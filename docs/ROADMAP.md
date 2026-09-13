@@ -1,0 +1,1271 @@
+# Campfire — Roadmap
+
+**Status:** Revised  
+**Version:** 0.2  
+**Date:** September 11, 2026  
+**Company:** Boring Infra Co.  
+**Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
+
+---
+
+## 1. Purpose
+
+This roadmap defines how Campfire should grow from a narrow proof of cross-human/cross-agent continuity into infrastructure for teams of people and agents.
+
+Campfire's north star is:
+
+> **Make agents work like they are part of the team.**
+
+The roadmap is intentionally evidence-driven.
+
+Campfire should not begin by building a generalized multi-agent platform, enterprise memory system, orchestration engine, or complete organizational knowledge graph.
+
+It should earn those capabilities by first proving one small behavior:
+
+> One human and agent can contribute durable work state that another authorized human and a different agent can use to continue the work without receiving the original conversation transcript or a manually prepared handoff.
+
+Everything after that should deepen the same core product thesis.
+
+---
+
+## 2. Roadmap Thesis
+
+The product progression is:
+
+```text
+Cross-Agent Continuity
+        ↓
+Shared Team Workspaces
+        ↓
+Identity + Authorization
+        ↓
+Richer Collaboration State
+        ↓
+Organizational Memory
+        ↓
+Coordination + Capabilities
+        ↓
+Organizational Learning
+```
+
+Each stage answers a different question.
+
+```text
+Stage 1
+Can work survive the originating agent session?
+
+Stage 2
+Can a team collaborate around that durable state?
+
+Stage 3
+Can the right humans and agents receive the right state?
+
+Stage 4
+Can Campfire represent real collaborative work well enough
+to become useful every day?
+
+Stage 5
+Can prior work improve future work across the organization?
+
+Stage 6
+Can humans and agents safely coordinate action?
+
+Stage 7
+Can the organization learn from the accumulated behavior,
+outcomes, decisions, and evidence of its people and agents?
+```
+
+Campfire should not skip these layers.
+
+---
+
+# Phase 0 — Thesis Alignment
+
+**Status:** Complete
+
+The original Campfire thesis centered on harness-independent agent collaboration.
+
+The revised thesis expands the collaboration boundary:
+
+> **Campfire is the shared workspace where people and their agents work together.**
+
+The important change is that humans and agents are both first-class participants in collaborative work.
+
+### Completed foundation
+
+- Product Definition v0.2
+- Vision v0.2
+- Architecture v0.2
+- Revised Sprint 001
+- North star established
+- Workspace established as primary collaboration boundary
+- Human and agent identities separated
+- Shared work state separated from private transcripts
+- MCP positioned as an interface rather than the product
+- Provenance and authorization established as architectural invariants
+
+### Exit condition
+
+Campfire has a coherent product and architecture thesis sufficient to begin implementation.
+
+**Result:** complete.
+
+---
+
+# Phase 1 — Prove Continuity
+
+## Sprint 001 — Cross-Harness Team Handoff
+
+**Status:** Complete (GO)
+
+### Goal
+
+Prove that structured Campfire state can carry useful work between two different human-agent relationships.
+
+### Reference flow
+
+```text
+Human A + Agent A
+        |
+        | contributes
+        v
+    Campfire
+        |
+        | retrieves
+        v
+Human B + Agent B
+```
+
+The two agents must use genuinely different harnesses.
+
+Agent B must not receive:
+
+- Agent A's transcript,
+- a manually written summary,
+- a copied prompt containing the answer,
+- or harness-specific session state.
+
+### Minimum product surface
+
+Campfire should support:
+
+- organization
+- team
+- human
+- agent
+- workspace
+- participant
+- goal
+- task
+- finding
+- decision
+- artifact
+- contribution/provenance
+
+Minimum interface:
+
+```text
+list_workspaces
+get_workspace
+get_workspace_context
+create_finding
+create_decision
+create_task
+update_task
+attach_artifact
+```
+
+### Technical constraints
+
+Prefer:
+
+```text
+MCP
+  ↓
+thin interface layer
+  ↓
+application services
+  ↓
+authorization
+  ↓
+domain
+  ↓
+SQLite
+```
+
+Avoid premature:
+
+- vector databases,
+- cloud control planes,
+- orchestration,
+- autonomous memory extraction,
+- transcript synchronization,
+- semantic ranking,
+- generalized knowledge graphs.
+
+### Success criteria
+
+Sprint 001 is successful if:
+
+1. Agent A performs meaningful work.
+2. Agent A contributes durable structured state.
+3. Agent A's transcript remains isolated.
+4. Agent B enters through another harness.
+5. Agent B retrieves authorized workspace context.
+6. Agent B correctly continues the work.
+7. Campfire preserves provenance across the handoff.
+8. A human can inspect what happened.
+
+### Decision
+
+At the end of Sprint 001:
+
+```text
+GO
+The continuation experience is clearly useful.
+
+CONDITIONAL GO
+The thesis works but the domain model or interface needs revision.
+
+NO-GO / REFRAME
+Structured shared state does not materially improve cross-agent continuation.
+```
+
+Do not begin the next major phase until this evidence exists.
+
+**Result:** complete (GO). See `docs/SPRINT_001_RESULT.md` and `docs/SPRINT_002_RESULT.md`.
+
+---
+
+# Phase 2 — Make the Workspace Useful
+
+## Sprint 002+ — Collaboration State
+
+**Status:** Sprint 002 GO. Sprint 003 orientation partial (deterministic exit
+met, in tree; real-harness rerun + Claude Code outstanding). Sprint 004 living
+workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C GO (v1.0).
+Viewer-002 team journal GO.
+
+If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
+
+### Questions
+
+- Which objects actually matter during real work?
+- What context does an incoming agent need first?
+- What should humans see?
+- Which state changes frequently?
+- Which state needs history?
+- How should decisions evolve?
+- How do artifacts relate to findings and tasks?
+- How should stale information appear?
+- What becomes noisy when multiple agents contribute?
+
+### Likely capabilities
+
+- workspace lifecycle
+- participant management
+- richer task state
+- decision lifecycle
+- finding status
+- artifact relationships
+- contribution timeline
+- current-state projection
+- basic filtering
+- context selection
+- human-readable workspace inspection
+
+### Potential domain refinement
+
+Evidence may justify a generic relationship primitive:
+
+```text
+Finding
+  supports
+Decision
+  produces
+Artifact
+  resolves
+Task
+```
+
+Do not build a generalized graph abstraction until real traces demonstrate the need.
+
+### Exit condition
+
+A Campfire workspace can support a small team across multiple sessions without becoming an unstructured dumping ground.
+
+---
+
+# Phase 3 — Identity and Authorization
+
+## Goal
+
+Make team context safely shareable across multiple humans and agents.
+
+Sprint 001 establishes the architectural boundary.
+
+This phase makes it robust enough for actual teams.
+
+### Capabilities
+
+- durable human identity
+- durable agent identity
+- agent-to-human attribution
+- team membership
+- workspace membership
+- role-based permissions
+- explicit read/write scopes
+- capability grants
+- authorization-aware retrieval
+- revocation
+- provenance inspection
+- authorization event logging
+
+### Core model
+
+```text
+Organization
+    ↓
+Team
+    ↓
+Human
+    ↓
+Agent
+
+Actor + Workspace + Operation + Resource
+                    ↓
+                Allow / Deny
+```
+
+### Important distinction
+
+An agent should not automatically inherit every capability or piece of context available to its human.
+
+Campfire should support narrower delegated authority.
+
+### Future enterprise direction
+
+Only after the internal model is stable should Campfire consider:
+
+- SSO
+- SCIM
+- identity provider integration
+- organization policy
+- service principals
+- enterprise audit controls
+
+### Exit condition
+
+A team can confidently answer:
+
+> Who can see this, who can change this, which agent acted, on whose behalf, and why was this context returned?
+
+---
+
+# Phase 4 — Real Team Collaboration
+
+## Goal
+
+Move from handoff infrastructure to a persistent environment for human-agent teamwork.
+
+Campfire should begin to feel less like storage and more like a shared operational workspace.
+
+### Candidate capabilities
+
+- workspace activity
+- assignments
+- mentions or subscriptions
+- handoff signals
+- human approvals
+- agent proposals
+- blockers
+- workspace status
+- decision review
+- artifact review
+- participant presence
+- explicit ownership
+- structured outcomes
+
+### Collaboration pattern
+
+```text
+Human
+  ↓
+sets goal
+
+Agent A
+  ↓
+investigates
+
+Agent B
+  ↓
+contributes another finding
+
+Human
+  ↓
+approves decision
+
+Agent C
+  ↓
+continues implementation
+
+Campfire
+  ↓
+preserves shared state + provenance
+```
+
+### Product test
+
+Campfire should reduce the amount of:
+
+- repeated explanation,
+- transcript forwarding,
+- manual summarization,
+- duplicated investigation,
+- lost rationale,
+- agent reorientation.
+
+### Exit condition
+
+A team chooses to keep a Campfire workspace active because it improves ongoing work, not merely because the product requires it for a demo.
+
+---
+
+# Phase 5 — Integrate the Existing Work Environment
+
+## Goal
+
+Allow Campfire to understand and reference the systems where teams already work without attempting to replace them.
+
+### Likely integrations
+
+- GitHub
+- issue/project systems
+- engineering documentation
+- incident systems
+- deployment systems
+- communication systems
+- infrastructure context
+
+### Integration principle
+
+> Campfire owns collaboration state. External systems continue to own their native artifacts.
+
+Example:
+
+```text
+Campfire Decision
+      |
+      references
+      v
+GitHub PR
+
+Campfire Finding
+      |
+      references
+      v
+Sentry event
+
+Campfire Task
+      |
+      references
+      v
+Linear issue
+```
+
+Avoid unnecessary duplication.
+
+### Combie relationship
+
+This phase is a natural point to test composition with Combie.
+
+Combie can answer:
+
+> What engineering resources exist and how are they related?
+
+Campfire can answer:
+
+> What is the team doing, learning, and deciding about those resources?
+
+The systems should compose without becoming mutually dependent.
+
+### Exit condition
+
+Agents can enter a workspace and understand both the team's collaborative state and the relevant external engineering resources without humans manually assembling every reference.
+
+---
+
+# Phase 6 — Team Memory
+
+## Goal
+
+Allow completed Campfire work to improve future work.
+
+Until this phase, Campfire primarily optimizes for continuity within active workspaces.
+
+Now it begins to connect work across time.
+
+### Capabilities
+
+- completed workspace retrieval
+- related prior work
+- decision history
+- prior attempts
+- superseded findings
+- artifact history
+- context freshness
+- workspace relationships
+- reusable outcomes
+- historical provenance
+
+### Example
+
+A new workspace begins:
+
+```text
+investigate-worker-timeout-2026-11
+```
+
+Campfire discovers:
+
+```text
+Related prior workspace:
+worker-timeout-2026-08
+
+Relevant state:
+- same service
+- similar failure mode
+- approach X failed
+- decision Y fixed the incident
+- configuration changed afterward
+```
+
+The agent does not need the old transcripts.
+
+It receives relevant durable organizational work state.
+
+### Retrieval evolution
+
+Only now should richer retrieval become a serious focus.
+
+Potential techniques:
+
+- explicit relationships
+- metadata filtering
+- recency
+- resource relationships
+- semantic retrieval
+- ranking
+- freshness scoring
+
+Embeddings are an implementation option, not the product.
+
+### Exit condition
+
+Campfire can answer:
+
+> Has this team learned something relevant before?
+
+with useful, provenance-backed state.
+
+---
+
+# Phase 7 — Organizational Memory
+
+## Goal
+
+Expand useful memory from individual teams and workspaces toward the organization while preserving boundaries.
+
+### Model
+
+```text
+Workspace Memory
+      ↓
+Team Memory
+      ↓
+Organizational Memory
+```
+
+This is not a universal context pool.
+
+Retrieval remains authorization-aware.
+
+### Candidate capabilities
+
+- cross-team workspace discovery
+- organizational decision history
+- reusable patterns
+- system-specific historical context
+- ownership discovery
+- expertise signals
+- recurring failure patterns
+- organizational conventions
+- policy-linked context
+- historical outcome comparison
+
+### Questions Campfire may answer
+
+- Why does the organization use this architecture?
+- Has another team solved this problem?
+- Who has worked on this system before?
+- Which decisions affect this resource?
+- What approaches repeatedly fail?
+- Which artifacts are authoritative?
+- Which findings are now stale?
+- What work changed this system?
+
+### Exit condition
+
+Organizational knowledge generated through human-agent work survives team and session boundaries without flattening security or provenance.
+
+---
+
+# Phase 8 — Coordination and Capabilities
+
+## Goal
+
+Allow Campfire to coordinate not just shared understanding, but controlled action.
+
+This phase should occur only after identity, authorization, provenance, and collaboration state are mature.
+
+### Potential capabilities
+
+- agent capability registration
+- delegated authority
+- action proposals
+- human approval gates
+- agent-to-agent task delegation
+- capability discovery
+- execution boundaries
+- action outcomes
+- retries and recovery
+- policy evaluation
+
+### Model
+
+```text
+Goal
+ ↓
+Task
+ ↓
+Assigned Agent
+ ↓
+Capability
+ ↓
+Action
+ ↓
+Outcome
+ ↓
+Shared Campfire State
+```
+
+Campfire does not need to become an agent runtime.
+
+It can coordinate work while external harnesses and runtimes execute it.
+
+### Pico relationship
+
+Pico becomes especially relevant here.
+
+Campfire may know:
+
+> Agent X wants to perform action Y.
+
+Pico may help determine:
+
+> What authority and attack paths exist around that action?
+
+Composition should remain explicit rather than collapsing product boundaries.
+
+### Exit condition
+
+Agents can safely coordinate meaningful work through Campfire with clear identity, authority, approval, and outcome provenance.
+
+---
+
+# Phase 9 — Verification-Aware Collaboration
+
+## Goal
+
+Distinguish what the team believes from what the available evidence supports.
+
+### Potential capabilities
+
+- evidence-linked findings
+- claim state
+- verification state
+- evidence freshness
+- decision confidence
+- artifact validation
+- outcome validation
+
+### Meno relationship
+
+Meno can provide verification semantics while Campfire provides the collaboration environment.
+
+```text
+Campfire
+Finding:
+"Migration 284 caused the failure."
+
+        ↓
+
+Meno
+Evidence:
+logs + migration state + reproduction
+
+        ↓
+
+Campfire
+Finding:
+verified
+```
+
+Campfire should not recreate Meno internally if composition works.
+
+### Exit condition
+
+Humans and agents can distinguish assertions, evidence, verified conclusions, and stale conclusions inside collaborative work.
+
+---
+
+# Phase 10 — Behavioral Understanding
+
+## Goal
+
+Understand how agents behave across collaborative work, not merely what state they produce.
+
+### Potential questions
+
+- Which agents repeatedly loop?
+- Which tasks require human intervention?
+- Which agents recover effectively?
+- Which strategies lead to successful outcomes?
+- Where do agents repeatedly fail?
+- How does behavior change after feedback?
+- Which workflows are safe to delegate further?
+
+### Agent Observability relationship
+
+The behavioral observability product can provide action/outcome/loop/recovery state.
+
+Campfire provides the organizational work context surrounding that behavior.
+
+Together:
+
+```text
+What was the team trying to do?
+        +
+How did the agent behave?
+        +
+What happened?
+```
+
+### Exit condition
+
+Agent behavior can be evaluated in the context of actual organizational goals and outcomes.
+
+---
+
+# Phase 11 — Organizational Learning
+
+## Goal
+
+Turn accumulated collaboration history into infrastructure that makes the organization better at working with agents over time.
+
+This is the long-term frontier, not an MVP feature.
+
+### Progression
+
+```text
+Shared Context
+      ↓
+Work Continuity
+      ↓
+Team Memory
+      ↓
+Organizational Memory
+      ↓
+Observed Outcomes
+      ↓
+Organizational Learning
+```
+
+### Possible capabilities
+
+Campfire may eventually help determine:
+
+- which approaches tend to work,
+- which decisions repeatedly produce failures,
+- which agents perform well for particular classes of work,
+- which tasks should require human review,
+- which evidence should be gathered before a decision,
+- which historical context predicts an issue,
+- which workflows can safely become more autonomous,
+- and how organizational practices evolve.
+
+This is where Campfire begins moving from:
+
+> “The team remembers.”
+
+toward:
+
+> **“The organization learns.”**
+
+### Constraint
+
+Campfire should not claim organizational learning merely because it can summarize old work.
+
+Learning requires outcomes, corrections, provenance, and evidence that prior experience changes future behavior.
+
+---
+
+# 12. Human Interface Roadmap
+
+Campfire begins agent-facing because cross-harness continuation is the first proof.
+
+But humans are first-class participants.
+
+A human interface should emerge as the domain model stabilizes.
+
+### Early interface
+
+A simple inspector can show:
+
+```text
+Workspace
+Goal
+Participants
+Open tasks
+Findings
+Decisions
+Artifacts
+Timeline
+Provenance
+```
+
+### Later interface
+
+The UI may evolve toward:
+
+- workspace overview,
+- team activity,
+- agent activity,
+- approval queue,
+- decisions,
+- related work,
+- organizational memory,
+- capability management,
+- policy visibility,
+- provenance inspection.
+
+### Principle
+
+Do not build a collaboration dashboard before knowing what humans actually need to inspect or control.
+
+The UI should expose the collaboration model rather than invent a second product model.
+
+---
+
+# 13. Deployment Roadmap
+
+Campfire should earn deployment complexity.
+
+### Stage A — Local proof
+
+```text
+local service
+SQLite
+MCP
+two harnesses
+```
+
+### Stage B — Shared development environment
+
+```text
+team-hosted service
+persistent database
+basic authentication
+workspace membership
+```
+
+### Stage C — Hosted team product
+
+```text
+multi-user
+remote state
+organization/team boundaries
+authorization
+audit
+```
+
+### Stage D — Enterprise
+
+Potentially:
+
+```text
+SSO
+SCIM
+policy integration
+service identities
+tenant controls
+audit export
+regional/data controls
+advanced capability policy
+```
+
+Do not build Stage D architecture into Stage A unless a domain invariant requires it.
+
+---
+
+# 14. What We Should Explicitly Not Roadmap Yet
+
+Campfire should resist adding fashionable capabilities without evidence.
+
+Do not commit yet to:
+
+- autonomous agent swarms,
+- a proprietary agent harness,
+- model hosting,
+- universal company search,
+- generic RAG,
+- a vector database product,
+- a replacement for Slack,
+- a replacement for GitHub,
+- a replacement for Linear,
+- full workflow automation,
+- a generalized agent runtime,
+- agent marketplaces,
+- no-code agent builders,
+- autonomous company management.
+
+Some may eventually interact with Campfire.
+
+None is required to establish the product category.
+
+---
+
+# 15. Evidence Gates
+
+Every major phase should have an explicit evidence gate.
+
+## Gate A — Continuity
+
+**Question:** Can Agent B continue Agent A's work?
+
+Required before Phase 2.
+
+## Gate B — Repeat Usage
+
+**Question:** Do humans/agents choose to reuse the workspace across multiple sessions?
+
+Required before investing heavily in collaboration UX.
+
+## Gate C — Multi-Participant Value
+
+**Question:** Does Campfire become more useful when multiple humans and agents contribute?
+
+Required before broad team features.
+
+## Gate D — Authorization Need
+
+**Question:** Do real collaboration scenarios produce meaningfully different access requirements?
+
+Required before sophisticated policy infrastructure.
+
+## Gate E — Historical Reuse
+
+**Question:** Does prior completed work materially improve new work?
+
+Required before deep organizational-memory investment.
+
+## Gate F — Controlled Action
+
+**Question:** Do teams want agents to coordinate actions through the shared workspace?
+
+Required before capability/orchestration investment.
+
+## Gate G — Learning
+
+**Question:** Can accumulated outcomes measurably improve future agent behavior or team decisions?
+
+Required before claiming organizational learning.
+
+---
+
+# 16. Success Metrics by Maturity
+
+Campfire's metrics should evolve with the product.
+
+### Early proof
+
+Measure:
+
+- successful cross-harness continuations,
+- context retrieved,
+- transcript-free handoffs,
+- provenance completeness,
+- incorrect/missing context.
+
+### Team collaboration
+
+Measure:
+
+- reused workspaces,
+- number of distinct human participants,
+- number of distinct agent/harness participants,
+- repeated investigations avoided,
+- manual handoffs avoided,
+- workspace continuation rate.
+
+### Team memory
+
+Measure:
+
+- prior work reused,
+- related-work retrieval success,
+- historical decisions referenced,
+- stale context detected,
+- time-to-orientation reduction.
+
+### Coordination
+
+Measure:
+
+- delegated tasks,
+- approvals,
+- successful actions,
+- interventions,
+- failed/blocked actions,
+- capability violations prevented.
+
+### Organizational learning
+
+Eventually measure:
+
+- repeated failure reduction,
+- improved task completion,
+- reduced human intervention,
+- improved evidence quality,
+- better agent routing/selection,
+- changes in behavior based on prior outcomes.
+
+Avoid vanity metrics such as raw token volume or number of stored memories.
+
+---
+
+# 17. Relationship to the Boring Infra Portfolio
+
+The roadmap should allow Campfire to compose with the broader Boring Infra thesis without becoming a forced umbrella product.
+
+```text
+Combie
+Engineering context
+        \
+
+Harnie ----\
+Work state  \
+             \
+Meno ---------> Campfire
+Verification  / Collaboration
+             /
+Pico --------/
+Authority
+        \
+         \
+Agent Observability
+Behavior + outcomes
+```
+
+The products answer different questions:
+
+```text
+Combie:
+What exists and how does it relate?
+
+Harnie:
+What was the agent doing?
+
+Meno:
+What claims are actually supported?
+
+Pico:
+What can the agent reach and where is that dangerous?
+
+Agent Observability:
+How is the agent behaving?
+
+Campfire:
+How do people and their agents work together?
+```
+
+The portfolio becomes more coherent if each product proves its primitive independently before deeper integration.
+
+Campfire should be designed for composition, not dependency.
+
+---
+
+# 18. Long-Term Product Shape
+
+If the roadmap succeeds, Campfire evolves through three recognizable product eras.
+
+## Era I — Continuity
+
+> **Your agent knows what the team already figured out.**
+
+Primary value:
+
+- cross-harness handoff,
+- shared work state,
+- provenance.
+
+## Era II — Collaboration
+
+> **People and agents work from the same operational context.**
+
+Primary value:
+
+- persistent workspaces,
+- identity,
+- authorization,
+- tasks,
+- decisions,
+- artifacts,
+- approvals,
+- team memory.
+
+## Era III — Learning
+
+> **The organization gets better at working with agents because of everything it has learned before.**
+
+Primary value:
+
+- organizational memory,
+- related prior work,
+- outcomes,
+- verification,
+- behavior,
+- controlled autonomy,
+- organizational learning.
+
+This progression keeps the long-term ambition large without making the first product vague.
+
+---
+
+# 19. v1.0 Cut
+
+The docs originally never named a v1.0. The first shippable product is:
+
+> **A team-hosted, harness-independent shared workspace a 3–20 person engineering team would keep using for ongoing work.**
+
+v1.0 is Era I complete plus the smallest Era II slice that makes a small multi-harness team keep a workspace alive. It is **not** organizational memory, a dashboard, GitHub sync, SSO, or orchestration.
+
+Evidence already in hand:
+
+- Gate A (continuity) — Sprint 001 GO, Sprint 002 GO
+
+Required before calling it 1.0.0:
+
+- Gate B (repeat usage) — Sprint 004
+- Gate C (multi-participant value) — Sprint 006
+- Deployment Stage B (team-hosted process, actor tokens, invite membership) — Sprint 005
+
+Sequence:
+
+```text
+003 Agent orientation          in tree
+004 Living workspace           GO (Gate B product surface)
+005 Team identity + hosted     GO (Stage B)
+006 Multi-participant value    GO (Gate C) → 1.0.0
+```
+
+---
+
+# 20. Near-Term Sequence
+
+The immediate sequence should remain disciplined:
+
+```text
+Product Definition v0.2   ✓
+        ↓
+Vision v0.2               ✓
+        ↓
+Architecture v0.2         ✓
+        ↓
+Roadmap v0.2              ✓
+        ↓
+Sprint 001 GO             ✓
+        ↓
+Sprint 002 GO             ✓ (deterministic + real-harness evidence; see result doc
+        ↓                   for what was real vs synthetic)
+Sprint 003 — Agent orientation (PARTIAL: deterministic exit met, in tree;
+        ↓                   real-harness rerun + Claude Code outstanding)
+Sprint 004 — Living workspace (Gate B)   GO ✓
+        ↓
+Sprint 005 — Team identity + hosted instance (Stage B)   GO ✓
+        ↓
+Sprint 006 — Multi-participant value (Gate C) → v1.0   GO ✓
+        ↓
+Viewer-002 — Team journal   GO ✓
+```
+
+The roadmap provides direction.
+
+The sprint provides commitment.
+
+Those should remain separate.
+
+---
+
+# 21. North Star
+
+Campfire should move toward a world where this interaction feels normal:
+
+```text
+Yesterday
+
+Sergio + Codex
+discovered why a service was failing.
+
+        ↓
+
+Campfire retained the useful team state.
+
+        ↓
+
+Today
+
+Alice + Claude Code
+continue from that understanding.
+
+        ↓
+
+Tomorrow
+
+Another teammate + another agent
+can continue again.
+
+        ↓
+
+Over time
+
+The organization remembers what happened,
+understands why,
+and learns from the outcome.
+```
+
+No transcript forwarding.
+
+No manual handoff document.
+
+No dependence on a single harness.
+
+No loss of provenance.
+
+No assumption that every agent may access everything.
+
+The first milestone is continuity.
+
+The long-term destination is infrastructure for organizations where humans and agents genuinely work as one team.
+
+> **Make agents work like they are part of the team.**
