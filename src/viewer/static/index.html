@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Campfire</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <header>
+      <span class="brand">Campfire</span>
+      <span id="whoami"></span>
+      <span id="error" hidden></span>
+      <label class="ws">
+        <span class="ws-label">workspace</span>
+        <select id="workspace" aria-label="Workspace"></select>
+      </label>
+    </header>
+    <section id="mast" aria-label="Workspace now">
+      <div id="people"></div>
+      <div id="goal"></div>
+    </section>
+    <main>
+      <section id="stream" class="stream" aria-label="Workstream"></section>
+    </main>
+    <p id="hint">j/k navigate   ↵ inspect   [/] workspace</p>
+    <script src="/app.js"></script>
+  </body>
+</html>

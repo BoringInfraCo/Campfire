@@ -1,0 +1,7 @@
+{"type":"step_start","sessionID":"ses_opencode_sample_001","part":{"type":"step-start"}}
+{"type":"tool_use","sessionID":"ses_opencode_sample_001","part":{"type":"tool","tool":"campfire_campfire_list_workspaces","callID":"call_001","state":{"status":"completed","input":{},"output":"{\"workspaces\":[{\"id\":\"ws_billing\",\"name\":\"billing-deploy-failure\"}]}","metadata":{}}}}
+{"type":"text","sessionID":"ses_opencode_sample_001","part":{"type":"text","text":"Let me inspect the billing workspace."}}
+{"type":"tool_use","sessionID":"ses_opencode_sample_001","part":{"type":"tool","tool":"Read","callID":"call_002","state":{"status":"completed","input":{"filePath":"fixtures/billing/deploy.log"},"output":"deploy timed out after 120s","metadata":{}}}}
+{"type":"text","sessionID":"ses_opencode_sample_001","part":{"type":"text","text":"Migration 284 holds a database lock longer than the deployment timeout."}}
+{"type":"step_finish","sessionID":"ses_opencode_sample_001","part":{"reason":"tool-calls","tokens":{"total":1500,"input":1000,"output":300,"reasoning":200,"cache":{"read":0,"write":0}},"cost":0.0012}}
+{"type":"step_finish","sessionID":"ses_opencode_sample_001","part":{"reason":"stop","tokens":{"total":500,"input":300,"output":100,"reasoning":100,"cache":{"read":0,"write":0}},"cost":0.0004}}
