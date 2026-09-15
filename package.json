@@ -14,7 +14,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && cp src/store/schema.sql dist/src/store/schema.sql && cp -r src/viewer/static dist/src/viewer/static && chmod +x dist/src/cli/index.js",
+    "build": "npm run sync:public && tsc && cp src/store/schema.sql dist/src/store/schema.sql && cp -r src/viewer/static dist/src/viewer/static && chmod +x dist/src/cli/index.js",
+    "sync:public": "cp src/viewer/static/index.html src/viewer/static/app.css src/viewer/static/app.js public/",
+    "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -28,7 +30,12 @@
     "serve": "tsx src/cli/index.ts serve",
     "view": "tsx src/cli/index.ts view",
     "acceptance": "tsx scripts/run-acceptance.ts",
-    "acceptance:002": "tsx scripts/run-acceptance-002.ts"
+    "acceptance:002": "tsx scripts/run-acceptance-002.ts",
+    "deploy": "node scripts/wrangler-deploy.mjs deploy",
+    "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
+    "dev:worker": "wrangler dev",
+    "db:migrate": "wrangler d1 migrations apply campfire --remote",
+    "pack:tarball": "sh scripts/package.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -40,6 +47,7 @@
     "@types/node": "^22.20.2",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "wrangler": "^4.131.1"
   }
 }

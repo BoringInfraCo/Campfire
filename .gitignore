@@ -1,7 +1,12 @@
 node_modules/
 dist/
+release/
+public/campfire/v*/
 .campfire/
 evidence/
 *.log
 !fixtures/billing/deploy.log
 .DS_Store
+.dev.vars
+.wrangler/
+wrangler.local.toml

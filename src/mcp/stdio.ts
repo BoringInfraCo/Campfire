@@ -10,7 +10,8 @@
  * /v1/call with CAMPFIRE_TOKEN and no local SQLite is opened for writes.
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { pathToFileURL } from "node:url";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import type { ActorRef } from "../domain/types.js";
 import { campfireHttpCall } from "../http/client.js";
@@ -156,7 +157,9 @@ function isMainModule(): boolean {
   const entry = process.argv[1];
   if (entry === undefined) return false;
   try {
-    return import.meta.url === pathToFileURL(entry).href;
+    // Compare real paths (see src/cli/index.ts): symlinked or ".." entry
+    // paths must still start the server instead of silently no-op-ing.
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch {
     return false;
   }

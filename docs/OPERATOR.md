@@ -1,10 +1,59 @@
 # Operator runbook
 
-Requirements: Node.js 22+. Reproducible install from a clean checkout:
+Requirements: Node.js 22+.
+
+Install the CLI on an operator or teammate machine (curl path):
+
+```bash
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh
+```
+
+Pinned / explicit variants (`--help` for all flags; env equivalents
+`CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
+
+```bash
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
+CAMPREFIX=~/.local sh install.sh --dry-run
+```
+
+The static asset is served by Workers from `public/` (see `wrangler.toml`
+and `public/_headers`); versioned immutable copies live at
+`/campfire/vX.Y.Z/install.sh` (produced by `npm run pack:tarball`).
+Release tarballs (`release/campfire-{os}-{arch}.tar.gz` + `.sha256`, built
+by `npm run pack:tarball` from `dist/` for GitHub Releases) are
+sha256-verified when published.
+
+Reproducible install from a clean checkout (source path):
 
 ```bash
 npm ci && npm run build && npm test
 ```
+
+## Deploy (Workers + D1)
+
+The public repo never contains a real D1 `database_id` — `wrangler.toml`
+keeps the `00000000-…` placeholder so clones validate without secrets.
+
+One-time provisioning (operator machine, never committed):
+
+```bash
+wrangler d1 create campfire   # save the returned id; `wrangler d1 list` to confirm
+export CAMPFIRE_D1_DATABASE_ID=<id>   # local shell, or CI secret of the same name
+# optional persistent local file instead of env (gitignored):
+cp wrangler.example.toml wrangler.local.toml  # paste the id there
+```
+
+Repeatable release (CI or operator — id resolves env > `wrangler.local.toml`):
+
+```bash
+npm run db:migrate     # by database NAME; needs no id in the repo
+npm run deploy:dry-run # validates with the placeholder when no id is set
+npm run deploy         # injects the real id via an ephemeral --config; wrangler.toml untouched
+npm run pack:tarball   # builds release/campfire-{os}-{arch}.tar.gz + .sha256
+gh release create …    # publish; install.sh verifies sha256
+```
+
+`wrangler dev` always uses the placeholder (D1 simulated locally).
 
 One process owns SQLite. CLI and MCP call it over HTTP with an actor token.
 

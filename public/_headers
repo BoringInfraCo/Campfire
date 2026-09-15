@@ -1,0 +1,12 @@
+# Cloudflare Pages / Workers Static Assets headers for Campfire downloads.
+# Directory convention: this file sits next to the served assets in public/.
+# install.sh is short-cached so fixes propagate; versioned copies produced
+# by `npm run pack:tarball` are immutable.
+
+/campfire/install.sh
+  Content-Type: text/x-shellscript; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/campfire/v*/install.sh
+  Content-Type: text/x-shellscript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable

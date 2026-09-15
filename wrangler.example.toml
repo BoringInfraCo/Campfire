@@ -1,0 +1,20 @@
+# Local operator override — NOT committed (see .gitignore).
+# Usage: cp wrangler.example.toml wrangler.local.toml, paste the real id,
+# then `npm run deploy`. The public wrangler.toml keeps the placeholder.
+name = "campfire"
+main = "src/worker/index.ts"
+compatibility_date = "2026-09-12"
+compatibility_flags = ["nodejs_compat"]
+
+rules = [{ type = "Text", globs = ["**/*.sql"], fallthrough = true }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "campfire"
+database_id = "REPLACE_ME_WITH_OUTPUT_OF_WRANGLER_D1_CREATE"
+migrations_dir = "migrations"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/v1/*", "/api/*"]

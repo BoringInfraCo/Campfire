@@ -6,9 +6,9 @@
  * and the MCP stdio entrypoint. It exists so the local proof can be driven
  * without a harness (AGENTS.md "Observability").
  */
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, realpathSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
@@ -919,7 +919,10 @@ function isMainModule(): boolean {
   const entry = process.argv[1];
   if (entry === undefined) return false;
   try {
-    return import.meta.url === pathToFileURL(entry).href;
+    // Compare real paths: the installed entrypoint may be reached through a
+    // symlink or a path containing ".." (argv[1] is verbatim), while
+    // import.meta.url is normalized. String comparison alone silently no-ops.
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch {
     return false;
   }
