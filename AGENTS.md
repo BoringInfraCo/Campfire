@@ -40,9 +40,19 @@ Agent B must be able to continue the work without receiving Agent A's private tr
 
 ## Read Before Implementing
 
-Before making substantial architectural or product changes, read:
+Per `skills/build-campfire/SKILL.md` (the canonical Engineering Constitution), read in this order before any substantive change:
+
+1. `skills/build-campfire/SKILL.md`
+2. `README.md`
+3. `docs/PRODUCT_DEFINITION.md`
+4. `docs/VISION.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/ROADMAP.md`
+7. Active Sprint under `docs/SPRINT_*.md` / `docs/SPRINT_VIEWER_*.md`
+8. Relevant code and tests under `src/` and `tests/`
 
 ```text
+skills/build-campfire/SKILL.md
 README.md
 docs/PRODUCT_DEFINITION.md
 docs/VISION.md
