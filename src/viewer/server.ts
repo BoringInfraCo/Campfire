@@ -14,6 +14,20 @@ import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
 export const DEFAULT_VIEWER_HOST = "127.0.0.1";
 export const DEFAULT_VIEWER_PORT = 9415;
 
+export const VIEWER_THEMES = ["campfire", "fx"] as const;
+
+export type ViewerTheme = (typeof VIEWER_THEMES)[number];
+
+export const DEFAULT_VIEWER_THEME: ViewerTheme = "campfire";
+
+export function isViewerTheme(value: string): value is ViewerTheme {
+  return (VIEWER_THEMES as readonly string[]).includes(value);
+}
+
+export function resolveViewerTheme(value: unknown): ViewerTheme {
+  return typeof value === "string" && isViewerTheme(value) ? value : DEFAULT_VIEWER_THEME;
+}
+
 export const VIEWER_READ_METHODS = [
   "whoami",
   "list_workspaces",
@@ -34,12 +48,16 @@ const STATIC_ROUTES: Record<string, { file: string; type: string }> = {
   "/": { file: "index.html", type: "text/html; charset=utf-8" },
   "/app.css": { file: "app.css", type: "text/css; charset=utf-8" },
   "/app.js": { file: "app.js", type: "text/javascript; charset=utf-8" },
+  // Brand logomark (ink variant) for the masthead. Static, read-only.
+  "/campfire-mark.svg": { file: "campfire-mark.svg", type: "image/svg+xml" },
 };
 
 export interface ViewerServerOptions {
   call: (method: string, params?: Record<string, unknown>) => Promise<unknown>;
   host?: string;
   port?: number;
+  /** Initial color theme for the Viewer shell. Validated against VIEWER_THEMES; defaults to campfire. */
+  theme?: string;
   /**
    * Non-loopback binds (anything outside 127.0.0.1 / ::1 / localhost)
    * require explicit opt-in. The Viewer carries the operator's authority
@@ -172,6 +190,16 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
           return;
         }
         throw error;
+      }
+      if (route.file === "index.html") {
+        const theme = resolveViewerTheme(options.theme);
+        let html = data.toString("utf8");
+        if (html.includes("data-theme=")) {
+          html = html.replace(/data-theme="[^"]*"/, `data-theme="${theme}"`);
+        } else {
+          html = html.replace('<html lang="en"', `<html lang="en" data-theme="${theme}"`);
+        }
+        data = Buffer.from(html, "utf8");
       }
       res.writeHead(200, {
         "content-type": route.type,

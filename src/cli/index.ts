@@ -27,7 +27,7 @@ import type {
 import { campfireHttpCall } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
-import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, startCampfireViewer } from "../viewer/server.js";
+import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
 import {
   readCampfireToken,
   readCampfireUrl,
@@ -693,8 +693,9 @@ async function cmdView(parsed: ParsedArgs, argv: string[]): Promise<void> {
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
   }
+  const theme = requireEnum(optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME, VIEWER_THEMES, "theme");
   await withBackend(argv, async (backend) => {
-    const running = await startCampfireViewer({ call: backend.call, host, port, allowRemote });
+    const running = await startCampfireViewer({ call: backend.call, host, port, allowRemote, theme });
     console.error(`[campfire] viewer listening on ${running.url}`);
     await new Promise<void>((resolve) => {
       const shutdown = (signal: NodeJS.Signals): void => {
@@ -789,7 +790,7 @@ function printUsage(): void {
     "  campfire bootstrap [--org <orgId>] [--team <teamId>] [--org-name <name>] [--team-name <name>] [--human-name <name>]",
     "  campfire seed [--reset]",
     "  campfire serve [--host 127.0.0.1] [--port 9414]",
-    "  campfire view [--host 127.0.0.1] [--port 9415] [--allow-remote]",
+    "  campfire view [--host 127.0.0.1] [--port 9415] [--allow-remote] [--theme campfire|fx]",
     "  campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
     "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",

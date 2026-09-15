@@ -1,5 +1,34 @@
 :root {
   color-scheme: dark;
+  /* Campfire ink canvas + Logo System v1.0 elevations.
+     human/agent come from the shared-workspace colors: Gather Pink for people,
+     Firelight for agents (see website campfire.css gather diagram). */
+  --bg: #171717;
+  --fg: #e8eef0;
+  --muted: #a7a39b;
+  --dim: #595752;
+  --accent: #fc6142;
+  --line: #333333;
+  --err: #ff9a82;
+  --human: #f9b2d7;
+  --agent: #ffd166;
+}
+
+:root[data-theme="campfire"] {
+  color-scheme: dark;
+  --bg: #171717;
+  --fg: #e8eef0;
+  --muted: #a7a39b;
+  --dim: #595752;
+  --accent: #fc6142;
+  --line: #333333;
+  --err: #ff9a82;
+  --human: #f9b2d7;
+  --agent: #ffd166;
+}
+
+:root[data-theme="fx"] {
+  color-scheme: dark;
   --bg: #0e0e0e;
   --fg: #c6c1b8;
   --muted: #6e6a63;
@@ -7,6 +36,9 @@
   --accent: #d4a017;
   --line: #242220;
   --err: #c45c4a;
+  /* Legacy palette keeps neutral marks. */
+  --human: #c6c1b8;
+  --agent: #6e6a63;
 }
 
 * {
@@ -29,8 +61,8 @@ body {
 
 header {
   display: flex;
-  align-items: baseline;
-  gap: 1.5ch;
+  align-items: center;
+  gap: 1.25ch;
   flex: 0 0 auto;
   min-height: 2.4em;
   padding: 0.55em 1.5ch;
@@ -38,7 +70,21 @@ header {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  line-height: 1;
   color: var(--accent);
+}
+
+/* Pixel logomark. Scales with the header font so it stays proportional;
+   pixelated keeps the 18x20 grid crisp at non-integer sizes. */
+.brand-mark {
+  display: block;
+  width: auto;
+  height: 1.6em;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 #whoami {
@@ -118,11 +164,11 @@ header select:focus-visible {
 }
 
 .mark.human {
-  color: var(--fg);
+  color: var(--human);
 }
 
 .mark.agent {
-  color: var(--muted);
+  color: var(--agent);
 }
 
 #people .role,

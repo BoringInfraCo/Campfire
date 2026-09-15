@@ -97,6 +97,29 @@ describe("Campfire Viewer", () => {
     expect(result.body.result.goal).toBeDefined();
   });
 
+  it("defaults to the Campfire theme with an fx fallback", async () => {
+    const html = await (await fetch(`${running.url}/`)).text();
+    expect(html).toContain('data-theme="campfire"');
+    const css = await (await fetch(`${running.url}/app.css`)).text();
+    expect(css).toContain("--accent: #fc6142");
+    expect(css).toContain('[data-theme="fx"]');
+  });
+
+  it("serves the Campfire logomark and uses the brand accent colors", async () => {
+    const html = await (await fetch(`${running.url}/`)).text();
+    expect(html).toContain('src="/campfire-mark.svg"');
+    expect(html).not.toContain('<span class="brand">Campfire</span>');
+
+    const mark = await fetch(`${running.url}/campfire-mark.svg`);
+    expect(mark.status).toBe(200);
+    expect(mark.headers.get("content-type") ?? "").toMatch(/svg/);
+    expect(await mark.text()).toContain("#FC6142");
+
+    const css = await (await fetch(`${running.url}/app.css`)).text();
+    expect(css).toContain("--human: #f9b2d7");
+    expect(css).toContain("--agent: #ffd166");
+  });
+
   it("shows a finding written through the service, not through the Viewer", async () => {
     const ctx: ActorContext = {
       actor: { actorId: FIXTURE.humans.sergio, actorType: "human" },
@@ -114,5 +137,23 @@ describe("Campfire Viewer", () => {
     if (!result.body.ok) return;
     const ids = result.body.result.items.map((item: { objectId: string }) => item.objectId);
     expect(ids).toContain(finding.id);
+  });
+
+  it("honors the fx theme option for the legacy palette", async () => {
+    const ctx: ActorContext = {
+      actor: { actorId: FIXTURE.humans.sergio, actorType: "human" },
+    };
+    const legacy = await startCampfireViewer({
+      call: (method, params) =>
+        Promise.resolve(dispatchCampfireMethod(runtime.service, ctx, method, params ?? {})),
+      port: 0,
+      theme: "fx",
+    });
+    try {
+      const html = await (await fetch(`${legacy.url}/`)).text();
+      expect(html).toContain('data-theme="fx"');
+    } finally {
+      await legacy.close();
+    }
   });
 });

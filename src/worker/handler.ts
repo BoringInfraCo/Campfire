@@ -46,7 +46,12 @@ type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];
 
 const VIEWER_READ_SET: ReadonlySet<string> = new Set(VIEWER_READ_METHODS);
 
-const STATIC_PATHS: ReadonlySet<string> = new Set(["/", "/app.css", "/app.js"]);
+const STATIC_PATHS: ReadonlySet<string> = new Set([
+  "/",
+  "/app.css",
+  "/app.js",
+  "/campfire-mark.svg",
+]);
 
 export function isViewerReadMethod(value: string): value is ViewerReadMethod {
   return VIEWER_READ_SET.has(value);
