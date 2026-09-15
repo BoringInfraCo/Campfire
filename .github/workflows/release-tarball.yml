@@ -1,0 +1,51 @@
+name: release-tarball
+
+# Build the platform release tarballs on CI runners (one per platform, per
+# OPERATOR.md) and attach them to an existing GitHub Release. Local packaging
+# is only a fallback: the tarball contains a native better-sqlite3 binding, so
+# it must be built on the target platform.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to attach tarballs to (e.g. v1.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` runs the `prepare` script, which builds dist/.
+      - run: npm ci
+
+      - run: npm run pack:tarball
+
+      - name: Upload tarball to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -eu
+          ls -la release
+          gh release upload "$TAG" \
+            release/campfire-*.tar.gz \
+            release/campfire-*.tar.gz.sha256 \
+            --clobber
