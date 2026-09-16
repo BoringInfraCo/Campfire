@@ -41,16 +41,27 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+
+      # Build the selected release source, but keep release tooling from the
+      # protected default branch. That lets us repair an existing tag without
+      # recreating a bug that existed in its historical packaging script.
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag }}
+          path: release-source
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: release-source/package-lock.json
+
+      - name: Use hardened release packaging
+        run: cp scripts/package.sh release-source/scripts/package.sh
 
       # `npm ci` runs the `prepare` script, which builds dist/.
       - run: npm ci
+        working-directory: release-source
 
       - name: Check native platform
         env:
@@ -62,6 +73,7 @@ jobs:
           test "$(uname -m)" = "$HOST_ARCH"
 
       - run: npm run pack:tarball
+        working-directory: release-source
 
       - name: Verify packaged archive and checksum
         env:
@@ -69,17 +81,17 @@ jobs:
         run: |
           set -eu
           archive="campfire-$PLATFORM.tar.gz"
-          test -s "release/$archive"
-          test -s "release/$archive.sha256"
-          digest="$(cut -d ' ' -f 1 < "release/$archive.sha256")"
+          test -s "release-source/release/$archive"
+          test -s "release-source/release/$archive.sha256"
+          digest="$(cut -d ' ' -f 1 < "release-source/release/$archive.sha256")"
           case "$digest" in
             *[!0-9a-fA-F]*) exit 1 ;;
           esac
           test "${#digest}" -eq 64
           if command -v sha256sum >/dev/null 2>&1; then
-            (cd release && sha256sum -c "$archive.sha256")
+            (cd release-source/release && sha256sum -c "$archive.sha256")
           else
-            (cd release && shasum -a 256 -c "$archive.sha256")
+            (cd release-source/release && shasum -a 256 -c "$archive.sha256")
           fi
 
       - name: Upload tarball to the release
@@ -91,6 +103,6 @@ jobs:
           set -eu
           archive="campfire-$PLATFORM.tar.gz"
           gh release upload "$TAG" \
-            "release/$archive" \
-            "release/$archive.sha256" \
+            "release-source/release/$archive" \
+            "release-source/release/$archive.sha256" \
             --clobber
