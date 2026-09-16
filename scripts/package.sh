@@ -5,14 +5,14 @@
 #   release/campfire-{os}-{arch}.tar.gz
 #   release/campfire-{os}-{arch}.tar.gz.sha256
 # plus a versioned copy of the installer for static hosting:
-#   public/campfire/vX.Y.Z/install.sh   (gitignored build output)
+#   public/campfire/vX.Y.Z/install.sh
 #
 # Tarball layout (mirrors the install prefix):
 #   bin/campfire                        POSIX sh wrapper (node + bundled lib)
 #   lib/campfire/{dist,package.json,package-lock.json,LICENSE,node_modules}
 #
-# node_modules is pruned to production deps in a staging dir, so the native
-# better-sqlite3 binding matches the build host. CI builds one tarball per
+# node_modules includes installed production deps only, copied from the build
+# host so the native better-sqlite3 binding matches it. CI builds one per
 # platform runner (darwin/linux x arm64/x64). Usage:
 #   npm run pack:tarball
 set -eu
@@ -43,18 +43,38 @@ npm run build >/dev/null || { echo "package.sh: error: npm run build failed" >&2
 
 STAGE="$(mktemp -d 2>/dev/null || mktemp -d -t campfire-pack)"
 trap 'rm -rf "$STAGE"' EXIT INT TERM
-mkdir -p "$STAGE/bin" "$STAGE/lib/campfire" release
+mkdir -p "$STAGE/bin" "$STAGE/lib/campfire/node_modules" release
 
 cp package.json package-lock.json LICENSE "$STAGE/lib/campfire/"
 cp -R dist "$STAGE/lib/campfire/dist"
-cp -R node_modules "$STAGE/lib/campfire/node_modules"
 
-# Prune to production deps inside staging only (never touches the worktree).
-# Works offline: it only deletes, using the existing tree + lockfile.
-(cd "$STAGE/lib/campfire" && npm prune --omit=dev --no-audit --no-fund) || {
-  echo "package.sh: error: npm prune --omit=dev failed" >&2
+# npm reports the installed production dependency graph, including nested
+# packages. Copy only those directories; copying every dev dependency before
+# pruning made packaging unnecessarily slow on macOS. This stays offline and
+# preserves the host-built better-sqlite3 binding without rebuilding it.
+PROJECT_ROOT="$(pwd)"
+npm ls --omit=dev --parseable --all > "$STAGE/production-dependencies" || {
+  echo "package.sh: error: could not list installed production dependencies" >&2
   exit 1
 }
+while IFS= read -r dependency; do
+  case "$dependency" in
+    "$PROJECT_ROOT") continue ;;
+    "$PROJECT_ROOT/node_modules/"*)
+      relative="${dependency#"$PROJECT_ROOT/node_modules/"}"
+      destination="$STAGE/lib/campfire/node_modules/$relative"
+      mkdir -p "$(dirname "$destination")"
+      cp -R "$dependency" "$(dirname "$destination")/" || {
+        echo "package.sh: error: could not stage production dependency $relative" >&2
+        exit 1
+      }
+      ;;
+    *)
+      echo "package.sh: error: unexpected dependency path $dependency" >&2
+      exit 1
+      ;;
+  esac
+done < "$STAGE/production-dependencies"
 
 # POSIX sh wrapper: resolves symlinks portably, execs bundled dist with node.
 # LIB_DIR must be normalized (no ".." segments): the CLI runs only when
@@ -95,18 +115,48 @@ tar -czf "release/$ARTIFACT" -C "$STAGE" bin lib || {
   exit 1
 }
 
-(cd release && { sha256sum "$ARTIFACT" | cut -d ' ' -f 1 > "$ARTIFACT.sum" 2>/dev/null || shasum -a 256 "$ARTIFACT" | cut -d ' ' -f 1 > "$ARTIFACT.sum"; }) || {
-  echo "package.sh: error: checksum failed" >&2
+# Select the installed hash tool before computing a digest. On macOS,
+# `sha256sum` is usually absent; the old pipeline returned cut's successful
+# status and wrote an empty checksum instead of falling back to shasum.
+if command -v sha256sum >/dev/null 2>&1; then
+  sum_output="$(sha256sum "release/$ARTIFACT")" || {
+    echo "package.sh: error: sha256sum failed" >&2
+    exit 1
+  }
+elif command -v shasum >/dev/null 2>&1; then
+  sum_output="$(shasum -a 256 "release/$ARTIFACT")" || {
+    echo "package.sh: error: shasum failed" >&2
+    exit 1
+  }
+else
+  echo "package.sh: error: neither sha256sum nor shasum is available" >&2
+  exit 1
+fi
+sum="${sum_output%% *}"
+case "$sum" in
+  *[!0-9a-fA-F]*)
+    echo "package.sh: error: checksum is not a hex digest" >&2
+    exit 1
+    ;;
+esac
+[ "${#sum}" -eq 64 ] || {
+  echo "package.sh: error: checksum must contain exactly 64 hex characters" >&2
   exit 1
 }
-sum="$(cat "release/$ARTIFACT.sum")"
 printf '%s  %s\n' "$sum" "$ARTIFACT" > "release/$ARTIFACT.sha256"
-rm -f "release/$ARTIFACT.sum"
 
 # Versioned installer copy for static hosting (/campfire/vX.Y.Z/install.sh).
-# Gitignored build output; the release workflow deploys public/ as-is.
+# Published versions are tracked so the Worker can serve immutable URLs.
+versioned_installer="public/campfire/v$VERSION/install.sh"
 mkdir -p "public/campfire/v$VERSION"
-cp public/campfire/install.sh "public/campfire/v$VERSION/install.sh"
+if [ -f "$versioned_installer" ]; then
+  cmp -s public/campfire/install.sh "$versioned_installer" || {
+    echo "package.sh: error: $versioned_installer differs from the current installer; refusing to overwrite an immutable version" >&2
+    exit 1
+  }
+else
+  cp public/campfire/install.sh "$versioned_installer"
+fi
 
 echo "pack: release/$ARTIFACT"
 echo "pack: release/$ARTIFACT.sha256 ($sum)"

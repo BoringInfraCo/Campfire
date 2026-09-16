@@ -21,8 +21,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+        include:
+          - runner: macos-14
+            platform: darwin-arm64
+            host_os: Darwin
+            host_arch: arm64
+          - runner: macos-15-intel
+            platform: darwin-x64
+            host_os: Darwin
+            host_arch: x86_64
+          - runner: ubuntu-24.04-arm
+            platform: linux-arm64
+            host_os: Linux
+            host_arch: aarch64
+          - runner: ubuntu-24.04
+            platform: linux-x64
+            host_os: Linux
+            host_arch: x86_64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,16 +52,45 @@ jobs:
       # `npm ci` runs the `prepare` script, which builds dist/.
       - run: npm ci
 
+      - name: Check native platform
+        env:
+          HOST_OS: ${{ matrix.host_os }}
+          HOST_ARCH: ${{ matrix.host_arch }}
+        run: |
+          set -eu
+          test "$(uname -s)" = "$HOST_OS"
+          test "$(uname -m)" = "$HOST_ARCH"
+
       - run: npm run pack:tarball
+
+      - name: Verify packaged archive and checksum
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -eu
+          archive="campfire-$PLATFORM.tar.gz"
+          test -s "release/$archive"
+          test -s "release/$archive.sha256"
+          digest="$(cut -d ' ' -f 1 < "release/$archive.sha256")"
+          case "$digest" in
+            *[!0-9a-fA-F]*) exit 1 ;;
+          esac
+          test "${#digest}" -eq 64
+          if command -v sha256sum >/dev/null 2>&1; then
+            (cd release && sha256sum -c "$archive.sha256")
+          else
+            (cd release && shasum -a 256 -c "$archive.sha256")
+          fi
 
       - name: Upload tarball to the release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           set -eu
-          ls -la release
+          archive="campfire-$PLATFORM.tar.gz"
           gh release upload "$TAG" \
-            release/campfire-*.tar.gz \
-            release/campfire-*.tar.gz.sha256 \
+            "release/$archive" \
+            "release/$archive.sha256" \
             --clobber

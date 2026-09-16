@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** September 11, 2026  
+**Date:** September 15, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -244,7 +244,9 @@ Do not begin the next major phase until this evidence exists.
 **Status:** Sprint 002 GO. Sprint 003 orientation partial (deterministic exit
 met, in tree; real-harness rerun + Claude Code outstanding). Sprint 004 living
 workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C GO (v1.0).
-Viewer-002 team journal GO.
+Viewer-002 team journal GO. v1.1 ships its Campfire theme and logomark. Sprint
+004/006 GO decisions cover product behavior in controlled traces; real multi-day
+team reuse and multi-participant value remain to be measured.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -889,6 +891,10 @@ basic authentication
 workspace membership
 ```
 
+**Implementation status:** Sprint 005 GO on the team-hosted SQLite/HTTP path.
+The Workers/D1 path adds a deployable remote store and API, but does not by
+itself prove sustained team usage or the full Stage C product.
+
 ### Stage C — Hosted team product
 
 ```text
@@ -961,11 +967,18 @@ Required before Phase 2.
 
 Required before investing heavily in collaboration UX.
 
+Sprint 004 showed repeat-session behavior in a deterministic trace. The human
+choice in this question still requires a real multi-day team-use run.
+
 ## Gate C — Multi-Participant Value
 
 **Question:** Does Campfire become more useful when multiple humans and agents contribute?
 
 Required before broad team features.
+
+Sprint 006 showed a third human's contribution changing a second agent's
+continuation on the hosted token/invite path. That controlled result is GO for
+the product surface; added value during ordinary team work is still unmeasured.
 
 ## Gate D — Authorization Need
 
@@ -1164,11 +1177,17 @@ Evidence already in hand:
 
 - Gate A (continuity) — Sprint 001 GO, Sprint 002 GO
 
-Required before calling it 1.0.0:
+The v1.0 product cut used these sprint acceptance results:
 
 - Gate B (repeat usage) — Sprint 004
 - Gate C (multi-participant value) — Sprint 006
 - Deployment Stage B (team-hosted process, actor tokens, invite membership) — Sprint 005
+
+Sprint 004 and 006 results explicitly did not claim week-long team dogfood.
+Therefore, v1.0 is a shipped capability cut, while the behavioral evidence
+behind Gate B and C still needs a field run. Sprint 002's real cross-harness
+proof used Codex and OpenCode; the planned Claude Code live rerun was blocked
+by expired OAuth credentials and remains separate harness validation.
 
 Sequence:
 
@@ -1181,7 +1200,31 @@ Sequence:
 
 ---
 
-# 20. Near-Term Sequence
+# 20. v1.1 Cut and Next Evidence
+
+v1.1.0 is a Viewer visual release: the read-only `campfire view` journal
+defaults to the Campfire palette and logomark, with `--theme fx` preserving the
+earlier palette. The Worker serves installer downloads and authenticated APIs,
+not a public browser journal.
+The work-state model, workspace authorization boundary, and sprint acceptance
+gates are unchanged. Workers/D1 is an available deployment path, not a claim
+that the hosted-team Stage C product or daily team retention has been proven.
+
+Before expanding the domain model, run one real multi-day team-use trace with
+multiple humans and at least two distinct harnesses against a persistent
+team-hosted workspace. Record each session's entry point, what state was
+retrieved and contributed, whether a human chose to return, whether another
+participant's contribution changed the next action, what manual explanation
+was still needed, and any authorization or provenance failure. Keep private
+transcripts outside Campfire. Use that evidence to choose one narrow next
+collaboration-state sprint, or to revise the model if the current objects are
+insufficient. A Claude Code live rerun can improve harness coverage, but its
+absence should not be labeled as a product-gate failure when Codex and
+OpenCode already proved the two-harness continuity path.
+
+---
+
+# 21. Near-Term Sequence
 
 The immediate sequence should remain disciplined:
 
@@ -1207,6 +1250,12 @@ Sprint 005 — Team identity + hosted instance (Stage B)   GO ✓
 Sprint 006 — Multi-participant value (Gate C) → v1.0   GO ✓
         ↓
 Viewer-002 — Team journal   GO ✓
+        ↓
+v1.1.0 — Viewer Campfire theme + logomark   shipped ✓
+        ↓
+Real multi-day team-use trace — Gate B/C behavioral evidence   pending
+        ↓
+Next narrow sprint — selected from observed team friction, not precommitted
 ```
 
 The roadmap provides direction.
@@ -1217,7 +1266,7 @@ Those should remain separate.
 
 ---
 
-# 21. North Star
+# 22. North Star
 
 Campfire should move toward a world where this interaction feels normal:
 

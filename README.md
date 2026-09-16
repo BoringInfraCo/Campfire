@@ -50,6 +50,12 @@ Requires Node.js **22 or newer**. SQLite is the store; one process owns the file
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
+For a pinned v1.1.0 install after the versioned static asset is deployed:
+
+```bash
+curl -fsSL https://boringinfra.company/campfire/v1.1.0/install.sh | sh -s -- --version 1.1.0
+```
+
 Or build from source:
 
 ```bash
@@ -58,7 +64,7 @@ npm run build
 npm test
 ```
 
-The package stays `private: true` and is **not published to npm**; distribution is via the install script and GitHub Release assets.
+The package stays `private: true` and is **not published to npm**; distribution is via the install script and GitHub Release assets. The installer verifies the release tarball checksum before installing. The versioned script requires the static-site deploy as well as the GitHub Release assets; see [docs/OPERATOR.md](docs/OPERATOR.md).
 
 ---
 
@@ -66,10 +72,10 @@ The package stays `private: true` and is **not published to npm**; distribution 
 
 | Harness | Connects via | Status |
 | --- | --- | --- |
-| Codex | MCP | ✅ Supported |
-| Claude Code | MCP | ✅ Supported |
-| OpenCode | MCP | ✅ Supported |
-| Cursor / internal agents | MCP | ✅ Supported |
+| Codex | MCP | Real cross-harness run with OpenCode |
+| OpenCode | MCP | Real cross-harness run with Codex |
+| Claude Code | MCP | MCP-compatible; live handoff validation pending |
+| Cursor / internal agents | MCP | MCP-compatible; live handoff validation pending |
 
 Harness-specific logic lives at the MCP adapter boundary; the domain model never depends on a vendor session schema. Each harness runs its own server process with its own actor identity.
 
@@ -82,6 +88,8 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - **Invite-only.** Retrieval is authorized before it crosses the boundary; no token, no state.
 - **Single SQLite writer.** The hosted `serve` process owns the file; CLI and MCP adapters POST `/v1/call` with a bearer token.
 - **Viewer is read-only.** `campfire view` is a loopback team journal; the browser never holds a token.
+- **Worker serves the API and downloads.** The remote Worker/D1 path does not serve a hosted browser journal.
+- **Team-use validation is pending.** Sprint 004 and 006 proved repeat-session and multi-participant behavior in deterministic traces; they did not measure multi-day human reuse or retention.
 
 ---
 
@@ -91,7 +99,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MCP → service → authorization → domain → SQLite
 - [docs/ROADMAP.md](docs/ROADMAP.md) — evidence-backed stages toward team memory
 - [docs/OPERATOR.md](docs/OPERATOR.md) — hosting, tokens, and the single-writer rule
-- [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — latest acceptance evidence (v1.0.0)
+- [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — hosted multi-participant acceptance evidence for the v1.0 product cut
 
 ---
 
@@ -106,7 +114,9 @@ npm run acceptance   # deterministic two-harness run + evidence
 Deploy: D1 `database_id` is never committed (`wrangler.toml` holds a
 placeholder). Provision once with `wrangler d1 create campfire`, keep the id
 in `$CAMPFIRE_D1_DATABASE_ID` or gitignored `wrangler.local.toml`, then
-`npm run db:migrate` / `npm run deploy`. See [docs/OPERATOR.md](docs/OPERATOR.md)
+`npm run db:migrate` / `npm run pack:tarball` / `npm run deploy`. The Worker/D1
+path is an available remote deployment slice; it does not establish the full
+hosted-team Stage C gate. See [docs/OPERATOR.md](docs/OPERATOR.md)
 ("Deploy") for the one-time vs release split.
 
 ## License

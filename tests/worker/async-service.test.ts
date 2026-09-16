@@ -91,6 +91,27 @@ describe("async service port (Workers/D1 logic)", () => {
 });
 
 describe("D1 worker handler (async production path)", () => {
+  it("does not expose the journal from the production asset binding", async () => {
+    const { store } = await setup();
+    const fetched: string[] = [];
+    const handle = createD1WorkerHandler({
+      store,
+      assetsFetch: async (request) => {
+        fetched.push(new URL(request.url).pathname);
+        return new Response("installer");
+      },
+    });
+
+    const journal = await handle(new Request("https://campfire.test/"));
+    expect(journal.status).toBe(404);
+    expect(fetched).toEqual([]);
+
+    const installer = await handle(new Request("https://campfire.test/campfire/install.sh"));
+    expect(installer.status).toBe(200);
+    expect(await installer.text()).toBe("installer");
+    expect(fetched).toEqual(["/campfire/install.sh"]);
+  });
+
   it("accepts a valid token, rejects missing/bad tokens, denies unauthorized reads", async () => {
     const { store, service, token, human } = await setup();
     const handle = createD1WorkerHandler({ store });
