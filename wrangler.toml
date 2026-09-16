@@ -19,6 +19,9 @@ name = "campfire"
 main = "src/worker/index.ts"
 compatibility_date = "2026-09-12"
 compatibility_flags = ["nodejs_compat"]
+# The public installer contract is scoped to this prefix; other
+# boringinfra.company routes remain owned by their existing application.
+routes = [{ pattern = "boringinfra.company/campfire/*", zone_name = "boringinfra.company" }]
 
 # Bundle schema.sql as a Text module for the D1 migration (no node:fs).
 rules = [{ type = "Text", globs = ["**/*.sql"], fallthrough = true }]
