@@ -138,8 +138,12 @@ function stripFlags(argv: string[], names: string[]): string[] {
 /**
  * Build the acting identity for a CLI command. Flags override the environment.
  * When neither is supplied the documented default human (`hum_sergio`) is used.
+ *
+ * `stripFlags` removes flags whose names collide with the command's own
+ * arguments (e.g. add-artifact's `--type` is the artifact type, not the
+ * acting actor type) so identity resolution never misreads them.
  */
-function resolveCliIdentity(argv: string[], options?: { ignoreActorFlags?: boolean }): ServerIdentity {
+function resolveCliIdentity(argv: string[], options?: { stripFlags?: string[] }): ServerIdentity {
   const env: NodeJS.ProcessEnv = { ...process.env };
   if (env.CAMPFIRE_ACTOR_ID === undefined || env.CAMPFIRE_ACTOR_ID.trim().length === 0) {
     env.CAMPFIRE_ACTOR_ID = DEFAULT_ACTOR_ID;
@@ -147,7 +151,7 @@ function resolveCliIdentity(argv: string[], options?: { ignoreActorFlags?: boole
   if (env.CAMPFIRE_ACTOR_TYPE === undefined || env.CAMPFIRE_ACTOR_TYPE.trim().length === 0) {
     env.CAMPFIRE_ACTOR_TYPE = DEFAULT_ACTOR_TYPE;
   }
-  const args = options?.ignoreActorFlags === true ? stripFlags(argv, ["actor", "type"]) : argv;
+  const args = options?.stripFlags === undefined ? argv : stripFlags(argv, options.stripFlags);
   return resolveServerIdentity(env, args);
 }
 
@@ -160,7 +164,13 @@ interface CliBackend {
 async function withBackend<T>(
   argv: string[],
   fn: (backend: CliBackend) => T | Promise<T>,
-  options?: { actorFlagIsTarget?: boolean },
+  options?: {
+    /**
+     * Flag names that must not be read as acting-identity flags because the
+     * command reuses them for its own arguments (target actor, artifact type).
+     */
+    stripIdentityFlags?: string[];
+  },
 ): Promise<T> {
   const url = readCampfireUrl();
   const token = readCampfireToken(process.env, argv);
@@ -182,7 +192,10 @@ async function withBackend<T>(
     return await fn(backend);
   }
 
-  const identity = resolveCliIdentity(argv, { ignoreActorFlags: options?.actorFlagIsTarget === true });
+  const identity = resolveCliIdentity(
+    argv,
+    options?.stripIdentityFlags === undefined ? undefined : { stripFlags: options.stripIdentityFlags },
+  );
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
@@ -526,6 +539,7 @@ async function cmdActivity(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requirePositional(parsed, "workspaceId");
   const limit = optionalPositiveInt(parsed.flags, "limit");
   const before = optionalFlag(parsed.flags, "before");
+  const asJson = parsed.flags.json === true;
   await withBackend(argv, async (backend) => {
     const query: GetActivityInput = { workspaceId };
     if (limit !== undefined) {
@@ -540,6 +554,11 @@ async function cmdActivity(parsed: ParsedArgs, argv: string[]): Promise<void> {
       truncated: boolean;
       nextBefore?: string;
     };
+    if (asJson) {
+      // The page object already carries total/truncated/nextBefore.
+      printJson(page);
+      return;
+    }
     for (const item of page.items) {
       console.log(formatContributionLine(item));
     }
@@ -655,9 +674,15 @@ async function cmdAddArtifact(parsed: ParsedArgs, argv: string[]): Promise<void>
   const type = requireEnum(requireFlag(parsed.flags, "type"), ARTIFACT_TYPES, "type") as ArtifactType;
   const title = requireFlag(parsed.flags, "title");
   const uriOrPath = requireFlag(parsed.flags, "uri");
-  await withBackend(argv, async (backend) => {
-    printJson(await backend.call("add_artifact", { workspaceId, type, title, uriOrPath }));
-  });
+  await withBackend(
+    argv,
+    async (backend) => {
+      printJson(await backend.call("add_artifact", { workspaceId, type, title, uriOrPath }));
+    },
+    // --type names the artifact here, not the acting identity; the acting
+    // actor type comes from CAMPFIRE_ACTOR_TYPE / the default human.
+    { stripIdentityFlags: ["type"] },
+  );
 }
 
 async function cmdServe(parsed: ParsedArgs): Promise<void> {
@@ -738,7 +763,8 @@ async function cmdIssueToken(parsed: ParsedArgs, argv: string[]): Promise<void> 
     async (backend) => {
       printJson(await backend.call("issue_token", { actorId, actorType }));
     },
-    { actorFlagIsTarget: true },
+    // --actor/--type name the token target, not the acting identity.
+    { stripIdentityFlags: ["actor", "type"] },
   );
 }
 
@@ -768,7 +794,8 @@ async function cmdInvite(parsed: ParsedArgs, argv: string[]): Promise<void> {
     async (backend) => {
       printJson(await backend.call("invite_workspace", { workspaceId, actorId, actorType, role }));
     },
-    { actorFlagIsTarget: true },
+    // --actor/--type name the invite target, not the acting identity.
+    { stripIdentityFlags: ["actor", "type"] },
   );
 }
 
@@ -795,7 +822,7 @@ function printUsage(): void {
     "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire show <workspaceId> [--json] [--full]",
-    "  campfire activity <workspaceId> [--limit N] [--before <contributionId>]",
+    "  campfire activity <workspaceId> [--limit N] [--before <contributionId>] [--json]",
     "  campfire create-workspace --team <teamId> --name <name> [--description <text>]",
     "  campfire update-workspace <workspaceId> --status active|completed|archived",
     "  campfire create-goal --workspace <workspaceId> --title <title> [--description <text>]",
@@ -820,14 +847,23 @@ function printUsage(): void {
     "  --type <t>         Actor type, human|agent (default: human).",
     "  --session <id>     Agent session id.",
     "  --harness <name>   Harness name for MCP / session registration.",
+    "  --json             Machine-readable output contract (described below).",
     "",
     "When CAMPFIRE_URL is set, commands POST /v1/call with CAMPFIRE_TOKEN / --token",
     "instead of opening the local SQLite file. serve/init/seed always use the local DB.",
     "",
-    "show prints the orientation projection as readable text.",
+    "show prints the orientation projection as readable text; --full uses the",
+    "inspector (get_workspace). show and activity default to human text and honor",
+    "--json; init, seed, bootstrap, whoami, list, and every create/add/update/",
+    "accept/issue/revoke/invite/join command print JSON with or without the flag.",
+    "Under --json a failure prints {\"error\":{\"code\",\"message\"[,\"details\"]}} on",
+    "stderr and exits 1. serve, view, mcp, and help have no JSON mode: serve and",
+    "view log notices to stderr, mcp speaks MCP JSON-RPC on stdio, help prints",
+    "this text. add-artifact's --type is the artifact type; acting as an agent",
+    "there uses CAMPFIRE_ACTOR_TYPE or --token, not --type.",
+    "",
     "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
     "requires --allow-remote. The browser never receives a token.",
-    "--json dumps the projection; --full uses the inspector (get_workspace).",
     "",
     "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
   ];
@@ -902,17 +938,54 @@ export async function runCli(argv: string[]): Promise<void> {
 }
 
 async function run(): Promise<void> {
-  try {
-    await runCli(process.argv.slice(2));
-  } catch (error) {
+  process.exitCode = await runCliEntry(process.argv.slice(2));
+}
+
+/**
+ * Render a CLI failure for the process boundary.
+ *
+ * Human mode keeps the stable `[Code] message` stderr line. Under `--json`
+ * failures are machine-readable too: a structured error object on stderr
+ * (stdout stays reserved for the success payload) with exit code 1 upstream.
+ */
+export function formatCliFailure(error: unknown, options?: { json?: boolean }): string {
+  if (options?.json === true) {
     if (error instanceof CampfireError) {
-      console.error(`[${error.code}] ${error.message}`);
-    } else if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error(String(error));
+      const details = error.details;
+      return JSON.stringify(
+        {
+          error:
+            details === undefined
+              ? { code: error.code, message: error.message }
+              : { code: error.code, message: error.message, details },
+        },
+        null,
+        2,
+      );
     }
-    process.exitCode = 1;
+    const message = error instanceof Error ? error.message : String(error);
+    return JSON.stringify({ error: { code: "InternalError", message } }, null, 2);
+  }
+  if (error instanceof CampfireError) {
+    return `[${error.code}] ${error.message}`;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+/**
+ * Run the CLI against an explicit argv and return the process exit code.
+ * Exported so tests cover the exact stdout/stderr contract of the binary.
+ */
+export async function runCliEntry(argv: string[]): Promise<number> {
+  try {
+    await runCli(argv);
+    return 0;
+  } catch (error) {
+    console.error(formatCliFailure(error, { json: parseArgs(argv).flags.json === true }));
+    return 1;
   }
 }
 

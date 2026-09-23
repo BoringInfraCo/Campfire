@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
-import { runCli } from "../../src/cli/index.js";
-import { ValidationError } from "../../src/domain/errors.js";
+import { formatCliFailure, runCli, runCliEntry } from "../../src/cli/index.js";
+import { Conflict, ValidationError, WorkspaceNotFound } from "../../src/domain/errors.js";
 import { openSqliteStore } from "../../src/store/sqlite-store.js";
 
 const BILLING_GOAL_TITLE =
@@ -96,6 +96,34 @@ describe("runCli", () => {
     expect(lines.length).toBeLessThanOrEqual(2);
   });
 
+  it("honors --json on activity with the full machine-readable page", async () => {
+    await cli(["activity", FIXTURE.workspaces.billing, "--limit", "2", "--json"]);
+
+    const page = JSON.parse(stdout()) as {
+      items: Array<{ id: string; actor: { actorId: string } }>;
+      total: number;
+      truncated: boolean;
+      nextBefore?: string;
+    };
+    expect(page.items.length).toBeGreaterThan(0);
+    expect(page.items.length).toBeLessThanOrEqual(2);
+    expect(page.total).toBe(6);
+    expect(page.truncated).toBe(true);
+    expect(typeof page.nextBefore).toBe("string");
+    expect(page.items[0]?.actor.actorId.length).toBeGreaterThan(0);
+  });
+
+  it("prints orientation JSON for show --json", async () => {
+    await cli(["show", FIXTURE.workspaces.billing, "--json"]);
+
+    const orientation = JSON.parse(stdout()) as {
+      workspace: { id: string };
+      goal?: { title: string };
+    };
+    expect(orientation.workspace.id).toBe(FIXTURE.workspaces.billing);
+    expect(orientation.goal?.title).toBe(BILLING_GOAL_TITLE);
+  });
+
   it("rejects an unknown command", async () => {
     await expect(cli(["definitely-not-a-command"])).rejects.toThrow(ValidationError);
   });
@@ -151,5 +179,148 @@ describe("runCli", () => {
     const task = JSON.parse(stdout()) as { id: string; title: string };
     expect(task.id.startsWith("task_")).toBe(true);
     expect(task.title).toBe("CLI task");
+  });
+
+  it("adds an artifact where --type is the artifact type, not the acting identity", async () => {
+    await cli([
+      "add-artifact",
+      "--workspace",
+      FIXTURE.workspaces.billing,
+      "--type",
+      "file",
+      "--title",
+      "Migration 284",
+      "--uri",
+      "fixtures/billing/migration-284.sql",
+      "--json",
+    ]);
+
+    const artifact = JSON.parse(stdout()) as {
+      type: string;
+      uriOrPath: string;
+      createdBy: { actorId: string };
+    };
+    expect(artifact.type).toBe("file");
+    expect(artifact.uriOrPath).toBe("fixtures/billing/migration-284.sql");
+    expect(artifact.createdBy.actorId).toBe(FIXTURE.humans.sergio);
+  });
+
+  it("invites with --type as the target actor type, not the acting identity", async () => {
+    await cli([
+      "invite",
+      FIXTURE.workspaces.unrelated,
+      "--actor",
+      FIXTURE.humans.alice,
+      "--type",
+      "human",
+      "--role",
+      "member",
+      "--json",
+    ]);
+
+    const invite = JSON.parse(stdout()) as {
+      workspaceId: string;
+      actor: { actorId: string; actorType: string };
+      role: string;
+    };
+    expect(invite.workspaceId).toBe(FIXTURE.workspaces.unrelated);
+    expect(invite.actor.actorId).toBe(FIXTURE.humans.alice);
+    expect(invite.actor.actorType).toBe("human");
+    expect(invite.role).toBe("member");
+  });
+
+  it("documents the --json contract in usage", async () => {
+    await cli(["help"]);
+    const output = stdout();
+    expect(output).toContain("campfire activity <workspaceId>");
+    expect(output).toContain("--before <contributionId>] [--json]");
+    expect(output).toContain("--json             Machine-readable output contract");
+    expect(output).toContain("have no JSON mode");
+    expect(output).toContain('{"error":{"code","message"');
+    expect(output).toContain("add-artifact's --type is the artifact type");
+  });
+});
+
+describe("runCliEntry exit-code and stderr contract", () => {
+  function stderrText(errSpy: { mock: { calls: unknown[][] } }): string {
+    return errSpy.mock.calls
+      .map((call) => call.map(String).join(" "))
+      .join("\n");
+  }
+
+  it("returns 0 and prints no failure line on success", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "list"]);
+
+    expect(code).toBe(0);
+    expect(errSpy.mock.calls).toHaveLength(0);
+  });
+
+  it("keeps [Code] message on stderr without --json", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "show", "does-not-exist"]);
+
+    expect(code).toBe(1);
+    expect(stderrText(errSpy)).toBe("[WorkspaceNotFound] Workspace not found: does-not-exist");
+  });
+
+  it("emits structured error JSON on stderr under --json", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "show", "does-not-exist", "--json"]);
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(stderrText(errSpy)) as {
+      error: { code: string; message: string; details?: { workspaceId?: string } };
+    };
+    expect(payload.error.code).toBe("WorkspaceNotFound");
+    expect(payload.error.message).toContain("does-not-exist");
+    expect(payload.error.details?.workspaceId).toBe("does-not-exist");
+  });
+
+  it("reports an unknown command as structured error JSON under --json", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "definitely-not-a-command", "--json"]);
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(stderrText(errSpy)) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe("ValidationError");
+    expect(payload.error.message).toContain("definitely-not-a-command");
+  });
+});
+
+describe("formatCliFailure", () => {
+  it("keeps the human formats unchanged", () => {
+    expect(formatCliFailure(new WorkspaceNotFound("ws_x"))).toBe(
+      "[WorkspaceNotFound] Workspace not found: ws_x",
+    );
+    expect(formatCliFailure(new Error("boom"))).toBe("boom");
+    expect(formatCliFailure("stringy")).toBe("stringy");
+  });
+
+  it("renders CampfireError details under --json", () => {
+    const parsed = JSON.parse(
+      formatCliFailure(new ValidationError("bad team", { field: "team" }), { json: true }),
+    ) as { error: { code: string; message: string; details?: Record<string, unknown> } };
+    expect(parsed.error.code).toBe("ValidationError");
+    expect(parsed.error.message).toBe("bad team");
+    expect(parsed.error.details).toEqual({ field: "team" });
+  });
+
+  it("omits details when the error has none", () => {
+    const parsed = JSON.parse(formatCliFailure(new Conflict("already joined"), { json: true })) as {
+      error: Record<string, unknown>;
+    };
+    expect(parsed.error).toEqual({ code: "Conflict", message: "already joined" });
+  });
+
+  it("wraps unexpected errors as InternalError under --json", () => {
+    const parsed = JSON.parse(formatCliFailure(new Error("boom"), { json: true })) as {
+      error: { code: string; message: string };
+    };
+    expect(parsed.error).toEqual({ code: "InternalError", message: "boom" });
   });
 });

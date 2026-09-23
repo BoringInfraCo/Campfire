@@ -9,7 +9,7 @@ Campfire is a secure, harness-independent collaboration layer for teams working 
 - **Stay authorized** — invite-only workspaces; authorization precedes retrieval
 - **Stay inspectable** — every mutation records who contributed what, when, and on whose behalf
 
-All commands accept `--json` for machine-readable output, built for humans and agents alike.
+Every data-producing command honors `--json` for machine-readable output — `show` and `activity` default to human text, the rest already print JSON, and failures under `--json` report a structured error object on stderr. The long-running `serve`/`view` commands, `mcp`, and `help` are the documented exceptions (they log notices, speak MCP JSON-RPC, or print usage text). Built for humans and agents alike.
 
 ---
 
