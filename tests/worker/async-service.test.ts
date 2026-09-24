@@ -79,6 +79,76 @@ describe("async service port (Workers/D1 logic)", () => {
     expect(resolved as unknown[]).toHaveLength(1);
   });
 
+  it("checks workspace-scoped readiness through the async service and dispatch", async () => {
+    const { service, human } = await setup();
+    const humanCtx = { actor: { actorId: human.id, actorType: "human" as const } };
+    const workspace = await service.createWorkspace(humanCtx, { teamId: "team_1", name: "A" });
+    const otherWorkspace = await service.createWorkspace(humanCtx, {
+      teamId: "team_1",
+      name: "B",
+    });
+    const created = await service.createAgent(humanCtx, {
+      teamId: "team_1",
+      humanId: human.id,
+      name: "Codex",
+      harness: "codex",
+    });
+    const agent = { actorId: created.agent.id, actorType: "agent" as const };
+    const agentCtx = { actor: agent };
+    await service.inviteToWorkspace(humanCtx, {
+      workspaceId: workspace.id,
+      actor: agent,
+      role: "agent",
+    });
+    await service.joinWorkspace(agentCtx, { workspaceId: workspace.id });
+    await service.inviteToWorkspace(humanCtx, {
+      workspaceId: otherWorkspace.id,
+      actor: agent,
+      role: "agent",
+    });
+    await service.joinWorkspace(agentCtx, { workspaceId: otherWorkspace.id });
+
+    await expect(
+      dispatchCampfireMethodAsync(service, agentCtx, "preflight", { workspaceId: workspace.id }),
+    ).rejects.toMatchObject({
+      code: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+
+    const session = await service.registerAgentSession(agentCtx, {
+      agentId: agent.actorId,
+      workspaceId: workspace.id,
+      harness: "codex",
+    });
+    await expect(
+      service.checkReadiness({ ...agentCtx, agentSessionId: session.id }, { workspaceId: workspace.id }),
+    ).resolves.toEqual({
+      ready: true,
+      workspaceId: workspace.id,
+      actor: agent,
+      sessionId: session.id,
+    });
+    await expect(
+      dispatchCampfireMethodAsync(
+        service,
+        { ...agentCtx, agentSessionId: session.id },
+        "preflight",
+        { workspaceId: otherWorkspace.id },
+      ),
+    ).rejects.toMatchObject({
+      code: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+
+    await service.endAgentSession(humanCtx, session.id);
+    await expect(
+      service.checkReadiness({ ...agentCtx, agentSessionId: session.id }, { workspaceId: workspace.id }),
+    ).rejects.toMatchObject({
+      code: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+  });
+
   it("rejects reads by non-participants before retrieval", async () => {
     const { service, human } = await setup();
     const ctx = { actor: { actorId: human.id, actorType: "human" as const } };
@@ -142,6 +212,14 @@ describe("D1 worker handler (async production path)", () => {
     // Private workspace: the second human is not a participant.
     const ctx = { actor: { actorId: human.id, actorType: "human" as const } };
     const workspace = await service.createWorkspace(ctx, { teamId: "team_1", name: "Private" });
+    const ready = await call(token, "preflight", { workspaceId: workspace.id });
+    expect(ready.status).toBe(200);
+    expect(ready.body.result).toEqual({
+      ready: true,
+      workspaceId: workspace.id,
+      actor: { actorId: human.id, actorType: "human" },
+    });
+
     const other = await service.createHuman(ctx, { teamId: "team_1", displayName: "Grace" });
     const denied = await call(other.token, "get_workspace_context", { workspaceId: workspace.id });
     expect(denied.status).toBe(403);

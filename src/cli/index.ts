@@ -24,13 +24,15 @@ import type {
   TaskStatus,
   WorkspaceStatus,
 } from "../domain/types.js";
-import { campfireHttpCall } from "../http/client.js";
+import { campfireHttpCall, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
 import {
   readCampfireToken,
+  readCampfireSessionId,
   readCampfireUrl,
+  readHarness,
   resolveServerIdentity,
 } from "../mcp/context.js";
 import type { ServerIdentity } from "../mcp/context.js";
@@ -41,6 +43,7 @@ import type {
   ParticipantView,
   WorkspaceContext,
   WorkspaceView,
+  ReadinessStatus,
 } from "../service/service.js";
 import type { CampfireStore } from "../store/store.js";
 
@@ -506,6 +509,55 @@ async function cmdWhoami(argv: string[]): Promise<void> {
   });
 }
 
+async function cmdPreflight(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  if (workspaceId === undefined || workspaceId.trim().length === 0) {
+    throw new ValidationError("Missing required <workspaceId> argument or --workspace", {
+      field: "workspaceId",
+    });
+  }
+  const url = readCampfireUrl();
+  if (url === undefined) {
+    throw new ValidationError(
+      "CAMPFIRE_URL is required for hosted preflight; set it to the Campfire serve endpoint",
+      { field: "CAMPFIRE_URL" },
+    );
+  }
+  const token = readCampfireToken(process.env, argv);
+  if (token === undefined) {
+    throw new ValidationError(
+      "CAMPFIRE_TOKEN is required for hosted preflight; set it to the actor-specific token",
+      { field: "CAMPFIRE_TOKEN" },
+    );
+  }
+  const sessionId = readCampfireSessionId(process.env, argv);
+  let status: ReadinessStatus;
+  try {
+    status = await campfireHttpCall<ReadinessStatus>({
+      baseUrl: url,
+      token,
+      method: "preflight",
+      params: sessionId === undefined ? { workspaceId } : { workspaceId, agentSessionId: sessionId },
+    });
+  } catch (error) {
+    if (error instanceof CampfireError) throw hostedPreflightError(error);
+    throw new ValidationError(
+      "Unable to reach Campfire at the configured CAMPFIRE_URL; verify the endpoint and start campfire serve",
+      { field: "CAMPFIRE_URL", nextAction: "start campfire serve" },
+    );
+  }
+  const harness = readHarness(process.env, argv);
+  const result = harness === undefined ? status : { ...status, harness };
+  if (parsed.flags.json === true) {
+    printJson(result);
+    return;
+  }
+  const session = status.sessionId === undefined ? "human identity" : `session=${status.sessionId}`;
+  console.log(
+    `Campfire ready: workspace=${status.workspaceId}, actor=${status.actor.actorId} (${status.actor.actorType}), ${session}`,
+  );
+}
+
 async function cmdList(argv: string[]): Promise<void> {
   await withBackend(argv, async (backend) => {
     printJson(await backend.call("list_workspaces", {}));
@@ -819,6 +871,7 @@ function printUsage(): void {
     "  campfire serve [--host 127.0.0.1] [--port 9414]",
     "  campfire view [--host 127.0.0.1] [--port 9415] [--allow-remote] [--theme campfire|fx]",
     "  campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
+    "  campfire preflight <workspaceId> [--session <id>] [--harness <name>] [--token <token>] [--json]",
     "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire show <workspaceId> [--json] [--full]",
@@ -892,6 +945,8 @@ export async function runCli(argv: string[]): Promise<void> {
       return cmdView(parsed, argv);
     case "mcp":
       return cmdMcp(argv);
+    case "preflight":
+      return cmdPreflight(parsed, argv);
     case "whoami":
       return cmdWhoami(argv);
     case "list":

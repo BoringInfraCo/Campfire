@@ -23,6 +23,7 @@ const AGENT_B: ServerIdentity = {
 };
 
 const EXPECTED_TOOLS = [
+  "preflight",
   "whoami",
   "list_workspaces",
   "create_workspace",
@@ -105,9 +106,11 @@ afterEach(async () => {
 
 describe("MCP tool surface", () => {
   it("advertises all Campfire tools without a campfire. prefix", async () => {
-    const { toolNames } = await connectAgents();
+    const { a, toolNames } = await connectAgents();
     expect(toolNames).toEqual(expect.arrayContaining(EXPECTED_TOOLS));
     expect(new Set(toolNames).size).toBe(toolNames.length);
+    const preflight = (await a.listTools()).tools.find((tool) => tool.name === "preflight");
+    expect((preflight?.inputSchema.required as string[] | undefined)).toContain("workspaceId");
   });
 
   it("reports the bound identity without accepting an actor parameter", async () => {
@@ -117,6 +120,60 @@ describe("MCP tool surface", () => {
     expect(who.json).toEqual({
       actor: { actorId: FIXTURE.agents.codexSergio, actorType: "agent" },
       harness: "codex",
+    });
+  });
+
+  it("returns the same readiness failure for unbound Codex and OpenCode agents", async () => {
+    const { a, b } = await connectAgents();
+
+    const codex = await call(a, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+    const opencode = await call(b, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+
+    expect(codex.isError).toBe(true);
+    expect(opencode.isError).toBe(true);
+    expect(codex.json).toMatchObject({
+      error: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+    expect(opencode.json).toMatchObject({
+      error: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+    expect(codex.json.message).toContain("register_agent_session");
+    expect(opencode.json.message).toContain("register_agent_session");
+  });
+
+  it("passes the same readiness contract for bound Codex and OpenCode agents", async () => {
+    const { a, b } = await connectAgents();
+    const codexSession = await call(a, "register_agent_session", {
+      agentId: FIXTURE.agents.codexSergio,
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+    const opencodeSession = await call(b, "register_agent_session", {
+      agentId: FIXTURE.agents.opencodeAlice,
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+    expect(codexSession.isError).toBe(false);
+    expect(opencodeSession.isError).toBe(false);
+
+    const codex = await call(a, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+    const opencode = await call(b, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+
+    expect(codex.isError).toBe(false);
+    expect(opencode.isError).toBe(false);
+    expect(codex.json).toMatchObject({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.agents.codexSergio, actorType: "agent" },
+      sessionId: codexSession.json.id,
+      harness: "codex",
+    });
+    expect(opencode.json).toMatchObject({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.agents.opencodeAlice, actorType: "agent" },
+      sessionId: opencodeSession.json.id,
+      harness: "opencode",
     });
   });
 });

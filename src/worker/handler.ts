@@ -88,8 +88,16 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-function fail(status: number, code: string, message: string): Response {
-  return json(status, { ok: false, error: code, message });
+function fail(
+  status: number,
+  code: string,
+  message: string,
+  details?: Record<string, unknown>,
+): Response {
+  return json(
+    status,
+    details === undefined ? { ok: false, error: code, message } : { ok: false, error: code, message, details },
+  );
 }
 
 function bearerToken(request: Request): string | undefined {
@@ -316,7 +324,12 @@ async function handleSyncCall(service: CampfireService, request: Request): Promi
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) {
-      return fail(statusFor(error.code, false), error.code, error.message);
+      return fail(
+        statusFor(error.code, false),
+        error.code,
+        error.message,
+        method === "preflight" ? error.details : undefined,
+      );
     }
     throw error;
   }
@@ -348,7 +361,12 @@ async function handleAsyncCall(service: AsyncCampfireService, request: Request):
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) {
-      return fail(statusFor(error.code, false), error.code, error.message);
+      return fail(
+        statusFor(error.code, false),
+        error.code,
+        error.message,
+        method === "preflight" ? error.details : undefined,
+      );
     }
     throw error;
   }

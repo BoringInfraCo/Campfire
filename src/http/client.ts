@@ -53,6 +53,65 @@ function asCode(value: string): CampfireErrorCode {
   return KNOWN_CODES.has(value) ? (value as CampfireErrorCode) : "ValidationError";
 }
 
+export function hostedPreflightError(error: CampfireError): CampfireError {
+  switch (error.code) {
+    case "ValidationError":
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire preflight request is invalid; provide a workspace ID and valid preflight arguments",
+        { field: "workspaceId" },
+      );
+    case "WorkspaceNotFound":
+      return new CampfireError(error.code, "The requested Campfire workspace was not found; verify the workspace ID");
+    case "ParticipantRequired":
+      return new CampfireError(
+        error.code,
+        "The authenticated actor is not a participant in the requested workspace; request an invite before preflight",
+      );
+    case "SessionNotFound":
+      return new CampfireError(
+        error.code,
+        "The configured agent session is unavailable; register an active session for the requested workspace",
+        { nextAction: "register_agent_session" },
+      );
+    case "Unauthorized":
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire could not authenticate a ready agent session; verify CAMPFIRE_TOKEN and register an active session for the requested workspace",
+        { nextAction: "register_agent_session" },
+      );
+    case "ActorNotFound":
+      return new CampfireError(error.code, "The configured Campfire actor is unavailable; verify CAMPFIRE_TOKEN");
+    default:
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire preflight failed; verify the endpoint, token, workspace access, and agent-session registration",
+      );
+  }
+}
+
+export function hostedIdentityError(error: CampfireError): CampfireError {
+  switch (error.code) {
+    case "Unauthorized":
+    case "ActorNotFound":
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire could not authenticate the configured token; verify CAMPFIRE_TOKEN",
+        { nextAction: "verify_campfire_token" },
+      );
+    case "ValidationError":
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire identity startup was rejected; verify CAMPFIRE_URL, CAMPFIRE_TOKEN, and MCP identity options",
+      );
+    default:
+      return new CampfireError(
+        error.code,
+        "Hosted Campfire identity startup failed; verify the endpoint, token, and MCP identity options",
+      );
+  }
+}
+
 export async function campfireHttpCall<T = unknown>(options: CampfireHttpCallOptions): Promise<T> {
   const response = await fetch(callUrl(options.baseUrl), {
     method: "POST",

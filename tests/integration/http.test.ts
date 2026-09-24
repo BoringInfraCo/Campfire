@@ -10,7 +10,9 @@ import type { CampfireRuntime } from "../../src/runtime.js";
 
 interface HttpOutcome {
   status: number;
-  body: { ok: true; result: any } | { ok: false; error: string; message: string };
+  body:
+    | { ok: true; result: any }
+    | { ok: false; error: string; message: string; details?: Record<string, unknown> };
 }
 
 async function call(
@@ -51,6 +53,186 @@ afterEach(async () => {
 });
 
 describe("HTTP /v1/call", () => {
+  it("requires a workspace ID for readiness", async () => {
+    const result = await call(running.url, FIXTURE.tokens.sergio, "preflight");
+
+    expect(result.status).toBe(400);
+    expect(result.body.ok).toBe(false);
+    if (result.body.ok) return;
+    expect(result.body.error).toBe("ValidationError");
+    expect(result.body.message).toContain("workspaceId");
+  });
+
+  it("checks workspace readiness without mutating collaboration state", async () => {
+    const before = runtime.store.listContributions(FIXTURE.workspaces.billing).length;
+
+    const result = await call(running.url, FIXTURE.tokens.sergio, "preflight", {
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body.ok).toBe(true);
+    if (!result.body.ok) return;
+    expect(result.body.result).toEqual({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.humans.sergio, actorType: "human" },
+    });
+    expect(runtime.store.listContributions(FIXTURE.workspaces.billing)).toHaveLength(before);
+  });
+
+  it("keeps workspace existence and participation failures distinct", async () => {
+    const missing = await call(running.url, FIXTURE.tokens.sergio, "preflight", {
+      workspaceId: "ws_does_not_exist",
+    });
+    const notParticipant = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.unrelated,
+    });
+
+    expect(missing.status).toBe(404);
+    expect(missing.body.ok).toBe(false);
+    if (!missing.body.ok) expect(missing.body.error).toBe("WorkspaceNotFound");
+    expect(notParticipant.status).toBe(403);
+    expect(notParticipant.body.ok).toBe(false);
+    if (!notParticipant.body.ok) expect(notParticipant.body.error).toBe("ParticipantRequired");
+  });
+
+  it("directs an unbound agent to register a session for the requested workspace", async () => {
+    const result = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+
+    expect(result.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+    if (result.body.ok) return;
+    expect(result.body.error).toBe("Unauthorized");
+    expect(result.body.details?.nextAction).toBe("register_agent_session");
+  });
+
+  it("passes readiness for an agent with a valid registered session", async () => {
+    const registered = await call(
+      running.url,
+      FIXTURE.tokens.opencodeAlice,
+      "register_agent_session",
+      {
+        agentId: FIXTURE.agents.opencodeAlice,
+        workspaceId: FIXTURE.workspaces.billing,
+        harness: "opencode",
+      },
+    );
+    expect(registered.body.ok).toBe(true);
+    if (!registered.body.ok) return;
+
+    const result = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.billing,
+      agentSessionId: registered.body.result.id,
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body.ok).toBe(true);
+    if (!result.body.ok) return;
+    expect(result.body.result).toEqual({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.agents.opencodeAlice, actorType: "agent" },
+      sessionId: registered.body.result.id,
+    });
+  });
+
+  it("rejects a session registered for another workspace with a registration action", async () => {
+    const invited = await call(running.url, FIXTURE.tokens.sergio, "invite_workspace", {
+      workspaceId: FIXTURE.workspaces.unrelated,
+      actorId: FIXTURE.agents.opencodeAlice,
+      actorType: "agent",
+      role: "agent",
+    });
+    expect(invited.body.ok).toBe(true);
+    const joined = await call(running.url, FIXTURE.tokens.opencodeAlice, "join_workspace", {
+      workspaceId: FIXTURE.workspaces.unrelated,
+    });
+    expect(joined.body.ok).toBe(true);
+
+    const registered = await call(
+      running.url,
+      FIXTURE.tokens.opencodeAlice,
+      "register_agent_session",
+      {
+        agentId: FIXTURE.agents.opencodeAlice,
+        workspaceId: FIXTURE.workspaces.billing,
+        harness: "opencode",
+      },
+    );
+    expect(registered.body.ok).toBe(true);
+    if (!registered.body.ok) return;
+
+    const result = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.unrelated,
+      agentSessionId: registered.body.result.id,
+    });
+
+    expect(result.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+    if (result.body.ok) return;
+    expect(result.body.error).toBe("Unauthorized");
+    expect(result.body.details?.nextAction).toBe("register_agent_session");
+  });
+
+  it("rejects an ended session with a registration action", async () => {
+    const registered = await call(
+      running.url,
+      FIXTURE.tokens.opencodeAlice,
+      "register_agent_session",
+      {
+        agentId: FIXTURE.agents.opencodeAlice,
+        workspaceId: FIXTURE.workspaces.billing,
+        harness: "opencode",
+      },
+    );
+    expect(registered.body.ok).toBe(true);
+    if (!registered.body.ok) return;
+    const ended = await call(running.url, FIXTURE.tokens.opencodeAlice, "end_agent_session", {
+      sessionId: registered.body.result.id,
+    });
+    expect(ended.body.ok).toBe(true);
+
+    const result = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.billing,
+      agentSessionId: registered.body.result.id,
+    });
+
+    expect(result.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+    if (result.body.ok) return;
+    expect(result.body.error).toBe("Unauthorized");
+    expect(result.body.details?.nextAction).toBe("register_agent_session");
+  });
+
+  it("rejects a session belonging to another actor with a registration action", async () => {
+    const registered = await call(
+      running.url,
+      FIXTURE.tokens.codexSergio,
+      "register_agent_session",
+      {
+        agentId: FIXTURE.agents.codexSergio,
+        workspaceId: FIXTURE.workspaces.billing,
+        harness: "codex",
+      },
+    );
+    expect(registered.body.ok).toBe(true);
+    if (!registered.body.ok) return;
+
+    const result = await call(running.url, FIXTURE.tokens.opencodeAlice, "preflight", {
+      workspaceId: FIXTURE.workspaces.billing,
+      agentSessionId: registered.body.result.id,
+    });
+
+    expect(result.status).toBe(403);
+    expect(result.body.ok).toBe(false);
+    if (result.body.ok) return;
+    expect(result.body.error).toBe("Unauthorized");
+    expect(result.body.details?.nextAction).toBe("register_agent_session");
+  });
+
   it("rejects a missing bearer token with 401", async () => {
     const result = await call(running.url, undefined, "whoami");
     expect(result.status).toBe(401);

@@ -14,11 +14,12 @@ import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import type { ActorRef } from "../domain/types.js";
-import { campfireHttpCall } from "../http/client.js";
+import { campfireHttpCall, hostedIdentityError } from "../http/client.js";
 import { createRuntime } from "../runtime.js";
 import type { CampfireRuntime } from "../runtime.js";
 import {
   readCampfireToken,
+  readCampfireSessionId,
   readCampfireUrl,
   readHarness,
   resolveServerIdentity,
@@ -40,18 +41,25 @@ function isActorRef(value: unknown): value is ActorRef {
   );
 }
 
-async function resolveRemoteIdentity(
+export async function resolveRemoteIdentity(
   url: string,
   token: string,
   env: NodeJS.ProcessEnv,
   argv: string[],
 ): Promise<ServerIdentity> {
-  const who = (await campfireHttpCall({
-    baseUrl: url,
-    token,
-    method: "whoami",
-    params: {},
-  })) as { actor?: unknown; sessionId?: unknown; harness?: unknown };
+  const sessionId = readCampfireSessionId(env, argv);
+  let who: { actor?: unknown; sessionId?: unknown; harness?: unknown };
+  try {
+    who = (await campfireHttpCall({
+      baseUrl: url,
+      token,
+      method: "whoami",
+      params: sessionId === undefined ? {} : { agentSessionId: sessionId },
+    })) as { actor?: unknown; sessionId?: unknown; harness?: unknown };
+  } catch (error) {
+    if (error instanceof CampfireError) throw hostedIdentityError(error);
+    throw error;
+  }
   if (!isActorRef(who.actor)) {
     throw new ValidationError("Remote whoami did not return an actor");
   }
@@ -82,6 +90,11 @@ export async function startStdioServer(
       });
     }
     const resolved = await resolveRemoteIdentity(url, token, env, argv);
+    if (resolved.ctx.actor.actorType === "agent" && resolved.ctx.agentSessionId === undefined) {
+      console.error(
+        `[campfire] agent ${resolved.ctx.actor.actorId} is not ready for workspace writes; use register_agent_session`,
+      );
+    }
     const server = createCampfireMcpServer({ remote: { url, token }, identity: resolved });
     const transport = new StdioServerTransport();
 

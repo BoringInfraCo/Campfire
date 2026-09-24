@@ -16,6 +16,7 @@ import {
   type AddDecisionInput,
   type AddFindingInput,
   type CampfireService,
+  type CheckReadinessInput,
   type CreateAgentInput,
   type CreateGoalInput,
   type CreateHumanInput,
@@ -25,6 +26,7 @@ import {
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
   type ParticipantView,
+  type ReadinessStatus,
   type RegisterAgentSessionInput,
   type UpdateGoalInput,
   type UpdateTaskInput,
@@ -206,7 +208,40 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     }
   }
 
+  function readinessFailure(workspaceId: string): Unauthorized {
+    return new Unauthorized(
+      `Agent has no active session for workspace ${workspaceId}; call register_agent_session first`,
+      { workspaceId, nextAction: "register_agent_session" },
+    );
+  }
+
   return {
+    checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus {
+      assertNonEmpty(input.workspaceId, "workspaceId");
+      authorizer.assertAllowed({ actor: ctx.actor }, "workspace:read", input.workspaceId);
+      if (ctx.agentSessionId !== undefined) {
+        try {
+          authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+        } catch (error) {
+          if (error instanceof SessionNotFound || error instanceof Unauthorized) {
+            throw readinessFailure(input.workspaceId);
+          }
+          throw error;
+        }
+      }
+      if (ctx.actor.actorType === "agent" && ctx.agentSessionId === undefined) {
+        throw readinessFailure(input.workspaceId);
+      }
+      return ctx.agentSessionId === undefined
+        ? { ready: true, workspaceId: input.workspaceId, actor: ctx.actor }
+        : {
+            ready: true,
+            workspaceId: input.workspaceId,
+            actor: ctx.actor,
+            sessionId: ctx.agentSessionId,
+          };
+    },
+
     createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace {
       if (store.getTeam(input.teamId) === undefined) {
         throw new TeamNotFound(input.teamId);

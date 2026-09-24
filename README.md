@@ -38,6 +38,7 @@ Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |
 | `campfire invite` / `join` | Grant and accept invite-only workspace membership |
 | `campfire serve` / `view` | Host the HTTP API and the read-only team journal |
+| `campfire preflight <workspaceId>` | Validate hosted endpoint, token, identity, workspace access, and agent-session readiness without mutation |
 | `campfire mcp` | Expose the same application service over MCP stdio |
 
 ---

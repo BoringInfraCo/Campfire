@@ -11,6 +11,7 @@ import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 
 export const CAMPFIRE_HTTP_METHODS = [
+  "preflight",
   "whoami",
   "list_workspaces",
   "create_workspace",
@@ -185,6 +186,8 @@ export function dispatchCampfireMethod(
   }
 
   switch (method) {
+    case "preflight":
+      return service.checkReadiness(ctx, { workspaceId: str(params, "workspaceId") });
     case "whoami":
       return { actor: ctx.actor, sessionId: ctx.agentSessionId };
     case "list_workspaces":

@@ -209,6 +209,17 @@ export interface ActivityPage {
   nextBefore?: string;
 }
 
+export interface CheckReadinessInput {
+  workspaceId: string;
+}
+
+export interface ReadinessStatus {
+  ready: true;
+  workspaceId: string;
+  actor: ActorRef;
+  sessionId?: string;
+}
+
 export interface GetActivityInput {
   workspaceId: string;
   limit?: number;
@@ -217,6 +228,7 @@ export interface GetActivityInput {
 }
 
 export interface CampfireService {
+  checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus;
   createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;
   listWorkspaces(ctx: ActorContext): WorkspaceSummary[];

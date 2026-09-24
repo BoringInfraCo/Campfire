@@ -14,6 +14,7 @@ import {
   type AddArtifactInput,
   type AddDecisionInput,
   type AddFindingInput,
+  type CheckReadinessInput,
   type CreateAgentInput,
   type CreateGoalInput,
   type CreateHumanInput,
@@ -23,6 +24,7 @@ import {
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
   type ParticipantView,
+  type ReadinessStatus,
   type RegisterAgentSessionInput,
   type UpdateGoalInput,
   type UpdateTaskInput,
@@ -86,6 +88,7 @@ export interface AsyncCampfireServiceOptions {
  * The Worker fetch handler depends on this, never on D1 details.
  */
 export interface AsyncCampfireService {
+  checkReadiness(ctx: ActorContext, input: CheckReadinessInput): Promise<ReadinessStatus>;
   createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<Workspace>;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Promise<Workspace>;
   listWorkspaces(ctx: ActorContext): Promise<WorkspaceSummary[]>;
@@ -239,7 +242,40 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     }
   }
 
+  function readinessFailure(workspaceId: string): Unauthorized {
+    return new Unauthorized(
+      `Agent has no active session for workspace ${workspaceId}; call register_agent_session first`,
+      { workspaceId, nextAction: "register_agent_session" },
+    );
+  }
+
   return {
+    async checkReadiness(ctx: ActorContext, input: CheckReadinessInput): Promise<ReadinessStatus> {
+      assertNonEmpty(input.workspaceId, "workspaceId");
+      await authorizer.assertAllowed({ actor: ctx.actor }, "workspace:read", input.workspaceId);
+      if (ctx.agentSessionId !== undefined) {
+        try {
+          await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+        } catch (error) {
+          if (error instanceof SessionNotFound || error instanceof Unauthorized) {
+            throw readinessFailure(input.workspaceId);
+          }
+          throw error;
+        }
+      }
+      if (ctx.actor.actorType === "agent" && ctx.agentSessionId === undefined) {
+        throw readinessFailure(input.workspaceId);
+      }
+      return ctx.agentSessionId === undefined
+        ? { ready: true, workspaceId: input.workspaceId, actor: ctx.actor }
+        : {
+            ready: true,
+            workspaceId: input.workspaceId,
+            actor: ctx.actor,
+            sessionId: ctx.agentSessionId,
+          };
+    },
+
     async createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<Workspace> {
       if (await store.getTeam(input.teamId) === undefined) {
         throw new TeamNotFound(input.teamId);

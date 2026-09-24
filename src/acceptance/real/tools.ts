@@ -8,6 +8,7 @@
  */
 
 export const CAMPFIRE_TOOL_NAMES = [
+  "preflight",
   "whoami",
   "list_workspaces",
   "create_workspace",
@@ -31,6 +32,7 @@ export const CAMPFIRE_TOOL_NAMES = [
 export type CampfireToolName = (typeof CAMPFIRE_TOOL_NAMES)[number];
 
 const READ_TOOLS: ReadonlySet<CampfireToolName> = new Set<CampfireToolName>([
+  "preflight",
   "whoami",
   "list_workspaces",
   "get_workspace",

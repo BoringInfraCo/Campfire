@@ -1,6 +1,6 @@
 # Campfire — Sprint 007: Harness Readiness Preflight
 
-**Status:** Active contract — implementation requires explicit authorization  
+**Status:** Complete (GO)
 **Sprint:** 007 — Harness Readiness Preflight  
 **Date:** September 24, 2026  
 **Company:** Boring Infra Co.  
@@ -41,8 +41,11 @@ Implement one narrow readiness check at the CLI/MCP boundary:
      configured.
 
 3. **Agent-session readiness**
-   - Detect whether an agent has the session state required for its first
-     workspace write.
+   - Require an explicit workspace ID at the service, CLI, MCP, and HTTP
+     boundaries.
+   - Check actor/workspace authorization and detect whether an agent has an
+     active session for that exact workspace, ready for its first workspace
+     write.
    - Return an actionable message identifying the existing explicit
      `register_agent_session` step when readiness is missing.
    - Do not automatically register a session or mutate Campfire state during a
@@ -72,9 +75,10 @@ Implement one narrow readiness check at the CLI/MCP boundary:
 - A missing or invalid token fails with an actionable identity/authentication
   error; the token is never printed or logged.
 - Hosted mode never silently falls back to a local SQLite identity.
-- An agent without the required registered session receives an actionable
-  preflight error before its first write and is directed to the existing
-  explicit session-registration operation.
+- An agent without a required registered session for the requested workspace
+  receives an actionable preflight error before its first write and is directed
+  to the existing explicit session-registration operation. Missing, ended,
+  wrong-actor, and wrong-workspace sessions fail the same readiness check.
 - A valid Codex configuration passes.
 - A valid OpenCode configuration passes.
 - Equivalent failures produce equivalent human and JSON error shapes regardless

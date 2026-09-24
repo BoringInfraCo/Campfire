@@ -16,6 +16,8 @@ let logs: string[];
 const previousDb = process.env.CAMPFIRE_DB;
 const previousUrl = process.env.CAMPFIRE_URL;
 const previousToken = process.env.CAMPFIRE_TOKEN;
+const previousHarness = process.env.CAMPFIRE_HARNESS;
+const previousSessionId = process.env.CAMPFIRE_SESSION_ID;
 
 function stdout(): string {
   return logs.join("\n");
@@ -34,6 +36,8 @@ beforeEach(() => {
   logs = [];
   delete process.env.CAMPFIRE_URL;
   delete process.env.CAMPFIRE_TOKEN;
+  delete process.env.CAMPFIRE_HARNESS;
+  delete process.env.CAMPFIRE_SESSION_ID;
   vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
     logs.push(args.map(String).join(" "));
   });
@@ -57,6 +61,16 @@ afterEach(() => {
     delete process.env.CAMPFIRE_TOKEN;
   } else {
     process.env.CAMPFIRE_TOKEN = previousToken;
+  }
+  if (previousHarness === undefined) {
+    delete process.env.CAMPFIRE_HARNESS;
+  } else {
+    process.env.CAMPFIRE_HARNESS = previousHarness;
+  }
+  if (previousSessionId === undefined) {
+    delete process.env.CAMPFIRE_SESSION_ID;
+  } else {
+    process.env.CAMPFIRE_SESSION_ID = previousSessionId;
   }
 });
 
@@ -132,6 +146,7 @@ describe("runCli", () => {
     await cli(["help"]);
     const output = stdout();
     expect(output).toContain("campfire serve");
+    expect(output).toContain("campfire preflight");
     expect(output).toContain("create-human");
     expect(output).toContain("create-agent");
     expect(output).toContain("issue-token");
@@ -238,6 +253,174 @@ describe("runCli", () => {
     expect(output).toContain("have no JSON mode");
     expect(output).toContain('{"error":{"code","message"');
     expect(output).toContain("add-artifact's --type is the artifact type");
+  });
+
+  it("requires an explicit hosted endpoint for preflight instead of falling back locally", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["preflight", FIXTURE.workspaces.billing, "--json"]);
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(
+      errSpy.mock.calls.map((call) => call.map(String).join(" ")).join("\n"),
+    ) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe("ValidationError");
+    expect(payload.error.message).toContain("CAMPFIRE_URL");
+    expect(payload.error.message).toContain("hosted preflight");
+  });
+
+  it("requires a workspace ID for hosted preflight", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9414";
+    process.env.CAMPFIRE_TOKEN = "cft_valid_secret_value";
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["preflight", "--json"]);
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(
+      errSpy.mock.calls.map((call) => call.map(String).join(" ")).join("\n"),
+    ) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe("ValidationError");
+    expect(payload.error.message).toContain("workspaceId");
+    expect(payload.error.message).toContain("--workspace");
+  });
+
+  it("reports a token-safe actionable error when hosted preflight cannot reach the endpoint", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:1";
+    process.env.CAMPFIRE_TOKEN = "cft_super_secret_preflight_token";
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["preflight", FIXTURE.workspaces.billing, "--json"]);
+
+    expect(code).toBe(1);
+    const stderr = errSpy.mock.calls.map((call) => call.map(String).join(" ")).join("\n");
+    const payload = JSON.parse(stderr) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe("ValidationError");
+    expect(payload.error.message).toContain("Unable to reach Campfire");
+    expect(payload.error.message).toContain("start campfire serve");
+    expect(stderr).not.toContain(process.env.CAMPFIRE_TOKEN);
+  });
+
+  it("requires an actor token for hosted preflight", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9414";
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["preflight", FIXTURE.workspaces.billing, "--json"]);
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(
+      errSpy.mock.calls.map((call) => call.map(String).join(" ")).join("\n"),
+    ) as { error: { code: string; message: string } };
+    expect(payload.error.code).toBe("ValidationError");
+    expect(payload.error.message).toContain("CAMPFIRE_TOKEN");
+    expect(payload.error.message).toContain("actor-specific token");
+  });
+
+  it("does not re-emit token-bearing remote preflight errors", async () => {
+    const token = "cft_remote_error_secret_value";
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9414";
+    process.env.CAMPFIRE_TOKEN = token;
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: false,
+          error: "Unauthorized",
+          message: `Rejected bearer ${token}`,
+          details: { echoedToken: token },
+        }),
+        { status: 401, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["preflight", FIXTURE.workspaces.billing, "--json"]);
+
+    expect(code).toBe(1);
+    const stderr = errSpy.mock.calls.map((call) => call.map(String).join(" ")).join("\n");
+    const payload = JSON.parse(stderr) as {
+      error: { code: string; message: string; details?: Record<string, unknown> };
+    };
+    expect(payload.error.code).toBe("Unauthorized");
+    expect(payload.error.message).toContain("verify CAMPFIRE_TOKEN");
+    expect(payload.error.message).toContain("register an active session");
+    expect(payload.error.details).toEqual({ nextAction: "register_agent_session" });
+    expect(stderr).not.toContain(token);
+  });
+
+  it("prints human-readable successful hosted preflight output", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9414";
+    process.env.CAMPFIRE_TOKEN = "cft_valid_secret_value";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          result: {
+            ready: true,
+            workspaceId: FIXTURE.workspaces.billing,
+            actor: { actorId: FIXTURE.humans.sergio, actorType: "human" },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    await runCli(["preflight", "--workspace", FIXTURE.workspaces.billing]);
+
+    expect(stdout()).toContain(`workspace=${FIXTURE.workspaces.billing}`);
+    expect(stdout()).toContain(`actor=${FIXTURE.humans.sergio}`);
+    expect(stdout().trimStart().startsWith("{")).toBe(false);
+    const request = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body)) as {
+      method: string;
+      params: Record<string, unknown>;
+    };
+    expect(request).toEqual({
+      method: "preflight",
+      params: { workspaceId: FIXTURE.workspaces.billing },
+    });
+  });
+
+  it("prints a structured successful preflight and forwards session readiness", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9414";
+    process.env.CAMPFIRE_TOKEN = "cft_valid_secret_value";
+    process.env.CAMPFIRE_HARNESS = "codex";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          result: {
+            ready: true,
+            workspaceId: "ws_billing_deploy",
+            actor: { actorId: "agt_codex", actorType: "agent" },
+            sessionId: "ses_ready",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    await runCli([
+      "preflight",
+      FIXTURE.workspaces.billing,
+      "--session",
+      "ses_ready",
+      "--json",
+    ]);
+
+    expect(JSON.parse(stdout())).toEqual({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: "agt_codex", actorType: "agent" },
+      sessionId: "ses_ready",
+      harness: "codex",
+    });
+    const request = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body)) as {
+      method: string;
+      params: Record<string, unknown>;
+    };
+    expect(request).toEqual({
+      method: "preflight",
+      params: { workspaceId: FIXTURE.workspaces.billing, agentSessionId: "ses_ready" },
+    });
   });
 });
 
