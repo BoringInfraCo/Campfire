@@ -1,0 +1,41 @@
+# Campfire on Cloudflare Workers.
+#
+# PUBLIC REPO: never commit a real D1 database_id here. This file keeps a
+# placeholder so `wrangler dev` (local simulation) and
+# `npm run deploy:dry-run` validate without secrets.
+#
+# One-time provisioning (operator machine or CI, NOT committed):
+#   wrangler d1 create campfire   # run `wrangler d1 list` to confirm
+#   export CAMPFIRE_D1_DATABASE_ID=<id from create>   # local shell / CI secret
+#   # optional persistent local override (gitignored):
+#   cp wrangler.example.toml wrangler.local.toml  # then paste the id there
+#   npm run deploy                # injects the id via temp --config, never writes it here
+# - `npm run db:migrate` applies ./migrations to the remote database (resolves
+#   by database NAME, needs no id in this file).
+# - No secrets live in this file. Tokens are bearer credentials resolved at
+#   request time; set local dev secrets via `.dev.vars` (gitignored), and
+#   production secrets via `wrangler secret put`.
+name = "campfire"
+main = "src/worker/index.ts"
+compatibility_date = "2026-09-12"
+compatibility_flags = ["nodejs_compat"]
+
+# Bundle schema.sql as a Text module for the D1 migration (no node:fs).
+rules = [{ type = "Text", globs = ["**/*.sql"], fallthrough = true }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "campfire"
+# INTENTIONAL PLACEHOLDER — do not replace with a real id in the public repo.
+# Deploy/migrate scripts inject the real id at release time from
+# $CAMPFIRE_D1_DATABASE_ID or untracked wrangler.local.toml (see above).
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[assets]
+# Single assets directory: ./public serves viewer static (index.html/app.css/app.js,
+# synced from src/viewer/static via `npm run sync:public`) AND /campfire/install.sh
+# (with text/x-shellscript via public/_headers). Two asset dirs are not supported.
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/v1/*", "/api/*"]

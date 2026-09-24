@@ -1,0 +1,358 @@
+:root {
+  color-scheme: dark;
+  /* Campfire ink canvas + Logo System v1.0 elevations.
+     human/agent come from the shared-workspace colors: Gather Pink for people,
+     Firelight for agents (see website campfire.css gather diagram). */
+  --bg: #171717;
+  --fg: #e8eef0;
+  --muted: #a7a39b;
+  --dim: #595752;
+  --accent: #fc6142;
+  --line: #333333;
+  --err: #ff9a82;
+  --human: #f9b2d7;
+  --agent: #ffd166;
+}
+
+:root[data-theme="campfire"] {
+  color-scheme: dark;
+  --bg: #171717;
+  --fg: #e8eef0;
+  --muted: #a7a39b;
+  --dim: #595752;
+  --accent: #fc6142;
+  --line: #333333;
+  --err: #ff9a82;
+  --human: #f9b2d7;
+  --agent: #ffd166;
+}
+
+:root[data-theme="fx"] {
+  color-scheme: dark;
+  --bg: #0e0e0e;
+  --fg: #c6c1b8;
+  --muted: #6e6a63;
+  --dim: #3a3835;
+  --accent: #d4a017;
+  --line: #242220;
+  --err: #c45c4a;
+  /* Legacy palette keeps neutral marks. */
+  --human: #c6c1b8;
+  --agent: #6e6a63;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1.25ch;
+  flex: 0 0 auto;
+  min-height: 2.4em;
+  padding: 0.55em 1.5ch;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* Pixel logomark. Scales with the header font so it stays proportional;
+   pixelated keeps the 18x20 grid crisp at non-integer sizes. */
+.brand-mark {
+  display: block;
+  width: auto;
+  height: 1.6em;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#whoami {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 28ch;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#error {
+  color: var(--err);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1ch;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.ws-label {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+header select {
+  max-width: 36ch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+
+header select:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#mast {
+  flex: 0 0 auto;
+  padding: 0.7em 1.5ch 0.85em;
+  border-bottom: 1px solid var(--line);
+}
+
+#people:empty,
+#goal:empty {
+  display: none;
+}
+
+#people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em 1.8ch;
+  min-width: 0;
+}
+
+#people .person {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mark {
+  margin-right: 0.5ch;
+}
+
+.mark.human {
+  color: var(--human);
+}
+
+.mark.agent {
+  color: var(--agent);
+}
+
+#people .role,
+#people .harness,
+#people .meta {
+  color: var(--muted);
+}
+
+#goal {
+  min-width: 0;
+  margin-top: 0.35em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#people:empty + #goal {
+  margin-top: 0;
+}
+
+#goal::before {
+  content: "GOAL";
+  color: var(--muted);
+  margin-right: 1.2ch;
+}
+
+#goal:has(.glabel)::before,
+#goal:has(.label)::before {
+  content: none;
+}
+
+#goal .glabel,
+#goal .label {
+  color: var(--muted);
+  margin-right: 1.2ch;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.stream {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.4em 0 1.5em;
+}
+
+.empty {
+  padding: 0.6em 1.5ch;
+  color: var(--muted);
+}
+
+.trunc {
+  padding: 0.2em 1.5ch 0.5em;
+  color: var(--dim);
+}
+
+.item {
+  padding: 0.45em 1.5ch 0.4em 0.5ch;
+}
+
+.item .who {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2ch;
+  min-width: 0;
+  padding: 0 0 0.05em 1ch;
+  border-left: 2px solid transparent;
+}
+
+.item .who .name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item .time {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.item.selected .who {
+  border-left-color: var(--accent);
+}
+
+.item .body {
+  padding: 0 0 0 2.7ch;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.item .kind {
+  color: var(--muted);
+}
+
+.item .sentence,
+.item .sum {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item.muted,
+.item.plumbing {
+  color: var(--dim);
+}
+
+.item.muted .who,
+.item.muted .body,
+.item.muted .time,
+.item.muted .kind,
+.item.muted .sentence,
+.item.muted .sum,
+.item.plumbing .who,
+.item.plumbing .body,
+.item.plumbing .time,
+.item.plumbing .kind,
+.item.plumbing .sentence,
+.item.plumbing .sum {
+  color: var(--dim);
+}
+
+.fold,
+.item.fold {
+  color: var(--muted);
+}
+
+.fold {
+  padding: 0.35em 1.5ch 0.35em 1.7ch;
+  border-left: 2px solid transparent;
+}
+
+.item.fold .who,
+.item.fold .body,
+.item.fold .time,
+.item.fold .kind,
+.item.fold .sum,
+.fold .body {
+  color: var(--muted);
+}
+
+.fold.selected,
+.item.fold.selected .who {
+  border-left-color: var(--accent);
+}
+
+.detail {
+  padding: 0.15em 1.5ch 0.55em 2.7ch;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.detail p,
+.detail div {
+  margin: 0;
+}
+
+#hint {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.4em 1.5ch;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 1px solid var(--dim);
+  outline-offset: 2px;
+}

@@ -1,0 +1,53 @@
+{
+  "name": "campfire",
+  "version": "1.1.0",
+  "private": true,
+  "description": "The shared workspace where people and their agents work together.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "campfire": "dist/src/cli/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run sync:public && tsc && cp src/store/schema.sql dist/src/store/schema.sql && rm -rf dist/src/viewer/static && cp -r src/viewer/static dist/src/viewer/static && chmod +x dist/src/cli/index.js",
+    "sync:public": "cp src/viewer/static/index.html src/viewer/static/app.css src/viewer/static/app.js src/viewer/static/campfire-mark.svg public/",
+    "prepare": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:acceptance": "vitest run tests/acceptance",
+    "campfire": "tsx src/cli/index.ts",
+    "init": "tsx src/cli/index.ts init",
+    "seed": "tsx src/cli/index.ts seed",
+    "mcp": "tsx src/cli/index.ts mcp",
+    "serve": "tsx src/cli/index.ts serve",
+    "view": "tsx src/cli/index.ts view",
+    "acceptance": "tsx scripts/run-acceptance.ts",
+    "acceptance:002": "tsx scripts/run-acceptance-002.ts",
+    "deploy": "node scripts/wrangler-deploy.mjs deploy",
+    "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
+    "dev:worker": "wrangler dev",
+    "db:migrate": "wrangler d1 migrations apply campfire --remote",
+    "pack:tarball": "sh scripts/package.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "better-sqlite3": "^13.0.3",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0",
+    "wrangler": "^4.131.1"
+  }
+}
