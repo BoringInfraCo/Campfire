@@ -19,6 +19,11 @@ understanding, not execution. Agents execute elsewhere and meet at Campfire.
 This sprint improves the existing orientation projection and the read-only
 Viewer. It does not add a new domain object, schema, or runtime.
 
+Measurement scope: agent Time to Context is measured with a real cold harness.
+Human Time to Context is diagnostic only; Viewer comprehension is validated
+structurally through deterministic derivation and review, not behaviorally, in
+Sprint 008.
+
 ---
 
 ## 2. Cold-entry questions
@@ -86,15 +91,23 @@ a blocked task, a proposed decision, and an accepted decision.
 - `openTaskCount` conflates blocked with open (`campfire-service.ts:311-313`).
 - Viewer already fetches `get_workspace_context` (`app.js:544-549`) but renders
   only goal and participants; the needed state is present and unused.
-- "Needs You", "Since You Were Here", and "Current Work" do not exist.
+- "Needs You", "Needs Attention", "Since You Were Here", and "Current Work" do
+  not exist.
 
 ### Derivability
 
 | Surface | Derivable without schema? | Basis |
 | --- | --- | --- |
-| Needs You | Yes | `proposedDecisions` + blocked tasks + caller-assigned tasks |
+| Needs You | Yes | Items the current actor is authorized to act on: proposed decisions it may accept, and blocked/open tasks assigned to it |
+| Needs Attention | Yes | Team-level items the actor cannot act on directly: proposed decisions it may not accept, unassigned blocked tasks |
 | Current Work | Yes | in-progress and blocked tasks + accepted decisions + goal |
 | Since You Were Here | Partial | `Contribution.createdAt`; client-held cursor needs no schema change; durable server cursor or `read` contributions would require schema and are out of scope |
+
+Authorization-aware attention: an item is labeled "Needs You" only when the
+existing authorizer would allow the current actor to perform the relevant
+operation (for example, `decision:update` to accept a proposed decision, or
+`task:update` for a task). If the actor cannot act on the item, it is labeled
+"Needs Attention." No new authorization policy is introduced.
 
 ---
 
@@ -109,15 +122,29 @@ both surfaces.
 Agent projection:
 
 - extend `WorkspaceContext` with deterministic derived sections for
-  `needsAttention`, `currentWork`, and a rule-based `suggestedNextAction`;
+  authorization-aware `needsYou`, team-level `needsAttention`, `currentWork`,
+  and a rule-based `suggestedNextAction`;
+- label an item "Needs You" only when the existing authorizer allows the current
+  actor to act on it; otherwise use "Needs Attention";
+- compute `suggestedNextAction` as an orientation hint, never an instruction to
+  execute, using this precedence and stable tie-breaker:
+  1. actionable proposed decision the caller is authorized to accept;
+  2. caller-assigned blocked task;
+  3. caller-assigned open task;
+  4. team-level attention item (unassigned blocked task, then proposed decision
+     the caller may not accept, then oldest open task);
+  5. no suggestion when none of the above exists.
+  Ties resolve by oldest `updatedAt`, then by object id.
 - include `provenanceSummary` by reusing existing `describeContribution`;
 - support an optional caller-supplied cursor for recency;
 - keep sync, async/Workers, HTTP, and MCP projections at parity.
 
 Human Viewer 003:
 
-- render "Needs You", "Current Work", and "Since You Were Here" from the
-  already-fetched context;
+- render "Needs You", "Needs Attention", "Current Work", and
+  "Since You Were Here" from the already-fetched context;
+- show "Needs You" only for items the current viewer actor is authorized to act
+  on outside the Viewer; use "Needs Attention" otherwise;
 - distinguish open, in-progress, blocked, proposed, accepted, and superseded
   states;
 - keep the Viewer read-only with the existing allowlist;
@@ -135,12 +162,15 @@ Deterministic:
 
 - A populated workspace built through the product returns, from one
   `get_workspace_context` call, goal, participants, distinct blocked tasks,
-  distinct proposed decisions, current work, and a non-empty deterministic next
-  action.
+  distinct proposed decisions, current work, and a deterministic next action.
+- "Needs You" contains only items the caller is authorized to act on; items the
+  caller cannot act on appear under "Needs Attention".
+- `suggestedNextAction` follows the documented precedence and tie-breaker and
+  is labeled as an orientation hint, not an instruction.
 - `provenanceSummary` appears in the context projection.
-- Viewer derivation functions produce "Needs You", "Current Work", and
-  "Since You Were Here" from a synthetic context and cursor, including an empty
-  first visit.
+- Viewer derivation functions produce "Needs You", "Needs Attention",
+  "Current Work", and "Since You Were Here" from a synthetic context and cursor,
+  including an empty first visit.
 - No schema or migration change; `VIEWER_READ_METHODS` unchanged; Viewer still
   rejects writes.
 - Existing service, HTTP, MCP, worker, Viewer, seed, and acceptance suites pass.
@@ -155,6 +185,14 @@ Real-harness:
 - Transcript-isolation and workspace-isolation checks remain unchanged.
 - Limitations are recorded honestly, including that the populated setup is
   setup, not a handoff.
+
+Measurement honesty:
+
+- Agent Time to Context is measured from first Campfire read to the correct
+  context statement by the real cold harness.
+- Human Time to Context is diagnostic, not a behavioral gate. Sprint 008
+  validates Viewer comprehension structurally through deterministic derivation
+  and review; it does not claim a measured human 30-second result.
 
 Cross-surface:
 
@@ -184,6 +222,8 @@ orchestration engine, or replacement for GitHub or existing coding tools.
 - Viewer writes or writable Viewer functionality.
 - Orchestration, scheduling, delegation, capability management, presence,
   notifications, chat, or execution ownership.
+- Automatic execution or dispatch of `suggestedNextAction`; it is an
+  orientation hint only.
 - Embeddings, semantic retrieval, or organizational memory.
 - Changes to authorization policy.
 - Field Trace 001 gate claims.
@@ -200,10 +240,10 @@ Sprint 008 is complete only when:
 
 1. The existing projection answers all seven cold-entry questions.
 2. Agent and Viewer surfaces share one derived understanding.
-3. Time to Context and orientation calls are recorded deterministically and by a
-   cold real harness.
+3. Agent Time to Context and orientation calls are measured by the cold real
+   harness; human Time to Context is recorded as diagnostic only.
 4. Blocked tasks, proposed decisions, and next action are unmistakable without
-   transcript access.
+   transcript access, and "Needs You" is authorization-aware.
 5. Viewer 003 remains read-only and authorization-scoped.
 6. No schema, domain-object, orchestration, or unrelated product work is added.
 7. A result document records evidence, limitations, and the next decision.
