@@ -1,6 +1,6 @@
 # Campfire — Sprint 008: Enter the Room
 
-**Status:** Complete (CONDITIONAL GO) — see `docs/SPRINT_008_RESULT.md`
+**Status:** Complete (GO) — see `docs/SPRINT_008_RESULT.md`
 **Date:** September 24, 2026  
 **Company:** Boring Infra Co.  
 **Depends on:** Sprint 007 — Harness Readiness Preflight (**GO**)  

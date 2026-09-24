@@ -244,12 +244,11 @@ Do not begin the next major phase until this evidence exists.
 **Status:** Sprint 002 GO. Sprint 003 orientation partial (deterministic exit
 met, in tree; real-harness rerun + Claude Code outstanding). Sprint 004 living
 workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C product-surface
-GO (v1.0).
-Viewer-002 team journal GO. v1.1 ships its Campfire theme and logomark. Sprint
-006 Gate C product-surface GO. Sprint
-007 harness readiness GO. Field Trace 001 was cancelled by founder decision;
-Gate B and Gate C external behavioral evidence remain unmeasured. Sprint 008 —
-Enter the Room is next.
+GO (v1.0). Viewer-002 team journal GO. v1.1 ships its Campfire theme and
+logomark. Sprint 007 harness readiness GO. Sprint 008 Enter the Room GO
+(precise Time to Context 19.8 s). Field Trace 001 was cancelled by founder
+decision; Gate B and Gate C external behavioral evidence remain unmeasured.
+Sprint 009 is directional, not committed.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1224,10 +1223,11 @@ evidence is preserved but excluded from Gate B and Gate C. It does not establish
 retention, ordinary team value, or external PMF.
 
 The next product sequence is founder-led internal validation. Sprint 008 — Enter
-the Room is next. Sprint 009 — Align Before Execution, Sprint 010 — Return to
-the Workspace, and Sprint 011 — Natural Contribution are directional sequence,
-not precommitted scopes. A future design-partner release replaces the abandoned
-formal field trace for external PMF evidence.
+the Room is GO (precise Time to Context 19.8 s). Sprint 009 — Align Before
+Execution is the next directional step; Sprint 010 — Return to the Workspace and
+Sprint 011 — Natural Contribution remain directional sequence, not precommitted
+scopes. A future design-partner release replaces the abandoned formal field
+trace for external PMF evidence.
 
 ---
 
@@ -1264,7 +1264,7 @@ Sprint 007 — Harness readiness preflight   GO ✓
         ↓
 Field Trace 001 — cancelled by founder decision; Gate B/C unmeasured
         ↓
-Sprint 008 — Enter the Room   next
+Sprint 008 — Enter the Room   GO ✓ (Time to Context 19.8 s)
         ↓
 Sprint 009 — Align Before Execution   directional
         ↓

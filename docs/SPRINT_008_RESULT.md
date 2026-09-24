@@ -5,7 +5,7 @@
 **Date:** September 24, 2026  
 **Company:** Boring Infra Co.  
 **Depends on:** Sprint 007 — Harness Readiness Preflight (**GO**)  
-**Recommendation:** **CONDITIONAL GO**
+**Recommendation:** **GO**
 
 ---
 
@@ -21,10 +21,11 @@ Campfire state and correctly answered all seven entry questions, including the
 goal, participants, findings, constraining decisions, blocked work, and next
 action.
 
-The 30-second Time to Context target is not yet demonstrated. The measured
-31.7 s is a whole-process upper bound (CLI startup, MCP handshake, model
-latency, five reads, and the statement), not first-read-to-statement time. The
-result is therefore CONDITIONAL on instrumenting the precise interval.
+The 30-second Time to Context target is met on the precise interval. External
+line-level instrumentation measured 19,822 ms from the first successful
+`get_workspace_context` response to the final correct context statement. The
+earlier 31.7 s figure was a whole-process upper bound and is superseded by this
+measurement.
 
 No schema, authorization policy, orchestration, or writable Viewer behavior was
 added.
@@ -68,12 +69,20 @@ oldest-open-task fallback).
 
 ## 4. Cold real-harness evaluation
 
-- Harness: real `codex-cli 0.150.1`, ephemeral, no transcript or handoff.
-- Exit: 0. Campfire MCP calls: 5. Non-Campfire tools: 0.
-- Measured duration: 31,679 ms (whole-process upper bound).
+- Harness: real `codex-cli 0.150.1`, fresh process, ephemeral, no transcript or
+  handoff.
+- Exit: 0. Campfire MCP calls: 6. Non-Campfire tools: 0.
+- First `get_workspace_context` response: 13,010 ms after process start.
+- Final correct context statement: 32,832 ms after process start.
+- **Precise Time to Context: 19,822 ms (≤30 s).**
+- Total process duration: 33,841 ms, recorded separately.
+- Delay attribution: ~4 ms tool wall time after context; ~19,817 ms model
+  reasoning/synthesis. The extra post-context calls were unnecessary but
+  negligible; the delay is model synthesis, not product-controlled latency.
 - Comprehension: PASS for all seven questions; correctly named the goal, a
   blocked task, a proposed decision, and the deterministic next action.
-- Evidence: `evidence/sprint-008/cold-harness.md` (private, gitignored).
+- Evidence: `evidence/sprint-008/closure-run.md` and the earlier
+  `evidence/sprint-008/cold-harness.md` (private, gitignored).
 
 ---
 
@@ -92,8 +101,9 @@ oldest-open-task fallback).
 
 ## 6. Limitations
 
-1. Time to Context is a process upper bound, not first-read-to-statement; the
-   30-second target is not proven.
+1. Time to Context is measured on one fresh run and one harness/model; the
+   timing is parent-arrival line timing, robust to constant but not variable
+   stdout buffering, and has no variance estimate.
 2. Human comprehension was validated structurally (deterministic derivation and
    review), not behaviorally timed.
 3. The cold run used one harness, one model, and one populated workspace; the
@@ -107,10 +117,11 @@ oldest-open-task fallback).
 ## 7. Recommendation
 
 ```text
-CONDITIONAL GO
+GO
 ```
 
-The projection answers the entry questions and the surfaces share one derived
-understanding. Before claiming the 30-second target, instrument the precise
-first-read-to-statement interval and rerun the cold harness. Do not begin
-Sprint 009 from this result without that decision.
+The projection answers all seven entry questions from one service-derived
+source, and the precise Time to Context is 19.8 s, within the 30-second target.
+The remaining delay is model synthesis, not product-controlled latency, so no
+product optimization is justified by this evidence. The next step is to draft
+the Sprint 009 contract, not to implement it.

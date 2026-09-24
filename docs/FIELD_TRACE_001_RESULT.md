@@ -32,6 +32,7 @@ promoted into a qualifying result.
 
 ## Roadmap consequence
 
-The next product sprint is Sprint 008 — Enter the Room. Sprint 009–011 and the
-design-partner release remain directional sequence, not precommitted scopes.
-Schema expansion, orchestration, and new domain objects remain out of scope.
+Sprint 008 — Enter the Room is complete (GO). Sprint 009 — Align Before
+Execution and the later sprints remain directional sequence, not precommitted
+scopes. Schema expansion, orchestration, and new domain objects remain out of
+scope.
