@@ -63,7 +63,8 @@ docs/SPRINT_008.md
 
 Sprint 008 — Enter the Room is complete (GO, precise Time to Context 19.8 s);
 its result is `docs/SPRINT_008_RESULT.md`. Sprint 007 is complete; its result is
-`docs/SPRINT_007_RESULT.md`. No Sprint 009 contract is active or precommitted.
+`docs/SPRINT_007_RESULT.md`. The Sprint 009 contract is drafted at
+`docs/SPRINT_009.md`; implementation requires explicit acceptance.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

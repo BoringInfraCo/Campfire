@@ -103,6 +103,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — hosted multi-participant acceptance evidence for the v1.0 product cut
 - [docs/SPRINT_007_RESULT.md](docs/SPRINT_007_RESULT.md) — harness readiness preflight result
 - [docs/SPRINT_008_RESULT.md](docs/SPRINT_008_RESULT.md) — Enter the Room result (GO; Time to Context 19.8 s)
+- [docs/SPRINT_009.md](docs/SPRINT_009.md) — Align Before Execution contract (drafted; implementation not authorized)
 
 ---
 
