@@ -39,8 +39,10 @@ import type { ServerIdentity } from "../mcp/context.js";
 import { startStdioServer } from "../mcp/stdio.js";
 import { createRuntime } from "../runtime.js";
 import type {
+  AttentionItem,
   GetActivityInput,
   ParticipantView,
+  SuggestedNextAction,
   WorkspaceContext,
   WorkspaceView,
   ReadinessStatus,
@@ -335,6 +337,24 @@ function formatTask(task: Task): string {
   return joinFields(task.id, `[${task.status}]`, task.title);
 }
 
+function formatAttentionItem(item: AttentionItem): string {
+  return joinFields(
+    item.kind,
+    item.id,
+    `[${item.status}]`,
+    item.summary,
+    `(${item.reason})`,
+    item.assignee === undefined ? undefined : `assignee=${item.assignee.actorId}`,
+  );
+}
+
+function formatSuggestedNextAction(action: SuggestedNextAction): string {
+  if (action.kind === "none") {
+    return "none";
+  }
+  return joinFields(action.kind, action.id, action.summary, `(${action.reason})`);
+}
+
 function section(title: string, lines: string[]): string[] {
   if (lines.length === 0) {
     return [];
@@ -366,6 +386,16 @@ function formatOrientation(context: WorkspaceContext): string {
     lines.push(labeled("Goal", goal.title));
   }
   lines.push(
+    ...section("Needs You", context.needsYou.map(formatAttentionItem)),
+    ...section("Needs Attention", context.needsAttention.map(formatAttentionItem)),
+    ...section("Current Work", [
+      ...context.currentWork.inProgressTasks.map(formatTask),
+      ...context.currentWork.blockedTasks.map(formatTask),
+      ...context.currentWork.acceptedDecisions.map(formatDecision),
+    ]),
+    ...section("Suggested next (orientation hint)", [
+      formatSuggestedNextAction(context.suggestedNextAction),
+    ]),
     ...section("Participants", context.participants.map(formatParticipant)),
     ...section("Proposed decisions", context.proposedDecisions.map(formatDecision)),
     ...section("Accepted decisions", context.acceptedDecisions.map(formatDecision)),

@@ -45,4 +45,11 @@ export interface Authorizer {
    * perform `operation` in `workspaceId`. Returns normally when allowed.
    */
   assertAllowed(ctx: ActorContext, operation: Operation, workspaceId?: string): void;
+
+  /**
+   * Boolean form of `assertAllowed` for projections that must label attention
+   * without throwing. Evaluates the same policy and never logs, so a context
+   * read does not emit authz noise (Sprint 008).
+   */
+  canAct(ctx: ActorContext, operation: Operation, workspaceId?: string): boolean;
 }

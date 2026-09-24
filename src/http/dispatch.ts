@@ -205,8 +205,12 @@ export function dispatchCampfireMethod(
       });
     case "get_workspace":
       return service.getWorkspace(ctx, str(params, "workspaceId"));
-    case "get_workspace_context":
-      return service.getWorkspaceContext(ctx, str(params, "workspaceId"));
+    case "get_workspace_context": {
+      const options: { since?: string } = {};
+      const since = optionalStr(params, "since");
+      if (since !== undefined) options.since = since;
+      return service.getWorkspaceContext(ctx, str(params, "workspaceId"), options);
+    }
     case "get_activity": {
       const query: { workspaceId: string; limit?: number; before?: string } = {
         workspaceId: str(params, "workspaceId"),

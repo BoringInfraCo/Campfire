@@ -186,6 +186,55 @@ export interface SupersededDecisionSummary {
  */
 export const ORIENTATION_PROVENANCE_LIMIT = 20;
 
+/** The kind of work an attention item points at. */
+export type AttentionKind = "task" | "decision";
+
+/** Why an item is surfaced; labels are stable across surfaces (Sprint 008). */
+export type AttentionReason =
+  | "proposed_decision_actionable"
+  | "assigned_blocked_task"
+  | "assigned_open_task"
+  | "team_proposed_decision"
+  | "unassigned_blocked_task"
+  | "team_blocked_task"
+  | "team_open_task";
+
+/** One authorization-aware orientation item for a cold entrant. */
+export interface AttentionItem {
+  kind: AttentionKind;
+  id: string;
+  summary: string;
+  status: string;
+  reason: AttentionReason;
+  assignee?: ActorRef;
+}
+
+/** The live state of the work, independent of who may act on it. */
+export interface CurrentWork {
+  inProgressTasks: Task[];
+  blockedTasks: Task[];
+  acceptedDecisions: Decision[];
+}
+
+/**
+ * A rule-based orientation hint. Never an instruction to execute: `orientationHint`
+ * is always true and no surface dispatches it (Sprint 008).
+ */
+export interface SuggestedNextAction {
+  kind: "task" | "decision" | "none";
+  id?: string;
+  summary: string;
+  reason: AttentionReason | "none";
+  orientationHint: true;
+}
+
+/** Contributions strictly after a caller-supplied cursor, capped for orientation. */
+export interface SinceProjection {
+  cursor: string;
+  items: Contribution[];
+  truncated: boolean;
+}
+
 export interface WorkspaceContext {
   workspace: Workspace;
   goal?: Goal;
@@ -200,6 +249,16 @@ export interface WorkspaceContext {
   provenance: Contribution[];
   provenanceTotal: number;
   provenanceTruncated: boolean;
+  /** Items the caller is authorized to act on outside Campfire. */
+  needsYou: AttentionItem[];
+  /** Team-level items the caller cannot act on directly. */
+  needsAttention: AttentionItem[];
+  currentWork: CurrentWork;
+  suggestedNextAction: SuggestedNextAction;
+  /** Reused `describeContribution` narrative over the full activity list. */
+  provenanceSummary: string[];
+  /** Present only when the caller supplied a `since` cursor. */
+  since?: SinceProjection;
 }
 
 export interface ActivityPage {
@@ -233,7 +292,11 @@ export interface CampfireService {
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;
   listWorkspaces(ctx: ActorContext): WorkspaceSummary[];
   getWorkspace(ctx: ActorContext, workspaceId: string): WorkspaceView;
-  getWorkspaceContext(ctx: ActorContext, workspaceId: string): WorkspaceContext;
+  getWorkspaceContext(
+    ctx: ActorContext,
+    workspaceId: string,
+    options?: { since?: string },
+  ): WorkspaceContext;
   getActivity(ctx: ActorContext, input: GetActivityInput): ActivityPage;
 
   createHuman(ctx: ActorContext | undefined, input: CreateHumanInput): CreateHumanResult;

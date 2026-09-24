@@ -342,6 +342,31 @@ describe("error handling", () => {
   });
 });
 
+describe("Sprint 008 orientation cursor", () => {
+  it("advertises the optional since cursor on get_workspace_context", async () => {
+    const { a } = await connectAgents();
+    const tool = (await a.listTools()).tools.find((item) => item.name === "get_workspace_context");
+    expect(tool).toBeDefined();
+    const schema = tool?.inputSchema as {
+      properties?: Record<string, unknown>;
+      required?: string[];
+    };
+    expect(schema.properties?.since).toBeDefined();
+    expect(schema.required ?? []).not.toContain("since");
+  });
+
+  it("forwards since to the service and surfaces a typed validation error", async () => {
+    const { a } = await connectAgents();
+    const result = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: "con_missing",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.json.error).toBe("ValidationError");
+    expect(result.json.details?.field).toBe("since");
+  });
+});
+
 describe("workspace creation isolation", () => {
   it("does not list a workspace Agent B has not joined", async () => {
     const { a, b } = await connectAgents();

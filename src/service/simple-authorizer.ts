@@ -58,6 +58,17 @@ export function createSimpleAuthorizer(store: CampfireStore): Authorizer {
         throw error;
       }
     },
+
+    canAct(ctx: ActorContext, operation: Operation, workspaceId?: string): boolean {
+      try {
+        evaluate(store, ctx, operation, workspaceId);
+        return true;
+      } catch {
+        // Boolean projection helper: no logAuthz entry, no thrown error. A
+        // context read must not emit authorization noise (Sprint 008).
+        return false;
+      }
+    },
   };
 }
 

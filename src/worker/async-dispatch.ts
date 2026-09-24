@@ -205,8 +205,12 @@ export async function dispatchCampfireMethodAsync(
       });
     case "get_workspace":
       return await service.getWorkspace(ctx, str(params, "workspaceId"));
-    case "get_workspace_context":
-      return await service.getWorkspaceContext(ctx, str(params, "workspaceId"));
+    case "get_workspace_context": {
+      const options: { since?: string } = {};
+      const since = optionalStr(params, "since");
+      if (since !== undefined) options.since = since;
+      return await service.getWorkspaceContext(ctx, str(params, "workspaceId"), options);
+    }
     case "get_activity": {
       const query: { workspaceId: string; limit?: number; before?: string } = {
         workspaceId: str(params, "workspaceId"),

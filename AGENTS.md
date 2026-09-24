@@ -61,9 +61,9 @@ docs/ROADMAP.md
 docs/SPRINT_008.md
 ```
 
-The latest active sprint contract is `docs/SPRINT_008.md` (next, implementation
-not started). Sprint 007 is complete and its result is
-`docs/SPRINT_007_RESULT.md`.
+Sprint 008 — Enter the Room is complete (CONDITIONAL GO); its result is
+`docs/SPRINT_008_RESULT.md`. Sprint 007 is complete; its result is
+`docs/SPRINT_007_RESULT.md`. No Sprint 009 contract is active or precommitted.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

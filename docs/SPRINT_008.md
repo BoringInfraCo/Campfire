@@ -1,6 +1,6 @@
 # Campfire — Sprint 008: Enter the Room
 
-**Status:** Contract — implementation not started; requires explicit acceptance
+**Status:** Complete (CONDITIONAL GO) — see `docs/SPRINT_008_RESULT.md`
 **Date:** September 24, 2026  
 **Company:** Boring Infra Co.  
 **Depends on:** Sprint 007 — Harness Readiness Preflight (**GO**)  

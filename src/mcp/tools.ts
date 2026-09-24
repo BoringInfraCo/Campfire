@@ -201,8 +201,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "get_workspace_context",
     {
       description:
-        "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, and recent provenance.",
-      inputSchema: { workspaceId: z.string() },
+        "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Pass `since` (a contribution id) to also receive contributions strictly after it.",
+      inputSchema: { workspaceId: z.string(), since: z.string().optional() },
     },
     (args) => run(() => invoke("get_workspace_context", args)),
   );

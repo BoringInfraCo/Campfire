@@ -86,6 +86,38 @@ describe("runCli", () => {
     expect(output.trimStart().startsWith("{")).toBe(false);
   });
 
+  it("renders the Sprint 008 orientation sections for show", async () => {
+    await cli(["add-decision", "--workspace", FIXTURE.workspaces.billing, "--summary", "CLI accepted"]);
+    const accepted = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    await cli(["accept-decision", accepted.id]);
+    await cli(["add-decision", "--workspace", FIXTURE.workspaces.billing, "--summary", "CLI proposed"]);
+    await cli([
+      "create-task",
+      "--workspace",
+      FIXTURE.workspaces.billing,
+      "--title",
+      "CLI assigned",
+      "--assignee-id",
+      FIXTURE.humans.sergio,
+      "--assignee-type",
+      "human",
+    ]);
+    await cli(["create-task", "--workspace", FIXTURE.workspaces.billing, "--title", "CLI unassigned blocked"]);
+    const blocked = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    await cli(["update-task", blocked.id, "--status", "blocked"]);
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing]);
+
+    const output = stdout();
+    expect(output).toContain("Needs You");
+    expect(output).toContain("Needs Attention");
+    expect(output).toContain("Current Work");
+    expect(output).toContain("Suggested next (orientation hint)");
+    expect(output).toContain("proposed_decision_actionable");
+    expect(output).toContain("unassigned_blocked_task");
+  });
+
   it("lists workspaces", async () => {
     await cli(["list"]);
 

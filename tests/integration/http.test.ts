@@ -353,3 +353,103 @@ describe("HTTP /v1/call", () => {
     }
   });
 });
+
+describe("HTTP /v1/call Sprint 008 orientation", () => {
+  async function createPopulatedWorkspace(): Promise<{
+    workspaceId: string;
+    decisionId: string;
+    taskId: string;
+  }> {
+    const created = await call(running.url, FIXTURE.tokens.sergio, "create_workspace", {
+      teamId: FIXTURE.teamId,
+      name: "sprint-008-orientation",
+    });
+    expect(created.body.ok).toBe(true);
+    if (!created.body.ok) throw new Error("workspace creation failed");
+    const workspaceId = created.body.result.id as string;
+
+    await call(running.url, FIXTURE.tokens.sergio, "create_goal", {
+      workspaceId,
+      title: "Enter the room",
+    });
+    const decision = await call(running.url, FIXTURE.tokens.sergio, "add_decision", {
+      workspaceId,
+      summary: "Adopt the orientation projection",
+    });
+    if (!decision.body.ok) throw new Error("decision creation failed");
+    const task = await call(running.url, FIXTURE.tokens.sergio, "create_task", {
+      workspaceId,
+      title: "Render Needs You",
+      assignee: { actorId: FIXTURE.humans.sergio, actorType: "human" },
+    });
+    if (!task.body.ok) throw new Error("task creation failed");
+    await call(running.url, FIXTURE.tokens.sergio, "update_task", {
+      taskId: task.body.result.id,
+      status: "blocked",
+    });
+    return {
+      workspaceId,
+      decisionId: decision.body.result.id as string,
+      taskId: task.body.result.id as string,
+    };
+  }
+
+  it("returns the orientation projection without since when none is supplied", async () => {
+    const { workspaceId, decisionId, taskId } = await createPopulatedWorkspace();
+
+    const result = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId,
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.ok).toBe(true);
+    if (!result.body.ok) return;
+    const context = result.body.result;
+    expect(context.needsYou.map((item: { reason: string }) => item.reason)).toEqual([
+      "proposed_decision_actionable",
+      "assigned_blocked_task",
+    ]);
+    expect(context.needsYou.map((item: { id: string }) => item.id)).toEqual([decisionId, taskId]);
+    expect(context.suggestedNextAction).toMatchObject({
+      kind: "decision",
+      id: decisionId,
+      reason: "proposed_decision_actionable",
+      orientationHint: true,
+    });
+    expect(Array.isArray(context.provenanceSummary)).toBe(true);
+    expect(context.since).toBeUndefined();
+  });
+
+  it("projects contributions strictly after a since cursor and rejects an unknown one", async () => {
+    const { workspaceId } = await createPopulatedWorkspace();
+
+    const activity = await call(running.url, FIXTURE.tokens.sergio, "get_activity", {
+      workspaceId,
+    });
+    expect(activity.body.ok).toBe(true);
+    if (!activity.body.ok) return;
+    const items = activity.body.result.items as Array<{ id: string }>;
+    const anchor = items[0]!.id;
+
+    const withSince = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId,
+      since: anchor,
+    });
+    expect(withSince.status).toBe(200);
+    expect(withSince.body.ok).toBe(true);
+    if (!withSince.body.ok) return;
+    expect(withSince.body.result.since).toBeDefined();
+    expect(
+      withSince.body.result.since.items.map((item: { id: string }) => item.id),
+    ).toEqual(items.slice(1).map((item) => item.id));
+
+    const unknown = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId,
+      since: "con_missing",
+    });
+    expect(unknown.status).toBe(400);
+    expect(unknown.body.ok).toBe(false);
+    if (unknown.body.ok) return;
+    expect(unknown.body.error).toBe("ValidationError");
+    expect(unknown.body.message).toContain("since");
+  });
+});

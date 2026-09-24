@@ -5,7 +5,7 @@ import { createCounterIdSource } from "../../src/domain/ids.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
 import { ORIENTATION_PROVENANCE_LIMIT, type CampfireService } from "../../src/service/service.js";
 import type { ActorContext } from "../../src/service/authorization.js";
-import type { ActorRef, ParticipantRole, WorkspaceParticipant } from "../../src/domain/types.js";
+import type { ActorRef, Decision, ParticipantRole, Task, WorkspaceParticipant } from "../../src/domain/types.js";
 import {
   ActorNotFound,
   ArtifactNotFound,
@@ -702,5 +702,407 @@ describe("activity page", () => {
     expect(() =>
       service.getActivity(ctxHuman1, { workspaceId: workspace.id, before: "con_missing" }),
     ).toThrow(ValidationError);
+  });
+});
+
+describe("Sprint 008 orientation projection", () => {
+  interface Populated {
+    workspaceId: string;
+    actionable: Decision;
+    accepted: Decision;
+    assignedOpen: Task;
+    assignedBlocked: Task;
+    inProgress: Task;
+    completed: Task;
+    unassignedBlocked: Task;
+    otherBlocked: Task;
+  }
+
+  // Build a workspace through the product (never the empty seed fixture):
+  // goal, participants, proposed + accepted decisions, tasks in all four
+  // states with assignees, findings, and an artifact.
+  function populate(): Populated {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Room" });
+    inviteAndJoin(ctxHuman1, ctxHuman2, workspace.id, "member");
+    inviteAndJoin(ctxHuman1, ctxAgent1, workspace.id, "agent");
+    service.createGoal(ctxHuman1, { workspaceId: workspace.id, title: "Ship the room" });
+
+    const actionable = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Adopt D1",
+    });
+    const accepted = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Adopt D2",
+    });
+    service.acceptDecision(ctxHuman1, accepted.id);
+
+    const assignedOpen = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Open mine",
+      assignee: HUMAN1,
+    });
+    const assignedBlocked = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Blocked mine",
+      assignee: HUMAN1,
+    });
+    service.updateTask(ctxHuman1, { taskId: assignedBlocked.id, status: "blocked" });
+    const inProgress = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "In progress",
+      assignee: HUMAN1,
+    });
+    service.updateTask(ctxHuman1, { taskId: inProgress.id, status: "in_progress" });
+    const completed = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Done",
+      assignee: HUMAN1,
+    });
+    service.updateTask(ctxHuman1, { taskId: completed.id, status: "in_progress" });
+    service.updateTask(ctxHuman1, { taskId: completed.id, status: "completed" });
+
+    const unassignedBlocked = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Unassigned blocked",
+    });
+    service.updateTask(ctxHuman1, { taskId: unassignedBlocked.id, status: "blocked" });
+    const otherBlocked = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Other blocked",
+      assignee: HUMAN2,
+    });
+    service.updateTask(ctxHuman1, { taskId: otherBlocked.id, status: "blocked" });
+
+    service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: "Finding A" });
+    service.addArtifact(ctxHuman1, {
+      workspaceId: workspace.id,
+      type: "log",
+      title: "Log A",
+      uriOrPath: "a.log",
+    });
+
+    return {
+      workspaceId: workspace.id,
+      actionable,
+      accepted,
+      assignedOpen,
+      assignedBlocked,
+      inProgress,
+      completed,
+      unassignedBlocked,
+      otherBlocked,
+    };
+  }
+
+  it("derives needsYou, needsAttention, currentWork, and provenance from one call", () => {
+    const p = populate();
+    const context = service.getWorkspaceContext(ctxHuman1, p.workspaceId);
+
+    // Needs You: only items the owner is authorized to act on.
+    expect(context.needsYou.map((item) => item.reason)).toEqual([
+      "proposed_decision_actionable",
+      "assigned_blocked_task",
+      "assigned_open_task",
+    ]);
+    expect(context.needsYou.find((item) => item.reason === "proposed_decision_actionable")).toMatchObject({
+      kind: "decision",
+      id: p.actionable.id,
+      status: "proposed",
+      summary: "Adopt D1",
+    });
+    expect(context.needsYou.find((item) => item.reason === "assigned_blocked_task")).toMatchObject({
+      kind: "task",
+      id: p.assignedBlocked.id,
+      assignee: HUMAN1,
+    });
+    expect(context.needsYou.find((item) => item.reason === "assigned_open_task")?.id).toBe(
+      p.assignedOpen.id,
+    );
+
+    // Needs Attention: team-level items the owner cannot act on directly.
+    expect(context.needsAttention.map((item) => item.reason)).toEqual([
+      "unassigned_blocked_task",
+      "team_blocked_task",
+    ]);
+    expect(context.needsAttention.find((item) => item.reason === "unassigned_blocked_task")?.id).toBe(
+      p.unassignedBlocked.id,
+    );
+    expect(context.needsAttention.find((item) => item.reason === "team_blocked_task")?.id).toBe(
+      p.otherBlocked.id,
+    );
+
+    // Current work is authorization-independent.
+    expect(context.currentWork.inProgressTasks.map((task) => task.id)).toEqual([p.inProgress.id]);
+    expect(context.currentWork.blockedTasks.map((task) => task.id).sort()).toEqual(
+      [p.assignedBlocked.id, p.unassignedBlocked.id, p.otherBlocked.id].sort(),
+    );
+    expect(context.currentWork.acceptedDecisions.map((decision) => decision.id)).toEqual([
+      p.accepted.id,
+    ]);
+    expect(context.openTasks.map((task) => task.id)).not.toContain(p.completed.id);
+
+    // Suggested next action is the highest-precedence actionable item, as a hint.
+    expect(context.suggestedNextAction).toEqual({
+      kind: "decision",
+      id: p.actionable.id,
+      summary: "Adopt D1",
+      reason: "proposed_decision_actionable",
+      orientationHint: true,
+    });
+
+    // Provenance summary reuses describeContribution over the full activity.
+    expect(context.provenanceSummary.length).toBe(context.provenanceTotal);
+    expect(context.provenanceSummary.some((line) => line.includes("Finding A"))).toBe(true);
+
+    // No cursor supplied, no `since` projection.
+    expect(context.since).toBeUndefined();
+  });
+
+  it("follows suggestedNextAction precedence deterministically", () => {
+    // 1. actionable proposed decision beats an assigned blocked task.
+    const ws1 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P1" });
+    const decision1 = service.addDecision(ctxHuman1, { workspaceId: ws1.id, summary: "decide" });
+    const blocked1 = service.createTask(ctxHuman1, {
+      workspaceId: ws1.id,
+      title: "blocked",
+      assignee: HUMAN1,
+    });
+    service.updateTask(ctxHuman1, { taskId: blocked1.id, status: "blocked" });
+    expect(service.getWorkspaceContext(ctxHuman1, ws1.id).suggestedNextAction).toMatchObject({
+      kind: "decision",
+      id: decision1.id,
+      reason: "proposed_decision_actionable",
+      orientationHint: true,
+    });
+
+    // 2. caller-assigned blocked task.
+    const ws2 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P2" });
+    const blocked2 = service.createTask(ctxHuman1, {
+      workspaceId: ws2.id,
+      title: "blocked",
+      assignee: HUMAN1,
+    });
+    service.updateTask(ctxHuman1, { taskId: blocked2.id, status: "blocked" });
+    expect(service.getWorkspaceContext(ctxHuman1, ws2.id).suggestedNextAction).toMatchObject({
+      kind: "task",
+      id: blocked2.id,
+      reason: "assigned_blocked_task",
+      orientationHint: true,
+    });
+
+    // 3. caller-assigned open task.
+    const ws3 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P3" });
+    const open3 = service.createTask(ctxHuman1, {
+      workspaceId: ws3.id,
+      title: "open",
+      assignee: HUMAN1,
+    });
+    expect(service.getWorkspaceContext(ctxHuman1, ws3.id).suggestedNextAction).toMatchObject({
+      kind: "task",
+      id: open3.id,
+      reason: "assigned_open_task",
+      orientationHint: true,
+    });
+
+    // 4a. unassigned blocked task.
+    const ws4 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P4" });
+    const unassigned4 = service.createTask(ctxHuman1, {
+      workspaceId: ws4.id,
+      title: "unassigned blocked",
+    });
+    service.updateTask(ctxHuman1, { taskId: unassigned4.id, status: "blocked" });
+    expect(service.getWorkspaceContext(ctxHuman1, ws4.id).suggestedNextAction).toMatchObject({
+      kind: "task",
+      id: unassigned4.id,
+      reason: "unassigned_blocked_task",
+      orientationHint: true,
+    });
+
+    // 4c. oldest open task when nothing higher-precedence exists.
+    const ws5 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P5" });
+    const oldest = service.createTask(ctxHuman1, { workspaceId: ws5.id, title: "first" });
+    service.createTask(ctxHuman1, { workspaceId: ws5.id, title: "second" });
+    expect(service.getWorkspaceContext(ctxHuman1, ws5.id).suggestedNextAction).toMatchObject({
+      kind: "task",
+      id: oldest.id,
+      orientationHint: true,
+    });
+
+    // 5. nothing to suggest.
+    const ws6 = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "P6" });
+    expect(service.getWorkspaceContext(ctxHuman1, ws6.id).suggestedNextAction).toEqual({
+      kind: "none",
+      summary: "",
+      reason: "none",
+      orientationHint: true,
+    });
+  });
+
+  it("tie-breaks equal updatedAt by id", () => {
+    const constant = createCampfireService({
+      store,
+      idSource: createCounterIdSource(),
+      clock: () => NOW,
+    });
+    const workspace = constant.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Tie" });
+    const first = constant.addDecision(ctxHuman1, { workspaceId: workspace.id, summary: "A" });
+    const second = constant.addDecision(ctxHuman1, { workspaceId: workspace.id, summary: "B" });
+
+    const context = constant.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.needsYou.map((item) => item.id)).toEqual([first.id, second.id]);
+    expect(context.suggestedNextAction.id).toBe(first.id);
+  });
+
+  it("is authorization-aware: a viewer gets no Needs You decision", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Viewer" });
+    inviteAndJoin(ctxHuman1, ctxHuman2, workspace.id, "viewer");
+    const decision = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Viewer cannot accept",
+    });
+
+    const context = service.getWorkspaceContext(ctxHuman2, workspace.id);
+    expect(context.needsYou).toEqual([]);
+    expect(context.needsAttention).toEqual([
+      {
+        kind: "decision",
+        id: decision.id,
+        summary: "Viewer cannot accept",
+        status: "proposed",
+        reason: "team_proposed_decision",
+      },
+    ]);
+    expect(context.suggestedNextAction).toMatchObject({
+      kind: "decision",
+      id: decision.id,
+      reason: "team_proposed_decision",
+      orientationHint: true,
+    });
+  });
+
+  it("rejects a non-participant before retrieval", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Private" });
+    expect(() => service.getWorkspaceContext(ctxAgent1, workspace.id)).toThrow(ParticipantRequired);
+  });
+
+  it("projects contributions strictly after a since cursor", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Since" });
+    service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: "one" });
+    service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: "two" });
+    const activity = store.listContributions(workspace.id);
+    const anchor = activity[1]!.id;
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id, { since: anchor });
+    expect(context.since?.items.map((item) => item.id)).toEqual(
+      activity.slice(2).map((item) => item.id),
+    );
+    expect(context.since?.cursor).toBe(activity.at(-1)!.id);
+    expect(context.since?.truncated).toBe(false);
+  });
+
+  it("caps the since window and rejects an unknown cursor", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "SinceCap" });
+    const anchor = store.listContributions(workspace.id).at(-1)!.id;
+    for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 3; index += 1) {
+      service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: `finding ${index}` });
+    }
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id, { since: anchor });
+    expect(context.since?.truncated).toBe(true);
+    expect(context.since?.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
+    expect(context.since?.items.at(-1)?.id).toBe(
+      store.listContributions(workspace.id).at(-1)!.id,
+    );
+
+    let thrown: unknown;
+    try {
+      service.getWorkspaceContext(ctxHuman1, workspace.id, { since: "con_missing" });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(ValidationError);
+    expect((thrown as ValidationError).details?.field).toBe("since");
+  });
+});
+
+describe("Sprint 008 attention edge cases", () => {
+  it("demotes viewer-assigned blocked and open tasks to needsAttention, not needsYou", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Viewer edges" });
+    inviteAndJoin(ctxHuman1, ctxHuman2, workspace.id, "viewer");
+
+    // Tasks are assigned to the viewer by the owner; the viewer may read but
+    // cannot act, so neither task may surface as Needs You (Sprint 008).
+    const blocked = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Viewer blocked",
+      assignee: HUMAN2,
+    });
+    service.updateTask(ctxHuman1, { taskId: blocked.id, status: "blocked" });
+    const open = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Viewer open",
+      assignee: HUMAN2,
+    });
+
+    const context = service.getWorkspaceContext(ctxHuman2, workspace.id);
+    expect(context.needsYou).toEqual([]);
+    expect(context.needsAttention).toEqual([
+      {
+        kind: "task",
+        id: blocked.id,
+        summary: "Viewer blocked",
+        status: "blocked",
+        reason: "team_blocked_task",
+        assignee: HUMAN2,
+      },
+      {
+        kind: "task",
+        id: open.id,
+        summary: "Viewer open",
+        status: "open",
+        reason: "assigned_open_task",
+        assignee: HUMAN2,
+      },
+    ]);
+  });
+
+  it("falls back to team_open_task for an unassigned oldest open task", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Fallback" });
+    const oldest = service.createTask(ctxHuman1, { workspaceId: workspace.id, title: "Oldest open" });
+    service.createTask(ctxHuman1, { workspaceId: workspace.id, title: "Newer open" });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    // The owner cannot act on an unassigned task, so it is neither Needs You
+    // nor Needs Attention; the generic fallback still points at it.
+    expect(context.needsYou).toEqual([]);
+    expect(context.needsAttention).toEqual([]);
+    expect(context.suggestedNextAction).toEqual({
+      kind: "task",
+      id: oldest.id,
+      summary: "Oldest open",
+      reason: "team_open_task",
+      orientationHint: true,
+    });
+  });
+
+  it("keeps an actionable proposed decision ahead of the team_open_task fallback", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Precedence" });
+    const decision = service.addDecision(ctxHuman1, { workspaceId: workspace.id, summary: "Decide now" });
+    const fallback = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Unassigned open",
+    });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.needsAttention).toEqual([]);
+    expect(context.suggestedNextAction).toEqual({
+      kind: "decision",
+      id: decision.id,
+      summary: "Decide now",
+      reason: "proposed_decision_actionable",
+      orientationHint: true,
+    });
+    expect(context.suggestedNextAction.id).not.toBe(fallback.id);
   });
 });
