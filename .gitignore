@@ -3,6 +3,7 @@ dist/
 release/
 .campfire/
 evidence/
+docs/internal/
 *.log
 !fixtures/billing/deploy.log
 .DS_Store
