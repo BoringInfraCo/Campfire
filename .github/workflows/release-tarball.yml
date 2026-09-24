@@ -18,6 +18,10 @@ permissions:
 
 jobs:
   pack:
+    # Release assets belong to the public snapshot repository. After the
+    # canonical repository is renamed, this guard keeps historical/manual
+    # release events there from publishing private development artifacts.
+    if: github.repository == 'BoringInfraCo/Campfire'
     strategy:
       fail-fast: false
       matrix:

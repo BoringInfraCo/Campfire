@@ -110,6 +110,13 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 
 ## Development
 
+Campfire uses a release-mirror repository model. Canonical development happens
+in the private `BoringInfraCo/Campfire-internal` repository. Reviewed release
+snapshots are exported with clean public history to
+`BoringInfraCo/Campfire`; normal development never pushes directly to that
+mirror. Run `npm run export:public -- --ref <release-tag> --output <directory>`
+to produce an audited snapshot from a committed release ref.
+
 ```bash
 npm run typecheck
 npm test

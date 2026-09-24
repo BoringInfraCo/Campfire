@@ -35,7 +35,8 @@
     "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
     "dev:worker": "wrangler dev",
     "db:migrate": "wrangler d1 migrations apply campfire --remote",
-    "pack:tarball": "sh scripts/package.sh"
+    "pack:tarball": "sh scripts/package.sh",
+    "export:public": "node scripts/export-public-release.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

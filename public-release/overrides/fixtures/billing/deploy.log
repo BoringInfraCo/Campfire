@@ -1,0 +1,9 @@
+2026-09-10T14:02:11Z INFO  deploy starting billing-service v2.14.0 (env=synthetic)
+2026-09-10T14:02:11Z INFO  connecting to postgres://billing-db.example.invalid:5432/billing
+2026-09-10T14:02:12Z INFO  acquiring migration advisory lock
+2026-09-10T14:02:12Z INFO  applying migration 284_add_billing_status
+2026-09-10T14:03:11Z WARN  migration 284 still running after 60s (step=backfill invoices)
+2026-09-10T14:04:12Z WARN  migration 284 still running after 120s (step=backfill invoices)
+2026-09-10T14:04:12Z ERROR deploy timed out after 120s; aborting
+2026-09-10T14:04:12Z ERROR rolling back migration 284
+2026-09-10T14:04:13Z ERROR deployment failed: migration advisory lock not released
