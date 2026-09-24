@@ -145,12 +145,19 @@ OpenCode uses the same server with its own token and `CAMPFIRE_HARNESS=opencode`
 
 ```bash
 npx tsx src/cli/index.ts show <workspaceId>
+npx tsx src/cli/index.ts show <workspaceId> --since <contributionId>
 npx tsx src/cli/index.ts add-finding --workspace <workspaceId> --summary "..."
 npx tsx src/cli/index.ts create-task --workspace <workspaceId> --title "..."
 npx tsx src/cli/index.ts add-decision --workspace <workspaceId> --summary "..."
 npx tsx src/cli/index.ts accept-decision <decisionId>
 npx tsx src/cli/index.ts update-task <taskId> --status in_progress
 ```
+
+Pass `--since <contributionId>` to print only the contributions recorded
+strictly after that observation, a `truncated` flag when older post-cursor rows
+were omitted, and the newest contribution id to retain as the next cursor. The
+cursor is an observation pointer; it is not a summary of the changes and not
+permission to execute.
 
 ## 7. Do not
 

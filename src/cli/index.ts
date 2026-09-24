@@ -329,6 +329,76 @@ function formatContributionLine(contribution: Contribution): string {
   );
 }
 
+/**
+ * Payload fields a returning caller needs to read the change itself. Only the
+ * fields the contribution actually recorded are printed (Sprint 010), so an
+ * assignee-only task update does not invent a status.
+ */
+function formatPayloadFields(contribution: Contribution): string | undefined {
+  const payload = contribution.payload ?? {};
+  const parts: string[] = [];
+  for (const key of ["summary", "title", "status"] as const) {
+    const value = payload[key];
+    if (typeof value === "string" && value.length > 0) {
+      parts.push(`${key}=${value}`);
+    }
+  }
+  const assignee = payload.assignee;
+  if (assignee === null) {
+    parts.push("assignee=null");
+  } else if (
+    typeof assignee === "object" &&
+    assignee !== null &&
+    typeof (assignee as ActorRef).actorId === "string"
+  ) {
+    parts.push(`assignee=${(assignee as ActorRef).actorId}`);
+  }
+  return parts.length === 0 ? undefined : parts.join("  ");
+}
+
+function formatDeltaLine(contribution: Contribution): string {
+  return joinFields(
+    contribution.id,
+    contribution.createdAt,
+    contribution.actor.actorId,
+    contribution.action,
+    contribution.objectType,
+    contribution.objectId,
+    formatPayloadFields(contribution),
+  );
+}
+
+/**
+ * The contribution delta for a caller-supplied `--since` cursor. States
+ * `truncated` when the window omits older post-cursor rows; the resume cursor
+ * always points at the newest contribution in the log, including when the
+ * window is partial.
+ */
+function formatDeltaSection(context: WorkspaceContext, since: string | undefined): string[] {
+  const delta = context.since;
+  if (delta === undefined) {
+    return [];
+  }
+  const anchor = since ?? delta.cursor;
+  if (delta.items.length === 0) {
+    return [`Since  ${anchor}  (no new contributions)`];
+  }
+  const note = delta.truncated ? "; truncated" : "";
+  return [
+    `Since  ${anchor}  (${delta.items.length} contributions${note})`,
+    ...delta.items.map((item) => `  ${formatDeltaLine(item)}`),
+  ];
+}
+
+/**
+ * Newest contribution id the caller should retain for the next return. It is
+ * an observation pointer, not a summary of the changes or permission to execute.
+ */
+function formatResumeCursor(context: WorkspaceContext): string | undefined {
+  const newest = context.since?.cursor ?? context.provenance.at(-1)?.id;
+  return newest === undefined ? undefined : labeled("Resume cursor", newest);
+}
+
 function formatDecision(decision: Decision): string {
   return joinFields(decision.id, decision.summary);
 }
@@ -431,7 +501,7 @@ function formatAlignmentBoundary(context: WorkspaceContext): string[] {
   return section("Recorded alignment boundary", lines);
 }
 
-function formatOrientation(context: WorkspaceContext): string {
+function formatOrientation(context: WorkspaceContext, since?: string): string {
   const { workspace, goal } = context;
   const lines: string[] = [
     labeled("Workspace", workspace.id, workspace.name, `[${workspace.status}]`),
@@ -465,6 +535,7 @@ function formatOrientation(context: WorkspaceContext): string {
         joinFields(artifact.id, artifact.type, artifact.uriOrPath, artifact.title),
       ),
     ),
+    ...formatDeltaSection(context, since),
     ...provenanceSection(
       "Recent provenance",
       context.provenance,
@@ -472,6 +543,10 @@ function formatOrientation(context: WorkspaceContext): string {
       context.provenanceTruncated,
     ),
   );
+  const resumeCursor = formatResumeCursor(context);
+  if (resumeCursor !== undefined) {
+    lines.push(resumeCursor);
+  }
   return lines.join("\n");
 }
 
@@ -653,6 +728,12 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requirePositional(parsed, "workspaceId");
   const asJson = parsed.flags.json === true;
   const full = parsed.flags.full === true;
+  const since = optionalFlag(parsed.flags, "since");
+  if (full && since !== undefined) {
+    throw new ValidationError("--since applies to the orientation projection, not --full", {
+      field: "since",
+    });
+  }
   await withBackend(argv, async (backend) => {
     if (full) {
       const view = (await backend.call("get_workspace", { workspaceId })) as WorkspaceView;
@@ -663,12 +744,18 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
       console.log(formatFullView(view));
       return;
     }
-    const context = (await backend.call("get_workspace_context", { workspaceId })) as WorkspaceContext;
+    const params: Record<string, unknown> = { workspaceId };
+    if (since !== undefined) {
+      params.since = since;
+    }
+    const context = (await backend.call("get_workspace_context", params)) as WorkspaceContext;
     if (asJson) {
+      // The service object already carries workspace, alignment, currentWork,
+      // the orientation hint, and the since projection.
       printJson(context);
       return;
     }
-    console.log(formatOrientation(context));
+    console.log(formatOrientation(context, since));
   });
 }
 
@@ -959,7 +1046,7 @@ function printUsage(): void {
     "  campfire preflight <workspaceId> [--session <id>] [--harness <name>] [--token <token>] [--json]",
     "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
-    "  campfire show <workspaceId> [--json] [--full]",
+    "  campfire show <workspaceId> [--since <contributionId>] [--json] [--full]",
     "  campfire activity <workspaceId> [--limit N] [--before <contributionId>] [--json]",
     "  campfire create-workspace --team <teamId> --name <name> [--description <text>]",
     "  campfire update-workspace <workspaceId> --status active|completed|archived",
@@ -990,8 +1077,11 @@ function printUsage(): void {
     "When CAMPFIRE_URL is set, commands POST /v1/call with CAMPFIRE_TOKEN / --token",
     "instead of opening the local SQLite file. serve/init/seed always use the local DB.",
     "",
-    "show prints the orientation projection as readable text; --full uses the",
-    "inspector (get_workspace). show and activity default to human text and honor",
+    "show prints the orientation projection as readable text; --since adds the",
+    "contributions recorded strictly after that id, states when older rows are",
+    "omitted, and prints the newest contribution id as the resume cursor. --full",
+    "uses the inspector (get_workspace). show and activity default to human text",
+    "and honor",
     "--json; init, seed, bootstrap, whoami, list, and every create/add/update/",
     "accept/issue/revoke/invite/join command print JSON with or without the flag.",
     "Under --json a failure prints {\"error\":{\"code\",\"message\"[,\"details\"]}} on",

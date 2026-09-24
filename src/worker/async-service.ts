@@ -893,7 +893,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       await store.transaction(async () => {
         await store.consumeInvite(invite.id, now);
         await store.addParticipant(participant);
-        record(
+        await record(
           ctx,
           input.workspaceId,
           "join",
@@ -942,7 +942,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       };
       await store.transaction(async () => {
         await store.createInvite(invite);
-        record(
+        await record(
           ctx,
           input.workspaceId,
           "create",
@@ -1002,7 +1002,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       };
       await store.transaction(async () => {
         await store.createAgentSession(session);
-        record(
+        await record(
           ctx,
           input.workspaceId,
           "register_session",
@@ -1171,7 +1171,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       };
       await store.transaction(async () => {
         await store.createDecision(decision);
-        record(
+        await record(
           ctx,
           input.workspaceId,
           "create",
@@ -1301,7 +1301,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       };
       await store.transaction(async () => {
         await store.createArtifact(artifact);
-        record(
+        await record(
           ctx,
           input.workspaceId,
           "create",

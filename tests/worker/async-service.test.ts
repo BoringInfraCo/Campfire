@@ -3,6 +3,7 @@ import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
 import { createCounterIdSource } from "../../src/domain/ids.js";
 import { createAsyncCampfireService } from "../../src/worker/async-service.js";
+import { ORIENTATION_PROVENANCE_LIMIT } from "../../src/service/service.js";
 import type { AsyncCampfireStore } from "../../src/worker/d1-store.js";
 import { dispatchCampfireMethodAsync } from "../../src/worker/async-dispatch.js";
 import { createD1WorkerHandler } from "../../src/worker/handler.js";
@@ -27,6 +28,31 @@ function wrapSync(store: CampfireStore): AsyncCampfireStore {
       if (typeof value !== "function") return value;
       return (...args: unknown[]) =>
         Promise.resolve((value as (...a: unknown[]) => unknown).apply(target, args));
+    },
+  }) as unknown as AsyncCampfireStore;
+}
+
+/**
+ * Defer contribution inserts by a macrotask. A service method that does not
+ * await `record()` resolves before the row lands, so a following read misses
+ * it — the sequencing bug Sprint 010 closes for the Workers/D1 path.
+ */
+function deferContributions(store: AsyncCampfireStore): AsyncCampfireStore {
+  return new Proxy(store, {
+    get(target, prop, receiver) {
+      if (prop === "createContribution") {
+        const insert = Reflect.get(target, prop, receiver) as (value: unknown) => Promise<void>;
+        return (value: unknown) =>
+          new Promise<void>((resolve, reject) => {
+            setTimeout(() => {
+              insert.call(target, value).then(resolve, reject);
+            }, 0);
+          });
+      }
+      const value = Reflect.get(target, prop, receiver) as unknown;
+      if (typeof value !== "function") return value;
+      return (...args: unknown[]) =>
+        (value as (...a: unknown[]) => unknown).apply(target, args);
     },
   }) as unknown as AsyncCampfireStore;
 }
@@ -157,6 +183,65 @@ describe("async service port (Workers/D1 logic)", () => {
     const other = await service.createHuman(ctx, { teamId: "team_1", displayName: "Grace" });
     const otherCtx = { actor: { actorId: other.human.id, actorType: "human" as const } };
     await expect(service.getWorkspace(otherCtx, workspace.id)).rejects.toThrow(ParticipantRequired);
+  });
+});
+
+describe("Sprint 010 contribution sequencing (async port)", () => {
+  it("awaits the contribution write for join, invite, register session, decision, and artifact", async () => {
+    const sync = openInMemoryStore();
+    const store = deferContributions(wrapSync(sync));
+    const service = createAsyncCampfireService({
+      store,
+      idSource: createCounterIdSource(),
+      clock: () => NOW,
+    });
+    await store.createOrganization({ id: "org_1", name: "Boring Infra Co.", createdAt: NOW });
+    await store.createTeam({ id: "team_1", organizationId: "org_1", name: "Engineering", createdAt: NOW });
+    const { human } = await service.createHuman(undefined, { teamId: "team_1", displayName: "Ada" });
+    const ctx = { actor: { actorId: human.id, actorType: "human" as const } };
+    const other = await service.createHuman(ctx, { teamId: "team_1", displayName: "Grace" });
+    const otherActor = { actorId: other.human.id, actorType: "human" as const };
+
+    const workspace = await service.createWorkspace(ctx, { teamId: "team_1", name: "Sequenced" });
+    await service.inviteToWorkspace(ctx, { workspaceId: workspace.id, actor: otherActor, role: "member" });
+    await service.joinWorkspace({ actor: otherActor }, { workspaceId: workspace.id });
+
+    const created = await service.createAgent(ctx, {
+      teamId: "team_1",
+      humanId: human.id,
+      name: "Codex",
+      harness: "codex",
+    });
+    const agentActor = { actorId: created.agent.id, actorType: "agent" as const };
+    await service.inviteToWorkspace(ctx, { workspaceId: workspace.id, actor: agentActor, role: "agent" });
+    await service.joinWorkspace({ actor: agentActor }, { workspaceId: workspace.id });
+    await service.registerAgentSession(
+      { actor: agentActor },
+      { agentId: agentActor.actorId, workspaceId: workspace.id, harness: "codex" },
+    );
+    await service.addDecision(ctx, { workspaceId: workspace.id, summary: "Sequenced" });
+    await service.addArtifact(ctx, {
+      workspaceId: workspace.id,
+      type: "log",
+      title: "Log",
+      uriOrPath: "a.log",
+    });
+
+    // Every write must be durable before its method resolves: the deferred
+    // store has not inserted anything at this point unless the service awaited.
+    const activity = sync.listContributions(workspace.id);
+    expect(activity.map((item) => [item.action, item.objectType])).toEqual([
+      ["create", "workspace"],
+      ["join", "participant"],
+      ["create", "invite"],
+      ["join", "participant"],
+      ["create", "invite"],
+      ["join", "participant"],
+      ["register_session", "agent_session"],
+      ["create", "decision"],
+      ["create", "artifact"],
+    ]);
+    expect(activity.at(-1)?.actor.actorId).toBe(human.id);
   });
 });
 
@@ -296,6 +381,26 @@ describe("Sprint 008 orientation projection (async parity)", () => {
     );
     expect(context.since?.cursor).toBe(activity.at(-1)!.id);
     expect(context.since?.truncated).toBe(false);
+
+    const newest = activity.at(-1)!.id;
+    const empty = await p.service.getWorkspaceContext(p.ctx, p.workspace.id, { since: newest });
+    expect(empty.since).toEqual({ cursor: newest, items: [], truncated: false });
+
+    for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 1; index += 1) {
+      await p.service.addFinding(p.ctx, { workspaceId: p.workspace.id, summary: `more ${index}` });
+    }
+    const after = p.sync.listContributions(p.workspace.id);
+    const capped = await p.service.getWorkspaceContext(p.ctx, p.workspace.id, { since: newest });
+    expect(capped.since?.truncated).toBe(true);
+    expect(capped.since?.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
+    expect(capped.since?.cursor).toBe(after.at(-1)!.id);
+    expect(capped.since?.items.map((item) => item.id)).not.toContain(after[activity.length]!.id);
+
+    const elsewhere = await p.service.createWorkspace(p.ctx, { teamId: "team_1", name: "Elsewhere" });
+    const foreign = p.sync.listContributions(elsewhere.id).at(-1)!.id;
+    await expect(
+      p.service.getWorkspaceContext(p.ctx, p.workspace.id, { since: foreign }),
+    ).rejects.toMatchObject({ code: "ValidationError", details: { field: "since" } });
 
     await expect(
       p.service.getWorkspaceContext(p.ctx, p.workspace.id, { since: "con_missing" }),

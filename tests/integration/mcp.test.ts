@@ -7,6 +7,7 @@ import { createCounterIdSource } from "../../src/domain/ids.js";
 import { createCampfireMcpServer } from "../../src/mcp/tools.js";
 import type { ServerIdentity } from "../../src/mcp/context.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
+import { ORIENTATION_PROVENANCE_LIMIT } from "../../src/service/service.js";
 import type { CampfireService } from "../../src/service/service.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
@@ -379,6 +380,41 @@ describe("Sprint 008 orientation cursor", () => {
     expect(result.isError).toBe(true);
     expect(result.json.error).toBe("ValidationError");
     expect(result.json.details?.field).toBe("since");
+  });
+
+  it("returns the same truncated and empty windows as the service", async () => {
+    const { a } = await connectAgents();
+    const humanCtx = {
+      actor: { actorId: FIXTURE.humans.sergio, actorType: "human" as const },
+    };
+    for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 1; index += 1) {
+      service.addFinding(humanCtx, {
+        workspaceId: FIXTURE.workspaces.billing,
+        summary: `mcp delta ${index}`,
+      });
+    }
+
+    const activity = await call(a, "get_activity", { workspaceId: FIXTURE.workspaces.billing });
+    // Activity pages are chronological (oldest first).
+    const items = activity.json.items as Array<{ id: string }>;
+    const oldest = items[0]!.id;
+    const newest = items.at(-1)!.id;
+
+    const truncated = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: oldest,
+    });
+    expect(truncated.isError).toBe(false);
+    expect(truncated.json.since.truncated).toBe(true);
+    expect(truncated.json.since.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
+    expect(truncated.json.since.cursor).toBe(newest);
+
+    const empty = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: newest,
+    });
+    expect(empty.isError).toBe(false);
+    expect(empty.json.since).toEqual({ cursor: newest, items: [], truncated: false });
   });
 });
 

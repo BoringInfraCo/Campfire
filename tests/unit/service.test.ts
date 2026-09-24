@@ -1011,13 +1011,19 @@ describe("Sprint 008 orientation projection", () => {
     for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 3; index += 1) {
       service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: `finding ${index}` });
     }
+    const activity = store.listContributions(workspace.id);
 
     const context = service.getWorkspaceContext(ctxHuman1, workspace.id, { since: anchor });
     expect(context.since?.truncated).toBe(true);
     expect(context.since?.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
-    expect(context.since?.items.at(-1)?.id).toBe(
-      store.listContributions(workspace.id).at(-1)!.id,
+    expect(context.since?.items.map((item) => item.id)).toEqual(
+      activity.slice(-ORIENTATION_PROVENANCE_LIMIT).map((item) => item.id),
     );
+    // The window keeps the newest 20; the omitted prefix is absent.
+    expect(context.since?.items.map((item) => item.id)).not.toContain(activity[1]!.id);
+    expect(context.since?.items.at(-1)?.id).toBe(activity.at(-1)!.id);
+    // The resume cursor is the newest id in the log, including when truncated.
+    expect(context.since?.cursor).toBe(activity.at(-1)!.id);
 
     let thrown: unknown;
     try {
@@ -1027,6 +1033,96 @@ describe("Sprint 008 orientation projection", () => {
     }
     expect(thrown).toBeInstanceOf(ValidationError);
     expect((thrown as ValidationError).details?.field).toBe("since");
+  });
+});
+
+describe("Sprint 010 return contract", () => {
+  it("returns exactly the other participant's changes after a stored cursor", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Return" });
+    inviteAndJoin(ctxHuman1, ctxHuman2, workspace.id, "member");
+    const decision = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Return decision",
+    });
+    const task = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Return task",
+      assignee: HUMAN1,
+    });
+
+    // The returning caller observed the workspace at this point and retained
+    // the newest contribution id as the prior cursor.
+    const before = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    const cursor = before.provenance.at(-1)!.id;
+
+    // Another participant accepts the decision, blocks the task, and reassigns it.
+    service.acceptDecision(ctxHuman2, decision.id);
+    service.updateTask(ctxHuman2, { taskId: task.id, status: "blocked" });
+    const reassigned = service.updateTask(ctxHuman2, { taskId: task.id, assignee: HUMAN2 });
+
+    const after = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    const delta = service.getWorkspaceContext(ctxHuman1, workspace.id, { since: cursor });
+
+    expect(delta.since).toBeDefined();
+    expect(delta.since!.items.map((item) => [item.action, item.objectType, item.objectId])).toEqual([
+      ["update", "decision", decision.id],
+      ["update", "task", task.id],
+      ["update", "task", task.id],
+    ]);
+    expect(delta.since!.items.every((item) => item.actor.actorId === HUMAN2.actorId)).toBe(true);
+    expect(delta.since!.items.map((item) => item.payload)).toEqual([
+      { status: "accepted" },
+      { status: "blocked" },
+      { assignee: HUMAN2 },
+    ]);
+    expect(delta.since!.truncated).toBe(false);
+    expect(delta.since!.cursor).toBe(after.provenance.at(-1)!.id);
+    expect(reassigned.assignee).toEqual(HUMAN2);
+
+    // Current implications are the siblings on the same response.
+    expect(delta.alignment).toEqual(after.alignment);
+    expect(delta.currentWork).toEqual(after.currentWork);
+    expect(delta.suggestedNextAction).toEqual(after.suggestedNextAction);
+  });
+
+  it("returns an empty window at the newest id and exposes it through provenance", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Newest" });
+    service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: "only" });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.since).toBeUndefined();
+    const newest = context.provenance.at(-1)!.id;
+
+    const empty = service.getWorkspaceContext(ctxHuman1, workspace.id, { since: newest });
+    expect(empty.since).toEqual({ cursor: newest, items: [], truncated: false });
+  });
+
+  it("fails closed for a cursor from another workspace without returning rows", () => {
+    const a = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "A" });
+    const b = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "B" });
+    service.addFinding(ctxHuman1, { workspaceId: b.id, summary: "B finding" });
+    const foreign = store.listContributions(b.id).at(-1)!.id;
+
+    let thrown: unknown;
+    try {
+      service.getWorkspaceContext(ctxHuman1, a.id, { since: foreign });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(ValidationError);
+    expect((thrown as ValidationError).details).toEqual({ field: "since", since: foreign });
+    // The read is rejected as a whole; no partial projection from either workspace.
+    expect(String((thrown as ValidationError).message)).not.toContain("B finding");
+  });
+
+  it("rejects a non-participant before reading the delta", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Private return" });
+    service.addFinding(ctxHuman1, { workspaceId: workspace.id, summary: "hidden" });
+    const cursor = store.listContributions(workspace.id).at(-1)!.id;
+
+    expect(() => service.getWorkspaceContext(ctxHuman2, workspace.id, { since: cursor })).toThrow(
+      ParticipantRequired,
+    );
   });
 });
 

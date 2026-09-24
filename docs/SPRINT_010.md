@@ -1,6 +1,6 @@
 # Campfire — Sprint 010: Return to the Workspace
 
-**Status:** Contract — implementation not started; requires explicit acceptance
+**Status:** Complete (GO) — see `docs/SPRINT_010_RESULT.md`
 **Date:** September 24, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 009 — Align Before Execution (**GO**)

@@ -32,7 +32,7 @@ Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md
 | Command | Description |
 | --- | --- |
 | `campfire init` / `seed [--reset]` | Bootstrap org/team and load the deterministic fixture |
-| `campfire list` / `show <workspace>` / `activity <workspace>` | Inspect workspaces and their contribution history |
+| `campfire list` / `show <workspace>` / `activity <workspace>` | Inspect workspaces and their contribution history; `show --since <contributionId>` adds the delta since that observation and the newest id to retain |
 | `campfire create-workspace` / `create-goal` / `create-task` | Shape the work (goals, tasks with explicit lifecycle) |
 | `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance |
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |
@@ -104,6 +104,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - [docs/SPRINT_007_RESULT.md](docs/SPRINT_007_RESULT.md) — harness readiness preflight result
 - [docs/SPRINT_008_RESULT.md](docs/SPRINT_008_RESULT.md) — Enter the Room result (GO; Time to Context 19.8 s)
 - [docs/SPRINT_009_RESULT.md](docs/SPRINT_009_RESULT.md) — Align Before Execution result (GO)
+- [docs/SPRINT_010_RESULT.md](docs/SPRINT_010_RESULT.md) — Return to the Workspace result (GO)
 
 ---
 

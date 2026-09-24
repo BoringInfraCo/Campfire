@@ -31,7 +31,11 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "campfire-cli-"));
   dbPath = join(dir, "campfire.db");
   const store = openSqliteStore(dbPath);
-  seedFixture(store);
+  // Seed in the past so contributions recorded by later CLI calls sort after
+  // every fixture row. With the real clock, sub-millisecond fixture rows and
+  // command rows can share a timestamp and interleave in log order.
+  let seeded = Date.parse("2026-01-01T00:00:00.000Z");
+  seedFixture(store, { clock: () => new Date((seeded += 1000)).toISOString() });
   store.close();
   logs = [];
   delete process.env.CAMPFIRE_URL;
@@ -317,6 +321,8 @@ describe("runCli", () => {
     const output = stdout();
     expect(output).toContain("campfire activity <workspaceId>");
     expect(output).toContain("--before <contributionId>] [--json]");
+    expect(output).toContain("campfire show <workspaceId> [--since <contributionId>]");
+    expect(output).toContain("prints the newest contribution id as the resume cursor");
     expect(output).toContain("--json             Machine-readable output contract");
     expect(output).toContain("have no JSON mode");
     expect(output).toContain('{"error":{"code","message"');
@@ -489,6 +495,190 @@ describe("runCli", () => {
       method: "preflight",
       params: { workspaceId: FIXTURE.workspaces.billing, agentSessionId: "ses_ready" },
     });
+  });
+});
+
+describe("Sprint 010 return delta (CLI)", () => {
+  function stderrText(errSpy: { mock: { calls: unknown[][] } }): string {
+    return errSpy.mock.calls
+      .map((call) => call.map(String).join(" "))
+      .join("\n");
+  }
+
+  async function newestProvenanceId(): Promise<string> {
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--json"]);
+    const context = JSON.parse(stdout()) as { provenance: Array<{ id: string }> };
+    return context.provenance.at(-1)!.id;
+  }
+
+  it("renders the --since delta with ids, actor, payload fields, and the resume cursor", async () => {
+    await cli(["add-decision", "--workspace", FIXTURE.workspaces.billing, "--summary", "Return decision"]);
+    const decision = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    await cli(["create-task", "--workspace", FIXTURE.workspaces.billing, "--title", "Return task"]);
+    const task = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    const anchor = await newestProvenanceId();
+
+    await cli(["accept-decision", decision.id, "--actor", FIXTURE.humans.alice, "--type", "human"]);
+    await cli([
+      "update-task",
+      task.id,
+      "--status",
+      "blocked",
+      "--actor",
+      FIXTURE.humans.alice,
+      "--type",
+      "human",
+    ]);
+    await cli([
+      "update-task",
+      task.id,
+      "--status",
+      "blocked",
+      "--assignee-id",
+      FIXTURE.humans.sergio,
+      "--assignee-type",
+      "human",
+      "--actor",
+      FIXTURE.humans.alice,
+      "--type",
+      "human",
+    ]);
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor, "--json"]);
+    const context = JSON.parse(stdout()) as {
+      workspace: { id: string };
+      alignment: unknown;
+      currentWork: unknown;
+      suggestedNextAction: unknown;
+      since: {
+        cursor: string;
+        truncated: boolean;
+        items: Array<{
+          id: string;
+          actor: { actorId: string };
+          action: string;
+          objectType: string;
+          objectId: string;
+        }>;
+      };
+    };
+    // --json is the service object unchanged: the delta sits beside the same
+    // orientation siblings, not in a CLI-only shape.
+    expect(context.workspace.id).toBe(FIXTURE.workspaces.billing);
+    expect(context.alignment).toBeDefined();
+    expect(context.currentWork).toBeDefined();
+    expect(context.suggestedNextAction).toBeDefined();
+    expect(context.since.truncated).toBe(false);
+    expect(context.since.items).toHaveLength(3);
+    expect(context.since.items.map((item) => [item.action, item.objectType, item.objectId])).toEqual([
+      ["update", "decision", decision.id],
+      ["update", "task", task.id],
+      ["update", "task", task.id],
+    ]);
+    expect(context.since.items.every((item) => item.actor.actorId === FIXTURE.humans.alice)).toBe(true);
+    expect(context.since.cursor).toBe(context.since.items.at(-1)!.id);
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor]);
+    const output = stdout();
+    expect(output).toContain(`Since  ${anchor}  (3 contributions)`);
+    expect(output).toContain(`Resume cursor  ${context.since.cursor}`);
+    for (const item of context.since.items) {
+      expect(output).toContain(item.id);
+    }
+    expect(output).toContain(FIXTURE.humans.alice);
+    expect(output).toContain("status=accepted");
+    expect(output).toContain("status=blocked");
+    expect(output).toContain(`assignee=${FIXTURE.humans.sergio}`);
+    expect(output).not.toContain("truncated");
+  });
+
+  it("states truncated when the delta window omits older changes", async () => {
+    logs = [];
+    await cli(["activity", FIXTURE.workspaces.billing, "--limit", "50", "--json"]);
+    const page = JSON.parse(stdout()) as { items: Array<{ id: string }> };
+    // Activity pages are chronological (oldest first).
+    const anchor = page.items[0]!.id;
+    for (let index = 0; index < 21; index += 1) {
+      await cli([
+        "add-finding",
+        "--workspace",
+        FIXTURE.workspaces.billing,
+        "--summary",
+        `delta finding ${index}`,
+      ]);
+    }
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor, "--json"]);
+    const context = JSON.parse(stdout()) as {
+      since: { cursor: string; truncated: boolean; items: Array<{ id: string }> };
+    };
+    expect(context.since.truncated).toBe(true);
+    expect(context.since.items).toHaveLength(20);
+    expect(context.since.items.at(-1)!.id).toBe(context.since.cursor);
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor]);
+    const output = stdout();
+    expect(output).toContain("truncated");
+    expect(output).toContain(`Resume cursor  ${context.since.cursor}`);
+    // The oldest post-cursor contribution was omitted from the rendered window.
+    expect(output).not.toContain(page.items[1]!.id);
+  });
+
+  it("returns an empty delta at the newest cursor", async () => {
+    const newest = await newestProvenanceId();
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", newest, "--json"]);
+    const context = JSON.parse(stdout()) as {
+      since: { cursor: string; truncated: boolean; items: unknown[] };
+    };
+    expect(context.since).toEqual({ cursor: newest, items: [], truncated: false });
+
+    logs = [];
+    await cli(["show", FIXTURE.workspaces.billing, "--since", newest]);
+    const output = stdout();
+    expect(output).toContain(`Since  ${newest}  (no new contributions)`);
+    expect(output).toContain(`Resume cursor  ${newest}`);
+  });
+
+  it("rejects an unknown, foreign-workspace, or --full cursor without leaking rows", async () => {
+    const billingId = await newestProvenanceId();
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const unknown = await runCliEntry([
+      "--db",
+      dbPath,
+      "show",
+      FIXTURE.workspaces.billing,
+      "--since",
+      "con_missing",
+    ]);
+    expect(unknown).toBe(1);
+    expect(stderrText(errSpy)).toContain("[ValidationError]");
+    expect(stderrText(errSpy)).toContain("con_missing");
+
+    errSpy.mockClear();
+    logs = [];
+    const foreign = await runCliEntry([
+      "--db",
+      dbPath,
+      "show",
+      FIXTURE.workspaces.unrelated,
+      "--since",
+      billingId,
+    ]);
+    expect(foreign).toBe(1);
+    expect(stderrText(errSpy)).toContain("[ValidationError]");
+    expect(stdout()).not.toContain(FIXTURE.unrelatedFindingSentinel);
+
+    await expect(cli(["show", FIXTURE.workspaces.billing, "--full", "--since", billingId])).rejects.toThrow(
+      ValidationError,
+    );
   });
 });
 

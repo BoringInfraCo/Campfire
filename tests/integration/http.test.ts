@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
+import { ORIENTATION_PROVENANCE_LIMIT } from "../../src/service/service.js";
 import { startCampfireHttpServer } from "../../src/http/server.js";
 import type { RunningHttpServer } from "../../src/http/server.js";
 import { createRuntimeFromPath } from "../../src/runtime.js";
@@ -455,5 +456,62 @@ describe("HTTP /v1/call Sprint 008 orientation", () => {
     if (unknown.body.ok) return;
     expect(unknown.body.error).toBe("ValidationError");
     expect(unknown.body.message).toContain("since");
+  });
+
+  it("locks truncation, the empty window, and a foreign workspace cursor", async () => {
+    const { workspaceId } = await createPopulatedWorkspace();
+    for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 1; index += 1) {
+      const finding = await call(running.url, FIXTURE.tokens.sergio, "add_finding", {
+        workspaceId,
+        summary: `http delta ${index}`,
+      });
+      expect(finding.body.ok).toBe(true);
+    }
+
+    const activity = await call(running.url, FIXTURE.tokens.sergio, "get_activity", { workspaceId });
+    expect(activity.body.ok).toBe(true);
+    if (!activity.body.ok) return;
+    // Activity pages are chronological (oldest first).
+    const items = activity.body.result.items as Array<{ id: string }>;
+    const oldest = items[0]!.id;
+    const newest = items.at(-1)!.id;
+
+    const truncated = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId,
+      since: oldest,
+    });
+    expect(truncated.status).toBe(200);
+    expect(truncated.body.ok).toBe(true);
+    if (!truncated.body.ok) return;
+    expect(truncated.body.result.since.truncated).toBe(true);
+    expect(truncated.body.result.since.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
+    expect(truncated.body.result.since.cursor).toBe(newest);
+
+    const empty = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId,
+      since: newest,
+    });
+    expect(empty.status).toBe(200);
+    expect(empty.body.ok).toBe(true);
+    if (!empty.body.ok) return;
+    expect(empty.body.result.since).toEqual({ cursor: newest, items: [], truncated: false });
+
+    // A real contribution id from the billing workspace is unknown here.
+    const billing = await call(running.url, FIXTURE.tokens.sergio, "get_activity", {
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+    expect(billing.body.ok).toBe(true);
+    if (!billing.body.ok) return;
+    const foreignId = (billing.body.result.items as Array<{ id: string }>)[0]!.id;
+
+    const foreign = await call(running.url, FIXTURE.tokens.sergio, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.unrelated,
+      since: foreignId,
+    });
+    expect(foreign.status).toBe(400);
+    expect(foreign.body.ok).toBe(false);
+    if (foreign.body.ok) return;
+    expect(foreign.body.error).toBe("ValidationError");
+    expect(JSON.stringify(foreign.body)).not.toContain(FIXTURE.unrelatedFindingSentinel);
   });
 });
