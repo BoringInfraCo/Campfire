@@ -1524,6 +1524,48 @@ Campfire stays `private: true` and is **not published to npm**.
 
 Distribution is via the install script and GitHub Release assets.
 
+## Release-Mirror Workflow
+
+`BoringInfraCo/Campfire-internal` is the private canonical development
+repository. `BoringInfraCo/Campfire` is a public release-snapshot repository,
+not a development remote. Normal work, branches, commits, and tags originate
+in the private repository.
+
+A tag in the private repository identifies an immutable release candidate. It
+must not, by itself, silently deploy production or push private history to the
+public repository. Treat public publication and production deployment as
+explicit promotion steps with observable validation between them.
+
+When the user requests a release:
+
+1. Work from a clean `main` checkout of `Campfire-internal` that is synchronized
+   with `origin/main`.
+2. Confirm `package.json` uses the intended version and the release source
+   includes the matching tracked `public/campfire/vX.Y.Z/install.sh`.
+3. Run the relevant typecheck, tests, build, packaging, and deployment dry run.
+4. Create and push the matching annotated `vX.Y.Z` tag only when explicitly
+   authorized. A tag is the source boundary for the release; do not retarget or
+   force-push it.
+5. Export that committed tag with
+   `npm run export:public -- --ref vX.Y.Z --output <empty-directory>`.
+6. Review the manifest and complete exported diff. Stop if the exporter reports
+   a forbidden path or secret pattern; never bypass the audit to ship.
+7. Promote only the audited snapshot to `BoringInfraCo/Campfire`. Never merge,
+   mirror, or push the private Git history into the public repository.
+8. Publish the matching public GitHub Release so its workflow builds and
+   attaches all supported platform archives and checksums.
+9. Deploy the Worker/D1-backed production slice separately from the private
+   repository, then verify the versioned installer URL, release assets,
+   checksums, and a clean installation.
+
+Pushing ordinary commits to `Campfire-internal`, pushing a tag, publishing the
+public snapshot, publishing GitHub Release assets, and deploying production are
+distinct external mutations. Do not infer authorization for one from another.
+If automation is added, prefer a manually approved promotion workflow (for
+example, `workflow_dispatch` with a protected GitHub Environment) that accepts
+an existing private tag. Do not use an unrestricted tag-push workflow that can
+publish or deploy without review.
+
 Avoid architecture that requires a hosted control plane for basic functionality.
 
 A team-hosted `serve` process may provide convenience:
