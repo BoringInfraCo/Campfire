@@ -58,12 +58,15 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_VIEWER_002.md
+docs/SPRINT_008.md
 ```
 
-The latest sprint execution contract is `docs/SPRINT_VIEWER_002.md` (complete, GO).
+The latest active sprint contract is `docs/SPRINT_008.md` (next, implementation
+not started). Sprint 007 is complete and its result is
+`docs/SPRINT_007_RESULT.md`.
 
-The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction, Electron, or a second store unless a new sprint doc requires it.
+The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
+Electron, or a second store unless a new sprint doc requires it.
 
 Higher-level documents establish the product invariants that sprints must not violate.
 

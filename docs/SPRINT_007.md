@@ -133,4 +133,5 @@ Sprint 007 is complete only when:
    decision.
 
 Implementation may begin only after this contract is reviewed and explicitly
-authorized. Field Trace 001 remains paused and unaffected.
+authorized. Field Trace 001 remained paused during Sprint 007 and was later
+cancelled by founder decision.

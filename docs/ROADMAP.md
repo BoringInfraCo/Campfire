@@ -243,10 +243,13 @@ Do not begin the next major phase until this evidence exists.
 
 **Status:** Sprint 002 GO. Sprint 003 orientation partial (deterministic exit
 met, in tree; real-harness rerun + Claude Code outstanding). Sprint 004 living
-workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C GO (v1.0).
+workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C product-surface
+GO (v1.0).
 Viewer-002 team journal GO. v1.1 ships its Campfire theme and logomark. Sprint
-004/006 GO decisions cover product behavior in controlled traces; real multi-day
-team reuse and multi-participant value remain to be measured.
+006 Gate C product-surface GO. Sprint
+007 harness readiness GO. Field Trace 001 was cancelled by founder decision;
+Gate B and Gate C external behavioral evidence remain unmeasured. Sprint 008 —
+Enter the Room is next.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -967,8 +970,10 @@ Required before Phase 2.
 
 Required before investing heavily in collaboration UX.
 
-Sprint 004 showed repeat-session behavior in a deterministic trace. The human
-choice in this question still requires a real multi-day team-use run.
+Sprint 004 showed repeat-session behavior in a deterministic trace. Field
+Trace 001 was cancelled by founder decision before a qualifying multi-day human
+run. Gate B remains unmeasured; future design-partner evidence must establish
+voluntary return.
 
 ## Gate C — Multi-Participant Value
 
@@ -978,7 +983,9 @@ Required before broad team features.
 
 Sprint 006 showed a third human's contribution changing a second agent's
 continuation on the hosted token/invite path. That controlled result is GO for
-the product surface; added value during ordinary team work is still unmeasured.
+the product surface; Field Trace 001 was cancelled by founder decision before a
+qualifying multi-participant run. Gate C remains unmeasured for ordinary team
+value.
 
 ## Gate D — Authorization Need
 
@@ -1179,15 +1186,16 @@ Evidence already in hand:
 
 The v1.0 product cut used these sprint acceptance results:
 
-- Gate B (repeat usage) — Sprint 004
-- Gate C (multi-participant value) — Sprint 006
+- Gate B product surface — Sprint 004
+- Gate C product surface — Sprint 006
 - Deployment Stage B (team-hosted process, actor tokens, invite membership) — Sprint 005
 
 Sprint 004 and 006 results explicitly did not claim week-long team dogfood.
-Therefore, v1.0 is a shipped capability cut, while the behavioral evidence
-behind Gate B and C still needs a field run. Sprint 002's real cross-harness
-proof used Codex and OpenCode; the planned Claude Code live rerun was blocked
-by expired OAuth credentials and remains separate harness validation.
+Field Trace 001 was cancelled by founder decision before a qualifying run, so
+Gate B and Gate C external behavioral evidence remains unmeasured. Sprint 002's
+real cross-harness proof used Codex and OpenCode; the planned Claude Code live
+rerun was blocked by expired OAuth credentials and remains separate harness
+validation.
 
 Sequence:
 
@@ -1195,7 +1203,7 @@ Sequence:
 003 Agent orientation          in tree
 004 Living workspace           GO (Gate B product surface)
 005 Team identity + hosted     GO (Stage B)
-006 Multi-participant value    GO (Gate C) → 1.0.0
+006 Multi-participant value    GO (Gate C product surface) → 1.0.0
 ```
 
 ---
@@ -1210,17 +1218,16 @@ The work-state model, workspace authorization boundary, and sprint acceptance
 gates are unchanged. Workers/D1 is an available deployment path, not a claim
 that the hosted-team Stage C product or daily team retention has been proven.
 
-Before expanding the domain model, run one real multi-day team-use trace with
-multiple humans and at least two distinct harnesses against a persistent
-team-hosted workspace. Record each session's entry point, what state was
-retrieved and contributed, whether a human chose to return, whether another
-participant's contribution changed the next action, what manual explanation
-was still needed, and any authorization or provenance failure. Keep private
-transcripts outside Campfire. Use that evidence to choose one narrow next
-collaboration-state sprint, or to revise the model if the current objects are
-insufficient. A Claude Code live rerun can improve harness coverage, but its
-absence should not be labeled as a product-gate failure when Codex and
-OpenCode already proved the two-harness continuity path.
+Field Trace 001 was cancelled by founder decision before a qualifying run. The
+required two independently operating humans were not available, so its pilot
+evidence is preserved but excluded from Gate B and Gate C. It does not establish
+retention, ordinary team value, or external PMF.
+
+The next product sequence is founder-led internal validation. Sprint 008 — Enter
+the Room is next. Sprint 009 — Align Before Execution, Sprint 010 — Return to
+the Workspace, and Sprint 011 — Natural Contribution are directional sequence,
+not precommitted scopes. A future design-partner release replaces the abandoned
+formal field trace for external PMF evidence.
 
 ---
 
@@ -1243,19 +1250,29 @@ Sprint 002 GO             ✓ (deterministic + real-harness evidence; see result
         ↓                   for what was real vs synthetic)
 Sprint 003 — Agent orientation (PARTIAL: deterministic exit met, in tree;
         ↓                   real-harness rerun + Claude Code outstanding)
-Sprint 004 — Living workspace (Gate B)   GO ✓
+Sprint 004 — Living workspace (Gate B surface)   GO ✓
         ↓
 Sprint 005 — Team identity + hosted instance (Stage B)   GO ✓
         ↓
-Sprint 006 — Multi-participant value (Gate C) → v1.0   GO ✓
+Sprint 006 — Multi-participant surface (Gate C surface) → v1.0   GO ✓
         ↓
 Viewer-002 — Team journal   GO ✓
         ↓
 v1.1.0 — Viewer Campfire theme + logomark   shipped ✓
         ↓
-Real multi-day team-use trace — Gate B/C behavioral evidence   pending
+Sprint 007 — Harness readiness preflight   GO ✓
         ↓
-Next narrow sprint — selected from observed team friction, not precommitted
+Field Trace 001 — cancelled by founder decision; Gate B/C unmeasured
+        ↓
+Sprint 008 — Enter the Room   next
+        ↓
+Sprint 009 — Align Before Execution   directional
+        ↓
+Sprint 010 — Return to the Workspace   directional
+        ↓
+Sprint 011 — Natural Contribution   directional
+        ↓
+Design-partner release   future external PMF evidence
 ```
 
 The roadmap provides direction.

@@ -90,7 +90,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - **Single SQLite writer.** The hosted `serve` process owns the file; CLI and MCP adapters POST `/v1/call` with a bearer token.
 - **Viewer is read-only.** `campfire view` is a loopback team journal; the browser never holds a token.
 - **Worker serves the API and downloads.** The remote Worker/D1 path does not serve a hosted browser journal.
-- **Team-use validation is pending.** Sprint 004 and 006 proved repeat-session and multi-participant behavior in deterministic traces; they did not measure multi-day human reuse or retention.
+- **External team-use validation is not measured.** Field Trace 001 was cancelled by founder decision; Sprint 004/006 remain controlled product-surface evidence, not retention or PMF evidence.
 
 ---
 
@@ -101,6 +101,8 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - [docs/ROADMAP.md](docs/ROADMAP.md) — evidence-backed stages toward team memory
 - [docs/OPERATOR.md](docs/OPERATOR.md) — hosting, tokens, and the single-writer rule
 - [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — hosted multi-participant acceptance evidence for the v1.0 product cut
+- [docs/SPRINT_007_RESULT.md](docs/SPRINT_007_RESULT.md) — harness readiness preflight result
+- [docs/SPRINT_008.md](docs/SPRINT_008.md) — next product sprint: Enter the Room
 
 ---
 

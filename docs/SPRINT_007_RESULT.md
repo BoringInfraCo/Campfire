@@ -83,8 +83,8 @@ Focused coverage verifies:
    handler test structure; no live Cloudflare D1 deployment was exercised.
 3. Preflight reports readiness only. It deliberately does not repair
    configuration or register an agent session.
-4. Field Trace 001 remains paused. This result makes no Gate B or Gate C field
-   claim.
+4. Field Trace 001 was paused during Sprint 007 and was later cancelled by
+   founder decision. This result makes no Gate B or Gate C field claim.
 
 ## 6. Recommendation
 
