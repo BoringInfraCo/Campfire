@@ -262,6 +262,104 @@ describe("viewer 003 derivation (real app.js functions)", () => {
   });
 });
 
+describe("viewer recorded alignment boundary", () => {
+  it("returns null from deriveAlignment when alignment is missing or not a record", () => {
+    const { sandbox } = loadAppSandbox();
+    expect(evalIn<unknown>(sandbox, "deriveAlignment({})")).toBeNull();
+    expect(evalIn<unknown>(sandbox, "deriveAlignment(null)")).toBeNull();
+    expect(evalIn<unknown>(sandbox, "deriveAlignment({ alignment: null })")).toBeNull();
+    expect(evalIn<unknown>(sandbox, "deriveAlignment({ alignment: [] })")).toBeNull();
+    expect(
+      evalIn<unknown>(
+        sandbox,
+        'deriveAlignment({ alignment: { status: "agreed", proposedDecisionIds: ["d1"], acceptedDecisionIds: [], unresolvedBlockedTaskIds: [] } })',
+      ),
+    ).toBeNull();
+  });
+
+  it("returns the projected id arrays and does not invent status from decisions alone", () => {
+    const { sandbox } = loadAppSandbox();
+    sandbox.ctx = {
+      proposedDecisions: [{ id: "d-prop", summary: "Raise retry budget" }],
+      acceptedDecisions: [{ id: "d-acc", summary: "Use SQLite" }],
+    };
+    expect(evalIn<unknown>(sandbox, "deriveAlignment(ctx)")).toBeNull();
+
+    sandbox.ctx = {
+      proposedDecisions: [{ id: "d-prop", summary: "Raise retry budget" }],
+      alignment: {
+        status: "open",
+        proposedDecisionIds: ["d-prop", 12, null],
+        acceptedDecisionIds: ["d-acc"],
+        unresolvedBlockedTaskIds: ["t-blk", { id: "nope" }],
+      },
+    };
+    expect(evalIn<unknown>(sandbox, "deriveAlignment(ctx)")).toEqual({
+      status: "open",
+      proposedDecisionIds: ["d-prop"],
+      acceptedDecisionIds: ["d-acc"],
+      unresolvedBlockedTaskIds: ["t-blk"],
+    });
+  });
+
+  it("renders the recorded boundary without actions or agreement language", () => {
+    const { sandbox } = loadAppSandbox();
+    sandbox.ctx = {
+      alignment: {
+        status: "open",
+        proposedDecisionIds: ["d-prop"],
+        acceptedDecisionIds: ["d-acc"],
+        unresolvedBlockedTaskIds: ["t-blk"],
+      },
+      proposedDecisions: [{ id: "d-prop", summary: "Raise retry budget" }],
+      acceptedDecisions: [{ id: "d-acc", summary: "Use SQLite" }],
+      currentWork: {
+        blockedTasks: [{ id: "t-blk", title: "Fix billing retry", status: "blocked" }],
+      },
+      openTasks: [{ id: "t-open", title: "Do not use this title", status: "open" }],
+    };
+    sandbox.el = { innerHTML: "" };
+    evalIn(sandbox, "renderAlignment(el, deriveAlignment(ctx), ctx)");
+    const html = evalIn<string>(sandbox, "el.innerHTML");
+    expect(html).toContain("open");
+    expect(html).toContain("Not permission to execute");
+    expect(html).toContain("Raise retry budget");
+    expect(html).toContain("Use SQLite");
+    expect(html).toContain("Fix billing retry");
+    expect(html).not.toContain("Do not use this title");
+    expect(html).not.toContain("<button");
+    expect(html.toLowerCase()).not.toContain("agreed");
+  });
+
+  it("renders unspecified with no groups when the id arrays are empty", () => {
+    const { sandbox } = loadAppSandbox();
+    sandbox.ctx = {
+      alignment: {
+        status: "unspecified",
+        proposedDecisionIds: [],
+        acceptedDecisionIds: [],
+        unresolvedBlockedTaskIds: [],
+      },
+    };
+    sandbox.el = { innerHTML: "" };
+    evalIn(sandbox, "renderAlignment(el, deriveAlignment(ctx), ctx)");
+    const html = evalIn<string>(sandbox, "el.innerHTML");
+    expect(html).toContain("unspecified");
+    expect(html).toContain("Not permission to execute");
+    expect(html).not.toContain("ogroup");
+    expect(html).not.toContain("No recorded alignment boundary.");
+    expect(html).not.toContain("<button");
+    expect(html.toLowerCase()).not.toContain("agreed");
+  });
+
+  it("shows the empty state when deriveAlignment returns null", () => {
+    const { sandbox } = loadAppSandbox();
+    sandbox.el = { innerHTML: "" };
+    evalIn(sandbox, "renderAlignment(el, deriveAlignment({}), {})");
+    expect(evalIn<string>(sandbox, "el.innerHTML")).toContain("No recorded alignment boundary.");
+  });
+});
+
 describe("viewer 003 read-only boundary", () => {
   it("keeps the read allowlist exactly, with no write method added", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([

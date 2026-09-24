@@ -9,6 +9,7 @@
 import type { ActorContext } from "../service/authorization.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
 import {
+  deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
   type AddArtifactInput,
@@ -660,6 +661,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         needsAttention: orientation.needsAttention,
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
+        alignment: deriveRecordedAlignment(decisions, tasks),
         provenanceSummary: activity.map((contribution, index) =>
           describeContribution(contribution, names[index] ?? contribution.actor.actorId),
         ),

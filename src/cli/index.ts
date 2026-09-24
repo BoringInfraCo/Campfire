@@ -377,6 +377,60 @@ function provenanceSection(
   return section(`${title}  ${note}`, contributions.map(formatContributionLine));
 }
 
+const ALIGNMENT_BOUNDARY_SENTENCE =
+  "Records what the team has proposed, accepted, or left unspecified. Not permission to execute.";
+
+function stringIds(value: readonly string[] | undefined): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((id): id is string => typeof id === "string" && id.length > 0);
+}
+
+function describeDecision(decisions: readonly Decision[], id: string): string {
+  const decision = decisions.find((item) => item.id === id);
+  if (decision === undefined || decision.summary.length === 0) {
+    return id;
+  }
+  return `${id} ${decision.summary}`;
+}
+
+function describeBlockedTask(context: WorkspaceContext, id: string): string {
+  const blocked = context.currentWork.blockedTasks.find((task) => task.id === id);
+  if (blocked !== undefined && blocked.title.length > 0) {
+    return `${id} ${blocked.title}`;
+  }
+  // openTasks includes non-completed work. Only a blocked row may supply the title.
+  const fromOpen = context.openTasks.find((task) => task.id === id && task.status === "blocked");
+  if (fromOpen !== undefined && fromOpen.title.length > 0) {
+    return `${id} ${fromOpen.title}`;
+  }
+  return id;
+}
+
+/**
+ * Recorded alignment boundary. Omitted when the projection has no `alignment`
+ * (do not invent one). Describes what was recorded; it is not a grant to execute
+ * and does not claim a proposal caused a blocked task.
+ */
+function formatAlignmentBoundary(context: WorkspaceContext): string[] {
+  const alignment = context.alignment;
+  if (alignment === undefined || alignment === null) {
+    return [];
+  }
+  const lines = [`status: ${alignment.status}`, ALIGNMENT_BOUNDARY_SENTENCE];
+  for (const id of stringIds(alignment.proposedDecisionIds)) {
+    lines.push(`proposed: ${describeDecision(context.proposedDecisions, id)}`);
+  }
+  for (const id of stringIds(alignment.acceptedDecisionIds)) {
+    lines.push(`accepted: ${describeDecision(context.acceptedDecisions, id)}`);
+  }
+  for (const id of stringIds(alignment.unresolvedBlockedTaskIds)) {
+    lines.push(`unresolved blocked tasks: ${describeBlockedTask(context, id)}`);
+  }
+  return section("Recorded alignment boundary", lines);
+}
+
 function formatOrientation(context: WorkspaceContext): string {
   const { workspace, goal } = context;
   const lines: string[] = [
@@ -386,6 +440,7 @@ function formatOrientation(context: WorkspaceContext): string {
     lines.push(labeled("Goal", goal.title));
   }
   lines.push(
+    ...formatAlignmentBoundary(context),
     ...section("Needs You", context.needsYou.map(formatAttentionItem)),
     ...section("Needs Attention", context.needsAttention.map(formatAttentionItem)),
     ...section("Current Work", [

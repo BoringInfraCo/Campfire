@@ -15,6 +15,7 @@ const els = {
   mast: document.getElementById("mast"),
   people: document.getElementById("people"),
   goal: document.getElementById("goal"),
+  alignment: document.getElementById("alignment"),
   nextAction: document.getElementById("next-action"),
   needsYou: document.getElementById("needs-you"),
   needsAttention: document.getElementById("needs-attention"),
@@ -159,6 +160,62 @@ function deriveSuggestedNextAction(context) {
     summary: strField(action.summary),
     reason: strField(action.reason),
   };
+}
+
+// Sprint 009 recorded alignment boundary. Status comes only from the service
+// projection. The Viewer never recomputes it from decisions.
+const ALIGNMENT_BOUNDARY_SENTENCE =
+  "Records what the team has proposed, accepted, or left unspecified. Not permission to execute.";
+
+function stringIds(value) {
+  return asArray(value).filter((id) => typeof id === "string");
+}
+
+function deriveAlignment(context) {
+  const alignment = isRecord(context) && isRecord(context.alignment) ? context.alignment : null;
+  if (!alignment) return null;
+  const status = alignment.status;
+  if (status !== "open" && status !== "established" && status !== "unspecified") {
+    return null;
+  }
+  return {
+    status,
+    proposedDecisionIds: stringIds(alignment.proposedDecisionIds),
+    acceptedDecisionIds: stringIds(alignment.acceptedDecisionIds),
+    unresolvedBlockedTaskIds: stringIds(alignment.unresolvedBlockedTaskIds),
+  };
+}
+
+function summaryForDecisionId(decisions, id) {
+  for (const decision of asArray(decisions)) {
+    if (isRecord(decision) && decision.id === id) return strField(decision.summary);
+  }
+  return "";
+}
+
+function titleForBlockedTaskId(context, id) {
+  const work = isRecord(context) && isRecord(context.currentWork) ? context.currentWork : null;
+  if (work) {
+    for (const task of asArray(work.blockedTasks)) {
+      if (!isRecord(task) || task.id !== id) continue;
+      const title = strField(task.title);
+      if (title) return title;
+    }
+  }
+  for (const task of asArray(isRecord(context) ? context.openTasks : undefined)) {
+    if (!isRecord(task) || task.id !== id) continue;
+    if (strField(task.status) !== "blocked") continue;
+    const title = strField(task.title);
+    if (title) return title;
+  }
+  return "";
+}
+
+function alignmentItemHtml(id, detail) {
+  if (detail) {
+    return `<li class="oitem"><span class="ometa">${esc(id)}</span><span class="osentence">${esc(detail)}</span></li>`;
+  }
+  return `<li class="oitem"><span class="osentence">${esc(id)}</span></li>`;
 }
 
 // Contributions are chronological, so the newest id is the last one present.
@@ -546,7 +603,31 @@ function renderNextAction(el, action) {
     (action.reason ? `<span class="hint-reason">${esc(action.reason)}</span>` : "");
 }
 
+function renderAlignment(el, alignment, context) {
+  if (!el) return;
+  if (!alignment) {
+    el.innerHTML = `<div class="empty">No recorded alignment boundary.</div>`;
+    return;
+  }
+  const proposed = workGroup("proposed", alignment.proposedDecisionIds, (id) =>
+    alignmentItemHtml(id, summaryForDecisionId(context && context.proposedDecisions, id)),
+  );
+  const accepted = workGroup("accepted", alignment.acceptedDecisionIds, (id) =>
+    alignmentItemHtml(id, summaryForDecisionId(context && context.acceptedDecisions, id)),
+  );
+  const blocked = workGroup("unresolved blocked tasks", alignment.unresolvedBlockedTaskIds, (id) =>
+    alignmentItemHtml(id, titleForBlockedTaskId(context, id)),
+  );
+  el.innerHTML =
+    `<div class="oitem"><span class="ometa">status</span><span class="osentence">${esc(alignment.status)}</span></div>` +
+    `<div class="oitem"><span class="osentence">${esc(ALIGNMENT_BOUNDARY_SENTENCE)}</span></div>` +
+    proposed +
+    accepted +
+    blocked;
+}
+
 function renderOrientation() {
+  renderAlignment(els.alignment, deriveAlignment(state.context), state.context);
   renderAttentionList(els.needsYou, deriveNeedsYou(state.context), "You're all caught up");
   renderAttentionList(els.needsAttention, deriveNeedsAttention(state.context), "Nothing needs attention");
   renderCurrentWork(els.currentWork, deriveCurrentWork(state.context));

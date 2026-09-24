@@ -91,6 +91,7 @@ describe("runCli", () => {
     const accepted = JSON.parse(logs[logs.length - 1]!) as { id: string };
     await cli(["accept-decision", accepted.id]);
     await cli(["add-decision", "--workspace", FIXTURE.workspaces.billing, "--summary", "CLI proposed"]);
+    const proposed = JSON.parse(logs[logs.length - 1]!) as { id: string };
     await cli([
       "create-task",
       "--workspace",
@@ -116,6 +117,41 @@ describe("runCli", () => {
     expect(output).toContain("Suggested next (orientation hint)");
     expect(output).toContain("proposed_decision_actionable");
     expect(output).toContain("unassigned_blocked_task");
+    expect(output.indexOf("Recorded alignment boundary")).toBeGreaterThan(-1);
+    expect(output.indexOf("Recorded alignment boundary")).toBeLessThan(output.indexOf("Needs You"));
+    expect(output).toContain("status: open");
+    expect(output).toContain("Not permission to execute");
+    expect(output).toContain(`proposed: ${proposed.id}`);
+    expect(output).toContain(`proposed: ${proposed.id} CLI proposed`);
+    expect(output).toContain("unresolved blocked tasks");
+    expect(output).toContain(`unresolved blocked tasks: ${blocked.id}`);
+    expect(output).not.toContain("agreed");
+    expect(output).not.toContain("may proceed");
+    expect(output).not.toContain("status: agreed");
+    expect(output).not.toContain("ready to execute");
+    expect(output.split("Not permission to execute.").join("")).not.toContain("permission to execute");
+  });
+
+  it("shows an established recorded alignment boundary when only an accepted decision exists", async () => {
+    await cli(["create-workspace", "--team", FIXTURE.teamId, "--name", "alignment-established"]);
+    const workspace = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    await cli(["add-decision", "--workspace", workspace.id, "--summary", "Only accepted constraint"]);
+    const decision = JSON.parse(logs[logs.length - 1]!) as { id: string };
+    await cli(["accept-decision", decision.id]);
+
+    logs = [];
+    await cli(["show", workspace.id]);
+
+    const output = stdout();
+    expect(output).toContain("Recorded alignment boundary");
+    expect(output).toContain("status: established");
+    expect(output).toContain(`accepted: ${decision.id} Only accepted constraint`);
+    expect(output).toContain("Not permission to execute");
+    expect(output).not.toContain("status: open");
+    expect(output).not.toContain("proposed:");
+    expect(output).not.toContain("status: agreed");
+    expect(output).not.toContain("agreed");
+    expect(output).not.toContain("may proceed");
   });
 
   it("lists workspaces", async () => {

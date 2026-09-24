@@ -254,6 +254,20 @@ describe("cross-harness continuation", () => {
     expect(context.json.acceptedDecisions.map((item: { id: string }) => item.id)).toContain(
       decision.json.id,
     );
+    // Billing seed has no decisions or tasks. The accepted decision is the only
+    // one, and the new task is open, so the recorded boundary is established.
+    expect(context.json.alignment).toEqual({
+      status: "established",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [decision.json.id],
+      unresolvedBlockedTaskIds: [],
+    });
+    expect(Object.keys(context.json.alignment)).toEqual([
+      "status",
+      "proposedDecisionIds",
+      "acceptedDecisionIds",
+      "unresolvedBlockedTaskIds",
+    ]);
     expect(context.json.openTasks.map((item: { id: string }) => item.id)).toContain(task.json.id);
     expect(context.json.artifacts.map((item: { id: string }) => item.id)).toContain(artifact.json.id);
     expect(
@@ -282,6 +296,7 @@ describe("cross-harness continuation", () => {
     expect(contextB.json.acceptedDecisions.map((item: { id: string }) => item.id)).toContain(
       decision.json.id,
     );
+    expect(contextB.json.alignment).toEqual(context.json.alignment);
     expect(contextB.json.openTasks.map((item: { id: string }) => item.id)).toContain(task.json.id);
     expect(JSON.stringify(contextB.json)).not.toContain(FIXTURE.unrelatedFindingSentinel);
 

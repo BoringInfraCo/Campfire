@@ -3,7 +3,11 @@ import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
 import { createCounterIdSource } from "../../src/domain/ids.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
-import { ORIENTATION_PROVENANCE_LIMIT, type CampfireService } from "../../src/service/service.js";
+import {
+  deriveRecordedAlignment,
+  ORIENTATION_PROVENANCE_LIMIT,
+  type CampfireService,
+} from "../../src/service/service.js";
 import type { ActorContext } from "../../src/service/authorization.js";
 import type { ActorRef, Decision, ParticipantRole, Task, WorkspaceParticipant } from "../../src/domain/types.js";
 import {
@@ -1104,5 +1108,221 @@ describe("Sprint 008 attention edge cases", () => {
       orientationHint: true,
     });
     expect(context.suggestedNextAction.id).not.toBe(fallback.id);
+  });
+});
+
+describe("Sprint 009 recorded alignment", () => {
+  it("is open when a proposed decision exists, even alongside an accepted one", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Open" });
+    const acceptedLater = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Accepted later stamp",
+    });
+    service.acceptDecision(ctxHuman1, acceptedLater.id);
+    const acceptedEarlier = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Accepted earlier stamp",
+    });
+    service.acceptDecision(ctxHuman1, acceptedEarlier.id);
+    const proposedLater = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Proposed later stamp",
+    });
+    const proposedEarlier = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Proposed earlier stamp",
+    });
+
+    // List order is created_at. Stamps invert that so the projection must sort.
+    const earlier = clock.tick();
+    const later = clock.tick();
+    store.updateDecision(proposedEarlier.id, { updatedAt: earlier });
+    store.updateDecision(proposedLater.id, { updatedAt: later });
+    store.updateDecision(acceptedEarlier.id, { updatedAt: earlier });
+    store.updateDecision(acceptedLater.id, { updatedAt: later });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment).toEqual({
+      status: "open",
+      proposedDecisionIds: [proposedEarlier.id, proposedLater.id],
+      acceptedDecisionIds: [acceptedEarlier.id, acceptedLater.id],
+      unresolvedBlockedTaskIds: [],
+    });
+
+    const same = clock.tick();
+    const tied = deriveRecordedAlignment(
+      [
+        { ...store.getDecision(proposedEarlier.id)!, updatedAt: same },
+        { ...store.getDecision(proposedLater.id)!, updatedAt: same },
+      ],
+      [],
+    );
+    expect(tied.status).toBe("open");
+    expect(tied.proposedDecisionIds).toEqual([proposedLater.id, proposedEarlier.id]);
+  });
+
+  it("is established when accepted decisions exist and no proposal does", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Established" });
+    const first = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "First accepted",
+    });
+    service.acceptDecision(ctxHuman1, first.id);
+    const second = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Second accepted",
+    });
+    service.acceptDecision(ctxHuman1, second.id);
+    const superseded = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "No longer current",
+    });
+    store.updateDecision(superseded.id, { status: "superseded", updatedAt: clock.tick() });
+
+    const earlier = clock.tick();
+    const later = clock.tick();
+    store.updateDecision(second.id, { updatedAt: earlier });
+    store.updateDecision(first.id, { updatedAt: later });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment).toEqual({
+      status: "established",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [second.id, first.id],
+      unresolvedBlockedTaskIds: [],
+    });
+  });
+
+  it("is unspecified when the workspace has no decisions", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "None" });
+    const open = service.createTask(ctxHuman1, { workspaceId: workspace.id, title: "Still open" });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment).toEqual({
+      status: "unspecified",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [],
+      unresolvedBlockedTaskIds: [],
+    });
+    expect(context.alignment.unresolvedBlockedTaskIds).not.toContain(open.id);
+  });
+
+  it("is unspecified when the only decisions are superseded", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Superseded" });
+    const decision = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Old constraint",
+    });
+    store.updateDecision(decision.id, { status: "superseded", updatedAt: clock.tick() });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment.status).toBe("unspecified");
+    expect(context.alignment.proposedDecisionIds).toEqual([]);
+    expect(context.alignment.acceptedDecisionIds).toEqual([]);
+    expect(context.alignment.proposedDecisionIds).not.toContain(decision.id);
+    expect(context.alignment.acceptedDecisionIds).not.toContain(decision.id);
+  });
+
+  it("lists a blocked task independently of a proposal and omits other task states", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Blocked" });
+    const proposed = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Still proposed",
+    });
+    const open = service.createTask(ctxHuman1, { workspaceId: workspace.id, title: "Open" });
+    const inProgress = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "In progress",
+    });
+    service.updateTask(ctxHuman1, { taskId: inProgress.id, status: "in_progress" });
+    const completed = service.createTask(ctxHuman1, { workspaceId: workspace.id, title: "Done" });
+    service.updateTask(ctxHuman1, { taskId: completed.id, status: "in_progress" });
+    service.updateTask(ctxHuman1, { taskId: completed.id, status: "completed" });
+    const blockedLater = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Blocked later",
+    });
+    service.updateTask(ctxHuman1, { taskId: blockedLater.id, status: "blocked" });
+    const blockedEarlier = service.createTask(ctxHuman1, {
+      workspaceId: workspace.id,
+      title: "Blocked earlier",
+    });
+    service.updateTask(ctxHuman1, { taskId: blockedEarlier.id, status: "blocked" });
+
+    const earlier = clock.tick();
+    const later = clock.tick();
+    store.updateTask(blockedEarlier.id, { updatedAt: earlier });
+    store.updateTask(blockedLater.id, { updatedAt: later });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment.status).toBe("open");
+    expect(context.alignment.proposedDecisionIds).toEqual([proposed.id]);
+    expect(context.alignment.acceptedDecisionIds).toEqual([]);
+    expect(context.alignment.unresolvedBlockedTaskIds).toEqual([
+      blockedEarlier.id,
+      blockedLater.id,
+    ]);
+    expect(context.alignment.unresolvedBlockedTaskIds).not.toContain(open.id);
+    expect(context.alignment.unresolvedBlockedTaskIds).not.toContain(inProgress.id);
+    expect(context.alignment.unresolvedBlockedTaskIds).not.toContain(completed.id);
+    expect(Object.keys(context.alignment)).toEqual([
+      "status",
+      "proposedDecisionIds",
+      "acceptedDecisionIds",
+      "unresolvedBlockedTaskIds",
+    ]);
+  });
+
+  it("keeps needsYou and needsAttention authorization unchanged", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Viewer" });
+    inviteAndJoin(ctxHuman1, ctxHuman2, workspace.id, "viewer");
+    const decision = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Viewer cannot accept",
+    });
+
+    const owner = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(owner.needsYou.find((item) => item.id === decision.id)).toMatchObject({
+      reason: "proposed_decision_actionable",
+      status: "proposed",
+    });
+    expect(owner.needsAttention.map((item) => item.reason)).not.toContain("team_proposed_decision");
+
+    const viewer = service.getWorkspaceContext(ctxHuman2, workspace.id);
+    expect(viewer.needsYou).toEqual([]);
+    expect(viewer.needsAttention).toEqual([
+      {
+        kind: "decision",
+        id: decision.id,
+        summary: "Viewer cannot accept",
+        status: "proposed",
+        reason: "team_proposed_decision",
+      },
+    ]);
+  });
+
+  it("records exactly one contribution on accept and none when deriving alignment", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Provenance" });
+    const decision = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "Accept me",
+    });
+    const before = store.listContributions(workspace.id).length;
+
+    service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(store.listContributions(workspace.id).length).toBe(before);
+
+    service.acceptDecision(ctxHuman1, decision.id);
+    expect(store.listContributions(workspace.id).length).toBe(before + 1);
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.alignment.status).toBe("established");
+    expect(context.alignment.acceptedDecisionIds).toEqual([decision.id]);
+    expect(store.listContributions(workspace.id).length).toBe(before + 1);
+    expect(store.listContributions(workspace.id).at(-1)).toMatchObject({
+      action: "update",
+      objectType: "decision",
+      objectId: decision.id,
+    });
   });
 });

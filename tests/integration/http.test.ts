@@ -417,6 +417,10 @@ describe("HTTP /v1/call Sprint 008 orientation", () => {
     });
     expect(Array.isArray(context.provenanceSummary)).toBe(true);
     expect(context.since).toBeUndefined();
+    expect(context.alignment.status).toBe("open");
+    expect(context.alignment.proposedDecisionIds).toEqual([decisionId]);
+    expect(context.alignment.acceptedDecisionIds).toEqual([]);
+    expect(context.alignment.unresolvedBlockedTaskIds).toEqual([taskId]);
   });
 
   it("projects contributions strictly after a since cursor and rejects an unknown one", async () => {

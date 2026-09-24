@@ -246,9 +246,11 @@ met, in tree; real-harness rerun + Claude Code outstanding). Sprint 004 living
 workspace GO. Sprint 005 hosted Stage B GO. Sprint 006 Gate C product-surface
 GO (v1.0). Viewer-002 team journal GO. v1.1 ships its Campfire theme and
 logomark. Sprint 007 harness readiness GO. Sprint 008 Enter the Room GO
-(precise Time to Context 19.8 s). Field Trace 001 was cancelled by founder
+(precise Time to Context 19.8 s). Sprint 009 Align Before Execution GO
+(recorded alignment boundary). Field Trace 001 was cancelled by founder
 decision; Gate B and Gate C external behavioral evidence remain unmeasured.
-Sprint 009 is directional, not committed.
+Sprint 010 — Return to the Workspace is the next directional contract, not
+committed scope.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1224,10 +1226,10 @@ retention, ordinary team value, or external PMF.
 
 The next product sequence is founder-led internal validation. Sprint 008 — Enter
 the Room is GO (precise Time to Context 19.8 s). Sprint 009 — Align Before
-Execution is the next directional step; Sprint 010 — Return to the Workspace and
-Sprint 011 — Natural Contribution remain directional sequence, not precommitted
-scopes. A future design-partner release replaces the abandoned formal field
-trace for external PMF evidence.
+Execution is GO (recorded alignment boundary). Sprint 010 — Return to the
+Workspace is the next directional contract. Sprint 011 — Natural Contribution
+remains directional sequence, not a precommitted scope. A future design-partner
+release replaces the abandoned formal field trace for external PMF evidence.
 
 ---
 
@@ -1266,9 +1268,9 @@ Field Trace 001 — cancelled by founder decision; Gate B/C unmeasured
         ↓
 Sprint 008 — Enter the Room   GO ✓ (Time to Context 19.8 s)
         ↓
-Sprint 009 — Align Before Execution   directional
+Sprint 009 — Align Before Execution   GO ✓
         ↓
-Sprint 010 — Return to the Workspace   directional
+Sprint 010 — Return to the Workspace   next directional contract
         ↓
 Sprint 011 — Natural Contribution   directional
         ↓

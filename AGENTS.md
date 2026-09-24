@@ -58,13 +58,14 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_008.md
+docs/SPRINT_009.md
 ```
 
-Sprint 008 — Enter the Room is complete (GO, precise Time to Context 19.8 s);
-its result is `docs/SPRINT_008_RESULT.md`. Sprint 007 is complete; its result is
-`docs/SPRINT_007_RESULT.md`. The Sprint 009 contract is drafted at
-`docs/SPRINT_009.md`; implementation requires explicit acceptance.
+Sprint 009 — Align Before Execution is complete (GO); its result is
+`docs/SPRINT_009_RESULT.md`. Sprint 008 — Enter the Room is complete (GO,
+precise Time to Context 19.8 s); its result is `docs/SPRINT_008_RESULT.md`.
+Sprint 007 is complete; its result is `docs/SPRINT_007_RESULT.md`. Sprint 010
+is the next directional contract and is not authorized for implementation.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

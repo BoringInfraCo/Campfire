@@ -425,6 +425,75 @@ describe("Sprint 008 attention edge cases (async parity)", () => {
   });
 });
 
+describe("Sprint 009 recorded alignment (async parity)", () => {
+  it("derives open, established, unspecified, and ignores superseded-only decisions", async () => {
+    const { service, human, sync } = await setup();
+    const ctx = { actor: { actorId: human.id, actorType: "human" as const } };
+
+    const unspecified = await service.createWorkspace(ctx, { teamId: "team_1", name: "None" });
+    const none = await service.getWorkspaceContext(ctx, unspecified.id);
+    expect(none.alignment).toEqual({
+      status: "unspecified",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [],
+      unresolvedBlockedTaskIds: [],
+    });
+
+    const openWs = await service.createWorkspace(ctx, { teamId: "team_1", name: "Open" });
+    const proposed = await service.addDecision(ctx, { workspaceId: openWs.id, summary: "Propose" });
+    const acceptedToo = await service.addDecision(ctx, {
+      workspaceId: openWs.id,
+      summary: "Accept too",
+    });
+    await service.acceptDecision(ctx, acceptedToo.id);
+    const blocked = await service.createTask(ctx, { workspaceId: openWs.id, title: "Blocked" });
+    await service.updateTask(ctx, { taskId: blocked.id, status: "blocked" });
+    const openTask = await service.createTask(ctx, { workspaceId: openWs.id, title: "Open task" });
+    const openContext = await service.getWorkspaceContext(ctx, openWs.id);
+    expect(openContext.alignment).toEqual({
+      status: "open",
+      proposedDecisionIds: [proposed.id],
+      acceptedDecisionIds: [acceptedToo.id],
+      unresolvedBlockedTaskIds: [blocked.id],
+    });
+    expect(openContext.alignment.unresolvedBlockedTaskIds).not.toContain(openTask.id);
+
+    const establishedWs = await service.createWorkspace(ctx, {
+      teamId: "team_1",
+      name: "Established",
+    });
+    const accepted = await service.addDecision(ctx, {
+      workspaceId: establishedWs.id,
+      summary: "Accepted",
+    });
+    await service.acceptDecision(ctx, accepted.id);
+    const established = await service.getWorkspaceContext(ctx, establishedWs.id);
+    expect(established.alignment).toEqual({
+      status: "established",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [accepted.id],
+      unresolvedBlockedTaskIds: [],
+    });
+
+    const supersededWs = await service.createWorkspace(ctx, {
+      teamId: "team_1",
+      name: "Superseded",
+    });
+    const old = await service.addDecision(ctx, {
+      workspaceId: supersededWs.id,
+      summary: "Old",
+    });
+    sync.updateDecision(old.id, { status: "superseded", updatedAt: "2026-01-02T00:00:00.000Z" });
+    const onlySuperseded = await service.getWorkspaceContext(ctx, supersededWs.id);
+    expect(onlySuperseded.alignment).toEqual({
+      status: "unspecified",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [],
+      unresolvedBlockedTaskIds: [],
+    });
+  });
+});
+
 describe("D1 worker handler (async production path)", () => {
   it("does not expose the journal from the production asset binding", async () => {
     const { store } = await setup();

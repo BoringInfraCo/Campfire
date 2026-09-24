@@ -10,6 +10,7 @@
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import {
+  deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
   type AddArtifactInput,
@@ -602,6 +603,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         needsAttention: orientation.needsAttention,
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
+        alignment: deriveRecordedAlignment(decisions, tasks),
         provenanceSummary: activity.map((contribution) =>
           describeContribution(contribution, actorName(contribution.actor)),
         ),

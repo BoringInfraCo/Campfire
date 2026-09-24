@@ -1,6 +1,6 @@
 # Campfire — Sprint 009: Align Before Execution
 
-**Status:** Contract — implementation not started; requires explicit acceptance
+**Status:** Complete (GO) — see `docs/SPRINT_009_RESULT.md`
 **Date:** September 24, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 008 — Enter the Room (**GO**)
