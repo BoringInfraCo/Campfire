@@ -258,8 +258,8 @@ Path is GO. `v1.2.1` is released and deployed; the live migration path,
 four-platform assets, latest and pinned installs, and production Worker were
 verified. Sprint 015 Zero-to-Shared-Workspace Onboarding is GO. One local
 `campfire onboard` command creates the first human, agent, workspace, and
-goal. It does not claim Gate B, Gate C, or external adoption, and it does
-not publish a release.
+goal. It is published as minor release `v1.3.0`. It does not claim Gate B,
+Gate C, or external adoption.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1249,8 +1249,8 @@ behavior or establish external product evidence. Sprint 015 —
 Zero-to-Shared-Workspace Onboarding is the next narrow product slice: replace
 the fixture-led first run with one deterministic setup composition over the
 existing identity, token, Workspace, Goal, invite, membership, session, and
-preflight boundaries. It is GO. It does not establish Gate B/C or PMF
-evidence, and it does not publish a release.
+preflight boundaries. It is GO and published as minor release `v1.3.0`.
+It does not establish Gate B/C or PMF evidence.
 
 ---
 
@@ -1301,7 +1301,7 @@ Sprint 013 — Public Release v1.2.0   GO ✓; Gate B/C remain unmeasured
         ↓
 Sprint 014 — Trust the Operator Path   GO ✓; v1.2.1 released + deployed; live operator path verified
         ↓
-Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; no release
+Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; v1.3.0 minor release
 ```
 
 The roadmap provides direction.

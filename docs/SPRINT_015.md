@@ -1,6 +1,6 @@
 # Campfire — Sprint 015: Zero-to-Shared-Workspace Onboarding
 
-**Status:** Complete (**GO**) — see `SPRINT_015_RESULT.md`
+**Status:** Complete (**GO**) — see `SPRINT_015_RESULT.md`. Released as minor `v1.3.0`.
 **Date:** September 25, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 014 — Trust the Operator Path (**GO**); `v1.2.1`

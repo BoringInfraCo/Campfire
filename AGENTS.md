@@ -77,9 +77,9 @@ evidence. Sprint 014 — Trust the Operator Path is complete (GO); its result is
 GitHub Release, production Worker, migration path, and latest/versioned
 installers are live. Gate B, Gate C, and external PMF evidence remain
 unmeasured. Sprint 015 — Zero-to-Shared-Workspace Onboarding is complete (GO);
-its result is `docs/SPRINT_015_RESULT.md`. That result does not authorize a
-release, public snapshot promotion, or production deployment. Sprint 016 is
-not defined.
+its result is `docs/SPRINT_015_RESULT.md`. It is published as minor release
+`v1.3.0` because `campfire onboard` is a backward-compatible first-run
+capability. Sprint 016 is not defined.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

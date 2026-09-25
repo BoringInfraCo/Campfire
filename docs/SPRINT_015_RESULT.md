@@ -26,7 +26,12 @@ allowed to run tools, completed the entry. That is a Codex approval setting,
 not Campfire identifier plumbing.
 
 This is one setup proof. Gate B, Gate C, retention, adoption, and
-product-market fit remain unmeasured. No release is authorized.
+product-market fit remain unmeasured.
+
+The operator authorized publication as minor release `v1.3.0`. Onboarding is
+new user-facing capability, existing commands and installations stay
+compatible, and there is no schema or breaking change, so this is not a patch
+and not a major version. Promotion evidence is recorded after the `v1.3.0` tag.
 
 OpenCode was not given a second live trace. The Codex trace showed no
 harness-specific onboarding behavior. The command stores the supplied harness
@@ -152,7 +157,8 @@ Sprint 015 is **GO** because:
 11. no schema, authorization, or orchestration behavior was added; and
 12. the Node 22 matrix passed.
 
-Not claimed: a release, a public snapshot promotion, a production deploy,
-OpenCode live entry, Gate B, Gate C, or product-market fit.
+Not claimed in the pre-promotion evidence: the public snapshot, GitHub Release
+assets, or production deploy. Those are recorded after tag `v1.3.0`. Also not
+claimed: OpenCode live entry, Gate B, Gate C, or product-market fit.
 
 Sprint 016 is not defined or authorized by this result.
