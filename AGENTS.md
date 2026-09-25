@@ -82,10 +82,10 @@ its result is `docs/SPRINT_015_RESULT.md`. It is published as minor release
 capability. Sprint 016 — Agent-Led Setup & Human Handoff is complete
 (CONDITIONAL GO); its result is `docs/SPRINT_016_RESULT.md`. OpenCode completed
 a cold prompt-to-Viewer run. Codex created the workspace but did not finish
-session registration or leave a Viewer listening. The operator separately
-authorized publication as backward-compatible minor release `v1.4.0`; that
-release does not change the CONDITIONAL GO decision or establish two-harness
-prompt-to-Viewer proof. Sprint 017 is not defined.
+session registration or leave a Viewer listening. It is published and deployed
+as backward-compatible minor release `v1.4.0`; that release does not change the
+CONDITIONAL GO decision or establish two-harness prompt-to-Viewer proof. Sprint
+017 is not defined.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

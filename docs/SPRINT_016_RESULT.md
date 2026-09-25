@@ -197,3 +197,32 @@ the serve and view logs contained neither token. The handoff did not contain
 the session id. No desktop screenshot was captured; the Viewer was checked
 through its loopback page and `/api/call`. Nothing was committed, tagged,
 published, migrated, or deployed.
+
+---
+
+## 8. v1.4.0 promotion
+
+The operator separately authorized Sprint 016 for publication as the
+backward-compatible minor release `v1.4.0`. The release does not change the
+sprint's **CONDITIONAL GO** decision or supply the missing Codex
+prompt-to-Viewer evidence.
+
+- Private source tag `v1.4.0`: `8b2f3baef8e0d1afde0425baf6de112709ec7b51`.
+- Public snapshot: `3200044a91ad1cce6373e5407c96dc56a75f23ed`, exported
+  from that private source commit with 149 tracked files.
+- Public GitHub Release:
+  `https://github.com/BoringInfraCo/Campfire/releases/tag/v1.4.0`.
+- The public release workflow produced all four platform archives and their
+  four SHA-256 checksum files. Both public CI runs and the packaging workflow
+  passed.
+- Production Worker version:
+  `f4598b19-4c2c-4e6c-8c6f-70979f1a37aa` at
+  `boringinfra.company/campfire/*`.
+- Clean latest and pinned production installs both verified their checksums,
+  reported `Installed campfire 1.4.0`, and returned version `1.4.0` from
+  `campfire setup --json`.
+- No database migration ran because this release has no schema migration.
+
+The private repository also has a matching GitHub Release entry so its
+Releases panel identifies `v1.4.0` as the current release while binaries remain
+published from the public repository.
