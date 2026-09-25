@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_015.md
+docs/SPRINT_016.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -79,7 +79,11 @@ installers are live. Gate B, Gate C, and external PMF evidence remain
 unmeasured. Sprint 015 — Zero-to-Shared-Workspace Onboarding is complete (GO);
 its result is `docs/SPRINT_015_RESULT.md`. It is published as minor release
 `v1.3.0` because `campfire onboard` is a backward-compatible first-run
-capability. Sprint 016 is not defined.
+capability. Sprint 016 — Agent-Led Setup & Human Handoff is complete
+(CONDITIONAL GO); its result is `docs/SPRINT_016_RESULT.md`. OpenCode completed
+a cold prompt-to-Viewer run. Codex created the workspace but did not finish
+session registration or leave a Viewer listening. That result does not
+authorize a release. Sprint 017 is not defined.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

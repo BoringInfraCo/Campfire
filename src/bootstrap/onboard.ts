@@ -11,7 +11,9 @@ import { ValidationError } from "../domain/errors.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 import type { CampfireStore } from "../store/store.js";
+import type { SetupContract } from "./setup-contract.js";
 import { bootstrapOrganizationTeam } from "./bootstrap.js";
+import { setupContract } from "./setup-contract.js";
 
 export interface OnboardInput {
   humanName: string;
@@ -44,6 +46,7 @@ export interface OnboardReceipt {
       workspaceId: string;
     };
     steps: ["register_agent_session", "preflight", "get_workspace_context"];
+    setup: SetupContract;
   };
 }
 
@@ -131,6 +134,12 @@ export function onboardInstallation(
           workspaceId: workspace.id,
         },
         steps: ["register_agent_session", "preflight", "get_workspace_context"],
+        setup: setupContract({
+          databasePath: config.databasePath,
+          workspaceId: workspace.id,
+          harness: input.harness,
+          serveCommand: `CAMPFIRE_DB=${config.databasePath} campfire serve`,
+        }),
       },
     };
   });
@@ -154,7 +163,10 @@ export function formatOnboardReceipt(receipt: OnboardReceipt): string {
     `1. Start the server: ${receipt.next.serve}`,
     `2. Point one harness process at CAMPFIRE_URL, CAMPFIRE_TOKEN (the agent token printed above), and CAMPFIRE_HARNESS=${receipt.agent.harness}.`,
     "   Do not put an actor id in hosted auth. Do not use the human token for the harness.",
-    `3. As that agent, call register_agent_session for workspace ${receipt.workspace.id}, then preflight, then read workspace context.`,
+    `3. Prepare the harness connection with campfire connect, then reload or start a fresh process. Approval may be required.`,
+    `4. As that agent, call register_agent_session for workspace ${receipt.workspace.id}, then preflight, then read workspace context.`,
+    "5. Capture the id returned by register_agent_session and pass it to hosted campfire doctor with --session or CAMPFIRE_SESSION_ID.",
+    "6. When doctor is ready, run campfire view and hand off campfire handoff with the loopback URL. Do not include the session id or tokens.",
     "",
   ].join("\n");
 }

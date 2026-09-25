@@ -34,13 +34,25 @@ A second `onboard` refuses when humans or workspaces already exist and points at
 
 Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
+## Agent-led setup
+
+An agent discovers the path from the installed binary with `campfire setup`. That command creates no state and prints no credential. `campfire onboard` remains the only command that prints one-time tokens. The human token is for operator administration. The agent token is for exactly one harness process.
+
+`campfire connect --harness codex` or `--harness opencode` writes that harness's Campfire MCP block and leaves unrelated settings in place. It stores the agent token in the config file and does not print it. A reload or a new harness process is required before MCP tools appear, and the harness may ask for approval. Claude Code and Cursor are not validated for this path.
+
+`campfire doctor <workspaceId> --harness <name>` is read-only. It does not register a session or search for one. Capture the id returned by `register_agent_session` and pass it to hosted doctor with `--session` or `CAMPFIRE_SESSION_ID` (`--session` wins). When doctor reports ready, `campfire view` serves the loopback journal and `campfire handoff` prints the workspace, goal, names, readiness, and Viewer URL. Do not put the session id or either token in that handoff. Campfire does not daemonize those processes and does not run the agent loop.
+
 ---
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
+| `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
 | `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Does not start the server or register an agent session |
+| `campfire connect` | Write a Codex or OpenCode MCP block for the agent token. Requires a reload or new process |
+| `campfire doctor <workspace>` | Read-only setup diagnosis. Does not register a session |
+| `campfire handoff <workspace>` | Non-secret Viewer receipt. The browser stays token-free |
 | `campfire init` / `seed [--reset]` | Bootstrap org/team; `seed --reset` loads the deterministic demo/evaluation fixture, not a new operator workspace |
 | `campfire list` / `show <workspace>` / `activity <workspace>` | Inspect workspaces and their contribution history; `show --since <contributionId>` adds the delta since that observation and the newest id to retain |
 | `campfire create-workspace` / `create-goal` / `create-task` | Shape the work (goals, tasks with explicit lifecycle) |
