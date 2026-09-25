@@ -135,10 +135,19 @@ The operator's normal Campfire database was not used.
 
 ## 4. Export audit
 
-The forbidden-content audit runs from the committed implementation source
-into an empty directory outside the repository. This section is completed
-after that command passes. The audit does not promote the snapshot, create a
-tag, publish a GitHub Release, or deploy production.
+`npm run export:public -- --ref e9ef9c906fac7a35431e9dd6a1c5b19c012c3d29`
+wrote 137 files into an empty directory outside the repository. The exporter's
+forbidden-path and forbidden-content audit passed. The manifest version is
+`1.2.1`, the exported migrate script uses the wrapper, the current installer
+contains the pinned-mismatch check, and the `v1.2.0` installer does not.
+`AGENTS.md` and this result document were not exported.
+
+The three files added since the 134-file `v1.2.0` manifest are
+`public/campfire/v1.2.1/install.sh`, `tests/unit/install.test.ts`, and
+`tests/unit/wrangler-deploy.test.ts`.
+
+This audit checks future release eligibility only. It does not promote the
+snapshot, create a tag, publish a GitHub Release, or deploy production.
 
 ---
 
@@ -157,7 +166,9 @@ Sprint 014 is **GO** because:
 8. a clean `v1.2.0` to local `v1.2.1` upgrade preserved the temporary workspace;
 9. published versioned installers and the `v1.2.0` tag were not rewritten;
 10. README, operator guidance, configuration comments, code, and tests agree; and
-11. the full Node 22 suite passed.
+11. the full Node 22 suite passed; and
+12. the export of commit `e9ef9c906fac7a35431e9dd6a1c5b19c012c3d29` passed its
+    forbidden-path and forbidden-content audit (137 files).
 
 Not claimed: a live Cloudflare migration, a public `v1.2.1` release, a
 production deploy, Gate B, Gate C, or product-market fit.
