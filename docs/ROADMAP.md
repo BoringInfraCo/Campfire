@@ -256,7 +256,10 @@ Close the Workspace GO (session-bound lifecycle; cold closer + downstream
 trace). Sprint 013 Public Release GO (`v1.2.0`). Sprint 014 Trust the Operator
 Path is GO. `v1.2.1` is released and deployed; the live migration path,
 four-platform assets, latest and pinned installs, and production Worker were
-verified.
+verified. Sprint 015 Zero-to-Shared-Workspace Onboarding is GO. One local
+`campfire onboard` command creates the first human, agent, workspace, and
+goal. It does not claim Gate B, Gate C, or external adoption, and it does
+not publish a release.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1242,7 +1245,12 @@ a design-partner trace. Gate B repeat usage and Gate C multi-participant value
 remain externally unmeasured, and the release makes no PMF claim. Sprint 014
 — Trust the Operator Path is GO as a narrow operator-path fix. Its audited
 `v1.2.1` patch is published and deployed. It does not introduce collaboration
-behavior or establish external product evidence.
+behavior or establish external product evidence. Sprint 015 —
+Zero-to-Shared-Workspace Onboarding is the next narrow product slice: replace
+the fixture-led first run with one deterministic setup composition over the
+existing identity, token, Workspace, Goal, invite, membership, session, and
+preflight boundaries. It is GO. It does not establish Gate B/C or PMF
+evidence, and it does not publish a release.
 
 ---
 
@@ -1292,6 +1300,8 @@ Sprint 012 — Close the Workspace   GO ✓
 Sprint 013 — Public Release v1.2.0   GO ✓; Gate B/C remain unmeasured
         ↓
 Sprint 014 — Trust the Operator Path   GO ✓; v1.2.1 released + deployed; live operator path verified
+        ↓
+Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; no release
 ```
 
 The roadmap provides direction.

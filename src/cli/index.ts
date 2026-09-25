@@ -10,6 +10,7 @@ import { mkdirSync, realpathSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
+import { formatOnboardReceipt, onboardInstallation } from "../bootstrap/onboard.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
@@ -618,6 +619,34 @@ async function cmdSeed(flags: Record<string, string | boolean>): Promise<void> {
  * emits runnable JS into `dist/` (gitignored), and `bin.campfire` points at
  * the built `dist/src/cli/index.js`. Local dev keeps using `tsx src/...`.
  */
+async function cmdOnboard(flags: Record<string, string | boolean>): Promise<void> {
+  // Reject blank input before opening SQLite so a typo cannot create a database.
+  const humanName = requireFlag(flags, "human-name");
+  const agentName = requireFlag(flags, "agent-name");
+  const harness = requireFlag(flags, "harness");
+  const workspaceName = requireFlag(flags, "workspace-name");
+  const goal = requireFlag(flags, "goal");
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  try {
+    const receipt = onboardInstallation(runtime.store, runtime.service, runtime.config, {
+      humanName,
+      agentName,
+      harness,
+      workspaceName,
+      goal,
+    });
+    if (flags.json === true) {
+      printJson(receipt);
+      return;
+    }
+    console.log(formatOnboardReceipt(receipt));
+  } finally {
+    runtime.close();
+  }
+}
+
 async function cmdBootstrap(flags: Record<string, string | boolean>): Promise<void> {
   const config = loadConfig();
   ensureParentDir(config.databasePath);
@@ -1038,6 +1067,7 @@ function printUsage(): void {
     "",
     "Usage:",
     "  campfire init",
+    "  campfire onboard --human-name <name> --agent-name <name> --harness <name> --workspace-name <name> --goal <title> [--json]",
     "  campfire bootstrap [--org <orgId>] [--team <teamId>] [--org-name <name>] [--team-name <name>] [--human-name <name>]",
     "  campfire seed [--reset]",
     "  campfire serve [--host 127.0.0.1] [--port 9414]",
@@ -1093,6 +1123,9 @@ function printUsage(): void {
     "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
     "requires --allow-remote. The browser never receives a token.",
     "",
+    "onboard is the first-run path. It does not start the server or register an",
+    "agent session. seed --reset remains the deterministic demo fixture.",
+    "",
     "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
   ];
   console.log(usage.join("\n"));
@@ -1110,6 +1143,8 @@ export async function runCli(argv: string[]): Promise<void> {
   switch (parsed.command) {
     case "init":
       return cmdInit();
+    case "onboard":
+      return cmdOnboard(parsed.flags);
     case "bootstrap":
       return cmdBootstrap(parsed.flags);
     case "seed":

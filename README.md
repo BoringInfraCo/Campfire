@@ -15,13 +15,22 @@ Every data-producing command honors `--json` for machine-readable output — `sh
 
 ## Quick start
 
+This is the path from an installed binary to one human, one agent they own, one workspace, and one goal. Onboard does not start the server and does not register an agent session. It prints each credential once, writes only the local database (`--db` or `CAMPFIRE_DB`), and does not provision Cloudflare.
+
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
-campfire init
-campfire seed --reset          # deterministic fixture
-campfire show ws_billing_deploy
-campfire serve                 # hosted HTTP API on 127.0.0.1:9414
+campfire onboard \
+  --human-name "Sergio" \
+  --agent-name "Codex" \
+  --harness codex \
+  --workspace-name "billing deploy" \
+  --goal "Ship the billing migration safely"
+CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
 ```
+
+The human token is for the operator CLI and administration. The agent token is for exactly one harness process. Point that process at `CAMPFIRE_URL`, `CAMPFIRE_TOKEN` (the agent token printed above), and `CAMPFIRE_HARNESS`. The agent calls `register_agent_session`, then `preflight`, then reads workspace context.
+
+A second `onboard` refuses when humans or workspaces already exist and points at `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`, and `join`. There is no reset flag. `campfire seed --reset` stays available as a deterministic demo/evaluation fixture. It is not how a new operator creates their workspace.
 
 Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
@@ -31,7 +40,8 @@ Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md
 
 | Command | Description |
 | --- | --- |
-| `campfire init` / `seed [--reset]` | Bootstrap org/team and load the deterministic fixture |
+| `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Does not start the server or register an agent session |
+| `campfire init` / `seed [--reset]` | Bootstrap org/team; `seed --reset` loads the deterministic demo/evaluation fixture, not a new operator workspace |
 | `campfire list` / `show <workspace>` / `activity <workspace>` | Inspect workspaces and their contribution history; `show --since <contributionId>` adds the delta since that observation and the newest id to retain |
 | `campfire create-workspace` / `create-goal` / `create-task` | Shape the work (goals, tasks with explicit lifecycle) |
 | `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance |

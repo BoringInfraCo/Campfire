@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_014.md
+docs/SPRINT_015.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -76,7 +76,10 @@ evidence. Sprint 014 — Trust the Operator Path is complete (GO); its result is
 `docs/SPRINT_014_RESULT.md`. The audited `v1.2.1` public snapshot, four-platform
 GitHub Release, production Worker, migration path, and latest/versioned
 installers are live. Gate B, Gate C, and external PMF evidence remain
-unmeasured. Sprint 015 is undefined.
+unmeasured. Sprint 015 — Zero-to-Shared-Workspace Onboarding is complete (GO);
+its result is `docs/SPRINT_015_RESULT.md`. That result does not authorize a
+release, public snapshot promotion, or production deployment. Sprint 016 is
+not defined.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
