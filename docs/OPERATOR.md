@@ -25,8 +25,11 @@ not public Viewer routes. `npm run pack:tarball` creates the tracked
 it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
-digest before unpacking. A GitHub Release upload alone does not deploy the
-versioned installer URL.
+digest before unpacking. A `latest` install reports the version stored in
+the installed package metadata (for example `1.2.0`), not the word `latest`.
+A pinned `--version` refuses the archive before replacing an existing install
+when package metadata differs. A GitHub Release upload alone does not deploy
+the versioned installer URL.
 
 Reproducible install from a clean checkout (source path):
 
@@ -38,6 +41,13 @@ npm ci && npm run build && npm test
 
 The public repo never contains a real D1 `database_id` — `wrangler.toml`
 keeps the `00000000-…` placeholder so clones validate without secrets.
+`$CAMPFIRE_D1_DATABASE_ID` wins over gitignored `wrangler.local.toml`. Both
+`npm run db:migrate` and `npm run deploy` run `scripts/wrangler-deploy.mjs`
+and fail locally, before Wrangler starts, when the id is missing, the
+placeholder `00000000-0000-0000-0000-000000000000`, or
+`REPLACE_ME_WITH_OUTPUT_OF_WRANGLER_D1_CREATE`; a database name alone does
+not bypass the committed placeholder, while `npm run deploy:dry-run` stays
+usable with that placeholder when no real id is set.
 
 One-time provisioning (operator machine, never committed):
 
@@ -51,7 +61,7 @@ cp wrangler.example.toml wrangler.local.toml  # paste the id there
 Repeatable release (CI or operator — id resolves env > `wrangler.local.toml`):
 
 ```bash
-npm run db:migrate     # by database NAME; needs no id in the repo
+npm run db:migrate     # same wrapper as deploy; fails closed without a real id
 npm run deploy:dry-run # validates with the placeholder when no id is set
 npm run pack:tarball   # builds release/campfire-{os}-{arch}.tar.gz + .sha256
 npm run deploy         # injects the real id via an ephemeral --config; deploys public/ assets

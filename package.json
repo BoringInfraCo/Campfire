@@ -1,6 +1,6 @@
 {
   "name": "campfire",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "The shared workspace where people and their agents work together.",
   "type": "module",
@@ -34,7 +34,7 @@
     "deploy": "node scripts/wrangler-deploy.mjs deploy",
     "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
     "dev:worker": "wrangler dev",
-    "db:migrate": "wrangler d1 migrations apply campfire --remote",
+    "db:migrate": "node scripts/wrangler-deploy.mjs d1 migrations apply campfire --remote",
     "pack:tarball": "sh scripts/package.sh",
     "export:public": "node scripts/export-public-release.mjs"
   },

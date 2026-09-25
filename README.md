@@ -24,7 +24,7 @@ campfire show ws_billing_deploy
 For a version-pinned install:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.2.0/install.sh | sh -s -- --version 1.2.0
+curl -fsSL https://boringinfra.company/campfire/v1.2.1/install.sh | sh -s -- --version 1.2.1
 ```
 
 ## Build and verify
