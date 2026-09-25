@@ -69,9 +69,10 @@ Sprint 007 is complete; its result is `docs/SPRINT_007_RESULT.md`. Sprint 010
 `docs/SPRINT_010_RESULT.md`. Sprint 011 — Natural Contribution is complete
 (GO); its result is `docs/SPRINT_011_RESULT.md`. Sprint 012 — Close the
 Workspace is complete (GO); its result is `docs/SPRINT_012_RESULT.md`.
-Sprint 013 — Public Release is authorized for the `v1.2.0` release sequence.
-Its contract explicitly defers design-partner evidence and does not authorize
-Sprint 014.
+Sprint 013 — Public Release is complete (GO); its result is
+`docs/SPRINT_013_RESULT.md`. The `v1.2.0` public snapshot, GitHub Release, and
+production installer are live. Its contract explicitly defers design-partner
+evidence. Sprint 014 remains undefined and is not authorized.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

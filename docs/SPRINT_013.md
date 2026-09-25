@@ -1,6 +1,6 @@
 # Campfire — Sprint 013: Public Release
 
-**Status:** Authorized — release execution in progress
+**Status:** Complete (**GO**) — see `SPRINT_013_RESULT.md`
 **Date:** September 25, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 012 — Close the Workspace (**GO**)
