@@ -126,10 +126,13 @@ npm run acceptance   # deterministic two-harness run + evidence
 Deploy: D1 `database_id` is never committed (`wrangler.toml` holds a
 placeholder). Provision once with `wrangler d1 create campfire`, keep the id
 in `$CAMPFIRE_D1_DATABASE_ID` or gitignored `wrangler.local.toml`, then
-`npm run db:migrate` / `npm run pack:tarball` / `npm run deploy`. The Worker/D1
-path is an available remote deployment slice; it does not establish the full
-hosted-team Stage C gate. See [docs/OPERATOR.md](docs/OPERATOR.md)
-("Deploy") for the one-time vs release split.
+`npm run db:migrate` / `npm run pack:tarball` / `npm run deploy`. Both
+`db:migrate` and `deploy` resolve the id through the same credential-safe
+wrapper and fail closed before contacting Cloudflare without a
+non-placeholder id. The Worker/D1 path is an available remote deployment
+slice; it does not establish the full hosted-team Stage C gate. See
+[docs/OPERATOR.md](docs/OPERATOR.md) ("Deploy") for the one-time vs release
+split.
 
 ## License
 

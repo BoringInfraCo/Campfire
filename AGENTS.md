@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_013.md
+docs/SPRINT_014.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -72,7 +72,10 @@ Workspace is complete (GO); its result is `docs/SPRINT_012_RESULT.md`.
 Sprint 013 — Public Release is complete (GO); its result is
 `docs/SPRINT_013_RESULT.md`. The `v1.2.0` public snapshot, GitHub Release, and
 production installer are live. Its contract explicitly defers design-partner
-evidence. Sprint 014 remains undefined and is not authorized.
+evidence. Sprint 014 — Trust the Operator Path is complete (GO); its result is
+`docs/SPRINT_014_RESULT.md`. The `v1.2.1` package is a local unreleased
+candidate. That result does not authorize a public tag, GitHub Release, or
+production deployment.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

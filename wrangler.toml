@@ -9,9 +9,13 @@
 #   export CAMPFIRE_D1_DATABASE_ID=<id from create>   # local shell / CI secret
 #   # optional persistent local override (gitignored):
 #   cp wrangler.example.toml wrangler.local.toml  # then paste the id there
-#   npm run deploy                # injects the id via temp --config, never writes it here
-# - `npm run db:migrate` applies ./migrations to the remote database (resolves
-#   by database NAME, needs no id in this file).
+#   npm run deploy                # wrapper injects the id via temp --config, never writes it here
+#   npm run db:migrate            # same wrapper; does not resolve by database name
+# - `npm run deploy` and `npm run db:migrate` both use scripts/wrangler-deploy.mjs.
+#   The wrapper takes $CAMPFIRE_D1_DATABASE_ID, else gitignored wrangler.local.toml,
+#   and fails before invoking Wrangler when that id is missing or a placeholder.
+#   A database name does not bypass the placeholder. `npm run deploy:dry-run`
+#   still validates with the committed placeholder.
 # - No secrets live in this file. Tokens are bearer credentials resolved at
 #   request time; set local dev secrets via `.dev.vars` (gitignored), and
 #   production secrets via `wrangler secret put`.
@@ -30,8 +34,10 @@ rules = [{ type = "Text", globs = ["**/*.sql"], fallthrough = true }]
 binding = "DB"
 database_name = "campfire"
 # INTENTIONAL PLACEHOLDER — do not replace with a real id in the public repo.
-# Deploy/migrate scripts inject the real id at release time from
+# Every migrate/deploy invocation injects the real id from
 # $CAMPFIRE_D1_DATABASE_ID or untracked wrangler.local.toml (see above).
+# That is not a release-only step. A missing or placeholder id fails closed
+# before Wrangler; deploy:dry-run may still use this placeholder.
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 

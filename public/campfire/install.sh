@@ -377,6 +377,16 @@ tar -xzf "$PKG" -C "$TMP_DIR" || fail "could not unpack campfire tarball"
 [ -f "$TMP_DIR/bin/campfire" ] || fail "tarball missing bin/campfire; refusing to install"
 [ -d "$TMP_DIR/lib/campfire" ] || fail "tarball missing lib/campfire; refusing to install"
 
+# The request label "latest" is not the installed version, and a pinned
+# request must not replace an existing install when the archive disagrees.
+pkg_json="$TMP_DIR/lib/campfire/package.json"
+[ -f "$pkg_json" ] || fail "tarball missing lib/campfire/package.json; refusing to replace an existing install"
+package_version="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$pkg_json" | head -n 1)"
+[ -n "$package_version" ] || fail "tarball lib/campfire/package.json has no version field; refusing to replace an existing install"
+if [ "$VERSION" != "latest" ] && [ "$package_version" != "$VERSION" ]; then
+  fail "archive package version $package_version does not match requested version $VERSION"
+fi
+
 if [ -n "$SUDO" ]; then
   $SUDO cp "$TMP_DIR/bin/campfire" "$BINDIR/campfire" || fail "could not install binary to $BINDIR"
   $SUDO chmod +x "$BINDIR/campfire" || fail "could not chmod $BINDIR/campfire"
@@ -393,7 +403,7 @@ fi
 # real output here — exit code alone proves nothing.
 help_out="$("$BINDIR/campfire" --help 2>&1)" || fail "installed binary failed '$BINDIR/campfire --help'"
 [ -n "$help_out" ] || fail "installed binary printed nothing for '$BINDIR/campfire --help'"
-log "Installed campfire $VERSION to $BINDIR/campfire ($OS/$ARCH)."
+log "Installed campfire $package_version to $BINDIR/campfire ($OS/$ARCH)."
 
 case ":$PATH:" in
   *":$BINDIR:"*) ;;

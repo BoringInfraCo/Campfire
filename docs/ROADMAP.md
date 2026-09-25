@@ -253,7 +253,9 @@ Sprint 010 Return to the Workspace GO (caller-supplied return cursor;
 Workers contribution writes awaited). Sprint 011 Natural Contribution GO
 (agent-interface guidance; cold contributor + downstream trace). Sprint 012
 Close the Workspace GO (session-bound lifecycle; cold closer + downstream
-trace).
+trace). Sprint 013 Public Release GO (`v1.2.0`). Sprint 014 Trust the Operator
+Path is GO. `v1.2.1` remains an unreleased local candidate, and the live remote
+migration was not re-run.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1237,7 +1239,9 @@ cold closer + downstream trace). By founder decision, Sprint 013 was a
 release-only contract: the proven state shipped as `v1.2.0` without requiring
 a design-partner trace. Gate B repeat usage and Gate C multi-participant value
 remain externally unmeasured, and the release makes no PMF claim. Sprint 014
-is undefined and not authorized.
+— Trust the Operator Path is GO as a narrow operator-path fix. It does not
+introduce collaboration behavior, publish `v1.2.1`, or establish external
+product evidence.
 
 ---
 
@@ -1285,6 +1289,8 @@ Sprint 011 — Natural Contribution   GO ✓
 Sprint 012 — Close the Workspace   GO ✓
         ↓
 Sprint 013 — Public Release v1.2.0   GO ✓; Gate B/C remain unmeasured
+        ↓
+Sprint 014 — Trust the Operator Path   GO ✓; v1.2.1 unreleased; live remote migration not re-run
 ```
 
 The roadmap provides direction.
