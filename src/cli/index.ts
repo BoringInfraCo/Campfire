@@ -10,7 +10,12 @@ import { mkdirSync, realpathSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
+import { prepareConnection } from "../bootstrap/connect.js";
+import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
+import type { DoctorReport } from "../bootstrap/doctor.js";
+import { buildHandoff, formatHandoff } from "../bootstrap/handoff.js";
 import { formatOnboardReceipt, onboardInstallation } from "../bootstrap/onboard.js";
+import { setupContract } from "../bootstrap/setup-contract.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
@@ -619,6 +624,149 @@ async function cmdSeed(flags: Record<string, string | boolean>): Promise<void> {
  * emits runnable JS into `dist/` (gitignored), and `bin.campfire` points at
  * the built `dist/src/cli/index.js`. Local dev keeps using `tsx src/...`.
  */
+function printDoctor(report: DoctorReport, asJson: boolean): void {
+  if (asJson) {
+    printJson(report);
+    return;
+  }
+  const lines = [`Campfire doctor ${report.version}`, `ready: ${report.ready ? "yes" : "no"}`, `next: ${report.nextAction}`];
+  for (const check of report.checks) {
+    lines.push(`- ${check.id}: ${check.pass ? "pass" : `fail (${check.nextAction})`}`);
+  }
+  console.log(lines.join("\n"));
+}
+
+function cmdSetup(flags: Record<string, string | boolean>): void {
+  const contract = setupContract();
+  if (flags.json === true) {
+    printJson(contract);
+    return;
+  }
+  console.log(
+    [
+      `Campfire setup contract ${contract.version}`,
+      "Inputs: --human-name --agent-name --harness --workspace-name --goal",
+      "Human credential: operator CLI / administration",
+      "Agent credential: exactly one harness process (CAMPFIRE_TOKEN)",
+      "Handoff: no credential",
+      `Serve: ${contract.serve.command}`,
+      "MCP: campfire mcp with CAMPFIRE_URL, CAMPFIRE_TOKEN, CAMPFIRE_HARNESS",
+      "Agent steps: register_agent_session, preflight, get_workspace_context",
+      "Viewer: campfire view on loopback. The browser does not receive a token.",
+      "A harness reload or explicit approval is required before MCP tools appear.",
+      "",
+    ].join("\n"),
+  );
+}
+
+function cmdConnect(flags: Record<string, string | boolean>): void {
+  const harness = requireFlag(flags, "harness");
+  const configPath = requireFlag(flags, "config");
+  const url = requireFlag(flags, "url");
+  const agentToken = requireFlag(flags, "token");
+  const workspaceId = requireFlag(flags, "workspace");
+  const mcpCommand = optionalFlag(flags, "mcp-command") ?? process.argv[1] ?? "campfire";
+  const plan = prepareConnection({ harness, configPath, mcpCommand, url, agentToken, workspaceId });
+  if (flags.json === true) {
+    printJson(plan);
+    return;
+  }
+  console.log(
+    [
+      `Wrote ${plan.harness} connection for workspace ${plan.workspaceId}.`,
+      `Config: ${plan.configPath}`,
+      "The agent token was stored in that file and is not repeated here.",
+      "Reload the harness or start a fresh process. Approval may be required.",
+      "",
+    ].join("\n"),
+  );
+}
+
+async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  if (workspaceId === undefined || workspaceId.trim().length === 0) {
+    throw new ValidationError("Missing required <workspaceId> argument", { field: "workspaceId" });
+  }
+  const harness = requireFlag(parsed.flags, "harness");
+  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN;
+  // Flag wins over the environment. Hosted doctor must be told the session id;
+  // it does not look one up.
+  const sessionFromFlag = optionalFlag(parsed.flags, "session");
+  const sessionId = sessionFromFlag ?? readCampfireSessionId(process.env, []);
+  const url = readCampfireUrl();
+  const asJson = parsed.flags.json === true;
+  if (url !== undefined) {
+    if (token === undefined) {
+      printDoctor(
+        { ready: false, version: setupContract().version, mode: "hosted", checks: [{ id: "token", pass: false, nextAction: "set_agent_token" }], nextAction: "set_agent_token" },
+        asJson,
+      );
+      return;
+    }
+    const report = await diagnoseHosted(
+      async (method, params) => {
+        try {
+          return await campfireHttpCall({ baseUrl: url, token, method, params });
+        } catch (error) {
+          if (error instanceof CampfireError) throw error;
+          throw new CampfireError("ValidationError", "Unable to reach Campfire", { nextAction: "start_campfire_serve" });
+        }
+      },
+      { workspaceId, harness, reachable: true, sessionId },
+    );
+    printDoctor(report, asJson);
+    return;
+  }
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  try {
+    printDoctor(diagnoseLocal(runtime, { workspaceId, harness, token }), asJson);
+  } finally {
+    runtime.close();
+  }
+}
+
+async function cmdHandoff(parsed: ParsedArgs): Promise<void> {
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  if (workspaceId === undefined || workspaceId.trim().length === 0) {
+    throw new ValidationError("Missing required <workspaceId> argument", { field: "workspaceId" });
+  }
+  const harness = requireFlag(parsed.flags, "harness");
+  const viewerUrl = requireFlag(parsed.flags, "viewer-url");
+  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN;
+  if (token === undefined) {
+    throw new ValidationError("Missing agent token: pass --token or set CAMPFIRE_TOKEN", { field: "token" });
+  }
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  try {
+    const doctor = diagnoseLocal(runtime, { workspaceId, harness, token });
+    const actor = runtime.service.resolveToken(token);
+    const view = runtime.service.getWorkspace({ actor }, workspaceId);
+    const human = view.participants.find((participant) => participant.role === "owner");
+    const agent = view.participants.find((participant) => participant.harness === harness);
+    if (human === undefined || agent === undefined || view.goal === undefined) {
+      throw new ValidationError("Workspace is missing the owner, agent, or goal for handoff", { field: "workspaceId" });
+    }
+    const receipt = buildHandoff({
+      version: doctor.version,
+      workspaceName: view.workspace.name,
+      workspaceId,
+      goalTitle: view.goal.title,
+      humanName: human.name,
+      agentName: agent.name,
+      viewerUrl,
+      doctor,
+    });
+    if (parsed.flags.json === true) printJson(receipt);
+    else console.log(formatHandoff(receipt));
+  } finally {
+    runtime.close();
+  }
+}
+
 async function cmdOnboard(flags: Record<string, string | boolean>): Promise<void> {
   // Reject blank input before opening SQLite so a typo cannot create a database.
   const humanName = requireFlag(flags, "human-name");
@@ -1067,7 +1215,11 @@ function printUsage(): void {
     "",
     "Usage:",
     "  campfire init",
+    "  campfire setup [--json]",
     "  campfire onboard --human-name <name> --agent-name <name> --harness <name> --workspace-name <name> --goal <title> [--json]",
+    "  campfire connect --harness codex|opencode --config <path> --url <url> --token <agent-token> --workspace <id> [--mcp-command <path>]",
+    "  campfire doctor <workspaceId> --harness <name> [--session <sessionId>] [--token <agent-token>] [--json]",
+    "  campfire handoff <workspaceId> --harness <name> --viewer-url <loopback-url> [--token <agent-token>] [--json]",
     "  campfire bootstrap [--org <orgId>] [--team <teamId>] [--org-name <name>] [--team-name <name>] [--human-name <name>]",
     "  campfire seed [--reset]",
     "  campfire serve [--host 127.0.0.1] [--port 9414]",
@@ -1125,6 +1277,12 @@ function printUsage(): void {
     "",
     "onboard is the first-run path. It does not start the server or register an",
     "agent session. seed --reset remains the deterministic demo fixture.",
+    "setup prints the agent-readable contract and creates no state. connect writes",
+    "only the named harness config and requires a reload or new process. doctor is",
+    "read-only. Hosted doctor needs the session id from register_agent_session",
+    "via --session or CAMPFIRE_SESSION_ID (--session wins). It does not look up",
+    "or register a session. Do not put the session id or tokens in the handoff.",
+    "handoff prints a loopback Viewer receipt and never a token.",
     "",
     "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
   ];
@@ -1143,8 +1301,16 @@ export async function runCli(argv: string[]): Promise<void> {
   switch (parsed.command) {
     case "init":
       return cmdInit();
+    case "setup":
+      return cmdSetup(parsed.flags);
     case "onboard":
       return cmdOnboard(parsed.flags);
+    case "connect":
+      return cmdConnect(parsed.flags);
+    case "doctor":
+      return cmdDoctor(parsed);
+    case "handoff":
+      return cmdHandoff(parsed);
     case "bootstrap":
       return cmdBootstrap(parsed.flags);
     case "seed":

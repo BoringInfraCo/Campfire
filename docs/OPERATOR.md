@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.3.0/install.sh | sh -s -- --version 1.3.0
+curl -fsSL https://boringinfra.company/campfire/v1.4.0/install.sh | sh -s -- --version 1.4.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +26,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.3.0`), not the word `latest`.
+the installed package metadata (for example `1.4.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -193,6 +193,26 @@ Do not put `CAMPFIRE_ACTOR_ID` on the hosted adapter.
 ```
 
 OpenCode uses the same server with its own token and `CAMPFIRE_HARNESS=opencode`.
+
+## Agent-led connection and handoff
+
+`campfire setup` prints the installed setup contract. It creates no rows and includes no credential. After `campfire onboard`, prepare one harness:
+
+```bash
+campfire connect --harness codex --config <codex-config.toml> --url http://127.0.0.1:9414 --token <agent-token> --workspace <workspaceId>
+campfire connect --harness opencode --config <opencode.json> --url http://127.0.0.1:9414 --token <agent-token> --workspace <workspaceId>
+```
+
+`connect` writes only the Campfire MCP entry, preserves unrelated settings, stores the agent token in that file, and does not print the token. Codex and OpenCode need a reload or a new process before the tools appear. The harness may require approval. Other harnesses are refused rather than guessed.
+
+`campfire doctor <workspaceId> --harness <name>` checks version, identity, workspace access, harness, session, preflight, and context. It does not register a session, look up an existing session, or change the workspace. A hosted doctor process cannot see the MCP process's in-memory session. Capture the id returned by `register_agent_session` and pass it with `--session <sessionId>` or `CAMPFIRE_SESSION_ID`. `--session` wins when both are set. Without that id, doctor asks for `register_agent_session_then_pass_session` and does not claim the session is missing. When the next action is `start_campfire_view`, start the journal and hand the human the loopback URL. Leave the session id and both tokens out of that handoff:
+
+```bash
+CAMPFIRE_DB=<absolute path> campfire view
+campfire handoff <workspaceId> --harness <name> --viewer-url http://127.0.0.1:9415 --token <agent-token>
+```
+
+The handoff lists the version, workspace, goal, participant names, readiness, and Viewer URL. It does not include a bearer token. `campfire serve` and `campfire view` stay in the terminal that started them. Campfire does not install them as daemons.
 
 ## 6. Humans contribute without a harness
 
