@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.2.0/install.sh | sh -s -- --version 1.2.0
+curl -fsSL https://boringinfra.company/campfire/v1.3.0/install.sh | sh -s -- --version 1.3.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +26,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.2.0`), not the word `latest`.
+the installed package metadata (for example `1.3.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -36,6 +36,45 @@ Reproducible install from a clean checkout (source path):
 ```bash
 npm ci && npm run build && npm test
 ```
+
+## First shared workspace
+
+`campfire onboard` is the first-run path from an installed binary to one
+human, one agent they own, one workspace, and one goal. It does not start
+the server and does not register an agent session. It writes only the local
+database (`--db` or `CAMPFIRE_DB`). It does not provision Cloudflare.
+
+```bash
+campfire onboard \
+  --human-name "Sergio" \
+  --agent-name "Codex" \
+  --harness codex \
+  --workspace-name "billing deploy" \
+  --goal "Ship the billing migration safely"
+```
+
+The command prints each credential once. The human token is for the operator
+CLI and administration. The agent token is for exactly one harness process.
+Do not put an actor id in hosted auth.
+
+Start the server on the absolute database path printed by onboard, then
+point the harness at `CAMPFIRE_URL`, `CAMPFIRE_TOKEN` (the agent token
+printed above), and `CAMPFIRE_HARNESS`:
+
+```bash
+CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
+```
+
+The agent calls `register_agent_session`, then `preflight`, then reads
+workspace context.
+
+A second run refuses when humans or workspaces already exist and points at
+`create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
+and `join`. There is no reset flag.
+
+`campfire seed --reset` stays available. It loads a deterministic
+demo/evaluation fixture. It is not how a new operator creates their
+workspace.
 
 ## Deploy (Workers + D1)
 
@@ -87,6 +126,10 @@ gate.
 One process owns SQLite. CLI and MCP call it over HTTP with an actor token.
 
 ## 1. Initialize
+
+`campfire onboard` (above) creates the first workspace. The source-checkout
+commands below are the granular path. `seed --reset` loads the deterministic
+demo/evaluation fixture; it is not how a new operator creates their workspace.
 
 ```bash
 npx tsx src/cli/index.ts init
@@ -195,8 +238,11 @@ past the first 50 is silently hidden.
 
 ## First-run bootstrap
 
-`init` creates the database; `seed --reset` loads the deterministic fixture.
-The first human may be created with no token (empty-human bootstrap); after
+The installed first workspace is `campfire onboard` (see "First shared
+workspace"). `init` creates an empty database. `seed --reset` loads the
+deterministic demo/evaluation fixture; it is not how a new operator creates
+their workspace. There is no onboard reset flag. The first human may still
+be created with no token on an empty database (empty-human bootstrap); after
 that, `create-human` requires a human actor and `issue-token` mints the raw
 token printed once:
 
