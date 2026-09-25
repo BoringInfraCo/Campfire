@@ -2,7 +2,7 @@
 
 **Status:** Complete (**GO**)
 **Date:** September 24, 2026
-**Patch candidate:** `v1.2.1` (local only; not tagged, not published, not deployed)
+**Release:** `v1.2.1` (tagged, published, and deployed September 25, 2026)
 **Depends on:** Sprint 013 — Public Release `v1.2.0` (**GO**)
 
 ---
@@ -20,14 +20,12 @@ Recommendation: **GO**.
 
 This is operator-path evidence. Gate B repeat usage, Gate C external
 multi-participant value, retention, and product-market fit remain unmeasured.
-`v1.2.1` is not a public release.
+`v1.2.1` is now the public release and production installer version.
 
-The live production command `npm run db:migrate` was not run. Sprint 014
-requires separate authorization for that remote mutation, and this
-implementation did not receive it. Do not treat the remote apply path as
-re-proven against Cloudflare. The wrapper's migrate arguments, id precedence,
-fail-closed behavior, ephemeral-config cleanup, and exit-status propagation
-are deterministic test evidence.
+After explicit founder authorization, the live production command
+`npm run db:migrate` ran through the new wrapper against the intended
+Cloudflare account and returned `No migrations to apply!`. The production
+deploy then completed through the same wrapper.
 
 ---
 
@@ -146,12 +144,48 @@ The three files added since the 134-file `v1.2.0` manifest are
 `public/campfire/v1.2.1/install.sh`, `tests/unit/install.test.ts`, and
 `tests/unit/wrangler-deploy.test.ts`.
 
-This audit checks future release eligibility only. It does not promote the
-snapshot, create a tag, publish a GitHub Release, or deploy production.
+That implementation audit established release eligibility. The later release
+export used immutable private tag `v1.2.1`, source commit
+`3848c401f42ac22c4890043bfa36f1dbfa8364f7`, again wrote 137 files, and passed
+the forbidden-path and forbidden-content audit. The exported files matched the
+promoted public snapshot byte for byte.
 
 ---
 
-## 5. Acceptance decision
+## 5. Release and production evidence
+
+- Private canonical tag `v1.2.1` points to
+  `3848c401f42ac22c4890043bfa36f1dbfa8364f7`.
+- Public snapshot commit `5e2f98a1327d390d7168826a553308acc2f72602`
+  is tagged `v1.2.1`.
+- Public main and tag CI both passed typecheck, build, all 337 tests, and the
+  blank-database bootstrap smoke.
+- The GitHub Release is
+  `https://github.com/BoringInfraCo/Campfire/releases/tag/v1.2.1`.
+- The release workflow built and checksum-verified all four native archives:
+  Darwin ARM64, Darwin x64, Linux ARM64, and Linux x64. All four archives and
+  all four `.sha256` files are attached to the release.
+- Live migration used `wrangler.local.toml` only through an ephemeral config;
+  Cloudflare reported no pending migrations and no identifier was printed.
+- Production deploy succeeded as Cloudflare Worker version
+  `6613df6e-b9a0-46a4-a2c5-726c71a47cfa`.
+- `https://boringinfra.company/campfire/install.sh` and
+  `https://boringinfra.company/campfire/v1.2.1/install.sh` returned the exact
+  tracked installer bytes (sha256
+  `c539f8a51e7f763ddd2e29b637add8f214dc8f7ff1329a6546d5e613dd4b5217`).
+- Clean latest and pinned production installs both verified the published
+  Darwin ARM64 archive checksum
+  `46c2794cae53d8ae7a189dbbde8df9fea7bc2a44e3fdf64e041a63846eb51dd8`,
+  installed package metadata `1.2.1`, reported `Installed campfire 1.2.1`, and
+  printed CLI help. The latest install also initialized and seeded a new
+  SQLite database and read `ws_billing_deploy` successfully.
+
+The prior `v1.0.0`, `v1.1.0`, and `v1.2.0` versioned installers and release
+tags remain unchanged.
+
+---
+
+## 6. Acceptance decision
 
 Sprint 014 is **GO** because:
 
@@ -170,7 +204,10 @@ Sprint 014 is **GO** because:
 12. the export of commit `e9ef9c906fac7a35431e9dd6a1c5b19c012c3d29` passed its
     forbidden-path and forbidden-content audit (137 files).
 
-Not claimed: a live Cloudflare migration, a public `v1.2.1` release, a
-production deploy, Gate B, Gate C, or product-market fit.
+The release promotion additionally proves the live Cloudflare migration path,
+public snapshot boundary, four-platform GitHub Release, production deploy, and
+clean production installation path.
+
+Not claimed: Gate B, Gate C, external repeat usage, retention, or product-market fit.
 
 Sprint 015 is not defined or authorized by this result.

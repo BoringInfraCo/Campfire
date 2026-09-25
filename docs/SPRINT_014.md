@@ -1,10 +1,10 @@
 # Campfire — Sprint 014: Trust the Operator Path
 
-**Status:** Complete (**GO**) — see `SPRINT_014_RESULT.md`. `v1.2.1` is an unreleased local candidate.
+**Status:** Complete (**GO**) — see `SPRINT_014_RESULT.md`. `v1.2.1` is released and deployed.
 **Date:** September 25, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 013 — Public Release `v1.2.0` (**GO**)
-**Patch candidate:** `v1.2.1` (not published by this contract)
+**Release:** `v1.2.1` (promotion authorized separately after the sprint GO decision)
 **Primary metric:** Documented operator-path accuracy. Every documented
 production command must either use the intended D1 configuration safely or
 fail closed before contacting a remote placeholder; installation must report
