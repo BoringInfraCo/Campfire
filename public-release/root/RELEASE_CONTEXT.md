@@ -18,6 +18,10 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Structured goals, tasks, findings, decisions, artifacts, and contributions are sufficient for the demonstrated cross-harness continuation flow.
 - Authorization must occur before state reaches a harness.
 - A read-only journal makes current state and provenance inspectable without exposing an actor token to the browser.
+- Agents orient more reliably when readiness, compact context, attention, alignment, and the next honest action are explicit at the interface boundary.
+- A caller-held contribution cursor supports truthful return without storing read state or treating the cursor as a summary.
+- Contribution and Workspace lifecycle writes preserve actor and active agent-session provenance across local and Workers services.
+- Completed Workspaces remain readable with their structured state and contribution history intact.
 
 ## Artifacts
 
@@ -27,6 +31,6 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 ## Verification
 
-The publication gate runs `npm ci`, type checking, the production build, and the full test suite. Release packaging smoke-tests the staged CLI, and every published archive is verified against its SHA-256 checksum.
+The publication gate runs `npm ci`, type checking, the production build, and the full test suite. Release packaging smoke-tests the staged CLI, and every published archive is verified against its SHA-256 checksum. Deterministic and cold-harness sprint evidence informed this release; external repeat usage, multi-participant retention, and product-market fit remain unmeasured.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

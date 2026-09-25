@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.1.0/install.sh | sh -s -- --version 1.1.0
+curl -fsSL https://boringinfra.company/campfire/v1.2.0/install.sh | sh -s -- --version 1.2.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 

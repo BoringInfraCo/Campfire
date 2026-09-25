@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_012.md
+docs/SPRINT_013.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -69,6 +69,9 @@ Sprint 007 is complete; its result is `docs/SPRINT_007_RESULT.md`. Sprint 010
 `docs/SPRINT_010_RESULT.md`. Sprint 011 — Natural Contribution is complete
 (GO); its result is `docs/SPRINT_011_RESULT.md`. Sprint 012 — Close the
 Workspace is complete (GO); its result is `docs/SPRINT_012_RESULT.md`.
+Sprint 013 — Public Release is authorized for the `v1.2.0` release sequence.
+Its contract explicitly defers design-partner evidence and does not authorize
+Sprint 014.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

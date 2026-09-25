@@ -1233,8 +1233,10 @@ Execution is GO (recorded alignment boundary). Sprint 010 — Return to the
 Workspace is GO (caller-supplied return cursor). Sprint 011 — Natural
 Contribution is GO (agent-interface guidance; cold contributor + downstream
 trace). Sprint 012 — Close the Workspace is GO (session-bound lifecycle;
-cold closer + downstream trace). A future design-partner
-release replaces the abandoned formal field trace for external PMF evidence.
+cold closer + downstream trace). By founder decision, Sprint 013 is a
+release-only contract: promote the proven state as `v1.2.0` without requiring
+a design-partner trace. Gate B repeat usage and Gate C multi-participant value
+remain externally unmeasured, and the release makes no PMF claim.
 
 ---
 
@@ -1281,7 +1283,7 @@ Sprint 011 — Natural Contribution   GO ✓
         ↓
 Sprint 012 — Close the Workspace   GO ✓
         ↓
-Design-partner release   future external PMF evidence
+Sprint 013 — Public Release v1.2.0   authorized; Gate B/C remain unmeasured
 ```
 
 The roadmap provides direction.
