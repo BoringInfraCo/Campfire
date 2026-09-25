@@ -506,6 +506,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
 
     updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace {
       authorizer.assertAllowed(ctx, "workspace:write", input.workspaceId);
+      requireAgentSession(ctx);
       const workspace = store.getWorkspace(input.workspaceId);
       if (workspace === undefined) {
         throw new WorkspaceNotFound(input.workspaceId);

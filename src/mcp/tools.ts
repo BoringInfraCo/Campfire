@@ -179,7 +179,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "update_workspace",
     {
-      description: "Update a workspace status through an explicit lifecycle transition.",
+      description:
+        "Change a workspace lifecycle status explicitly after inspecting its recorded state. Use completed only when the recorded goal is finished and no recorded work or proposal remains; completion preserves the workspace and its history. Use active for ongoing or deliberately reopened work. Archived is terminal retirement, not a synonym for completed. Quiet state alone never grants permission and never proves success.",
       inputSchema: {
         workspaceId: z.string(),
         status: z.enum(WORKSPACE_STATUSES),

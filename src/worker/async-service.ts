@@ -544,6 +544,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
 
     async updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Promise<Workspace> {
       await authorizer.assertAllowed(ctx, "workspace:write", input.workspaceId);
+      await requireAgentSession(ctx);
       const workspace = await store.getWorkspace(input.workspaceId);
       if (workspace === undefined) {
         throw new WorkspaceNotFound(input.workspaceId);
