@@ -1262,7 +1262,9 @@ agent can prepare a Codex or OpenCode connection and a token-free Viewer
 receipt. Hosted doctor requires the registered session id. OpenCode completed
 prompt-to-Viewer; Codex did not. Campfire does not become a runtime
 supervisor or orchestration engine. This sprint does not establish repeat
-usage, multi-participant value, or PMF, and it does not authorize a release.
+usage, multi-participant value, or PMF. The operator separately authorized
+publication as backward-compatible minor release `v1.4.0`; publication does
+not upgrade the sprint's CONDITIONAL GO evidence.
 
 ---
 
@@ -1315,7 +1317,7 @@ Sprint 014 — Trust the Operator Path   GO ✓; v1.2.1 released + deployed; liv
         ↓
 Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; v1.3.0 minor release
         ↓
-Sprint 016 — Agent-Led Setup & Human Handoff   CONDITIONAL GO; OpenCode prompt-to-Viewer validated; Codex setup incomplete; Gate B/C remain unmeasured
+Sprint 016 — Agent-Led Setup & Human Handoff   CONDITIONAL GO; v1.4.0 authorized; OpenCode prompt-to-Viewer validated; Codex setup incomplete; Gate B/C remain unmeasured
 ```
 
 The roadmap provides direction.

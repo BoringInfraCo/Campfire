@@ -25,7 +25,11 @@ session, and did not leave a Viewer listening. Only OpenCode is validated for
 the full prompt-to-Viewer path.
 
 Gate B, Gate C, retention, adoption, and product-market fit remain unmeasured.
-No release is authorized.
+
+The operator separately authorized publication as minor release `v1.4.0`.
+The four new backward-compatible interface commands make this a minor release,
+not a patch. Publication does not change this sprint's CONDITIONAL GO decision
+or establish the missing Codex prompt-to-Viewer evidence.
 
 ---
 
@@ -144,7 +148,9 @@ connection adapters, read-only doctor, secret-free handoff, and full test
 suite pass, and one real harness (OpenCode) completed prompt-to-Viewer.
 Codex did not complete that path, so the two-harness experience is not claimed.
 
-Not claimed: a release, Gate B, Gate C, or product-market fit.
+Not claimed in the pre-promotion evidence: a public snapshot, GitHub Release,
+or production deploy. Those require separate verification after tag `v1.4.0`.
+Also not claimed: Gate B, Gate C, or product-market fit.
 
 Sprint 017 is not defined or authorized by this result.
 
