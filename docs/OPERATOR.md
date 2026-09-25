@@ -8,20 +8,25 @@ Install the CLI on an operator or teammate machine (curl path):
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
-Pinned / explicit variants (`--help` for all flags; env equivalents
+Pinned / explicit variants (the versioned URL works after the Workers asset
+deploy; `--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
+curl -fsSL https://boringinfra.company/campfire/v1.2.0/install.sh | sh -s -- --version 1.2.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
-The static asset is served by Workers from `public/` (see `wrangler.toml`
-and `public/_headers`); versioned immutable copies live at
-`/campfire/vX.Y.Z/install.sh` (produced by `npm run pack:tarball`).
-Release tarballs (`release/campfire-{os}-{arch}.tar.gz` + `.sha256`, built
-by `npm run pack:tarball` from `dist/` for GitHub Releases) are
-sha256-verified when published.
+The Worker serves only installer downloads from `public/` (see `wrangler.toml`
+and `public/_headers`); its root page, `app.js`, `app.css`, and logomark are
+not public Viewer routes. `npm run pack:tarball` creates the tracked
+`public/campfire/vX.Y.Z/install.sh` file. Commit that versioned copy and deploy
+it to Workers before its URL is live. The release workflow builds
+platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
+and attaches them to GitHub Releases. The installer verifies the SHA-256
+digest before unpacking. A GitHub Release upload alone does not deploy the
+versioned installer URL.
 
 Reproducible install from a clean checkout (source path):
 
@@ -48,10 +53,24 @@ Repeatable release (CI or operator — id resolves env > `wrangler.local.toml`):
 ```bash
 npm run db:migrate     # by database NAME; needs no id in the repo
 npm run deploy:dry-run # validates with the placeholder when no id is set
-npm run deploy         # injects the real id via an ephemeral --config; wrangler.toml untouched
 npm run pack:tarball   # builds release/campfire-{os}-{arch}.tar.gz + .sha256
-gh release create …    # publish; install.sh verifies sha256
+npm run deploy         # injects the real id via an ephemeral --config; deploys public/ assets
+gh release create …    # publish matching platform assets; install.sh verifies SHA-256
 ```
+
+Versioned installer files are tracked in git; keep the generated
+`public/campfire/vX.Y.Z/install.sh` in the release commit before the Workers
+deploy. Verify the versioned URL, each published tarball/checksum pair, and a
+clean installation from the release. Packaging on an operator machine builds
+only that machine's platform; the release workflow builds the supported
+platform assets on their respective runners. Keep the `vX.Y.Z` script and
+published release tag aligned.
+
+The Worker/D1 entrypoint provides remote state and bearer-token API routes
+plus installer downloads. It does not serve a hosted browser journal;
+`campfire view` is the supported read-only Viewer path on loopback. This remote
+deployment slice is not evidence of the roadmap's full hosted-team Stage C
+gate.
 
 `wrangler dev` always uses the placeholder (D1 simulated locally).
 
@@ -126,12 +145,19 @@ OpenCode uses the same server with its own token and `CAMPFIRE_HARNESS=opencode`
 
 ```bash
 npx tsx src/cli/index.ts show <workspaceId>
+npx tsx src/cli/index.ts show <workspaceId> --since <contributionId>
 npx tsx src/cli/index.ts add-finding --workspace <workspaceId> --summary "..."
 npx tsx src/cli/index.ts create-task --workspace <workspaceId> --title "..."
 npx tsx src/cli/index.ts add-decision --workspace <workspaceId> --summary "..."
 npx tsx src/cli/index.ts accept-decision <decisionId>
 npx tsx src/cli/index.ts update-task <taskId> --status in_progress
 ```
+
+Pass `--since <contributionId>` to print only the contributions recorded
+strictly after that observation, a `truncated` flag when older post-cursor rows
+were omitted, and the newest contribution id to retain as the next cursor. The
+cursor is an observation pointer; it is not a summary of the changes and not
+permission to execute.
 
 ## 7. Do not
 

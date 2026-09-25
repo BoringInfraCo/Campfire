@@ -111,9 +111,14 @@ function fail(
   code: string,
   message: string,
   access: { method?: string; actorId?: string; actorType?: string },
+  details?: Record<string, unknown>,
 ): void {
   logAccess({ allow: false, error: code, ...access });
-  writeJson(res, status, { ok: false, error: code, message });
+  writeJson(
+    res,
+    status,
+    details === undefined ? { ok: false, error: code, message } : { ok: false, error: code, message, details },
+  );
 }
 
 export async function startCampfireHttpServer(options: HttpServerOptions): Promise<RunningHttpServer> {
@@ -215,11 +220,14 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
       writeJson(res, 200, { ok: true, result });
     } catch (error) {
       if (error instanceof CampfireError) {
-        fail(res, statusFor(error.code, false), error.code, error.message, {
-          method,
-          actorId: actor.actorId,
-          actorType: actor.actorType,
-        });
+        fail(
+          res,
+          statusFor(error.code, false),
+          error.code,
+          error.message,
+          { method, actorId: actor.actorId, actorType: actor.actorType },
+          method === "preflight" ? error.details : undefined,
+        );
         return;
       }
       throw error;

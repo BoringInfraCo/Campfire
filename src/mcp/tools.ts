@@ -11,7 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { CampfireError, ValidationError } from "../domain/errors.js";
-import { campfireHttpCall } from "../http/client.js";
+import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
@@ -84,12 +84,22 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       if (ctx.agentSessionId !== undefined) {
         merged.agentSessionId = ctx.agentSessionId;
       }
-      return campfireHttpCall({
-        baseUrl: remote.url,
-        token: remote.token,
-        method,
-        params: merged,
-      });
+      try {
+        return await campfireHttpCall({
+          baseUrl: remote.url,
+          token: remote.token,
+          method,
+          params: merged,
+        });
+      } catch (error) {
+        if (error instanceof CampfireError && method === "preflight") {
+          throw hostedPreflightError(error);
+        }
+        if (error instanceof CampfireError && method === "whoami") {
+          throw hostedIdentityError(error);
+        }
+        throw error;
+      }
     }
     if (service === undefined) {
       throw new ValidationError("Campfire MCP server is missing a service");
@@ -108,6 +118,22 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       return fail("InternalError", error instanceof Error ? error.message : String(error));
     }
   }
+
+  server.registerTool(
+    "preflight",
+    {
+      description:
+        "Check endpoint, authenticated identity, and agent-session readiness without changing Campfire state.",
+      inputSchema: { workspaceId: z.string().min(1) },
+    },
+    (args) =>
+      run(async () => {
+        const status = (await invoke("preflight", {
+          workspaceId: args.workspaceId,
+        })) as Record<string, unknown>;
+        return identity.harness === undefined ? status : { ...status, harness: identity.harness };
+      }),
+  );
 
   server.registerTool(
     "whoami",
@@ -153,7 +179,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "update_workspace",
     {
-      description: "Update a workspace status through an explicit lifecycle transition.",
+      description:
+        "Change a workspace lifecycle status explicitly after inspecting its recorded state. Use completed only when the recorded goal is finished and no recorded work or proposal remains; completion preserves the workspace and its history. Use active for ongoing or deliberately reopened work. Archived is terminal retirement, not a synonym for completed. Quiet state alone never grants permission and never proves success.",
       inputSchema: {
         workspaceId: z.string(),
         status: z.enum(WORKSPACE_STATUSES),
@@ -175,8 +202,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "get_workspace_context",
     {
       description:
-        "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, and recent provenance.",
-      inputSchema: { workspaceId: z.string() },
+        "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Pass `since` (a contribution id) to also receive contributions strictly after it.",
+      inputSchema: { workspaceId: z.string(), since: z.string().optional() },
     },
     (args) => run(() => invoke("get_workspace_context", args)),
   );
@@ -269,7 +296,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "update_goal",
     {
-      description: "Update a goal's title, description, or status.",
+      description:
+        "Change shared team intent only when the goal itself changed. Do not use it to narrate progress; progress belongs in findings, tasks, or artifacts.",
       inputSchema: {
         goalId: z.string(),
         title: z.string().optional(),
@@ -283,7 +311,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "add_finding",
     {
-      description: "Record a durable finding in a workspace.",
+      description:
+        "Record a durable fact or conclusion useful to later participants. Include evidence or confidence when useful. Do not paste a private transcript or scratch reasoning.",
       inputSchema: {
         workspaceId: z.string(),
         summary: z.string(),
@@ -298,7 +327,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "add_decision",
     {
-      description: "Record a decision in a workspace.",
+      description:
+        "Record a direction that still needs explicit acceptance. Creating a decision only proposes it; it does not approve it.",
       inputSchema: {
         workspaceId: z.string(),
         summary: z.string(),
@@ -312,7 +342,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "accept_decision",
     {
-      description: "Accept a proposed decision.",
+      description:
+        "Accept a proposed decision only for an explicit approval. Never call it as an automatic follow-up to proposing.",
       inputSchema: { decisionId: z.string() },
     },
     (args) => run(() => invoke("accept_decision", args)),
@@ -321,7 +352,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "create_task",
     {
-      description: "Create a task in a workspace.",
+      description:
+        "Create actionable shared work with a truthful initial lifecycle state and assignee.",
       inputSchema: {
         workspaceId: z.string(),
         title: z.string(),
@@ -335,7 +367,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "update_task",
     {
-      description: "Update a task's status, title, description, or assignee. Pass assignee null to clear.",
+      description:
+        "Update shared work to its truthful current lifecycle status, title, description, or assignee. Move to in_progress when started, blocked when waiting, completed only when the completion condition is met. Pass assignee null to clear.",
       inputSchema: {
         taskId: z.string(),
         status: z.enum(TASK_STATUSES).optional(),
@@ -350,7 +383,8 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "add_artifact",
     {
-      description: "Attach an artifact reference to a workspace.",
+      description:
+        "Attach a stable reference to a useful output or source with metadata. Store the reference, not copied secret material or private session content.",
       inputSchema: {
         workspaceId: z.string(),
         type: z.enum(ARTIFACT_TYPES),

@@ -11,6 +11,7 @@ import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 
 export const CAMPFIRE_HTTP_METHODS = [
+  "preflight",
   "whoami",
   "list_workspaces",
   "create_workspace",
@@ -185,6 +186,8 @@ export function dispatchCampfireMethod(
   }
 
   switch (method) {
+    case "preflight":
+      return service.checkReadiness(ctx, { workspaceId: str(params, "workspaceId") });
     case "whoami":
       return { actor: ctx.actor, sessionId: ctx.agentSessionId };
     case "list_workspaces":
@@ -202,8 +205,12 @@ export function dispatchCampfireMethod(
       });
     case "get_workspace":
       return service.getWorkspace(ctx, str(params, "workspaceId"));
-    case "get_workspace_context":
-      return service.getWorkspaceContext(ctx, str(params, "workspaceId"));
+    case "get_workspace_context": {
+      const options: { since?: string } = {};
+      const since = optionalStr(params, "since");
+      if (since !== undefined) options.since = since;
+      return service.getWorkspaceContext(ctx, str(params, "workspaceId"), options);
+    }
     case "get_activity": {
       const query: { workspaceId: string; limit?: number; before?: string } = {
         workspaceId: str(params, "workspaceId"),

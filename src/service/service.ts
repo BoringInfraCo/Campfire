@@ -186,6 +186,73 @@ export interface SupersededDecisionSummary {
  */
 export const ORIENTATION_PROVENANCE_LIMIT = 20;
 
+/** The kind of work an attention item points at. */
+export type AttentionKind = "task" | "decision";
+
+/** Why an item is surfaced; labels are stable across surfaces (Sprint 008). */
+export type AttentionReason =
+  | "proposed_decision_actionable"
+  | "assigned_blocked_task"
+  | "assigned_open_task"
+  | "team_proposed_decision"
+  | "unassigned_blocked_task"
+  | "team_blocked_task"
+  | "team_open_task";
+
+/** One authorization-aware orientation item for a cold entrant. */
+export interface AttentionItem {
+  kind: AttentionKind;
+  id: string;
+  summary: string;
+  status: string;
+  reason: AttentionReason;
+  assignee?: ActorRef;
+}
+
+/** The live state of the work, independent of who may act on it. */
+export interface CurrentWork {
+  inProgressTasks: Task[];
+  blockedTasks: Task[];
+  acceptedDecisions: Decision[];
+}
+
+/**
+ * A rule-based orientation hint. Never an instruction to execute: `orientationHint`
+ * is always true and no surface dispatches it (Sprint 008).
+ */
+export interface SuggestedNextAction {
+  kind: "task" | "decision" | "none";
+  id?: string;
+  summary: string;
+  reason: AttentionReason | "none";
+  orientationHint: true;
+}
+
+export type RecordedAlignmentStatus = "open" | "established" | "unspecified";
+
+/**
+ * Recorded alignment boundary (Sprint 009).
+ *
+ * Describes what the workspace has recorded as proposed, accepted, or
+ * unspecified. It is not permission to execute and it does not prove
+ * agreement. Superseded decisions never establish the boundary. Blocked
+ * tasks stay independently unresolved: the projection does not claim that
+ * a proposal causes a block.
+ */
+export interface RecordedAlignment {
+  status: RecordedAlignmentStatus;
+  proposedDecisionIds: string[];
+  acceptedDecisionIds: string[];
+  unresolvedBlockedTaskIds: string[];
+}
+
+/** Contributions strictly after a caller-supplied cursor, capped for orientation. */
+export interface SinceProjection {
+  cursor: string;
+  items: Contribution[];
+  truncated: boolean;
+}
+
 export interface WorkspaceContext {
   workspace: Workspace;
   goal?: Goal;
@@ -200,6 +267,18 @@ export interface WorkspaceContext {
   provenance: Contribution[];
   provenanceTotal: number;
   provenanceTruncated: boolean;
+  /** Items the caller is authorized to act on outside Campfire. */
+  needsYou: AttentionItem[];
+  /** Team-level items the caller cannot act on directly. */
+  needsAttention: AttentionItem[];
+  currentWork: CurrentWork;
+  suggestedNextAction: SuggestedNextAction;
+  /** Recorded boundary derived from decision and task status. Not permission to execute. */
+  alignment: RecordedAlignment;
+  /** Reused `describeContribution` narrative over the full activity list. */
+  provenanceSummary: string[];
+  /** Present only when the caller supplied a `since` cursor. */
+  since?: SinceProjection;
 }
 
 export interface ActivityPage {
@@ -207,6 +286,17 @@ export interface ActivityPage {
   total: number;
   truncated: boolean;
   nextBefore?: string;
+}
+
+export interface CheckReadinessInput {
+  workspaceId: string;
+}
+
+export interface ReadinessStatus {
+  ready: true;
+  workspaceId: string;
+  actor: ActorRef;
+  sessionId?: string;
 }
 
 export interface GetActivityInput {
@@ -217,11 +307,16 @@ export interface GetActivityInput {
 }
 
 export interface CampfireService {
+  checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus;
   createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;
   listWorkspaces(ctx: ActorContext): WorkspaceSummary[];
   getWorkspace(ctx: ActorContext, workspaceId: string): WorkspaceView;
-  getWorkspaceContext(ctx: ActorContext, workspaceId: string): WorkspaceContext;
+  getWorkspaceContext(
+    ctx: ActorContext,
+    workspaceId: string,
+    options?: { since?: string },
+  ): WorkspaceContext;
   getActivity(ctx: ActorContext, input: GetActivityInput): ActivityPage;
 
   createHuman(ctx: ActorContext | undefined, input: CreateHumanInput): CreateHumanResult;
@@ -246,4 +341,58 @@ export interface CampfireService {
   addArtifact(ctx: ActorContext, input: AddArtifactInput): Artifact;
 
   close(): void;
+}
+
+/** Same recency order as the orientation projection: updatedAt, then id. */
+function compareByUpdatedThenId(
+  a: { updatedAt: string; id: string },
+  b: { updatedAt: string; id: string },
+): number {
+  if (a.updatedAt < b.updatedAt) return -1;
+  if (a.updatedAt > b.updatedAt) return 1;
+  if (a.id < b.id) return -1;
+  if (a.id > b.id) return 1;
+  return 0;
+}
+
+/**
+ * Recorded alignment from current Decision and Task status only.
+ *
+ * Superseded decisions are ignored: they neither open nor establish the
+ * boundary, and they are omitted from both id lists. A proposal keeps the
+ * boundary `open` even when accepted decisions also exist. Blocked tasks are
+ * listed on their own; nothing here links a proposal to a block.
+ */
+export function deriveRecordedAlignment(
+  decisions: readonly Decision[],
+  tasks: readonly Task[],
+): RecordedAlignment {
+  const proposedDecisionIds = decisions
+    .filter((decision) => decision.status === "proposed")
+    .sort(compareByUpdatedThenId)
+    .map((decision) => decision.id);
+  const acceptedDecisionIds = decisions
+    .filter((decision) => decision.status === "accepted")
+    .sort(compareByUpdatedThenId)
+    .map((decision) => decision.id);
+  const unresolvedBlockedTaskIds = tasks
+    .filter((task) => task.status === "blocked")
+    .sort(compareByUpdatedThenId)
+    .map((task) => task.id);
+
+  let status: RecordedAlignmentStatus;
+  if (proposedDecisionIds.length > 0) {
+    status = "open";
+  } else if (acceptedDecisionIds.length > 0) {
+    status = "established";
+  } else {
+    status = "unspecified";
+  }
+
+  return {
+    status,
+    proposedDecisionIds,
+    acceptedDecisionIds,
+    unresolvedBlockedTaskIds,
+  };
 }

@@ -1,8 +1,12 @@
 "use strict";
 
 const STORAGE_KEY = "campfire.viewer.workspaceId";
+const CURSOR_PREFIX = "campfire.viewer.lastSeen.";
 const POLL_MS = 2000;
 const LIMIT = 50;
+
+const FIRST_VISIT_MESSAGE = "First visit — new activity will appear here.";
+const NO_NEW_MESSAGE = "No new activity since you were here.";
 
 const els = {
   whoami: document.getElementById("whoami"),
@@ -11,6 +15,12 @@ const els = {
   mast: document.getElementById("mast"),
   people: document.getElementById("people"),
   goal: document.getElementById("goal"),
+  alignment: document.getElementById("alignment"),
+  nextAction: document.getElementById("next-action"),
+  needsYou: document.getElementById("needs-you"),
+  needsAttention: document.getElementById("needs-attention"),
+  currentWork: document.getElementById("current-work"),
+  since: document.getElementById("since"),
   stream: document.getElementById("stream"),
   hint: document.getElementById("hint"),
 };
@@ -22,6 +32,12 @@ const state = {
   context: null,
   view: null,
   activity: null,
+  // "Since You Were Here" is a client-held cursor. sincePending is true until
+  // the first context fetch resolves for the current workspace; sinceView is
+  // the frozen snapshot rendered from that fetch.
+  sincePending: true,
+  sinceRequested: false,
+  sinceView: null,
   selectedId: null,
   expandedId: null,
   foldOpen: new Set(),
@@ -62,6 +78,193 @@ function strField(...values) {
   return "";
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+// --- Sprint 008 orientation projection (read-only) --------------------------
+// The service is the single source of authorization-aware attention. These
+// helpers only normalize the service-projected WorkspaceContext; the Viewer
+// never recomputes who may act. Every field is read defensively so an older
+// context (without these sections) still renders.
+
+function normalizeAttentionItem(item) {
+  return {
+    kind: strField(item.kind),
+    id: strField(item.id),
+    summary: strField(item.summary, item.title),
+    status: strField(item.status),
+    reason: strField(item.reason),
+    assignee: isRecord(item.assignee) ? item.assignee : null,
+  };
+}
+
+function deriveAttentionList(context, key) {
+  return asArray(context && context[key])
+    .filter((item) => isRecord(item))
+    .map(normalizeAttentionItem);
+}
+
+function deriveNeedsYou(context) {
+  return deriveAttentionList(context, "needsYou");
+}
+
+function deriveNeedsAttention(context) {
+  return deriveAttentionList(context, "needsAttention");
+}
+
+function deriveCurrentWork(context) {
+  const work = isRecord(context && context.currentWork) ? context.currentWork : {};
+  return {
+    inProgressTasks: asArray(work.inProgressTasks),
+    blockedTasks: asArray(work.blockedTasks),
+    acceptedDecisions: asArray(work.acceptedDecisions),
+  };
+}
+
+function deriveSince(context) {
+  const since = isRecord(context && context.since) ? context.since : null;
+  if (!since) return { present: false, items: [], truncated: false, cursor: "" };
+  return {
+    present: true,
+    items: asArray(since.items),
+    truncated: since.truncated === true,
+    cursor: strField(since.cursor),
+  };
+}
+
+// hasCursor reflects a stored client cursor (a return visit), not the context.
+function deriveSinceView(context, hasCursor) {
+  if (!hasCursor) return { state: "first-visit", items: [], truncated: false };
+  const since = deriveSince(context);
+  if (!since.present || !since.items.length) {
+    return { state: "empty", items: [], truncated: false };
+  }
+  return { state: "items", items: since.items, truncated: since.truncated };
+}
+
+function deriveSuggestedNextAction(context) {
+  const action = isRecord(context && context.suggestedNextAction)
+    ? context.suggestedNextAction
+    : null;
+  if (!action) return null;
+  const kind = strField(action.kind);
+  if (!kind || kind === "none") return null;
+  return {
+    kind,
+    id: strField(action.id),
+    summary: strField(action.summary),
+    reason: strField(action.reason),
+  };
+}
+
+// Sprint 009 recorded alignment boundary. Status comes only from the service
+// projection. The Viewer never recomputes it from decisions.
+const ALIGNMENT_BOUNDARY_SENTENCE =
+  "Records what the team has proposed, accepted, or left unspecified. Not permission to execute.";
+
+function stringIds(value) {
+  return asArray(value).filter((id) => typeof id === "string");
+}
+
+function deriveAlignment(context) {
+  const alignment = isRecord(context) && isRecord(context.alignment) ? context.alignment : null;
+  if (!alignment) return null;
+  const status = alignment.status;
+  if (status !== "open" && status !== "established" && status !== "unspecified") {
+    return null;
+  }
+  return {
+    status,
+    proposedDecisionIds: stringIds(alignment.proposedDecisionIds),
+    acceptedDecisionIds: stringIds(alignment.acceptedDecisionIds),
+    unresolvedBlockedTaskIds: stringIds(alignment.unresolvedBlockedTaskIds),
+  };
+}
+
+function summaryForDecisionId(decisions, id) {
+  for (const decision of asArray(decisions)) {
+    if (isRecord(decision) && decision.id === id) return strField(decision.summary);
+  }
+  return "";
+}
+
+function titleForBlockedTaskId(context, id) {
+  const work = isRecord(context) && isRecord(context.currentWork) ? context.currentWork : null;
+  if (work) {
+    for (const task of asArray(work.blockedTasks)) {
+      if (!isRecord(task) || task.id !== id) continue;
+      const title = strField(task.title);
+      if (title) return title;
+    }
+  }
+  for (const task of asArray(isRecord(context) ? context.openTasks : undefined)) {
+    if (!isRecord(task) || task.id !== id) continue;
+    if (strField(task.status) !== "blocked") continue;
+    const title = strField(task.title);
+    if (title) return title;
+  }
+  return "";
+}
+
+function alignmentItemHtml(id, detail) {
+  if (detail) {
+    return `<li class="oitem"><span class="ometa">${esc(id)}</span><span class="osentence">${esc(detail)}</span></li>`;
+  }
+  return `<li class="oitem"><span class="osentence">${esc(id)}</span></li>`;
+}
+
+// Contributions are chronological, so the newest id is the last one present.
+function newestContributionId(context) {
+  const since = deriveSince(context);
+  for (let i = since.items.length - 1; i >= 0; i -= 1) {
+    const id = strField(since.items[i] && since.items[i].id);
+    if (id) return id;
+  }
+  if (since.cursor) return since.cursor;
+  const provenance = asArray(context && context.provenance);
+  for (let i = provenance.length - 1; i >= 0; i -= 1) {
+    const id = strField(provenance[i] && provenance[i].id);
+    if (id) return id;
+  }
+  return "";
+}
+
+function cursorStore() {
+  try {
+    if (typeof localStorage !== "undefined" && localStorage) return localStorage;
+  } catch (err) {
+    // localStorage can throw (private mode); fall back to session scope.
+  }
+  return sessionStorage;
+}
+
+function cursorKey(workspaceId) {
+  return `${CURSOR_PREFIX}${workspaceId}`;
+}
+
+function readCursor(workspaceId) {
+  if (!workspaceId) return "";
+  try {
+    return cursorStore().getItem(cursorKey(workspaceId)) || "";
+  } catch (err) {
+    return "";
+  }
+}
+
+function writeCursor(workspaceId, cursor) {
+  if (!workspaceId || !cursor) return;
+  try {
+    cursorStore().setItem(cursorKey(workspaceId), cursor);
+  } catch (err) {
+    // The cursor is a convenience, never a source of truth.
+  }
+}
+
 function actorName(actor) {
   if (!actor || typeof actor !== "object") return "";
   return nameMap[actor.actorId] || actor.actorId || "";
@@ -87,14 +290,22 @@ function matchObject(item) {
   const view = state.view;
   const ctx = state.context;
   if (type === "task") {
-    return pickById(view && view.tasks, id) || pickById(ctx && ctx.openTasks, id);
+    const work = deriveCurrentWork(ctx);
+    return (
+      pickById(view && view.tasks, id) ||
+      pickById(work.inProgressTasks, id) ||
+      pickById(work.blockedTasks, id) ||
+      pickById(ctx && ctx.openTasks, id)
+    );
   }
   if (type === "finding") {
     return pickById(view && view.findings, id) || pickById(ctx && ctx.findings, id);
   }
   if (type === "decision") {
+    const work = deriveCurrentWork(ctx);
     return (
       pickById(view && view.decisions, id) ||
+      pickById(work.acceptedDecisions, id) ||
       pickById(ctx && ctx.proposedDecisions, id) ||
       pickById(ctx && ctx.acceptedDecisions, id) ||
       pickById(ctx && ctx.supersededDecisions, id)
@@ -122,18 +333,24 @@ function itemSentence(item) {
   return item.objectId || item.id || "";
 }
 
+const TASK_STATUSES = ["open", "in_progress", "blocked", "completed"];
+const DECISION_STATUSES = ["proposed", "accepted", "superseded"];
+
 function kindLabel(item) {
   const payload = payloadOf(item);
   const type = item.objectType;
   const action = item.action;
-  if (action === "create" && type === "finding") return "finding";
-  if (action === "update" && type === "task" && payload.status === "completed") return "completed";
-  if (action === "update" && type === "task") return "task";
-  if (action === "create" && type === "task") return "task";
-  if (action === "create" && type === "decision") return "decision";
-  if ((action === "update" || action === "accept") && type === "decision" && payload.status === "accepted") {
-    return "accepted";
+  if (type === "task" && (action === "create" || action === "update")) {
+    const resolved = matchObject(item);
+    const status = strField(payload.status, resolved && resolved.status);
+    return TASK_STATUSES.includes(status) ? status : "task";
   }
+  if (type === "decision" && (action === "create" || action === "update" || action === "accept")) {
+    const resolved = matchObject(item);
+    const status = strField(payload.status, resolved && resolved.status);
+    return DECISION_STATUSES.includes(status) ? status : "decision";
+  }
+  if (action === "create" && type === "finding") return "finding";
   if (action === "create" && type === "artifact") return "artifact";
   if (action === "create" && type === "goal") return "goal";
   return type || "";
@@ -228,6 +445,9 @@ function resetSelection() {
   state.olderBefore = null;
   state.olderExhausted = false;
   state.loadingOlder = false;
+  state.sincePending = true;
+  state.sinceRequested = false;
+  state.sinceView = null;
   streamPinned = true;
 }
 
@@ -308,6 +528,111 @@ function renderMast() {
       els.goal.innerHTML = "";
     }
   }
+}
+
+function attentionItemHtml(item) {
+  const meta = [item.kind, item.status].filter(Boolean).join(" · ");
+  const metaHtml = meta ? `<span class="ometa">${esc(meta)}</span>` : "";
+  const sentence = item.summary || item.id || "";
+  const reasonHtml = item.reason ? `<span class="oreason">${esc(item.reason)}</span>` : "";
+  return `<li class="oitem">${metaHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}</li>`;
+}
+
+function renderAttentionList(el, items, emptyText) {
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = `<div class="empty">${esc(emptyText)}</div>`;
+    return;
+  }
+  el.innerHTML = `<ul class="olist">${items.map(attentionItemHtml).join("")}</ul>`;
+}
+
+function workTaskHtml(task) {
+  const status = strField(task.status);
+  const title = strField(task.title, task.summary, task.id);
+  return `<li class="oitem">${status ? `<span class="ometa">${esc(status)}</span>` : ""}<span class="osentence">${esc(title)}</span></li>`;
+}
+
+function workDecisionHtml(decision) {
+  const title = strField(decision.summary, decision.title, decision.id);
+  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span></li>`;
+}
+
+function workGroup(label, items, renderItem) {
+  if (!items.length) return "";
+  return `<div class="ogroup"><div class="ogroup-label">${esc(label)}</div><ul class="olist">${items.map(renderItem).join("")}</ul></div>`;
+}
+
+function renderCurrentWork(el, work) {
+  if (!el) return;
+  const html =
+    workGroup("in progress", work.inProgressTasks, workTaskHtml) +
+    workGroup("blocked", work.blockedTasks, workTaskHtml) +
+    workGroup("accepted decisions", work.acceptedDecisions, workDecisionHtml);
+  el.innerHTML = html || `<div class="empty">No current work</div>`;
+}
+
+function sinceItemHtml(item) {
+  return `<li class="oitem"><span class="ometa">${esc(kindLabel(item))}</span><span class="osentence">${esc(itemSentence(item))}</span></li>`;
+}
+
+function renderSince(el, view) {
+  if (!el) return;
+  if (!view || view.state === "first-visit") {
+    el.innerHTML = `<div class="empty">${esc(FIRST_VISIT_MESSAGE)}</div>`;
+    return;
+  }
+  if (view.state !== "items" || !view.items.length) {
+    el.innerHTML = `<div class="empty">${esc(NO_NEW_MESSAGE)}</div>`;
+    return;
+  }
+  const trunc = view.truncated ? `<div class="trunc">older changes omitted</div>` : "";
+  el.innerHTML = trunc + `<ul class="olist">${view.items.map(sinceItemHtml).join("")}</ul>`;
+}
+
+// Orientation hint only: plain text, never an actionable control.
+function renderNextAction(el, action) {
+  if (!el) return;
+  if (!action) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML =
+    `<span class="hint-label">SUGGESTED NEXT — orientation hint, not an action</span>` +
+    `<span class="hint-summary">${esc(action.summary || action.id)}</span>` +
+    (action.reason ? `<span class="hint-reason">${esc(action.reason)}</span>` : "");
+}
+
+function renderAlignment(el, alignment, context) {
+  if (!el) return;
+  if (!alignment) {
+    el.innerHTML = `<div class="empty">No recorded alignment boundary.</div>`;
+    return;
+  }
+  const proposed = workGroup("proposed", alignment.proposedDecisionIds, (id) =>
+    alignmentItemHtml(id, summaryForDecisionId(context && context.proposedDecisions, id)),
+  );
+  const accepted = workGroup("accepted", alignment.acceptedDecisionIds, (id) =>
+    alignmentItemHtml(id, summaryForDecisionId(context && context.acceptedDecisions, id)),
+  );
+  const blocked = workGroup("unresolved blocked tasks", alignment.unresolvedBlockedTaskIds, (id) =>
+    alignmentItemHtml(id, titleForBlockedTaskId(context, id)),
+  );
+  el.innerHTML =
+    `<div class="oitem"><span class="ometa">status</span><span class="osentence">${esc(alignment.status)}</span></div>` +
+    `<div class="oitem"><span class="osentence">${esc(ALIGNMENT_BOUNDARY_SENTENCE)}</span></div>` +
+    proposed +
+    accepted +
+    blocked;
+}
+
+function renderOrientation() {
+  renderAlignment(els.alignment, deriveAlignment(state.context), state.context);
+  renderAttentionList(els.needsYou, deriveNeedsYou(state.context), "You're all caught up");
+  renderAttentionList(els.needsAttention, deriveNeedsAttention(state.context), "Nothing needs attention");
+  renderCurrentWork(els.currentWork, deriveCurrentWork(state.context));
+  renderSince(els.since, state.sinceView);
+  renderNextAction(els.nextAction, deriveSuggestedNextAction(state.context));
 }
 
 function renderDetail(lines) {
@@ -421,6 +746,7 @@ function render() {
   rebuildNames();
   renderHeader();
   renderMast();
+  renderOrientation();
   renderStream();
 }
 
@@ -541,12 +867,26 @@ async function refresh() {
       return;
     }
 
+    const cursor = readCursor(id);
+    const useSince = Boolean(cursor) && state.sincePending;
+    const contextParams = { workspaceId: id };
+    if (useSince) contextParams.since = cursor;
+
     const [context, activity] = await Promise.all([
-      api("get_workspace_context", { workspaceId: id }),
+      api("get_workspace_context", contextParams),
       api("get_activity", { workspaceId: id, limit: LIMIT }),
     ]);
     if (g !== gen || state.workspaceId !== id) return;
     state.context = context;
+    if (state.sincePending) {
+      // Snapshot the diff only on the first context fetch for this workspace;
+      // polling afterwards keeps the frozen "since you were here" view.
+      state.sinceRequested = useSince;
+      state.sinceView = deriveSinceView(context, useSince);
+      state.sincePending = false;
+    }
+    // Client-side last-seen cursor only; read state is never persisted server-side.
+    writeCursor(id, newestContributionId(context));
     // Poll refresh replaces only the latest page; older pages loaded via
     // "older activity" are preserved so history is not silently dropped.
     // If the workspace shrank below what we hold, reset the older cache.

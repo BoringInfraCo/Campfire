@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
@@ -45,6 +46,34 @@ beforeEach(() => {
 });
 
 describe("worker fetch handler (sync service)", () => {
+  it("runs before public assets so the local-only journal cannot bypass the handler", () => {
+    const config = readFileSync(new URL("../../wrangler.toml", import.meta.url), "utf8");
+    expect(config).toMatch(/\[assets\][\s\S]*\brun_worker_first\s*=\s*true\b/);
+  });
+
+  it("serves only installer assets, never the browser journal", async () => {
+    const fetched: string[] = [];
+    handle = createWorkerHandler({
+      service,
+      assetsFetch: async (request) => {
+        fetched.push(new URL(request.url).pathname);
+        return new Response("installer", { headers: { "content-type": "text/x-shellscript" } });
+      },
+    });
+
+    for (const path of ["/", "/index.html", "/app.js", "/app.css", "/campfire-mark.svg"]) {
+      const result = await get(path, undefined);
+      expect(result.status).toBe(404);
+    }
+    expect(fetched).toEqual([]);
+
+    for (const path of ["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]) {
+      const result = await get(path, undefined);
+      expect(result).toEqual({ status: 200, body: "installer" });
+    }
+    expect(fetched).toEqual(["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]);
+  });
+
   it("returns whoami for a valid token", async () => {
     const result = await post("/v1/call", FIXTURE.tokens.sergio, "whoami");
     expect(result.status).toBe(200);

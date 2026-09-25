@@ -1,0 +1,7 @@
+{
+  "queue": "webhook-delivery",
+  "maxRetries": 5,
+  "backoff": "none",
+  "lockTtlMs": 120000,
+  "timeoutSeconds": 120
+}

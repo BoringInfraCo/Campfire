@@ -60,13 +60,21 @@ export function readHarness(
   return harness.length > 0 ? harness : undefined;
 }
 
+export function readCampfireSessionId(
+  env: NodeJS.ProcessEnv = process.env,
+  argv: string[] = process.argv.slice(2),
+): string | undefined {
+  const sessionId = pickFlagOrEnv(argv, "session", env, "CAMPFIRE_SESSION_ID");
+  return sessionId.length > 0 ? sessionId : undefined;
+}
+
 export function resolveServerIdentity(
   env: NodeJS.ProcessEnv = process.env,
   argv: string[] = process.argv.slice(2),
 ): ServerIdentity {
   const actorId = pickFlagOrEnv(argv, "actor", env, "CAMPFIRE_ACTOR_ID");
   const actorType = pickFlagOrEnv(argv, "type", env, "CAMPFIRE_ACTOR_TYPE").toLowerCase();
-  const sessionId = pickFlagOrEnv(argv, "session", env, "CAMPFIRE_SESSION_ID");
+  const sessionId = readCampfireSessionId(env, argv) ?? "";
   const harness = pickFlagOrEnv(argv, "harness", env, "CAMPFIRE_HARNESS");
 
   if (actorId.length === 0) {

@@ -31,6 +31,11 @@ const VIEWER_WRITE_OPERATIONS: ReadonlySet<Operation> = new Set<Operation>([
 
 export interface AsyncAuthorizer {
   assertAllowed(ctx: ActorContext, operation: Operation, workspaceId?: string): Promise<void>;
+  /**
+   * Boolean form of `assertAllowed` for projections that must label attention
+   * without throwing. Evaluates the same policy and never logs (Sprint 008).
+   */
+  canAct(ctx: ActorContext, operation: Operation, workspaceId?: string): Promise<boolean>;
 }
 
 function logAuthz(entry: {
@@ -54,6 +59,16 @@ export function createAsyncAuthorizer(store: AsyncCampfireStore): AsyncAuthorize
         const reason = error instanceof Error ? error.message : String(error);
         logAuthz({ allow: false, actorId: ctx.actor.actorId, operation, workspaceId, reason });
         throw error;
+      }
+    },
+
+    async canAct(ctx: ActorContext, operation: Operation, workspaceId?: string): Promise<boolean> {
+      try {
+        await evaluate(store, ctx, operation, workspaceId);
+        return true;
+      } catch {
+        // Boolean projection helper: no logAuthz entry, no thrown error.
+        return false;
       }
     },
   };

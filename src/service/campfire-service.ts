@@ -10,22 +10,30 @@
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import {
+  deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
   type AddArtifactInput,
   type AddDecisionInput,
   type AddFindingInput,
+  type AttentionItem,
+  type AttentionReason,
   type CampfireService,
+  type CheckReadinessInput,
   type CreateAgentInput,
   type CreateGoalInput,
   type CreateHumanInput,
   type CreateTaskInput,
   type CreateWorkspaceInput,
+  type CurrentWork,
   type GetActivityInput,
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
   type ParticipantView,
+  type ReadinessStatus,
   type RegisterAgentSessionInput,
+  type SinceProjection,
+  type SuggestedNextAction,
   type UpdateGoalInput,
   type UpdateTaskInput,
   type UpdateWorkspaceInput,
@@ -206,7 +214,253 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     }
   }
 
+  function readinessFailure(workspaceId: string): Unauthorized {
+    return new Unauthorized(
+      `Agent has no active session for workspace ${workspaceId}; call register_agent_session first`,
+      { workspaceId, nextAction: "register_agent_session" },
+    );
+  }
+
+  // --- Sprint 008 orientation derivation -----------------------------------
+  // One deterministic, authorization-aware attention model shared by every
+  // surface. The Viewer consumes this projection and never recomputes it.
+
+  function compareByUpdatedThenId(
+    a: { updatedAt: string; id: string },
+    b: { updatedAt: string; id: string },
+  ): number {
+    if (a.updatedAt < b.updatedAt) return -1;
+    if (a.updatedAt > b.updatedAt) return 1;
+    if (a.id < b.id) return -1;
+    if (a.id > b.id) return 1;
+    return 0;
+  }
+
+  function isAssignedTo(actor: ActorRef, assignee: ActorRef | undefined): boolean {
+    return (
+      assignee !== undefined &&
+      assignee.actorId === actor.actorId &&
+      assignee.actorType === actor.actorType
+    );
+  }
+
+  function attentionItemFromTask(task: Task, reason: AttentionReason): AttentionItem {
+    const item: AttentionItem = {
+      kind: "task",
+      id: task.id,
+      summary: task.title,
+      status: task.status,
+      reason,
+    };
+    if (task.assignee !== undefined) {
+      item.assignee = task.assignee;
+    }
+    return item;
+  }
+
+  function attentionItemFromDecision(decision: Decision, reason: AttentionReason): AttentionItem {
+    return {
+      kind: "decision",
+      id: decision.id,
+      summary: decision.summary,
+      status: decision.status,
+      reason,
+    };
+  }
+
+  function deriveSuggestedNextAction(
+    needsYou: AttentionItem[],
+    needsAttention: AttentionItem[],
+    tasks: Task[],
+  ): SuggestedNextAction {
+    const actionableDecision = needsYou.find(
+      (item) => item.reason === "proposed_decision_actionable",
+    );
+    if (actionableDecision !== undefined) {
+      return {
+        kind: "decision",
+        id: actionableDecision.id,
+        summary: actionableDecision.summary,
+        reason: "proposed_decision_actionable",
+        orientationHint: true,
+      };
+    }
+    const assignedBlocked = needsYou.find((item) => item.reason === "assigned_blocked_task");
+    if (assignedBlocked !== undefined) {
+      return {
+        kind: "task",
+        id: assignedBlocked.id,
+        summary: assignedBlocked.summary,
+        reason: "assigned_blocked_task",
+        orientationHint: true,
+      };
+    }
+    const assignedOpen = needsYou.find((item) => item.reason === "assigned_open_task");
+    if (assignedOpen !== undefined) {
+      return {
+        kind: "task",
+        id: assignedOpen.id,
+        summary: assignedOpen.summary,
+        reason: "assigned_open_task",
+        orientationHint: true,
+      };
+    }
+    const unassignedBlocked = needsAttention.find(
+      (item) => item.reason === "unassigned_blocked_task",
+    );
+    if (unassignedBlocked !== undefined) {
+      return {
+        kind: "task",
+        id: unassignedBlocked.id,
+        summary: unassignedBlocked.summary,
+        reason: "unassigned_blocked_task",
+        orientationHint: true,
+      };
+    }
+    const teamProposed = needsAttention.find((item) => item.reason === "team_proposed_decision");
+    if (teamProposed !== undefined) {
+      return {
+        kind: "decision",
+        id: teamProposed.id,
+        summary: teamProposed.summary,
+        reason: "team_proposed_decision",
+        orientationHint: true,
+      };
+    }
+    const oldestOpen = [...tasks]
+      .filter((task) => task.status === "open")
+      .sort(compareByUpdatedThenId)[0];
+    if (oldestOpen !== undefined) {
+      return {
+        kind: "task",
+        id: oldestOpen.id,
+        summary: oldestOpen.title,
+        reason: "team_open_task",
+        orientationHint: true,
+      };
+    }
+    return { kind: "none", summary: "", reason: "none", orientationHint: true };
+  }
+
+  function deriveOrientation(
+    ctx: ActorContext,
+    workspaceId: string,
+    tasks: Task[],
+    decisions: Decision[],
+  ): {
+    needsYou: AttentionItem[];
+    needsAttention: AttentionItem[];
+    currentWork: CurrentWork;
+    suggestedNextAction: SuggestedNextAction;
+  } {
+    // Authorization is evaluated through the existing policy only; no new rule.
+    const canActDecision = authorizer.canAct(ctx, "decision:update", workspaceId);
+    const canActTask = authorizer.canAct(ctx, "task:update", workspaceId);
+
+    const proposed = decisions
+      .filter((decision) => decision.status === "proposed")
+      .sort(compareByUpdatedThenId);
+    const accepted = decisions.filter((decision) => decision.status === "accepted");
+
+    const sortedTasks = [...tasks].sort(compareByUpdatedThenId);
+    const inProgressTasks = sortedTasks.filter((task) => task.status === "in_progress");
+    const blockedTasks = sortedTasks.filter((task) => task.status === "blocked");
+
+    const actionableDecisions = canActDecision ? proposed : [];
+    const teamProposed = canActDecision ? [] : proposed;
+
+    const assignedBlocked: Task[] = [];
+    const assignedOpen: Task[] = [];
+    const unassignedBlocked: Task[] = [];
+    const otherBlocked: Task[] = [];
+    const demotedBlocked: Task[] = [];
+    const demotedOpen: Task[] = [];
+
+    for (const task of sortedTasks) {
+      const mine = isAssignedTo(ctx.actor, task.assignee);
+      if (task.status === "blocked") {
+        if (mine) {
+          (canActTask ? assignedBlocked : demotedBlocked).push(task);
+        } else if (task.assignee === undefined) {
+          unassignedBlocked.push(task);
+        } else {
+          otherBlocked.push(task);
+        }
+      } else if (task.status === "open" && mine) {
+        (canActTask ? assignedOpen : demotedOpen).push(task);
+      }
+    }
+
+    const needsYou: AttentionItem[] = [
+      ...actionableDecisions.map((decision) =>
+        attentionItemFromDecision(decision, "proposed_decision_actionable"),
+      ),
+      ...assignedBlocked.map((task) => attentionItemFromTask(task, "assigned_blocked_task")),
+      ...assignedOpen.map((task) => attentionItemFromTask(task, "assigned_open_task")),
+    ];
+
+    const needsAttention: AttentionItem[] = [
+      ...unassignedBlocked.map((task) =>
+        attentionItemFromTask(task, "unassigned_blocked_task"),
+      ),
+      ...teamProposed.map((decision) =>
+        attentionItemFromDecision(decision, "team_proposed_decision"),
+      ),
+      ...otherBlocked.map((task) => attentionItemFromTask(task, "team_blocked_task")),
+      ...demotedBlocked.map((task) => attentionItemFromTask(task, "team_blocked_task")),
+      ...demotedOpen.map((task) => attentionItemFromTask(task, "assigned_open_task")),
+    ];
+
+    return {
+      needsYou,
+      needsAttention,
+      currentWork: { inProgressTasks, blockedTasks, acceptedDecisions: accepted },
+      suggestedNextAction: deriveSuggestedNextAction(needsYou, needsAttention, tasks),
+    };
+  }
+
+  function buildSince(activity: Contribution[], since: string): SinceProjection {
+    const index = activity.findIndex((contribution) => contribution.id === since);
+    if (index === -1) {
+      throw new ValidationError(`Unknown contribution id for since: ${since}`, {
+        field: "since",
+        since,
+      });
+    }
+    const after = activity.slice(index + 1);
+    const truncated = after.length > ORIENTATION_PROVENANCE_LIMIT;
+    const items = truncated ? after.slice(-ORIENTATION_PROVENANCE_LIMIT) : after;
+    const newest = activity[activity.length - 1]?.id ?? since;
+    return { cursor: newest, items, truncated };
+  }
+
   return {
+    checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus {
+      assertNonEmpty(input.workspaceId, "workspaceId");
+      authorizer.assertAllowed({ actor: ctx.actor }, "workspace:read", input.workspaceId);
+      if (ctx.agentSessionId !== undefined) {
+        try {
+          authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+        } catch (error) {
+          if (error instanceof SessionNotFound || error instanceof Unauthorized) {
+            throw readinessFailure(input.workspaceId);
+          }
+          throw error;
+        }
+      }
+      if (ctx.actor.actorType === "agent" && ctx.agentSessionId === undefined) {
+        throw readinessFailure(input.workspaceId);
+      }
+      return ctx.agentSessionId === undefined
+        ? { ready: true, workspaceId: input.workspaceId, actor: ctx.actor }
+        : {
+            ready: true,
+            workspaceId: input.workspaceId,
+            actor: ctx.actor,
+            sessionId: ctx.agentSessionId,
+          };
+    },
+
     createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace {
       if (store.getTeam(input.teamId) === undefined) {
         throw new TeamNotFound(input.teamId);
@@ -252,6 +506,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
 
     updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace {
       authorizer.assertAllowed(ctx, "workspace:write", input.workspaceId);
+      requireAgentSession(ctx);
       const workspace = store.getWorkspace(input.workspaceId);
       if (workspace === undefined) {
         throw new WorkspaceNotFound(input.workspaceId);
@@ -308,19 +563,25 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       };
     },
 
-    getWorkspaceContext(ctx: ActorContext, workspaceId: string): WorkspaceContext {
+    getWorkspaceContext(
+      ctx: ActorContext,
+      workspaceId: string,
+      options?: { since?: string },
+    ): WorkspaceContext {
       authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
       const workspace = store.getWorkspace(workspaceId);
       if (workspace === undefined) {
         throw new WorkspaceNotFound(workspaceId);
       }
       const decisions = store.listDecisions(workspaceId);
+      const tasks = store.listTasks(workspaceId);
       const activity = store.listContributions(workspaceId);
       const provenance =
         activity.length > ORIENTATION_PROVENANCE_LIMIT
           ? activity.slice(-ORIENTATION_PROVENANCE_LIMIT)
           : activity;
-      return {
+      const orientation = deriveOrientation(ctx, workspaceId, tasks, decisions);
+      const context: WorkspaceContext = {
         workspace,
         goal: store.getGoalForWorkspace(workspaceId),
         participants: store.listParticipants(workspaceId).map(resolveParticipant),
@@ -333,13 +594,25 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
             summary: decision.summary,
             updatedAt: decision.updatedAt,
           })),
-        openTasks: store.listTasks(workspaceId).filter((task) => task.status !== "completed"),
+        openTasks: tasks.filter((task) => task.status !== "completed"),
         findings: store.listFindings(workspaceId),
         artifacts: store.listArtifacts(workspaceId),
         provenance,
         provenanceTotal: activity.length,
         provenanceTruncated: activity.length > ORIENTATION_PROVENANCE_LIMIT,
+        needsYou: orientation.needsYou,
+        needsAttention: orientation.needsAttention,
+        currentWork: orientation.currentWork,
+        suggestedNextAction: orientation.suggestedNextAction,
+        alignment: deriveRecordedAlignment(decisions, tasks),
+        provenanceSummary: activity.map((contribution) =>
+          describeContribution(contribution, actorName(contribution.actor)),
+        ),
       };
+      if (options?.since !== undefined) {
+        context.since = buildSince(activity, options.since);
+      }
+      return context;
     },
 
     getActivity(ctx: ActorContext, input: GetActivityInput): ActivityPage {

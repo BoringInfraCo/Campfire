@@ -8,12 +8,11 @@
  *
  * - `POST /v1/call` — full method set, bearer required. Reuses
  *   `dispatchCampfireMethod` + `CampfireService` (sync, local SQLite/tests).
- * - `POST /api/call` — viewer read-methods only (compat with the local
- *   Viewer client), bearer required in Workers (no process identity here).
- * - `GET /api/<viewerMethod>` — read-gated viewer APIs with query params.
- * - `GET /, /app.css, /app.js` — viewer static via Workers Assets
- *   (`env.ASSETS.fetch`); the handler takes the fetcher as a dependency so
- *   tests can inject a mock.
+ * - `POST /api/call` and `GET /api/<viewerMethod>` — bearer-authenticated,
+ *   read-only compatibility APIs for non-browser clients.
+ * - `GET /campfire/install.sh` and versioned installer paths — the only
+ *   public assets served through `env.ASSETS.fetch`. The journal itself is
+ *   served by the loopback Viewer process, where the bearer stays server-side.
  *
  * `createD1WorkerHandler` is the production entry: same routes over
  * `AsyncCampfireService` (D1). Same validation, same status mapping.
@@ -46,12 +45,10 @@ type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];
 
 const VIEWER_READ_SET: ReadonlySet<string> = new Set(VIEWER_READ_METHODS);
 
-const STATIC_PATHS: ReadonlySet<string> = new Set([
-  "/",
-  "/app.css",
-  "/app.js",
-  "/campfire-mark.svg",
-]);
+function isInstallerPath(path: string): boolean {
+  return path === "/campfire/install.sh" ||
+    /^\/campfire\/v\d+\.\d+\.\d+\/install\.sh$/.test(path);
+}
 
 export function isViewerReadMethod(value: string): value is ViewerReadMethod {
   return VIEWER_READ_SET.has(value);
@@ -91,8 +88,16 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-function fail(status: number, code: string, message: string): Response {
-  return json(status, { ok: false, error: code, message });
+function fail(
+  status: number,
+  code: string,
+  message: string,
+  details?: Record<string, unknown>,
+): Response {
+  return json(
+    status,
+    details === undefined ? { ok: false, error: code, message } : { ok: false, error: code, message, details },
+  );
 }
 
 function bearerToken(request: Request): string | undefined {
@@ -164,12 +169,12 @@ export interface D1WorkerHandlerOptions {
   clock?: () => string;
 }
 
-async function handleStatic(
+async function handleInstaller(
   request: Request,
   assetsFetch: AssetsFetch | undefined,
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
-  if (!STATIC_PATHS.has(path)) return undefined;
+  if (!isInstallerPath(path)) return undefined;
   if (assetsFetch === undefined) {
     return fail(404, "ValidationError", `No asset binding for: ${path}`);
   }
@@ -194,8 +199,8 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       const path = url.pathname;
 
       if (request.method === "GET") {
-        const staticResponse = await handleStatic(request, assetsFetch);
-        if (staticResponse !== undefined) return staticResponse;
+        const installerResponse = await handleInstaller(request, assetsFetch);
+        if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleSyncViewerGet(service, request, url);
         }
@@ -235,8 +240,8 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
       const path = url.pathname;
 
       if (request.method === "GET") {
-        const staticResponse = await handleStatic(request, assetsFetch);
-        if (staticResponse !== undefined) return staticResponse;
+        const installerResponse = await handleInstaller(request, assetsFetch);
+        if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleAsyncViewerGet(service, request, url);
         }
@@ -319,7 +324,12 @@ async function handleSyncCall(service: CampfireService, request: Request): Promi
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) {
-      return fail(statusFor(error.code, false), error.code, error.message);
+      return fail(
+        statusFor(error.code, false),
+        error.code,
+        error.message,
+        method === "preflight" ? error.details : undefined,
+      );
     }
     throw error;
   }
@@ -351,7 +361,12 @@ async function handleAsyncCall(service: AsyncCampfireService, request: Request):
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) {
-      return fail(statusFor(error.code, false), error.code, error.message);
+      return fail(
+        statusFor(error.code, false),
+        error.code,
+        error.message,
+        method === "preflight" ? error.details : undefined,
+      );
     }
     throw error;
   }

@@ -1,0 +1,112 @@
+name: release-tarball
+
+# Build the platform release tarballs on CI runners (one per platform, per
+# OPERATOR.md) and attach them to an existing GitHub Release. Local packaging
+# is only a fallback: the tarball contains a native better-sqlite3 binding, so
+# it must be built on the target platform.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to attach tarballs to (e.g. v1.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    # Release assets belong to the public snapshot repository. After the
+    # canonical repository is renamed, this guard keeps historical/manual
+    # release events there from publishing private development artifacts.
+    if: github.repository == 'BoringInfraCo/Campfire'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform: darwin-arm64
+            host_os: Darwin
+            host_arch: arm64
+          - runner: macos-15-intel
+            platform: darwin-x64
+            host_os: Darwin
+            host_arch: x86_64
+          - runner: ubuntu-24.04-arm
+            platform: linux-arm64
+            host_os: Linux
+            host_arch: aarch64
+          - runner: ubuntu-24.04
+            platform: linux-x64
+            host_os: Linux
+            host_arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build the selected release source, but keep release tooling from the
+      # protected default branch. That lets us repair an existing tag without
+      # recreating a bug that existed in its historical packaging script.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          path: release-source
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: release-source/package-lock.json
+
+      - name: Use hardened release packaging
+        run: cp scripts/package.sh release-source/scripts/package.sh
+
+      # `npm ci` runs the `prepare` script, which builds dist/.
+      - run: npm ci
+        working-directory: release-source
+
+      - name: Check native platform
+        env:
+          HOST_OS: ${{ matrix.host_os }}
+          HOST_ARCH: ${{ matrix.host_arch }}
+        run: |
+          set -eu
+          test "$(uname -s)" = "$HOST_OS"
+          test "$(uname -m)" = "$HOST_ARCH"
+
+      - run: npm run pack:tarball
+        working-directory: release-source
+
+      - name: Verify packaged archive and checksum
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -eu
+          archive="campfire-$PLATFORM.tar.gz"
+          test -s "release-source/release/$archive"
+          test -s "release-source/release/$archive.sha256"
+          digest="$(cut -d ' ' -f 1 < "release-source/release/$archive.sha256")"
+          case "$digest" in
+            *[!0-9a-fA-F]*) exit 1 ;;
+          esac
+          test "${#digest}" -eq 64
+          if command -v sha256sum >/dev/null 2>&1; then
+            (cd release-source/release && sha256sum -c "$archive.sha256")
+          else
+            (cd release-source/release && shasum -a 256 -c "$archive.sha256")
+          fi
+
+      - name: Upload tarball to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -eu
+          archive="campfire-$PLATFORM.tar.gz"
+          gh release upload "$TAG" \
+            "release-source/release/$archive" \
+            "release-source/release/$archive.sha256" \
+            --clobber

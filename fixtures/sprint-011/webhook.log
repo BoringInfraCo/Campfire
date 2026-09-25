@@ -1,0 +1,9 @@
+2026-09-24T10:00:00Z INFO webhook-delivery queue=webhook-delivery timeout=120s attempt=1/5 status=queued
+2026-09-24T10:00:00Z DEBUG Authorization: Bearer SECRET_SPRINT011_FIXTURE_TOKEN_do_not_share
+2026-09-24T10:02:00Z WARN webhook-delivery attempt=1 status=delayed elapsed=120s timeout=120s
+2026-09-24T10:02:00Z WARN webhook-delivery retry scheduled backoff=fixed 0s attempt=2/5
+2026-09-24T10:02:00Z WARN webhook-delivery redis lock contention key=webhook-delivery lockTtlMs=120000
+2026-09-24T10:04:00Z WARN webhook-delivery attempt=2 status=delayed elapsed=120s timeout=120s
+2026-09-24T10:04:00Z WARN webhook-delivery retry scheduled backoff=fixed 0s attempt=3/5
+2026-09-24T10:04:00Z WARN webhook-delivery redis lock contention key=webhook-delivery lockTtlMs=120000
+2026-09-24T10:06:00Z WARN webhook-delivery attempt=3 status=delayed elapsed=120s timeout=120s

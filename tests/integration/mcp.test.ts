@@ -7,6 +7,7 @@ import { createCounterIdSource } from "../../src/domain/ids.js";
 import { createCampfireMcpServer } from "../../src/mcp/tools.js";
 import type { ServerIdentity } from "../../src/mcp/context.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
+import { ORIENTATION_PROVENANCE_LIMIT } from "../../src/service/service.js";
 import type { CampfireService } from "../../src/service/service.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
@@ -23,6 +24,7 @@ const AGENT_B: ServerIdentity = {
 };
 
 const EXPECTED_TOOLS = [
+  "preflight",
   "whoami",
   "list_workspaces",
   "create_workspace",
@@ -105,9 +107,11 @@ afterEach(async () => {
 
 describe("MCP tool surface", () => {
   it("advertises all Campfire tools without a campfire. prefix", async () => {
-    const { toolNames } = await connectAgents();
+    const { a, toolNames } = await connectAgents();
     expect(toolNames).toEqual(expect.arrayContaining(EXPECTED_TOOLS));
     expect(new Set(toolNames).size).toBe(toolNames.length);
+    const preflight = (await a.listTools()).tools.find((tool) => tool.name === "preflight");
+    expect((preflight?.inputSchema.required as string[] | undefined)).toContain("workspaceId");
   });
 
   it("reports the bound identity without accepting an actor parameter", async () => {
@@ -117,6 +121,60 @@ describe("MCP tool surface", () => {
     expect(who.json).toEqual({
       actor: { actorId: FIXTURE.agents.codexSergio, actorType: "agent" },
       harness: "codex",
+    });
+  });
+
+  it("returns the same readiness failure for unbound Codex and OpenCode agents", async () => {
+    const { a, b } = await connectAgents();
+
+    const codex = await call(a, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+    const opencode = await call(b, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+
+    expect(codex.isError).toBe(true);
+    expect(opencode.isError).toBe(true);
+    expect(codex.json).toMatchObject({
+      error: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+    expect(opencode.json).toMatchObject({
+      error: "Unauthorized",
+      details: { nextAction: "register_agent_session" },
+    });
+    expect(codex.json.message).toContain("register_agent_session");
+    expect(opencode.json.message).toContain("register_agent_session");
+  });
+
+  it("passes the same readiness contract for bound Codex and OpenCode agents", async () => {
+    const { a, b } = await connectAgents();
+    const codexSession = await call(a, "register_agent_session", {
+      agentId: FIXTURE.agents.codexSergio,
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+    const opencodeSession = await call(b, "register_agent_session", {
+      agentId: FIXTURE.agents.opencodeAlice,
+      workspaceId: FIXTURE.workspaces.billing,
+    });
+    expect(codexSession.isError).toBe(false);
+    expect(opencodeSession.isError).toBe(false);
+
+    const codex = await call(a, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+    const opencode = await call(b, "preflight", { workspaceId: FIXTURE.workspaces.billing });
+
+    expect(codex.isError).toBe(false);
+    expect(opencode.isError).toBe(false);
+    expect(codex.json).toMatchObject({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.agents.codexSergio, actorType: "agent" },
+      sessionId: codexSession.json.id,
+      harness: "codex",
+    });
+    expect(opencode.json).toMatchObject({
+      ready: true,
+      workspaceId: FIXTURE.workspaces.billing,
+      actor: { actorId: FIXTURE.agents.opencodeAlice, actorType: "agent" },
+      sessionId: opencodeSession.json.id,
+      harness: "opencode",
     });
   });
 });
@@ -197,6 +255,20 @@ describe("cross-harness continuation", () => {
     expect(context.json.acceptedDecisions.map((item: { id: string }) => item.id)).toContain(
       decision.json.id,
     );
+    // Billing seed has no decisions or tasks. The accepted decision is the only
+    // one, and the new task is open, so the recorded boundary is established.
+    expect(context.json.alignment).toEqual({
+      status: "established",
+      proposedDecisionIds: [],
+      acceptedDecisionIds: [decision.json.id],
+      unresolvedBlockedTaskIds: [],
+    });
+    expect(Object.keys(context.json.alignment)).toEqual([
+      "status",
+      "proposedDecisionIds",
+      "acceptedDecisionIds",
+      "unresolvedBlockedTaskIds",
+    ]);
     expect(context.json.openTasks.map((item: { id: string }) => item.id)).toContain(task.json.id);
     expect(context.json.artifacts.map((item: { id: string }) => item.id)).toContain(artifact.json.id);
     expect(
@@ -225,6 +297,7 @@ describe("cross-harness continuation", () => {
     expect(contextB.json.acceptedDecisions.map((item: { id: string }) => item.id)).toContain(
       decision.json.id,
     );
+    expect(contextB.json.alignment).toEqual(context.json.alignment);
     expect(contextB.json.openTasks.map((item: { id: string }) => item.id)).toContain(task.json.id);
     expect(JSON.stringify(contextB.json)).not.toContain(FIXTURE.unrelatedFindingSentinel);
 
@@ -282,6 +355,66 @@ describe("error handling", () => {
     ];
 
     expect(JSON.stringify(outputs)).not.toContain(privateSentinel);
+  });
+});
+
+describe("Sprint 008 orientation cursor", () => {
+  it("advertises the optional since cursor on get_workspace_context", async () => {
+    const { a } = await connectAgents();
+    const tool = (await a.listTools()).tools.find((item) => item.name === "get_workspace_context");
+    expect(tool).toBeDefined();
+    const schema = tool?.inputSchema as {
+      properties?: Record<string, unknown>;
+      required?: string[];
+    };
+    expect(schema.properties?.since).toBeDefined();
+    expect(schema.required ?? []).not.toContain("since");
+  });
+
+  it("forwards since to the service and surfaces a typed validation error", async () => {
+    const { a } = await connectAgents();
+    const result = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: "con_missing",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.json.error).toBe("ValidationError");
+    expect(result.json.details?.field).toBe("since");
+  });
+
+  it("returns the same truncated and empty windows as the service", async () => {
+    const { a } = await connectAgents();
+    const humanCtx = {
+      actor: { actorId: FIXTURE.humans.sergio, actorType: "human" as const },
+    };
+    for (let index = 0; index < ORIENTATION_PROVENANCE_LIMIT + 1; index += 1) {
+      service.addFinding(humanCtx, {
+        workspaceId: FIXTURE.workspaces.billing,
+        summary: `mcp delta ${index}`,
+      });
+    }
+
+    const activity = await call(a, "get_activity", { workspaceId: FIXTURE.workspaces.billing });
+    // Activity pages are chronological (oldest first).
+    const items = activity.json.items as Array<{ id: string }>;
+    const oldest = items[0]!.id;
+    const newest = items.at(-1)!.id;
+
+    const truncated = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: oldest,
+    });
+    expect(truncated.isError).toBe(false);
+    expect(truncated.json.since.truncated).toBe(true);
+    expect(truncated.json.since.items).toHaveLength(ORIENTATION_PROVENANCE_LIMIT);
+    expect(truncated.json.since.cursor).toBe(newest);
+
+    const empty = await call(a, "get_workspace_context", {
+      workspaceId: FIXTURE.workspaces.billing,
+      since: newest,
+    });
+    expect(empty.isError).toBe(false);
+    expect(empty.json.since).toEqual({ cursor: newest, items: [], truncated: false });
   });
 });
 

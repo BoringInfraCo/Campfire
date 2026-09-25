@@ -24,23 +24,28 @@ import type {
   TaskStatus,
   WorkspaceStatus,
 } from "../domain/types.js";
-import { campfireHttpCall } from "../http/client.js";
+import { campfireHttpCall, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
 import {
   readCampfireToken,
+  readCampfireSessionId,
   readCampfireUrl,
+  readHarness,
   resolveServerIdentity,
 } from "../mcp/context.js";
 import type { ServerIdentity } from "../mcp/context.js";
 import { startStdioServer } from "../mcp/stdio.js";
 import { createRuntime } from "../runtime.js";
 import type {
+  AttentionItem,
   GetActivityInput,
   ParticipantView,
+  SuggestedNextAction,
   WorkspaceContext,
   WorkspaceView,
+  ReadinessStatus,
 } from "../service/service.js";
 import type { CampfireStore } from "../store/store.js";
 
@@ -138,8 +143,12 @@ function stripFlags(argv: string[], names: string[]): string[] {
 /**
  * Build the acting identity for a CLI command. Flags override the environment.
  * When neither is supplied the documented default human (`hum_sergio`) is used.
+ *
+ * `stripFlags` removes flags whose names collide with the command's own
+ * arguments (e.g. add-artifact's `--type` is the artifact type, not the
+ * acting actor type) so identity resolution never misreads them.
  */
-function resolveCliIdentity(argv: string[], options?: { ignoreActorFlags?: boolean }): ServerIdentity {
+function resolveCliIdentity(argv: string[], options?: { stripFlags?: string[] }): ServerIdentity {
   const env: NodeJS.ProcessEnv = { ...process.env };
   if (env.CAMPFIRE_ACTOR_ID === undefined || env.CAMPFIRE_ACTOR_ID.trim().length === 0) {
     env.CAMPFIRE_ACTOR_ID = DEFAULT_ACTOR_ID;
@@ -147,7 +156,7 @@ function resolveCliIdentity(argv: string[], options?: { ignoreActorFlags?: boole
   if (env.CAMPFIRE_ACTOR_TYPE === undefined || env.CAMPFIRE_ACTOR_TYPE.trim().length === 0) {
     env.CAMPFIRE_ACTOR_TYPE = DEFAULT_ACTOR_TYPE;
   }
-  const args = options?.ignoreActorFlags === true ? stripFlags(argv, ["actor", "type"]) : argv;
+  const args = options?.stripFlags === undefined ? argv : stripFlags(argv, options.stripFlags);
   return resolveServerIdentity(env, args);
 }
 
@@ -160,7 +169,13 @@ interface CliBackend {
 async function withBackend<T>(
   argv: string[],
   fn: (backend: CliBackend) => T | Promise<T>,
-  options?: { actorFlagIsTarget?: boolean },
+  options?: {
+    /**
+     * Flag names that must not be read as acting-identity flags because the
+     * command reuses them for its own arguments (target actor, artifact type).
+     */
+    stripIdentityFlags?: string[];
+  },
 ): Promise<T> {
   const url = readCampfireUrl();
   const token = readCampfireToken(process.env, argv);
@@ -182,7 +197,10 @@ async function withBackend<T>(
     return await fn(backend);
   }
 
-  const identity = resolveCliIdentity(argv, { ignoreActorFlags: options?.actorFlagIsTarget === true });
+  const identity = resolveCliIdentity(
+    argv,
+    options?.stripIdentityFlags === undefined ? undefined : { stripFlags: options.stripIdentityFlags },
+  );
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
@@ -311,12 +329,100 @@ function formatContributionLine(contribution: Contribution): string {
   );
 }
 
+/**
+ * Payload fields a returning caller needs to read the change itself. Only the
+ * fields the contribution actually recorded are printed (Sprint 010), so an
+ * assignee-only task update does not invent a status.
+ */
+function formatPayloadFields(contribution: Contribution): string | undefined {
+  const payload = contribution.payload ?? {};
+  const parts: string[] = [];
+  for (const key of ["summary", "title", "status"] as const) {
+    const value = payload[key];
+    if (typeof value === "string" && value.length > 0) {
+      parts.push(`${key}=${value}`);
+    }
+  }
+  const assignee = payload.assignee;
+  if (assignee === null) {
+    parts.push("assignee=null");
+  } else if (
+    typeof assignee === "object" &&
+    assignee !== null &&
+    typeof (assignee as ActorRef).actorId === "string"
+  ) {
+    parts.push(`assignee=${(assignee as ActorRef).actorId}`);
+  }
+  return parts.length === 0 ? undefined : parts.join("  ");
+}
+
+function formatDeltaLine(contribution: Contribution): string {
+  return joinFields(
+    contribution.id,
+    contribution.createdAt,
+    contribution.actor.actorId,
+    contribution.action,
+    contribution.objectType,
+    contribution.objectId,
+    formatPayloadFields(contribution),
+  );
+}
+
+/**
+ * The contribution delta for a caller-supplied `--since` cursor. States
+ * `truncated` when the window omits older post-cursor rows; the resume cursor
+ * always points at the newest contribution in the log, including when the
+ * window is partial.
+ */
+function formatDeltaSection(context: WorkspaceContext, since: string | undefined): string[] {
+  const delta = context.since;
+  if (delta === undefined) {
+    return [];
+  }
+  const anchor = since ?? delta.cursor;
+  if (delta.items.length === 0) {
+    return [`Since  ${anchor}  (no new contributions)`];
+  }
+  const note = delta.truncated ? "; truncated" : "";
+  return [
+    `Since  ${anchor}  (${delta.items.length} contributions${note})`,
+    ...delta.items.map((item) => `  ${formatDeltaLine(item)}`),
+  ];
+}
+
+/**
+ * Newest contribution id the caller should retain for the next return. It is
+ * an observation pointer, not a summary of the changes or permission to execute.
+ */
+function formatResumeCursor(context: WorkspaceContext): string | undefined {
+  const newest = context.since?.cursor ?? context.provenance.at(-1)?.id;
+  return newest === undefined ? undefined : labeled("Resume cursor", newest);
+}
+
 function formatDecision(decision: Decision): string {
   return joinFields(decision.id, decision.summary);
 }
 
 function formatTask(task: Task): string {
   return joinFields(task.id, `[${task.status}]`, task.title);
+}
+
+function formatAttentionItem(item: AttentionItem): string {
+  return joinFields(
+    item.kind,
+    item.id,
+    `[${item.status}]`,
+    item.summary,
+    `(${item.reason})`,
+    item.assignee === undefined ? undefined : `assignee=${item.assignee.actorId}`,
+  );
+}
+
+function formatSuggestedNextAction(action: SuggestedNextAction): string {
+  if (action.kind === "none") {
+    return "none";
+  }
+  return joinFields(action.kind, action.id, action.summary, `(${action.reason})`);
 }
 
 function section(title: string, lines: string[]): string[] {
@@ -341,7 +447,61 @@ function provenanceSection(
   return section(`${title}  ${note}`, contributions.map(formatContributionLine));
 }
 
-function formatOrientation(context: WorkspaceContext): string {
+const ALIGNMENT_BOUNDARY_SENTENCE =
+  "Records what the team has proposed, accepted, or left unspecified. Not permission to execute.";
+
+function stringIds(value: readonly string[] | undefined): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((id): id is string => typeof id === "string" && id.length > 0);
+}
+
+function describeDecision(decisions: readonly Decision[], id: string): string {
+  const decision = decisions.find((item) => item.id === id);
+  if (decision === undefined || decision.summary.length === 0) {
+    return id;
+  }
+  return `${id} ${decision.summary}`;
+}
+
+function describeBlockedTask(context: WorkspaceContext, id: string): string {
+  const blocked = context.currentWork.blockedTasks.find((task) => task.id === id);
+  if (blocked !== undefined && blocked.title.length > 0) {
+    return `${id} ${blocked.title}`;
+  }
+  // openTasks includes non-completed work. Only a blocked row may supply the title.
+  const fromOpen = context.openTasks.find((task) => task.id === id && task.status === "blocked");
+  if (fromOpen !== undefined && fromOpen.title.length > 0) {
+    return `${id} ${fromOpen.title}`;
+  }
+  return id;
+}
+
+/**
+ * Recorded alignment boundary. Omitted when the projection has no `alignment`
+ * (do not invent one). Describes what was recorded; it is not a grant to execute
+ * and does not claim a proposal caused a blocked task.
+ */
+function formatAlignmentBoundary(context: WorkspaceContext): string[] {
+  const alignment = context.alignment;
+  if (alignment === undefined || alignment === null) {
+    return [];
+  }
+  const lines = [`status: ${alignment.status}`, ALIGNMENT_BOUNDARY_SENTENCE];
+  for (const id of stringIds(alignment.proposedDecisionIds)) {
+    lines.push(`proposed: ${describeDecision(context.proposedDecisions, id)}`);
+  }
+  for (const id of stringIds(alignment.acceptedDecisionIds)) {
+    lines.push(`accepted: ${describeDecision(context.acceptedDecisions, id)}`);
+  }
+  for (const id of stringIds(alignment.unresolvedBlockedTaskIds)) {
+    lines.push(`unresolved blocked tasks: ${describeBlockedTask(context, id)}`);
+  }
+  return section("Recorded alignment boundary", lines);
+}
+
+function formatOrientation(context: WorkspaceContext, since?: string): string {
   const { workspace, goal } = context;
   const lines: string[] = [
     labeled("Workspace", workspace.id, workspace.name, `[${workspace.status}]`),
@@ -350,6 +510,17 @@ function formatOrientation(context: WorkspaceContext): string {
     lines.push(labeled("Goal", goal.title));
   }
   lines.push(
+    ...formatAlignmentBoundary(context),
+    ...section("Needs You", context.needsYou.map(formatAttentionItem)),
+    ...section("Needs Attention", context.needsAttention.map(formatAttentionItem)),
+    ...section("Current Work", [
+      ...context.currentWork.inProgressTasks.map(formatTask),
+      ...context.currentWork.blockedTasks.map(formatTask),
+      ...context.currentWork.acceptedDecisions.map(formatDecision),
+    ]),
+    ...section("Suggested next (orientation hint)", [
+      formatSuggestedNextAction(context.suggestedNextAction),
+    ]),
     ...section("Participants", context.participants.map(formatParticipant)),
     ...section("Proposed decisions", context.proposedDecisions.map(formatDecision)),
     ...section("Accepted decisions", context.acceptedDecisions.map(formatDecision)),
@@ -364,6 +535,7 @@ function formatOrientation(context: WorkspaceContext): string {
         joinFields(artifact.id, artifact.type, artifact.uriOrPath, artifact.title),
       ),
     ),
+    ...formatDeltaSection(context, since),
     ...provenanceSection(
       "Recent provenance",
       context.provenance,
@@ -371,6 +543,10 @@ function formatOrientation(context: WorkspaceContext): string {
       context.provenanceTruncated,
     ),
   );
+  const resumeCursor = formatResumeCursor(context);
+  if (resumeCursor !== undefined) {
+    lines.push(resumeCursor);
+  }
   return lines.join("\n");
 }
 
@@ -493,6 +669,55 @@ async function cmdWhoami(argv: string[]): Promise<void> {
   });
 }
 
+async function cmdPreflight(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  if (workspaceId === undefined || workspaceId.trim().length === 0) {
+    throw new ValidationError("Missing required <workspaceId> argument or --workspace", {
+      field: "workspaceId",
+    });
+  }
+  const url = readCampfireUrl();
+  if (url === undefined) {
+    throw new ValidationError(
+      "CAMPFIRE_URL is required for hosted preflight; set it to the Campfire serve endpoint",
+      { field: "CAMPFIRE_URL" },
+    );
+  }
+  const token = readCampfireToken(process.env, argv);
+  if (token === undefined) {
+    throw new ValidationError(
+      "CAMPFIRE_TOKEN is required for hosted preflight; set it to the actor-specific token",
+      { field: "CAMPFIRE_TOKEN" },
+    );
+  }
+  const sessionId = readCampfireSessionId(process.env, argv);
+  let status: ReadinessStatus;
+  try {
+    status = await campfireHttpCall<ReadinessStatus>({
+      baseUrl: url,
+      token,
+      method: "preflight",
+      params: sessionId === undefined ? { workspaceId } : { workspaceId, agentSessionId: sessionId },
+    });
+  } catch (error) {
+    if (error instanceof CampfireError) throw hostedPreflightError(error);
+    throw new ValidationError(
+      "Unable to reach Campfire at the configured CAMPFIRE_URL; verify the endpoint and start campfire serve",
+      { field: "CAMPFIRE_URL", nextAction: "start campfire serve" },
+    );
+  }
+  const harness = readHarness(process.env, argv);
+  const result = harness === undefined ? status : { ...status, harness };
+  if (parsed.flags.json === true) {
+    printJson(result);
+    return;
+  }
+  const session = status.sessionId === undefined ? "human identity" : `session=${status.sessionId}`;
+  console.log(
+    `Campfire ready: workspace=${status.workspaceId}, actor=${status.actor.actorId} (${status.actor.actorType}), ${session}`,
+  );
+}
+
 async function cmdList(argv: string[]): Promise<void> {
   await withBackend(argv, async (backend) => {
     printJson(await backend.call("list_workspaces", {}));
@@ -503,6 +728,12 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requirePositional(parsed, "workspaceId");
   const asJson = parsed.flags.json === true;
   const full = parsed.flags.full === true;
+  const since = optionalFlag(parsed.flags, "since");
+  if (full && since !== undefined) {
+    throw new ValidationError("--since applies to the orientation projection, not --full", {
+      field: "since",
+    });
+  }
   await withBackend(argv, async (backend) => {
     if (full) {
       const view = (await backend.call("get_workspace", { workspaceId })) as WorkspaceView;
@@ -513,12 +744,18 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
       console.log(formatFullView(view));
       return;
     }
-    const context = (await backend.call("get_workspace_context", { workspaceId })) as WorkspaceContext;
+    const params: Record<string, unknown> = { workspaceId };
+    if (since !== undefined) {
+      params.since = since;
+    }
+    const context = (await backend.call("get_workspace_context", params)) as WorkspaceContext;
     if (asJson) {
+      // The service object already carries workspace, alignment, currentWork,
+      // the orientation hint, and the since projection.
       printJson(context);
       return;
     }
-    console.log(formatOrientation(context));
+    console.log(formatOrientation(context, since));
   });
 }
 
@@ -526,6 +763,7 @@ async function cmdActivity(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requirePositional(parsed, "workspaceId");
   const limit = optionalPositiveInt(parsed.flags, "limit");
   const before = optionalFlag(parsed.flags, "before");
+  const asJson = parsed.flags.json === true;
   await withBackend(argv, async (backend) => {
     const query: GetActivityInput = { workspaceId };
     if (limit !== undefined) {
@@ -540,6 +778,11 @@ async function cmdActivity(parsed: ParsedArgs, argv: string[]): Promise<void> {
       truncated: boolean;
       nextBefore?: string;
     };
+    if (asJson) {
+      // The page object already carries total/truncated/nextBefore.
+      printJson(page);
+      return;
+    }
     for (const item of page.items) {
       console.log(formatContributionLine(item));
     }
@@ -655,9 +898,15 @@ async function cmdAddArtifact(parsed: ParsedArgs, argv: string[]): Promise<void>
   const type = requireEnum(requireFlag(parsed.flags, "type"), ARTIFACT_TYPES, "type") as ArtifactType;
   const title = requireFlag(parsed.flags, "title");
   const uriOrPath = requireFlag(parsed.flags, "uri");
-  await withBackend(argv, async (backend) => {
-    printJson(await backend.call("add_artifact", { workspaceId, type, title, uriOrPath }));
-  });
+  await withBackend(
+    argv,
+    async (backend) => {
+      printJson(await backend.call("add_artifact", { workspaceId, type, title, uriOrPath }));
+    },
+    // --type names the artifact here, not the acting identity; the acting
+    // actor type comes from CAMPFIRE_ACTOR_TYPE / the default human.
+    { stripIdentityFlags: ["type"] },
+  );
 }
 
 async function cmdServe(parsed: ParsedArgs): Promise<void> {
@@ -738,7 +987,8 @@ async function cmdIssueToken(parsed: ParsedArgs, argv: string[]): Promise<void> 
     async (backend) => {
       printJson(await backend.call("issue_token", { actorId, actorType }));
     },
-    { actorFlagIsTarget: true },
+    // --actor/--type name the token target, not the acting identity.
+    { stripIdentityFlags: ["actor", "type"] },
   );
 }
 
@@ -768,7 +1018,8 @@ async function cmdInvite(parsed: ParsedArgs, argv: string[]): Promise<void> {
     async (backend) => {
       printJson(await backend.call("invite_workspace", { workspaceId, actorId, actorType, role }));
     },
-    { actorFlagIsTarget: true },
+    // --actor/--type name the invite target, not the acting identity.
+    { stripIdentityFlags: ["actor", "type"] },
   );
 }
 
@@ -792,10 +1043,11 @@ function printUsage(): void {
     "  campfire serve [--host 127.0.0.1] [--port 9414]",
     "  campfire view [--host 127.0.0.1] [--port 9415] [--allow-remote] [--theme campfire|fx]",
     "  campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
+    "  campfire preflight <workspaceId> [--session <id>] [--harness <name>] [--token <token>] [--json]",
     "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
     "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
-    "  campfire show <workspaceId> [--json] [--full]",
-    "  campfire activity <workspaceId> [--limit N] [--before <contributionId>]",
+    "  campfire show <workspaceId> [--since <contributionId>] [--json] [--full]",
+    "  campfire activity <workspaceId> [--limit N] [--before <contributionId>] [--json]",
     "  campfire create-workspace --team <teamId> --name <name> [--description <text>]",
     "  campfire update-workspace <workspaceId> --status active|completed|archived",
     "  campfire create-goal --workspace <workspaceId> --title <title> [--description <text>]",
@@ -820,14 +1072,26 @@ function printUsage(): void {
     "  --type <t>         Actor type, human|agent (default: human).",
     "  --session <id>     Agent session id.",
     "  --harness <name>   Harness name for MCP / session registration.",
+    "  --json             Machine-readable output contract (described below).",
     "",
     "When CAMPFIRE_URL is set, commands POST /v1/call with CAMPFIRE_TOKEN / --token",
     "instead of opening the local SQLite file. serve/init/seed always use the local DB.",
     "",
-    "show prints the orientation projection as readable text.",
+    "show prints the orientation projection as readable text; --since adds the",
+    "contributions recorded strictly after that id, states when older rows are",
+    "omitted, and prints the newest contribution id as the resume cursor. --full",
+    "uses the inspector (get_workspace). show and activity default to human text",
+    "and honor",
+    "--json; init, seed, bootstrap, whoami, list, and every create/add/update/",
+    "accept/issue/revoke/invite/join command print JSON with or without the flag.",
+    "Under --json a failure prints {\"error\":{\"code\",\"message\"[,\"details\"]}} on",
+    "stderr and exits 1. serve, view, mcp, and help have no JSON mode: serve and",
+    "view log notices to stderr, mcp speaks MCP JSON-RPC on stdio, help prints",
+    "this text. add-artifact's --type is the artifact type; acting as an agent",
+    "there uses CAMPFIRE_ACTOR_TYPE or --token, not --type.",
+    "",
     "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
     "requires --allow-remote. The browser never receives a token.",
-    "--json dumps the projection; --full uses the inspector (get_workspace).",
     "",
     "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
   ];
@@ -856,6 +1120,8 @@ export async function runCli(argv: string[]): Promise<void> {
       return cmdView(parsed, argv);
     case "mcp":
       return cmdMcp(argv);
+    case "preflight":
+      return cmdPreflight(parsed, argv);
     case "whoami":
       return cmdWhoami(argv);
     case "list":
@@ -902,17 +1168,54 @@ export async function runCli(argv: string[]): Promise<void> {
 }
 
 async function run(): Promise<void> {
-  try {
-    await runCli(process.argv.slice(2));
-  } catch (error) {
+  process.exitCode = await runCliEntry(process.argv.slice(2));
+}
+
+/**
+ * Render a CLI failure for the process boundary.
+ *
+ * Human mode keeps the stable `[Code] message` stderr line. Under `--json`
+ * failures are machine-readable too: a structured error object on stderr
+ * (stdout stays reserved for the success payload) with exit code 1 upstream.
+ */
+export function formatCliFailure(error: unknown, options?: { json?: boolean }): string {
+  if (options?.json === true) {
     if (error instanceof CampfireError) {
-      console.error(`[${error.code}] ${error.message}`);
-    } else if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error(String(error));
+      const details = error.details;
+      return JSON.stringify(
+        {
+          error:
+            details === undefined
+              ? { code: error.code, message: error.message }
+              : { code: error.code, message: error.message, details },
+        },
+        null,
+        2,
+      );
     }
-    process.exitCode = 1;
+    const message = error instanceof Error ? error.message : String(error);
+    return JSON.stringify({ error: { code: "InternalError", message } }, null, 2);
+  }
+  if (error instanceof CampfireError) {
+    return `[${error.code}] ${error.message}`;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+/**
+ * Run the CLI against an explicit argv and return the process exit code.
+ * Exported so tests cover the exact stdout/stderr contract of the binary.
+ */
+export async function runCliEntry(argv: string[]): Promise<number> {
+  try {
+    await runCli(argv);
+    return 0;
+  } catch (error) {
+    console.error(formatCliFailure(error, { json: parseArgs(argv).flags.json === true }));
+    return 1;
   }
 }
 

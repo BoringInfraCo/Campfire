@@ -356,3 +356,134 @@ main {
   outline: 1px solid var(--dim);
   outline-offset: 2px;
 }
+
+/* Sprint 008 orientation: read-only panels above the stream. Two columns keep
+   the entry surfaces legible without pushing the workstream off screen. */
+.orientation {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6em 2.5ch;
+  max-height: 42vh;
+  overflow: auto;
+  padding: 0.7em 1.5ch 0.8em;
+  border-bottom: 1px solid var(--line);
+}
+
+.orientation:empty {
+  display: none;
+}
+
+.next-action {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.next-action:empty {
+  display: none;
+}
+
+.alignment {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* The recorded sentence must stay fully visible. Status stays plain text. */
+.alignment .osentence {
+  white-space: normal;
+}
+
+.hint-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85em;
+  letter-spacing: 0.03em;
+}
+
+.hint-summary {
+  display: block;
+  min-width: 0;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint-reason {
+  display: block;
+  min-width: 0;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel {
+  min-width: 0;
+}
+
+.panel-title {
+  margin: 0 0 0.2em;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panel-body {
+  min-width: 0;
+}
+
+.olist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ogroup + .ogroup {
+  margin-top: 0.25em;
+}
+
+.ogroup-label {
+  color: var(--dim);
+  font-size: 0.85em;
+}
+
+.oitem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em 1ch;
+  min-width: 0;
+  padding: 0.05em 0;
+}
+
+.ometa {
+  flex: none;
+  color: var(--muted);
+}
+
+.osentence {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oreason {
+  flex-basis: 100%;
+  min-width: 0;
+  padding-left: 1.5ch;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 70ch) {
+  .orientation {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: 50vh;
+  }
+}

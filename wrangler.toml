@@ -19,6 +19,9 @@ name = "campfire"
 main = "src/worker/index.ts"
 compatibility_date = "2026-09-12"
 compatibility_flags = ["nodejs_compat"]
+# The public installer contract is scoped to this prefix; other
+# boringinfra.company routes remain owned by their existing application.
+routes = [{ pattern = "boringinfra.company/campfire/*", zone_name = "boringinfra.company" }]
 
 # Bundle schema.sql as a Text module for the D1 migration (no node:fs).
 rules = [{ type = "Text", globs = ["**/*.sql"], fallthrough = true }]
@@ -33,9 +36,9 @@ database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 
 [assets]
-# Single assets directory: ./public serves viewer static (index.html/app.css/app.js,
-# synced from src/viewer/static via `npm run sync:public`) AND /campfire/install.sh
-# (with text/x-shellscript via public/_headers). Two asset dirs are not supported.
+# The release installer shares ./public with locally packaged Viewer files.
+# Run the Worker before every asset request so the public Worker serves only
+# /campfire/install.sh and versioned installers; the journal is loopback-only.
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/v1/*", "/api/*"]
+run_worker_first = true
