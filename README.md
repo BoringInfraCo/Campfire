@@ -9,7 +9,7 @@ Campfire is a secure, harness-independent collaboration layer for teams working 
 - **Stay authorized** — invite-only workspaces; authorization precedes retrieval
 - **Stay inspectable** — every mutation records who contributed what, when, and on whose behalf
 
-Every data-producing command honors `--json` for machine-readable output — `show` and `activity` default to human text, the rest already print JSON, and failures under `--json` report a structured error object on stderr. The long-running `serve`/`view` commands, `mcp`, and `help` are the documented exceptions (they log notices, speak MCP JSON-RPC, or print usage text). Built for humans and agents alike.
+Every data-producing command honors `--json` for machine-readable output — `show` and `activity` default to human text, the rest already print JSON, and failures under `--json` report a structured error object on stderr, with an optional sibling `next` array of copy-pasteable commands. The long-running `serve`/`view` commands, `mcp`, and `help` are the documented exceptions (they log notices, speak MCP JSON-RPC, or print usage text). Built for humans and agents alike.
 
 ---
 
@@ -56,7 +56,7 @@ at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
 available as a deterministic demo/evaluation fixture. It is not how a new
 operator creates their workspace.
 
-Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
+Run `campfire --help` for the grouped command list, or `campfire <command> --help` for one command. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
 ## Agent-led setup
 

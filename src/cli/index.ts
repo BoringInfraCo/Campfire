@@ -29,6 +29,8 @@ import {
   rememberProfileAgents,
 } from "../bootstrap/profile.js";
 import { defaultHumanName, promptHumanName } from "./first-run.js";
+import { formatCommandUsage, formatUsage, isKnownCommand } from "./help.js";
+import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
@@ -111,6 +113,10 @@ function parseArgs(argv: string[]): ParsedArgs {
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
     if (token === undefined) continue;
+    if (token === "-h") {
+      flags.help = true;
+      continue;
+    }
     if (token.startsWith("--")) {
       const body = token.slice(2);
       const eq = body.indexOf("=");
@@ -644,6 +650,9 @@ async function cmdSeed(flags: Record<string, string | boolean>): Promise<void> {
   } finally {
     runtime.close();
   }
+  if (flags.reset === true) {
+    console.error(SEED_RESET_WARNING);
+  }
 }
 
 /**
@@ -653,12 +662,20 @@ async function cmdSeed(flags: Record<string, string | boolean>): Promise<void> {
  * emits runnable JS into `dist/` (gitignored), and `bin.campfire` points at
  * the built `dist/src/cli/index.js`. Local dev keeps using `tsx src/...`.
  */
-function printDoctor(report: DoctorReport, asJson: boolean): void {
+function printDoctor(
+  report: DoctorReport,
+  asJson: boolean,
+  hint?: { workspaceId: string; harness: string },
+): void {
   if (asJson) {
     printJson(report);
     return;
   }
   const lines = [`Campfire doctor ${report.version}`, `ready: ${report.ready ? "yes" : "no"}`, `next: ${report.nextAction}`];
+  const command = commandForNextAction(report.nextAction, hint);
+  if (command !== undefined) {
+    lines.push(`  ${command}`);
+  }
   for (const check of report.checks) {
     lines.push(`- ${check.id}: ${check.pass ? "pass" : `fail (${check.nextAction})`}`);
   }
@@ -747,6 +764,7 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
       printDoctor(
         { ready: false, version: setupContract().version, mode: "hosted", checks: [{ id: "token", pass: false, nextAction: "set_agent_token" }], nextAction: "set_agent_token" },
         asJson,
+        { workspaceId, harness },
       );
       return;
     }
@@ -761,14 +779,14 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
       },
       { workspaceId, harness, reachable: true, sessionId },
     );
-    printDoctor(report, asJson);
+    printDoctor(report, asJson, { workspaceId, harness });
     return;
   }
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
   try {
-    printDoctor(diagnoseLocal(runtime, { workspaceId, harness, token }), asJson);
+    printDoctor(diagnoseLocal(runtime, { workspaceId, harness, token }), asJson, { workspaceId, harness });
   } finally {
     runtime.close();
   }
@@ -1480,100 +1498,28 @@ async function cmdDefault(parsed: ParsedArgs): Promise<void> {
   await cmdUp(parsed);
 }
 
-function printUsage(): void {
-  const usage = [
-    "Campfire",
-    "",
-    "Usage:",
-    "  campfire [--human-name <name>]  Record you, then listen. Agents appear when a harness connects",
-    "  campfire up [--no-connect] [--no-open] [--port 9414] [--viewer-port 9415]",
-    "  campfire status [--json]",
-    "  campfire init",
-    "  campfire setup [--json]",
-    "  campfire onboard --human-name <name> --agent-name <name> --harness <name> --workspace-name <name> --goal <title> [--json]",
-    "  campfire connect --harness codex|opencode [--config <path>] [--url <url>] [--token <agent-token>] [--workspace <id>] [--mcp-command <path>]",
-    "  campfire doctor <workspaceId> --harness <name> [--session <sessionId>] [--token <agent-token>] [--json]",
-    "  campfire handoff <workspaceId> --harness <name> --viewer-url <loopback-url> [--token <agent-token>] [--json]",
-    "  campfire bootstrap [--org <orgId>] [--team <teamId>] [--org-name <name>] [--team-name <name>] [--human-name <name>]",
-    "  campfire seed [--reset]",
-    "  campfire serve [--host 127.0.0.1] [--port 9414]",
-    "  campfire view [--host 127.0.0.1] [--port 9415] [--allow-remote] [--theme campfire|fx]",
-    "  campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
-    "  campfire preflight <workspaceId> [--session <id>] [--harness <name>] [--token <token>] [--json]",
-    "  campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
-    "  campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
-    "  campfire show <workspaceId> [--since <contributionId>] [--json] [--full]",
-    "  campfire activity <workspaceId> [--limit N] [--before <contributionId>] [--json]",
-    "  campfire create-workspace --team <teamId> --name <name> [--description <text>]",
-    "  campfire update-workspace <workspaceId> --status active|completed|archived",
-    "  campfire create-goal --workspace <workspaceId> --title <title> [--description <text>]",
-    "  campfire update-goal <goalId> [--title <title>] [--description <text>] [--status active|completed|abandoned]",
-    "  campfire add-finding --workspace <workspaceId> --summary <text> [--detail <text>] [--confidence <n>]",
-    "  campfire add-decision --workspace <workspaceId> --summary <text> [--rationale <text>]",
-    "  campfire accept-decision <decisionId>",
-    "  campfire create-task --workspace <workspaceId> --title <title> [--description <text>] [--assignee-id <id> --assignee-type human|agent]",
-    "  campfire update-task <taskId> --status open|in_progress|blocked|completed [--title <title>] [--description <text>] [--assignee-id <id> --assignee-type human|agent]",
-    "  campfire add-artifact --workspace <workspaceId> --type file|document|log|other --title <title> --uri <path>",
-    "  campfire create-human --name <display> --team <teamId>",
-    "  campfire create-agent --name <name> --human <humanId> --harness <name> [--team <teamId>]",
-    "  campfire issue-token --actor <id> --type human|agent",
-    "  campfire revoke-token <token> [--revoke-token <token>]",
-    "  campfire invite <workspaceId> --actor <id> --type human|agent --role owner|member|agent|viewer",
-    "  campfire join <workspaceId>",
-    "",
-    "Global options:",
-    "  --db <path>        Override CAMPFIRE_DB for this process.",
-    "  --token <token>    Actor token (or CAMPFIRE_TOKEN). Preferred over --actor.",
-    "  --actor <id>       Actor identity for local use (default: hum_sergio).",
-    "  --type <t>         Actor type, human|agent (default: human).",
-    "  --session <id>     Agent session id.",
-    "  --harness <name>   Harness name for MCP / session registration.",
-    "  --json             Machine-readable output contract (described below).",
-    "",
-    "When CAMPFIRE_URL is set, commands POST /v1/call with CAMPFIRE_TOKEN / --token",
-    "instead of opening the local SQLite file. serve/init/seed always use the local DB.",
-    "",
-    "show prints the orientation projection as readable text; --since adds the",
-    "contributions recorded strictly after that id, states when older rows are",
-    "omitted, and prints the newest contribution id as the resume cursor. --full",
-    "uses the inspector (get_workspace). show and activity default to human text",
-    "and honor",
-    "--json; init, seed, bootstrap, whoami, list, and every create/add/update/",
-    "accept/issue/revoke/invite/join command print JSON with or without the flag.",
-    "Under --json a failure prints {\"error\":{\"code\",\"message\"[,\"details\"]}} on",
-    "stderr and exits 1. serve, view, mcp, and help have no JSON mode: serve and",
-    "view log notices to stderr, mcp speaks MCP JSON-RPC on stdio, help prints",
-    "this text. add-artifact's --type is the artifact type; acting as an agent",
-    "there uses CAMPFIRE_ACTOR_TYPE or --token, not --type.",
-    "",
-    "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
-    "requires --allow-remote. The browser never receives a token.",
-    "",
-    "campfire with no args records the human once, then prints status. It does",
-    "not ask for agents, workspaces, or goals. campfire up starts serve and view",
-    "in this process, connects each installed Codex or OpenCode as an agent that",
-    "human owns, and opens the loopback Viewer. It does not import past sessions.",
-    "The agent in a session creates the workspace and goal. Session registration",
-    "stays explicit. onboard remains the one-shot script path and does not start",
-    "the server. seed --reset remains the deterministic demo fixture. setup",
-    "prints the agent-readable contract and creates no state.",
-    "connect writes only the named harness config and requires a reload or new",
-    "process. doctor is read-only. Hosted doctor needs the session id from",
-    "register_agent_session via --session or CAMPFIRE_SESSION_ID (--session wins).",
-    "It does not look up or register a session. Do not put the session id or",
-    "tokens in the handoff. handoff prints a loopback Viewer receipt and never a token.",
-    "",
-    "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
-  ];
-  console.log(usage.join("\n"));
+function printHelp(command?: string): void {
+  if (command === undefined || command === "help") {
+    console.log(formatUsage());
+    return;
+  }
+  if (!isKnownCommand(command)) {
+    throw new ValidationError(`Unknown command: ${command}`, { command });
+  }
+  console.log(formatCommandUsage(command));
 }
 
 export async function runCli(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
   applyDbFlag(parsed.flags);
 
-  if (parsed.flags.help === true || parsed.command === "help") {
-    printUsage();
+  if (parsed.command === "help") {
+    printHelp(parsed.positionals[0]);
+    return;
+  }
+
+  if (parsed.flags.help === true) {
+    printHelp(parsed.command);
     return;
   }
 
@@ -1660,50 +1606,21 @@ async function run(): Promise<void> {
   process.exitCode = await runCliEntry(process.argv.slice(2));
 }
 
-/**
- * Render a CLI failure for the process boundary.
- *
- * Human mode keeps the stable `[Code] message` stderr line. Under `--json`
- * failures are machine-readable too: a structured error object on stderr
- * (stdout stays reserved for the success payload) with exit code 1 upstream.
- */
-export function formatCliFailure(error: unknown, options?: { json?: boolean }): string {
-  if (options?.json === true) {
-    if (error instanceof CampfireError) {
-      const details = error.details;
-      return JSON.stringify(
-        {
-          error:
-            details === undefined
-              ? { code: error.code, message: error.message }
-              : { code: error.code, message: error.message, details },
-        },
-        null,
-        2,
-      );
-    }
-    const message = error instanceof Error ? error.message : String(error);
-    return JSON.stringify({ error: { code: "InternalError", message } }, null, 2);
-  }
-  if (error instanceof CampfireError) {
-    return `[${error.code}] ${error.message}`;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
+export { formatCliFailure };
 
 /**
  * Run the CLI against an explicit argv and return the process exit code.
  * Exported so tests cover the exact stdout/stderr contract of the binary.
  */
 export async function runCliEntry(argv: string[]): Promise<number> {
+  const parsed = parseArgs(argv);
   try {
     await runCli(argv);
     return 0;
   } catch (error) {
-    console.error(formatCliFailure(error, { json: parseArgs(argv).flags.json === true }));
+    console.error(
+      formatCliFailure(error, { json: parsed.flags.json === true, command: parsed.command }),
+    );
     return 1;
   }
 }
