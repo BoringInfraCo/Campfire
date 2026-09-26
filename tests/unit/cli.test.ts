@@ -217,6 +217,12 @@ describe("runCli", () => {
   it("prints usage including serve, invite, identity, and contribution commands", async () => {
     await cli(["help"]);
     const output = stdout();
+    expect(output).toContain("First run:");
+    expect(output).toContain("Inspect:");
+    expect(output).toContain("Contribute:");
+    expect(output).toContain("Identity:");
+    expect(output).toContain("Run:");
+    expect(output).toContain("Fixtures:");
     expect(output).toContain("campfire serve");
     expect(output).toContain("campfire preflight");
     expect(output).toContain("create-human");
@@ -227,6 +233,21 @@ describe("runCli", () => {
     expect(output).toContain("add-finding");
     expect(output).toContain("add-decision");
     expect(output).toContain("add-artifact");
+  });
+
+  it("prints onboard-only usage for campfire onboard --help", async () => {
+    await cli(["onboard", "--help"]);
+    const output = stdout();
+    expect(output).toContain("campfire onboard --human-name");
+    expect(output).toContain("First-run path");
+    expect(output).toContain("--json prints each one-time token once");
+    expect(output).not.toContain("campfire create-task");
+    expect(output).not.toContain("First run:");
+
+    logs = [];
+    await cli(["onboard", "-h"]);
+    expect(stdout()).toContain("campfire onboard --human-name");
+    expect(stdout()).not.toContain("campfire create-task");
   });
 
   it("shows a workspace with the fixture sergio token", async () => {
@@ -704,7 +725,9 @@ describe("runCliEntry exit-code and stderr contract", () => {
     const code = await runCliEntry(["--db", dbPath, "show", "does-not-exist"]);
 
     expect(code).toBe(1);
-    expect(stderrText(errSpy)).toBe("[WorkspaceNotFound] Workspace not found: does-not-exist");
+    const stderr = stderrText(errSpy);
+    expect(stderr.startsWith("[WorkspaceNotFound] Workspace not found: does-not-exist")).toBe(true);
+    expect(stderr).toContain("campfire list");
   });
 
   it("emits structured error JSON on stderr under --json", async () => {
@@ -715,10 +738,14 @@ describe("runCliEntry exit-code and stderr contract", () => {
     expect(code).toBe(1);
     const payload = JSON.parse(stderrText(errSpy)) as {
       error: { code: string; message: string; details?: { workspaceId?: string } };
+      next?: Array<{ command: string; when: string }>;
     };
     expect(payload.error.code).toBe("WorkspaceNotFound");
     expect(payload.error.message).toContain("does-not-exist");
     expect(payload.error.details?.workspaceId).toBe("does-not-exist");
+    expect(payload.next).toEqual([
+      { command: "campfire list", when: "List workspaces this actor can see" },
+    ]);
   });
 
   it("reports an unknown command as structured error JSON under --json", async () => {
@@ -727,16 +754,65 @@ describe("runCliEntry exit-code and stderr contract", () => {
     const code = await runCliEntry(["--db", dbPath, "definitely-not-a-command", "--json"]);
 
     expect(code).toBe(1);
-    const payload = JSON.parse(stderrText(errSpy)) as { error: { code: string; message: string } };
+    const payload = JSON.parse(stderrText(errSpy)) as {
+      error: { code: string; message: string };
+      next?: Array<{ command: string }>;
+    };
     expect(payload.error.code).toBe("ValidationError");
     expect(payload.error.message).toContain("definitely-not-a-command");
+    expect(payload.next?.some((step) => step.command === "campfire --help")).toBe(true);
+  });
+
+  it("suggests a close command for an unknown name", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "onbord"]);
+
+    expect(code).toBe(1);
+    const stderr = stderrText(errSpy);
+    expect(stderr).toContain("[ValidationError] Unknown command: onbord");
+    expect(stderr).toContain("campfire onboard");
+    expect(stderr).toContain("campfire --help");
+  });
+
+  it("prints a copy-pasteable doctor command while keeping the nextAction token", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry([
+      "--db",
+      dbPath,
+      "doctor",
+      FIXTURE.workspaces.billing,
+      "--harness",
+      "codex",
+    ]);
+
+    expect(code).toBe(0);
+    const output = stdout();
+    expect(output).toContain("next: set_agent_token");
+    expect(output).toContain(
+      `campfire doctor ${FIXTURE.workspaces.billing} --harness codex --token <agent-token>`,
+    );
+    expect(output).not.toContain(FIXTURE.tokens.sergio);
+    expect(stderrText(errSpy)).toBe("");
+  });
+
+  it("warns on seed --reset that the demo fixture is not a new operator workspace", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["--db", dbPath, "seed", "--reset"]);
+
+    expect(code).toBe(0);
+    expect(stderrText(errSpy)).toContain("SEED NOTE");
+    expect(stderrText(errSpy)).toContain("campfire onboard");
+    expect(stderrText(errSpy)).not.toMatch(/cft_/);
   });
 });
 
 describe("formatCliFailure", () => {
   it("keeps the human formats unchanged", () => {
     expect(formatCliFailure(new WorkspaceNotFound("ws_x"))).toBe(
-      "[WorkspaceNotFound] Workspace not found: ws_x",
+      "[WorkspaceNotFound] Workspace not found: ws_x\nNext:\n  campfire list",
     );
     expect(formatCliFailure(new Error("boom"))).toBe("boom");
     expect(formatCliFailure("stringy")).toBe("stringy");
