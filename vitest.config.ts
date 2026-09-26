@@ -21,6 +21,7 @@ export default defineConfig({
   plugins: [sqlText()],
   test: {
     include: ["tests/**/*.test.ts"],
+    setupFiles: ["tests/setup-profile-env.ts"],
     testTimeout: 30_000,
     hookTimeout: 30_000,
     pool: "forks",

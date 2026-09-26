@@ -17,8 +17,8 @@
 #   CAMPFIRE_VERSION      version to install, with or without leading "v"
 #                         (default: latest).
 #   CAMPFIRE_URL          Campfire server URL. Not used for downloading; it is
-#                         only echoed in the next-steps guidance (the CLI reads
-#                         CAMPFIRE_URL at runtime).
+#                         remembered in the installer's closing line (the CLI
+#                         reads CAMPFIRE_URL at runtime).
 #   CAMPFIRE_RELEASE_BASE release host (default:
 #                         https://github.com/BoringInfraCo/Campfire).
 #   CAMPFIRE_TARBALL      override: local file path or http(s) URL of a
@@ -53,8 +53,8 @@ Flags:
   --prefix DIR     install prefix (default: /usr/local if writable,
                    otherwise ~/.local). Binary lands in DIR/bin.
   --version VER    version to install, e.g. 1.0.0 (default: latest).
-  --url URL        Campfire server URL. Only used in the next-steps output;
-                   the CLI reads CAMPFIRE_URL at runtime.
+  --url URL        Campfire server URL. Remembered in the installer's closing
+                   line; the CLI reads CAMPFIRE_URL at runtime.
   --dry-run        print the install plan without changing anything.
   --yes            assume "yes" for the explicit sudo prompt.
   -h, --help       print this help and exit.
@@ -79,31 +79,11 @@ fail() {
 }
 
 print_next_steps() {
-  # $1 = installed campfire path (used in the MCP snippet)
-  _bin="$1"
-  _url="$SERVER_URL"
-  if [ -z "$_url" ]; then
-    _url="http://127.0.0.1:9414"
-  fi
   log ""
-  log "Next steps:"
   if [ -n "$SERVER_URL" ]; then
-    log "  1. Point the CLI at your hosted instance:"
-    log "     export CAMPFIRE_URL=\"$SERVER_URL\""
-  else
-    log "  1. Point the CLI at your hosted instance (or omit for local SQLite):"
-    log "     export CAMPFIRE_URL=\"http://127.0.0.1:9414\""
+    log "This install will talk to $SERVER_URL."
   fi
-  log "  2. Export the actor token your operator issued (never commit it):"
-  log "     export CAMPFIRE_TOKEN=\"<token from campfire issue-token>\""
-  log "  3. Verify: campfire whoami && campfire list"
-  log ""
-  log "  MCP snippet (one server process per harness, each with its own token):"
-  log "    { \"mcpServers\": { \"campfire\": {"
-  log "      \"command\": \"$_bin\", \"args\": [\"mcp\"],"
-  log "      \"env\": { \"CAMPFIRE_URL\": \"$_url\","
-  log "               \"CAMPFIRE_TOKEN\": \"<agent token>\", \"CAMPFIRE_HARNESS\": \"codex\" } } } }"
-  log "  From source instead: git clone https://github.com/$REPO_SPEC && npm ci && npm run build."
+  log "Run  campfire  to create your first workspace."
 }
 
 # ---- argument parsing (POSIX: no getopt) ----
@@ -296,7 +276,7 @@ npm_fallback() {
   npm install -g "$spec" || fail "npm fallback failed. Install from source instead: git clone https://github.com/$REPO_SPEC && cd Campfire && npm ci && npm run build."
   command -v campfire >/dev/null 2>&1 || fail "npm install succeeded but 'campfire' is not on PATH"
   campfire --help >/dev/null 2>&1 || fail "npm-installed campfire failed to run 'campfire --help'"
-  log "Installed campfire via npm. Run 'campfire --help' to begin."
+  log "Installed campfire via npm."
   print_next_steps "$(command -v campfire)"
   exit 0
 }

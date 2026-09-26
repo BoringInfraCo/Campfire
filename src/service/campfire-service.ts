@@ -500,6 +500,21 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         store.addParticipant(participant);
         record(ctx, workspace.id, "create", "workspace", workspace.id, { name: workspace.name }, now);
         record(ctx, workspace.id, "join", "participant", ctx.actor.actorId, { role: "owner" }, now);
+        // The Viewer is opened as the owning human. An agent-created workspace
+        // is visible to that human without a second invite. This does not give
+        // the agent the human's other workspaces.
+        if (ctx.actor.actorType === "agent") {
+          const agent = store.getAgent(ctx.actor.actorId);
+          if (agent?.humanId !== undefined && agent.humanId.length > 0) {
+            store.addParticipant({
+              workspaceId: workspace.id,
+              actor: { actorId: agent.humanId, actorType: "human" },
+              role: "owner",
+              joinedAt: now,
+            });
+            record(ctx, workspace.id, "join", "participant", agent.humanId, { role: "owner" }, now);
+          }
+        }
       });
       return workspace;
     },

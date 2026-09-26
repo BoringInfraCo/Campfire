@@ -15,32 +15,56 @@ Every data-producing command honors `--json` for machine-readable output — `sh
 
 ## Quick start
 
-This is the path from an installed binary to one human, one agent they own, one workspace, and one goal. Onboard does not start the server and does not register an agent session. It prints each credential once, writes only the local database (`--db` or `CAMPFIRE_DB`), and does not provision Cloudflare.
+Install, then run Campfire. A terminal first-run records the human once.
+The name defaults from `git config user.name` or the login. Agents appear
+when Codex or OpenCode is installed and `campfire up` is listening. The
+agent in that session creates the workspace and goal. Past private sessions
+are not imported. This does not register an agent session and does not
+provision Cloudflare.
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
+campfire
+```
+
+`campfire up` starts the local API and the read-only Viewer in this process
+and writes a Codex or OpenCode MCP block for each installed harness. Reload
+the harness so MCP tools appear. The agent then calls
+`register_agent_session`, then creates or continues the workspace.
+
+Agents and scripts keep the non-interactive path:
+
+```bash
 campfire onboard \
   --human-name "Sergio" \
   --agent-name "Codex" \
   --harness codex \
   --workspace-name "billing deploy" \
-  --goal "Ship the billing migration safely"
-CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
+  --goal "Ship the billing migration safely" \
+  --json
+campfire up --no-open
 ```
 
-The human token is for the operator CLI and administration. The agent token is for exactly one harness process. Point that process at `CAMPFIRE_URL`, `CAMPFIRE_TOKEN` (the agent token printed above), and `CAMPFIRE_HARNESS`. The agent calls `register_agent_session`, then `preflight`, then reads workspace context.
+`--json` prints each credential once. Human-mode onboard does not. The human
+token is stored for the operator CLI. The agent token is written into exactly
+one harness process config. Do not put either token in the Viewer or a
+handoff.
 
-A second `onboard` refuses when humans or workspaces already exist and points at `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`, and `join`. There is no reset flag. `campfire seed --reset` stays available as a deterministic demo/evaluation fixture. It is not how a new operator creates their workspace.
+A second `onboard` refuses when humans or workspaces already exist and points
+at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
+`invite`, and `join`. There is no reset flag. `campfire seed --reset` stays
+available as a deterministic demo/evaluation fixture. It is not how a new
+operator creates their workspace.
 
 Run `campfire --help` for the full command list. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
 ## Agent-led setup
 
-An agent discovers the path from the installed binary with `campfire setup`. That command creates no state and prints no credential. `campfire onboard` remains the only command that prints one-time tokens. The human token is for operator administration. The agent token is for exactly one harness process.
+An agent discovers the path from the installed binary with `campfire setup`. That command creates no state and prints no credential. `campfire onboard --json` remains the only command that prints one-time tokens. Human-mode onboard stores them locally instead. The human token is for operator administration. The agent token is for exactly one harness process.
 
-`campfire connect --harness codex` or `--harness opencode` writes that harness's Campfire MCP block and leaves unrelated settings in place. It stores the agent token in the config file and does not print it. A reload or a new harness process is required before MCP tools appear, and the harness may ask for approval. Claude Code and Cursor are not validated for this path.
+`campfire connect --harness codex` or `--harness opencode` writes that harness's Campfire MCP block and leaves unrelated settings in place. After onboard it can read the agent token from the local credential store, so `--token` / `--config` / `--workspace` are optional. It stores the agent token in the config file and does not print it. A reload or a new harness process is required before MCP tools appear, and the harness may ask for approval. Claude Code and Cursor are not validated for this path.
 
-`campfire doctor <workspaceId> --harness <name>` is read-only. It does not register a session or search for one. Capture the id returned by `register_agent_session` and pass it to hosted doctor with `--session` or `CAMPFIRE_SESSION_ID` (`--session` wins). When doctor reports ready, `campfire view` serves the loopback journal and `campfire handoff` prints the workspace, goal, names, readiness, and Viewer URL. Do not put the session id or either token in that handoff. Campfire does not daemonize those processes and does not run the agent loop.
+`campfire doctor <workspaceId> --harness <name>` is read-only. It does not register a session or search for one. Capture the id returned by `register_agent_session` and pass it to hosted doctor with `--session` or `CAMPFIRE_SESSION_ID` (`--session` wins). When doctor reports ready, `campfire up` (or `campfire view`) serves the loopback journal and `campfire handoff` prints the workspace, goal, names, readiness, and Viewer URL. Do not put the session id or either token in that handoff. Campfire does not install a machine daemon and does not run the agent loop.
 
 ---
 
@@ -48,8 +72,11 @@ An agent discovers the path from the installed binary with `campfire setup`. Tha
 
 | Command | Description |
 | --- | --- |
+| `campfire` | Record the human once, or print status. Agents and workspaces appear when work starts |
+| `campfire up` | Start the local API and Viewer; connect each installed Codex or OpenCode. Does not import past sessions |
+| `campfire status` | Show the current workspace without credentials |
 | `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
-| `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Does not start the server or register an agent session |
+| `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Stores credentials locally. Does not start the server or register an agent session |
 | `campfire connect` | Write a Codex or OpenCode MCP block for the agent token. Requires a reload or new process |
 | `campfire doctor <workspace>` | Read-only setup diagnosis. Does not register a session |
 | `campfire handoff <workspace>` | Non-secret Viewer receipt. The browser stays token-free |

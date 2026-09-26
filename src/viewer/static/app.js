@@ -494,7 +494,7 @@ function renderHeader() {
   if (key !== selectKey) {
     selectKey = key;
     if (!list.length) {
-      els.workspace.innerHTML = `<option value="">No workspaces</option>`;
+      els.workspace.innerHTML = `<option value="">Waiting for an agent to start work.</option>`;
     } else {
       els.workspace.innerHTML = list
         .map((w) => `<option value="${esc(w.id)}">${esc(w.name)}</option>`)
@@ -698,7 +698,7 @@ function renderStream() {
   const top = el.scrollTop;
 
   if (!state.workspaces.length) {
-    el.innerHTML = `<div class="empty">No workspaces</div>`;
+    el.innerHTML = `<div class="empty">Waiting for an agent to start work.</div>`;
     return;
   }
 

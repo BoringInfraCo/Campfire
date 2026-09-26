@@ -10,7 +10,26 @@ import { mkdirSync, realpathSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
-import { prepareConnection } from "../bootstrap/connect.js";
+import {
+  defaultHarnessConfigPath,
+  detectInstalledHarnesses,
+  prepareConnection,
+} from "../bootstrap/connect.js";
+import { beginHuman, connectInstalledHarnesses } from "../bootstrap/listen.js";
+import { startLocalWorkspace, openLoopbackUrl, shouldOpenBrowser } from "../bootstrap/local-workspace.js";
+import {
+  formatStatus,
+  loadCredentials,
+  loadProfile,
+  persistHumanProfile,
+  persistOnboardProfile,
+  readOperatorAgentToken,
+  readOperatorHumanToken,
+  rememberAgentCredential,
+  rememberProfileAgents,
+} from "../bootstrap/profile.js";
+import { defaultHumanName, promptHumanName } from "./first-run.js";
+import { isInteractiveTty, wordmark } from "./ui.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
 import { buildHandoff, formatHandoff } from "../bootstrap/handoff.js";
@@ -58,7 +77,17 @@ import type { CampfireStore } from "../store/store.js";
 const DEFAULT_ACTOR_ID = "hum_sergio";
 const DEFAULT_ACTOR_TYPE = "human";
 
-const BOOLEAN_FLAGS = new Set(["reset", "help", "json", "full", "allow-remote"]);
+const BOOLEAN_FLAGS = new Set([
+  "reset",
+  "help",
+  "json",
+  "full",
+  "allow-remote",
+  "connect",
+  "no-connect",
+  "open",
+  "no-open",
+]);
 
 const WORKSPACE_STATUSES = ["active", "completed", "archived"] as const;
 const GOAL_STATUSES = ["active", "completed", "abandoned"] as const;
@@ -184,7 +213,7 @@ async function withBackend<T>(
   },
 ): Promise<T> {
   const url = readCampfireUrl();
-  const token = readCampfireToken(process.env, argv);
+  const token = readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
 
   if (url !== undefined) {
     if (token === undefined) {
@@ -661,19 +690,37 @@ function cmdSetup(flags: Record<string, string | boolean>): void {
 
 function cmdConnect(flags: Record<string, string | boolean>): void {
   const harness = requireFlag(flags, "harness");
-  const configPath = requireFlag(flags, "config");
-  const url = requireFlag(flags, "url");
-  const agentToken = requireFlag(flags, "token");
-  const workspaceId = requireFlag(flags, "workspace");
+  const profile = loadProfile();
+  const configPath =
+    optionalFlag(flags, "config") ??
+    (harness === "codex" || harness === "opencode" ? defaultHarnessConfigPath(harness) : undefined);
+  if (configPath === undefined) {
+    throw new ValidationError("Missing required --config argument", { field: "config" });
+  }
+  const url = optionalFlag(flags, "url") ?? profile?.url ?? "http://127.0.0.1:9414";
+  const agentToken =
+    optionalFlag(flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken(process.env, harness);
+  if (agentToken === undefined) {
+    throw new ValidationError("Missing agent token: pass --token or set CAMPFIRE_TOKEN", { field: "token" });
+  }
+  const workspaceId = optionalFlag(flags, "workspace") ?? profile?.workspaceId;
   const mcpCommand = optionalFlag(flags, "mcp-command") ?? process.argv[1] ?? "campfire";
-  const plan = prepareConnection({ harness, configPath, mcpCommand, url, agentToken, workspaceId });
+  const plan = prepareConnection({
+    harness,
+    configPath,
+    mcpCommand,
+    url,
+    agentToken,
+    ...(workspaceId === undefined ? {} : { workspaceId }),
+  });
   if (flags.json === true) {
     printJson(plan);
     return;
   }
+  const scope = plan.workspaceId === undefined ? "" : ` for workspace ${plan.workspaceId}`;
   console.log(
     [
-      `Wrote ${plan.harness} connection for workspace ${plan.workspaceId}.`,
+      `Wrote ${plan.harness} connection${scope}.`,
       `Config: ${plan.configPath}`,
       "The agent token was stored in that file and is not repeated here.",
       "Reload the harness or start a fresh process. Approval may be required.",
@@ -688,7 +735,7 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
     throw new ValidationError("Missing required <workspaceId> argument", { field: "workspaceId" });
   }
   const harness = requireFlag(parsed.flags, "harness");
-  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN;
+  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken();
   // Flag wins over the environment. Hosted doctor must be told the session id;
   // it does not look one up.
   const sessionFromFlag = optionalFlag(parsed.flags, "session");
@@ -734,7 +781,7 @@ async function cmdHandoff(parsed: ParsedArgs): Promise<void> {
   }
   const harness = requireFlag(parsed.flags, "harness");
   const viewerUrl = requireFlag(parsed.flags, "viewer-url");
-  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN;
+  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken();
   if (token === undefined) {
     throw new ValidationError("Missing agent token: pass --token or set CAMPFIRE_TOKEN", { field: "token" });
   }
@@ -784,6 +831,19 @@ async function cmdOnboard(flags: Record<string, string | boolean>): Promise<void
       harness,
       workspaceName,
       goal,
+    });
+    persistOnboardProfile({
+      databasePath: receipt.databasePath,
+      workspaceId: receipt.workspace.id,
+      workspaceName: receipt.workspace.name,
+      goalTitle: receipt.goal.title,
+      humanId: receipt.human.id,
+      humanName: receipt.human.displayName,
+      agentId: receipt.agent.id,
+      agentName: receipt.agent.name,
+      harness: receipt.agent.harness,
+      humanToken: receipt.human.token,
+      agentToken: receipt.agent.token,
     });
     if (flags.json === true) {
       printJson(receipt);
@@ -1209,15 +1269,229 @@ async function cmdMcp(argv: string[]): Promise<void> {
   await startStdioServer(resolveCliIdentity(argv), process.env, argv);
 }
 
+async function cmdUp(parsed: ParsedArgs): Promise<void> {
+  const profile = loadProfile();
+  if (profile === undefined) {
+    throw new ValidationError("No Campfire profile yet. Run campfire in a terminal, or pass --human-name.", {
+      field: "up",
+    });
+  }
+  const humanToken = readOperatorHumanToken();
+  if (humanToken === undefined) {
+    throw new ValidationError("Missing operator credential. Re-run campfire onboard.", { field: "credentials" });
+  }
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  let running: Awaited<ReturnType<typeof startLocalWorkspace>> | undefined;
+  try {
+    const actor = runtime.service.resolveToken(humanToken);
+    const human = runtime.store.getHuman(actor.actorId);
+    if (human === undefined) {
+      throw new ValidationError("The stored operator credential is not a human.", { field: "credentials" });
+    }
+    const connect = parsed.flags["no-connect"] !== true;
+    let connected: string[] = [];
+    if (connect) {
+      const harnesses = detectInstalledHarnesses();
+      const known: Record<string, string | undefined> = {};
+      const stored = loadCredentials();
+      for (const harness of harnesses) {
+        known[harness] = stored?.agents?.[harness] ?? (profile.harness === harness ? stored?.agentToken : undefined);
+      }
+      const mcpCommand = optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire";
+      const url = optionalFlag(parsed.flags, "url") ?? profile.url;
+      const configOverride =
+        harnesses.length === 1 ? optionalFlag(parsed.flags, "config") : undefined;
+      const result = connectInstalledHarnesses({
+        store: runtime.store,
+        service: runtime.service,
+        human: { id: human.id, teamId: human.teamId },
+        harnesses,
+        knownTokens: known,
+        url,
+        mcpCommand,
+        ...(profile.workspaceId === undefined ? {} : { workspaceId: profile.workspaceId }),
+        configPathFor: (harness) => configOverride ?? defaultHarnessConfigPath(harness),
+        onMintedToken: (harness, token) => rememberAgentCredential(harness, token),
+      });
+      connected = result.connected;
+      if (result.agents.length > 0) {
+        rememberProfileAgents(
+          result.agents.map((agent) => ({ id: agent.agentId, name: agent.name, harness: agent.harness })),
+        );
+      }
+    }
+    const workspaces = runtime.service.listWorkspaces({ actor });
+    const httpHost = optionalFlag(parsed.flags, "host") ?? DEFAULT_HTTP_HOST;
+    const httpPortRaw = optionalFlag(parsed.flags, "port");
+    const httpPort = httpPortRaw === undefined ? DEFAULT_HTTP_PORT : Number(httpPortRaw);
+    const viewerPortRaw = optionalFlag(parsed.flags, "viewer-port");
+    const viewerPort = viewerPortRaw === undefined ? DEFAULT_VIEWER_PORT : Number(viewerPortRaw);
+    if (!Number.isInteger(httpPort) || httpPort < 0 || httpPort > 65535) {
+      throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
+    }
+    if (!Number.isInteger(viewerPort) || viewerPort < 0 || viewerPort > 65535) {
+      throw new ValidationError("--viewer-port must be an integer between 0 and 65535", { field: "viewer-port" });
+    }
+    running = await startLocalWorkspace({
+      runtime,
+      human: { actor },
+      httpHost,
+      httpPort,
+      viewerPort,
+    });
+    const openBrowser = parsed.flags["no-open"] !== true && shouldOpenBrowser();
+    if (openBrowser) {
+      try {
+        openLoopbackUrl(running.viewerUrl);
+      } catch {
+        // Opening a browser is convenience, not correctness.
+      }
+    }
+    if (parsed.flags.json === true) {
+      printJson({
+        human: profile.humanName,
+        workspaces: workspaces.map((workspace) => ({
+          id: workspace.id,
+          name: workspace.name,
+          goal: workspace.goalTitle,
+        })),
+        agents: connected,
+        apiUrl: running.apiUrl,
+        viewerUrl: running.viewerUrl,
+        openedBrowser: openBrowser,
+        pastSessionsImported: false,
+      });
+    } else {
+      const workspaceLines =
+        workspaces.length === 0
+          ? ["  Waiting for an agent to start work."]
+          : workspaces.map(
+              (workspace) =>
+                `  Workspace  ${workspace.name}${workspace.goalTitle === undefined ? "" : `  ${workspace.goalTitle}`}`,
+            );
+      const lines = [
+        wordmark(false),
+        connected.length === 0 ? "  Agents     none connected yet" : `  Agents     ${connected.join(", ")}`,
+        ...workspaceLines,
+        "  Past sessions are not imported.",
+        "",
+        `  You        ${running.viewerUrl}`,
+      ];
+      if (connected.length > 0) {
+        lines.push("  Agent      reload the harness, then continue in that session");
+      }
+      lines.push("");
+      console.log(lines.join("\n"));
+    }
+    console.error(`[campfire] HTTP ${running.apiUrl}  viewer ${running.viewerUrl}`);
+    const session = running;
+    await new Promise<void>((resolve) => {
+      const shutdown = (signal: NodeJS.Signals): void => {
+        console.error(`[campfire] received ${signal}, shutting down`);
+        void session.close().finally(() => {
+          runtime.close();
+          resolve();
+        });
+      };
+      process.once("SIGINT", shutdown);
+      process.once("SIGTERM", shutdown);
+    });
+  } catch (error) {
+    await running?.close();
+    runtime.close();
+    throw error;
+  }
+}
+
+function printStatus(asJson: boolean): void {
+  const profile = loadProfile();
+  if (profile === undefined) {
+    throw new ValidationError("No Campfire profile yet. Run campfire in a terminal, or pass --human-name.", {
+      field: "status",
+    });
+  }
+  if (asJson) {
+    printJson({
+      workspace: profile.workspaceName,
+      workspaceId: profile.workspaceId,
+      goal: profile.goalTitle,
+      human: profile.humanName,
+      agent: profile.agentName,
+      harness: profile.harness,
+      databasePath: profile.databasePath,
+    });
+    return;
+  }
+  process.stdout.write(wordmark());
+  console.log(formatStatus(profile));
+}
+
+function startHuman(humanName: string): void {
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  try {
+    const started = beginHuman(runtime.store, runtime.service, runtime.config, humanName);
+    persistHumanProfile({
+      databasePath: started.databasePath,
+      humanId: started.humanId,
+      humanName: started.humanName,
+      humanToken: started.token,
+    });
+  } finally {
+    runtime.close();
+  }
+}
+
+async function cmdDefault(parsed: ParsedArgs): Promise<void> {
+  if (loadProfile() !== undefined) {
+    printStatus(parsed.flags.json === true);
+    return;
+  }
+  const named = optionalFlag(parsed.flags, "human-name");
+  const noninteractive =
+    parsed.flags.json === true || process.env.CAMPFIRE_NONINTERACTIVE === "1" || !isInteractiveTty();
+  if (noninteractive && named === undefined) {
+    throw new ValidationError(
+      "Run campfire in a terminal to confirm your name, or pass --human-name. Agents and workspaces appear when a harness connects.",
+      { field: "human-name" },
+    );
+  }
+  const humanName = named ?? (await promptHumanName(defaultHumanName()));
+  startHuman(humanName);
+  if (parsed.flags.json === true) {
+    const profile = loadProfile();
+    printJson({
+      human: profile?.humanName,
+      humanId: profile?.humanId,
+      databasePath: profile?.databasePath,
+      waiting: "agent",
+      pastSessionsImported: false,
+    });
+    return;
+  }
+  if (noninteractive) {
+    process.stdout.write(wordmark());
+    console.log(formatStatus(loadProfile()!));
+    return;
+  }
+  await cmdUp(parsed);
+}
+
 function printUsage(): void {
   const usage = [
-    "Campfire developer CLI",
+    "Campfire",
     "",
     "Usage:",
+    "  campfire [--human-name <name>]  Record you, then listen. Agents appear when a harness connects",
+    "  campfire up [--no-connect] [--no-open] [--port 9414] [--viewer-port 9415]",
+    "  campfire status [--json]",
     "  campfire init",
     "  campfire setup [--json]",
     "  campfire onboard --human-name <name> --agent-name <name> --harness <name> --workspace-name <name> --goal <title> [--json]",
-    "  campfire connect --harness codex|opencode --config <path> --url <url> --token <agent-token> --workspace <id> [--mcp-command <path>]",
+    "  campfire connect --harness codex|opencode [--config <path>] [--url <url>] [--token <agent-token>] [--workspace <id>] [--mcp-command <path>]",
     "  campfire doctor <workspaceId> --harness <name> [--session <sessionId>] [--token <agent-token>] [--json]",
     "  campfire handoff <workspaceId> --harness <name> --viewer-url <loopback-url> [--token <agent-token>] [--json]",
     "  campfire bootstrap [--org <orgId>] [--team <teamId>] [--org-name <name>] [--team-name <name>] [--human-name <name>]",
@@ -1275,14 +1549,19 @@ function printUsage(): void {
     "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
     "requires --allow-remote. The browser never receives a token.",
     "",
-    "onboard is the first-run path. It does not start the server or register an",
-    "agent session. seed --reset remains the deterministic demo fixture.",
-    "setup prints the agent-readable contract and creates no state. connect writes",
-    "only the named harness config and requires a reload or new process. doctor is",
-    "read-only. Hosted doctor needs the session id from register_agent_session",
-    "via --session or CAMPFIRE_SESSION_ID (--session wins). It does not look up",
-    "or register a session. Do not put the session id or tokens in the handoff.",
-    "handoff prints a loopback Viewer receipt and never a token.",
+    "campfire with no args records the human once, then prints status. It does",
+    "not ask for agents, workspaces, or goals. campfire up starts serve and view",
+    "in this process, connects each installed Codex or OpenCode as an agent that",
+    "human owns, and opens the loopback Viewer. It does not import past sessions.",
+    "The agent in a session creates the workspace and goal. Session registration",
+    "stays explicit. onboard remains the one-shot script path and does not start",
+    "the server. seed --reset remains the deterministic demo fixture. setup",
+    "prints the agent-readable contract and creates no state.",
+    "connect writes only the named harness config and requires a reload or new",
+    "process. doctor is read-only. Hosted doctor needs the session id from",
+    "register_agent_session via --session or CAMPFIRE_SESSION_ID (--session wins).",
+    "It does not look up or register a session. Do not put the session id or",
+    "tokens in the handoff. handoff prints a loopback Viewer receipt and never a token.",
     "",
     "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
   ];
@@ -1293,9 +1572,13 @@ export async function runCli(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
   applyDbFlag(parsed.flags);
 
-  if (parsed.flags.help === true || parsed.command === undefined || parsed.command === "help") {
+  if (parsed.flags.help === true || parsed.command === "help") {
     printUsage();
     return;
+  }
+
+  if (parsed.command === undefined) {
+    return cmdDefault(parsed);
   }
 
   switch (parsed.command) {
@@ -1305,6 +1588,11 @@ export async function runCli(argv: string[]): Promise<void> {
       return cmdSetup(parsed.flags);
     case "onboard":
       return cmdOnboard(parsed.flags);
+    case "up":
+      return cmdUp(parsed);
+    case "status":
+      printStatus(parsed.flags.json === true);
+      return;
     case "connect":
       return cmdConnect(parsed.flags);
     case "doctor":
