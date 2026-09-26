@@ -89,8 +89,7 @@ CONDITIONAL GO decision or establish two-harness prompt-to-Viewer proof. Sprint
 `docs/SPRINT_017_RESULT.md`. It amends the 015/016 first-run *experience*
 (installer messaging, local profile, `campfire` default, `campfire up`)
 without changing collaboration objects or silently registering agent sessions.
-The operator authorized publication as backward-compatible minor release
-`v1.5.0`.
+It is published and deployed as backward-compatible minor release `v1.5.0`.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

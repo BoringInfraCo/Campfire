@@ -3,7 +3,7 @@
 **Status:** Complete
 **Decision:** GO
 **Date:** September 25, 2026
-**Release authorization:** `v1.5.0` minor release
+**Release:** `v1.5.0` minor release — published and deployed
 
 ---
 
@@ -108,3 +108,33 @@ external adoption, product-market fit, or a hosted multi-tenant product.
 Publication as `v1.5.0` is a backward-compatible minor release because it adds
 the new default first-run experience and `campfire up` without breaking prior
 commands or requiring a schema migration.
+
+---
+
+## 6. Release promotion
+
+The Sprint 017 result was promoted on September 25, 2026:
+
+- Private source tag `v1.5.0` points to
+  `97216bd60c4733e73a8b25eaa1a3e3ccfc172c77`.
+- The audited public snapshot is
+  `3119d949c53a813a54182cc27a57a1c18a094457`.
+- Both public CI workflows passed. The public GitHub Release contains all four
+  platform archives and their four SHA-256 checksum files.
+- The production Worker deployment is
+  `c7f31631-3746-4e01-9a46-9ee895df48b5` at
+  `boringinfra.company/campfire/*`.
+- Clean latest and pinned production installs both reported
+  `Installed campfire 1.5.0`; the verified macOS arm64 archive checksum was
+  `bed72a1e3457884dbd6aa78b13538a137e55c2f4be84426f157b52f2f8df7c0b`.
+- No database migration ran because this release has no schema change.
+
+After deployment, a second independent trace used the binary installed from
+the live latest installer and wholly fresh config, data, credential, database,
+and harness-config paths. It created human `Live v1.5 Verifier`, workspace
+`live v1.5 release verification`, and goal
+`Verify the production v1.5.0 Viewer`. `campfire up` detected Codex and opened
+the full real Viewer on loopback ports `19814`/`19815`. The Viewer page and API
+response contained no `cft_` token, `CAMPFIRE_TOKEN`, or bearer credential;
+the generated Codex config had mode `0600`. The production Viewer was captured
+in the in-app browser as the final release artifact.

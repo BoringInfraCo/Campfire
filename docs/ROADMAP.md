@@ -266,7 +266,7 @@ a Viewer listening. It is published as `v1.4.0`. It remains onboarding
 evidence, not Gate B/C or PMF evidence. Sprint 017 Quiet Install & First
 Workspace is GO: the human-first path, local profile, installed-harness
 connection, one-process API + Viewer, and token-free handoff were independently
-verified. The operator authorized it as minor release `v1.5.0`.
+verified. It is published and deployed as minor release `v1.5.0`.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1322,7 +1322,7 @@ Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; v1.3.0 minor releas
         ↓
 Sprint 016 — Agent-Led Setup & Human Handoff   CONDITIONAL GO; v1.4.0 released + deployed; OpenCode prompt-to-Viewer validated; Codex setup incomplete; Gate B/C remain unmeasured
         ↓
-Sprint 017 — Quiet Install & First Workspace   GO ✓; v1.5.0 authorized; cold human-first path + Codex auto-connect + real Viewer verified
+Sprint 017 — Quiet Install & First Workspace   GO ✓; v1.5.0 released + deployed; cold human-first path + Codex auto-connect + real Viewer verified
 ```
 
 The roadmap provides direction.
