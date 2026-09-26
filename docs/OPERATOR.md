@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.4.0/install.sh | sh -s -- --version 1.4.0
+curl -fsSL https://boringinfra.company/campfire/v1.5.0/install.sh | sh -s -- --version 1.5.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +26,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.4.0`), not the word `latest`.
+the installed package metadata (for example `1.5.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -39,10 +39,22 @@ npm ci && npm run build && npm test
 
 ## First shared workspace
 
-`campfire onboard` is the first-run path from an installed binary to one
-human, one agent they own, one workspace, and one goal. It does not start
-the server and does not register an agent session. It writes only the local
-database (`--db` or `CAMPFIRE_DB`). It does not provision Cloudflare.
+After install, run `campfire` in a terminal. That records the human once.
+The suggested name comes from `git config user.name` or the login. It does
+not ask for an agent, a workspace, or a goal. Credentials are stored under
+`$CAMPFIRE_CONFIG_DIR` or `~/.config/campfire` (credentials mode 0600).
+`campfire up` starts the local API and Viewer in this process and connects
+each installed Codex or OpenCode as an agent that human owns. It says plainly
+that past sessions are not imported. It does not register an agent session
+and does not provision Cloudflare. The agent creates the workspace and goal
+when work starts. A second workspace is a normal `create_workspace`.
+
+```bash
+campfire
+campfire up
+```
+
+Agents and scripts keep flags:
 
 ```bash
 campfire onboard \
@@ -50,25 +62,22 @@ campfire onboard \
   --agent-name "Codex" \
   --harness codex \
   --workspace-name "billing deploy" \
-  --goal "Ship the billing migration safely"
+  --goal "Ship the billing migration safely" \
+  --json
 ```
 
-The command prints each credential once. The human token is for the operator
-CLI and administration. The agent token is for exactly one harness process.
-Do not put an actor id in hosted auth.
+`--json` prints each credential once. Human-mode onboard does not. The human
+token is for the operator CLI and administration. The agent token is for
+exactly one harness process. Do not put an actor id in hosted auth.
 
-Start the server on the absolute database path printed by onboard, then
-point the harness at `CAMPFIRE_URL`, `CAMPFIRE_TOKEN` (the agent token
-printed above), and `CAMPFIRE_HARNESS`:
+`campfire up` writes a Codex or OpenCode MCP block for each harness it
+finds. A second harness is another connection, not another wizard. Tokens
+are stored locally and are not printed. Reload the harness so tools appear.
+The agent calls `register_agent_session` before creating a goal, then
+`preflight`, then reads workspace context. The Viewer lists workspaces that
+exist. With none yet, it says it is waiting for an agent to start work.
 
-```bash
-CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
-```
-
-The agent calls `register_agent_session`, then `preflight`, then reads
-workspace context.
-
-A second run refuses when humans or workspaces already exist and points at
+A second onboard refuses when humans or workspaces already exist and points at
 `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
 and `join`. There is no reset flag.
 
@@ -282,6 +291,7 @@ replacement and give each harness process only its own actor's token.
 ## Upgrade notes
 
 - SQLite file upgrades run through versioned `schema_migrations` at startup.
-  Back up `.campfire/campfire.db` before upgrading binaries.
+  Back up the SQLite file (`CAMPFIRE_DB`, `$CWD/.campfire/campfire.db`, or
+  `~/.local/share/campfire/campfire.db`) before upgrading binaries.
 - `view --host` behavior is now explicit: loopback by default, `--allow-remote`
   required otherwise. Scripts binding `0.0.0.0` must add the flag.

@@ -5,8 +5,9 @@
  * authorization, and store never see a config file. The written file holds
  * the agent token; this function's return value does not.
  */
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import { ValidationError } from "../domain/errors.js";
 
 const BEGIN = "# BEGIN campfire-connect";
@@ -17,7 +18,8 @@ export interface ConnectionPlan {
   configPath: string;
   reloadRequired: true;
   approvalMayBeRequired: true;
-  workspaceId: string;
+  /** Present when a workspace already exists. Connection does not require one. */
+  workspaceId?: string;
   mcp: {
     command: string;
     args: ["mcp"];
@@ -32,7 +34,7 @@ export interface PrepareConnectionInput {
   mcpCommand: string;
   url: string;
   agentToken: string;
-  workspaceId: string;
+  workspaceId?: string;
 }
 
 function rejectUnsafe(value: string, field: string): void {
@@ -131,13 +133,49 @@ function prepareOpenCode(input: PrepareConnectionInput): void {
   writeSecretFile(input.configPath, `${JSON.stringify(parsed, null, 2)}\n`);
 }
 
+export function defaultHarnessConfigPath(
+  harness: "codex" | "opencode",
+  env: NodeJS.ProcessEnv = process.env,
+  cwd: string = process.cwd(),
+): string {
+  const home = (env.HOME ?? homedir()).trim() || homedir();
+  if (harness === "codex") return join(home, ".codex", "config.toml");
+  const local = join(cwd, "opencode.json");
+  if (existsSync(local)) return local;
+  const xdg = (env.XDG_CONFIG_HOME ?? "").trim() || join(home, ".config");
+  return join(xdg, "opencode", "opencode.json");
+}
+
+export type SupportedHarness = "codex" | "opencode";
+
+export function detectInstalledHarnesses(
+  env: NodeJS.ProcessEnv = process.env,
+  cwd: string = process.cwd(),
+): SupportedHarness[] {
+  const home = (env.HOME ?? homedir()).trim() || homedir();
+  const found: SupportedHarness[] = [];
+  if (existsSync(join(home, ".codex"))) found.push("codex");
+  const xdg = (env.XDG_CONFIG_HOME ?? "").trim() || join(home, ".config");
+  if (existsSync(join(cwd, "opencode.json")) || existsSync(join(xdg, "opencode"))) {
+    found.push("opencode");
+  }
+  return found;
+}
+
+export function detectInstalledHarness(
+  env: NodeJS.ProcessEnv = process.env,
+  cwd: string = process.cwd(),
+): SupportedHarness | undefined {
+  return detectInstalledHarnesses(env, cwd)[0];
+}
+
 export function prepareConnection(input: PrepareConnectionInput): ConnectionPlan {
   const harness = assertSupported(input.harness);
   rejectUnsafe(input.configPath, "config");
   rejectUnsafe(input.mcpCommand, "mcp-command");
   rejectUnsafe(input.url, "url");
   rejectUnsafe(input.agentToken, "token");
-  rejectUnsafe(input.workspaceId, "workspace");
+  if (input.workspaceId !== undefined) rejectUnsafe(input.workspaceId, "workspace");
   if (harness === "codex") prepareCodex(input);
   else prepareOpenCode(input);
   return {
@@ -145,7 +183,7 @@ export function prepareConnection(input: PrepareConnectionInput): ConnectionPlan
     configPath: input.configPath,
     reloadRequired: true,
     approvalMayBeRequired: true,
-    workspaceId: input.workspaceId,
+    ...(input.workspaceId === undefined ? {} : { workspaceId: input.workspaceId }),
     mcp: {
       command: input.mcpCommand,
       args: ["mcp"],

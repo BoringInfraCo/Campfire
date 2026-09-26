@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { onboardInstallation } from "../../src/bootstrap/onboard.js";
+import { loadCredentials } from "../../src/bootstrap/profile.js";
 import { runCliEntry } from "../../src/cli/index.js";
 import { ValidationError } from "../../src/domain/errors.js";
 import { createRuntimeFromPath } from "../../src/runtime.js";
@@ -127,11 +128,14 @@ describe("campfire onboard", () => {
       ).toBe(agents[0]!.id);
 
       const text = stdout.join("\n");
-      const humanToken = text.match(/Human token — operator CLI \/ administration: (\S+)/)?.[1];
-      const agentToken = text.match(/Agent token — exactly one harness process: (\S+)/)?.[1];
-      expect(humanToken).toBeDefined();
+      const credentials = loadCredentials();
+      expect(credentials).toBeDefined();
+      const humanToken = credentials!.humanToken;
+      const agentToken = credentials!.agentToken;
       expect(agentToken).toBeDefined();
-      expect(runtime.service.resolveToken(humanToken!)).toEqual({ actorId: human!.id, actorType: "human" });
+      expect(text).not.toMatch(/cft_/);
+      expect(text).toContain("campfire up");
+      expect(runtime.service.resolveToken(humanToken)).toEqual({ actorId: human!.id, actorType: "human" });
       expect(runtime.service.resolveToken(agentToken!)).toEqual({ actorId: agents[0]!.id, actorType: "agent" });
       const stored = JSON.stringify({
         humans,
@@ -142,19 +146,13 @@ describe("campfire onboard", () => {
         contributions,
         sessions: runtime.store.listAgentSessions(workspace!.id),
       });
-      expect(stored).not.toContain(humanToken!);
-      expect(stored).not.toContain(agentToken!);
-      expect(stderr.join("\n")).not.toContain(humanToken!);
-      expect(stderr.join("\n")).not.toContain(agentToken!);
-      expect(text.split(agentToken!).length - 1).toBe(1);
-      expect(text.split(humanToken!).length - 1).toBe(1);
-      expect(text).toContain("operator CLI / administration");
-      expect(text).toContain("exactly one harness process");
-      expect(text).toContain(dbPath);
+      expect(stored).not.toContain(humanToken);
+      expect(stored).not.toContain(agentToken);
+      expect(stderr.join("\n")).not.toContain(humanToken);
+      expect(stderr.join("\n")).not.toContain(agentToken);
       expect(isAbsolute(dbPath)).toBe(true);
       expect(text).toContain("register_agent_session");
       expect(text).toContain("preflight");
-      expect(text).toContain("the agent token printed above");
     } finally {
       runtime.close();
     }
@@ -168,7 +166,7 @@ describe("campfire onboard", () => {
       agent: { id: string; actorType: string; humanId: string; harness: string; token: string };
       workspace: { id: string; name: string; status: string };
       goal: { title: string; status: string };
-      next: { serve: string; harness: { env: string[]; workspaceId: string }; steps: string[] };
+      next: { serve: string; up: string; harness: { env: string[]; workspaceId: string }; steps: string[] };
     };
     expect(receipt.databasePath).toBe(dbPath);
     expect(isAbsolute(receipt.databasePath)).toBe(true);
@@ -178,6 +176,9 @@ describe("campfire onboard", () => {
     expect(receipt.agent.harness).toBe("codex");
     expect(receipt.workspace).toMatchObject({ name: WORKSPACE, status: "active" });
     expect(receipt.goal).toMatchObject({ title: GOAL, status: "active" });
+    expect(receipt.human.token).toMatch(/^cft_/);
+    expect(receipt.agent.token).toMatch(/^cft_/);
+    expect(receipt.next.up).toBe("campfire up");
     expect(receipt.next.serve).toBe(`CAMPFIRE_DB=${dbPath} campfire serve`);
     expect(receipt.next.harness.env).toEqual(["CAMPFIRE_URL", "CAMPFIRE_TOKEN", "CAMPFIRE_HARNESS"]);
     expect(receipt.next.harness.workspaceId).toBe(receipt.workspace.id);

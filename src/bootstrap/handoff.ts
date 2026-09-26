@@ -66,15 +66,15 @@ export function buildHandoff(input: {
 
 export function formatHandoff(receipt: HandoffReceipt): string {
   return [
-    `Campfire ${receipt.version}`,
-    `Workspace: ${receipt.workspaceName} (${receipt.workspaceId})`,
-    `Goal: ${receipt.goalTitle}`,
-    `Human: ${receipt.humanName}`,
-    `Agent: ${receipt.agentName}`,
-    `Readiness: ${receipt.readiness}`,
-    `Viewer: ${receipt.viewerUrl}`,
-    "A harness reload or approval may still be required before MCP tools appear.",
-    "Next: open the Viewer URL. It is read-only and does not receive a token.",
+    `Workspace  ${receipt.workspaceName} is live.`,
+    "",
+    `  Goal     ${receipt.goalTitle}`,
+    `  You      ${receipt.humanName}`,
+    `  Agent    ${receipt.agentName}`,
+    `  You      ${receipt.viewerUrl}`,
+    "  Agent    reload the harness, then continue in that session",
+    "",
+    "The Viewer is read-only and does not receive a token.",
     "",
   ].join("\n");
 }

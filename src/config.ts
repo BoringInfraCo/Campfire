@@ -3,9 +3,17 @@
  *
  * Sprint 001 is a single local service with a SQLite file. No cloud control
  * plane is required (AGENTS.md constraint 10, ARCHITECTURE section 4).
+ *
+ * Database resolution, in order:
+ * 1. CAMPFIRE_DB (and the CLI --db flag, which sets it)
+ * 2. the operator profile written by onboard / first-run
+ * 3. an existing $CWD/.campfire/campfire.db (compat with pre-017 installs)
+ * 4. $XDG_DATA_HOME/campfire/campfire.db (or ~/.local/share/campfire)
  */
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
+import { cwdDatabasePath, loadProfile, resolveProfilePaths } from "./bootstrap/profile.js";
 
 export interface CampfireConfig {
   /** Absolute path to the SQLite database file. */
@@ -23,7 +31,11 @@ export function resolveDatabasePath(env: NodeJS.ProcessEnv = process.env): strin
   if (configured && configured.trim().length > 0) {
     return isAbsolute(configured) ? configured : resolve(process.cwd(), configured);
   }
-  return join(process.cwd(), ".campfire", "campfire.db");
+  const profile = loadProfile(env);
+  if (profile !== undefined) return profile.databasePath;
+  const legacy = cwdDatabasePath();
+  if (existsSync(legacy)) return legacy;
+  return resolveProfilePaths(env).defaultDatabasePath;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): CampfireConfig {

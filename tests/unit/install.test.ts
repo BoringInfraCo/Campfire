@@ -199,6 +199,9 @@ describe("install.sh regressions", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed campfire 1.2.0");
+    expect(result.stdout).toContain("Run  campfire  to create your first workspace.");
+    expect(result.stdout).not.toContain("Next steps:");
+    expect(result.stdout).not.toContain("mcpServers");
     const help = spawnSync(join(prefix, "bin", "campfire"), ["--help"], { encoding: "utf8" });
     expect(help.status).toBe(0);
     expect(help.stdout).toContain("campfire help");
@@ -269,7 +272,11 @@ exit 0
     expect(result.status).toBe(0);
     expect(existsSync(join(prefix, "bin", "campfire"))).toBe(true);
     expect(result.stdout).toContain(url);
-    expect(result.stdout).toContain(`export CAMPFIRE_URL="${url}"`);
+    expect(result.stdout).toContain("Run  campfire  to create your first workspace.");
+    expect(result.stdout).not.toContain("export CAMPFIRE_URL");
+    expect(result.stdout).not.toContain("issue-token");
+    expect(result.stdout).not.toContain("mcpServers");
+    expect(result.stdout).not.toContain("CAMPFIRE_TOKEN");
   });
 
   it("leaves immutable versioned installers without the mismatch sentence", () => {

@@ -1,6 +1,6 @@
-# Campfire 1.4.0 release context
+# Campfire 1.5.0 release context
 
-This public source snapshot was exported on 2026-09-25 from private canonical source commit `8b2f3baef8e0d1afde0425baf6de112709ec7b51` (dated 2026-09-25T11:10:54-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-09-26 from private canonical source commit `97216bd60c4733e73a8b25eaa1a3e3ccfc172c77` (dated 2026-09-25T23:47:35-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 

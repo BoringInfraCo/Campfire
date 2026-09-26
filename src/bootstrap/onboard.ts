@@ -40,6 +40,7 @@ export interface OnboardReceipt {
   goal: { id: string; title: string; status: string };
   next: {
     serve: string;
+    up: string;
     harness: {
       env: ["CAMPFIRE_URL", "CAMPFIRE_TOKEN", "CAMPFIRE_HARNESS"];
       harness: string;
@@ -128,6 +129,7 @@ export function onboardInstallation(
       goal: { id: goal.id, title: goal.title, status: goal.status },
       next: {
         serve: `CAMPFIRE_DB=${config.databasePath} campfire serve`,
+        up: "campfire up",
         harness: {
           env: ["CAMPFIRE_URL", "CAMPFIRE_TOKEN", "CAMPFIRE_HARNESS"],
           harness: input.harness,
@@ -147,26 +149,18 @@ export function onboardInstallation(
 
 export function formatOnboardReceipt(receipt: OnboardReceipt): string {
   return [
-    "Campfire onboarding receipt",
+    `Workspace ${receipt.workspace.name} is ready.`,
     "",
-    `Database: ${receipt.databasePath}`,
-    `Human: ${receipt.human.displayName} (${receipt.human.id})`,
-    `Agent: ${receipt.agent.name} (${receipt.agent.id}), harness ${receipt.agent.harness}, owned by ${receipt.agent.humanId}`,
-    `Workspace: ${receipt.workspace.name} (${receipt.workspace.id})`,
-    `Goal: ${receipt.goal.title} (${receipt.goal.id})`,
+    `  Goal     ${receipt.goal.title}`,
+    `  You      ${receipt.human.displayName}`,
+    `  Agent    ${receipt.agent.name} (${receipt.agent.harness})`,
     "",
-    "Credentials (printed once):",
-    `Human token — operator CLI / administration: ${receipt.human.token}`,
-    `Agent token — exactly one harness process: ${receipt.agent.token}`,
+    "Credentials are stored locally (mode 0600) and are not printed here.",
+    "Pass --json for one-time tokens.",
     "",
-    "Next steps:",
-    `1. Start the server: ${receipt.next.serve}`,
-    `2. Point one harness process at CAMPFIRE_URL, CAMPFIRE_TOKEN (the agent token printed above), and CAMPFIRE_HARNESS=${receipt.agent.harness}.`,
-    "   Do not put an actor id in hosted auth. Do not use the human token for the harness.",
-    `3. Prepare the harness connection with campfire connect, then reload or start a fresh process. Approval may be required.`,
-    `4. As that agent, call register_agent_session for workspace ${receipt.workspace.id}, then preflight, then read workspace context.`,
-    "5. Capture the id returned by register_agent_session and pass it to hosted campfire doctor with --session or CAMPFIRE_SESSION_ID.",
-    "6. When doctor is ready, run campfire view and hand off campfire handoff with the loopback URL. Do not include the session id or tokens.",
+    `Next: ${receipt.next.up}`,
+    `      Reload ${receipt.agent.harness} after connect. Approval may be required.`,
+    `      As the agent: register_agent_session, then preflight.`,
     "",
   ].join("\n");
 }
