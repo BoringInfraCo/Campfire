@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.4.0/install.sh | sh -s -- --version 1.4.0
+curl -fsSL https://boringinfra.company/campfire/v1.5.0/install.sh | sh -s -- --version 1.5.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +26,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.4.0`), not the word `latest`.
+the installed package metadata (for example `1.5.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.

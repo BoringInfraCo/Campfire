@@ -100,10 +100,10 @@ Requires Node.js **22 or newer**. SQLite is the store; one process owns the file
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
-For a pinned v1.4.0 install after the versioned static asset is deployed:
+For a pinned v1.5.0 install after the versioned static asset is deployed:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.4.0/install.sh | sh -s -- --version 1.4.0
+curl -fsSL https://boringinfra.company/campfire/v1.5.0/install.sh | sh -s -- --version 1.5.0
 ```
 
 Or build from source:

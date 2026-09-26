@@ -262,8 +262,11 @@ goal. It is published as minor release `v1.3.0`. It does not claim Gate B,
 Gate C, or external adoption. Sprint 016 Agent-Led Setup & Human Handoff is
 complete (CONDITIONAL GO). OpenCode completed a cold prompt-to-Viewer run.
 Codex created the workspace but did not finish session registration or leave
-a Viewer listening. It is not published. It remains onboarding evidence, not
-Gate B/C or PMF evidence.
+a Viewer listening. It is published as `v1.4.0`. It remains onboarding
+evidence, not Gate B/C or PMF evidence. Sprint 017 Quiet Install & First
+Workspace is GO: the human-first path, local profile, installed-harness
+connection, one-process API + Viewer, and token-free handoff were independently
+verified. The operator authorized it as minor release `v1.5.0`.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -1318,6 +1321,8 @@ Sprint 014 — Trust the Operator Path   GO ✓; v1.2.1 released + deployed; liv
 Sprint 015 — Zero-to-Shared-Workspace Onboarding   GO ✓; v1.3.0 minor release
         ↓
 Sprint 016 — Agent-Led Setup & Human Handoff   CONDITIONAL GO; v1.4.0 released + deployed; OpenCode prompt-to-Viewer validated; Codex setup incomplete; Gate B/C remain unmeasured
+        ↓
+Sprint 017 — Quiet Install & First Workspace   GO ✓; v1.5.0 authorized; cold human-first path + Codex auto-connect + real Viewer verified
 ```
 
 The roadmap provides direction.

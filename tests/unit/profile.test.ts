@@ -117,7 +117,8 @@ describe("resolveDatabasePath", () => {
     writeFileSync(legacy, "");
     try {
       process.chdir(cwd);
-      expect(resolveDatabasePath()).toBe(legacy);
+      // macOS canonicalizes /var to /private/var when reporting process.cwd().
+      expect(resolveDatabasePath()).toBe(join(process.cwd(), ".campfire", "campfire.db"));
     } finally {
       process.chdir(originalCwd);
       rmSync(cwd, { recursive: true, force: true });

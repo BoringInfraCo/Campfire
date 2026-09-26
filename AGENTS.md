@@ -85,10 +85,12 @@ a cold prompt-to-Viewer run. Codex created the workspace but did not finish
 session registration or leave a Viewer listening. It is published and deployed
 as backward-compatible minor release `v1.4.0`; that release does not change the
 CONDITIONAL GO decision or establish two-harness prompt-to-Viewer proof. Sprint
-017 — Quiet Install & First Workspace is in progress; its contract is
-`docs/SPRINT_017.md`. It amends the 015/016 first-run *experience* (installer
-messaging, local profile, `campfire` default, `campfire up`) without changing
-collaboration objects or silently registering agent sessions.
+017 — Quiet Install & First Workspace is complete (GO); its result is
+`docs/SPRINT_017_RESULT.md`. It amends the 015/016 first-run *experience*
+(installer messaging, local profile, `campfire` default, `campfire up`)
+without changing collaboration objects or silently registering agent sessions.
+The operator authorized publication as backward-compatible minor release
+`v1.5.0`.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

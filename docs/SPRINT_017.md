@@ -1,6 +1,6 @@
 # Campfire — Sprint 017: Quiet Install & First Workspace
 
-**Status:** In progress
+**Status:** Complete (GO)
 **Date:** September 25, 2026
 **Company:** Boring Infra Co.
 **Depends on:** Sprint 016 — Agent-Led Setup & Human Handoff (**CONDITIONAL GO**); `v1.4.0`
