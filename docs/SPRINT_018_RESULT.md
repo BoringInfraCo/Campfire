@@ -91,5 +91,29 @@ the MCP process, and is reused. Process start does not register a session.
 The amended lifetime is recorded in `README.md`, `docs/OPERATOR.md`, and
 `docs/ARCHITECTURE.md`.
 
-Not claimed: Gate B, Gate C, retention, adoption, product-market fit, a
-release, Claude Code, or Cursor.
+Not claimed: Gate B, Gate C, retention, adoption, product-market fit,
+Claude Code, or Cursor.
+
+---
+
+## 5. Release promotion
+
+The Sprint 018 result was promoted on September 27, 2026:
+
+- Private source tag `v1.6.0` points to
+  `d06cdd74f0ca21252dab2104b76689e83600834c`.
+- The audited public snapshot is
+  `9f3c13973654c17b609395a1502279c1934883ef`.
+- Both public CI workflows passed. The public GitHub Release contains all four
+  platform archives and their four SHA-256 checksum files.
+- The production Worker deployment is
+  `cd7793df-0d4a-4e5d-9de1-fe1a47492dd5` at
+  `boringinfra.company/campfire/*`.
+- A clean latest install from
+  `https://boringinfra.company/campfire/install.sh` reported
+  `Installed campfire 1.6.0` and wrote `~/.local/bin/campfire`. The verified
+  macOS arm64 archive checksum was
+  `8970a67076a22dd463caa7424ba0e9bd3dd8968e2a41636cf0f206687063684f`.
+- `https://boringinfra.company/campfire/v1.6.0/install.sh` returned the same
+  installer. No database migration ran because this release has no schema
+  change.

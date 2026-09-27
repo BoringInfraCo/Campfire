@@ -95,7 +95,8 @@ Sprint 018 — Enter With the Session is complete (GO); its result is
 each read the workspace before acting, from a prompt that does not name
 Campfire. A loopback session starts the existing listener when nothing is
 listening, and a later session reuses it. It does not register a session at
-startup, install a machine daemon, publish a release, or claim Gate B.
+startup or install a machine daemon. It is published and deployed as
+backward-compatible minor release `v1.6.0`. That release does not claim Gate B.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
