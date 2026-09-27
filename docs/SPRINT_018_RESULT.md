@@ -3,7 +3,7 @@
 **Status:** Complete
 **Decision:** GO
 **Date:** September 27, 2026
-**Release:** none — this result does not publish a version
+**Release:** `v1.6.0` minor release
 
 ---
 
