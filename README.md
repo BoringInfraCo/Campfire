@@ -27,10 +27,14 @@ curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 campfire
 ```
 
-`campfire up` starts the local API and the read-only Viewer in this process
-and writes a Codex or OpenCode MCP block for each installed harness. Reload
-the harness so MCP tools appear. The agent then calls
-`register_agent_session`, then creates or continues the workspace.
+`campfire up` starts the local API and the read-only Viewer and writes a
+Codex or OpenCode MCP block for each installed harness. Reload the harness
+so MCP tools appear. On a loopback URL, opening that harness starts the same
+listener when nothing is already listening, and that process keeps the
+database after the session exits. A reboot stops it. `campfire mcp` stays an
+HTTP client. The session instructions tell the agent to read the workspace
+before it builds, and to call `register_agent_session` before it contributes.
+Starting the process does not register a session.
 
 Agents and scripts keep the non-interactive path:
 
@@ -64,7 +68,7 @@ An agent discovers the path from the installed binary with `campfire setup`. Tha
 
 `campfire connect --harness codex` or `--harness opencode` writes that harness's Campfire MCP block and leaves unrelated settings in place. After onboard it can read the agent token from the local credential store, so `--token` / `--config` / `--workspace` are optional. It stores the agent token in the config file and does not print it. A reload or a new harness process is required before MCP tools appear, and the harness may ask for approval. Claude Code and Cursor are not validated for this path.
 
-`campfire doctor <workspaceId> --harness <name>` is read-only. It does not register a session or search for one. Capture the id returned by `register_agent_session` and pass it to hosted doctor with `--session` or `CAMPFIRE_SESSION_ID` (`--session` wins). When doctor reports ready, `campfire up` (or `campfire view`) serves the loopback journal and `campfire handoff` prints the workspace, goal, names, readiness, and Viewer URL. Do not put the session id or either token in that handoff. Campfire does not install a machine daemon and does not run the agent loop.
+`campfire doctor <workspaceId> --harness <name>` is read-only. It does not register a session or search for one. Capture the id returned by `register_agent_session` and pass it to hosted doctor with `--session` or `CAMPFIRE_SESSION_ID` (`--session` wins). When doctor reports ready, `campfire up` (or `campfire view`) serves the loopback journal and `campfire handoff` prints the workspace, goal, names, readiness, and Viewer URL. Do not put the session id or either token in that handoff. Campfire does not install a machine daemon and does not run the agent loop. A loopback harness session may start the existing listener; it does not install launchd, systemd, a watcher, or a supervisor, and it does not start a listener for a non-loopback URL.
 
 ---
 
@@ -136,7 +140,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - **No transcript sync.** Campfire stores structured state, never raw conversation history.
 - **Workspace-scoped.** State belongs to an explicit workspace; there is no org-wide memory pool.
 - **Invite-only.** Retrieval is authorized before it crosses the boundary; no token, no state.
-- **Single SQLite writer.** The hosted `serve` process owns the file; CLI and MCP adapters POST `/v1/call` with a bearer token.
+- **Single SQLite writer.** The listener process owns the file; CLI and MCP adapters POST `/v1/call` with a bearer token. A loopback harness session starts that listener when it is not already running.
 - **Viewer is read-only.** `campfire view` is a loopback team journal; the browser never holds a token.
 - **Worker serves the API and downloads.** The remote Worker/D1 path does not serve a hosted browser journal.
 - **External team-use validation is not measured.** Field Trace 001 was cancelled by founder decision; Sprint 004/006 remain controlled product-surface evidence, not retention or PMF evidence.

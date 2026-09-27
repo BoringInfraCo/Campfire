@@ -9,7 +9,7 @@ import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
 import { startCampfireHttpServer } from "../../src/http/server.js";
 import type { RunningHttpServer } from "../../src/http/server.js";
 import { createCampfireMcpServer } from "../../src/mcp/tools.js";
-import { resolveRemoteIdentity, startStdioServer } from "../../src/mcp/stdio.js";
+import { resolveRemoteIdentity, resolveRemoteStartup, startStdioServer } from "../../src/mcp/stdio.js";
 import type { ServerIdentity } from "../../src/mcp/context.js";
 import { createRuntimeFromPath } from "../../src/runtime.js";
 import type { CampfireRuntime } from "../../src/runtime.js";
@@ -133,6 +133,25 @@ describe("hosted MCP readiness", () => {
     });
     expect(result.json.message).toContain("verify CAMPFIRE_TOKEN");
     expect(JSON.stringify(result.json)).not.toContain(token);
+  });
+
+  it("does not register a session while resolving an accepting listener", async () => {
+    const before = runtime.store.listAgentSessions(FIXTURE.workspaces.billing);
+    const startup = await resolveRemoteStartup(
+      running.url,
+      FIXTURE.tokens.codexSergio,
+      { CAMPFIRE_URL: running.url, CAMPFIRE_HARNESS: "codex" },
+      [],
+    );
+    expect(startup.kind).toBe("ready");
+    if (startup.kind === "ready") {
+      expect(startup.identity.ctx.agentSessionId).toBeUndefined();
+      expect(startup.identity.ctx.actor).toMatchObject({
+        actorId: FIXTURE.agents.codexSergio,
+        actorType: "agent",
+      });
+    }
+    expect(runtime.store.listAgentSessions(FIXTURE.workspaces.billing)).toEqual(before);
   });
 
   it("does not re-emit token-bearing remote identity startup errors", async () => {

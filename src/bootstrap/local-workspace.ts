@@ -1,9 +1,10 @@
 /**
  * In-process serve + view.
  *
- * `campfire up` owns both listeners for this CLI session. It does not install
- * a machine daemon. Tokens stay in this process; the Viewer browser never
- * receives one.
+ * `campfire up` owns both listeners for this CLI session. Sprint 018 may
+ * start this same command detached when a loopback harness session finds
+ * nothing listening. This function does not install a machine daemon.
+ * Tokens stay in this process; the Viewer browser never receives one.
  */
 import { spawn } from "node:child_process";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";

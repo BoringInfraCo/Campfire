@@ -108,8 +108,9 @@ const COMMAND_HELP: Record<CliCommand, CommandHelp> = {
   up: {
     usage: "campfire up [--no-connect] [--no-open] [--port 9414] [--viewer-port 9415]",
     notes: [
-      "Starts serve and view in this process, connects each installed Codex or OpenCode,",
+      "Starts serve and view, connects each installed Codex or OpenCode,",
       "and opens the loopback Viewer. Does not import past sessions.",
+      "A later loopback harness session reuses this listener, or starts it when it is down.",
       "Session registration stays an explicit agent step.",
     ],
   },
@@ -215,7 +216,11 @@ const COMMAND_HELP: Record<CliCommand, CommandHelp> = {
   mcp: {
     usage:
       "campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
-    notes: ["Speaks MCP JSON-RPC on stdio. No --json mode."],
+    notes: [
+      "Speaks MCP JSON-RPC on stdio. No --json mode.",
+      "On a loopback CAMPFIRE_URL, starts campfire up when nothing is listening.",
+      "Does not open the database, read the operator credential, or register a session.",
+    ],
   },
   init: {
     usage: "campfire init",
@@ -269,11 +274,12 @@ const GLOBAL_NOTES = [
   "requires --allow-remote. The browser never receives a token.",
   "",
   "campfire with no args records the human once, then prints status. It does",
-  "not ask for agents, workspaces, or goals. campfire up starts serve and view",
-  "in this process, connects each installed Codex or OpenCode as an agent that",
-  "human owns, and opens the loopback Viewer. It does not import past sessions.",
-  "The agent in a session creates the workspace and goal. Session registration",
-  "stays explicit. onboard remains the one-shot script path and does not start",
+  "not ask for agents, workspaces, or goals. campfire up starts serve and view,",
+  "connects each installed Codex or OpenCode as an agent that human owns, and",
+  "opens the loopback Viewer. A later loopback session reuses that listener or",
+  "starts it when it is down. It does not import past sessions. The agent reads",
+  "the workspace before it builds. Session registration stays explicit. onboard",
+  "remains the one-shot script path and does not start",
   "the server. seed --reset remains the deterministic demo fixture. setup",
   "prints the agent-readable contract and creates no state.",
   "connect writes only the named harness config and requires a reload or new",

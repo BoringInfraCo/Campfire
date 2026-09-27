@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_017.md
+docs/SPRINT_018.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -90,6 +90,12 @@ CONDITIONAL GO decision or establish two-harness prompt-to-Viewer proof. Sprint
 (installer messaging, local profile, `campfire` default, `campfire up`)
 without changing collaboration objects or silently registering agent sessions.
 It is published and deployed as backward-compatible minor release `v1.5.0`.
+Sprint 018 — Enter With the Session is complete (GO); its result is
+`docs/SPRINT_018_RESULT.md`. A cold Codex session and a cold OpenCode session
+each read the workspace before acting, from a prompt that does not name
+Campfire. A loopback session starts the existing listener when nothing is
+listening, and a later session reuses it. It does not register a session at
+startup, install a machine daemon, publish a release, or claim Gate B.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

@@ -136,6 +136,8 @@ The first system should prove reliable state sharing and continuation before add
 
 For Sprint 001, Campfire can operate as a single local service backed by SQLite.
 
+Sprint 018 keeps that single local service. When a Codex or OpenCode session's `CAMPFIRE_URL` is loopback and nothing is listening, that session starts the same API and Viewer `campfire up` starts. The listener process owns SQLite and keeps it after the MCP process exits. `campfire mcp` calls `POST /v1/call` and does not open the file. A second session reuses the listener. A reboot clears it. This is not an operating-system service, and a non-loopback URL is not started from the session.
+
 The architecture should not require a cloud control plane to prove the product thesis.
 
 Future deployments may introduce remote/team-hosted services, but those concerns should not distort the first domain model.
