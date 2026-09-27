@@ -16,11 +16,14 @@ import { dispatchCampfireMethod } from "../http/dispatch.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 import type { ServerIdentity } from "./context.js";
+import { SESSION_INSTRUCTIONS } from "./instructions.js";
 
 export interface CampfireMcpOptions {
   service?: CampfireService;
   remote?: { url: string; token: string };
-  identity: ServerIdentity;
+  identity?: ServerIdentity;
+  /** Set when the listener is down. Tools return this error and do not call out. */
+  unavailable?: { message: string; details?: Record<string, unknown> };
 }
 
 const ACTOR_TYPES = ["human", "agent"] as const;
@@ -64,25 +67,40 @@ function fail(code: string, message: string, details?: Record<string, unknown>):
 }
 
 export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer {
-  const { identity, remote } = options;
+  const { identity, remote, unavailable } = options;
   const service = options.service;
-  if (remote === undefined && service === undefined) {
+  if (unavailable === undefined && remote === undefined && service === undefined) {
     throw new ValidationError("Campfire MCP server requires a service or remote HTTP target");
   }
+  if (unavailable === undefined && identity === undefined) {
+    throw new ValidationError("Campfire MCP server requires an identity");
+  }
 
-  const server = new McpServer({ name: "campfire", version: "1.0.0" });
+  const server = new McpServer({ name: "campfire", version: "1.0.0" }, { instructions: SESSION_INSTRUCTIONS });
   // The server owns its own actor context so registering a session can bind to
   // this connection without mutating a caller-supplied identity object.
-  const ctx: ActorContext = {
-    actor: { ...identity.ctx.actor },
-    agentSessionId: identity.ctx.agentSessionId,
-  };
+  // A down listener has no actor: tools return before this is read.
+  const ctx: ActorContext | undefined =
+    identity === undefined
+      ? undefined
+      : {
+          actor: { ...identity.ctx.actor },
+          agentSessionId: identity.ctx.agentSessionId,
+        };
+
+  function requireCtx(): ActorContext {
+    if (ctx === undefined) {
+      throw new ValidationError("Campfire MCP server is missing an identity");
+    }
+    return ctx;
+  }
 
   async function invoke(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    const actorCtx = requireCtx();
     if (remote !== undefined) {
       const merged = { ...params };
-      if (ctx.agentSessionId !== undefined) {
-        merged.agentSessionId = ctx.agentSessionId;
+      if (actorCtx.agentSessionId !== undefined) {
+        merged.agentSessionId = actorCtx.agentSessionId;
       }
       try {
         return await campfireHttpCall({
@@ -104,10 +122,13 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     if (service === undefined) {
       throw new ValidationError("Campfire MCP server is missing a service");
     }
-    return dispatchCampfireMethod(service, ctx, method, params);
+    return dispatchCampfireMethod(service, actorCtx, method, params);
   }
 
   async function run(fn: () => unknown | Promise<unknown>): Promise<CallToolResult> {
+    if (unavailable !== undefined) {
+      return fail("ValidationError", unavailable.message, unavailable.details);
+    }
     try {
       return ok(await fn());
     } catch (error) {
@@ -131,7 +152,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         const status = (await invoke("preflight", {
           workspaceId: args.workspaceId,
         })) as Record<string, unknown>;
-        return identity.harness === undefined ? status : { ...status, harness: identity.harness };
+        return identity?.harness === undefined ? status : { ...status, harness: identity.harness };
       }),
   );
 
@@ -146,10 +167,11 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         if (remote !== undefined) {
           return invoke("whoami", {});
         }
+        const actorCtx = requireCtx();
         return {
-          actor: ctx.actor,
-          sessionId: ctx.agentSessionId,
-          harness: identity.harness,
+          actor: actorCtx.actor,
+          sessionId: actorCtx.agentSessionId,
+          harness: identity?.harness,
         };
       }),
   );
@@ -262,7 +284,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     },
     (args) =>
       run(async () => {
-        const harness = args.harness ?? identity.harness;
+        const harness = args.harness ?? identity?.harness;
         if (harness === undefined || harness.trim().length === 0) {
           throw new ValidationError(
             "harness is required: pass harness or set --harness / CAMPFIRE_HARNESS",
@@ -275,7 +297,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
           workspaceId: args.workspaceId,
           harness,
         })) as { id: string };
-        ctx.agentSessionId = session.id;
+        requireCtx().agentSessionId = session.id;
         return session;
       }),
   );

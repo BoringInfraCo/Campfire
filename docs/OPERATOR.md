@@ -14,7 +14,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.5.0/install.sh | sh -s -- --version 1.5.0
+curl -fsSL https://boringinfra.company/campfire/v1.6.0/install.sh | sh -s -- --version 1.6.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +26,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.5.0`), not the word `latest`.
+the installed package metadata (for example `1.6.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -73,9 +73,16 @@ exactly one harness process. Do not put an actor id in hosted auth.
 `campfire up` writes a Codex or OpenCode MCP block for each harness it
 finds. A second harness is another connection, not another wizard. Tokens
 are stored locally and are not printed. Reload the harness so tools appear.
-The agent calls `register_agent_session` before creating a goal, then
-`preflight`, then reads workspace context. The Viewer lists workspaces that
-exist. With none yet, it says it is waiting for an agent to start work.
+The session instructions tell the agent to call `list_workspaces` and
+`get_workspace_context` before it builds, and to call
+`register_agent_session` before a goal, finding, decision, task, artifact,
+or workspace update. Process start does not register a session. The Viewer
+lists workspaces that exist. With none yet, it says it is waiting for an
+agent to start work. When the harness MCP block points at loopback and
+nothing is listening, that session starts the same API and Viewer as
+`campfire up` and leaves that process owning the database. A later session
+reuses it. A reboot clears it. A non-loopback URL is not started from the
+session.
 
 A second onboard refuses when humans or workspaces already exist and points at
 `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
@@ -221,7 +228,7 @@ CAMPFIRE_DB=<absolute path> campfire view
 campfire handoff <workspaceId> --harness <name> --viewer-url http://127.0.0.1:9415 --token <agent-token>
 ```
 
-The handoff lists the version, workspace, goal, participant names, readiness, and Viewer URL. It does not include a bearer token. `campfire serve` and `campfire view` stay in the terminal that started them. Campfire does not install them as daemons.
+The handoff lists the version, workspace, goal, participant names, readiness, and Viewer URL. It does not include a bearer token. `campfire serve` and `campfire view` stay in the process that started them. `campfire up` in a terminal is that process. A Codex or OpenCode session may also start it when its loopback URL is down, and that process keeps the database after `campfire mcp` exits. Campfire does not install them as operating-system daemons.
 
 ## 6. Humans contribute without a harness
 

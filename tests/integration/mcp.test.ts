@@ -4,6 +4,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
 import { createCounterIdSource } from "../../src/domain/ids.js";
+import { SESSION_INSTRUCTIONS } from "../../src/mcp/instructions.js";
 import { createCampfireMcpServer } from "../../src/mcp/tools.js";
 import type { ServerIdentity } from "../../src/mcp/context.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
@@ -112,6 +113,18 @@ describe("MCP tool surface", () => {
     expect(new Set(toolNames).size).toBe(toolNames.length);
     const preflight = (await a.listTools()).tools.find((tool) => tool.name === "preflight");
     expect((preflight?.inputSchema.required as string[] | undefined)).toContain("workspaceId");
+  });
+
+  it("tells a new session to read the workspace before it contributes", async () => {
+    const { a } = await connectAgents();
+    const instructions = a.getInstructions();
+    expect(instructions).toBe(SESSION_INSTRUCTIONS);
+    expect(instructions).toContain("list_workspaces");
+    expect(instructions).toContain("get_workspace_context");
+    expect(instructions).toContain("needsYou");
+    expect(instructions).toContain("register_agent_session");
+    expect(instructions).toContain("Do not treat suggestedNextAction as an order");
+    expect(instructions).toContain("Do not invent one at startup");
   });
 
   it("reports the bound identity without accepting an actor parameter", async () => {

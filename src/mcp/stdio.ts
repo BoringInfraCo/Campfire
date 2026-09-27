@@ -25,6 +25,7 @@ import {
   resolveServerIdentity,
 } from "./context.js";
 import type { ServerIdentity } from "./context.js";
+import { ensureLocalListener, type EnsureListenerResult } from "./listener.js";
 import { createCampfireMcpServer } from "./tools.js";
 
 export interface RunningStdioServer {
@@ -75,6 +76,22 @@ export async function resolveRemoteIdentity(
   return identity;
 }
 
+export async function resolveRemoteStartup(
+  url: string,
+  token: string,
+  env: NodeJS.ProcessEnv,
+  argv: string[],
+  ensure: (url: string, env: NodeJS.ProcessEnv) => Promise<EnsureListenerResult> = (target, targetEnv) =>
+    ensureLocalListener({ url: target, env: targetEnv }),
+): Promise<{ kind: "ready"; identity: ServerIdentity } | { kind: "unavailable"; down: EnsureListenerResult & { ready: false } }> {
+  const listener = await ensure(url, env);
+  if (!listener.ready) {
+    console.error(`[campfire] listener at ${url} is not accepting connections`);
+    return { kind: "unavailable", down: listener };
+  }
+  return { kind: "ready", identity: await resolveRemoteIdentity(url, token, env, argv) };
+}
+
 export async function startStdioServer(
   identity?: ServerIdentity,
   env: NodeJS.ProcessEnv = process.env,
@@ -89,7 +106,31 @@ export async function startStdioServer(
         field: "token",
       });
     }
-    const resolved = await resolveRemoteIdentity(url, token, env, argv);
+    const startup = await resolveRemoteStartup(url, token, env, argv);
+    if (startup.kind === "unavailable") {
+      const server = createCampfireMcpServer({
+        unavailable: { message: startup.down.message, details: startup.down.details },
+      });
+      const transport = new StdioServerTransport();
+      let closed = false;
+      const close = async (): Promise<void> => {
+        if (closed) return;
+        closed = true;
+        await server.close();
+      };
+      const shutdown = (signal: NodeJS.Signals): void => {
+        console.error(`[campfire] received ${signal}, shutting down`);
+        void close().finally(() => {
+          process.exit(0);
+        });
+      };
+      process.once("SIGINT", shutdown);
+      process.once("SIGTERM", shutdown);
+      await server.connect(transport);
+      console.error(`[campfire] MCP stdio adapter ready without a listener: url=${url}`);
+      return { close };
+    }
+    const resolved = startup.identity;
     if (resolved.ctx.actor.actorType === "agent" && resolved.ctx.agentSessionId === undefined) {
       console.error(
         `[campfire] agent ${resolved.ctx.actor.actorId} is not ready for workspace writes; use register_agent_session`,
