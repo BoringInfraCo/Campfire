@@ -5,6 +5,7 @@
  * bearer token is the actor; callers never send an acting actor id.
  */
 import { CampfireError, ValidationError, type CampfireErrorCode } from "../domain/errors.js";
+import type { BridgeReport } from "../bridge/report.js";
 
 const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
   "ValidationError",
@@ -112,16 +113,7 @@ export function hostedIdentityError(error: CampfireError): CampfireError {
   }
 }
 
-export async function campfireHttpCall<T = unknown>(options: CampfireHttpCallOptions): Promise<T> {
-  const response = await fetch(callUrl(options.baseUrl), {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${options.token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ method: options.method, params: options.params ?? {} }),
-  });
-
+async function readCampfireResponse<T>(response: Response): Promise<T> {
   let payload: unknown;
   try {
     payload = await response.json();
@@ -143,4 +135,34 @@ export async function campfireHttpCall<T = unknown>(options: CampfireHttpCallOpt
     throw new CampfireError(asCode(body.error), body.message, { httpStatus: response.status });
   }
   throw new ValidationError("Campfire HTTP response was missing ok");
+}
+
+export async function campfireHttpCall<T = unknown>(options: CampfireHttpCallOptions): Promise<T> {
+  const response = await fetch(callUrl(options.baseUrl), {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${options.token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ method: options.method, params: options.params ?? {} }),
+  });
+  return readCampfireResponse<T>(response);
+}
+
+/**
+ * Operator-only bridge inspection over the hosted instance. The server returns
+ * the already-redacted report: the raw webhook URL and signing secret never
+ * cross the wire. Requires the `CAMPFIRE_BRIDGE_TOKEN` instance-operator
+ * credential; actor tokens are rejected.
+ */
+export async function campfireHttpBridgeReport(options: {
+  baseUrl: string;
+  token: string;
+}): Promise<BridgeReport> {
+  const url = `${options.baseUrl.replace(/\/+$/, "")}/v1/bridge`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { authorization: `Bearer ${options.token}` },
+  });
+  return readCampfireResponse<BridgeReport>(response);
 }

@@ -6,6 +6,11 @@
  * leaking storage details into collaboration semantics (AGENTS.md invariant 7).
  */
 import type {
+  DomainEventRecord,
+  WebhookDeliveryCounts,
+  WebhookDeliveryRecord,
+} from "../domain/events.js";
+import type {
   ActorRef,
   ActorToken,
   Agent,
@@ -132,6 +137,43 @@ export interface CampfireStore {
   getOpenInvite(workspaceId: string, actor: ActorRef): WorkspaceInvite | undefined;
   consumeInvite(id: string, consumedAt: string): void;
   listInvites(workspaceId: string): WorkspaceInvite[];
+
+  // --- domain events ---
+  createDomainEvent(event: DomainEventRecord): void;
+  getDomainEvent(id: string): DomainEventRecord | undefined;
+  listDomainEventsForWorkspace(workspaceId: string): DomainEventRecord[];
+
+  // Operational delivery state, not Contributions.
+  createWebhookDelivery(delivery: WebhookDeliveryRecord): void;
+  getWebhookDelivery(id: string): WebhookDeliveryRecord | undefined;
+  listWebhookDeliveries(): WebhookDeliveryRecord[];
+  countWebhookDeliveries(): WebhookDeliveryCounts;
+
+  listDueWebhookDeliveries(input: {
+    bridgeId: string;
+    now: string;
+    leaseBefore: string;
+    configFingerprint: string;
+  }): WebhookDeliveryRecord[];
+
+  claimWebhookDelivery(
+    id: string,
+    input: { now: string; claimToken: string; leaseBefore: string; configFingerprint: string },
+  ): WebhookDeliveryRecord | undefined;
+
+  markWebhookDeliveryDelivered(id: string, claimToken: string, deliveredAt: string): boolean;
+
+  markWebhookDeliveryRetry(
+    id: string,
+    claimToken: string,
+    input: {
+      attemptCount: number;
+      status: "pending" | "exhausted";
+      nextAttemptAt?: string;
+      lastError?: string;
+      updatedAt: string;
+    },
+  ): boolean;
 
   // --- infrastructure ---
   transaction<T>(fn: () => T): T;

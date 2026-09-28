@@ -83,11 +83,16 @@ import {
   assertWorkspaceTransition,
 } from "../domain/lifecycle.js";
 import type { CampfireStore, GoalPatch, TaskPatch } from "../store/store.js";
+import type { QualifyingMutation } from "../domain/event-qualify.js";
+import type { DomainEventSubjectType } from "../domain/events.js";
+import { bridgeFromEnv, definedData, planOutbox, resolveOnBehalfOf } from "./outbox.js";
 
 export interface CampfireServiceOptions {
   store: CampfireStore;
   idSource?: IdSource;
   clock?: () => string;
+  /** Operator webhook env. Defaults to process.env. A bad bridge does not fail the mutation. */
+  webhookEnv?: Record<string, string | undefined>;
 }
 
 function assertNonEmpty(value: string, field: string): void {
@@ -101,6 +106,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
   const idSource: IdSource = options.idSource ?? ((kind) => createId(kind));
   const clock: () => string = options.clock ?? nowIso;
   const authorizer: Authorizer = createSimpleAuthorizer(store);
+  const webhookEnv = options.webhookEnv ?? process.env;
 
   function record(
     ctx: ActorContext,
@@ -110,9 +116,10 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     objectId: string,
     payload: Record<string, unknown> | undefined,
     createdAt: string,
-  ): void {
+  ): string {
+    const id = idSource("contribution");
     store.createContribution({
-      id: idSource("contribution"),
+      id,
       workspaceId,
       actor: ctx.actor,
       agentSessionId: ctx.agentSessionId,
@@ -122,6 +129,47 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       payload,
       createdAt,
     });
+    return id;
+  }
+
+  function behalfOf(ctx: ActorContext, workspaceId: string) {
+    if (ctx.actor.actorType !== "agent" || ctx.agentSessionId === undefined) return undefined;
+    return resolveOnBehalfOf(ctx.actor, workspaceId, store.getAgentSession(ctx.agentSessionId));
+  }
+
+  function writeOutbox(
+    ctx: ActorContext,
+    input: {
+      mutation: QualifyingMutation;
+      occurredAt: string;
+      workspaceId: string;
+      subjectType: DomainEventSubjectType;
+      subjectId: string;
+      summary: string;
+      data: Record<string, unknown>;
+      contributionId: string;
+      onBehalfOf?: { actorId: string; actorType: "human" };
+    },
+  ): void {
+    const planned = planOutbox({
+      mutation: input.mutation,
+      eventId: idSource("domainEvent"),
+      deliveryId: idSource("webhookDelivery"),
+      occurredAt: input.occurredAt,
+      workspaceId: input.workspaceId,
+      actor: ctx.actor,
+      subjectType: input.subjectType,
+      subjectId: input.subjectId,
+      summary: input.summary,
+      data: definedData(input.data),
+      contributionId: input.contributionId,
+      ...(ctx.agentSessionId !== undefined ? { agentSessionId: ctx.agentSessionId } : {}),
+      ...(input.onBehalfOf !== undefined ? { onBehalfOf: input.onBehalfOf } : {}),
+      bridge: bridgeFromEnv(webhookEnv),
+    });
+    if (planned === undefined) return;
+    store.createDomainEvent(planned.event);
+    if (planned.delivery !== undefined) store.createWebhookDelivery(planned.delivery);
   }
 
   function resolveParticipant(participant: WorkspaceParticipant): ParticipantView {
@@ -528,9 +576,29 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       }
       assertWorkspaceTransition(workspace.status, input.status);
       const now = clock();
+      const onBehalfOf = behalfOf(ctx, input.workspaceId);
       store.transaction(() => {
         store.updateWorkspace(input.workspaceId, { status: input.status, updatedAt: now });
-        record(ctx, input.workspaceId, "update", "workspace", input.workspaceId, { status: input.status }, now);
+        const contributionId = record(
+          ctx,
+          input.workspaceId,
+          "update",
+          "workspace",
+          input.workspaceId,
+          { status: input.status },
+          now,
+        );
+        writeOutbox(ctx, {
+          mutation: { kind: "workspace.updated", from: workspace.status, to: input.status },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "workspace",
+          subjectId: input.workspaceId,
+          summary: workspace.name,
+          data: { name: workspace.name, status: input.status, previousStatus: workspace.status },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       const updated = store.getWorkspace(input.workspaceId);
       if (updated === undefined) {
@@ -1061,9 +1129,27 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         payload.status = input.status;
       }
 
+      const onBehalfOf = behalfOf(ctx, goal.workspaceId);
       store.transaction(() => {
         store.updateGoal(input.goalId, patch);
-        record(ctx, goal.workspaceId, "update", "goal", input.goalId, payload, now);
+        const contributionId = record(ctx, goal.workspaceId, "update", "goal", input.goalId, payload, now);
+        if (input.status !== undefined) {
+          writeOutbox(ctx, {
+            mutation: { kind: "goal.updated", from: goal.status, to: input.status },
+            occurredAt: now,
+            workspaceId: goal.workspaceId,
+            subjectType: "goal",
+            subjectId: input.goalId,
+            summary: patch.title ?? goal.title,
+            data: {
+              title: patch.title ?? goal.title,
+              status: input.status,
+              previousStatus: goal.status,
+            },
+            contributionId,
+            ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+          });
+        }
       });
       const updated = store.getGoal(input.goalId);
       if (updated === undefined) {
@@ -1097,9 +1183,34 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         confidence: input.confidence,
         sourceArtifactId: input.sourceArtifactId,
       };
+      const onBehalfOf = behalfOf(ctx, input.workspaceId);
       store.transaction(() => {
         store.createFinding(finding);
-        record(ctx, input.workspaceId, "create", "finding", finding.id, { summary: finding.summary }, now);
+        const contributionId = record(
+          ctx,
+          input.workspaceId,
+          "create",
+          "finding",
+          finding.id,
+          { summary: finding.summary },
+          now,
+        );
+        writeOutbox(ctx, {
+          mutation: { kind: "finding.created" },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "finding",
+          subjectId: finding.id,
+          summary: finding.summary,
+          data: {
+            summary: finding.summary,
+            detail: finding.detail,
+            confidence: finding.confidence,
+            sourceArtifactId: finding.sourceArtifactId,
+          },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return finding;
     },
@@ -1127,9 +1238,10 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         status,
         updatedAt: now,
       };
+      const onBehalfOf = behalfOf(ctx, input.workspaceId);
       store.transaction(() => {
         store.createDecision(decision);
-        record(
+        const contributionId = record(
           ctx,
           input.workspaceId,
           "create",
@@ -1138,6 +1250,17 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           { summary: decision.summary, status },
           now,
         );
+        writeOutbox(ctx, {
+          mutation: { kind: "decision.created", status },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "decision",
+          subjectId: decision.id,
+          summary: decision.summary,
+          data: { summary: decision.summary, status, rationale: decision.rationale },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return decision;
     },
@@ -1151,9 +1274,29 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       requireAgentSession(ctx);
       assertDecisionTransition(decision.status, "accepted");
       const now = clock();
+      const onBehalfOf = behalfOf(ctx, decision.workspaceId);
       store.transaction(() => {
         store.updateDecision(decisionId, { status: "accepted", approvedBy: ctx.actor, updatedAt: now });
-        record(ctx, decision.workspaceId, "update", "decision", decisionId, { status: "accepted" }, now);
+        const contributionId = record(
+          ctx,
+          decision.workspaceId,
+          "update",
+          "decision",
+          decisionId,
+          { status: "accepted" },
+          now,
+        );
+        writeOutbox(ctx, {
+          mutation: { kind: "decision.updated", from: decision.status, to: "accepted" },
+          occurredAt: now,
+          workspaceId: decision.workspaceId,
+          subjectType: "decision",
+          subjectId: decisionId,
+          summary: decision.summary,
+          data: { summary: decision.summary, status: "accepted", previousStatus: decision.status },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       const updated = store.getDecision(decisionId);
       if (updated === undefined) {
@@ -1231,9 +1374,27 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         payload.assignee = input.assignee;
       }
 
+      const onBehalfOf = behalfOf(ctx, task.workspaceId);
       store.transaction(() => {
         store.updateTask(input.taskId, patch);
-        record(ctx, task.workspaceId, "update", "task", input.taskId, payload, now);
+        const contributionId = record(ctx, task.workspaceId, "update", "task", input.taskId, payload, now);
+        if (input.status !== undefined) {
+          writeOutbox(ctx, {
+            mutation: { kind: "task.updated", from: task.status, to: input.status },
+            occurredAt: now,
+            workspaceId: task.workspaceId,
+            subjectType: "task",
+            subjectId: input.taskId,
+            summary: patch.title ?? task.title,
+            data: {
+              title: patch.title ?? task.title,
+              status: input.status,
+              previousStatus: task.status,
+            },
+            contributionId,
+            ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+          });
+        }
       });
       const updated = store.getTask(input.taskId);
       if (updated === undefined) {
@@ -1257,9 +1418,10 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         uriOrPath,
         metadata: input.metadata,
       };
+      const onBehalfOf = behalfOf(ctx, input.workspaceId);
       store.transaction(() => {
         store.createArtifact(artifact);
-        record(
+        const contributionId = record(
           ctx,
           input.workspaceId,
           "create",
@@ -1268,6 +1430,17 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           { title: artifact.title, type: artifact.type },
           now,
         );
+        writeOutbox(ctx, {
+          mutation: { kind: "artifact.created" },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "artifact",
+          subjectId: artifact.id,
+          summary: artifact.title,
+          data: { title: artifact.title, type: artifact.type, uriOrPath: artifact.uriOrPath },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return artifact;
     },

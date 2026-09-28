@@ -82,11 +82,16 @@ import {
 } from "../domain/lifecycle.js";
 import type { GoalPatch, TaskPatch } from "../store/store.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
+import type { QualifyingMutation } from "../domain/event-qualify.js";
+import type { DomainEventSubjectType } from "../domain/events.js";
+import { bridgeFromEnv, definedData, planOutbox, resolveOnBehalfOf } from "../service/outbox.js";
 
 export interface AsyncCampfireServiceOptions {
   store: AsyncCampfireStore;
   idSource?: IdSource;
   clock?: () => string;
+  /** Operator webhook env. Defaults to process.env. A bad bridge does not fail the mutation. */
+  webhookEnv?: Record<string, string | undefined>;
 }
 
 /**
@@ -136,6 +141,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
   const idSource: IdSource = options.idSource ?? ((kind) => createId(kind));
   const clock: () => string = options.clock ?? nowIso;
   const authorizer: AsyncAuthorizer = createAsyncAuthorizer(store);
+  const webhookEnv = options.webhookEnv ?? process.env;
 
   async function record(
     ctx: ActorContext,
@@ -145,9 +151,10 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     objectId: string,
     payload: Record<string, unknown> | undefined,
     createdAt: string,
-  ): Promise<void> {
+  ): Promise<string> {
+    const id = idSource("contribution");
     await store.createContribution({
-      id: idSource("contribution"),
+      id,
       workspaceId,
       actor: ctx.actor,
       agentSessionId: ctx.agentSessionId,
@@ -157,6 +164,47 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       payload,
       createdAt,
     });
+    return id;
+  }
+
+  async function behalfOf(ctx: ActorContext, workspaceId: string) {
+    if (ctx.actor.actorType !== "agent" || ctx.agentSessionId === undefined) return undefined;
+    return resolveOnBehalfOf(ctx.actor, workspaceId, await store.getAgentSession(ctx.agentSessionId));
+  }
+
+  async function writeOutbox(
+    ctx: ActorContext,
+    input: {
+      mutation: QualifyingMutation;
+      occurredAt: string;
+      workspaceId: string;
+      subjectType: DomainEventSubjectType;
+      subjectId: string;
+      summary: string;
+      data: Record<string, unknown>;
+      contributionId: string;
+      onBehalfOf?: { actorId: string; actorType: "human" };
+    },
+  ): Promise<void> {
+    const planned = planOutbox({
+      mutation: input.mutation,
+      eventId: idSource("domainEvent"),
+      deliveryId: idSource("webhookDelivery"),
+      occurredAt: input.occurredAt,
+      workspaceId: input.workspaceId,
+      actor: ctx.actor,
+      subjectType: input.subjectType,
+      subjectId: input.subjectId,
+      summary: input.summary,
+      data: definedData(input.data),
+      contributionId: input.contributionId,
+      ...(ctx.agentSessionId !== undefined ? { agentSessionId: ctx.agentSessionId } : {}),
+      ...(input.onBehalfOf !== undefined ? { onBehalfOf: input.onBehalfOf } : {}),
+      bridge: bridgeFromEnv(webhookEnv),
+    });
+    if (planned === undefined) return;
+    await store.createDomainEvent(planned.event);
+    if (planned.delivery !== undefined) await store.createWebhookDelivery(planned.delivery);
   }
 
   async function resolveParticipant(participant: WorkspaceParticipant): Promise<ParticipantView> {
@@ -551,9 +599,29 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       }
       assertWorkspaceTransition(workspace.status, input.status);
       const now = clock();
+      const onBehalfOf = await behalfOf(ctx, input.workspaceId);
       await store.transaction(async () => {
         await store.updateWorkspace(input.workspaceId, { status: input.status, updatedAt: now });
-        await record(ctx, input.workspaceId, "update", "workspace", input.workspaceId, { status: input.status }, now);
+        const contributionId = await record(
+          ctx,
+          input.workspaceId,
+          "update",
+          "workspace",
+          input.workspaceId,
+          { status: input.status },
+          now,
+        );
+        await writeOutbox(ctx, {
+          mutation: { kind: "workspace.updated", from: workspace.status, to: input.status },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "workspace",
+          subjectId: input.workspaceId,
+          summary: workspace.name,
+          data: { name: workspace.name, status: input.status, previousStatus: workspace.status },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       const updated = await store.getWorkspace(input.workspaceId);
       if (updated === undefined) {
@@ -1104,9 +1172,27 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         payload.status = input.status;
       }
 
+      const onBehalfOf = await behalfOf(ctx, goal.workspaceId);
       await store.transaction(async () => {
         await store.updateGoal(input.goalId, patch);
-        await record(ctx, goal.workspaceId, "update", "goal", input.goalId, payload, now);
+        const contributionId = await record(ctx, goal.workspaceId, "update", "goal", input.goalId, payload, now);
+        if (input.status !== undefined) {
+          await writeOutbox(ctx, {
+            mutation: { kind: "goal.updated", from: goal.status, to: input.status },
+            occurredAt: now,
+            workspaceId: goal.workspaceId,
+            subjectType: "goal",
+            subjectId: input.goalId,
+            summary: patch.title ?? goal.title,
+            data: {
+              title: patch.title ?? goal.title,
+              status: input.status,
+              previousStatus: goal.status,
+            },
+            contributionId,
+            ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+          });
+        }
       });
       const updated = await store.getGoal(input.goalId);
       if (updated === undefined) {
@@ -1140,9 +1226,34 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         confidence: input.confidence,
         sourceArtifactId: input.sourceArtifactId,
       };
+      const onBehalfOf = await behalfOf(ctx, input.workspaceId);
       await store.transaction(async () => {
         await store.createFinding(finding);
-        await record(ctx, input.workspaceId, "create", "finding", finding.id, { summary: finding.summary }, now);
+        const contributionId = await record(
+          ctx,
+          input.workspaceId,
+          "create",
+          "finding",
+          finding.id,
+          { summary: finding.summary },
+          now,
+        );
+        await writeOutbox(ctx, {
+          mutation: { kind: "finding.created" },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "finding",
+          subjectId: finding.id,
+          summary: finding.summary,
+          data: {
+            summary: finding.summary,
+            detail: finding.detail,
+            confidence: finding.confidence,
+            sourceArtifactId: finding.sourceArtifactId,
+          },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return finding;
     },
@@ -1170,9 +1281,10 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         status,
         updatedAt: now,
       };
+      const onBehalfOf = await behalfOf(ctx, input.workspaceId);
       await store.transaction(async () => {
         await store.createDecision(decision);
-        await record(
+        const contributionId = await record(
           ctx,
           input.workspaceId,
           "create",
@@ -1181,6 +1293,17 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           { summary: decision.summary, status },
           now,
         );
+        await writeOutbox(ctx, {
+          mutation: { kind: "decision.created", status },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "decision",
+          subjectId: decision.id,
+          summary: decision.summary,
+          data: { summary: decision.summary, status, rationale: decision.rationale },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return decision;
     },
@@ -1194,9 +1317,29 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       await requireAgentSession(ctx);
       assertDecisionTransition(decision.status, "accepted");
       const now = clock();
+      const onBehalfOf = await behalfOf(ctx, decision.workspaceId);
       await store.transaction(async () => {
         await store.updateDecision(decisionId, { status: "accepted", approvedBy: ctx.actor, updatedAt: now });
-        await record(ctx, decision.workspaceId, "update", "decision", decisionId, { status: "accepted" }, now);
+        const contributionId = await record(
+          ctx,
+          decision.workspaceId,
+          "update",
+          "decision",
+          decisionId,
+          { status: "accepted" },
+          now,
+        );
+        await writeOutbox(ctx, {
+          mutation: { kind: "decision.updated", from: decision.status, to: "accepted" },
+          occurredAt: now,
+          workspaceId: decision.workspaceId,
+          subjectType: "decision",
+          subjectId: decisionId,
+          summary: decision.summary,
+          data: { summary: decision.summary, status: "accepted", previousStatus: decision.status },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       const updated = await store.getDecision(decisionId);
       if (updated === undefined) {
@@ -1274,9 +1417,27 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         payload.assignee = input.assignee;
       }
 
+      const onBehalfOf = await behalfOf(ctx, task.workspaceId);
       await store.transaction(async () => {
         await store.updateTask(input.taskId, patch);
-        await record(ctx, task.workspaceId, "update", "task", input.taskId, payload, now);
+        const contributionId = await record(ctx, task.workspaceId, "update", "task", input.taskId, payload, now);
+        if (input.status !== undefined) {
+          await writeOutbox(ctx, {
+            mutation: { kind: "task.updated", from: task.status, to: input.status },
+            occurredAt: now,
+            workspaceId: task.workspaceId,
+            subjectType: "task",
+            subjectId: input.taskId,
+            summary: patch.title ?? task.title,
+            data: {
+              title: patch.title ?? task.title,
+              status: input.status,
+              previousStatus: task.status,
+            },
+            contributionId,
+            ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+          });
+        }
       });
       const updated = await store.getTask(input.taskId);
       if (updated === undefined) {
@@ -1300,9 +1461,10 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         uriOrPath,
         metadata: input.metadata,
       };
+      const onBehalfOf = await behalfOf(ctx, input.workspaceId);
       await store.transaction(async () => {
         await store.createArtifact(artifact);
-        await record(
+        const contributionId = await record(
           ctx,
           input.workspaceId,
           "create",
@@ -1311,6 +1473,17 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           { title: artifact.title, type: artifact.type },
           now,
         );
+        await writeOutbox(ctx, {
+          mutation: { kind: "artifact.created" },
+          occurredAt: now,
+          workspaceId: input.workspaceId,
+          subjectType: "artifact",
+          subjectId: artifact.id,
+          summary: artifact.title,
+          data: { title: artifact.title, type: artifact.type, uriOrPath: artifact.uriOrPath },
+          contributionId,
+          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
+        });
       });
       return artifact;
     },

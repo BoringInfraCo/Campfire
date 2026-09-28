@@ -16,6 +16,7 @@ let logs: string[];
 const previousDb = process.env.CAMPFIRE_DB;
 const previousUrl = process.env.CAMPFIRE_URL;
 const previousToken = process.env.CAMPFIRE_TOKEN;
+const previousBridgeToken = process.env.CAMPFIRE_BRIDGE_TOKEN;
 const previousHarness = process.env.CAMPFIRE_HARNESS;
 const previousSessionId = process.env.CAMPFIRE_SESSION_ID;
 
@@ -40,6 +41,7 @@ beforeEach(() => {
   logs = [];
   delete process.env.CAMPFIRE_URL;
   delete process.env.CAMPFIRE_TOKEN;
+  delete process.env.CAMPFIRE_BRIDGE_TOKEN;
   delete process.env.CAMPFIRE_HARNESS;
   delete process.env.CAMPFIRE_SESSION_ID;
   vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
@@ -65,6 +67,11 @@ afterEach(() => {
     delete process.env.CAMPFIRE_TOKEN;
   } else {
     process.env.CAMPFIRE_TOKEN = previousToken;
+  }
+  if (previousBridgeToken === undefined) {
+    delete process.env.CAMPFIRE_BRIDGE_TOKEN;
+  } else {
+    process.env.CAMPFIRE_BRIDGE_TOKEN = previousBridgeToken;
   }
   if (previousHarness === undefined) {
     delete process.env.CAMPFIRE_HARNESS;
@@ -717,6 +724,17 @@ describe("runCliEntry exit-code and stderr contract", () => {
 
     expect(code).toBe(0);
     expect(errSpy.mock.calls).toHaveLength(0);
+  });
+
+  it("refuses hosted bridge inspection without the operator token", async () => {
+    process.env.CAMPFIRE_URL = "http://127.0.0.1:9";
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const code = await runCliEntry(["bridge", "--json"]);
+
+    expect(code).toBe(1);
+    expect(stderrText(errSpy)).toContain("CAMPFIRE_BRIDGE_TOKEN");
+    expect(stdout()).toBe("");
   });
 
   it("keeps [Code] message on stderr without --json", async () => {

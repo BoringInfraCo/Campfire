@@ -20,6 +20,8 @@ export const ID_PREFIXES = {
   contribution: "con",
   token: "tok",
   invite: "inv",
+  domainEvent: "evt",
+  webhookDelivery: "dlv",
 } as const;
 
 export type IdKind = keyof typeof ID_PREFIXES;

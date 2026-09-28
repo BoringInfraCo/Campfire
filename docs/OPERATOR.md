@@ -295,10 +295,102 @@ Tokens are bearer credentials. Revoke a compromised token with
 they own); revoked tokens are rejected with `Unauthorized`. Then issue a
 replacement and give each harness process only its own actor's token.
 
+## Webhook bridge
+
+One outbound webhook per Campfire process. It is operator configuration, not
+an agent tool and not a workspace mutation. Nothing is subscribed until every
+value below is set. Agents cannot create, change, or read the signing secret.
+
+```bash
+export CAMPFIRE_WEBHOOK_ID=bridge_local
+export CAMPFIRE_WEBHOOK_URL=https://example.com/campfire
+export CAMPFIRE_WEBHOOK_SECRET=...          # env or Worker secret; never a file in the repo
+export CAMPFIRE_WEBHOOK_EVENTS=finding.recorded,decision.proposed,decision.accepted,task.blocked
+export CAMPFIRE_WEBHOOK_WORKSPACES=ws_billing_deploy
+```
+
+`CAMPFIRE_WEBHOOK_URL` must be `https`. `http` is accepted only for
+`127.0.0.1`, `localhost`, or `::1`, for local development and acceptance.
+URLs with a username or password are rejected. Redirects are not followed.
+
+The closed event names are `finding.recorded`, `decision.proposed`,
+`decision.accepted`, `task.blocked`, `task.completed`, `goal.completed`,
+`artifact.attached`, and `workspace.completed`. A mutation outside that list
+still saves its Campfire state and Contribution. It does not emit a domain
+event.
+
+Each request is JSON with:
+
+```text
+Content-Type: application/json
+X-Campfire-Event-Id
+X-Campfire-Event-Type
+X-Campfire-Timestamp          # unix seconds
+X-Campfire-Signature          # v1=<hex hmac-sha256 of "<timestamp>.<exact body>">
+```
+
+Receivers should deduplicate on the event id and reject stale timestamps.
+A `2xx` response marks the delivery delivered. Timeouts, network errors, and
+other statuses keep the same event id. Five attempts are allowed. After each
+of the first four failures the next attempt waits 1s, 2s, 4s, then 8s. The
+fifth failure is exhausted and stays inspectable. The request timeout is 10
+seconds.
+The Campfire mutation stays committed if delivery fails. A claim held longer
+than 30 seconds can be retried by another dispatcher. Retries send the same
+event id and the same body.
+
+The local listener (`campfire up` / `campfire serve`) pumps pending deliveries.
+It does not install launchd, systemd, or another machine daemon. The Worker
+sends during the request and retries on its scheduled trigger. Removing the
+configuration stops the next send. Each queued row stores a non-secret
+fingerprint of the bridge id, URL, and signing secret it was queued for.
+Changing the URL or secret leaves queued rows pending and unsent; restoring the
+exact same bridge id, URL, and secret resumes them. This prevents reusing a
+bridge id from sending previously queued events to a different destination.
+Rows queued before the fingerprint migration are marked `exhausted` instead of
+being sent to a destination they were not queued for.
+
+`campfire bridge` prints whether the webhook is configured, the workspace and
+event filters, and pending, delivering, delivered, and exhausted counts, then
+lists each delivery with event id, event type, workspace id, attempt count,
+timestamps, status, and a short error. The destination is reported as its
+origin only: paths and query strings can carry credentials, so the raw URL is
+never printed, and neither is the signing secret.
+
+With `CAMPFIRE_URL` set the command inspects the hosted instance instead of the
+local database. The hosted route is `GET /v1/bridge` and takes the
+instance-operator credential `CAMPFIRE_BRIDGE_TOKEN` (`--token` also works):
+
+```bash
+CAMPFIRE_URL=https://campfire.example.com CAMPFIRE_BRIDGE_TOKEN=<operator-token> campfire bridge --json
+```
+
+`CAMPFIRE_BRIDGE_TOKEN` is not an actor token. It resolves to no human or agent
+identity and grants no workspace access; conversely, no actor token — human or
+agent — can read the report. Bridge filters and delivery metadata are
+instance-level operator state, so they are never exposed through workspace
+authorization. When the token is unset on the server, the hosted route fails
+closed. The local command needs no token because it reads the SQLite file
+directly. This command and route are not MCP tools. The Viewer does not
+administer the bridge.
+
+The Worker accepts API routes both at the origin root and under the
+`/campfire` zone-route prefix, so a hosted `CAMPFIRE_URL` may be either
+`https://campfire.example.com` or `https://boringinfra.company/campfire`. The
+installer stays at `/campfire/install.sh`.
+
+On Workers, set the webhook secret and `CAMPFIRE_BRIDGE_TOKEN` with
+`wrangler secret put`, and the five non-secret names as vars. Do not put secrets
+in `wrangler.toml`.
+
 ## Upgrade notes
 
 - SQLite file upgrades run through versioned `schema_migrations` at startup.
   Back up the SQLite file (`CAMPFIRE_DB`, `$CWD/.campfire/campfire.db`, or
   `~/.local/share/campfire/campfire.db`) before upgrading binaries.
+- Sprint 019 v4 adds `webhook_deliveries.config_fingerprint` and marks any
+  delivery queued before the fingerprint existed as `exhausted`. Those rows
+  stay inspectable with `campfire bridge`; repeat the underlying mutation if
+  one still needs to reach the bridge.
 - `view --host` behavior is now explicit: loopback by default, `--allow-remote`
   required otherwise. Scripts binding `0.0.0.0` must add the flag.
