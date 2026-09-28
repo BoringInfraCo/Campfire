@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_018.md
+docs/SPRINT_019.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -97,6 +97,10 @@ Campfire. A loopback session starts the existing listener when nothing is
 listening, and a later session reuses it. It does not register a session at
 startup or install a machine daemon. It is published and deployed as
 backward-compatible minor release `v1.6.0`. That release does not claim Gate B.
+Sprint 019 — Carry the Work Out is complete (GO); its result is
+`docs/SPRINT_019_RESULT.md`. One operator-configured webhook carries a closed
+set of Campfire transitions. Core does not name Slack, Linear, or another
+destination. It is not released. It does not claim Gate B, Gate C, or Gate F.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

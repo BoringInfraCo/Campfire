@@ -43,7 +43,13 @@ import type {
   TaskPatch,
   WorkspacePatch,
 } from "../store/store.js";
-import type { D1Database } from "./d1-types.js";
+import type {
+  DomainEventRecord,
+  WebhookDeliveryCounts,
+  WebhookDeliveryRecord,
+  WebhookDeliveryStatus,
+} from "../domain/events.js";
+import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 
 /** Async mirror of `CampfireStore`: identical shape, Promise returns. */
@@ -222,6 +228,42 @@ interface WorkspaceInviteRow {
   invited_by_actor_type: string;
   created_at: string;
   consumed_at: string | null;
+}
+
+interface DomainEventRow {
+  id: string;
+  spec_version: string;
+  type: string;
+  occurred_at: string;
+  workspace_id: string;
+  actor_id: string;
+  actor_type: string;
+  subject_type: string;
+  subject_id: string;
+  summary: string;
+  data: string;
+  body: string;
+  contribution_id: string;
+  agent_session_id: string | null;
+  on_behalf_of_actor_id: string | null;
+  on_behalf_of_actor_type: string | null;
+  created_at: string;
+}
+
+interface WebhookDeliveryRow {
+  id: string;
+  event_id: string;
+  bridge_id: string;
+  status: string;
+  attempt_count: number;
+  next_attempt_at: string | null;
+  claimed_at: string | null;
+  claim_token: string | null;
+  last_error: string | null;
+  delivered_at: string | null;
+  config_fingerprint: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 function parseJson(value: string | null): Record<string, unknown> | undefined {
@@ -422,24 +464,115 @@ function mapWorkspaceInvite(row: WorkspaceInviteRow): WorkspaceInvite {
   };
 }
 
+function mapDomainEvent(row: DomainEventRow): DomainEventRecord {
+  const event: DomainEventRecord = {
+    id: row.id,
+    specVersion: row.spec_version as DomainEventRecord["specVersion"],
+    type: row.type as DomainEventRecord["type"],
+    occurredAt: row.occurred_at,
+    workspaceId: row.workspace_id,
+    actor: {
+      actorId: row.actor_id,
+      actorType: row.actor_type as DomainEventRecord["actor"]["actorType"],
+    },
+    subjectType: row.subject_type as DomainEventRecord["subjectType"],
+    subjectId: row.subject_id,
+    summary: row.summary,
+    data: JSON.parse(row.data) as Record<string, unknown>,
+    body: row.body,
+    contributionId: row.contribution_id,
+    createdAt: row.created_at,
+  };
+  if (row.agent_session_id !== null) event.agentSessionId = row.agent_session_id;
+  if (row.on_behalf_of_actor_id !== null && row.on_behalf_of_actor_type !== null) {
+    event.onBehalfOf = {
+      actorId: row.on_behalf_of_actor_id,
+      actorType: "human",
+    };
+  }
+  return event;
+}
+
+function mapWebhookDelivery(row: WebhookDeliveryRow): WebhookDeliveryRecord {
+  const delivery: WebhookDeliveryRecord = {
+    id: row.id,
+    eventId: row.event_id,
+    bridgeId: row.bridge_id,
+    status: row.status as WebhookDeliveryStatus,
+    attemptCount: row.attempt_count,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+  if (row.next_attempt_at !== null) delivery.nextAttemptAt = row.next_attempt_at;
+  if (row.claimed_at !== null) delivery.claimedAt = row.claimed_at;
+  if (row.claim_token !== null) delivery.claimToken = row.claim_token;
+  if (row.last_error !== null) delivery.lastError = row.last_error;
+  if (row.delivered_at !== null) delivery.deliveredAt = row.delivered_at;
+  if (row.config_fingerprint !== null) delivery.configFingerprint = row.config_fingerprint;
+  return delivery;
+}
+
+function deliveryIsClaimable(row: WebhookDeliveryRow, now: string, leaseBefore: string): boolean {
+  if (row.status === "pending") {
+    return row.next_attempt_at === null || row.next_attempt_at <= now;
+  }
+  if (row.status === "delivering") {
+    return row.claimed_at !== null && row.claimed_at <= leaseBefore;
+  }
+  return false;
+}
+
+function emptyDeliveryCounts(): WebhookDeliveryCounts {
+  return { pending: 0, delivering: 0, delivered: 0, exhausted: 0 };
+}
+
 /** Apply the Campfire schema to a D1 database (idempotent). */
 export async function migrateD1(db: D1Database): Promise<void> {
   await db.exec(CAMPFIRE_D1_SCHEMA_SQL);
 }
 
 export function createD1Store(db: D1Database): AsyncCampfireStore {
+  let txnDepth = 0;
+  let dirty = false;
+  // Batch commits the state change, Contribution, and domain event atomically; no network inside the transaction.
+  const buffered: D1PreparedStatement[] = [];
+
+  function assertReadable(): void {
+    if (txnDepth > 0 && dirty) {
+      throw new Error("D1 transaction cannot read uncommitted writes");
+    }
+  }
+
   async function first<T>(query: string, ...params: unknown[]): Promise<T | undefined> {
+    assertReadable();
     const row = await db.prepare(query).bind(...params).first<T>();
     return row ?? undefined;
   }
 
   async function all<T>(query: string, ...params: unknown[]): Promise<T[]> {
+    assertReadable();
     const result = await db.prepare(query).bind(...params).all<T>();
     return result.results;
   }
 
-  async function run(query: string, ...params: unknown[]): Promise<void> {
-    await db.prepare(query).bind(...params).run();
+  async function run(
+    query: string,
+    ...params: unknown[]
+  ): Promise<{ success: boolean; meta?: { changes?: number } }> {
+    const statement = db.prepare(query).bind(...params);
+    if (txnDepth > 0) {
+      buffered.push(statement);
+      dirty = true;
+      return { success: true };
+    }
+    return statement.run();
+  }
+
+  async function runNow(
+    query: string,
+    ...params: unknown[]
+  ): Promise<{ success: boolean; meta?: { changes?: number } }> {
+    return db.prepare(query).bind(...params).run();
   }
 
   return {
@@ -786,11 +919,142 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
         "SELECT * FROM workspace_invites WHERE workspace_id = ? ORDER BY created_at, rowid", workspaceId)).map(mapWorkspaceInvite);
     },
 
-    // D1 has no interactive transactions; service-level groupings run
-    // sequentially. Individual statements remain atomic. This matches D1
-    // guidance (batch for independent writes; sequential for read+write).
+    async createDomainEvent(event) {
+      await run(
+        "INSERT INTO domain_events (id, spec_version, type, occurred_at, workspace_id, actor_id, actor_type, subject_type, subject_id, summary, data, body, contribution_id, agent_session_id, on_behalf_of_actor_id, on_behalf_of_actor_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        event.id, event.specVersion, event.type, event.occurredAt, event.workspaceId,
+        event.actor.actorId, event.actor.actorType, event.subjectType, event.subjectId,
+        event.summary, JSON.stringify(event.data), event.body, event.contributionId,
+        event.agentSessionId ?? null, event.onBehalfOf?.actorId ?? null,
+        event.onBehalfOf?.actorType ?? null, event.createdAt);
+    },
+
+    async getDomainEvent(id) {
+      const row = await first<DomainEventRow>("SELECT * FROM domain_events WHERE id = ?", id);
+      return row ? mapDomainEvent(row) : undefined;
+    },
+
+    async listDomainEventsForWorkspace(workspaceId) {
+      return (await all<DomainEventRow>(
+        "SELECT * FROM domain_events WHERE workspace_id = ? ORDER BY occurred_at, rowid", workspaceId)).map(mapDomainEvent);
+    },
+
+    // Operational delivery state, not Contributions.
+    async createWebhookDelivery(delivery) {
+      await run(
+        "INSERT INTO webhook_deliveries (id, event_id, bridge_id, status, attempt_count, next_attempt_at, claimed_at, claim_token, last_error, delivered_at, config_fingerprint, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        delivery.id, delivery.eventId, delivery.bridgeId, delivery.status, delivery.attemptCount,
+        delivery.nextAttemptAt ?? null, delivery.claimedAt ?? null, delivery.claimToken ?? null,
+        delivery.lastError ?? null, delivery.deliveredAt ?? null, delivery.configFingerprint ?? null,
+        delivery.createdAt, delivery.updatedAt);
+    },
+
+    async getWebhookDelivery(id) {
+      const row = await first<WebhookDeliveryRow>("SELECT * FROM webhook_deliveries WHERE id = ?", id);
+      return row ? mapWebhookDelivery(row) : undefined;
+    },
+
+    async listWebhookDeliveries() {
+      return (await all<WebhookDeliveryRow>(
+        "SELECT * FROM webhook_deliveries ORDER BY created_at, rowid")).map(mapWebhookDelivery);
+    },
+
+    async countWebhookDeliveries() {
+      const rows = await all<{ status: string; count: number }>(
+        "SELECT status, COUNT(*) AS count FROM webhook_deliveries GROUP BY status");
+      const counts = emptyDeliveryCounts();
+      for (const row of rows) {
+        if (
+          row.status === "pending" ||
+          row.status === "delivering" ||
+          row.status === "delivered" ||
+          row.status === "exhausted"
+        ) {
+          counts[row.status] = row.count;
+        }
+      }
+      return counts;
+    },
+
+    async listDueWebhookDeliveries(input) {
+      return (await all<WebhookDeliveryRow>(
+        `SELECT * FROM webhook_deliveries
+         WHERE bridge_id = ?
+           AND config_fingerprint = ?
+           AND (
+             (status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?))
+             OR (status = 'delivering' AND claimed_at IS NOT NULL AND claimed_at <= ?)
+           )
+         ORDER BY created_at, rowid`,
+        input.bridgeId, input.configFingerprint, input.now, input.leaseBefore)).map(mapWebhookDelivery);
+    },
+
+    async claimWebhookDelivery(id, input) {
+      const row = await first<WebhookDeliveryRow>("SELECT * FROM webhook_deliveries WHERE id = ?", id);
+      if (
+        row === undefined ||
+        row.config_fingerprint !== input.configFingerprint ||
+        !deliveryIsClaimable(row, input.now, input.leaseBefore)
+      ) {
+        return undefined;
+      }
+      const result = await runNow(
+        `UPDATE webhook_deliveries
+         SET status = 'delivering', claim_token = ?, claimed_at = ?, updated_at = ?
+         WHERE id = ?
+           AND (
+             (status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?))
+             OR (status = 'delivering' AND claimed_at IS NOT NULL AND claimed_at <= ?)
+           )
+           AND (claim_token IS NULL OR claim_token = ?)
+           AND config_fingerprint = ?`,
+        input.claimToken, input.now, input.now, id, input.now, input.leaseBefore, row.claim_token,
+        input.configFingerprint);
+      if (result.meta?.changes !== 1) return undefined;
+      const updated = await first<WebhookDeliveryRow>("SELECT * FROM webhook_deliveries WHERE id = ?", id);
+      return updated ? mapWebhookDelivery(updated) : undefined;
+    },
+
+    async markWebhookDeliveryDelivered(id, claimToken, deliveredAt) {
+      const result = await runNow(
+        `UPDATE webhook_deliveries
+         SET status = 'delivered', delivered_at = ?, attempt_count = attempt_count + 1,
+             claim_token = NULL, next_attempt_at = NULL, last_error = NULL, updated_at = ?
+         WHERE id = ? AND claim_token = ? AND status = 'delivering'`,
+        deliveredAt, deliveredAt, id, claimToken);
+      return result.meta?.changes === 1;
+    },
+
+    async markWebhookDeliveryRetry(id, claimToken, input) {
+      const result = await runNow(
+        `UPDATE webhook_deliveries
+         SET status = ?, attempt_count = ?, next_attempt_at = ?, last_error = ?,
+             claim_token = NULL, claimed_at = NULL, updated_at = ?
+         WHERE id = ? AND claim_token = ? AND status = 'delivering'`,
+        input.status, input.attemptCount,
+        input.status === "exhausted" ? null : (input.nextAttemptAt ?? null),
+        input.lastError ?? null, input.updatedAt, id, claimToken);
+      return result.meta?.changes === 1;
+    },
+
     async transaction<T>(fn: () => Promise<T>): Promise<T> {
-      return fn();
+      const outer = txnDepth === 0;
+      txnDepth += 1;
+      try {
+        const result = await fn();
+        if (outer && buffered.length > 0) {
+          const statements = buffered.splice(0, buffered.length);
+          dirty = false;
+          await db.batch(statements);
+        }
+        return result;
+      } catch (error) {
+        buffered.length = 0;
+        dirty = false;
+        throw error;
+      } finally {
+        txnDepth -= 1;
+      }
     },
 
     async close(): Promise<void> {

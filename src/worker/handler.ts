@@ -18,6 +18,12 @@
  * `AsyncCampfireService` (D1). Same validation, same status mapping.
  */
 import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
+import { collectBridgeReport } from "../bridge/report.js";
+import {
+  bridgeOperatorTokenMatches,
+  readBridgeOperatorToken,
+  readWebhookBridgeConfig,
+} from "../bridge/config.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 import { dispatchCampfireMethod, isCampfireHttpMethod } from "../http/dispatch.js";
@@ -48,6 +54,18 @@ const VIEWER_READ_SET: ReadonlySet<string> = new Set(VIEWER_READ_METHODS);
 function isInstallerPath(path: string): boolean {
   return path === "/campfire/install.sh" ||
     /^\/campfire\/v\d+\.\d+\.\d+\/install\.sh$/.test(path);
+}
+
+/**
+ * The production zone route is `boringinfra.company/campfire/*`, which reaches
+ * the Worker with a `/campfire` prefix, while custom domains and local runs use
+ * the origin root. Accept both for API routes; the installer is matched against
+ * the original request path so `/campfire/install.sh` keeps working.
+ */
+function apiPath(pathname: string): string {
+  if (pathname === "/campfire") return "/";
+  if (pathname.startsWith("/campfire/")) return pathname.slice("/campfire".length);
+  return pathname;
 }
 
 export function isViewerReadMethod(value: string): value is ViewerReadMethod {
@@ -167,6 +185,7 @@ export interface D1WorkerHandlerOptions {
   assetsFetch?: AssetsFetch;
   idSource?: IdSource;
   clock?: () => string;
+  webhookEnv?: Record<string, string | undefined>;
 }
 
 async function handleInstaller(
@@ -196,7 +215,8 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
   return async function handle(request: Request): Promise<Response> {
     try {
       const url = new URL(request.url);
-      const path = url.pathname;
+      const path = apiPath(url.pathname);
+      url.pathname = path;
 
       if (request.method === "GET") {
         const installerResponse = await handleInstaller(request, assetsFetch);
@@ -231,13 +251,19 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
     store: options.store,
     ...(options.idSource !== undefined ? { idSource: options.idSource } : {}),
     ...(options.clock !== undefined ? { clock: options.clock } : {}),
+    ...(options.webhookEnv !== undefined ? { webhookEnv: options.webhookEnv } : {}),
   });
   const assetsFetch = options.assetsFetch;
 
   return async function handle(request: Request): Promise<Response> {
     try {
       const url = new URL(request.url);
-      const path = url.pathname;
+      const path = apiPath(url.pathname);
+      url.pathname = path;
+
+      if (path === "/v1/bridge") {
+        return await handleAsyncBridgeReport(options.store, options.webhookEnv ?? {}, request);
+      }
 
       if (request.method === "GET") {
         const installerResponse = await handleInstaller(request, assetsFetch);
@@ -486,4 +512,31 @@ async function handleAsyncViewerGet(
     }
     throw error;
   }
+}
+
+/**
+ * Operator-only inspection of Worker/D1 delivery state. The credential is the
+ * instance bridge operator token, not an actor token: bridge configuration and
+ * delivery metadata are instance-level operator state, not workspace state, so
+ * workspace authorization does not apply and no actor may read it. The report
+ * redacts the webhook destination to an origin and never includes the signing
+ * secret.
+ */
+async function handleAsyncBridgeReport(
+  store: AsyncCampfireStore,
+  webhookEnv: Record<string, string | undefined>,
+  request: Request,
+): Promise<Response> {
+  if (request.method !== "GET") {
+    return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
+  }
+  const expected = readBridgeOperatorToken(webhookEnv);
+  if (expected === undefined) {
+    return fail(503, "Unauthorized", "Bridge inspection is not configured");
+  }
+  if (!bridgeOperatorTokenMatches(bearerToken(request), expected)) {
+    return fail(401, "Unauthorized", "Bridge inspection requires the operator token");
+  }
+  const report = await collectBridgeReport(readWebhookBridgeConfig(webhookEnv), store);
+  return json(200, { ok: true, result: report });
 }

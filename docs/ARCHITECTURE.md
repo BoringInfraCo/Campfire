@@ -477,6 +477,38 @@ Campfire does not need full event sourcing in Sprint 001.
 
 It should, however, avoid designing itself into a state model where important provenance is destroyed on update.
 
+### Domain events and the outbound bridge
+
+Sprint 019 adds a narrow outward boundary. A qualifying successful mutation commits the materialized change, its Contribution, and one immutable DomainEvent in the same transaction. The event is a fact about that change. It is not a command, and it does not replace the Contribution log.
+
+```text
+Interface
+   |
+Application service
+   |
+Authorization + lifecycle rules
+   |
+State + Contribution + DomainEvent transaction
+   |
+Persistence
+
+DomainEvent outbox
+   |
+Bridge dispatcher
+   |
+Webhook adapter
+```
+
+No network request runs inside the mutation transaction. Webhook failure does not undo the Campfire write.
+
+Delivery attempts are operational records. They are not Contributions and they do not appear as agent-authored collaboration activity. One operator-configured webhook may deliver an allowlisted event for an allowlisted workspace. The adapter signs the exact body. It does not format a vendor message.
+
+Each queued delivery is bound to a non-secret fingerprint of the bridge id, URL, and signing secret it was created for, so reusing a bridge id cannot redirect previously queued events to a different destination. Delivery state is inspectable by the operator in both runtimes: `campfire bridge` reads the local SQLite outbox, and the hosted Worker/D1 instance returns the same redacted report at `GET /v1/bridge` to the distinct instance-operator credential `CAMPFIRE_BRIDGE_TOKEN`. That credential is not an actor token and resolves to no workspace identity, so an unrelated human or agent token cannot read instance-level bridge state through workspace authorization. The report exposes delivery facts and an origin, never the webhook path, query, raw URL, or signing secret. This route is not an agent MCP tool.
+
+Core does not import or branch on Slack, Linear, GitHub, email, or any other destination. A future bridge that creates or changes external work needs its own action proposal and approval record. A DomainEvent is not that approval. Decision acceptance remains a Campfire lifecycle transition.
+
+The closed vocabulary is `finding.recorded`, `decision.proposed`, `decision.accepted`, `task.blocked`, `task.completed`, `goal.completed`, `artifact.attached`, and `workspace.completed`. Other mutations still write their Contribution and write no DomainEvent.
+
 ---
 
 ## 10. Transcript Isolation

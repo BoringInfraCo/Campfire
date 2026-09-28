@@ -666,4 +666,166 @@ describe("D1 worker handler (async production path)", () => {
 
     service.close();
   });
+
+  it("exposes the redacted bridge report only to the operator token and denies actors", async () => {
+    const { sync, store, service, human, token } = await setup();
+    const humanCtx = { actor: { actorId: human.id, actorType: "human" as const } };
+    const created = await service.createAgent(humanCtx, {
+      teamId: "team_1",
+      humanId: human.id,
+      name: "Codex",
+      harness: "codex",
+    });
+    // A valid human who is not a participant in the reported workspace.
+    const unrelated = await service.createHuman(humanCtx, {
+      teamId: "team_1",
+      displayName: "Mallory",
+    });
+
+    const OPERATOR_TOKEN = "operator-bridge-secret";
+    const PATH_SENTINEL = "operator_secret_path";
+    const QUERY_SENTINEL = "operator_secret_query";
+    const WEBHOOK_SECRET = "worker-signing-secret";
+    await sync.createWorkspace({
+      id: "ws_1",
+      teamId: "team_1",
+      name: "W",
+      status: "active",
+      createdBy: humanCtx.actor,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    sync.createContribution({
+      id: "con_1",
+      workspaceId: "ws_1",
+      actor: humanCtx.actor,
+      action: "create",
+      objectType: "finding",
+      objectId: "fin_1",
+      createdAt: NOW,
+    });
+    sync.createDomainEvent({
+      id: "evt_1",
+      specVersion: "1.0",
+      type: "finding.recorded",
+      occurredAt: NOW,
+      workspaceId: "ws_1",
+      actor: humanCtx.actor,
+      subjectType: "finding",
+      subjectId: "fin_1",
+      summary: "Bridge inspected",
+      data: { summary: "Bridge inspected" },
+      body: "{}",
+      contributionId: "con_1",
+      createdAt: NOW,
+    });
+    sync.createWebhookDelivery({
+      id: "dlv_1",
+      eventId: "evt_1",
+      bridgeId: "bridge_worker",
+      status: "delivered",
+      attemptCount: 1,
+      configFingerprint: "fp",
+      deliveredAt: NOW,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+
+    const handle = createD1WorkerHandler({
+      store,
+      webhookEnv: {
+        CAMPFIRE_WEBHOOK_ID: "bridge_worker",
+        CAMPFIRE_WEBHOOK_URL: `https://example.com/${PATH_SENTINEL}?token=${QUERY_SENTINEL}`,
+        CAMPFIRE_WEBHOOK_SECRET: WEBHOOK_SECRET,
+        CAMPFIRE_WEBHOOK_EVENTS: "finding.recorded",
+        CAMPFIRE_WEBHOOK_WORKSPACES: "ws_1",
+        CAMPFIRE_BRIDGE_TOKEN: OPERATOR_TOKEN,
+      },
+    });
+
+    async function get(auth: string | undefined, path = "/v1/bridge") {
+      const headers: Record<string, string> = {};
+      if (auth !== undefined) headers.authorization = `Bearer ${auth}`;
+      const res = await handle(new Request(`https://campfire.test${path}`, { headers }));
+      const body = (await res.json()) as any;
+      return { status: res.status, body, text: JSON.stringify(body) };
+    }
+
+    const missing = await get(undefined);
+    expect(missing.status).toBe(401);
+
+    // Resolving to a valid actor is not operator authorization. An unrelated
+    // human, the owning human, and an agent are all refused.
+    const unrelatedDenied = await get(unrelated.token);
+    expect(unrelatedDenied.status).toBe(401);
+    expect(unrelatedDenied.body.message).toContain("operator token");
+    const ownerDenied = await get(token);
+    expect(ownerDenied.status).toBe(401);
+    const agentDenied = await get(created.token);
+    expect(agentDenied.status).toBe(401);
+
+    const operatorReport = await get(OPERATOR_TOKEN);
+    expect(operatorReport.status).toBe(200);
+    expect(operatorReport.body.ok).toBe(true);
+    expect(operatorReport.body.result).toMatchObject({
+      configured: true,
+      id: "bridge_worker",
+      origin: "https://example.com",
+      counts: { pending: 0, delivering: 0, delivered: 1, exhausted: 0 },
+    });
+    expect(operatorReport.body.result.deliveries).toEqual([
+      expect.objectContaining({ eventId: "evt_1", eventType: "finding.recorded", workspaceId: "ws_1" }),
+    ]);
+    expect(operatorReport.text).not.toContain(PATH_SENTINEL);
+    expect(operatorReport.text).not.toContain(QUERY_SENTINEL);
+    expect(operatorReport.text).not.toContain(WEBHOOK_SECRET);
+    expect(operatorReport.body.result).not.toHaveProperty("url");
+
+    // The production zone route reaches the Worker with a /campfire prefix.
+    const prefixed = await get(OPERATOR_TOKEN, "/campfire/v1/bridge");
+    expect(prefixed.status).toBe(200);
+
+    const wrongMethod = await handle(
+      new Request("https://campfire.test/v1/bridge", {
+        method: "POST",
+        headers: { authorization: `Bearer ${OPERATOR_TOKEN}` },
+      }),
+    );
+    expect(wrongMethod.status).toBe(405);
+
+    service.close();
+  });
+
+  it("fails closed when the bridge operator token is not configured", async () => {
+    const { store } = await setup();
+    const handle = createD1WorkerHandler({ store });
+    const res = await handle(
+      new Request("https://campfire.test/v1/bridge", {
+        headers: { authorization: "Bearer cft_any_actor_token" },
+      }),
+    );
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as { message: string }).message).toContain("not configured");
+  });
+
+  it("serves API routes under the production /campfire route prefix", async () => {
+    const { store, token } = await setup();
+    const handle = createD1WorkerHandler({ store });
+    const call = await handle(
+      new Request("https://campfire.test/campfire/v1/call", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ method: "whoami", params: {} }),
+      }),
+    );
+    expect(call.status).toBe(200);
+    expect(((await call.json()) as { ok: boolean }).ok).toBe(true);
+
+    const viewer = await handle(
+      new Request("https://campfire.test/campfire/api/whoami", {
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    );
+    expect(viewer.status).toBe(200);
+  });
 });

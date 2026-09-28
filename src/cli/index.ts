@@ -51,7 +51,7 @@ import type {
   TaskStatus,
   WorkspaceStatus,
 } from "../domain/types.js";
-import { campfireHttpCall, hostedPreflightError } from "../http/client.js";
+import { campfireHttpBridgeReport, campfireHttpCall, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
@@ -64,7 +64,10 @@ import {
 } from "../mcp/context.js";
 import type { ServerIdentity } from "../mcp/context.js";
 import { startStdioServer } from "../mcp/stdio.js";
+import { readBridgeOperatorToken, readWebhookBridgeConfig } from "../bridge/config.js";
+import { collectBridgeReport, formatBridgeReport, type BridgeReport } from "../bridge/report.js";
 import { createRuntime } from "../runtime.js";
+import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
   AttentionItem,
   GetActivityInput,
@@ -624,6 +627,54 @@ function formatFullView(view: WorkspaceView): string {
     ...provenanceSection("Provenance", view.activity, view.activity.length, false),
   );
   return lines.join("\n");
+}
+
+function printBridgeReport(report: BridgeReport, asJson: boolean): void {
+  if (asJson) {
+    printJson(report);
+    return;
+  }
+  console.log(formatBridgeReport(report));
+}
+
+/**
+ * Operator inspection surface for webhook delivery state.
+ *
+ * Local mode reads the SQLite outbox directly. When `CAMPFIRE_URL` is set the
+ * command asks the hosted instance for the same report, so Worker/D1 delivery
+ * state is inspectable too. The hosted route takes the instance-operator token
+ * (`CAMPFIRE_BRIDGE_TOKEN` or `--token`), not an actor token. The server
+ * redacts the destination to an origin; the raw URL and signing secret never
+ * cross either boundary. Not an MCP tool.
+ */
+async function cmdBridge(parsed: ParsedArgs): Promise<void> {
+  const asJson = parsed.flags.json === true;
+  const webhookConfig = readWebhookBridgeConfig(process.env);
+  const hostedUrl = readCampfireUrl();
+  if (hostedUrl !== undefined) {
+    const token = optionalFlag(parsed.flags, "token") ?? readBridgeOperatorToken(process.env);
+    if (token === undefined) {
+      throw new ValidationError(
+        "Missing operator token: pass --token or set CAMPFIRE_BRIDGE_TOKEN when CAMPFIRE_URL is set",
+        { field: "token" },
+      );
+    }
+    printBridgeReport(await campfireHttpBridgeReport({ baseUrl: hostedUrl, token }), asJson);
+    return;
+  }
+
+  const config = loadConfig();
+  let store: CampfireStore;
+  try {
+    store = openReadonlySqliteStore(config.databasePath);
+  } catch {
+    throw new ValidationError(`No Campfire database at ${config.databasePath}`, { field: "db" });
+  }
+  try {
+    printBridgeReport(await collectBridgeReport(webhookConfig, store), asJson);
+  } finally {
+    store.close();
+  }
 }
 
 async function cmdInit(): Promise<void> {
@@ -1539,6 +1590,8 @@ export async function runCli(argv: string[]): Promise<void> {
     case "status":
       printStatus(parsed.flags.json === true);
       return;
+    case "bridge":
+      return cmdBridge(parsed);
     case "connect":
       return cmdConnect(parsed.flags);
     case "doctor":

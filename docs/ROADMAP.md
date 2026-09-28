@@ -270,7 +270,10 @@ verified. It is published and deployed as minor release `v1.5.0`. Sprint 018
 Enter With the Session is GO. Cold Codex and OpenCode sessions read the
 workspace before acting, and a loopback session starts or reuses the local
 listener. It is published and deployed as minor release `v1.6.0`. It does
-not claim Gate B.
+not claim Gate B. Sprint 019 — Carry the Work Out is GO. One signed webhook
+projects a closed set of Campfire transitions. It is not released. It is not
+Phase 4 or Phase 5 completion. Gate B, Gate C, and Gate F remain unmeasured.
+Successful delivery is not repeat-usage evidence and not controlled action.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -462,6 +465,10 @@ A team chooses to keep a Campfire workspace active because it improves ongoing w
 ## Goal
 
 Allow Campfire to understand and reference the systems where teams already work without attempting to replace them.
+
+Sprint 019 is not this phase. It only projects facts Campfire has already
+recorded, through one vendor-neutral webhook. It does not create external
+issues, messages, or documents, and it does not establish Gate F.
 
 ### Likely integrations
 
@@ -1329,6 +1336,8 @@ Sprint 016 — Agent-Led Setup & Human Handoff   CONDITIONAL GO; v1.4.0 released
 Sprint 017 — Quiet Install & First Workspace   GO ✓; v1.5.0 released + deployed; cold human-first path + Codex auto-connect + real Viewer verified
         ↓
 Sprint 018 — Enter With the Session   GO ✓; v1.6.0 released + deployed; cold Codex + OpenCode read before acting; loopback listener start and reuse; Gate B unmeasured
+        ↓
+Sprint 019 — Carry the Work Out   GO; one signed webhook for a closed event vocabulary; not released; not Phase 4/5; Gate B/C/F unmeasured
 ```
 
 The roadmap provides direction.

@@ -48,3 +48,8 @@ migrations_dir = "migrations"
 directory = "./public"
 binding = "ASSETS"
 run_worker_first = true
+
+# Retry webhook deliveries that the request-lifetime pump did not finish.
+# This is the Worker scheduler, not a machine daemon.
+[triggers]
+crons = ["*/5 * * * *"]

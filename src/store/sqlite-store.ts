@@ -27,6 +27,12 @@ import type {
   WorkspaceParticipant,
   WorkspaceStatus,
 } from "../domain/types.js";
+import type {
+  DomainEventRecord,
+  WebhookDeliveryCounts,
+  WebhookDeliveryRecord,
+  WebhookDeliveryStatus,
+} from "../domain/events.js";
 import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
 
 interface OrganizationRow {
@@ -192,6 +198,42 @@ interface WorkspaceInviteRow {
   invited_by_actor_type: string;
   created_at: string;
   consumed_at: string | null;
+}
+
+interface DomainEventRow {
+  id: string;
+  spec_version: string;
+  type: string;
+  occurred_at: string;
+  workspace_id: string;
+  actor_id: string;
+  actor_type: string;
+  subject_type: string;
+  subject_id: string;
+  summary: string;
+  data: string;
+  body: string;
+  contribution_id: string;
+  agent_session_id: string | null;
+  on_behalf_of_actor_id: string | null;
+  on_behalf_of_actor_type: string | null;
+  created_at: string;
+}
+
+interface WebhookDeliveryRow {
+  id: string;
+  event_id: string;
+  bridge_id: string;
+  status: string;
+  attempt_count: number;
+  next_attempt_at: string | null;
+  claimed_at: string | null;
+  claim_token: string | null;
+  last_error: string | null;
+  delivered_at: string | null;
+  config_fingerprint: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 function parseJson(value: string | null): Record<string, unknown> | undefined {
@@ -390,6 +432,68 @@ function mapWorkspaceInvite(row: WorkspaceInviteRow): WorkspaceInvite {
     createdAt: row.created_at,
     consumedAt: row.consumed_at ?? undefined,
   };
+}
+
+function mapDomainEvent(row: DomainEventRow): DomainEventRecord {
+  const event: DomainEventRecord = {
+    id: row.id,
+    specVersion: row.spec_version as DomainEventRecord["specVersion"],
+    type: row.type as DomainEventRecord["type"],
+    occurredAt: row.occurred_at,
+    workspaceId: row.workspace_id,
+    actor: {
+      actorId: row.actor_id,
+      actorType: row.actor_type as DomainEventRecord["actor"]["actorType"],
+    },
+    subjectType: row.subject_type as DomainEventRecord["subjectType"],
+    subjectId: row.subject_id,
+    summary: row.summary,
+    data: JSON.parse(row.data) as Record<string, unknown>,
+    body: row.body,
+    contributionId: row.contribution_id,
+    createdAt: row.created_at,
+  };
+  if (row.agent_session_id !== null) event.agentSessionId = row.agent_session_id;
+  if (row.on_behalf_of_actor_id !== null && row.on_behalf_of_actor_type !== null) {
+    event.onBehalfOf = {
+      actorId: row.on_behalf_of_actor_id,
+      actorType: "human",
+    };
+  }
+  return event;
+}
+
+function mapWebhookDelivery(row: WebhookDeliveryRow): WebhookDeliveryRecord {
+  const delivery: WebhookDeliveryRecord = {
+    id: row.id,
+    eventId: row.event_id,
+    bridgeId: row.bridge_id,
+    status: row.status as WebhookDeliveryStatus,
+    attemptCount: row.attempt_count,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+  if (row.next_attempt_at !== null) delivery.nextAttemptAt = row.next_attempt_at;
+  if (row.claimed_at !== null) delivery.claimedAt = row.claimed_at;
+  if (row.claim_token !== null) delivery.claimToken = row.claim_token;
+  if (row.last_error !== null) delivery.lastError = row.last_error;
+  if (row.delivered_at !== null) delivery.deliveredAt = row.delivered_at;
+  if (row.config_fingerprint !== null) delivery.configFingerprint = row.config_fingerprint;
+  return delivery;
+}
+
+function deliveryIsClaimable(row: WebhookDeliveryRow, now: string, leaseBefore: string): boolean {
+  if (row.status === "pending") {
+    return row.next_attempt_at === null || row.next_attempt_at <= now;
+  }
+  if (row.status === "delivering") {
+    return row.claimed_at !== null && row.claimed_at <= leaseBefore;
+  }
+  return false;
+}
+
+function emptyDeliveryCounts(): WebhookDeliveryCounts {
+  return { pending: 0, delivering: 0, delivered: 0, exhausted: 0 };
 }
 
 function createSqliteStore(db: Database.Database): CampfireStore {
@@ -919,6 +1023,173 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       return rows.map(mapWorkspaceInvite);
     },
 
+    // --- domain events ---
+    createDomainEvent(event) {
+      db.prepare(
+        "INSERT INTO domain_events (id, spec_version, type, occurred_at, workspace_id, actor_id, actor_type, subject_type, subject_id, summary, data, body, contribution_id, agent_session_id, on_behalf_of_actor_id, on_behalf_of_actor_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      ).run(
+        event.id,
+        event.specVersion,
+        event.type,
+        event.occurredAt,
+        event.workspaceId,
+        event.actor.actorId,
+        event.actor.actorType,
+        event.subjectType,
+        event.subjectId,
+        event.summary,
+        JSON.stringify(event.data),
+        event.body,
+        event.contributionId,
+        event.agentSessionId ?? null,
+        event.onBehalfOf?.actorId ?? null,
+        event.onBehalfOf?.actorType ?? null,
+        event.createdAt,
+      );
+    },
+
+    getDomainEvent(id) {
+      const row = db.prepare("SELECT * FROM domain_events WHERE id = ?").get(id) as DomainEventRow | undefined;
+      return row ? mapDomainEvent(row) : undefined;
+    },
+
+    listDomainEventsForWorkspace(workspaceId) {
+      const rows = db
+        .prepare("SELECT * FROM domain_events WHERE workspace_id = ? ORDER BY occurred_at, rowid")
+        .all(workspaceId) as DomainEventRow[];
+      return rows.map(mapDomainEvent);
+    },
+
+    // Operational delivery state, not Contributions.
+    createWebhookDelivery(delivery) {
+      db.prepare(
+        "INSERT INTO webhook_deliveries (id, event_id, bridge_id, status, attempt_count, next_attempt_at, claimed_at, claim_token, last_error, delivered_at, config_fingerprint, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      ).run(
+        delivery.id,
+        delivery.eventId,
+        delivery.bridgeId,
+        delivery.status,
+        delivery.attemptCount,
+        delivery.nextAttemptAt ?? null,
+        delivery.claimedAt ?? null,
+        delivery.claimToken ?? null,
+        delivery.lastError ?? null,
+        delivery.deliveredAt ?? null,
+        delivery.configFingerprint ?? null,
+        delivery.createdAt,
+        delivery.updatedAt,
+      );
+    },
+
+    getWebhookDelivery(id) {
+      const row = db.prepare("SELECT * FROM webhook_deliveries WHERE id = ?").get(id) as
+        | WebhookDeliveryRow
+        | undefined;
+      return row ? mapWebhookDelivery(row) : undefined;
+    },
+
+    listWebhookDeliveries() {
+      const rows = db
+        .prepare("SELECT * FROM webhook_deliveries ORDER BY created_at, rowid")
+        .all() as WebhookDeliveryRow[];
+      return rows.map(mapWebhookDelivery);
+    },
+
+    countWebhookDeliveries() {
+      const rows = db
+        .prepare("SELECT status, COUNT(*) AS count FROM webhook_deliveries GROUP BY status")
+        .all() as Array<{ status: string; count: number }>;
+      const counts = emptyDeliveryCounts();
+      for (const row of rows) {
+        if (
+          row.status === "pending" ||
+          row.status === "delivering" ||
+          row.status === "delivered" ||
+          row.status === "exhausted"
+        ) {
+          counts[row.status] = row.count;
+        }
+      }
+      return counts;
+    },
+
+    listDueWebhookDeliveries(input) {
+      const rows = db
+        .prepare(
+          `SELECT * FROM webhook_deliveries
+           WHERE bridge_id = ?
+             AND config_fingerprint = ?
+             AND (
+               (status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?))
+               OR (status = 'delivering' AND claimed_at IS NOT NULL AND claimed_at <= ?)
+             )
+           ORDER BY created_at, rowid`,
+        )
+        .all(input.bridgeId, input.configFingerprint, input.now, input.leaseBefore) as WebhookDeliveryRow[];
+      return rows.map(mapWebhookDelivery);
+    },
+
+    claimWebhookDelivery(id, input) {
+      const claim = db.transaction(() => {
+        const row = db.prepare("SELECT * FROM webhook_deliveries WHERE id = ?").get(id) as
+          | WebhookDeliveryRow
+          | undefined;
+        if (
+          row === undefined ||
+          row.config_fingerprint !== input.configFingerprint ||
+          !deliveryIsClaimable(row, input.now, input.leaseBefore)
+        ) {
+          return undefined;
+        }
+        const info = db
+          .prepare(
+            `UPDATE webhook_deliveries
+             SET status = 'delivering', claim_token = ?, claimed_at = ?, updated_at = ?
+             WHERE id = ? AND claim_token IS NOT DISTINCT FROM ?
+               AND config_fingerprint = ?`,
+          )
+          .run(input.claimToken, input.now, input.now, id, row.claim_token, input.configFingerprint);
+        if (info.changes !== 1) return undefined;
+        const updated = db.prepare("SELECT * FROM webhook_deliveries WHERE id = ?").get(id) as
+          | WebhookDeliveryRow
+          | undefined;
+        return updated ? mapWebhookDelivery(updated) : undefined;
+      });
+      return claim();
+    },
+
+    markWebhookDeliveryDelivered(id, claimToken, deliveredAt) {
+      const info = db
+        .prepare(
+          `UPDATE webhook_deliveries
+           SET status = 'delivered', delivered_at = ?, attempt_count = attempt_count + 1,
+               claim_token = NULL, next_attempt_at = NULL, last_error = NULL, updated_at = ?
+           WHERE id = ? AND claim_token = ? AND status = 'delivering'`,
+        )
+        .run(deliveredAt, deliveredAt, id, claimToken);
+      return info.changes === 1;
+    },
+
+    markWebhookDeliveryRetry(id, claimToken, input) {
+      const info = db
+        .prepare(
+          `UPDATE webhook_deliveries
+           SET status = ?, attempt_count = ?, next_attempt_at = ?, last_error = ?,
+               claim_token = NULL, claimed_at = NULL, updated_at = ?
+           WHERE id = ? AND claim_token = ? AND status = 'delivering'`,
+        )
+        .run(
+          input.status,
+          input.attemptCount,
+          input.status === "exhausted" ? null : (input.nextAttemptAt ?? null),
+          input.lastError ?? null,
+          input.updatedAt,
+          id,
+          claimToken,
+        );
+      return info.changes === 1;
+    },
+
     // --- infrastructure ---
     transaction(fn) {
       return db.transaction(fn)();
@@ -942,4 +1213,10 @@ export function openSqliteStore(databasePath: string): CampfireStore {
 
 export function openInMemoryStore(): CampfireStore {
   return openSqliteStore(":memory:");
+}
+
+/** Read-only open for operator inspection. Does not migrate or take the write lock. */
+export function openReadonlySqliteStore(databasePath: string): CampfireStore {
+  const db = new Database(databasePath, { readonly: true, fileMustExist: true });
+  return createSqliteStore(db);
 }

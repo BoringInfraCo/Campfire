@@ -10,6 +10,7 @@ export const CLI_COMMANDS = [
   "handoff",
   "up",
   "status",
+  "bridge",
   "whoami",
   "list",
   "show",
@@ -117,6 +118,16 @@ const COMMAND_HELP: Record<CliCommand, CommandHelp> = {
   status: {
     usage: "campfire status [--json]",
     notes: ["Shows the current workspace without credentials."],
+  },
+  bridge: {
+    usage: "campfire bridge [--json] [--db <path>] [--token <operator-token>]",
+    notes: [
+      "Shows whether the outbound webhook is configured, its filters, and delivery counts.",
+      "The destination is reported as origin only; path/query credentials and the signing secret are never printed.",
+      "With CAMPFIRE_URL set it inspects the hosted instance using CAMPFIRE_BRIDGE_TOKEN (or --token), never an actor token.",
+      "Does not print the signing secret and is not an agent MCP tool.",
+      "pending rows stay listed after the configuration is removed.",
+    ],
   },
   whoami: {
     usage: "campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]",
@@ -307,6 +318,7 @@ export function formatUsage(): string {
     `  ${COMMAND_HELP.handoff.usage}`,
     `  ${COMMAND_HELP.up.usage}`,
     `  ${COMMAND_HELP.status.usage}`,
+    `  ${COMMAND_HELP.bridge.usage}`,
     "",
     "Inspect:",
     `  ${COMMAND_HELP.whoami.usage}`,

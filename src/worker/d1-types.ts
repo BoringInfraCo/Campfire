@@ -16,7 +16,7 @@ export interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
   first<T = Record<string, unknown>>(column?: string): Promise<T | null>;
   all<T = Record<string, unknown>>(): Promise<D1Result<T>>;
-  run(): Promise<{ success: boolean }>;
+  run(): Promise<{ success: boolean; meta?: { changes?: number } }>;
 }
 
 export interface D1Database {
@@ -33,4 +33,11 @@ export interface AssetsFetcher {
 export interface CampfireWorkerEnv {
   DB: D1Database;
   ASSETS: AssetsFetcher;
+  CAMPFIRE_WEBHOOK_ID?: string;
+  CAMPFIRE_WEBHOOK_URL?: string;
+  CAMPFIRE_WEBHOOK_SECRET?: string;
+  CAMPFIRE_WEBHOOK_EVENTS?: string;
+  CAMPFIRE_WEBHOOK_WORKSPACES?: string;
+  /** Instance-operator credential for GET /v1/bridge. Not an actor token. */
+  CAMPFIRE_BRIDGE_TOKEN?: string;
 }
