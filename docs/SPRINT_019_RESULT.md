@@ -121,9 +121,20 @@ in Linear.
 - `git diff --check` passed.
 - The existing suite passes with no webhook configured.
 
-Not done in this session: remote D1 migration, Worker deploy, tag, or public
-release. The Worker scheduled function was executed against a fake D1 binding,
-not production.
+Release promotion completed on 2026-09-28 as `v1.7.1`:
+
+- Private canonical source tag: `v1.7.1` at `7c0dca27541c4dc5d9522250908eee8196b275d8`.
+- The public snapshot was exported from that tag, audited, and independently
+  verified from a clean checkout (`npm ci`, type-check, 42 files / 460 tests).
+- Public source tag and GitHub Release: [Campfire v1.7.1](https://github.com/BoringInfraCo/Campfire/releases/tag/v1.7.1).
+  Public CI and all Linux/macOS x64/arm64 release-artifact jobs passed.
+- The original private `v1.7.0` tag remains immutable but was not publicly
+  released: independent public-snapshot verification found that the webhook
+  trace receiver had been omitted from the exporter. `v1.7.1` adds it to the
+  explicit public allowlist.
+
+Not done in this session: remote D1 migration or Worker deployment. The Worker
+scheduled function was executed against a fake D1 binding, not production.
 
 ---
 
