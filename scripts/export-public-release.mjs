@@ -24,6 +24,7 @@ const EXACT_SOURCE_PATHS = new Set([
   "scripts/package.sh",
   "scripts/run-acceptance-002.ts",
   "scripts/run-acceptance.ts",
+  "scripts/sprint-019-receiver.mjs",
   "scripts/wrangler-deploy.mjs",
   "tsconfig.json",
   "vitest.config.ts",
