@@ -9,7 +9,7 @@ Campfire is a secure, harness-independent collaboration layer for teams working 
 - **Stay authorized** — invite-only workspaces; authorization precedes retrieval
 - **Stay inspectable** — every mutation records who contributed what, when, and on whose behalf
 
-Every data-producing command honors `--json` for machine-readable output — `show` and `activity` default to human text, the rest already print JSON, and failures under `--json` report a structured error object on stderr, with an optional sibling `next` array of copy-pasteable commands. The long-running `serve`/`view` commands, `mcp`, and `help` are the documented exceptions (they log notices, speak MCP JSON-RPC, or print usage text). Built for humans and agents alike.
+Every command honors `--output auto|human|json`; `--json` remains a compatibility alias for `--output json`. Under `auto`, a command renders human text when stdout is a TTY and JSON when it is piped, and `CAMPFIRE_OUTPUT` sets the default mode. Explicit JSON prints exactly one compact JSON value on stdout; a failure prints a structured error object on stderr and exits 1. JSON-only administration commands always print JSON and reject `--output human`. `help` stays text, `mcp` speaks MCP JSON-RPC on stdio, and `serve`/`view` keep their operational notices on stderr with no synthetic result document. Read and inspection results never add token material. Only the credential-minting commands (`onboard`, `issue-token`, `create-human`, `create-agent`, and `bootstrap --human-name`) can print a one-time token, and `onboard` requires explicit `--json` or `--output json` for its credential receipt so a pipe cannot capture tokens by default. Built for humans and agents alike.
 
 ---
 
@@ -47,12 +47,23 @@ campfire onboard \
   --goal "Ship the billing migration safely" \
   --json
 campfire up --no-open
+
+# Primary reads (same authorized result as human mode):
+campfire status --output json
+campfire agents --output json
+campfire decisions --output json
+campfire changes --since <contributionId> --output json
+campfire inspect <kind> <id> --workspace <workspaceId> --output json
+campfire capabilities --output json
 ```
 
-`--json` prints each credential once. Human-mode onboard does not. The human
-token is stored for the operator CLI. The agent token is written into exactly
-one harness process config. Do not put either token in the Viewer or a
-handoff.
+`--json` prints each credential once. Human-mode onboard does not. Because the
+receipt carries one-time credentials, `onboard` is the one dual-surface
+command that stays human under `auto` even when piped: a piped `campfire
+onboard` prints the token-free human receipt, and the JSON credential receipt
+is opt-in with `--json` or `--output json`. The human token is stored for
+the operator CLI. The agent token is written into exactly one harness process
+config. Do not put either token in the Viewer or a handoff.
 
 A second `onboard` refuses when humans or workspaces already exist and points
 at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
@@ -60,11 +71,13 @@ at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
 available as a deterministic demo/evaluation fixture. It is not how a new
 operator creates their workspace.
 
-Run `campfire --help` for the grouped command list, or `campfire <command> --help` for one command. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
+Run `campfire --help` for the grouped command list — **Start and connect**, **Understand the workspace**, **Recover and hand off**, **Discover the CLI**, and **Administration** — or `campfire <command> --help` for one command. Existing lower-level commands remain available under Administration. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
 ## Agent-led setup
 
-An agent discovers the path from the installed binary with `campfire setup`. That command creates no state and prints no credential. `campfire onboard --json` remains the only command that prints one-time tokens. Human-mode onboard stores them locally instead. The human token is for operator administration. The agent token is for exactly one harness process.
+An agent discovers the path from the installed binary with `campfire setup`. That command creates no state and prints no credential. `campfire onboard --output json` remains the setup path that prints one-time tokens (`--json` still works as an alias); human-mode onboard stores them locally instead. The human token is for operator administration. The agent token is for exactly one harness process.
+
+For the shell fallback, an agent can run `campfire capabilities --output json` to discover the installed commands and `campfire status --output json` to read the live workspace overview.
 
 `campfire connect --harness codex` or `--harness opencode` writes that harness's Campfire MCP block and leaves unrelated settings in place. After onboard it can read the agent token from the local credential store, so `--token` / `--config` / `--workspace` are optional. It stores the agent token in the config file and does not print it. A reload or a new harness process is required before MCP tools appear, and the harness may ask for approval. Claude Code and Cursor are not validated for this path.
 
@@ -76,9 +89,14 @@ An agent discovers the path from the installed binary with `campfire setup`. Tha
 
 | Command | Description |
 | --- | --- |
-| `campfire` | Record the human once, or print status. Agents and workspaces appear when work starts |
+| `campfire` | Interactive first-run human path: record the human once, then report the local profile. Use `campfire status` for the live, machine-readable overview |
 | `campfire up` | Start the local API and Viewer; connect each installed Codex or OpenCode. Does not import past sessions |
-| `campfire status` | Show the current workspace without credentials |
+| `campfire status [workspace]` | Live authorized workspace overview built from the authorized WorkspaceContext: goal, work counts, decisions, participants, attention, and the newest contribution cursor. Not a local-profile summary |
+| `campfire agents [workspace]` | Recorded agent participants with role, harness, human owner, and joined time. Never a presence label |
+| `campfire decisions [workspace]` | Proposed, accepted, and superseded decisions from the existing lifecycle |
+| `campfire changes [workspace] [--since <contributionId>]` | Contributions after a cursor, or the recent provenance window, plus the cursor to retain next |
+| `campfire inspect <kind> <id> --workspace <workspaceId>` | Inspect one workspace object by kind and id from the authorized projection. No cross-workspace lookup |
+| `campfire capabilities` | The installed CLI command manifest for shell discovery; not the future Campfire Capability domain object |
 | `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
 | `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Stores credentials locally. Does not start the server or register an agent session |
 | `campfire connect` | Write a Codex or OpenCode MCP block for the agent token. Requires a reload or new process |

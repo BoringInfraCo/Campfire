@@ -98,11 +98,12 @@ describe("sprint 017 first-run CLI", () => {
     stderr.length = 0;
     expect(await runCliEntry(["status", "--json"])).toBe(0);
     const status = JSON.parse(stdout.join("\n")) as {
-      workspace: string;
-      goal: string;
+      workspace: { id: string; name: string };
+      goal: { title: string };
     };
-    expect(status.workspace).toBe(WORKSPACE);
-    expect(status.goal).toBe(GOAL);
+    expect(status.workspace.name).toBe(WORKSPACE);
+    expect(status.workspace.id).toMatch(/^ws_/);
+    expect(status.goal.title).toBe(GOAL);
     expect(JSON.stringify(status)).not.toMatch(/cft_/);
     expect(stdout.join("\n")).not.toContain(receipt.human.token);
     expect(stdout.join("\n")).not.toContain(receipt.agent.token);
@@ -118,7 +119,7 @@ describe("sprint 017 first-run CLI", () => {
   });
 
   it("prints a token-free human-mode onboard receipt that points at campfire up", async () => {
-    expect(await runCliEntry(onboardArgs())).toBe(0);
+    expect(await runCliEntry(onboardArgs(["--output", "human"]))).toBe(0);
     const text = stdout.join("\n");
     expect(text).not.toMatch(/cft_/);
     expect(text).toContain("campfire up");

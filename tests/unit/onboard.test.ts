@@ -78,7 +78,7 @@ afterEach(() => {
 
 describe("campfire onboard", () => {
   it("creates one human-owned agent workspace and goal on a clean database", async () => {
-    expect(await runCliEntry(onboardArgs())).toBe(0);
+    expect(await runCliEntry(onboardArgs(["--output", "human"]))).toBe(0);
 
     const runtime = createRuntimeFromPath(dbPath);
     try {

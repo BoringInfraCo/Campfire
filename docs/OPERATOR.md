@@ -49,6 +49,19 @@ that past sessions are not imported. It does not register an agent session
 and does not provision Cloudflare. The agent creates the workspace and goal
 when work starts. A second workspace is a normal `create_workspace`.
 
+Once a workspace exists, `campfire status` prints the live, authorized
+overview: goal, work counts, decisions, participants, attention, and the
+newest contribution cursor. The local profile only selects the workspace; it
+is not the source of truth. Output follows `--output auto|human|json`:
+`auto` renders text on a TTY and JSON when piped, `--json` is a compatibility
+alias for `--output json`, and `CAMPFIRE_OUTPUT` sets the default. Explicit
+JSON is one compact value on stdout; failures are structured JSON on stderr
+and exit 1. Read output adds no tokens; only the credential-minting commands
+(`onboard --output json`, `issue-token`, `create-human`, `create-agent`, and
+`bootstrap --human-name`) can print a one-time token, and `onboard` requires
+explicit `--json` or `--output json` for its credential receipt so a pipe
+cannot capture tokens by default.
+
 ```bash
 campfire
 campfire up
@@ -66,7 +79,11 @@ campfire onboard \
   --json
 ```
 
-`--json` prints each credential once. Human-mode onboard does not. The human
+`--json` prints each credential once. Human-mode onboard does not. Because the
+receipt carries one-time credentials, `onboard` stays human under `auto` even
+when piped: a non-interactive onboard without `--json` or `--output json`
+prints the token-free human receipt, and only an explicit JSON request emits
+the one-time receipt. The human
 token is for the operator CLI and administration. The agent token is for
 exactly one harness process. Do not put an actor id in hosted auth.
 
@@ -246,7 +263,9 @@ Pass `--since <contributionId>` to print only the contributions recorded
 strictly after that observation, a `truncated` flag when older post-cursor rows
 were omitted, and the newest contribution id to retain as the next cursor. The
 cursor is an observation pointer; it is not a summary of the changes and not
-permission to execute.
+permission to execute. `show` and `activity` render text on a TTY under
+`auto` and one compact JSON value when piped or with `--output json` (`--json`
+is an alias for `--output json`).
 
 ## 7. Do not
 

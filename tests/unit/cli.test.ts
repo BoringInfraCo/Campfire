@@ -87,7 +87,7 @@ afterEach(() => {
 
 describe("runCli", () => {
   it("prints orientation text for show, not a JSON dump", async () => {
-    await cli(["show", FIXTURE.workspaces.billing]);
+    await cli(["show", FIXTURE.workspaces.billing, "--output", "human"]);
 
     const output = stdout();
     expect(output).toContain("Workspace");
@@ -119,7 +119,7 @@ describe("runCli", () => {
     await cli(["update-task", blocked.id, "--status", "blocked"]);
 
     logs = [];
-    await cli(["show", FIXTURE.workspaces.billing]);
+    await cli(["show", FIXTURE.workspaces.billing, "--output", "human"]);
 
     const output = stdout();
     expect(output).toContain("Needs You");
@@ -151,7 +151,7 @@ describe("runCli", () => {
     await cli(["accept-decision", decision.id]);
 
     logs = [];
-    await cli(["show", workspace.id]);
+    await cli(["show", workspace.id, "--output", "human"]);
 
     const output = stdout();
     expect(output).toContain("Recorded alignment boundary");
@@ -224,12 +224,11 @@ describe("runCli", () => {
   it("prints usage including serve, invite, identity, and contribution commands", async () => {
     await cli(["help"]);
     const output = stdout();
-    expect(output).toContain("First run:");
-    expect(output).toContain("Inspect:");
-    expect(output).toContain("Contribute:");
-    expect(output).toContain("Identity:");
-    expect(output).toContain("Run:");
-    expect(output).toContain("Fixtures:");
+    expect(output).toContain("Start and connect:");
+    expect(output).toContain("Understand the workspace:");
+    expect(output).toContain("Recover and hand off:");
+    expect(output).toContain("Discover the CLI:");
+    expect(output).toContain("Administration:");
     expect(output).toContain("campfire serve");
     expect(output).toContain("campfire preflight");
     expect(output).toContain("create-human");
@@ -246,10 +245,10 @@ describe("runCli", () => {
     await cli(["onboard", "--help"]);
     const output = stdout();
     expect(output).toContain("campfire onboard --human-name");
-    expect(output).toContain("First-run path");
-    expect(output).toContain("--json prints each one-time token once");
+    expect(output).toContain("First-run path: one human, one agent they own, one workspace, and one goal.");
+    expect(output).toContain("--output json prints each one-time token once, then never again.");
     expect(output).not.toContain("campfire create-task");
-    expect(output).not.toContain("First run:");
+    expect(output).not.toContain("Understand the workspace:");
 
     logs = [];
     await cli(["onboard", "-h"]);
@@ -258,7 +257,7 @@ describe("runCli", () => {
   });
 
   it("shows a workspace with the fixture sergio token", async () => {
-    await cli(["show", FIXTURE.workspaces.billing, "--token", FIXTURE.tokens.sergio]);
+    await cli(["show", FIXTURE.workspaces.billing, "--token", FIXTURE.tokens.sergio, "--output", "human"]);
 
     const output = stdout();
     expect(output).toContain("Workspace");
@@ -347,13 +346,13 @@ describe("runCli", () => {
   it("documents the --json contract in usage", async () => {
     await cli(["help"]);
     const output = stdout();
-    expect(output).toContain("campfire activity <workspaceId>");
-    expect(output).toContain("--before <contributionId>] [--json]");
-    expect(output).toContain("campfire show <workspaceId> [--since <contributionId>]");
-    expect(output).toContain("prints the newest contribution id as the resume cursor");
-    expect(output).toContain("--json             Machine-readable output contract");
-    expect(output).toContain("have no JSON mode");
+    expect(output).toContain("campfire show <workspaceId> [--since <contributionId>] [--output auto|human|json] [--full]");
+    expect(output).toContain("campfire activity [workspace]");
+    expect(output).toContain("--output <mode>");
+    expect(output).toContain("Compatibility alias for --output json");
+    expect(output).toContain("auto renders text when stdout is a TTY");
     expect(output).toContain('{"error":{"code","message"');
+    expect(output).toContain("help stays text");
     expect(output).toContain("add-artifact's --type is the artifact type");
   });
 
@@ -466,7 +465,7 @@ describe("runCli", () => {
       ),
     );
 
-    await runCli(["preflight", "--workspace", FIXTURE.workspaces.billing]);
+    await runCli(["preflight", "--workspace", FIXTURE.workspaces.billing, "--output", "human"]);
 
     expect(stdout()).toContain(`workspace=${FIXTURE.workspaces.billing}`);
     expect(stdout()).toContain(`actor=${FIXTURE.humans.sergio}`);
@@ -609,7 +608,7 @@ describe("Sprint 010 return delta (CLI)", () => {
     expect(context.since.cursor).toBe(context.since.items.at(-1)!.id);
 
     logs = [];
-    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor]);
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor, "--output", "human"]);
     const output = stdout();
     expect(output).toContain(`Since  ${anchor}  (3 contributions)`);
     expect(output).toContain(`Resume cursor  ${context.since.cursor}`);
@@ -649,7 +648,7 @@ describe("Sprint 010 return delta (CLI)", () => {
     expect(context.since.items.at(-1)!.id).toBe(context.since.cursor);
 
     logs = [];
-    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor]);
+    await cli(["show", FIXTURE.workspaces.billing, "--since", anchor, "--output", "human"]);
     const output = stdout();
     expect(output).toContain("truncated");
     expect(output).toContain(`Resume cursor  ${context.since.cursor}`);
@@ -668,7 +667,7 @@ describe("Sprint 010 return delta (CLI)", () => {
     expect(context.since).toEqual({ cursor: newest, items: [], truncated: false });
 
     logs = [];
-    await cli(["show", FIXTURE.workspaces.billing, "--since", newest]);
+    await cli(["show", FIXTURE.workspaces.billing, "--since", newest, "--output", "human"]);
     const output = stdout();
     expect(output).toContain(`Since  ${newest}  (no new contributions)`);
     expect(output).toContain(`Resume cursor  ${newest}`);
@@ -685,6 +684,8 @@ describe("Sprint 010 return delta (CLI)", () => {
       FIXTURE.workspaces.billing,
       "--since",
       "con_missing",
+      "--output",
+      "human",
     ]);
     expect(unknown).toBe(1);
     expect(stderrText(errSpy)).toContain("[ValidationError]");
@@ -699,6 +700,8 @@ describe("Sprint 010 return delta (CLI)", () => {
       FIXTURE.workspaces.unrelated,
       "--since",
       billingId,
+      "--output",
+      "human",
     ]);
     expect(foreign).toBe(1);
     expect(stderrText(errSpy)).toContain("[ValidationError]");
@@ -740,7 +743,7 @@ describe("runCliEntry exit-code and stderr contract", () => {
   it("keeps [Code] message on stderr without --json", async () => {
     const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const code = await runCliEntry(["--db", dbPath, "show", "does-not-exist"]);
+    const code = await runCliEntry(["--db", dbPath, "show", "does-not-exist", "--output", "human"]);
 
     expect(code).toBe(1);
     const stderr = stderrText(errSpy);
@@ -803,6 +806,8 @@ describe("runCliEntry exit-code and stderr contract", () => {
       FIXTURE.workspaces.billing,
       "--harness",
       "codex",
+      "--output",
+      "human",
     ]);
 
     expect(code).toBe(0);
