@@ -100,12 +100,13 @@ backward-compatible minor release `v1.6.0`. That release does not claim Gate B.
 Sprint 019 — Carry the Work Out is complete (GO); its result is
 `docs/SPRINT_019_RESULT.md`. One operator-configured webhook carries a closed
 set of Campfire transitions. Core does not name Slack, Linear, or another
-destination. It is not released. It does not claim Gate B, Gate C, or Gate F.
+destination. It is published as `v1.7.1`. It does not claim Gate B, Gate C, or
+Gate F.
 Sprint CLI-001 — Agent-Native Interface Contract is complete (GO); its result
 is `docs/SPRINT_CLI_001_RESULT.md` and its compatibility audit is
 `docs/SPRINT_CLI_001_COMPATIBILITY_AUDIT.md`. One human terminal trace and one
-cold-agent CLI-only trace passed. It is not released and does not claim Gate B,
-Gate C, or Gate F.
+cold-agent CLI-only trace passed. It is published and deployed as minor release
+`v1.8.0` and does not claim Gate B, Gate C, or Gate F.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

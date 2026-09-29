@@ -3,8 +3,7 @@
 **Status:** Complete
 **Decision:** GO
 **Date:** September 28, 2026
-**Release:** `v1.8.0` minor release candidate. The compatibility audit is
-recorded; tagging, publication, and deployment remain separate release steps.
+**Release:** `v1.8.0` minor release — published and deployed
 
 ---
 
@@ -133,7 +132,7 @@ Evidence: `evidence/sprint-cli-001/cold-agent-cli-trace.md` and
 ## 6. Automated verification
 
 - `npm run typecheck` — passed.
-- `npm test` — 44 files, 503 tests passed, including:
+- `npm test` — 44 files, 504 tests passed, including:
   - `tests/unit/cli-001.test.ts` — output selection, projection parity,
     command semantics, security/privacy, and compatibility contracts;
   - `tests/integration/cli-hosted.test.ts` — local/hosted parity over a real
@@ -154,3 +153,30 @@ participant presence, team memory, coordination, capabilities, or
 product-market fit. It introduces no Huddle object, checkpoint, presence
 model, heartbeat, file-editing view, orchestration, natural-language command
 search, JSON Lines, SDK, or new persistence.
+
+---
+
+## 8. Release promotion
+
+Release promotion completed on September 28, 2026 as `v1.8.0`:
+
+- Private canonical source commit and annotated tag:
+  `547af7922507d594621c652607dfdd1cd6fce3da` / `v1.8.0`.
+- The tag exported 191 allowlisted files. Private sprint documents, local
+  evidence, credentials, databases, and private history were excluded.
+- A clean exported snapshot passed `npm ci`, type-check, and the full 44-file /
+  504-test suite before promotion.
+- Public snapshot commit: `38005350d752566f8a2f4d5f9323e379fc14051d`.
+- Public source tag and GitHub Release:
+  <https://github.com/BoringInfraCo/Campfire/releases/tag/v1.8.0>.
+- Public main and tag CI passed. Release workflow `36503610607` built,
+  checksum-verified, and attached Darwin and Linux archives for ARM64 and x64.
+- No D1 migration ran because CLI-001 has no schema change.
+- Production Worker/assets deployed successfully as version
+  `5ff8b331-336c-4b96-8da5-8ff5b5088cc1`.
+- The live latest and pinned `v1.8.0` installer URLs matched their tracked
+  sources. A clean pinned install verified its archive checksum, reported
+  Campfire `1.8.0`, and exposed the new capabilities manifest.
+
+The release does not upgrade the sprint's product-evidence claims. Gate B,
+Gate C, and Gate F remain unmeasured.
