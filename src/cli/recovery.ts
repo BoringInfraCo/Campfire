@@ -6,7 +6,7 @@
  * array when a recovery command exists. Never interpolates a bearer token.
  */
 import { CampfireError } from "../domain/errors.js";
-import { CLI_COMMANDS, isKnownCommand } from "./help.js";
+import { CLI_COMMANDS, isKnownCommand } from "./catalog.js";
 
 export interface CliNextStep {
   command: string;
@@ -115,6 +115,16 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
     return [{ command: "campfire list", when: "List workspaces this actor can see" }];
   }
 
+  if (field === "workspace") {
+    return [
+      { command: "campfire list", when: "List workspaces this actor can see" },
+      {
+        command: "campfire status <workspaceId> --output json",
+        when: "Retry with an explicit workspace id",
+      },
+    ];
+  }
+
   if (field === "onboard" || error.message.includes("already has a human or a workspace")) {
     return [
       { command: "campfire create-human --name <display> --team <teamId>", when: "Add another human" },
@@ -137,6 +147,15 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
 
   if (field === "credentials") {
     return [{ command: "campfire onboard --help", when: "Create the local operator profile" }];
+  }
+
+  if (field === "output") {
+    return [
+      {
+        command: "campfire capabilities --output json",
+        when: "List installed commands and their supported output modes",
+      },
+    ];
   }
 
   if (field === "token" || field === "CAMPFIRE_TOKEN") {
@@ -207,10 +226,10 @@ export function formatCliFailure(
             : { code: error.code, message: error.message, details },
       };
       if (next.length > 0) payload.next = next;
-      return JSON.stringify(payload, null, 2);
+      return JSON.stringify(payload);
     }
     const message = error instanceof Error ? error.message : String(error);
-    return JSON.stringify({ error: { code: "InternalError", message } }, null, 2);
+    return JSON.stringify({ error: { code: "InternalError", message } });
   }
   const head =
     error instanceof CampfireError

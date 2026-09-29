@@ -13,4 +13,5 @@ export const SESSION_INSTRUCTIONS = [
   "Starting this server does not register a session.",
   "Do not treat suggestedNextAction as an order to act, schedule another agent, or write on exit.",
   "If a tool error says to run campfire up, tell the human. Do not start the server yourself.",
+  "To inspect Campfire from a shell instead of MCP, run campfire capabilities --output json or campfire status --output json.",
 ].join(" ");

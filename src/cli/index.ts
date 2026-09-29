@@ -29,7 +29,37 @@ import {
   rememberProfileAgents,
 } from "../bootstrap/profile.js";
 import { defaultHumanName, promptHumanName } from "./first-run.js";
-import { formatCommandUsage, formatUsage, isKnownCommand } from "./help.js";
+import {
+  CLI_COMMAND_NAMES,
+  commandSpec,
+  formatCommandUsage,
+  formatUsage,
+  isKnownCommand,
+  type CliCommand,
+} from "./catalog.js";
+import { parseArgs, type ParsedArgs } from "./args.js";
+import { resolveErrorOutput, resolveExplicitOutput, resolveOutputMode, type ResolvedOutput } from "./output.js";
+import {
+  buildAwaitingWorkspace,
+  buildCommandManifest,
+  buildWorkspaceAgents,
+  buildWorkspaceChanges,
+  buildWorkspaceDecisions,
+  buildWorkspaceInspect,
+  buildWorkspaceStatus,
+  formatAttentionItem,
+  formatCommandManifest,
+  formatContributionDeltaLine,
+  formatContributionLine,
+  formatParticipant,
+  formatWorkspaceAgents,
+  formatWorkspaceChanges,
+  formatWorkspaceDecisions,
+  formatWorkspaceInspect,
+  formatWorkspaceStatus,
+  INSPECT_KINDS,
+  type InspectKind,
+} from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
@@ -40,6 +70,16 @@ import { setupContract } from "../bootstrap/setup-contract.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
+import {
+  ActorNotFound,
+  ArtifactNotFound,
+  DecisionNotFound,
+  FindingNotFound,
+  GoalNotFound,
+  TaskNotFound,
+  WorkspaceNotFound,
+} from "../domain/errors.js";
+import { installedCampfireVersion } from "../bootstrap/version.js";
 import type {
   ActorRef,
   ArtifactType,
@@ -69,30 +109,17 @@ import { collectBridgeReport, formatBridgeReport, type BridgeReport } from "../b
 import { createRuntime } from "../runtime.js";
 import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
-  AttentionItem,
   GetActivityInput,
-  ParticipantView,
   SuggestedNextAction,
   WorkspaceContext,
   WorkspaceView,
   ReadinessStatus,
+  WorkspaceSummary,
 } from "../service/service.js";
 import type { CampfireStore } from "../store/store.js";
 
 const DEFAULT_ACTOR_ID = "hum_sergio";
 const DEFAULT_ACTOR_TYPE = "human";
-
-const BOOLEAN_FLAGS = new Set([
-  "reset",
-  "help",
-  "json",
-  "full",
-  "allow-remote",
-  "connect",
-  "no-connect",
-  "open",
-  "no-open",
-]);
 
 const WORKSPACE_STATUSES = ["active", "completed", "archived"] as const;
 const GOAL_STATUSES = ["active", "completed", "abandoned"] as const;
@@ -102,50 +129,6 @@ const ACTOR_TYPES = ["human", "agent"] as const;
 const ARTIFACT_TYPES = ["file", "document", "log", "other"] as const;
 
 const HEADER_LABEL_WIDTH = 9;
-
-interface ParsedArgs {
-  command?: string;
-  positionals: string[];
-  flags: Record<string, string | boolean>;
-}
-
-function parseArgs(argv: string[]): ParsedArgs {
-  const positionals: string[] = [];
-  const flags: Record<string, string | boolean> = {};
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i];
-    if (token === undefined) continue;
-    if (token === "-h") {
-      flags.help = true;
-      continue;
-    }
-    if (token.startsWith("--")) {
-      const body = token.slice(2);
-      const eq = body.indexOf("=");
-      if (eq >= 0) {
-        flags[body.slice(0, eq)] = body.slice(eq + 1);
-        continue;
-      }
-      if (BOOLEAN_FLAGS.has(body)) {
-        flags[body] = true;
-        continue;
-      }
-      const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith("--")) {
-        flags[body] = next;
-        i += 1;
-      } else {
-        flags[body] = true;
-      }
-    } else {
-      positionals.push(token);
-    }
-  }
-
-  const [command, ...rest] = positionals;
-  return { command, positionals: rest, flags };
-}
 
 function applyDbFlag(flags: Record<string, string | boolean>): void {
   const db = flags.db;
@@ -266,8 +249,93 @@ async function withBackend<T>(
   }
 }
 
+/** Compact JSON: machine output must not pay for decorative whitespace (CLI-001). */
 function printJson(value: unknown): void {
-  console.log(JSON.stringify(value, null, 2));
+  console.log(JSON.stringify(value));
+}
+
+/** The resolved output mode for a dispatched catalog command. */
+function commandOutput(parsed: ParsedArgs): ResolvedOutput {
+  if (parsed.command === undefined || !isKnownCommand(parsed.command)) {
+    // Bare `campfire` keeps its first-run human rendering; explicit JSON or
+    // CAMPFIRE_OUTPUT=json still selects JSON.
+    return resolveExplicitOutput(parsed) === "json" ? "json" : "human";
+  }
+  return resolveOutputMode(parsed, commandSpec(parsed.command));
+}
+
+/** Render one command result in the selected mode from the same object. */
+function emitResult<T>(
+  result: T,
+  mode: ResolvedOutput,
+  render: (value: T) => string,
+): void {
+  if (mode === "json") {
+    printJson(result);
+    return;
+  }
+  const text = render(result);
+  if (text.length > 0) {
+    console.log(text);
+  }
+}
+
+type WorkspaceSelection =
+  | { workspaceId: string }
+  | { awaiting: true; human?: { id: string; name: string } };
+
+function workspaceSelectionError(workspaces: WorkspaceSummary[]): ValidationError {
+  if (workspaces.length === 0) {
+    return new ValidationError(
+      "No Campfire workspace is available for this actor. Run campfire onboard, or pass --workspace <id>.",
+      { field: "workspace", workspaces: [] },
+    );
+  }
+  return new ValidationError(
+    "Multiple Campfire workspaces are available; select one with --workspace <id>.",
+    {
+      field: "workspace",
+      workspaces: workspaces.map((workspace) => ({
+        id: workspace.id,
+        name: workspace.name,
+        status: workspace.status,
+      })),
+    },
+  );
+}
+
+/**
+ * One workspace selection rule for primary read commands (CLI-001 section 6):
+ * explicit id, then the local profile, then the sole authorized workspace. The
+ * profile is a selector only; it is never the source of truth for status.
+ */
+async function resolveReadWorkspace(
+  backend: CliBackend,
+  explicit: string | undefined,
+  options?: { allowAwaiting?: boolean },
+): Promise<WorkspaceSelection> {
+  if (explicit !== undefined && explicit.trim().length > 0) {
+    return { workspaceId: explicit };
+  }
+  const profile = loadProfile();
+  if (profile?.workspaceId !== undefined) {
+    return { workspaceId: profile.workspaceId };
+  }
+  const workspaces = (await backend.call("list_workspaces", {})) as WorkspaceSummary[];
+  if (workspaces.length === 1) {
+    return { workspaceId: workspaces[0]!.id };
+  }
+  if (options?.allowAwaiting === true && profile !== undefined && workspaces.length === 0) {
+    return {
+      awaiting: true,
+      human: { id: profile.humanId, name: profile.humanName },
+    };
+  }
+  throw workspaceSelectionError(workspaces);
+}
+
+function explicitWorkspaceArgument(parsed: ParsedArgs): string | undefined {
+  return optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
 }
 
 function requirePositional(parsed: ParsedArgs, field: string): string {
@@ -354,62 +422,8 @@ function labeled(label: string, ...values: string[]): string {
   return joinFields(label.padEnd(HEADER_LABEL_WIDTH), ...values);
 }
 
-function formatParticipant(participant: ParticipantView): string {
-  return joinFields(
-    participant.name,
-    participant.role,
-    participant.harness,
-    participant.humanOwnerId === undefined ? undefined : `on behalf of ${participant.humanOwnerId}`,
-  );
-}
-
-function formatContributionLine(contribution: Contribution): string {
-  return joinFields(
-    contribution.createdAt,
-    contribution.actor.actorId,
-    contribution.action,
-    contribution.objectType,
-    contribution.objectId,
-  );
-}
-
-/**
- * Payload fields a returning caller needs to read the change itself. Only the
- * fields the contribution actually recorded are printed (Sprint 010), so an
- * assignee-only task update does not invent a status.
- */
-function formatPayloadFields(contribution: Contribution): string | undefined {
-  const payload = contribution.payload ?? {};
-  const parts: string[] = [];
-  for (const key of ["summary", "title", "status"] as const) {
-    const value = payload[key];
-    if (typeof value === "string" && value.length > 0) {
-      parts.push(`${key}=${value}`);
-    }
-  }
-  const assignee = payload.assignee;
-  if (assignee === null) {
-    parts.push("assignee=null");
-  } else if (
-    typeof assignee === "object" &&
-    assignee !== null &&
-    typeof (assignee as ActorRef).actorId === "string"
-  ) {
-    parts.push(`assignee=${(assignee as ActorRef).actorId}`);
-  }
-  return parts.length === 0 ? undefined : parts.join("  ");
-}
-
 function formatDeltaLine(contribution: Contribution): string {
-  return joinFields(
-    contribution.id,
-    contribution.createdAt,
-    contribution.actor.actorId,
-    contribution.action,
-    contribution.objectType,
-    contribution.objectId,
-    formatPayloadFields(contribution),
-  );
+  return formatContributionDeltaLine(contribution);
 }
 
 /**
@@ -449,17 +463,6 @@ function formatDecision(decision: Decision): string {
 
 function formatTask(task: Task): string {
   return joinFields(task.id, `[${task.status}]`, task.title);
-}
-
-function formatAttentionItem(item: AttentionItem): string {
-  return joinFields(
-    item.kind,
-    item.id,
-    `[${item.status}]`,
-    item.summary,
-    `(${item.reason})`,
-    item.assignee === undefined ? undefined : `assignee=${item.assignee.actorId}`,
-  );
 }
 
 function formatSuggestedNextAction(action: SuggestedNextAction): string {
@@ -648,7 +651,7 @@ function printBridgeReport(report: BridgeReport, asJson: boolean): void {
  * cross either boundary. Not an MCP tool.
  */
 async function cmdBridge(parsed: ParsedArgs): Promise<void> {
-  const asJson = parsed.flags.json === true;
+  const asJson = commandOutput(parsed) === "json";
   const webhookConfig = readWebhookBridgeConfig(process.env);
   const hostedUrl = readCampfireUrl();
   if (hostedUrl !== undefined) {
@@ -733,9 +736,9 @@ function printDoctor(
   console.log(lines.join("\n"));
 }
 
-function cmdSetup(flags: Record<string, string | boolean>): void {
+function cmdSetup(parsed: ParsedArgs): void {
   const contract = setupContract();
-  if (flags.json === true) {
+  if (commandOutput(parsed) === "json") {
     printJson(contract);
     return;
   }
@@ -756,7 +759,8 @@ function cmdSetup(flags: Record<string, string | boolean>): void {
   );
 }
 
-function cmdConnect(flags: Record<string, string | boolean>): void {
+function cmdConnect(parsed: ParsedArgs): void {
+  const flags = parsed.flags;
   const harness = requireFlag(flags, "harness");
   const profile = loadProfile();
   const configPath =
@@ -781,7 +785,7 @@ function cmdConnect(flags: Record<string, string | boolean>): void {
     agentToken,
     ...(workspaceId === undefined ? {} : { workspaceId }),
   });
-  if (flags.json === true) {
+  if (commandOutput(parsed) === "json") {
     printJson(plan);
     return;
   }
@@ -809,7 +813,7 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
   const sessionFromFlag = optionalFlag(parsed.flags, "session");
   const sessionId = sessionFromFlag ?? readCampfireSessionId(process.env, []);
   const url = readCampfireUrl();
-  const asJson = parsed.flags.json === true;
+  const asJson = commandOutput(parsed) === "json";
   if (url !== undefined) {
     if (token === undefined) {
       printDoctor(
@@ -876,14 +880,15 @@ async function cmdHandoff(parsed: ParsedArgs): Promise<void> {
       viewerUrl,
       doctor,
     });
-    if (parsed.flags.json === true) printJson(receipt);
+    if (commandOutput(parsed) === "json") printJson(receipt);
     else console.log(formatHandoff(receipt));
   } finally {
     runtime.close();
   }
 }
 
-async function cmdOnboard(flags: Record<string, string | boolean>): Promise<void> {
+async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
+  const flags = parsed.flags;
   // Reject blank input before opening SQLite so a typo cannot create a database.
   const humanName = requireFlag(flags, "human-name");
   const agentName = requireFlag(flags, "agent-name");
@@ -914,7 +919,7 @@ async function cmdOnboard(flags: Record<string, string | boolean>): Promise<void
       humanToken: receipt.human.token,
       agentToken: receipt.agent.token,
     });
-    if (flags.json === true) {
+    if (commandOutput(parsed) === "json") {
       printJson(receipt);
       return;
     }
@@ -1014,7 +1019,7 @@ async function cmdPreflight(parsed: ParsedArgs, argv: string[]): Promise<void> {
   }
   const harness = readHarness(process.env, argv);
   const result = harness === undefined ? status : { ...status, harness };
-  if (parsed.flags.json === true) {
+  if (commandOutput(parsed) === "json") {
     printJson(result);
     return;
   }
@@ -1032,7 +1037,7 @@ async function cmdList(argv: string[]): Promise<void> {
 
 async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requirePositional(parsed, "workspaceId");
-  const asJson = parsed.flags.json === true;
+  const mode = commandOutput(parsed);
   const full = parsed.flags.full === true;
   const since = optionalFlag(parsed.flags, "since");
   if (full && since !== undefined) {
@@ -1043,11 +1048,7 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
   await withBackend(argv, async (backend) => {
     if (full) {
       const view = (await backend.call("get_workspace", { workspaceId })) as WorkspaceView;
-      if (asJson) {
-        printJson(view);
-        return;
-      }
-      console.log(formatFullView(view));
+      emitResult(view, mode, formatFullView);
       return;
     }
     const params: Record<string, unknown> = { workspaceId };
@@ -1055,51 +1056,234 @@ async function cmdShow(parsed: ParsedArgs, argv: string[]): Promise<void> {
       params.since = since;
     }
     const context = (await backend.call("get_workspace_context", params)) as WorkspaceContext;
-    if (asJson) {
-      // The service object already carries workspace, alignment, currentWork,
-      // the orientation hint, and the since projection.
-      printJson(context);
-      return;
-    }
-    console.log(formatOrientation(context, since));
+    // The service object already carries workspace, alignment, currentWork,
+    // the orientation hint, and the since projection.
+    emitResult(context, mode, (value) => formatOrientation(value, since));
   });
 }
 
+interface ActivityRenderPage {
+  items: Contribution[];
+  total: number;
+  truncated: boolean;
+  nextBefore?: string;
+}
+
+function renderActivityPage(page: ActivityRenderPage): string {
+  const lines = page.items.map(formatContributionLine);
+  if (page.truncated) {
+    const parts = [`truncated total=${page.total}`];
+    if (page.nextBefore !== undefined) {
+      parts.push(`nextBefore=${page.nextBefore}`);
+    }
+    lines.push(parts.join(" "));
+  }
+  return lines.join("\n");
+}
+
 async function cmdActivity(parsed: ParsedArgs, argv: string[]): Promise<void> {
-  const workspaceId = requirePositional(parsed, "workspaceId");
+  const mode = commandOutput(parsed);
   const limit = optionalPositiveInt(parsed.flags, "limit");
   const before = optionalFlag(parsed.flags, "before");
-  const asJson = parsed.flags.json === true;
+  const explicit = explicitWorkspaceArgument(parsed);
   await withBackend(argv, async (backend) => {
-    const query: GetActivityInput = { workspaceId };
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const query: GetActivityInput = { workspaceId: selection.workspaceId };
     if (limit !== undefined) {
       query.limit = limit;
     }
     if (before !== undefined) {
       query.before = before;
     }
-    const page = (await backend.call("get_activity", query as unknown as Record<string, unknown>)) as {
-      items: Contribution[];
-      total: number;
-      truncated: boolean;
-      nextBefore?: string;
-    };
-    if (asJson) {
-      // The page object already carries total/truncated/nextBefore.
-      printJson(page);
+    const page = (await backend.call(
+      "get_activity",
+      query as unknown as Record<string, unknown>,
+    )) as ActivityRenderPage;
+    emitResult(page, mode, renderActivityPage);
+  });
+}
+
+async function cmdStatus(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit, { allowAwaiting: true });
+    if ("awaiting" in selection) {
+      emitResult(buildAwaitingWorkspace(selection.human), mode, formatWorkspaceStatus);
       return;
     }
-    for (const item of page.items) {
-      console.log(formatContributionLine(item));
-    }
-    if (page.truncated) {
-      const parts = [`truncated total=${page.total}`];
-      if (page.nextBefore !== undefined) {
-        parts.push(`nextBefore=${page.nextBefore}`);
-      }
-      console.error(parts.join(" "));
-    }
+    const context = (await backend.call("get_workspace_context", {
+      workspaceId: selection.workspaceId,
+    })) as WorkspaceContext;
+    emitResult(buildWorkspaceStatus(context), mode, formatWorkspaceStatus);
   });
+}
+
+async function cmdAgents(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const context = (await backend.call("get_workspace_context", {
+      workspaceId: selection.workspaceId,
+    })) as WorkspaceContext;
+    emitResult(buildWorkspaceAgents(context), mode, formatWorkspaceAgents);
+  });
+}
+
+async function cmdDecisions(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const view = (await backend.call("get_workspace", {
+      workspaceId: selection.workspaceId,
+    })) as WorkspaceView;
+    emitResult(buildWorkspaceDecisions(view), mode, formatWorkspaceDecisions);
+  });
+}
+
+async function cmdChanges(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const since = optionalFlag(parsed.flags, "since");
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId };
+    if (since !== undefined) {
+      params.since = since;
+    }
+    const context = (await backend.call("get_workspace_context", params)) as WorkspaceContext;
+    emitResult(buildWorkspaceChanges(context, since), mode, formatWorkspaceChanges);
+  });
+}
+
+/**
+ * Select one object from the authorized full workspace projection. There is no
+ * cross-workspace lookup: an id from another workspace is simply not found.
+ */
+function selectInspectObject(view: WorkspaceView, kind: InspectKind, id: string): unknown {
+  switch (kind) {
+    case "workspace": {
+      if (view.workspace.id !== id) {
+        throw new WorkspaceNotFound(id);
+      }
+      return view.workspace;
+    }
+    case "agent": {
+      const found = view.participants.find(
+        (participant) => participant.actor.actorId === id && participant.actor.actorType === "agent",
+      );
+      if (found === undefined) {
+        throw new ActorNotFound(id);
+      }
+      // Static participant record, flattened so the agent id is explicit.
+      return {
+        id: found.actor.actorId,
+        actorType: found.actor.actorType,
+        name: found.name,
+        role: found.role,
+        ...(found.harness === undefined ? {} : { harness: found.harness }),
+        ...(found.humanOwnerId === undefined ? {} : { humanOwnerId: found.humanOwnerId }),
+        joinedAt: found.joinedAt,
+      };
+    }
+    case "goal": {
+      if (view.goal === undefined || view.goal.id !== id) {
+        throw new GoalNotFound(id);
+      }
+      return view.goal;
+    }
+    case "task": {
+      const found = view.tasks.find((task) => task.id === id);
+      if (found === undefined) {
+        throw new TaskNotFound(id);
+      }
+      return found;
+    }
+    case "finding": {
+      const found = view.findings.find((finding) => finding.id === id);
+      if (found === undefined) {
+        throw new FindingNotFound(id);
+      }
+      return found;
+    }
+    case "decision": {
+      const found = view.decisions.find((decision) => decision.id === id);
+      if (found === undefined) {
+        throw new DecisionNotFound(id);
+      }
+      return found;
+    }
+    case "artifact": {
+      const found = view.artifacts.find((artifact) => artifact.id === id);
+      if (found === undefined) {
+        throw new ArtifactNotFound(id);
+      }
+      return found;
+    }
+    case "contribution": {
+      const found = view.activity.find((contribution) => contribution.id === id);
+      if (found === undefined) {
+        throw new ValidationError(`Contribution not found in workspace: ${id}`, {
+          field: "contributionId",
+          contributionId: id,
+        });
+      }
+      return found;
+    }
+  }
+}
+
+async function cmdInspect(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const kindRaw = parsed.positionals[0];
+  if (kindRaw === undefined || kindRaw.trim().length === 0) {
+    throw new ValidationError(`Missing required <kind> argument; expected ${INSPECT_KINDS.join("|")}`, {
+      field: "kind",
+    });
+  }
+  if (!(INSPECT_KINDS as readonly string[]).includes(kindRaw)) {
+    throw new ValidationError(
+      `Invalid inspect kind: ${kindRaw}; expected ${INSPECT_KINDS.join("|")}`,
+      { field: "kind", value: kindRaw },
+    );
+  }
+  const kind = kindRaw as InspectKind;
+  const id = parsed.positionals[1];
+  if (id === undefined || id.trim().length === 0) {
+    throw new ValidationError("Missing required <id> argument", { field: "id" });
+  }
+  const workspaceFlag = optionalFlag(parsed.flags, "workspace");
+  if (kind !== "workspace" && workspaceFlag === undefined) {
+    throw new ValidationError(
+      `--workspace <workspaceId> is required to inspect a ${kind}; inspect never searches other workspaces`,
+      { field: "workspace" },
+    );
+  }
+  const workspaceId = kind === "workspace" ? (workspaceFlag ?? id) : workspaceFlag!;
+  await withBackend(argv, async (backend) => {
+    const view = (await backend.call("get_workspace", { workspaceId })) as WorkspaceView;
+    const object = selectInspectObject(view, kind, id);
+    emitResult(buildWorkspaceInspect(workspaceId, kind, object), mode, formatWorkspaceInspect);
+  });
+}
+
+async function cmdCapabilities(parsed: ParsedArgs): Promise<void> {
+  const mode = commandOutput(parsed);
+  emitResult(buildCommandManifest(installedCampfireVersion()), mode, formatCommandManifest);
 }
 
 async function cmdCreateWorkspace(parsed: ParsedArgs, argv: string[]): Promise<void> {
@@ -1418,7 +1602,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         // Opening a browser is convenience, not correctness.
       }
     }
-    if (parsed.flags.json === true) {
+    if (commandOutput(parsed) === "json") {
       printJson({
         human: profile.humanName,
         workspaces: workspaces.map((workspace) => ({
@@ -1516,12 +1700,12 @@ function startHuman(humanName: string): void {
 
 async function cmdDefault(parsed: ParsedArgs): Promise<void> {
   if (loadProfile() !== undefined) {
-    printStatus(parsed.flags.json === true);
+    printStatus(commandOutput(parsed) === "json");
     return;
   }
   const named = optionalFlag(parsed.flags, "human-name");
   const noninteractive =
-    parsed.flags.json === true || process.env.CAMPFIRE_NONINTERACTIVE === "1" || !isInteractiveTty();
+    commandOutput(parsed) === "json" || process.env.CAMPFIRE_NONINTERACTIVE === "1" || !isInteractiveTty();
   if (noninteractive && named === undefined) {
     throw new ValidationError(
       "Run campfire in a terminal to confirm your name, or pass --human-name. Agents and workspaces appear when a harness connects.",
@@ -1530,7 +1714,7 @@ async function cmdDefault(parsed: ParsedArgs): Promise<void> {
   }
   const humanName = named ?? (await promptHumanName(defaultHumanName()));
   startHuman(humanName);
-  if (parsed.flags.json === true) {
+  if (commandOutput(parsed) === "json") {
     const profile = loadProfile();
     printJson({
       human: profile?.humanName,
@@ -1560,14 +1744,60 @@ function printHelp(command?: string): void {
   console.log(formatCommandUsage(command));
 }
 
+type CliHandler = (parsed: ParsedArgs, argv: string[]) => Promise<void> | void;
+
+/**
+ * Dispatch map keyed by catalog command. Tests assert its keys match the
+ * catalog exactly, so a dispatched command cannot silently lose its help or
+ * capabilities entry, and a catalogued command cannot lose its handler.
+ */
+export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
+  setup: (parsed) => cmdSetup(parsed),
+  onboard: (parsed) => cmdOnboard(parsed),
+  connect: (parsed) => cmdConnect(parsed),
+  doctor: (parsed) => cmdDoctor(parsed),
+  handoff: (parsed) => cmdHandoff(parsed),
+  up: (parsed) => cmdUp(parsed),
+  status: (parsed, argv) => cmdStatus(parsed, argv),
+  agents: (parsed, argv) => cmdAgents(parsed, argv),
+  decisions: (parsed, argv) => cmdDecisions(parsed, argv),
+  changes: (parsed, argv) => cmdChanges(parsed, argv),
+  inspect: (parsed, argv) => cmdInspect(parsed, argv),
+  capabilities: (parsed) => cmdCapabilities(parsed),
+  bridge: (parsed) => cmdBridge(parsed),
+  whoami: (_parsed, argv) => cmdWhoami(argv),
+  list: (_parsed, argv) => cmdList(argv),
+  show: (parsed, argv) => cmdShow(parsed, argv),
+  activity: (parsed, argv) => cmdActivity(parsed, argv),
+  preflight: (parsed, argv) => cmdPreflight(parsed, argv),
+  "create-workspace": (parsed, argv) => cmdCreateWorkspace(parsed, argv),
+  "update-workspace": (parsed, argv) => cmdUpdateWorkspace(parsed, argv),
+  "create-goal": (parsed, argv) => cmdCreateGoal(parsed, argv),
+  "update-goal": (parsed, argv) => cmdUpdateGoal(parsed, argv),
+  "add-finding": (parsed, argv) => cmdAddFinding(parsed, argv),
+  "add-decision": (parsed, argv) => cmdAddDecision(parsed, argv),
+  "accept-decision": (parsed, argv) => cmdAcceptDecision(parsed, argv),
+  "create-task": (parsed, argv) => cmdCreateTask(parsed, argv),
+  "update-task": (parsed, argv) => cmdUpdateTask(parsed, argv),
+  "add-artifact": (parsed, argv) => cmdAddArtifact(parsed, argv),
+  "create-human": (parsed, argv) => cmdCreateHuman(parsed, argv),
+  "create-agent": (parsed, argv) => cmdCreateAgent(parsed, argv),
+  "issue-token": (parsed, argv) => cmdIssueToken(parsed, argv),
+  "revoke-token": (parsed, argv) => cmdRevokeToken(parsed, argv),
+  invite: (parsed, argv) => cmdInvite(parsed, argv),
+  join: (parsed, argv) => cmdJoin(parsed, argv),
+  serve: (parsed) => cmdServe(parsed),
+  view: (parsed, argv) => cmdView(parsed, argv),
+  mcp: (_parsed, argv) => cmdMcp(argv),
+  init: () => cmdInit(),
+  bootstrap: (parsed) => cmdBootstrap(parsed.flags),
+  seed: (parsed) => cmdSeed(parsed.flags),
+  help: (parsed) => printHelp(parsed.positionals[0]),
+};
+
 export async function runCli(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
   applyDbFlag(parsed.flags);
-
-  if (parsed.command === "help") {
-    printHelp(parsed.positionals[0]);
-    return;
-  }
 
   if (parsed.flags.help === true) {
     printHelp(parsed.command);
@@ -1578,81 +1808,15 @@ export async function runCli(argv: string[]): Promise<void> {
     return cmdDefault(parsed);
   }
 
-  switch (parsed.command) {
-    case "init":
-      return cmdInit();
-    case "setup":
-      return cmdSetup(parsed.flags);
-    case "onboard":
-      return cmdOnboard(parsed.flags);
-    case "up":
-      return cmdUp(parsed);
-    case "status":
-      printStatus(parsed.flags.json === true);
-      return;
-    case "bridge":
-      return cmdBridge(parsed);
-    case "connect":
-      return cmdConnect(parsed.flags);
-    case "doctor":
-      return cmdDoctor(parsed);
-    case "handoff":
-      return cmdHandoff(parsed);
-    case "bootstrap":
-      return cmdBootstrap(parsed.flags);
-    case "seed":
-      return cmdSeed(parsed.flags);
-    case "serve":
-      return cmdServe(parsed);
-    case "view":
-      return cmdView(parsed, argv);
-    case "mcp":
-      return cmdMcp(argv);
-    case "preflight":
-      return cmdPreflight(parsed, argv);
-    case "whoami":
-      return cmdWhoami(argv);
-    case "list":
-      return cmdList(argv);
-    case "show":
-      return cmdShow(parsed, argv);
-    case "activity":
-      return cmdActivity(parsed, argv);
-    case "create-workspace":
-      return cmdCreateWorkspace(parsed, argv);
-    case "update-workspace":
-      return cmdUpdateWorkspace(parsed, argv);
-    case "create-goal":
-      return cmdCreateGoal(parsed, argv);
-    case "update-goal":
-      return cmdUpdateGoal(parsed, argv);
-    case "add-finding":
-      return cmdAddFinding(parsed, argv);
-    case "add-decision":
-      return cmdAddDecision(parsed, argv);
-    case "accept-decision":
-      return cmdAcceptDecision(parsed, argv);
-    case "create-task":
-      return cmdCreateTask(parsed, argv);
-    case "update-task":
-      return cmdUpdateTask(parsed, argv);
-    case "add-artifact":
-      return cmdAddArtifact(parsed, argv);
-    case "create-human":
-      return cmdCreateHuman(parsed, argv);
-    case "create-agent":
-      return cmdCreateAgent(parsed, argv);
-    case "issue-token":
-      return cmdIssueToken(parsed, argv);
-    case "revoke-token":
-      return cmdRevokeToken(parsed, argv);
-    case "invite":
-      return cmdInvite(parsed, argv);
-    case "join":
-      return cmdJoin(parsed, argv);
-    default:
-      throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
+  if (!isKnownCommand(parsed.command)) {
+    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
   }
+
+  // Validate the output request once for every catalogued command, including
+  // JSON-only commands whose handlers never consult the mode.
+  resolveOutputMode(parsed, commandSpec(parsed.command));
+
+  return CLI_COMMAND_HANDLERS[parsed.command](parsed, argv);
 }
 
 async function run(): Promise<void> {
@@ -1672,7 +1836,10 @@ export async function runCliEntry(argv: string[]): Promise<number> {
     return 0;
   } catch (error) {
     console.error(
-      formatCliFailure(error, { json: parsed.flags.json === true, command: parsed.command }),
+      formatCliFailure(error, {
+        json: resolveErrorOutput(parsed) === "json",
+        command: parsed.command,
+      }),
     );
     return 1;
   }
