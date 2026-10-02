@@ -1,4 +1,5 @@
 -- Campfire v1 schema (migration version 1).
+-- Enrollment tables are introduced by v5; retain this baseline for legacy upgrades.
 -- Deliberately small, explicit, inspectable. No transcript storage.
 -- JSON is used only for genuinely flexible auxiliary metadata.
 -- Versioning is owned by src/store/migrations.ts; do not add columns here.

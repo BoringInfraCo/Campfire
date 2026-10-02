@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_019.md
+docs/SPRINT_020.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -107,6 +107,17 @@ is `docs/SPRINT_CLI_001_RESULT.md` and its compatibility audit is
 `docs/SPRINT_CLI_001_COMPATIBILITY_AUDIT.md`. One human terminal trace and one
 cold-agent CLI-only trace passed. It is published and deployed as minor release
 `v1.8.0` and does not claim Gate B, Gate C, or Gate F.
+Sprint 020 — Bring the Next Teammate In has an implemented `v1.9.0` candidate;
+its active acceptance contract is `docs/SPRINT_020.md` and current disposition
+is recorded in `docs/SPRINT_020_RESULT.md`. Secure enrollment, recipient-owned
+Codex/OpenCode connections, remote profiles, orientation, contribution, return,
+and enrollment recovery are in tree. The independent two-human/two-machine
+trace and both real recipient-harness paths remain pending; this is CONDITIONAL
+GO for an engineering candidate, not release-ready GO. No public promotion or
+production deployment has occurred. Enrollment authority, schema, retry/recovery,
+and remote-profile changes are explicit sprint requirements; unrelated memory,
+orchestration, Viewer writes, and broad platform work remain out of scope.
+Gate B and Gate C remain unmeasured until qualifying evidence exists.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

@@ -5,6 +5,7 @@
  * bearer token is the actor; callers never send an acting actor id.
  */
 import { CampfireError, ValidationError, type CampfireErrorCode } from "../domain/errors.js";
+import type { EnrollmentReceipt, RedeemEnrollmentInput } from "../domain/enrollment.js";
 import type { BridgeReport } from "../bridge/report.js";
 
 const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
@@ -42,6 +43,7 @@ export interface CampfireHttpFailure {
   ok: false;
   error: string;
   message: string;
+  details?: Record<string, unknown>;
 }
 
 export type CampfireHttpResponse<T = unknown> = CampfireHttpSuccess<T> | CampfireHttpFailure;
@@ -132,7 +134,7 @@ async function readCampfireResponse<T>(response: Response): Promise<T> {
     return body.result;
   }
   if (body.ok === false) {
-    throw new CampfireError(asCode(body.error), body.message, { httpStatus: response.status });
+    throw new CampfireError(asCode(body.error), body.message, { ...(body.details ?? {}), httpStatus: response.status });
   }
   throw new ValidationError("Campfire HTTP response was missing ok");
 }
@@ -140,6 +142,8 @@ async function readCampfireResponse<T>(response: Response): Promise<T> {
 export async function campfireHttpCall<T = unknown>(options: CampfireHttpCallOptions): Promise<T> {
   const response = await fetch(callUrl(options.baseUrl), {
     method: "POST",
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
     headers: {
       authorization: `Bearer ${options.token}`,
       "content-type": "application/json",
@@ -162,7 +166,21 @@ export async function campfireHttpBridgeReport(options: {
   const url = `${options.baseUrl.replace(/\/+$/, "")}/v1/bridge`;
   const response = await fetch(url, {
     method: "GET",
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
     headers: { authorization: `Bearer ${options.token}` },
   });
   return readCampfireResponse<BridgeReport>(response);
+}
+
+/** Invitation capability is never sent to the actor dispatch endpoint. */
+export async function campfireHttpRedeemEnrollment(options: {
+  baseUrl: string; secret: string; input: RedeemEnrollmentInput;
+}): Promise<EnrollmentReceipt> {
+  const response = await fetch(`${options.baseUrl.replace(/\/+$/, "")}/v1/enrollment/redeem`, {
+    method: "POST", redirect: "error", signal: AbortSignal.timeout(15_000),
+    headers: { authorization: `Bearer ${options.secret}`, "content-type": "application/json" },
+    body: JSON.stringify(options.input),
+  });
+  return readCampfireResponse<EnrollmentReceipt>(response);
 }

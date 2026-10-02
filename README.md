@@ -4,6 +4,11 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
+This checkout targets the **v1.9.0 candidate**: bring a new teammate into an
+existing shared workspace with their own identities and agents. The independent
+two-human acceptance trace is pending; v1.9 has not been published or deployed.
+The published installer remains on v1.8 until release promotion.
+
 - **Share work state** — goals, tasks, findings, decisions, and artifacts with provenance
 - **Continue anywhere** — pick up work in a fresh session on any supported harness
 - **Stay authorized** — invite-only workspaces; authorization precedes retrieval
@@ -71,6 +76,54 @@ at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
 available as a deterministic demo/evaluation fixture. It is not how a new
 operator creates their workspace.
 
+## Join existing team work
+
+Use an already provisioned, reachable Campfire instance. An authenticated human
+workspace owner creates a private invitation for one new teammate:
+
+```bash
+campfire invite-teammate <workspaceId> --out ./alice.invitation.json
+```
+
+The owner transfers that file privately. It contains single-use enrollment
+authority for this workspace, expires after 24 hours by default, and contains
+neither the owner's credentials nor a copy of their work. Anyone holding the
+file can claim it; the recipient's display name is not verified identity.
+
+On the recipient's machine, using a fresh or isolated Campfire profile:
+
+```bash
+campfire join --invitation-file ./alice.invitation.json \
+  --human-name "Alice" --harness opencode
+campfire status
+campfire up
+```
+
+Select both supported harnesses by repeating `--harness codex --harness opencode`.
+Join stores the recipient's own credentials and prepares their MCP connections;
+reload the harness and approve its normal tool access. Remote `up` serves a
+local read-only journal of the shared backend. It creates no local collaboration
+database or second shared API. Normal commands use the saved remote profile.
+
+The incoming agent reads the existing goal, decisions, blockers, findings and
+provenance before acting, and explicitly registers its own session before
+contributing. An additional supported harness can be enrolled later:
+
+```bash
+campfire connect --harness codex --enroll
+# Reapply an already enrolled connection without creating another identity:
+campfire connect --harness codex
+```
+
+Retry interrupted join with the same file, human name, selected harnesses and
+profile directory. Private pending state preserves the original prepared
+credentials. Use `CAMPFIRE_CONFIG_DIR` for an isolated profile when one already
+exists; unrelated profiles and harness configuration are not silently replaced.
+The owner can cancel enrollment authority with
+`campfire revoke-invitation <invitationId> --workspace <workspaceId>`; this does
+not remove an already enrolled participant. Legacy existing-actor `invite` and
+`join <workspaceId>` remain available. See [the operator runbook](docs/OPERATOR.md).
+
 Run `campfire --help` for the grouped command list — **Start and connect**, **Understand the workspace**, **Recover and hand off**, **Discover the CLI**, and **Administration** — or `campfire <command> --help` for one command. Existing lower-level commands remain available under Administration. See [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) for the product thesis.
 
 ## Agent-led setup
@@ -108,6 +161,8 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance |
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |
 | `campfire invite` / `join` | Grant and accept invite-only workspace membership |
+| `campfire invite-teammate` / `join --invitation-file` | Owner authorizes one new human; recipient enrolls their own supported agents into existing shared work |
+| `campfire revoke-invitation` | Cancel enrollment authority without removing existing participants |
 | `campfire serve` / `view` | Host the HTTP API and the read-only team journal |
 | `campfire preflight <workspaceId>` | Validate hosted endpoint, token, identity, workspace access, and agent-session readiness without mutation |
 | `campfire mcp` | Expose the same application service over MCP stdio |
@@ -122,10 +177,10 @@ Requires Node.js **22 or newer**. SQLite is the store; one process owns the file
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
-For a pinned v1.6.0 install after the versioned static asset is deployed:
+For the currently published pinned v1.8.0 install:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.6.0/install.sh | sh -s -- --version 1.6.0
+curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --version 1.8.0
 ```
 
 Or build from source:
@@ -162,6 +217,7 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 - **Viewer is read-only.** `campfire view` is a loopback team journal; the browser never holds a token.
 - **Worker serves the API and downloads.** The remote Worker/D1 path does not serve a hosted browser journal.
 - **External team-use validation is not measured.** Field Trace 001 was cancelled by founder decision; Sprint 004/006 remain controlled product-surface evidence, not retention or PMF evidence.
+- **v1.9 candidate acceptance is pending.** Enrollment engineering checks and the required independent two-human trace have separate verdicts in [Sprint 020 result](docs/SPRINT_020_RESULT.md). No v1.9 release promotion has occurred.
 
 ---
 

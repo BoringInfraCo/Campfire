@@ -1,5 +1,7 @@
 import Database from "better-sqlite3";
 import { applyMigrations } from "./migrations.js";
+import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
+  mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
 import type {
   ActorType,
   ActorToken,
@@ -497,6 +499,16 @@ function emptyDeliveryCounts(): WebhookDeliveryCounts {
 }
 
 function createSqliteStore(db: Database.Database): CampfireStore {
+  function executeEnrollment(statements: EnrollmentStatement[]): boolean {
+    return db.transaction(() => {
+      let claimed = false;
+      for (const [index, statement] of statements.entries()) {
+        const result = db.prepare(statement.sql).run(...statement.values);
+        if (index === 0) claimed = result.changes === 1;
+      }
+      return claimed;
+    }).immediate();
+  }
   return {
     // --- identity ---
     createOrganization(organization) {
@@ -1021,6 +1033,32 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         .prepare("SELECT * FROM workspace_invites WHERE workspace_id = ? ORDER BY created_at, rowid")
         .all(workspaceId) as WorkspaceInviteRow[];
       return rows.map(mapWorkspaceInvite);
+    },
+
+    createEnrollmentInvitation(invitation, contribution) {
+      return executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+    },
+    getEnrollmentInvitation(id) {
+      const row = db.prepare("SELECT * FROM enrollment_invitations WHERE id = ?").get(id) as EnrollmentInvitationRow | undefined;
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    getEnrollmentInvitationByHash(secretHash) {
+      const row = db.prepare("SELECT * FROM enrollment_invitations WHERE secret_hash = ?").get(secretHash) as EnrollmentInvitationRow | undefined;
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    revokeEnrollmentInvitation(input) {
+      return executeEnrollment(revokeEnrollmentStatements(input, globalThis.crypto.randomUUID()));
+    },
+    provisionEnrollment(plan) {
+      return executeEnrollment(provisionEnrollmentStatements(plan, globalThis.crypto.randomUUID()));
+    },
+    getOwnedAgentEnrollment(workspaceId, humanId, harness) {
+      const row = db.prepare("SELECT * FROM managed_agent_slots WHERE workspace_id = ? AND human_id = ? AND harness = ?")
+        .get(workspaceId, humanId, harness) as OwnedAgentEnrollmentRow | undefined;
+      return row === undefined ? undefined : mapOwnedAgentEnrollment(row);
+    },
+    provisionOwnedAgent(plan) {
+      return executeEnrollment(provisionOwnedAgentStatements(plan, globalThis.crypto.randomUUID()));
     },
 
     // --- domain events ---

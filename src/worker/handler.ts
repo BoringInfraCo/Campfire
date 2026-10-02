@@ -1,3 +1,4 @@
+import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
 /**
  * Cloudflare Workers fetch handler for Campfire.
  *
@@ -231,6 +232,7 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
         return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
       }
 
+      if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
       if (path === "/v1/call") {
         return await handleSyncCall(service, request);
       }
@@ -278,6 +280,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
         return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
       }
 
+      if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
       if (path === "/v1/call") {
         return await handleAsyncCall(service, request);
       }
@@ -539,4 +542,30 @@ async function handleAsyncBridgeReport(
   }
   const report = await collectBridgeReport(readWebhookBridgeConfig(webhookEnv), store);
   return json(200, { ok: true, result: report });
+}
+
+async function handleEnrollmentRedeem(service: CampfireService | AsyncCampfireService, request: Request): Promise<Response> {
+  const secret = bearerToken(request);
+  if (secret === undefined) return fail(401, "Unauthorized", "Missing invitation capability");
+  try {
+    const reader = request.body?.getReader();
+    const chunks: Uint8Array[] = []; let length = 0;
+    if (reader !== undefined) {
+      while (true) {
+        const item = await reader.read(); if (item.done) break;
+        length += item.value.byteLength;
+        if (length > MAX_BODY_BYTES) { await reader.cancel(); return fail(400, "ValidationError", "Request body too large"); }
+        chunks.push(item.value);
+      }
+    }
+    const bytes = new Uint8Array(length); let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+    let input: unknown;
+    try { input = JSON.parse(new TextDecoder().decode(bytes)); } catch { return fail(400, "ValidationError", "Request body must be JSON"); }
+    const result = await service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
+    return json(200, { ok: true, result });
+  } catch (error) {
+    if (error instanceof CampfireError) return fail(statusFor(error.code, false), error.code, error.message, error.details);
+    return fail(500, "InternalError", "Enrollment could not be completed; retry the saved request");
+  }
 }

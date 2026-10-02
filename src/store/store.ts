@@ -33,6 +33,7 @@ import type {
   TaskStatus,
   DecisionStatus,
 } from "../domain/types.js";
+import type { EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
 
 export interface WorkspacePatch {
   name?: string;
@@ -137,6 +138,16 @@ export interface CampfireStore {
   getOpenInvite(workspaceId: string, actor: ActorRef): WorkspaceInvite | undefined;
   consumeInvite(id: string, consumedAt: string): void;
   listInvites(workspaceId: string): WorkspaceInvite[];
+
+  // Guarded Sprint 020 administrative provisioning. False means this execution
+  // did not claim authority; callers may inspect a winning receipt for replay.
+  createEnrollmentInvitation(invitation: EnrollmentInvitation, contribution: Contribution): boolean;
+  getEnrollmentInvitation(id: string): EnrollmentInvitation | undefined;
+  getEnrollmentInvitationByHash(secretHash: string): EnrollmentInvitation | undefined;
+  revokeEnrollmentInvitation(input: RevokeEnrollmentInvitationPlan): boolean;
+  provisionEnrollment(plan: EnrollmentProvisionPlan): boolean;
+  getOwnedAgentEnrollment(workspaceId: string, humanId: string, harness: EnrollmentHarness): OwnedAgentEnrollmentRecord | undefined;
+  provisionOwnedAgent(plan: OwnedAgentProvisionPlan): boolean;
 
   // --- domain events ---
   createDomainEvent(event: DomainEventRecord): void;

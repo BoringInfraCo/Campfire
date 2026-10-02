@@ -50,6 +50,13 @@ export interface SetupContract {
     bind: "loopback";
     tokenInBrowser: false;
   };
+  enrollment: {
+    invitation: "campfire invite-teammate <workspaceId> --out <private-file>";
+    join: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode";
+    additionalAgent: "campfire connect --harness codex|opencode --enroll";
+    remoteStartup: "campfire up";
+    sessionsAutomatic: false;
+  };
   reloadRequired: true;
   approvalMayBeRequired: true;
   handoffFields: typeof SETUP_HANDOFF_FIELDS;
@@ -82,6 +89,12 @@ export function setupContract(options?: {
     },
     agentSteps: SETUP_AGENT_STEPS,
     viewer: { command: "campfire view", bind: "loopback", tokenInBrowser: false },
+    enrollment: {
+      invitation: "campfire invite-teammate <workspaceId> --out <private-file>",
+      join: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode",
+      additionalAgent: "campfire connect --harness codex|opencode --enroll",
+      remoteStartup: "campfire up", sessionsAutomatic: false,
+    },
     reloadRequired: true,
     approvalMayBeRequired: true,
     handoffFields: SETUP_HANDOFF_FIELDS,

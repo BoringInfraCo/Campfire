@@ -51,6 +51,8 @@ import type {
 } from "../domain/events.js";
 import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
+import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
+  mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 
 /** Async mirror of `CampfireStore`: identical shape, Promise returns. */
 export type AsyncCampfireStore = Omit<
@@ -575,6 +577,16 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     return db.prepare(query).bind(...params).run();
   }
 
+  async function executeEnrollment(statements: EnrollmentStatement[]): Promise<boolean> {
+    // This operation owns its complete atomic batch. Letting an outer buffer
+    // defer it would break its claim result and could split administrative state.
+    if (txnDepth !== 0) throw new Error("Enrollment provisioning cannot nest inside a buffered D1 transaction");
+    const results = await db.batch(statements.map((statement) => db.prepare(statement.sql).bind(...statement.values)));
+    const claim = results[0] as { success?: boolean; meta?: { changes?: number } } | undefined;
+    if (claim?.success !== true) throw new Error("Enrollment persistence failed");
+    return claim.meta?.changes === 1;
+  }
+
   return {
     async createOrganization(organization) {
       await run("INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?)",
@@ -917,6 +929,31 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     async listInvites(workspaceId) {
       return (await all<WorkspaceInviteRow>(
         "SELECT * FROM workspace_invites WHERE workspace_id = ? ORDER BY created_at, rowid", workspaceId)).map(mapWorkspaceInvite);
+    },
+
+    async createEnrollmentInvitation(invitation, contribution) {
+      return executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+    },
+    async getEnrollmentInvitation(id) {
+      const row = await first<EnrollmentInvitationRow>("SELECT * FROM enrollment_invitations WHERE id = ?", id);
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    async getEnrollmentInvitationByHash(secretHash) {
+      const row = await first<EnrollmentInvitationRow>("SELECT * FROM enrollment_invitations WHERE secret_hash = ?", secretHash);
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    async revokeEnrollmentInvitation(input) {
+      return executeEnrollment(revokeEnrollmentStatements(input, globalThis.crypto.randomUUID()));
+    },
+    async provisionEnrollment(plan) {
+      return executeEnrollment(provisionEnrollmentStatements(plan, globalThis.crypto.randomUUID()));
+    },
+    async getOwnedAgentEnrollment(workspaceId, humanId, harness) {
+      const row = await first<OwnedAgentEnrollmentRow>("SELECT * FROM managed_agent_slots WHERE workspace_id = ? AND human_id = ? AND harness = ?", workspaceId, humanId, harness);
+      return row === undefined ? undefined : mapOwnedAgentEnrollment(row);
+    },
+    async provisionOwnedAgent(plan) {
+      return executeEnrollment(provisionOwnedAgentStatements(plan, globalThis.crypto.randomUUID()));
     },
 
     async createDomainEvent(event) {

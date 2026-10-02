@@ -1,3 +1,4 @@
+import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
 /**
  * Campfire HTTP adapter.
  *
@@ -209,6 +210,23 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
     const path = url.split("?")[0];
     if (path === "/v1/bridge") {
       await handleBridgeReport(req, res, options.runtime.store);
+      return;
+    }
+    if (path === "/v1/enrollment/redeem") {
+      if (req.method !== "POST") { fail(res, 405, "ValidationError", "POST required", {}); return; }
+      const secret = bearerToken(req);
+      if (secret === undefined) { fail(res, 401, "Unauthorized", "Missing invitation capability", {}); return; }
+      try {
+        const raw = await readBody(req);
+        let input: unknown;
+        try { input = JSON.parse(raw); } catch { throw new CampfireError("ValidationError", "Request body must be JSON"); }
+        const result = service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
+        writeJson(res, 200, { ok: true, result });
+        void deliverPending();
+      } catch (error) {
+        if (error instanceof CampfireError) fail(res, statusFor(error.code, false), error.code, error.message, {}, error.details);
+        else fail(res, 500, "InternalError", "Enrollment could not be completed; retry the saved request", {});
+      }
       return;
     }
     if (path !== "/v1/call") {

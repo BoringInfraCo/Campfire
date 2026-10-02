@@ -14,6 +14,8 @@ export interface ParsedArgs {
 
 const BOOLEAN_FLAGS = new Set([
   "reset",
+  "enroll",
+  "allow-loopback",
   "help",
   "json",
   "full",

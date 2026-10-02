@@ -9,6 +9,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { ValidationError } from "../domain/errors.js";
+import { canonicalEndpoint } from "./endpoint.js";
 
 export const PROFILE_VERSION = 1 as const;
 
@@ -19,7 +20,8 @@ export interface ProfileAgent {
 }
 
 export interface CampfireProfile {
-  version: typeof PROFILE_VERSION;
+  version: typeof PROFILE_VERSION | 2;
+  mode?: "local";
   databasePath: string;
   url: string;
   humanId: string;
@@ -35,8 +37,28 @@ export interface CampfireProfile {
   agents?: ProfileAgent[];
 }
 
+/** Remote enrollment records no local collaboration database. */
+export interface RemoteCampfireProfile {
+  version: 2;
+  mode: "remote";
+  url: string;
+  humanId: string;
+  humanName: string;
+  workspaceId: string;
+  workspaceName?: string;
+  goalTitle?: string;
+  agents: ProfileAgent[];
+}
+
+export type AnyCampfireProfile = CampfireProfile | RemoteCampfireProfile;
+
 export interface CampfireCredentials {
   humanToken: string;
+  /** Remote credentials are bound to the complete canonical API endpoint. */
+  endpoint?: string;
+  humanId?: string;
+  workspaceId?: string;
+  agentIds?: Record<string, string>;
   /** Single-agent onboard compatibility. Prefer `agents` when more than one harness is connected. */
   agentToken?: string;
   agents?: Record<string, string>;
@@ -114,9 +136,9 @@ function readAgents(value: unknown): ProfileAgent[] | undefined {
   });
 }
 
-export function loadProfile(
+export function loadAnyProfile(
   env: NodeJS.ProcessEnv = process.env,
-): CampfireProfile | undefined {
+): AnyCampfireProfile | undefined {
   const { configPath } = resolveProfilePaths(env);
   if (!existsSync(configPath)) return undefined;
   let parsed: unknown;
@@ -130,9 +152,42 @@ export function loadProfile(
   if (!isRecord(parsed)) {
     throw new ValidationError("Campfire profile must be a JSON object", { field: "profile" });
   }
+  if (parsed.version !== 1 && parsed.version !== 2) {
+    throw new ValidationError("Unsupported Campfire profile version", { field: "profile" });
+  }
+  if (parsed.version === 1 && parsed.mode !== undefined && parsed.mode !== "local" ||
+      parsed.version === 2 && parsed.mode !== "local" && parsed.mode !== "remote") {
+    throw new ValidationError("Campfire profile mode is invalid", { field: "profile" });
+  }
+  if (parsed.version === 2 && parsed.mode === "remote") {
+    if (parsed.databasePath !== undefined) {
+      throw new ValidationError("Remote profile cannot select a local database", { field: "profile" });
+    }
+    const agents = readAgents(parsed.agents);
+    if (agents === undefined || agents.length === 0 ||
+        agents.some((agent) => agent.harness !== "codex" && agent.harness !== "opencode") ||
+        new Set(agents.map((agent) => agent.harness)).size !== agents.length ||
+        new Set(agents.map((agent) => agent.id)).size !== agents.length) {
+      throw new ValidationError("Remote profile requires distinct supported owned agents", { field: "agents" });
+    }
+    return {
+      version: 2,
+      mode: "remote",
+      // Loopback profiles can only be created via explicit test opt-in. Reading
+      // their recorded endpoint must remain possible in a fresh process.
+      url: canonicalEndpoint(requiredString(parsed, "url"), { allowLoopbackHttp: true }),
+      humanId: requiredString(parsed, "humanId"),
+      humanName: requiredString(parsed, "humanName"),
+      workspaceId: requiredString(parsed, "workspaceId"),
+      ...(parsed.workspaceName === undefined ? {} : { workspaceName: requiredString(parsed, "workspaceName") }),
+      ...(parsed.goalTitle === undefined ? {} : { goalTitle: requiredString(parsed, "goalTitle") }),
+      agents,
+    };
+  }
   const databasePath = requiredString(parsed, "databasePath");
   const profile: CampfireProfile = {
-    version: PROFILE_VERSION,
+    version: parsed.version,
+    ...(parsed.version === 2 ? { mode: "local" as const } : {}),
     databasePath: isAbsolute(databasePath) ? databasePath : resolve(databasePath),
     url: requiredString(parsed, "url"),
     humanId: requiredString(parsed, "humanId"),
@@ -155,6 +210,18 @@ export function loadProfile(
   return profile;
 }
 
+/** Local callers must fail before implicitly opening SQLite for a remote profile. */
+export function loadProfile(env: NodeJS.ProcessEnv = process.env): CampfireProfile | undefined {
+  const profile = loadAnyProfile(env);
+  if (profile?.mode === "remote") {
+    throw new ValidationError("Remote Campfire profile requires the shared backend; no local database is selected", {
+      field: "profile",
+      nextAction: "use_remote_profile_backend",
+    });
+  }
+  return profile;
+}
+
 export function loadCredentials(
   env: NodeJS.ProcessEnv = process.env,
 ): CampfireCredentials | undefined {
@@ -174,6 +241,16 @@ export function loadCredentials(
   const credentials: CampfireCredentials = {
     humanToken: requiredString(parsed, "humanToken"),
   };
+  if (parsed.endpoint !== undefined) {
+    credentials.endpoint = canonicalEndpoint(requiredString(parsed, "endpoint"), { allowLoopbackHttp: true });
+    credentials.humanId = requiredString(parsed, "humanId");
+    credentials.workspaceId = requiredString(parsed, "workspaceId");
+    if (!isRecord(parsed.agentIds)) {
+      throw new ValidationError("Remote credential agent identity binding is missing", { field: "credentials" });
+    }
+    credentials.agentIds = {};
+    for (const harness of Object.keys(parsed.agentIds)) credentials.agentIds[harness] = requiredString(parsed.agentIds, harness);
+  }
   const agentToken = optionalString(parsed, "agentToken");
   if (agentToken !== undefined) credentials.agentToken = agentToken;
   if (parsed.agents !== undefined) {
@@ -305,6 +382,7 @@ export function persistOnboardProfile(
 export function readOperatorHumanToken(
   env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
+  if (!storedEndpointMatches(env)) return undefined;
   const token = loadCredentials(env)?.humanToken.trim();
   return token && token.length > 0 ? token : undefined;
 }
@@ -313,14 +391,31 @@ export function readOperatorAgentToken(
   env: NodeJS.ProcessEnv = process.env,
   harness?: string,
 ): string | undefined {
+  if (!storedEndpointMatches(env)) return undefined;
   const credentials = loadCredentials(env);
   if (credentials === undefined) return undefined;
+  const profile = loadAnyProfile(env);
+  if (profile?.mode === "remote") {
+    if (harness === undefined) return undefined;
+    const agent = profile.agents.find((entry) => entry.harness === harness);
+    if (agent === undefined || credentials.agentIds?.[harness] !== agent.id) return undefined;
+    return credentials.agents?.[harness]?.trim() || undefined;
+  }
   if (harness !== undefined) {
     const specific = credentials.agents?.[harness]?.trim();
     if (specific !== undefined && specific.length > 0) return specific;
   }
   const legacy = credentials.agentToken?.trim();
   return legacy !== undefined && legacy.length > 0 ? legacy : undefined;
+}
+
+function storedEndpointMatches(env: NodeJS.ProcessEnv): boolean {
+  const profile = loadAnyProfile(env);
+  if (profile?.mode !== "remote") return true;
+  const url = canonicalEndpoint(env.CAMPFIRE_URL?.trim() || profile.url, { allowLoopbackHttp: true });
+  const credentials = loadCredentials(env);
+  return url === profile.url && credentials?.endpoint === profile.url &&
+    credentials.humanId === profile.humanId && credentials.workspaceId === profile.workspaceId;
 }
 
 export function formatStatus(profile: CampfireProfile): string {

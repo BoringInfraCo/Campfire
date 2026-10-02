@@ -9,6 +9,11 @@ docs/internal/
 !fixtures/sprint-011/webhook.log
 !public-release/overrides/fixtures/billing/deploy.log
 .DS_Store
+*.invitation.json
+pending-enrollment.json
+pending-agent-*.json
+enrollment-receipt.json
+credentials.json
 .dev.vars
 .env
 .env.*

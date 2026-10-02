@@ -278,6 +278,16 @@ the existing authorized workspace model. Neither sprint is Phase 4 or Phase 5
 completion. Gate B, Gate C, and Gate F remain unmeasured. Successful delivery
 is not repeat-usage evidence and not controlled action.
 
+Sprint 020 — Bring the Next Teammate In has an implemented `v1.9.0` candidate. Its contract is `docs/SPRINT_020.md`: owner-authorized
+new-person enrollment, recipient-owned agent connections, existing-work
+orientation, useful contribution back, and fresh-process return through one
+continuous journey. The candidate is in tree; `docs/SPRINT_020_RESULT.md` records
+CONDITIONAL GO with independent two-human/two-machine acceptance and both live
+recipient-harness paths pending. It is not published or deployed. Enrollment
+atomicity, safe retry/recovery, and remote-profile support are part of that slice; finding lifecycle, context-budget redesign, broader concurrency
+work, and new integrations remain separate. Gate B and Gate C remain unmeasured
+until qualifying behavior is independently observed.
+
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
 ### Questions
@@ -1343,6 +1353,8 @@ Sprint 018 — Enter With the Session   GO ✓; v1.6.0 released + deployed; cold
 Sprint 019 — Carry the Work Out   GO ✓; v1.7.1 released; one signed webhook for a closed event vocabulary; not Phase 4/5; Gate B/C/F unmeasured
         ↓
 Sprint CLI-001 — Agent-Native Interface Contract   GO ✓; v1.8.0 released + deployed; first-class CLI for humans and agents; Gate B/C/F unmeasured
+        ↓
+Sprint 020 — Bring the Next Teammate In   IMPLEMENTED CANDIDATE; v1.9.0; CONDITIONAL GO pending independent two-human/two-machine and both live recipient paths; not published/deployed; see docs/SPRINT_020_RESULT.md; Gate B/C unmeasured
 ```
 
 The roadmap provides direction.

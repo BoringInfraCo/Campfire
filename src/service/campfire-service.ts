@@ -8,6 +8,7 @@
  * `CampfireStore` (AGENTS.md invariant 7).
  */
 import type { ActorContext, Authorizer } from "./authorization.js";
+import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitationView, normalizeEnrollOwnedAgentInput, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import {
   deriveRecordedAlignment,
@@ -107,6 +108,57 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
   const clock: () => string = options.clock ?? nowIso;
   const authorizer: Authorizer = createSimpleAuthorizer(store);
   const webhookEnv = options.webhookEnv ?? process.env;
+
+  function assertEnrollmentOwner(ctx: ActorContext, workspaceId: string): Workspace {
+    authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+    const workspace = store.getWorkspace(workspaceId);
+    if (ctx.actor.actorType !== "human" || store.getParticipant(workspaceId, ctx.actor)?.role !== "owner" || workspace === undefined) {
+      throw new Unauthorized("Only a human workspace owner may administer enrollment invitations", { recoveryCode: "owner_required" });
+    }
+    return workspace;
+  }
+
+  function assertInvitationUsable(invitation: EnrollmentInvitation | undefined, invitationId: string, now: string): EnrollmentInvitation {
+    if (invitation === undefined || invitation.id !== invitationId || invitation.revokedAt !== undefined || invitation.expiresAt <= now) {
+      throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+    }
+    const workspace = store.getWorkspace(invitation.workspaceId);
+    const issuer = store.getHuman(invitation.issuedByHumanId);
+    const participant = store.getParticipant(invitation.workspaceId, { actorId: invitation.issuedByHumanId, actorType: "human" });
+    if (workspace?.status !== "active" || workspace.teamId !== invitation.teamId || issuer?.teamId !== invitation.teamId || participant?.role !== "owner") {
+      throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+    }
+    return invitation;
+  }
+
+  function replayEnrollment(invitation: EnrollmentInvitation, input: ReturnType<typeof normalizeRedeemEnrollmentInput>, digest: string): EnrollmentReceipt {
+    if (invitation.requestId !== input.requestId || invitation.requestDigest !== digest || invitation.receipt === undefined) {
+      throw new Conflict("Invitation was claimed by a different enrollment request", { recoveryCode: "invitation_already_claimed" });
+    }
+    const receipt = invitation.receipt;
+    const prepared = [
+      { hash: input.humanTokenHash, id: receipt.human.id, type: "human" },
+      ...input.agents.map((agent) => ({ hash: agent.tokenHash, id: receipt.agents.find((entry) => entry.harness === agent.harness)?.id, type: "agent" })),
+    ];
+    for (const expected of prepared) {
+      const token = store.getActorTokenByHash(expected.hash);
+      if (token === undefined || token.revokedAt !== undefined || token.actor.actorId !== expected.id || token.actor.actorType !== expected.type) {
+        throw new Unauthorized("Enrollment credentials no longer authorize recovery", { recoveryCode: "enrollment_credentials_revoked" });
+      }
+    }
+    return receipt;
+  }
+
+  function replayOwnedAgent(record: OwnedAgentEnrollmentRecord, input: ReturnType<typeof normalizeEnrollOwnedAgentInput>, digest: string): OwnedAgentReceipt {
+    if (record.requestId !== input.requestId || record.requestDigest !== digest || record.tokenHash !== input.tokenHash) {
+      throw new Conflict("This harness already has an enrolled agent; reconnect that identity", { recoveryCode: "agent_already_enrolled" });
+    }
+    const token = store.getActorTokenByHash(input.tokenHash);
+    if (token === undefined || token.revokedAt !== undefined || token.actor.actorType !== "agent" || token.actor.actorId !== record.receipt.agent.id) {
+      throw new Unauthorized("Agent credentials no longer authorize recovery", { recoveryCode: "enrollment_credentials_revoked" });
+    }
+    return record.receipt;
+  }
 
   function record(
     ctx: ActorContext,
@@ -483,6 +535,86 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
   }
 
   return {
+    issueEnrollmentInvitation(ctx, rawInput) {
+      const input = normalizeIssueEnrollmentInput(rawInput);
+      const workspace = assertEnrollmentOwner(ctx, input.workspaceId);
+      if (workspace.status !== "active") throw new Conflict("Enroll teammates only into active workspaces", { recoveryCode: "workspace_not_active" });
+      const now = clock();
+      const secret = generateRawToken().replace(/^cft_/, "cfe_");
+      const invitation: EnrollmentInvitation = { id: `ein_${idSource("invite")}`, workspaceId: workspace.id, teamId: workspace.teamId, issuedByHumanId: ctx.actor.actorId, secretHash: hashToken(secret), createdAt: now, expiresAt: new Date(Date.parse(now) + input.expiresInHours * 3_600_000).toISOString(), permittedHarnesses: [...ENROLLMENT_HARNESSES] };
+      const contribution: Contribution = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
+      if (!store.createEnrollmentInvitation(invitation, contribution)) throw new Unauthorized("Workspace owner authority changed before invitation issuance", { recoveryCode: "owner_required" });
+      return { version: 1, kind: "enrollment_invitation", invitationId: invitation.id, secret, workspace: { id: workspace.id, name: workspace.name, teamId: workspace.teamId }, expiresAt: invitation.expiresAt, permittedHarnesses: [...invitation.permittedHarnesses] };
+    },
+
+    getEnrollmentInvitation(ctx, rawInput) {
+      const input = normalizeInvitationLookup(rawInput);
+      assertEnrollmentOwner(ctx, input.workspaceId);
+      const invitation = store.getEnrollmentInvitation(input.invitationId);
+      if (invitation === undefined || invitation.workspaceId !== input.workspaceId) throw new Unauthorized("Invitation is unavailable in this workspace", { recoveryCode: "invalid_enrollment_invitation" });
+      return invitationView(invitation);
+    },
+
+    revokeEnrollmentInvitation(ctx, rawInput) {
+      const input = normalizeInvitationLookup(rawInput);
+      assertEnrollmentOwner(ctx, input.workspaceId);
+      const invitation = store.getEnrollmentInvitation(input.invitationId);
+      if (invitation === undefined || invitation.workspaceId !== input.workspaceId) throw new Unauthorized("Invitation is unavailable in this workspace", { recoveryCode: "invalid_enrollment_invitation" });
+      if (invitation.revokedAt !== undefined) return revocationReceipt(invitation);
+      const now = clock();
+      const contribution: Contribution = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
+      if (!store.revokeEnrollmentInvitation({ invitationId: invitation.id, workspaceId: input.workspaceId, actor: ctx.actor, revokedAt: now, contribution })) throw new Unauthorized("Workspace owner authority changed before invitation revocation", { recoveryCode: "owner_required" });
+      return revocationReceipt({ ...invitation, revokedAt: now });
+    },
+
+    redeemEnrollment(secret, rawInput) {
+      const input = normalizeRedeemEnrollmentInput(rawInput);
+      if (typeof secret !== "string" || !/^cfe_[a-f0-9]{32}$/.test(secret)) throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+      const now = clock();
+      const secretHash = hashToken(secret);
+      const digest = hashToken(JSON.stringify(input));
+      const invitation = assertInvitationUsable(store.getEnrollmentInvitationByHash(secretHash), input.invitationId, now);
+      if (input.agents.some((agent) => !invitation.permittedHarnesses.includes(agent.harness))) throw new ValidationError("Selected harness is not permitted for enrollment", { field: "agents" });
+      if (invitation.consumedAt !== undefined) return replayEnrollment(invitation, input, digest);
+      for (const tokenHash of [input.humanTokenHash, ...input.agents.map((agent) => agent.tokenHash)]) {
+        if (store.getActorTokenByHash(tokenHash) !== undefined) {
+          // An identical concurrent claim may have committed after the initial
+          // invitation read. Recover its result instead of mislabeling its tokens.
+          const winner = assertInvitationUsable(store.getEnrollmentInvitationByHash(secretHash), input.invitationId, clock());
+          if (winner.consumedAt !== undefined) return replayEnrollment(winner, input, digest);
+          throw new Conflict("Prepared credentials are already registered", { recoveryCode: "credential_conflict" });
+        }
+      }
+      const workspace = store.getWorkspace(invitation.workspaceId)!;
+      const plan = buildEnrollmentPlan(invitation, workspace, input, digest, now, idSource);
+      if (store.provisionEnrollment(plan)) return plan.receipt;
+      const winner = assertInvitationUsable(store.getEnrollmentInvitationByHash(secretHash), input.invitationId, clock());
+      if (winner.consumedAt !== undefined) return replayEnrollment(winner, input, digest);
+      throw new Conflict("Enrollment was not committed; retry the same prepared request", { recoveryCode: "enrollment_retry_required" });
+    },
+
+    enrollOwnedAgent(ctx, rawInput) {
+      const input = normalizeEnrollOwnedAgentInput(rawInput);
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const human = ctx.actor.actorType === "human" ? store.getHuman(ctx.actor.actorId) : undefined;
+      const participant = store.getParticipant(input.workspaceId, ctx.actor);
+      const workspace = store.getWorkspace(input.workspaceId);
+      if (human === undefined || (participant?.role !== "owner" && participant?.role !== "member") || workspace?.status !== "active" || human.teamId !== workspace.teamId) throw new Unauthorized("A human owner or member is required to enroll their own agent", { recoveryCode: "human_membership_required" });
+      const digest = hashToken(JSON.stringify({ humanId: human.id, ...input }));
+      const existing = store.getOwnedAgentEnrollment(input.workspaceId, human.id, input.harness);
+      if (existing !== undefined) return replayOwnedAgent(existing, input, digest);
+      if (store.getActorTokenByHash(input.tokenHash) !== undefined) {
+        const winner = store.getOwnedAgentEnrollment(input.workspaceId, human.id, input.harness);
+        if (winner !== undefined) return replayOwnedAgent(winner, input, digest);
+        throw new Conflict("Prepared credentials are already registered", { recoveryCode: "credential_conflict" });
+      }
+      const plan = buildOwnedAgentPlan(human, input, digest, clock(), idSource);
+      if (store.provisionOwnedAgent(plan)) return plan.record.receipt;
+      const winner = store.getOwnedAgentEnrollment(input.workspaceId, human.id, input.harness);
+      if (winner !== undefined) return replayOwnedAgent(winner, input, digest);
+      throw new Conflict("Agent enrollment was not committed; retry the same prepared request", { recoveryCode: "enrollment_retry_required" });
+    },
+
     checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus {
       assertNonEmpty(input.workspaceId, "workspaceId");
       authorizer.assertAllowed({ actor: ctx.actor }, "workspace:read", input.workspaceId);

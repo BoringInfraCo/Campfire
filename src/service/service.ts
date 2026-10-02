@@ -5,6 +5,7 @@
  * Handlers stay thin: validate, call the service, serialize the result.
  */
 import type { ActorContext } from "./authorization.js";
+import type { EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type {
   ActorRef,
   Agent,
@@ -307,6 +308,11 @@ export interface GetActivityInput {
 }
 
 export interface CampfireService {
+  issueEnrollmentInvitation(ctx: ActorContext, input: IssueEnrollmentInvitationInput): IssuedEnrollmentInvitation;
+  getEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentInvitationView;
+  revokeEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentRevocationReceipt;
+  redeemEnrollment(secret: string, input: RedeemEnrollmentInput): EnrollmentReceipt;
+  enrollOwnedAgent(ctx: ActorContext, input: EnrollOwnedAgentInput): OwnedAgentReceipt;
   checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus;
   createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;

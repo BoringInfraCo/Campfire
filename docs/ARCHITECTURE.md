@@ -138,6 +138,59 @@ For Sprint 001, Campfire can operate as a single local service backed by SQLite.
 
 Sprint 018 keeps that single local service. When a Codex or OpenCode session's `CAMPFIRE_URL` is loopback and nothing is listening, that session starts the same API and Viewer `campfire up` starts. The listener process owns SQLite and keeps it after the MCP process exits. `campfire mcp` calls `POST /v1/call` and does not open the file. A second session reuses the listener. A reboot clears it. This is not an operating-system service, and a non-loopback URL is not started from the session.
 
+Sprint 020's implemented v1.9 candidate adds enrollment into an already
+provisioned team-hosted SQLite/HTTP or Workers/D1 instance. A separate remote
+profile holds the recipient's endpoint, human, selected workspace and owned
+agent references; credentials stay in private local storage. Normal CLI reads
+use the authorized remote service. Remote `up` runs only the loopback read-only
+Viewer proxy and prepares the recipient's connections. It does not create a
+local collaboration database or another shared API. Existing v1 local profiles
+and listener behavior remain compatible. This is an engineering candidate;
+independent two-human/two-machine acceptance remains pending.
+
+### Scoped teammate enrollment
+
+New-person enrollment is a capability distinct from actor authentication and
+existing ActorRef-targeted WorkspaceInvites. An authenticated human workspace
+owner issues a random, expiring, revocable invitation for one active workspace
+and its team. The protected invitation file carries endpoint metadata and that
+enrollment secret, never an owner token, agent token, work snapshot or database.
+Names are display names, not verified identity claims.
+
+`POST /v1/enrollment/redeem` accepts only this capability. Ordinary `/v1/call`,
+MCP and Viewer remain actor-authenticated; enrollment secrets authorize none of
+those operations. Core fixes the new human's `member` role, their owning
+relationship to each selected Codex/OpenCode Agent, and explicit `agent`
+memberships. Reading never registers an AgentSession, and contribution still
+requires explicit session registration.
+
+The recipient CLI generates fresh actor credentials and durably saves private
+pending state before networking. Redemption sends the prepared hashes and
+bounded normalized enrollment inputs; raw actor tokens stay local. Core binds
+the claim to a stable request ID and digest, prebuilds complete rows, and calls
+one guarded persistence operation. Invitation consumption, Human/Agent rows,
+token hashes, memberships, administrative Contributions and a nonsecret receipt
+commit together. Every write is conditioned on that execution winning the
+claim; SQLite transactions and D1 batches implement the same rule. The issuer's
+owner authority, active workspace, permitted harnesses, expiry and revocation
+are checked at the atomic claim boundary.
+
+Exact retry returns the same nonsecret result without duplicating identities or
+history. Different claims cannot obtain it; revoked actor credentials cannot be
+resurrected through recovery. Local filesystem finalization is a separate stage,
+recoverable using the prepared credentials. Because the server commit and the
+recipient filesystem cannot share a transaction, the recipient CLI reports the
+local stage it actually reached (`enrolled`, `credentials_saved`,
+`connection_prepared`, `reload_required`) rather than a single success flag. A narrow managed slot per enrolled
+human/harness/workspace supports adding the other supported harness safely; it
+is not a global uniqueness rule on existing Agents.
+
+Enrollment history uses the existing Contribution log and never invents an agent
+session. It contains no invitation secret, actor credential, token hash or raw
+pending request. Administrative enrollment does not extend Sprint 019's closed
+webhook event vocabulary. No new hosting, identity provider, daemon, public
+browser journal, orchestration or general account recovery service is introduced.
+
 The architecture should not require a cloud control plane to prove the product thesis.
 
 Future deployments may introduce remote/team-hosted services, but those concerns should not distort the first domain model.

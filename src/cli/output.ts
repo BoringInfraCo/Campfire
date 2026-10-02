@@ -14,7 +14,7 @@ import { ValidationError } from "../domain/errors.js";
 import type { ParsedArgs } from "./args.js";
 import {
   CLI_OUTPUT_MODES,
-  commandSpec,
+  commandSpecForArgs,
   isKnownCommand,
   type CliCommandSpec,
   type CliOutputMode,
@@ -136,19 +136,19 @@ export function resolveCommandOutput(parsed: ParsedArgs): ResolvedOutput {
   if (command === undefined || !isKnownCommand(command)) {
     return explicitRequest(parsed) ?? "human";
   }
-  return resolveOutputMode(parsed, commandSpec(command));
+  return resolveOutputMode(parsed, commandSpecForArgs(command, parsed.flags));
 }
 
 /** Best-effort error mode: protocol commands stay human unless JSON was explicit. */
 export function resolveErrorOutput(parsed: ParsedArgs): ResolvedOutput {
   try {
     const command = parsed.command;
-    if (command !== undefined && isKnownCommand(command) && commandSpec(command).protocol) {
+    if (command !== undefined && isKnownCommand(command) && commandSpecForArgs(command, parsed.flags).protocol) {
       return explicitRequest(parsed) ?? "human";
     }
     if (command !== undefined && isKnownCommand(command)) {
       // Credential safety applies to success output; failures carry no token.
-      return resolveOutputMode(parsed, commandSpec(command), { forError: true });
+      return resolveOutputMode(parsed, commandSpecForArgs(command, parsed.flags), { forError: true });
     }
     return resolveCommandOutput(parsed);
   } catch {

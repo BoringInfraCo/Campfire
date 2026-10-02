@@ -9,6 +9,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { ValidationError } from "../domain/errors.js";
+import { canonicalEndpoint } from "./endpoint.js";
 
 const BEGIN = "# BEGIN campfire-connect";
 const END = "# END campfire-connect";
@@ -35,6 +36,67 @@ export interface PrepareConnectionInput {
   url: string;
   agentToken: string;
   workspaceId?: string;
+  /** Remote enrollment must never silently replace another Campfire principal. */
+  rejectConflicting?: boolean;
+}
+
+function connectionConflict(): never {
+  throw new ValidationError("Campfire harness configuration conflict; choose an isolated harness config", {
+    field: "config", nextAction: "use_isolated_harness_config",
+  });
+}
+
+/** Read-only check usable before enrollment. A precise reconnect is permitted. */
+export function assertConnectionCompatible(input: {
+  harness: string; configPath: string; url?: string; agentToken?: string;
+}): void {
+  const harness = assertSupported(input.harness);
+  if (!existsSync(input.configPath)) return;
+  let text: string;
+  try { text = readFileSync(input.configPath, "utf8"); } catch { return connectionConflict(); }
+  let url: unknown;
+  let token: unknown;
+  if (harness === "codex") {
+    const campfireTable = /^\s*\[\s*(?:mcp_servers|"mcp_servers"|'mcp_servers')\s*\.\s*(?:campfire|"campfire"|'campfire')(?:\s*\.\s*(?:env|"env"|'env'))?\s*\]/m;
+    const inlineCampfire = /^\s*(?:mcp_servers|"mcp_servers"|'mcp_servers')\s*\.\s*(?:campfire|"campfire"|'campfire')\s*=/m;
+    // An unmanaged table cannot be appended to: that produces ambiguous TOML.
+    if (!campfireTable.test(text) && !inlineCampfire.test(text) && !text.includes(BEGIN)) return;
+    const start = text.indexOf(BEGIN);
+    const end = text.indexOf(END, start);
+    if (start === -1 || end === -1 || text.indexOf(BEGIN, start + BEGIN.length) !== -1 || text.indexOf(END, end + END.length) !== -1) connectionConflict();
+    const outside = text.slice(0, start) + text.slice(end + END.length);
+    if (campfireTable.test(outside) || inlineCampfire.test(outside)) connectionConflict();
+    const block = text.slice(start, end);
+    try {
+      const urls = [...block.matchAll(/^CAMPFIRE_URL\s*=\s*(.+)$/gm)];
+      const tokens = [...block.matchAll(/^CAMPFIRE_TOKEN\s*=\s*(.+)$/gm)];
+      if (urls.length !== 1 || tokens.length !== 1) connectionConflict();
+      url = JSON.parse(urls[0]![1]!);
+      token = JSON.parse(tokens[0]![1]!);
+    } catch { connectionConflict(); }
+  } else {
+    let parsed: unknown;
+    try { parsed = text.trim() ? JSON.parse(text) : {}; } catch { return connectionConflict(); }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) connectionConflict();
+    const mcp = (parsed as Record<string, unknown>).mcp;
+    if (mcp === undefined) return;
+    if (mcp === null || typeof mcp !== "object" || Array.isArray(mcp)) connectionConflict();
+    const campfire = (mcp as Record<string, unknown>).campfire;
+    if (campfire === undefined) return;
+    if (campfire === null || typeof campfire !== "object" || Array.isArray(campfire)) connectionConflict();
+    const configured = campfire as Record<string, unknown>;
+    if (configured.type !== "local" || configured.enabled !== true || !Array.isArray(configured.command) ||
+        configured.command.length !== 2 || configured.command[1] !== "mcp") connectionConflict();
+    const environment = (campfire as Record<string, unknown>).environment;
+    if (environment === null || typeof environment !== "object" || Array.isArray(environment)) connectionConflict();
+    url = (environment as Record<string, unknown>).CAMPFIRE_URL;
+    token = (environment as Record<string, unknown>).CAMPFIRE_TOKEN;
+    if ((environment as Record<string, unknown>).CAMPFIRE_HARNESS !== "opencode") connectionConflict();
+  }
+  if (typeof url !== "string" || typeof token !== "string" || input.url === undefined || input.agentToken === undefined) connectionConflict();
+  try {
+    if (canonicalEndpoint(url, { allowLoopbackHttp: true }) !== canonicalEndpoint(input.url, { allowLoopbackHttp: true }) || token !== input.agentToken) connectionConflict();
+  } catch { connectionConflict(); }
 }
 
 function rejectUnsafe(value: string, field: string): void {
@@ -176,6 +238,7 @@ export function prepareConnection(input: PrepareConnectionInput): ConnectionPlan
   rejectUnsafe(input.url, "url");
   rejectUnsafe(input.agentToken, "token");
   if (input.workspaceId !== undefined) rejectUnsafe(input.workspaceId, "workspace");
+  if (input.rejectConflicting) assertConnectionCompatible(input);
   if (harness === "codex") prepareCodex(input);
   else prepareOpenCode(input);
   return {

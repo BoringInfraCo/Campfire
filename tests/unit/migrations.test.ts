@@ -7,8 +7,9 @@ import {
   schemaVersion,
   V3_SQL as sqliteV3Sql,
   V4_SQL as sqliteV4Sql,
+  V5_SQL as sqliteV5Sql,
 } from "../../src/store/migrations.js";
-import { V3_SQL as workerV3Sql, V4_SQL as workerV4Sql } from "../../src/worker/schema.js";
+import { V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql } from "../../src/worker/schema.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const LATER = "2026-01-02T00:00:00.000Z";
@@ -58,6 +59,7 @@ describe("schema migrations", () => {
       { version: 2, applied_at: NOW },
       { version: 3, applied_at: NOW },
       { version: 4, applied_at: NOW },
+      { version: 5, applied_at: NOW },
     ]);
   });
 
@@ -113,6 +115,21 @@ describe("schema migrations", () => {
     const v4Body = v4.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
     expect(sqliteV4Sql).toBe(workerV4Sql);
     expect(v4Body).toBe(sqliteV4Sql);
+  });
+
+  it("keeps enrollment migrations identical and upgrades v4 without altering collaboration state", () => {
+    const file = readFileSync(new URL("../../migrations/0004_enrollment.sql", import.meta.url), "utf8");
+    expect(file.replace(/^--[^\n]*\n+/, "").trim()).toBe(sqliteV5Sql);
+    expect(workerV5Sql).toBe(sqliteV5Sql);
+    const db = memory();
+    applyMigrations(db, () => NOW);
+    db.exec("DROP TABLE managed_agent_slots; DROP TABLE enrollment_invitations; DELETE FROM schema_migrations WHERE version = 5;");
+    const before = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
+    applyMigrations(db, () => LATER);
+    expect(schemaVersion(db)).toBe(5);
+    const after = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT IN ('enrollment_invitations', 'managed_agent_slots') ORDER BY name").all();
+    expect(after).toEqual(before);
+    expect(db.prepare("SELECT applied_at FROM schema_migrations WHERE version = 5").get()).toEqual({ applied_at: LATER });
   });
 
   it("exhausts pre-fingerprint queued rows instead of sending them to a changed destination", () => {
