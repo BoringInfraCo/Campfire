@@ -25,6 +25,10 @@
 #                         campfire tarball. Skips release resolution (used for
 #                         testing and mirrors).
 #   CAMPFIRE_DRY_RUN=1    print the install plan without changing anything.
+#   CAMPFIRE_TELEMETRY    set to 0, off, false, or no to disable the anonymous
+#                         install_completed report. Unset or empty means enabled.
+#   CAMPFIRE_TELEMETRY_URL override for the telemetry ingestion endpoint
+#                         (default: the production endpoint below).
 #
 # Product invariant: installing never requires silent privilege escalation
 # and never installs a Node.js toolchain for you.
@@ -84,6 +88,206 @@ print_next_steps() {
     log "This install will talk to $SERVER_URL."
   fi
   log "Run  campfire  to create your first workspace."
+}
+
+# ---- anonymous install_completed report (TEL-001D) ----
+#
+# WHY THIS IS SHAPED LIKE THIS: by the time report_install_completed runs,
+# Campfire is already installed and working. The installer's exit code must be
+# identical whether this POST succeeds, fails, times out, redirects, or the
+# endpoint does not exist at all (TEL-001 section 13). Therefore nothing in this
+# section may call fail, may set a non-zero status, may write outside the local
+# config directory, and may run before the install steps have completed. Every
+# step is either wrapped in `( ... ) >/dev/null 2>&1 || true` or explicitly
+# ignored. Telemetry is measurement, never part of the install transaction.
+
+DEFAULT_TELEMETRY_ENDPOINT="https://boringinfra.company/campfire/v1/telemetry"
+
+# POSIX sh has no ${var//...}; a single sed strips surrounding whitespace. Used
+# a handful of times per run, so the extra process is not worth a loop.
+trim_value() {
+  printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+# The config directory, resolved exactly as src/bootstrap/profile.ts
+# resolveProfilePaths does: CAMPFIRE_CONFIG_DIR, then XDG_CONFIG_HOME/campfire,
+# then $HOME/.config/campfire. $HOME is used here and only here, to locate a
+# directory -- it is never part of the payload.
+telemetry_config_dir() {
+  configured="$(trim_value "${CAMPFIRE_CONFIG_DIR:-}")"
+  if [ -n "$configured" ]; then
+    printf '%s' "$configured"
+    return 0
+  fi
+  xdg="$(trim_value "${XDG_CONFIG_HOME:-}")"
+  if [ -n "$xdg" ]; then
+    printf '%s/campfire' "$xdg"
+    return 0
+  fi
+  home="$(trim_value "${HOME:-}")"
+  [ -n "$home" ] || return 0
+  printf '%s/.config/campfire' "$home"
+}
+
+# Lowercase hex UUID in the exact shape src/telemetry/contract.ts requires.
+# The server rejects any other shape, so a malformed id is dropped rather than
+# posted, and no escaping problem can turn into a broken JSON body.
+is_installation_id() {
+  case "$1" in
+    ????????-????-????-????-????????????) ;;
+    *) return 1 ;;
+  esac
+  case "$1" in
+    *[!0-9a-f-]*) return 1 ;;
+  esac
+  return 0
+}
+
+# A random local installation id. uuidgen when present, otherwise 16 bytes from
+# /dev/urandom shaped as UUIDv4. Nothing about the machine, the user, the
+# network, or the repository is read: 122 bits of OS randomness and no inputs.
+new_installation_id() {
+  if command -v uuidgen >/dev/null 2>&1; then
+    candidate="$(uuidgen 2>/dev/null | tr 'A-Z' 'a-z' | tr -d ' \n' || true)"
+    if is_installation_id "$candidate"; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  fi
+  raw="$(od -An -tx1 -N16 /dev/urandom 2>/dev/null | tr -d ' \n' || true)"
+  case "$raw" in
+    ????????????????????????????????) ;;
+    *) return 0 ;;
+  esac
+  # Force the version nibble to 4 and the variant nibble into 8..b, exactly as a
+  # v4 generator does, so the shape matches what the contract accepts.
+  variant="$(printf '%s' "$raw" | cut -c 17)"
+  case "$variant" in
+    0|1|2|3|4|5|6|7) variant="8" ;;
+  esac
+  printf '%s-%s-4%s-%s%s-%s' \
+    "$(printf '%s' "$raw" | cut -c 1-8)" \
+    "$(printf '%s' "$raw" | cut -c 9-12)" \
+    "$(printf '%s' "$raw" | cut -c 13-15)" \
+    "$variant" \
+    "$(printf '%s' "$raw" | cut -c 18-20)" \
+    "$(printf '%s' "$raw" | cut -c 21-32)"
+}
+
+# Pull an existing installationId out of a telemetry.json without a JSON parser.
+# Conservative: on anything unexpected the result is empty, and an empty result
+# means "do not overwrite that file".
+read_installation_id() {
+  [ -f "$1" ] || return 0
+  grep -o '"installationId"[[:space:]]*:[[:space:]]*"[^"]*"' "$1" 2>/dev/null |
+    sed -n 's/.*"\([0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}\)".*/\1/p' |
+    head -n 1
+}
+
+# True when a recorded telemetry.json explicitly disables telemetry. This is what
+# makes `campfire telemetry disable` authoritative for a LATER reinstall: the
+# operator's decision is stored state, so a fresh install that still has that
+# file must honour it rather than re-enabling reporting because it happened to
+# run. Conservative by design -- anything that is not an unambiguous
+# "enabled": false leaves the report enabled, matching the documented default,
+# because failing open on an unreadable preference would silently ignore an
+# opt-out the operator believed was in force.
+telemetry_preference_disabled() {
+  [ -f "$1" ] || return 1
+  grep -q '"enabled"[[:space:]]*:[[:space:]]*false' "$1" 2>/dev/null
+}
+
+# $1 = the version string from the installed package.json.
+report_install_completed() {
+  # Same opt-out values as src/telemetry/state.ts. Unset or empty means enabled,
+  # matching the documented default. Read defensively because an operator shell
+  # may export whitespace around the value.
+  setting="$(trim_value "${CAMPFIRE_TELEMETRY:-}" | tr 'A-Z' 'a-z' || true)"
+  case "$setting" in
+    0|off|false|no) return 0 ;;
+  esac
+
+  # Endpoint override, else the documented production endpoint. The URL is not
+  # validated here: canonicalEndpoint does that in TypeScript, and a broken
+  # value can only cost the event, never the install. One guard rejects the
+  # empty string, which is the only value that cannot be repaired by curl.
+  endpoint="$(trim_value "${CAMPFIRE_TELEMETRY_URL:-}")"
+  if [ -z "$endpoint" ]; then
+    endpoint="$DEFAULT_TELEMETRY_ENDPOINT"
+  fi
+  [ -n "$endpoint" ] || return 0
+
+  config_dir="$(telemetry_config_dir || true)"
+  state_file=""
+  [ -n "$config_dir" ] && state_file="$config_dir/telemetry.json"
+
+  # A recorded opt-out outranks everything above, including the default. An
+  # operator who ran `campfire telemetry disable` must not see a reinstall start
+  # reporting again.
+  if [ -n "$state_file" ] && telemetry_preference_disabled "$state_file"; then
+    return 0
+  fi
+
+  # IDENTITY PRESERVATION, AND WHY IT IS DELIBERATELY CONSERVATIVE: the shell
+  # has no JSON parser, so rewriting an existing telemetry.json would risk
+  # clobbering fields the TypeScript side owns (enabled, activatedOn,
+  # lastActiveOn, installCompletedReported). Correctness of state preservation
+  # beats writing completeness, so this file is written ONLY when it does not
+  # exist at all. When it exists, the id is parsed out of it and the file is left
+  # byte-for-byte untouched. A missing id inside an existing file therefore
+  # yields a one-off id for this event rather than a rewritten file; the CLI's
+  # own ensureInstallationId will mint the persistent id on first use.
+  installation_id=""
+  if [ -n "$state_file" ] && [ -f "$state_file" ]; then
+    installation_id="$(read_installation_id "$state_file" || true)"
+  fi
+  if ! is_installation_id "$installation_id"; then
+    installation_id="$(new_installation_id || true)"
+  fi
+  if ! is_installation_id "$installation_id"; then
+    return 0
+  fi
+
+  if [ -n "$state_file" ] && [ ! -e "$state_file" ]; then
+    (
+      mkdir -p "$config_dir" 2>/dev/null || exit 0
+      # noclobber: if the TypeScript side created the file between the check
+      # above and this write, leave its version alone instead of racing it.
+      set -C
+      printf '{\n  "version": 1,\n  "installationId": "%s",\n  "installCompletedReported": true\n}\n' \
+        "$installation_id" > "$state_file" 2>/dev/null || exit 0
+    ) >/dev/null 2>&1 || true
+  fi
+
+  # PAYLOAD ALLOW-LIST. These seven keys are the entire body, written
+  # explicitly to match src/telemetry/contract.ts serializeTelemetryEvent. There
+  # is no interpolation of the working directory, the login name, the machine
+  # name, the install prefix, the tarball URL, the OS release string, the MAC
+  # address, or the Git identity, and there is deliberately no loop over
+  # environment variables: a field that is not written by name cannot leave the
+  # machine. $OS and $ARCH are reused from the platform allowlist
+  # above so the installer and the CLI report identical strings for one machine.
+  # The version is used verbatim only when it is a plain release string;
+  # anything else degrades to "unknown" rather than risking a broken or
+  # surprising JSON body.
+  version="$1"
+  case "$version" in
+    ''|*[!0-9A-Za-z._+-]*) version="unknown" ;;
+  esac
+
+  (
+    body="$(printf '{"schemaVersion":1,"event":"install_completed","installationId":"%s","campfireVersion":"%s","os":"%s","arch":"%s","installMethod":"curl"}' \
+      "$installation_id" "$version" "$OS" "$ARCH")" || exit 0
+    # Short timeouts are the point: -fs fails silently on any HTTP error and
+    # --max-time/--connect-timeout cap the damage at two seconds, so a dead or
+    # slow endpoint cannot make the installer look hung. No -L: a redirect
+    # target is not the documented ingestion endpoint.
+    curl -fs -o /dev/null \
+      --connect-timeout 1 --max-time 2 \
+      -H 'Content-Type: application/json' \
+      --data "$body" \
+      "$endpoint"
+  ) >/dev/null 2>&1 || true
 }
 
 # ---- argument parsing (POSIX: no getopt) ----
@@ -394,3 +598,12 @@ case ":$PATH:" in
 esac
 
 print_next_steps "$BINDIR/campfire"
+
+# Last, after every install step and after the closing output, so a failure path
+# or a dry run never reports and the human-visible output above is untouched.
+# The version reported is the one read out of the archive, not the requested
+# label ("latest" is not a version). The npm fallback path above exits 0 from
+# inside npm_fallback and reports nothing: its install method is not the curl
+# tarball install this event describes, and mislabelling it would corrupt the
+# install_method dimension.
+report_install_completed "$package_version"

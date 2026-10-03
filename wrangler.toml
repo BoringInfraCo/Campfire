@@ -41,6 +41,12 @@ database_name = "campfire"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 
+# Anonymous product telemetry (TEL-001). Cloudflare creates the dataset on the
+# first write after this binding is deployed; see docs/OPERATOR.md.
+[[analytics_engine_datasets]]
+binding = "TELEMETRY"
+dataset = "campfire_telemetry"
+
 [assets]
 # The release installer shares ./public with locally packaged Viewer files.
 # Run the Worker before every asset request so the public Worker serves only

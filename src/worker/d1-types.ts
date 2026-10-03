@@ -5,7 +5,14 @@
  * and Vitest pass without generating `worker-configuration.d.ts`. Shapes
  * follow the current D1 Workers Binding API docs (prepare/bind/first/all/run,
  * database batch/exec).
+ *
+ * The Analytics Engine dataset type is declared once, next to the adapter that
+ * uses it, and re-exported here so `CampfireWorkerEnv` stays the single place
+ * the Worker's bindings are described.
  */
+import type { AnalyticsEngineDataset } from "./telemetry.js";
+
+export type { AnalyticsEngineDataset };
 
 export interface D1Result<T = Record<string, unknown>> {
   results: T[];
@@ -33,6 +40,12 @@ export interface AssetsFetcher {
 export interface CampfireWorkerEnv {
   DB: D1Database;
   ASSETS: AssetsFetcher;
+  /**
+   * Anonymous product telemetry (TEL-001). Optional by design: a deployment
+   * without the binding still serves the installer and accepts ingestion,
+   * reporting `recorded: false` instead of failing.
+   */
+  TELEMETRY?: AnalyticsEngineDataset;
   CAMPFIRE_WEBHOOK_ID?: string;
   CAMPFIRE_WEBHOOK_URL?: string;
   CAMPFIRE_WEBHOOK_SECRET?: string;

@@ -22,6 +22,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - A caller-held contribution cursor supports truthful return without storing read state or treating the cursor as a summary.
 - Contribution and Workspace lifecycle writes preserve actor and active agent-session provenance across local and Workers services.
 - Completed Workspaces remain readable with their structured state and contribution history intact.
+- Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
 
 ## Artifacts
 

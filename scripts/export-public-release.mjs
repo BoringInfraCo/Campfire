@@ -15,6 +15,8 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+// Allowlist-exact, not prefix-based: an unlisted path is silently absent from every
+// public snapshot — precedent: docs/SPRINT_019_RESULT.md "release-correction precedent".
 const EXACT_SOURCE_PATHS = new Set([
   ".github/workflows/ci.yml",
   ".github/workflows/release-tarball.yml",
@@ -25,6 +27,7 @@ const EXACT_SOURCE_PATHS = new Set([
   "scripts/run-acceptance-002.ts",
   "scripts/run-acceptance.ts",
   "scripts/sprint-019-receiver.mjs",
+  "scripts/telemetry-queries.mjs",
   "scripts/wrangler-deploy.mjs",
   "tsconfig.json",
   "vitest.config.ts",
@@ -33,6 +36,7 @@ const EXACT_SOURCE_PATHS = new Set([
   "docs/ARCHITECTURE.md",
   "docs/OPERATOR.md",
   "docs/PRODUCT_DEFINITION.md",
+  "docs/TELEMETRY.md",
   "docs/VISION.md",
 ]);
 

@@ -150,6 +150,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire changes [workspace] [--since <contributionId>]` | Contributions after a cursor, or the recent provenance window, plus the cursor to retain next |
 | `campfire inspect <kind> <id> --workspace <workspaceId>` | Inspect one workspace object by kind and id from the authorized projection. No cross-workspace lookup |
 | `campfire capabilities` | The installed CLI command manifest for shell discovery; not the future Campfire Capability domain object |
+| `campfire telemetry status\|enable\|disable` | Show or change anonymous product telemetry. Sends only the installation id, Campfire version, OS, architecture, and surface counters; never content, paths, or identity |
 | `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
 | `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Stores credentials locally. Does not start the server or register an agent session |
 | `campfire connect` | Write a Codex or OpenCode MCP block for the agent token. Requires a reload or new process |
@@ -177,11 +178,14 @@ Requires Node.js **22 or newer**. SQLite is the store; one process owns the file
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
-For the currently published pinned v1.8.0 install:
+For the production-deployed pinned v1.8.0 installer:
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --version 1.8.0
 ```
+
+The v1.9.0 source snapshot and GitHub Release are published. Its Worker assets,
+including the versioned installer URL, have not yet been promoted to production.
 
 Or build from source:
 
@@ -221,12 +225,28 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 
 ---
 
+## Telemetry
+
+Campfire records four anonymous events so it can tell whether the project is being installed, activated, and used again: `install_requested`, `install_completed`, `activated`, and `active`. A payload carries a random local installation id plus Campfire version, OS, architecture, install method, and surface, and nothing else. There is no dashboard and no third-party analytics SDK.
+
+- **No content.** No prompts, messages, code, diffs, findings, decisions, goals, task or artifact contents, file paths, or repository, branch, workspace, and team names.
+- **No identity.** No name, email, handle, hostname, machine fingerprint, IP address, or location.
+- **No credentials.** No tokens, keys, secrets, or raw command arguments.
+- **Enforced by an allow-list, not by policy.** Every payload is built from a fixed field list, and the endpoint rejects any undocumented field.
+- **An installation, not a person.** The id is a random UUID generated locally; a deduplicated count is an anonymous installation.
+- **Off on request.** `campfire telemetry disable`, or `CAMPFIRE_TELEMETRY=0` for a single invocation. One honest exception: the installer fetch itself is recorded by the Worker before any Campfire code exists on the machine, so it cannot be suppressed locally.
+
+The full disclosure, including how the installation id is created and where the local state lives, is [docs/TELEMETRY.md](docs/TELEMETRY.md).
+
+---
+
 ## Docs
 
 - [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) — collaboration model and invariants
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MCP → service → authorization → domain → SQLite
 - [docs/ROADMAP.md](docs/ROADMAP.md) — evidence-backed stages toward team memory
 - [docs/OPERATOR.md](docs/OPERATOR.md) — hosting, tokens, and the single-writer rule
+- [docs/TELEMETRY.md](docs/TELEMETRY.md) — what anonymous product telemetry collects, why, and how to disable it
 - [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — hosted multi-participant acceptance evidence for the v1.0 product cut
 - [docs/SPRINT_007_RESULT.md](docs/SPRINT_007_RESULT.md) — harness readiness preflight result
 - [docs/SPRINT_008_RESULT.md](docs/SPRINT_008_RESULT.md) — Enter the Room result (GO; Time to Context 19.8 s)

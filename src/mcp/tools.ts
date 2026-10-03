@@ -15,6 +15,7 @@ import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
+import { reportActivated, reportActive, telemetryInBackground } from "../telemetry/report.js";
 import type { ServerIdentity } from "./context.js";
 import { SESSION_INSTRUCTIONS } from "./instructions.js";
 
@@ -64,6 +65,56 @@ function fail(code: string, message: string, details?: Record<string, unknown>):
       },
     ],
   };
+}
+
+/**
+ * MCP methods whose *success* is the TEL-001 section 9 activation boundary:
+ * "successful workspace bootstrap/join" and "the first successful
+ * authenticated workspace-context operation". Everything else in this file is
+ * either trivial (`whoami`, `preflight`, `list_workspaces`), a diagnostic read
+ * (`get_workspace`, `get_activity`), or a write that presumes a workspace the
+ * agent already has. Activation is a statement that Campfire is *usable*, not
+ * that the binary started, so `--help`-class and failed paths are excluded by
+ * construction: the caller only reaches this set after `fn()` resolved.
+ *
+ * This is deliberately not per-tool instrumentation. TEL-001 section 4 forbids
+ * instrumenting every command, and per-tool events would turn a bounded
+ * activation signal into behavioural analytics of an agent's session.
+ */
+const ACTIVATION_METHODS: ReadonlySet<string> = new Set([
+  "get_workspace_context",
+  "join_workspace",
+  "create_workspace",
+]);
+
+/**
+ * Methods that also count as meaningful *activity*, and therefore carry the
+ * daily `active` event. This is a narrower set than activation on purpose:
+ * `join_workspace` / `create_workspace` are meaningful once, and the one-time
+ * `activated` event already records that day's use of them. Reporting `active`
+ * from them too would spend the installation's daily activity budget on a
+ * bootstrap step rather than on a returning participant reading the workspace.
+ */
+const ACTIVITY_METHODS: ReadonlySet<string> = new Set(["get_workspace_context"]);
+
+/**
+ * Attach to an MCP success boundary without changing its result.
+ *
+ * Both reporters are bounded internally — `activated` once per installation,
+ * `active` once per UTC day — so an agent loop calling a tool hundreds of times
+ * still produces at most one of each. That bound is the reason this hook can sit
+ * on the shared post-success path without any sampling or debounce here.
+ *
+ * Fire-and-forget is mandatory: an MCP tool result must never be delayed or
+ * rejected by measurement (TEL-001 sections 8 and 12).
+ */
+function reportMcpSuccess(method: string): void {
+  if (ACTIVATION_METHODS.has(method)) {
+    telemetryInBackground(reportActivated("mcp"));
+  }
+  if (ACTIVITY_METHODS.has(method)) {
+    telemetryInBackground(reportActive("mcp"));
+  }
 }
 
 export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer {
@@ -125,12 +176,22 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     return dispatchCampfireMethod(service, actorCtx, method, params);
   }
 
-  async function run(fn: () => unknown | Promise<unknown>): Promise<CallToolResult> {
+  /**
+   * The single funnel every tool result passes through. `method` names the tool
+   * so the post-success telemetry hook can decide whether the call was a
+   * meaningful Campfire success; it never reaches the payload, because the
+   * telemetry contract is a closed vocabulary of events and dimensions.
+   */
+  async function run(method: string, fn: () => unknown | Promise<unknown>): Promise<CallToolResult> {
     if (unavailable !== undefined) {
       return fail("ValidationError", unavailable.message, unavailable.details);
     }
     try {
-      return ok(await fn());
+      const result = await fn();
+      // Success only. A throw below is a failed setup or failed authentication
+      // (section 9) and must never activate.
+      reportMcpSuccess(method);
+      return ok(result);
     } catch (error) {
       if (error instanceof CampfireError) {
         return fail(error.code, error.message, error.details);
@@ -148,7 +209,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       inputSchema: { workspaceId: z.string().min(1) },
     },
     (args) =>
-      run(async () => {
+      run("preflight", async () => {
         const status = (await invoke("preflight", {
           workspaceId: args.workspaceId,
         })) as Record<string, unknown>;
@@ -163,7 +224,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       inputSchema: {},
     },
     () =>
-      run(async () => {
+      run("whoami", async () => {
         if (remote !== undefined) {
           return invoke("whoami", {});
         }
@@ -182,7 +243,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       description: "List the workspaces the acting actor participates in.",
       inputSchema: {},
     },
-    () => run(() => invoke("list_workspaces", {})),
+    () => run("list_workspaces", () => invoke("list_workspaces", {})),
   );
 
   server.registerTool(
@@ -195,7 +256,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         description: z.string().optional(),
       },
     },
-    (args) => run(() => invoke("create_workspace", args)),
+    (args) => run("create_workspace", () => invoke("create_workspace", args)),
   );
 
   server.registerTool(
@@ -208,7 +269,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         status: z.enum(WORKSPACE_STATUSES),
       },
     },
-    (args) => run(() => invoke("update_workspace", args)),
+    (args) => run("update_workspace", () => invoke("update_workspace", args)),
   );
 
   server.registerTool(
@@ -217,7 +278,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       description: "Read the full current-state projection of a workspace, including provenance.",
       inputSchema: { workspaceId: z.string() },
     },
-    (args) => run(() => invoke("get_workspace", args)),
+    (args) => run("get_workspace", () => invoke("get_workspace", args)),
   );
 
   server.registerTool(
@@ -227,7 +288,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Pass `since` (a contribution id) to also receive contributions strictly after it.",
       inputSchema: { workspaceId: z.string(), since: z.string().optional() },
     },
-    (args) => run(() => invoke("get_workspace_context", args)),
+    (args) => run("get_workspace_context", () => invoke("get_workspace_context", args)),
   );
 
   server.registerTool(
@@ -240,7 +301,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         before: z.string().optional(),
       },
     },
-    (args) => run(() => invoke("get_activity", args)),
+    (args) => run("get_activity", () => invoke("get_activity", args)),
   );
 
   server.registerTool(
@@ -253,7 +314,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         role: z.enum(PARTICIPANT_ROLES).optional(),
       },
     },
-    (args) => run(() => invoke("join_workspace", { workspaceId: args.workspaceId })),
+    (args) => run("join_workspace", () => invoke("join_workspace", { workspaceId: args.workspaceId })),
   );
 
   server.registerTool(
@@ -268,7 +329,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         role: z.enum(PARTICIPANT_ROLES),
       },
     },
-    (args) => run(() => invoke("invite_workspace", args)),
+    (args) => run("invite_workspace", () => invoke("invite_workspace", args)),
   );
 
   server.registerTool(
@@ -283,7 +344,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       },
     },
     (args) =>
-      run(async () => {
+      run("register_agent_session", async () => {
         const harness = args.harness ?? identity?.harness;
         if (harness === undefined || harness.trim().length === 0) {
           throw new ValidationError(
@@ -312,7 +373,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         description: z.string().optional(),
       },
     },
-    (args) => run(() => invoke("create_goal", args)),
+    (args) => run("create_goal", () => invoke("create_goal", args)),
   );
 
   server.registerTool(
@@ -327,7 +388,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         status: z.enum(GOAL_STATUSES).optional(),
       },
     },
-    (args) => run(() => invoke("update_goal", args)),
+    (args) => run("update_goal", () => invoke("update_goal", args)),
   );
 
   server.registerTool(
@@ -343,7 +404,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         sourceArtifactId: z.string().optional(),
       },
     },
-    (args) => run(() => invoke("add_finding", args)),
+    (args) => run("add_finding", () => invoke("add_finding", args)),
   );
 
   server.registerTool(
@@ -358,7 +419,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         status: z.enum(DECISION_STATUSES).optional(),
       },
     },
-    (args) => run(() => invoke("add_decision", args)),
+    (args) => run("add_decision", () => invoke("add_decision", args)),
   );
 
   server.registerTool(
@@ -368,7 +429,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         "Accept a proposed decision only for an explicit approval. Never call it as an automatic follow-up to proposing.",
       inputSchema: { decisionId: z.string() },
     },
-    (args) => run(() => invoke("accept_decision", args)),
+    (args) => run("accept_decision", () => invoke("accept_decision", args)),
   );
 
   server.registerTool(
@@ -383,7 +444,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         assignee: actorRefSchema.optional(),
       },
     },
-    (args) => run(() => invoke("create_task", args)),
+    (args) => run("create_task", () => invoke("create_task", args)),
   );
 
   server.registerTool(
@@ -399,7 +460,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         assignee: actorRefSchema.nullable().optional(),
       },
     },
-    (args) => run(() => invoke("update_task", args)),
+    (args) => run("update_task", () => invoke("update_task", args)),
   );
 
   server.registerTool(
@@ -415,7 +476,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         metadata: z.record(z.string(), z.unknown()).optional(),
       },
     },
-    (args) => run(() => invoke("add_artifact", args)),
+    (args) => run("add_artifact", () => invoke("add_artifact", args)),
   );
 
   return server;

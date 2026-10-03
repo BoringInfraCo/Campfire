@@ -113,11 +113,22 @@ is recorded in `docs/SPRINT_020_RESULT.md`. Secure enrollment, recipient-owned
 Codex/OpenCode connections, remote profiles, orientation, contribution, return,
 and enrollment recovery are in tree. The independent two-human/two-machine
 trace and both real recipient-harness paths remain pending; this is CONDITIONAL
-GO for an engineering candidate, not release-ready GO. No public promotion or
-production deployment has occurred. Enrollment authority, schema, retry/recovery,
+GO for an engineering candidate, not release-ready GO. The v1.9.0 public
+source snapshot and GitHub Release are published; production deployment has
+not occurred. Enrollment authority, schema, retry/recovery,
 and remote-profile changes are explicit sprint requirements; unrelated memory,
 orchestration, Viewer writes, and broad platform work remain out of scope.
 Gate B and Gate C remain unmeasured until qualifying evidence exists.
+Sprint TEL-001 — Anonymous Product Telemetry is complete (GO as an engineering
+candidate); its result is `docs/SPRINT_TEL_001_RESULT.md` and its disclosure is
+`docs/TELEMETRY.md`. It adds a versioned, allow-listed event contract, a random
+anonymous installation id, `campfire telemetry status|enable|disable`, bounded
+`activated`/`active` events on real success boundaries, a measured installer
+route, and Cloudflare Analytics Engine ingestion. It is not a general analytics
+platform: per-command instrumentation, session replay, dashboard UI, billing, and
+any workspace content remain out of scope. The dataset is not provisioned and no
+founder metric has been produced. Telemetry must never fail a Campfire
+operation.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

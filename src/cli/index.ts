@@ -49,6 +49,7 @@ import { resolveErrorOutput, resolveExplicitOutput, resolveOutputMode, type Reso
 import {
   buildAwaitingWorkspace,
   buildCommandManifest,
+  buildTelemetryStatus,
   buildWorkspaceAgents,
   buildWorkspaceChanges,
   buildWorkspaceDecisions,
@@ -59,6 +60,7 @@ import {
   formatContributionDeltaLine,
   formatContributionLine,
   formatParticipant,
+  formatTelemetryStatus,
   formatWorkspaceAgents,
   formatWorkspaceChanges,
   formatWorkspaceDecisions,
@@ -66,13 +68,14 @@ import {
   formatWorkspaceStatus,
   INSPECT_KINDS,
   type InspectKind,
+  type TelemetryEndpoint,
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
 import { buildHandoff, formatHandoff } from "../bootstrap/handoff.js";
-import { formatOnboardReceipt, onboardInstallation } from "../bootstrap/onboard.js";
+import { formatOnboardReceipt, onboardInstallation, type OnboardReceipt } from "../bootstrap/onboard.js";
 import { setupContract } from "../bootstrap/setup-contract.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
@@ -99,6 +102,14 @@ import type {
   WorkspaceStatus,
 } from "../domain/types.js";
 import { campfireHttpBridgeReport, campfireHttpCall, hostedPreflightError } from "../http/client.js";
+import {
+  DEFAULT_TELEMETRY_ENDPOINT,
+  TELEMETRY_ENDPOINT_ENV_VAR,
+  reportActivated,
+  reportActive,
+  telemetryInBackground,
+} from "../telemetry/report.js";
+import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
@@ -200,6 +211,40 @@ interface CliBackend {
   call(method: string, params?: Record<string, unknown>): Promise<unknown>;
 }
 
+/**
+ * The single CLI call funnel, with the TEL-001E lifecycle boundary attached.
+ *
+ * A successful `get_workspace_context` is the section 9 "first successful
+ * authenticated workspace-context operation". Every withBackend-based read
+ * command funnels through here, so one hook observes activation and repeated
+ * use without instrumenting commands individually (TEL-001 section 4 forbids
+ * per-command instrumentation). `--help`, `--version`, `capabilities`, `setup`,
+ * `seed`, `bootstrap`, and `telemetry` never reach this funnel, so trivial and
+ * telemetry commands cannot activate an installation.
+ *
+ * The Viewer is deliberately not instrumented: `src/viewer/server.ts` and
+ * `src/bootstrap/local-workspace.ts` receive their own `call` and are left
+ * untouched. `campfire view` does hand this wrapper to the Viewer, and that is
+ * safe rather than accidental: `claimActivation` answers once per installation
+ * and `claimActiveEvent` once per UTC day, so a Viewer polling every two
+ * seconds still produces one event and then local reads only.
+ *
+ * Both reports are fire-and-forget, and the awaited result is returned
+ * unchanged, so measurement cannot delay, fail, or alter the command.
+ */
+function measuredCall(
+  call: (method: string, params?: Record<string, unknown>) => Promise<unknown>,
+): CliBackend["call"] {
+  return async (method, params) => {
+    const result = await call(method, params);
+    if (method === "get_workspace_context") {
+      telemetryInBackground(reportActivated("cli", { env: process.env }));
+      telemetryInBackground(reportActive("cli", { env: process.env }));
+    }
+    return result;
+  };
+}
+
 async function withBackend<T>(
   argv: string[],
   fn: (backend: CliBackend) => T | Promise<T>,
@@ -228,8 +273,9 @@ async function withBackend<T>(
     };
     const backend: CliBackend = {
       identity,
-      call: (method, params) =>
+      call: measuredCall((method, params) =>
         campfireHttpCall({ baseUrl: url, token, method, params: params ?? {} }),
+      ),
     };
     return await fn(backend);
   }
@@ -250,8 +296,9 @@ async function withBackend<T>(
     const backend: CliBackend = {
       identity: bound,
       store: runtime.store,
-      call: (method, params) =>
+      call: measuredCall((method, params) =>
         Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {})),
+      ),
     };
     return await fn(backend);
   } finally {
@@ -774,6 +821,73 @@ function cmdSetup(parsed: ParsedArgs): void {
   );
 }
 
+const TELEMETRY_SUBCOMMANDS = ["status", "enable", "disable"] as const;
+type TelemetrySubcommand = (typeof TELEMETRY_SUBCOMMANDS)[number];
+
+/**
+ * The ingestion endpoint this installation would use, without sending anything.
+ *
+ * This mirrors `resolveTelemetryTarget` deliberately instead of calling it:
+ * that helper mints an installation id as a side effect, and `status` must be
+ * a pure read. An endpoint that fails validation is reported as unusable
+ * rather than repaired, and the configured value is never echoed back because a
+ * URL can carry an operator secret.
+ */
+function telemetryEndpointStatus(env: NodeJS.ProcessEnv = process.env): TelemetryEndpoint {
+  const configured = env[TELEMETRY_ENDPOINT_ENV_VAR]?.trim();
+  const fromEnv = configured !== undefined && configured.length > 0;
+  try {
+    return {
+      url: canonicalEndpoint(fromEnv ? configured! : DEFAULT_TELEMETRY_ENDPOINT, { allowLoopbackHttp: true }),
+      source: fromEnv ? "env" : "default",
+      valid: true,
+    };
+  } catch {
+    return { source: fromEnv ? "env" : "default", valid: false };
+  }
+}
+
+/**
+ * `campfire telemetry status|enable|disable` (TEL-001B, section 12).
+ *
+ * Local preference control only: no SQLite runtime, no token, and no network,
+ * so it works on a fresh install before any workspace exists. The resolved
+ * preference is re-read after a write so an ambient `CAMPFIRE_TELEMETRY`
+ * override stays visible in the output instead of being hidden by the value
+ * that was just stored.
+ */
+function cmdTelemetry(parsed: ParsedArgs): void {
+  const mode = commandOutput(parsed);
+  const requested = parsed.positionals[0];
+  const subcommand = TELEMETRY_SUBCOMMANDS.find((name) => name === requested) as TelemetrySubcommand | undefined;
+  if (subcommand === undefined) {
+    throw new ValidationError(
+      `Unknown telemetry subcommand: ${requested === undefined ? "(none)" : requested}. ` +
+        `Run campfire telemetry status, campfire telemetry enable, or campfire telemetry disable; campfire telemetry --help lists them.`,
+      { field: "telemetry" },
+    );
+  }
+  // `status` reads the state file only. Calling the enabling path here would
+  // create an installation id, which would make inspecting telemetry an
+  // observable event about this installation.
+  const state =
+    subcommand === "status"
+      ? loadTelemetryState(process.env)
+      : setTelemetryEnabled(subcommand === "enable", process.env);
+  const preference = resolveTelemetryPreference(process.env);
+  emitResult(
+    buildTelemetryStatus({
+      ...preference,
+      ...(state?.installationId === undefined ? {} : { installationId: state.installationId }),
+      ...(state?.activatedOn === undefined ? {} : { activatedOn: state.activatedOn }),
+      ...(state?.lastActiveOn === undefined ? {} : { lastActiveOn: state.lastActiveOn }),
+      endpoint: telemetryEndpointStatus(process.env),
+    }),
+    mode,
+    formatTelemetryStatus,
+  );
+}
+
 async function cmdConnect(parsed: ParsedArgs): Promise<void> {
   const flags = parsed.flags;
   const harness = requireFlag(flags, "harness");
@@ -970,8 +1084,12 @@ async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
+  // Kept outside the try so the report cannot be reached before the workspace,
+  // goal, and local profile are all committed; `runtime.close()` still runs on
+  // every path through the block.
+  let receipt: OnboardReceipt;
   try {
-    const receipt = onboardInstallation(runtime.store, runtime.service, runtime.config, {
+    receipt = onboardInstallation(runtime.store, runtime.service, runtime.config, {
       humanName,
       agentName,
       harness,
@@ -991,14 +1109,19 @@ async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
       humanToken: receipt.human.token,
       agentToken: receipt.agent.token,
     });
-    if (commandOutput(parsed) === "json") {
-      printJson(receipt);
-      return;
-    }
-    console.log(formatOnboardReceipt(receipt));
   } finally {
     runtime.close();
   }
+  // TEL-001E, section 9 "successful workspace bootstrap". Placed after the
+  // database is closed and after the profile is persisted, and sent in the
+  // background: an onboarding that already succeeded is never failed, delayed,
+  // or rolled back by measurement.
+  telemetryInBackground(reportActivated("cli", { env: process.env }));
+  if (commandOutput(parsed) === "json") {
+    printJson(receipt);
+    return;
+  }
+  console.log(formatOnboardReceipt(receipt));
 }
 
 async function cmdBootstrap(flags: Record<string, string | boolean>): Promise<void> {
@@ -1485,6 +1608,11 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
       if(path!==undefined) configPaths[harness]=path;
     }
     const receipt = await joinFromInvitation({invitationFile,humanName:requireFlag(parsed.flags,"human-name"),harnesses:selected as EnrollmentHarness[],configPaths,mcpCommand:optionalFlag(parsed.flags,"mcp-command"),allowLoopback:parsed.flags["allow-loopback"]===true});
+    // TEL-001E, section 9 "successful workspace join": the enrollment is
+    // committed and verified, so this installation demonstrably works. Only
+    // the invitation variant reaches it; background so a committed join is
+    // never failed by measurement.
+    telemetryInBackground(reportActivated("cli", { env: process.env }));
     emitResult(receipt,commandOutput(parsed),value=>`Joined ${value.workspace.name} as ${value.human.name}.\nCompleted: ${value.stages.join(", ")}.\nConnected ${value.agents.map(agent=>agent.harness).join(" and ")}. Reload the harness and approve Campfire tools.\nNext: campfire up`);
     return;
   }
@@ -1993,6 +2121,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   init: () => cmdInit(),
   bootstrap: (parsed) => cmdBootstrap(parsed.flags),
   seed: (parsed) => cmdSeed(parsed.flags),
+  telemetry: (parsed) => cmdTelemetry(parsed),
   help: (parsed) => printHelp(parsed.positionals[0]),
 };
 

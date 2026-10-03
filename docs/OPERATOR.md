@@ -2,10 +2,11 @@
 
 Requirements: Node.js 22+.
 
-The source tree targets a v1.9.0 candidate. Public v1.9 promotion and the
-independent two-human acceptance trace remain pending; the deployed installer
-continues to serve v1.8.0. Build the candidate from source or use its staged
-package for enrollment evaluation. See `SPRINT_020_RESULT.md` for the verdict.
+The source tree targets a v1.9.1 telemetry candidate. The v1.9.0 source
+snapshot and GitHub Release are published, while the Worker and versioned
+installer have not been promoted to production. The last documented deployed
+installer is v1.8.0. The independent two-human acceptance trace remains
+pending; see `SPRINT_020_RESULT.md` for that verdict.
 
 Install the CLI on an operator or teammate machine (curl path):
 
@@ -265,6 +266,78 @@ gate.
 `wrangler dev` always uses the placeholder (D1 simulated locally).
 
 One process owns SQLite. CLI and MCP call it over HTTP with an actor token.
+
+## Telemetry (Workers Analytics Engine)
+
+Anonymous product telemetry is a second, independent Worker binding in
+`wrangler.toml`:
+
+```toml
+[[analytics_engine_datasets]]
+binding = "TELEMETRY"
+dataset = "campfire_telemetry"
+```
+
+Unlike D1 this binding holds no secret. There is no `database_id`, no
+placeholder, and nothing for `$CAMPFIRE_D1_DATABASE_ID` or
+`wrangler.local.toml` to resolve: `scripts/wrangler-deploy.mjs` patches only the
+D1 id, so `npm run deploy`, `npm run deploy:dry-run`, and `npm run db:migrate`
+all carry the telemetry binding through unchanged.
+
+One-time provisioning (nothing to create by hand — the platform provisions the
+dataset on the first write):
+
+```bash
+npm run deploy                          # publishes the Worker with the TELEMETRY binding
+curl -fsSL https://boringinfra.company/campfire/install | head -c 1 >/dev/null
+# controlled check: that fetch records one install_requested data point
+```
+
+A Worker deployed without the binding, or one whose Analytics Engine write
+throws, accepts telemetry and answers
+`200 {"ok":true,"result":{"recorded":false}}`. That is intentional: the
+installer's best-effort POST must not look like a failure and must not be
+retried. `recorded: false` means the Worker did not accept a write;
+`recorded: true` means the binding accepted it, not that Analytics Engine has
+confirmed durable storage. A misnamed binding can create a different dataset,
+so verify the deployed
+binding name and query `campfire_telemetry` after the first controlled event.
+
+Client-side controls are operator/environment configuration:
+
+```bash
+export CAMPFIRE_TELEMETRY=0        # 0|off|false|no disables product events; 1|on|true|yes enables
+export CAMPFIRE_TELEMETRY_URL=https://boringinfra.company/campfire/v1/telemetry
+```
+
+`CAMPFIRE_TELEMETRY=0` guarantees silence without changing operator state.
+For CLI and MCP events, the environment override has precedence over the
+recorded `campfire telemetry disable|enable` preference. The shell installer
+also honors a recorded disable on reinstall, even if the environment requests
+`CAMPFIRE_TELEMETRY=1`. `CAMPFIRE_TELEMETRY_URL` selects the
+ingestion endpoint for a local or staged deployment; an endpoint that fails
+validation disables delivery rather than falling back to a guessed host. The
+official installer honors both environment variables before it reports
+completion, and reads the recorded preference on reinstall. The installer *fetch* is
+recorded by the Worker and cannot be disabled from the client — see
+`docs/TELEMETRY.md` for the full disclosure.
+
+Read-only measurement queries (dataset, definitions, sampling caveats):
+
+```bash
+node scripts/telemetry-queries.mjs --list                     # query catalogue
+node scripts/telemetry-queries.mjs --dry-run                  # plan and exact SQL, sends nothing
+node scripts/telemetry-queries.mjs --since 2026-10-02 --confirm
+node scripts/telemetry-queries.mjs --output json --confirm    # reproducible document
+```
+
+The script needs `CLOUDFLARE_ACCOUNT_ID` and a read-only API token with
+`Account | Account Analytics | Read` in `CLOUDFLARE_API_TOKEN` — the same names
+Wrangler uses. It never hard-codes a credential, never places one in argv, and
+refuses to send anything without `--confirm`. It defaults to the documented
+Analytics Engine SQL API; `--runner wrangler` uses
+`npx wrangler analytics-engine sql` on Wrangler builds that ship that
+subcommand.
 
 ## 1. Initialize
 

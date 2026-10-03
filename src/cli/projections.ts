@@ -575,3 +575,101 @@ export function formatCommandManifest(manifest: CliCommandManifest): string {
   }
   return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// telemetry_status
+// ---------------------------------------------------------------------------
+
+/**
+ * Where the effective preference came from. `env` wins over a stored
+ * preference so CI can guarantee silence without mutating operator state.
+ */
+export type TelemetryPreferenceSource = "env" | "preference" | "default";
+
+export interface TelemetryEndpoint {
+  /** Absent when the configured endpoint failed validation. */
+  url?: string;
+  source?: "env" | "default";
+  /** False disables delivery rather than repairing a bad endpoint by guessing. */
+  valid: boolean;
+}
+
+export interface TelemetryStatusInput {
+  enabled: boolean;
+  source: TelemetryPreferenceSource;
+  /** Absent until an installation id exists; reading status never creates one. */
+  installationId?: string;
+  activatedOn?: string;
+  lastActiveOn?: string;
+  endpoint: TelemetryEndpoint;
+}
+
+export interface TelemetryStatusResult {
+  version: typeof PROJECTION_VERSION;
+  kind: "telemetry_status";
+  enabled: boolean;
+  source: TelemetryPreferenceSource;
+  installation?: {
+    /** Random local UUID. An installation, never a person. */
+    id: string;
+    activatedOn?: string;
+    lastActiveOn?: string;
+  };
+  endpoint: TelemetryEndpoint;
+  next: Array<{ command: string; when: string }>;
+}
+
+export function buildTelemetryStatus(input: TelemetryStatusInput): TelemetryStatusResult {
+  const next: Array<{ command: string; when: string }> = input.enabled
+    ? [{ command: "campfire telemetry disable", when: "Stop anonymous product telemetry" }]
+    : [{ command: "campfire telemetry enable", when: "Send anonymous product telemetry" }];
+  return {
+    version: PROJECTION_VERSION,
+    kind: "telemetry_status",
+    enabled: input.enabled,
+    source: input.source,
+    ...(input.installationId === undefined
+      ? {}
+      : {
+          installation: {
+            id: input.installationId,
+            ...(input.activatedOn === undefined ? {} : { activatedOn: input.activatedOn }),
+            ...(input.lastActiveOn === undefined ? {} : { lastActiveOn: input.lastActiveOn }),
+          },
+        }),
+    endpoint: input.endpoint,
+    next,
+  };
+}
+
+function telemetryInstallationLabel(installation: TelemetryStatusResult["installation"]): string {
+  if (installation === undefined) {
+    return "none yet (created on the first reported event)";
+  }
+  return joinFields(
+    installation.id,
+    installation.activatedOn === undefined ? undefined : `activated ${installation.activatedOn}`,
+    installation.lastActiveOn === undefined ? undefined : `last active ${installation.lastActiveOn}`,
+    "(this installation, not a person)",
+  );
+}
+
+function telemetryEndpointLabel(endpoint: TelemetryEndpoint): string {
+  if (!endpoint.valid) {
+    // The configured value is never echoed: a URL can carry an operator secret.
+    return "unusable; delivery is disabled";
+  }
+  return joinFields(endpoint.url, endpoint.source === undefined ? undefined : `(${endpoint.source})`);
+}
+
+export function formatTelemetryStatus(result: TelemetryStatusResult): string {
+  const lines = [
+    labeled("Telemetry", result.enabled ? "enabled" : "disabled", `(${result.source})`),
+    labeled("Install", telemetryInstallationLabel(result.installation)),
+    labeled("Endpoint", telemetryEndpointLabel(result.endpoint)),
+  ];
+  for (const step of result.next) {
+    lines.push(joinFields(step.command.padEnd(HEADER_LABEL_WIDTH), step.when));
+  }
+  return lines.join("\n");
+}
