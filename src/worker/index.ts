@@ -48,6 +48,9 @@ export default {
       store,
       assetsFetch: (req) => env.ASSETS.fetch(req),
       webhookEnv: webhookEnv(env),
+      // Passed through as-is, including undefined: an unprovisioned dataset
+      // must leave the installer and the ingestion route working, not crash.
+      telemetryDataset: env.TELEMETRY,
     });
     const response = await handle(request);
     ctx.waitUntil(deliverPending(env).catch(() => undefined));

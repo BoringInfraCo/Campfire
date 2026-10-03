@@ -50,6 +50,7 @@ export const CLI_COMMAND_NAMES = [
   "init",
   "bootstrap",
   "seed",
+  "telemetry",
   "help",
 ] as const;
 
@@ -517,6 +518,29 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "Real first run: campfire onboard.",
     ] },
   ),
+  // `mutates` is true for the group because `enable` and `disable` write the
+  // local preference. The subcommand is a positional, not a flag, so
+  // `commandSpecForArgs` cannot select a per-invocation spec the way it does for
+  // `--enroll`; the per-subcommand truth is carried by `variants`, where
+  // `status` is read-only.
+  telemetry: spec(
+    "telemetry",
+    "admin",
+    "Show or change anonymous product telemetry.",
+    "campfire telemetry status|enable|disable [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: false, variants: [
+      { selector: "status", usage: "campfire telemetry status [--output auto|human|json]", mutates: false, outputModes: DUAL },
+      { selector: "enable", usage: "campfire telemetry enable [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "disable", usage: "campfire telemetry disable [--output auto|human|json]", mutates: true, outputModes: DUAL },
+    ], notes: [
+      "Sends only anonymous counters: Campfire version, OS, architecture, surface, and a random local installation id.",
+      "It never sends prompts, messages, code, diffs, file paths, repository, branch, workspace or team names, tokens, email addresses, or hostnames.",
+      "status resolves the preference, the installation id, and the endpoint, and never creates an installation id.",
+      "The id identifies this installation, not a person, and is a random UUID with no user or machine input.",
+      "CAMPFIRE_TELEMETRY=0 (or off|false|no) turns telemetry off for one invocation without changing the stored preference.",
+      "CAMPFIRE_TELEMETRY_URL selects the ingestion endpoint; an unusable endpoint disables delivery rather than guessing a host.",
+    ] },
+  ),
   help: spec(
     "help",
     "discover",
@@ -598,6 +622,13 @@ const GLOBAL_NOTES = [
   "",
   "add-artifact's --type is the artifact type; acting as an agent there uses",
   "CAMPFIRE_ACTOR_TYPE or --token, not --type.",
+  "",
+  "telemetry reports anonymous install, activation, and active counters. It",
+  "sends Campfire version, OS, architecture, surface, and a random local",
+  "installation id; never prompts, messages, code, paths, repository, branch,",
+  "workspace or team names, tokens, email addresses, or hostnames.",
+  "campfire telemetry status|enable|disable inspects or changes it, and",
+  "CAMPFIRE_TELEMETRY=0 turns it off for a single invocation.",
   "",
   "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
 ];

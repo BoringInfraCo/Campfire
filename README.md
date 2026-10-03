@@ -30,7 +30,7 @@ Onboard is the first-run path to one human, one agent they own, one workspace, a
 For a version-pinned install:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.9.0/install.sh | sh -s -- --version 1.9.0
+curl -fsSL https://boringinfra.company/campfire/v1.9.1/install.sh | sh -s -- --version 1.9.1
 ```
 
 ## Build and verify
@@ -43,6 +43,10 @@ npm test
 ```
 
 Campfire remains `private: true` in `package.json` and is not published to npm. Distribution uses the install script and checksummed GitHub Release archives.
+
+## Telemetry
+
+Campfire sends four anonymous events so it can tell whether it is being installed, activated, and used again: `install_requested`, `install_completed`, `activated`, and `active`. A payload contains a random installation id generated locally plus the Campfire version, OS, architecture, install method, and surface — no prompts, messages, code, diffs, file paths, repository, branch, workspace, or team names, no identity, and no credentials. The field list is enforced in code rather than by policy: every payload is built from a fixed allow-list and the endpoint rejects any undocumented field. Run `campfire telemetry status`, `campfire telemetry disable`, or set `CAMPFIRE_TELEMETRY=0` for one invocation. See [docs/TELEMETRY.md](docs/TELEMETRY.md) for the complete disclosure, and [docs/OPERATOR.md](docs/OPERATOR.md) for hosting the Analytics Engine dataset.
 
 ## Contributing
 

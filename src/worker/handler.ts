@@ -11,8 +11,13 @@ import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
  *   `dispatchCampfireMethod` + `CampfireService` (sync, local SQLite/tests).
  * - `POST /api/call` and `GET /api/<viewerMethod>` — bearer-authenticated,
  *   read-only compatibility APIs for non-browser clients.
- * - `GET /campfire/install.sh` and versioned installer paths — the only
- *   public assets served through `env.ASSETS.fetch`. The journal itself is
+ * - `GET /campfire/install` (`/install`) — the measured installer route: same
+ *   installer asset, plus one anonymous `install_requested` data point.
+ * - `POST /v1/telemetry` — anonymous telemetry ingestion (TEL-001F). No
+ *   bearer: it authenticates no Campfire state and writes only Analytics
+ *   Engine data points.
+ * - `GET /campfire/install.sh` and versioned installer paths — the installer
+ *   assets served through `env.ASSETS.fetch`. The journal itself is
  *   served by the loopback Viewer process, where the bearer stays server-side.
  *
  * `createD1WorkerHandler` is the production entry: same routes over
@@ -31,6 +36,12 @@ import { dispatchCampfireMethod, isCampfireHttpMethod } from "../http/dispatch.j
 import { dispatchCampfireMethodAsync } from "./async-dispatch.js";
 import { createAsyncCampfireService, type AsyncCampfireService } from "./async-service.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
+import {
+  handleTelemetryEvent,
+  recordInstallRequested,
+  TELEMETRY_PATH,
+  type AnalyticsEngineDataset,
+} from "./telemetry.js";
 import type { IdSource } from "../domain/ids.js";
 
 const MAX_BODY_BYTES = 1_048_576;
@@ -52,9 +63,24 @@ type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];
 
 const VIEWER_READ_SET: ReadonlySet<string> = new Set(VIEWER_READ_METHODS);
 
+/** The one installer asset. `/campfire/install` serves this file under a shorter path. */
+const INSTALLER_ASSET_PATH = "/campfire/install.sh";
+
 function isInstallerPath(path: string): boolean {
-  return path === "/campfire/install.sh" ||
+  return path === INSTALLER_ASSET_PATH ||
     /^\/campfire\/v\d+\.\d+\.\d+\/install\.sh$/.test(path);
+}
+
+/**
+ * The measured installer route (TEL-001D). Deliberately not an
+ * `isInstallerPath` case: those `.sh` paths serve an asset unchanged and stay
+ * unmeasured, while this one additionally records `install_requested`. Both
+ * spellings are matched — the zone-prefixed original and the prefix-stripped
+ * one — so the route behaves the same on the production zone and on a custom
+ * domain.
+ */
+function isInstallRequestPath(path: string): boolean {
+  return path === "/campfire/install" || apiPath(path) === "/install";
 }
 
 /**
@@ -179,6 +205,8 @@ function agentSessionIdOf(params: Record<string, unknown>): string | undefined {
 export interface SyncWorkerHandlerOptions {
   service: CampfireService;
   assetsFetch?: AssetsFetch;
+  /** Optional Analytics Engine dataset. Absent means telemetry is not provisioned. */
+  telemetryDataset?: AnalyticsEngineDataset;
 }
 
 export interface D1WorkerHandlerOptions {
@@ -187,6 +215,31 @@ export interface D1WorkerHandlerOptions {
   idSource?: IdSource;
   clock?: () => string;
   webhookEnv?: Record<string, string | undefined>;
+  telemetryDataset?: AnalyticsEngineDataset;
+}
+
+/** Re-point an installer request at `path`, preserving the original request when it already matches. */
+function assetRequest(request: Request, path: string): Request {
+  const url = new URL(request.url);
+  if (url.pathname === path) return request;
+  url.pathname = path;
+  return new Request(url.toString(), { method: request.method, headers: request.headers });
+}
+
+async function fetchInstallerAsset(
+  request: Request,
+  assetsFetch: AssetsFetch | undefined,
+  path: string,
+): Promise<Response> {
+  if (assetsFetch === undefined) {
+    return fail(404, "ValidationError", `No asset binding for: ${path}`);
+  }
+  try {
+    return await assetsFetch(assetRequest(request, path));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return fail(502, "ValidationError", `Asset fetch failed: ${message}`);
+  }
 }
 
 async function handleInstaller(
@@ -195,15 +248,30 @@ async function handleInstaller(
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
   if (!isInstallerPath(path)) return undefined;
-  if (assetsFetch === undefined) {
-    return fail(404, "ValidationError", `No asset binding for: ${path}`);
+  return fetchInstallerAsset(request, assetsFetch, path);
+}
+
+/**
+ * `GET /install` — the official installer, measured (TEL-001D).
+ *
+ * The request is recorded only after the installer response has been produced,
+ * and only when an installer body was actually served: a 404 or 502 is a
+ * routing failure, not an installer request, and counting it would inflate the
+ * top of the funnel against nothing. The write is deferred so measurement can
+ * never delay or fail the download.
+ */
+async function handleInstallRequest(
+  request: Request,
+  assetsFetch: AssetsFetch | undefined,
+  telemetryDataset: AnalyticsEngineDataset | undefined,
+): Promise<Response | undefined> {
+  const path = new URL(request.url).pathname;
+  if (!isInstallRequestPath(path)) return undefined;
+  const response = await fetchInstallerAsset(request, assetsFetch, INSTALLER_ASSET_PATH);
+  if (response.status >= 200 && response.status < 300) {
+    void recordInstallRequested(telemetryDataset).catch(() => undefined);
   }
-  try {
-    return await assetsFetch(request);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return fail(502, "ValidationError", `Asset fetch failed: ${message}`);
-  }
+  return response;
 }
 
 /**
@@ -211,7 +279,7 @@ async function handleInstaller(
  * `dispatchCampfireMethod` directly (local SQLite path, Vitest).
  */
 export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request: Request) => Promise<Response> {
-  const { service, assetsFetch } = options;
+  const { service, assetsFetch, telemetryDataset } = options;
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -219,7 +287,15 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       const path = apiPath(url.pathname);
       url.pathname = path;
 
+      // Matched ahead of the method split so a non-POST to the ingestion route
+      // answers 405 from the adapter rather than falling through to the 404 the
+      // GET branch produces for unknown paths. A 404 here would hide that the
+      // route exists and that it requires POST.
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset }, request);
+
       if (request.method === "GET") {
+        const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
+        if (installRequest !== undefined) return installRequest;
         const installerResponse = await handleInstaller(request, assetsFetch);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
@@ -256,6 +332,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
     ...(options.webhookEnv !== undefined ? { webhookEnv: options.webhookEnv } : {}),
   });
   const assetsFetch = options.assetsFetch;
+  const telemetryDataset = options.telemetryDataset;
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -267,7 +344,14 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
         return await handleAsyncBridgeReport(options.store, options.webhookEnv ?? {}, request);
       }
 
+      // Matched ahead of the method split so a non-POST to the ingestion route
+      // answers 405 rather than the 404 the GET branch produces (see the sync
+      // handler above).
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset }, request);
+
       if (request.method === "GET") {
+        const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
+        if (installRequest !== undefined) return installRequest;
         const installerResponse = await handleInstaller(request, assetsFetch);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {

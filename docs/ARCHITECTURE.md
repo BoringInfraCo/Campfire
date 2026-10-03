@@ -1090,6 +1090,16 @@ A useful principle:
 
 > If we cannot explain how Agent B obtained a piece of shared state, the architecture is not ready.
 
+One boundary is worth naming here so the two senses are not confused.
+Anonymous product telemetry (TEL-001) is *not* in-system observability: it is an
+outbound measurement path that records installer requests, completed
+installations, activation, and active installations, using a fixed field
+allow-list and a locally generated installation id. It carries no workspace
+state, no behavioral signal, and no identity, and it is separate from the
+contribution history that answers the principle above. The allow-list, the
+prohibited fields, and the ingestion boundary are documented in
+`docs/TELEMETRY.md`.
+
 ---
 
 ## 22. Future Architecture

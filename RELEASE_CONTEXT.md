@@ -1,6 +1,6 @@
-# Campfire 1.9.0 release context
+# Campfire 1.9.1 release context
 
-This public source snapshot was exported on 2026-10-03 from private canonical source commit `5d80dba4f1f21a8c834f0a508cb59d2e5be48172` (dated 2026-10-02T19:50:58-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-03 from private canonical source commit `48957420b254c2d1d53c951b9647ed3f46f6e580` (dated 2026-10-02T22:53:15-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -22,6 +22,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - A caller-held contribution cursor supports truthful return without storing read state or treating the cursor as a summary.
 - Contribution and Workspace lifecycle writes preserve actor and active agent-session provenance across local and Workers services.
 - Completed Workspaces remain readable with their structured state and contribution history intact.
+- Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
 
 ## Artifacts
 
