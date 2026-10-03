@@ -5,7 +5,13 @@ release/
 evidence/
 *.log
 !fixtures/billing/deploy.log
+!fixtures/sprint-011/webhook.log
 .DS_Store
+*.invitation.json
+pending-enrollment.json
+pending-agent-*.json
+enrollment-receipt.json
+credentials.json
 .dev.vars
 .env
 .env.*
