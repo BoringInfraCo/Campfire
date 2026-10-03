@@ -4,7 +4,7 @@
  * Every dependent INSERT selects only if that execution won the claim.
  */
 import type { EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
-import type { Agent, ActorToken, Contribution, WorkspaceParticipant } from "../domain/types.js";
+import type { Agent, ActorToken, NewContribution, WorkspaceParticipant } from "../domain/types.js";
 
 export interface EnrollmentStatement { sql: string; values: unknown[] }
 interface Guard { sql: string; values: unknown[] }
@@ -19,10 +19,22 @@ const ownerGuard = (workspaceId: string, humanId: string, teamId?: string): Guar
     WHERE w.id = ?${teamId === undefined ? "" : " AND w.team_id = ? AND w.status = 'active'"})`,
   values: [humanId, workspaceId, ...(teamId === undefined ? [] : [teamId])],
 });
-function contributionInsert(value: Contribution, guard: Guard): EnrollmentStatement {
-  return insert("contributions", "id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, created_at",
-    [value.id, value.workspaceId, value.actor.actorId, value.actor.actorType, value.agentSessionId ?? null, value.action,
-      value.objectType, value.objectId, value.payload === undefined ? null : JSON.stringify(value.payload), value.createdAt], guard);
+function contributionInsert(value: NewContribution, guard: Guard): EnrollmentStatement {
+  // Position is assigned in the statement. A placeholder would store 0 and the
+  // unique (workspace, position) index would reject the next enrollment write.
+  return {
+    sql: `INSERT INTO contributions (
+      id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, append_position, created_at
+    ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      (SELECT COALESCE(MAX(append_position), 0) + 1 FROM contributions WHERE workspace_id = ?),
+      ? WHERE ${guard.sql}`,
+    values: [
+      value.id, value.workspaceId, value.actor.actorId, value.actor.actorType, value.agentSessionId ?? null,
+      value.action, value.objectType, value.objectId,
+      value.payload === undefined ? null : JSON.stringify(value.payload),
+      value.workspaceId, value.createdAt, ...guard.values,
+    ],
+  };
 }
 function agentInsert(value: Agent, guard: Guard): EnrollmentStatement {
   return insert("agents", "id, team_id, human_id, name, harness, model, instance_metadata, created_at",
@@ -42,7 +54,7 @@ function slotInsert(record: OwnedAgentEnrollmentRecord, nonce: string, guard: Gu
     [record.workspaceId, record.humanId, record.harness, record.requestId, record.requestDigest, record.tokenHash, JSON.stringify(record.receipt), nonce], guard);
 }
 
-export function issueEnrollmentStatements(invitation: EnrollmentInvitation, contribution: Contribution, nonce: string): EnrollmentStatement[] {
+export function issueEnrollmentStatements(invitation: EnrollmentInvitation, contribution: NewContribution, nonce: string): EnrollmentStatement[] {
   const guard = ownerGuard(invitation.workspaceId, invitation.issuedByHumanId, invitation.teamId);
   const ownWrite = { sql: "EXISTS (SELECT 1 FROM enrollment_invitations WHERE id = ? AND claim_nonce = ?)", values: [invitation.id, nonce] };
   return [

@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+.
 
-The source tree targets v1.9.3. This patch keeps telemetry schema version 1
+The source tree targets v1.10.0. The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches

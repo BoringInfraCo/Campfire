@@ -6,8 +6,10 @@
  * from the resolved token, never from client-supplied actor ids.
  */
 import { Unauthorized, ValidationError } from "../domain/errors.js";
+import type { ContextBudget } from "../domain/context-policy.js";
 import type { ActorRef, ArtifactType, ParticipantRole } from "../domain/types.js";
 import type { ActorContext } from "../service/authorization.js";
+import type { ListWorkspaceObjectsInput } from "../service/service.js";
 import type { AsyncCampfireService } from "./async-service.js";
 
 import { normalizeIssueEnrollmentInput, normalizeInvitationLookup, normalizeEnrollOwnedAgentInput } from "../domain/enrollment.js";
@@ -20,6 +22,15 @@ export const CAMPFIRE_HTTP_METHODS = [
   "update_workspace",
   "get_workspace",
   "get_workspace_context",
+  "get_workspace_changes",
+  "list_decisions",
+  "list_findings",
+  "list_tasks",
+  "list_artifacts",
+  "get_decision",
+  "get_finding",
+  "get_task",
+  "get_artifact",
   "get_activity",
   "join_workspace",
   "invite_workspace",
@@ -102,6 +113,34 @@ function optionalNum(params: Record<string, unknown>, field: string): number | u
     throw new ValidationError(`${field} must be a number`, { field, value });
   }
   return value;
+}
+
+const CONTEXT_BUDGET_KEYS = ["goals", "decisions", "findings", "tasks", "blockers", "artifacts", "recentChanges"] as const;
+
+function optionalContextBudget(params: Record<string, unknown>): Partial<ContextBudget> | undefined {
+  if (params.budget === undefined) return undefined;
+  if (!isRecord(params.budget)) {
+    throw new ValidationError("budget must be an object of numbers", { field: "budget" });
+  }
+  const budget: Partial<ContextBudget> = {};
+  for (const [key, value] of Object.entries(params.budget)) {
+    if (!(CONTEXT_BUDGET_KEYS as readonly string[]).includes(key) || typeof value !== "number" || !Number.isFinite(value)) {
+      throw new ValidationError("budget must be an object of numbers", { field: "budget", key });
+    }
+    budget[key as keyof ContextBudget] = value;
+  }
+  return budget;
+}
+
+function objectListInput(params: Record<string, unknown>): ListWorkspaceObjectsInput {
+  const input: ListWorkspaceObjectsInput = { workspaceId: str(params, "workspaceId") };
+  const limit = optionalInt(params, "limit");
+  if (limit !== undefined) input.limit = limit;
+  const cursor = optionalStr(params, "cursor");
+  if (cursor !== undefined) input.cursor = cursor;
+  const status = optionalStr(params, "status");
+  if (status !== undefined) input.status = status;
+  return input;
 }
 
 function optionalInt(params: Record<string, unknown>, field: string): number | undefined {
@@ -211,11 +250,38 @@ export async function dispatchCampfireMethodAsync(
     case "get_workspace":
       return await service.getWorkspace(ctx, str(params, "workspaceId"));
     case "get_workspace_context": {
-      const options: { since?: string } = {};
+      const options: { since?: string; budget?: Partial<ContextBudget> } = {};
       const since = optionalStr(params, "since");
       if (since !== undefined) options.since = since;
+      const budget = optionalContextBudget(params);
+      if (budget !== undefined) options.budget = budget;
       return await service.getWorkspaceContext(ctx, str(params, "workspaceId"), options);
     }
+    case "get_workspace_changes": {
+      const input: { workspaceId: string; after: string; limit?: number } = {
+        workspaceId: str(params, "workspaceId"),
+        after: str(params, "after"),
+      };
+      const limit = optionalInt(params, "limit");
+      if (limit !== undefined) input.limit = limit;
+      return await service.getWorkspaceChanges(ctx, input);
+    }
+    case "list_decisions":
+      return await service.listDecisionsPage(ctx, objectListInput(params));
+    case "list_findings":
+      return await service.listFindingsPage(ctx, objectListInput(params));
+    case "list_tasks":
+      return await service.listTasksPage(ctx, objectListInput(params));
+    case "list_artifacts":
+      return await service.listArtifactsPage(ctx, objectListInput(params));
+    case "get_decision":
+      return await service.getDecisionInWorkspace(ctx, str(params, "workspaceId"), str(params, "decisionId"));
+    case "get_finding":
+      return await service.getFindingInWorkspace(ctx, str(params, "workspaceId"), str(params, "findingId"));
+    case "get_task":
+      return await service.getTaskInWorkspace(ctx, str(params, "workspaceId"), str(params, "taskId"));
+    case "get_artifact":
+      return await service.getArtifactInWorkspace(ctx, str(params, "workspaceId"), str(params, "artifactId"));
     case "get_activity": {
       const query: { workspaceId: string; limit?: number; before?: string } = {
         workspaceId: str(params, "workspaceId"),

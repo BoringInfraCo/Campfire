@@ -146,9 +146,12 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire up` | Start the local API and Viewer; connect each installed Codex or OpenCode. Does not import past sessions |
 | `campfire status [workspace]` | Live authorized workspace overview built from the authorized WorkspaceContext: goal, work counts, decisions, participants, attention, and the newest contribution cursor. Not a local-profile summary |
 | `campfire agents [workspace]` | Recorded agent participants with role, harness, human owner, and joined time. Never a presence label |
-| `campfire decisions [workspace]` | Proposed, accepted, and superseded decisions from the existing lifecycle |
-| `campfire changes [workspace] [--since <contributionId>]` | Contributions after a cursor, or the recent provenance window, plus the cursor to retain next |
-| `campfire inspect <kind> <id> --workspace <workspaceId>` | Inspect one workspace object by kind and id from the authorized projection. No cross-workspace lookup |
+| `campfire decisions [workspace]` | One page of decisions. Default page size is 100. `--limit`, `--cursor`, and `--status` continue the list. The page reports total, returned, and truncated |
+| `campfire context [workspace]` | Bounded orientation, the same read as `show` without `--full`. Truncated sections say how many rows are showing |
+| `campfire catch-up [workspace] --after <cursor>` | Changes after an orientation or catch-up cursor. Material changes come first. Pass the returned cursor to continue |
+| `campfire findings` / `tasks` / `artifacts [workspace]` | One bounded page of that object. `tasks` accepts `--status`. Pass `--cursor` to continue |
+| `campfire changes [workspace] [--since <contributionId>]` | Contributions after a contribution id, or the recent provenance window, plus the cursor to retain next |
+| `campfire inspect <kind> <id> --workspace <workspaceId>` | Inspect one workspace object by kind and id. Task, finding, decision, and artifact reads load that object. No cross-workspace lookup |
 | `campfire capabilities` | The installed CLI command manifest for shell discovery; not the future Campfire Capability domain object |
 | `campfire telemetry status\|enable\|disable` | Show or change anonymous product telemetry. Sends only the installation id, Campfire version, OS, architecture, and surface counters; never content, paths, or identity |
 | `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
@@ -157,7 +160,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire doctor <workspace>` | Read-only setup diagnosis. Does not register a session |
 | `campfire handoff <workspace>` | Non-secret Viewer receipt. The browser stays token-free |
 | `campfire init` / `seed [--reset]` | Bootstrap org/team; `seed --reset` loads the deterministic demo/evaluation fixture, not a new operator workspace |
-| `campfire list` / `show <workspace>` / `activity <workspace>` | Inspect workspaces and their contribution history; `show --since <contributionId>` adds the delta since that observation and the newest id to retain |
+| `campfire list` / `show <workspace>` / `activity <workspace>` | `show` is the bounded orientation. `show --full` remains the full inspector. `show --since <contributionId>` adds the delta since that observation. `activity` is the contribution history |
 | `campfire create-workspace` / `create-goal` / `create-task` | Shape the work (goals, tasks with explicit lifecycle) |
 | `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance |
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |

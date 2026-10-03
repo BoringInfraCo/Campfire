@@ -18,7 +18,7 @@ import type {
   AttentionItem,
   ParticipantView,
   WorkspaceContext,
-  WorkspaceView,
+  WorkspaceObjectPage,
 } from "../service/service.js";
 import {
   CLI_CATALOG,
@@ -340,18 +340,26 @@ export interface WorkspaceDecisionsResult {
   proposed: Decision[];
   accepted: Decision[];
   superseded: Decision[];
+  total: number;
+  returned: number;
+  truncated: boolean;
+  nextCursor?: string;
 }
 
-export function buildWorkspaceDecisions(view: WorkspaceView): WorkspaceDecisionsResult {
+export function buildWorkspaceDecisions(page: WorkspaceObjectPage<Decision>): WorkspaceDecisionsResult {
   const of = (status: DecisionStatus): Decision[] =>
-    view.decisions.filter((decision) => decision.status === status);
+    page.items.filter((decision) => decision.status === status);
   return {
     version: PROJECTION_VERSION,
     kind: "workspace_decisions",
-    workspaceId: view.workspace.id,
+    workspaceId: page.workspaceId,
     proposed: of("proposed"),
     accepted: of("accepted"),
     superseded: of("superseded"),
+    total: page.total,
+    returned: page.returned,
+    truncated: page.truncated,
+    ...(page.nextCursor === undefined ? {} : { nextCursor: page.nextCursor }),
   };
 }
 
@@ -367,12 +375,14 @@ function decisionLines(decisions: readonly Decision[]): string[] {
 }
 
 export function formatWorkspaceDecisions(result: WorkspaceDecisionsResult): string {
-  return [
+  const lines = [
     labeled("Workspace", result.workspaceId),
     ...section(`Proposed  (${result.proposed.length})`, decisionLines(result.proposed)),
     ...section(`Accepted  (${result.accepted.length})`, decisionLines(result.accepted)),
     ...section(`Superseded  (${result.superseded.length})`, decisionLines(result.superseded)),
-  ].join("\n");
+  ];
+  if (result.truncated) lines.push(`Showing ${result.returned} of ${result.total}`);
+  return lines.join("\n");
 }
 
 // ---------------------------------------------------------------------------

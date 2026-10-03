@@ -17,6 +17,7 @@ import type {
   AgentSession,
   Artifact,
   Contribution,
+  NewContribution,
   Decision,
   Finding,
   Goal,
@@ -34,6 +35,7 @@ import type {
   DecisionStatus,
 } from "../domain/types.js";
 import type { EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
+import type { ContributionPageQuery, ContributionWindow, ObjectPage, ObjectPageQuery } from "./context-queries.js";
 
 export interface WorkspacePatch {
   name?: string;
@@ -124,9 +126,12 @@ export interface CampfireStore {
   listArtifacts(workspaceId: string): Artifact[];
 
   // --- activity / provenance ---
-  createContribution(contribution: Contribution): void;
+  /** Store assigns `appendPosition`. A caller-supplied position is ignored. */
+  createContribution(contribution: Omit<Contribution, "appendPosition">): void;
   getContribution(id: string): Contribution | undefined;
   listContributions(workspaceId: string): Contribution[];
+  /** Highest append position in the workspace, or 0 when it has no contributions. */
+  maxAppendPosition(workspaceId: string): number;
 
   // --- actor tokens (hashes only) ---
   createActorToken(token: ActorToken): void;
@@ -141,7 +146,7 @@ export interface CampfireStore {
 
   // Guarded Sprint 020 administrative provisioning. False means this execution
   // did not claim authority; callers may inspect a winning receipt for replay.
-  createEnrollmentInvitation(invitation: EnrollmentInvitation, contribution: Contribution): boolean;
+  createEnrollmentInvitation(invitation: EnrollmentInvitation, contribution: NewContribution): boolean;
   getEnrollmentInvitation(id: string): EnrollmentInvitation | undefined;
   getEnrollmentInvitationByHash(secretHash: string): EnrollmentInvitation | undefined;
   revokeEnrollmentInvitation(input: RevokeEnrollmentInvitationPlan): boolean;
@@ -189,4 +194,34 @@ export interface CampfireStore {
   // --- infrastructure ---
   transaction<T>(fn: () => T): T;
   close(): void;
+
+  /**
+   * Bounded CTX-001 reads. `limit` is the page size (1–100). Implementations
+   * fetch one extra row to set `hasMore` and must not read the rest of the table.
+   * `total` is the authorized workspace count for the same filter, not the page length.
+   */
+  countObjectsByStatus(kind: "decisions" | "tasks", workspaceId: string): Array<{ status: string; count: number }>;
+  countObjects(kind: "findings" | "artifacts" | "contributions", workspaceId: string): number;
+  pageDecisions(workspaceId: string, query: ObjectPageQuery & { statuses?: DecisionStatus[] }): ObjectPage<Decision>;
+  countDecisions(workspaceId: string, statuses?: DecisionStatus[]): number;
+  pageTasks(workspaceId: string, query: ObjectPageQuery & { statuses?: TaskStatus[] }): ObjectPage<Task>;
+  countTasks(workspaceId: string, statuses?: TaskStatus[]): number;
+  pageFindings(workspaceId: string, query: ObjectPageQuery): ObjectPage<Finding>;
+  pageArtifacts(workspaceId: string, query: ObjectPageQuery): ObjectPage<Artifact>;
+  pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
+  /** Newest `limit` contributions in the workspace, chronological. `total` is the workspace count. */
+  listRecentContributionWindow(workspaceId: string, limit: number): ObjectPage<Contribution>;
+  /**
+   * Newest `limit` contributions strictly after `contributionId`, chronological.
+   * `found` is false when the id is missing or belongs to another workspace.
+   * `total` is the count strictly after the anchor. `hasMore` means older rows
+   * after the anchor were omitted from this newest window.
+   */
+  listContributionsSince(workspaceId: string, contributionId: string, limit: number): ContributionWindow;
+  /**
+   * Newest `limit` contributions strictly before `contributionId`, chronological.
+   * `found` is false when the id is missing or belongs to another workspace.
+   * `total` is the count of every contribution in the workspace.
+   */
+  listContributionsBefore(workspaceId: string, contributionId: string, limit: number): ContributionWindow;
 }

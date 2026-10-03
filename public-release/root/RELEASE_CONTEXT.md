@@ -23,6 +23,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Contribution and Workspace lifecycle writes preserve actor and active agent-session provenance across local and Workers services.
 - Completed Workspaces remain readable with their structured state and contribution history intact.
 - Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
+- Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
 
 ## Artifacts
 

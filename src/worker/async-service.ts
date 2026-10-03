@@ -10,6 +10,27 @@ import type { ActorContext } from "../service/authorization.js";
 import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitationView, normalizeEnrollOwnedAgentInput, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import type { EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
+import { assembleWorkspaceContext } from "../service/context-assembly.js";
+import {
+  affectedObjectIds,
+  assertCursorWorkspace,
+  assembleCatchUp,
+  clampPageLimit,
+  compareDecisionKeyset,
+  CONTEXT_SCHEMA_VERSION,
+  contributionCursor,
+  decodeContextCursor,
+  decisionFetchLimits,
+  decisionRank,
+  DEFAULT_CONTEXT_BUDGET,
+  encodeContextCursor,
+  genesisContributionCursor,
+  objectCursor,
+  ORIENTATION_CHANGE_LOOKAHEAD,
+  selectRecentChanges,
+  toContextSlice,
+  type ContextBudget,
+} from "../domain/context-policy.js";
 import {
   deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
@@ -27,7 +48,9 @@ import {
   type CreateWorkspaceInput,
   type CurrentWork,
   type GetActivityInput,
+  type GetWorkspaceChangesInput,
   type InviteToWorkspaceInput,
+  type ListWorkspaceObjectsInput,
   type JoinWorkspaceInput,
   type ParticipantView,
   type ReadinessStatus,
@@ -37,7 +60,9 @@ import {
   type UpdateGoalInput,
   type UpdateTaskInput,
   type UpdateWorkspaceInput,
+  type WorkspaceCatchUp,
   type WorkspaceContext,
+  type WorkspaceObjectPage,
   type WorkspaceSummary,
   type WorkspaceView,
 } from "../service/service.js";
@@ -50,10 +75,12 @@ import type {
   ContributionAction,
   ContributionObjectType,
   Decision,
+  DecisionStatus,
   Finding,
   Goal,
   Human,
   Task,
+  TaskStatus,
   Workspace,
   WorkspaceInvite,
   WorkspaceParticipant,
@@ -67,6 +94,7 @@ import {
   Conflict,
   CrossWorkspaceReference,
   DecisionNotFound,
+  FindingNotFound,
   GoalNotFound,
   ParticipantRequired,
   SessionNotFound,
@@ -114,8 +142,17 @@ export interface AsyncCampfireService {
   getWorkspaceContext(
     ctx: ActorContext,
     workspaceId: string,
-    options?: { since?: string },
+    options?: { since?: string; budget?: Partial<import("../domain/context-policy.js").ContextBudget> },
   ): Promise<WorkspaceContext>;
+  getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp>;
+  listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Decision>>;
+  getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Promise<Decision>;
+  listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Finding>>;
+  getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Promise<Finding>;
+  listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Task>>;
+  getTaskInWorkspace(ctx: ActorContext, workspaceId: string, taskId: string): Promise<Task>;
+  listArtifactsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Artifact>>;
+  getArtifactInWorkspace(ctx: ActorContext, workspaceId: string, artifactId: string): Promise<Artifact>;
   getActivity(ctx: ActorContext, input: GetActivityInput): Promise<ActivityPage>;
   createHuman(ctx: ActorContext | undefined, input: CreateHumanInput): Promise<{ human: Human; token: string }>;
   createAgent(ctx: ActorContext, input: CreateAgentInput): Promise<{ agent: Agent; token: string }>;
@@ -564,19 +601,123 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     };
   }
 
-  function buildSince(activity: Contribution[], since: string): SinceProjection {
-    const index = activity.findIndex((contribution) => contribution.id === since);
-    if (index === -1) {
-      throw new ValidationError(`Unknown contribution id for since: ${since}`, {
-        field: "since",
-        since,
-      });
+  function resolveContextBudget(override?: Partial<ContextBudget>): ContextBudget {
+    const budget: ContextBudget = { ...DEFAULT_CONTEXT_BUDGET };
+    if (override === undefined) return budget;
+    for (const key of Object.keys(DEFAULT_CONTEXT_BUDGET) as (keyof ContextBudget)[]) {
+      const value = override[key];
+      if (value !== undefined) {
+        budget[key] = clampPageLimit(value, DEFAULT_CONTEXT_BUDGET[key]);
+      }
     }
-    const after = activity.slice(index + 1);
-    const truncated = after.length > ORIENTATION_PROVENANCE_LIMIT;
-    const items = truncated ? after.slice(-ORIENTATION_PROVENANCE_LIMIT) : after;
-    const newest = activity[activity.length - 1]?.id ?? since;
-    return { cursor: newest, items, truncated };
+    return budget;
+  }
+
+  function statusCount(rows: ReadonlyArray<{ status: string; count: number }>, status: string): number {
+    return rows.find((row) => row.status === status)?.count ?? 0;
+  }
+
+  async function requireReadableWorkspace(ctx: ActorContext, workspaceId: string): Promise<Workspace> {
+    await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+    const workspace = await store.getWorkspace(workspaceId);
+    if (workspace === undefined) throw new WorkspaceNotFound(workspaceId);
+    return workspace;
+  }
+
+  function pageContributionQuery(
+    limit: number,
+    materiality: "high" | "normal",
+    afterPosition: number,
+    tip: number,
+  ): { limit: number; materiality: "high" | "normal"; afterPosition?: number; throughPosition?: number } {
+    return {
+      limit,
+      materiality,
+      ...(afterPosition > 0 ? { afterPosition } : {}),
+      ...(tip > 0 ? { throughPosition: tip } : {}),
+    };
+  }
+
+  function objectAfter(
+    token: string | undefined,
+    workspaceId: string,
+    kind: "decision" | "task" | "finding" | "artifact",
+  ): { rank: number; at: string; id: string } | undefined {
+    if (token === undefined) return undefined;
+    const cursor = decodeContextCursor(token);
+    assertCursorWorkspace(cursor, workspaceId);
+    if (cursor.kind !== kind) {
+      throw new ValidationError(`Cursor is not a ${kind} cursor`, { field: "cursor", kind });
+    }
+    return { rank: cursor.rank, at: cursor.at, id: cursor.id };
+  }
+
+  function decisionStatuses(status: string | undefined): DecisionStatus[] | undefined {
+    if (status === undefined) return undefined;
+    if (status !== "proposed" && status !== "accepted" && status !== "superseded") {
+      throw new ValidationError("Invalid decision status", { field: "status", status });
+    }
+    return [status];
+  }
+
+  function taskStatuses(status: string | undefined): TaskStatus[] | undefined {
+    if (status === undefined) return undefined;
+    if (status !== "open" && status !== "in_progress" && status !== "blocked" && status !== "completed") {
+      throw new ValidationError("Invalid task status", { field: "status", status });
+    }
+    return [status];
+  }
+
+  function rejectObjectStatus(status: string | undefined): void {
+    if (status !== undefined) {
+      throw new ValidationError("status is not a filter for this object", { field: "status" });
+    }
+  }
+
+  function pageNextCursor(
+    kind: "decision" | "task" | "finding" | "artifact",
+    workspaceId: string,
+    page: { hasMore: boolean; next?: { rank: number; at: string; id: string } },
+  ): string | undefined {
+    if (!page.hasMore || page.next === undefined) return undefined;
+    return objectCursor({ kind, workspaceId, rank: page.next.rank, at: page.next.at, id: page.next.id });
+  }
+
+  function finishObjectPage<T>(
+    workspaceId: string,
+    items: readonly T[],
+    total: number,
+    nextCursor?: string,
+  ): WorkspaceObjectPage<T> {
+    return { schemaVersion: CONTEXT_SCHEMA_VERSION, workspaceId, ...toContextSlice(items, total, nextCursor) };
+  }
+
+  function resolveActivityBefore(workspaceId: string, before: string | undefined): string | undefined {
+    if (before === undefined) return undefined;
+    if (!before.startsWith("cf1.")) return before;
+    const cursor = decodeContextCursor(before);
+    assertCursorWorkspace(cursor, workspaceId);
+    if (cursor.kind !== "contribution") {
+      throw new ValidationError("Cursor is not a contribution cursor", { field: "before" });
+    }
+    return cursor.id === "" ? undefined : cursor.id;
+  }
+
+  function unknownBefore(beforeId: string): ValidationError {
+    return new ValidationError(`Unknown contribution id for before: ${beforeId}`, {
+      field: "before",
+      before: beforeId,
+    });
+  }
+
+  function readInWorkspace<T extends { workspaceId: string }>(
+    row: T | undefined,
+    workspaceId: string,
+    id: string,
+    missing: (objectId: string) => Error,
+  ): T {
+    if (row === undefined || row.workspaceId !== workspaceId) throw missing(id);
+    return row;
   }
 
   return {
@@ -587,7 +728,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       const now = clock();
       const secret = generateRawToken().replace(/^cft_/, "cfe_");
       const invitation: EnrollmentInvitation = { id: `ein_${idSource("invite")}`, workspaceId: workspace.id, teamId: workspace.teamId, issuedByHumanId: ctx.actor.actorId, secretHash: (await hashTokenAsync(secret)), createdAt: now, expiresAt: new Date(Date.parse(now) + input.expiresInHours * 3_600_000).toISOString(), permittedHarnesses: [...ENROLLMENT_HARNESSES] };
-      const contribution: Contribution = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
+      const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
       if (!(await store.createEnrollmentInvitation(invitation, contribution))) throw new Unauthorized("Workspace owner authority changed before invitation issuance", { recoveryCode: "owner_required" });
       return { version: 1, kind: "enrollment_invitation", invitationId: invitation.id, secret, workspace: { id: workspace.id, name: workspace.name, teamId: workspace.teamId }, expiresAt: invitation.expiresAt, permittedHarnesses: [...invitation.permittedHarnesses] };
     },
@@ -607,7 +748,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       if (invitation === undefined || invitation.workspaceId !== input.workspaceId) throw new Unauthorized("Invitation is unavailable in this workspace", { recoveryCode: "invalid_enrollment_invitation" });
       if (invitation.revokedAt !== undefined) return revocationReceipt(invitation);
       const now = clock();
-      const contribution: Contribution = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
+      const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
       if (!(await store.revokeEnrollmentInvitation({ invitationId: invitation.id, workspaceId: input.workspaceId, actor: ctx.actor, revokedAt: now, contribution }))) throw new Unauthorized("Workspace owner authority changed before invitation revocation", { recoveryCode: "owner_required" });
       return revocationReceipt({ ...invitation, revokedAt: now });
     },
@@ -822,60 +963,296 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     async getWorkspaceContext(
       ctx: ActorContext,
       workspaceId: string,
-      options?: { since?: string },
+      options?: { since?: string; budget?: Partial<ContextBudget> },
     ): Promise<WorkspaceContext> {
-      await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      const workspace = await store.getWorkspace(workspaceId);
-      if (workspace === undefined) {
-        throw new WorkspaceNotFound(workspaceId);
+      const workspace = await requireReadableWorkspace(ctx, workspaceId);
+      const budget = resolveContextBudget(options?.budget);
+
+      const decisionCounts = await store.countObjectsByStatus("decisions", workspaceId);
+      const acceptedCount = statusCount(decisionCounts, "accepted");
+      const proposedCount = statusCount(decisionCounts, "proposed");
+      const supersededCount = statusCount(decisionCounts, "superseded");
+      const decisionLimits = decisionFetchLimits(budget.decisions, {
+        accepted: acceptedCount,
+        proposed: proposedCount,
+      });
+      const acceptedPage =
+        decisionLimits.accepted > 0
+          ? await store.pageDecisions(workspaceId, { limit: decisionLimits.accepted, statuses: ["accepted"] })
+          : { items: [] as Decision[], hasMore: false, total: 0 };
+      const proposedPage =
+        decisionLimits.proposed > 0
+          ? await store.pageDecisions(workspaceId, { limit: decisionLimits.proposed, statuses: ["proposed"] })
+          : { items: [] as Decision[], hasMore: false, total: 0 };
+      const decisionItems = [...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset);
+      const decisionTotal = acceptedCount + proposedCount + supersededCount;
+      const decisionNext =
+        decisionItems.length < decisionTotal && !acceptedPage.hasMore
+          ? (() => {
+              const last = decisionItems[decisionItems.length - 1];
+              return last === undefined
+                ? undefined
+                : objectCursor({
+                    kind: "decision",
+                    workspaceId,
+                    rank: decisionRank(last.status),
+                    at: last.updatedAt,
+                    id: last.id,
+                  });
+            })()
+          : undefined;
+
+      const taskCounts = await store.countObjectsByStatus("tasks", workspaceId);
+      const blockedCount = statusCount(taskCounts, "blocked");
+      const taskPage = await store.pageTasks(workspaceId, { limit: budget.tasks });
+      const taskTotal = await store.countTasks(workspaceId);
+      const blockerTotal = await store.countTasks(workspaceId, ["blocked"]);
+      const blockerPage =
+        blockedCount === 0
+          ? { items: [] as Task[], hasMore: false, total: blockerTotal }
+          : await store.pageTasks(workspaceId, { limit: budget.blockers, statuses: ["blocked"] });
+
+      const findingTotal = await store.countObjects("findings", workspaceId);
+      const findingPage = await store.pageFindings(workspaceId, { limit: budget.findings });
+      const artifactTotal = await store.countObjects("artifacts", workspaceId);
+      const artifactPage = await store.pageArtifacts(workspaceId, { limit: budget.artifacts });
+
+      const provenanceWindow = await store.listRecentContributionWindow(workspaceId, ORIENTATION_PROVENANCE_LIMIT);
+      const provenance = provenanceWindow.items;
+      const contributionTotal = await store.countObjects("contributions", workspaceId);
+      const provenanceSummary: string[] = [];
+      for (const contribution of provenance) {
+        provenanceSummary.push(describeContribution(contribution, await actorName(contribution.actor)));
       }
-      const decisions = await store.listDecisions(workspaceId);
-      const tasks = await store.listTasks(workspaceId);
-      const activity = await store.listContributions(workspaceId);
-      const provenance =
-        activity.length > ORIENTATION_PROVENANCE_LIMIT
-          ? activity.slice(-ORIENTATION_PROVENANCE_LIMIT)
-          : activity;
-      const [goal, participants, findings, artifacts] = await Promise.all([
-        store.getGoalForWorkspace(workspaceId),
-        store.listParticipants(workspaceId),
-        store.listFindings(workspaceId),
-        store.listArtifacts(workspaceId),
-      ]);
-      const orientation = await deriveOrientation(ctx, workspaceId, tasks, decisions);
-      const names = await Promise.all(activity.map((contribution) => actorName(contribution.actor)));
-      const context: WorkspaceContext = {
+
+      const changeWindow = await store.listRecentContributionWindow(workspaceId, ORIENTATION_CHANGE_LOOKAHEAD);
+      const selectedChanges = selectRecentChanges(changeWindow.items, budget.recentChanges, workspaceId);
+
+      const newest = provenance[provenance.length - 1];
+      const orientationCursor =
+        newest === undefined
+          ? encodeContextCursor(genesisContributionCursor(workspaceId))
+          : encodeContextCursor(
+              contributionCursor({
+                workspaceId,
+                occurredAt: newest.createdAt,
+                id: newest.id,
+                phase: "high",
+                originOccurredAt: newest.createdAt,
+                originId: newest.id,
+                position: newest.appendPosition,
+                originPosition: newest.appendPosition,
+                tip: 0,
+              }),
+            );
+
+      const participantRows = await store.listParticipants(workspaceId);
+      const participants = [];
+      for (const participant of participantRows) {
+        participants.push(await resolveParticipant(participant));
+      }
+      const goal = await store.getGoalForWorkspace(workspaceId);
+      const orientation = await deriveOrientation(ctx, workspaceId, taskPage.items, decisionItems);
+      const alignment = deriveRecordedAlignment(decisionItems, taskPage.items, {
+        proposedDecisions: proposedCount,
+        acceptedDecisions: acceptedCount,
+      });
+
+      let since: SinceProjection | undefined;
+      if (options?.since !== undefined) {
+        const window = await store.listContributionsSince(workspaceId, options.since, ORIENTATION_PROVENANCE_LIMIT);
+        if (!window.found) {
+          throw new ValidationError(`Unknown contribution id for since: ${options.since}`, {
+            field: "since",
+            since: options.since,
+          });
+        }
+        const last = window.items[window.items.length - 1];
+        since = {
+          cursor: last?.id ?? options.since,
+          items: window.items,
+          truncated: window.total > window.items.length,
+        };
+      }
+
+      const findingNext = pageNextCursor("finding", workspaceId, findingPage);
+      const taskNext = pageNextCursor("task", workspaceId, taskPage);
+      const blockerNext = pageNextCursor("task", workspaceId, blockerPage);
+      const artifactNext = pageNextCursor("artifact", workspaceId, artifactPage);
+      return assembleWorkspaceContext({
         workspace,
-        goal,
-        participants: await Promise.all(participants.map((p) => resolveParticipant(p))),
-        proposedDecisions: decisions.filter((decision) => decision.status === "proposed"),
-        acceptedDecisions: decisions.filter((decision) => decision.status === "accepted"),
-        supersededDecisions: decisions
-          .filter((decision) => decision.status === "superseded")
-          .map((decision) => ({
-            id: decision.id,
-            summary: decision.summary,
-            updatedAt: decision.updatedAt,
-          })),
-        openTasks: tasks.filter((task) => task.status !== "completed"),
-        findings,
-        artifacts,
+        ...(goal === undefined ? {} : { goal }),
+        participants,
+        generatedAt: clock(),
+        budget,
+        orientationCursor,
+        decisions: { items: decisionItems, total: decisionTotal, ...(decisionNext === undefined ? {} : { nextCursor: decisionNext }) },
+        findings: { items: findingPage.items, total: findingTotal, ...(findingNext === undefined ? {} : { nextCursor: findingNext }) },
+        tasks: { items: taskPage.items, total: taskTotal, ...(taskNext === undefined ? {} : { nextCursor: taskNext }) },
+        blockers: { items: blockerPage.items, total: blockerTotal, ...(blockerNext === undefined ? {} : { nextCursor: blockerNext }) },
+        artifacts: { items: artifactPage.items, total: artifactTotal, ...(artifactNext === undefined ? {} : { nextCursor: artifactNext }) },
+        recentChanges: { items: selectedChanges, total: contributionTotal },
         provenance,
-        provenanceTotal: activity.length,
-        provenanceTruncated: activity.length > ORIENTATION_PROVENANCE_LIMIT,
+        provenanceTotal: contributionTotal,
+        provenanceSummary,
         needsYou: orientation.needsYou,
         needsAttention: orientation.needsAttention,
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
-        alignment: deriveRecordedAlignment(decisions, tasks),
-        provenanceSummary: activity.map((contribution, index) =>
-          describeContribution(contribution, names[index] ?? contribution.actor.actorId),
-        ),
-      };
-      if (options?.since !== undefined) {
-        context.since = buildSince(activity, options.since);
+        alignment,
+        ...(since === undefined ? {} : { since }),
+      });
+    },
+
+    async getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp> {
+      await requireReadableWorkspace(ctx, input.workspaceId);
+      const cursor = decodeContextCursor(input.after);
+      assertCursorWorkspace(cursor, input.workspaceId);
+      if (cursor.kind !== "contribution") {
+        throw new ValidationError("Cursor is not a contribution cursor", { field: "after" });
       }
-      return context;
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.recentChanges);
+      // tip 0 is not frozen. Pin the append high-water mark and do not raise it,
+      // or a row written between pages joins this run and the next one skips or repeats it.
+      const tip = cursor.tip === 0 ? await store.maxAppendPosition(input.workspaceId) : cursor.tip;
+      const origin = { occurredAt: cursor.originOccurredAt, id: cursor.originId, position: cursor.originPosition };
+
+      let high: Contribution[] = [];
+      let highHasMore = false;
+      let normal: Contribution[] = [];
+      let normalHasMore = false;
+      if (cursor.phase === "high") {
+        const highPage = await store.pageContributions(
+          input.workspaceId,
+          pageContributionQuery(limit, "high", cursor.position, tip),
+        );
+        high = highPage.items;
+        highHasMore = highPage.hasMore;
+        if (!highHasMore) {
+          const room = limit - high.length;
+          if (room > 0) {
+            const normalPage = await store.pageContributions(
+              input.workspaceId,
+              pageContributionQuery(room, "normal", cursor.originPosition, tip),
+            );
+            normal = normalPage.items;
+            normalHasMore = normalPage.hasMore;
+          } else {
+            // A full material page still has to learn whether normal rows remain.
+            // limit 1 returns the row itself, so existence is not the same as hasMore.
+            const probe = await store.pageContributions(
+              input.workspaceId,
+              pageContributionQuery(1, "normal", cursor.originPosition, tip),
+            );
+            normalHasMore = probe.items.length > 0 || probe.hasMore;
+          }
+        }
+      } else {
+        const normalPage = await store.pageContributions(
+          input.workspaceId,
+          pageContributionQuery(limit, "normal", cursor.position, tip),
+        );
+        normal = normalPage.items;
+        normalHasMore = normalPage.hasMore;
+      }
+
+      const assembled = assembleCatchUp({
+        workspaceId: input.workspaceId,
+        fromCursor: input.after,
+        phase: cursor.phase,
+        origin,
+        tip,
+        high,
+        highHasMore,
+        normal,
+        normalHasMore,
+      });
+      const highCount = await store.pageContributions(
+        input.workspaceId,
+        pageContributionQuery(1, "high", cursor.originPosition, tip),
+      );
+      const normalCount = await store.pageContributions(
+        input.workspaceId,
+        pageContributionQuery(1, "normal", cursor.originPosition, tip),
+      );
+      return {
+        schemaVersion: CONTEXT_SCHEMA_VERSION,
+        workspaceId: input.workspaceId,
+        fromCursor: input.after,
+        toCursor: assembled.toCursor,
+        changes: toContextSlice(assembled.items, highCount.total + normalCount.total, assembled.hasMore ? assembled.toCursor : undefined),
+        affected: affectedObjectIds(assembled.items),
+        generatedAt: clock(),
+        ordering: "material-then-chronological",
+      };
+    },
+
+    async listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Decision>> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.decisions);
+      const statuses = decisionStatuses(input.status);
+      const after = objectAfter(input.cursor, input.workspaceId, "decision");
+      const page = await store.pageDecisions(input.workspaceId, {
+        limit,
+        ...(after === undefined ? {} : { after }),
+        ...(statuses === undefined ? {} : { statuses }),
+      });
+      const total = await store.countDecisions(input.workspaceId, statuses);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("decision", input.workspaceId, page));
+    },
+
+    async getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Promise<Decision> {
+      await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(await store.getDecision(decisionId), workspaceId, decisionId, (id) => new DecisionNotFound(id));
+    },
+
+    async listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Finding>> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      rejectObjectStatus(input.status);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.findings);
+      const after = objectAfter(input.cursor, input.workspaceId, "finding");
+      const page = await store.pageFindings(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
+      const total = await store.countObjects("findings", input.workspaceId);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("finding", input.workspaceId, page));
+    },
+
+    async getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Promise<Finding> {
+      await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(await store.getFinding(findingId), workspaceId, findingId, (id) => new FindingNotFound(id));
+    },
+
+    async listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Task>> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.tasks);
+      const statuses = taskStatuses(input.status);
+      const after = objectAfter(input.cursor, input.workspaceId, "task");
+      const page = await store.pageTasks(input.workspaceId, {
+        limit,
+        ...(after === undefined ? {} : { after }),
+        ...(statuses === undefined ? {} : { statuses }),
+      });
+      const total = await store.countTasks(input.workspaceId, statuses);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("task", input.workspaceId, page));
+    },
+
+    async getTaskInWorkspace(ctx: ActorContext, workspaceId: string, taskId: string): Promise<Task> {
+      await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(await store.getTask(taskId), workspaceId, taskId, (id) => new TaskNotFound(id));
+    },
+
+    async listArtifactsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Artifact>> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      rejectObjectStatus(input.status);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.artifacts);
+      const after = objectAfter(input.cursor, input.workspaceId, "artifact");
+      const page = await store.pageArtifacts(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
+      const total = await store.countObjects("artifacts", input.workspaceId);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("artifact", input.workspaceId, page));
+    },
+
+    async getArtifactInWorkspace(ctx: ActorContext, workspaceId: string, artifactId: string): Promise<Artifact> {
+      await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(await store.getArtifact(artifactId), workspaceId, artifactId, (id) => new ArtifactNotFound(id));
     },
 
     async getActivity(ctx: ActorContext, input: GetActivityInput): Promise<ActivityPage> {
@@ -886,31 +1263,35 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           limit: input.limit,
         });
       }
-      const all = await store.listContributions(input.workspaceId);
-      let remaining = all;
-      if (input.before !== undefined) {
-        const index = all.findIndex((contribution) => contribution.id === input.before);
-        if (index === -1) {
-          throw new ValidationError(`Unknown contribution id for before: ${input.before}`, {
-            field: "before",
-            before: input.before,
-          });
+      const beforeId = resolveActivityBefore(input.workspaceId, input.before);
+      if (input.limit === undefined) {
+        const all = await store.listContributions(input.workspaceId);
+        let remaining = all;
+        if (beforeId !== undefined) {
+          const index = all.findIndex((contribution) => contribution.id === beforeId);
+          if (index === -1) throw unknownBefore(beforeId);
+          remaining = all.slice(0, index);
         }
-        remaining = all.slice(0, index);
+        return { items: remaining, total: all.length, truncated: false };
       }
-      if (input.limit !== undefined && remaining.length > input.limit) {
-        const items = remaining.slice(-input.limit);
+      if (beforeId === undefined) {
+        const window = await store.listRecentContributionWindow(input.workspaceId, input.limit);
+        const nextBefore = window.hasMore ? window.items[0]?.id : undefined;
         return {
-          items,
-          total: all.length,
-          truncated: true,
-          nextBefore: items[0]?.id,
+          items: window.items,
+          total: window.total,
+          truncated: window.hasMore,
+          ...(nextBefore === undefined ? {} : { nextBefore }),
         };
       }
+      const window = await store.listContributionsBefore(input.workspaceId, beforeId, input.limit);
+      if (!window.found) throw unknownBefore(beforeId);
+      const nextBefore = window.hasMore ? window.items[0]?.id : undefined;
       return {
-        items: remaining,
-        total: all.length,
-        truncated: false,
+        items: window.items,
+        total: window.total,
+        truncated: window.hasMore,
+        ...(nextBefore === undefined ? {} : { nextBefore }),
       };
     },
 

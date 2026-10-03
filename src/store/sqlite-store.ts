@@ -36,6 +36,24 @@ import type {
   WebhookDeliveryStatus,
 } from "../domain/events.js";
 import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
+import {
+  contributionsBeforeSql,
+  contributionsSinceSql,
+  countByStatusSql,
+  countContributionsPageSql,
+  countContributionsSinceSql,
+  countDecisionsSql,
+  countRowsSql,
+  countTasksSql,
+  pageArtifactsSql,
+  pageContributionsSql,
+  pageDecisionsSql,
+  pageFindingsSql,
+  pageTasksSql,
+  recentContributionsSql,
+  takeLimitPlusOne,
+  type ObjectPage,
+} from "./context-queries.js";
 
 interface OrganizationRow {
   id: string;
@@ -178,6 +196,7 @@ interface ContributionRow {
   object_type: string;
   object_id: string;
   payload: string | null;
+  append_position: number | bigint | string;
   created_at: string;
 }
 
@@ -407,6 +426,7 @@ function mapContribution(row: ContributionRow): Contribution {
     objectType: row.object_type as ContributionObjectType,
     objectId: row.object_id,
     payload: parseJson(row.payload),
+    appendPosition: Number(row.append_position),
     createdAt: row.created_at,
   };
 }
@@ -498,16 +518,90 @@ function emptyDeliveryCounts(): WebhookDeliveryCounts {
   return { pending: 0, delivering: 0, delivered: 0, exhausted: 0 };
 }
 
+interface RankedRow {
+  id: string;
+  context_rank: number | bigint | string;
+  updated_at?: string | null;
+  created_at?: string | null;
+}
+
+function readCount(row: { count?: number | bigint | string | null } | undefined): number {
+  if (row === undefined || row.count === undefined || row.count === null) return 0;
+  return Number(row.count);
+}
+
+function rankedPage<TRow extends RankedRow, T>(
+  rows: readonly TRow[],
+  limit: number,
+  total: number,
+  mapRow: (row: TRow) => T,
+): ObjectPage<T> {
+  const page = takeLimitPlusOne(rows, limit);
+  const last = page.items[page.items.length - 1];
+  return {
+    items: page.items.map(mapRow),
+    total,
+    hasMore: page.hasMore,
+    ...(page.hasMore && last
+      ? { next: { rank: Number(last.context_rank), at: last.updated_at ?? last.created_at ?? "", id: last.id } }
+      : {}),
+  };
+}
+
+/** The inner LIMIT keeps the newest rows; chronological order puts the extra oldest row first. */
+function newestChronologicalWindow<T>(rows: readonly T[], limit: number): { items: T[]; hasMore: boolean } {
+  const page = takeLimitPlusOne([...rows].reverse(), limit);
+  return { items: [...page.items].reverse(), hasMore: page.hasMore };
+}
+
+const CONTRIBUTION_INSERT_SQL = `INSERT INTO contributions (
+  id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, append_position, created_at
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?, ?,
+  (SELECT COALESCE(MAX(append_position), 0) + 1 FROM contributions WHERE workspace_id = ?),
+  ?
+)`;
+
+const APPEND_POSITION_ATTEMPTS = 3;
+
+/** Only a lost race on the per-workspace position is retried. Other constraints propagate. */
+function isAppendPositionConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const code = "code" in error && typeof error.code === "string" ? error.code : "";
+  const message = "message" in error && typeof error.message === "string" ? error.message : "";
+  const constraint = code.startsWith("SQLITE_CONSTRAINT") || /unique constraint failed/i.test(message);
+  return constraint && (message.includes("append_position") || message.includes("idx_contributions_workspace_position"));
+}
+
 function createSqliteStore(db: Database.Database): CampfireStore {
+  function contributionAnchor(
+    workspaceId: string,
+    contributionId: string,
+  ): { occurredAt: string; rowid: number } | undefined {
+    const row = db
+      .prepare("SELECT rowid AS entry_rowid, workspace_id, created_at FROM contributions WHERE id = ?")
+      .get(contributionId) as { entry_rowid: number; workspace_id: string; created_at: string } | undefined;
+    if (row === undefined || row.workspace_id !== workspaceId) return undefined;
+    return { occurredAt: row.created_at, rowid: Number(row.entry_rowid) };
+  }
+
   function executeEnrollment(statements: EnrollmentStatement[]): boolean {
-    return db.transaction(() => {
+    const run = db.transaction(() => {
       let claimed = false;
       for (const [index, statement] of statements.entries()) {
         const result = db.prepare(statement.sql).run(...statement.values);
         if (index === 0) claimed = result.changes === 1;
       }
       return claimed;
-    }).immediate();
+    });
+    for (let attempt = 0; attempt < APPEND_POSITION_ATTEMPTS; attempt += 1) {
+      try {
+        return run.immediate();
+      } catch (error) {
+        if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+      }
+    }
+    return false;
   }
   return {
     // --- identity ---
@@ -943,9 +1037,7 @@ function createSqliteStore(db: Database.Database): CampfireStore {
 
     // --- activity / provenance ---
     createContribution(contribution) {
-      db.prepare(
-        "INSERT INTO contributions (id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      ).run(
+      const params = [
         contribution.id,
         contribution.workspaceId,
         contribution.actor.actorId,
@@ -955,8 +1047,20 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         contribution.objectType,
         contribution.objectId,
         contribution.payload === undefined ? null : JSON.stringify(contribution.payload),
+        contribution.workspaceId,
         contribution.createdAt,
-      );
+      ];
+      // The position subquery runs with the insert, including inside a transaction.
+      // A JavaScript read would be wrong under D1, and a unique collision is retried.
+      const insert = db.prepare(CONTRIBUTION_INSERT_SQL);
+      for (let attempt = 0; attempt < APPEND_POSITION_ATTEMPTS; attempt += 1) {
+        try {
+          insert.run(...params);
+          return;
+        } catch (error) {
+          if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+        }
+      }
     },
 
     getContribution(id) {
@@ -969,6 +1073,111 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         .prepare("SELECT * FROM contributions WHERE workspace_id = ? ORDER BY created_at, rowid")
         .all(workspaceId) as ContributionRow[];
       return rows.map(mapContribution);
+    },
+
+    maxAppendPosition(workspaceId) {
+      const row = db
+        .prepare(
+          "SELECT COALESCE(MAX(append_position), 0) AS append_position FROM contributions WHERE workspace_id = ?",
+        )
+        .get(workspaceId) as { append_position: number | bigint | string | null } | undefined;
+      return Number(row?.append_position ?? 0);
+    },
+
+    countObjectsByStatus(kind, workspaceId) {
+      const statement = countByStatusSql(kind, workspaceId);
+      const rows = db.prepare(statement.sql).all(...statement.params) as Array<{ status: string; count: number | bigint | string }>;
+      return rows.map((row) => ({ status: row.status, count: Number(row.count) }));
+    },
+
+    countObjects(kind, workspaceId) {
+      const statement = countRowsSql(kind, workspaceId);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
+    pageDecisions(workspaceId, query) {
+      const listed = pageDecisionsSql(workspaceId, query);
+      const counted = countDecisionsSql(workspaceId, query.statuses);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Array<DecisionRow & RankedRow>;
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      return rankedPage(rows, query.limit, total, mapDecision);
+    },
+
+    countDecisions(workspaceId, statuses) {
+      const statement = countDecisionsSql(workspaceId, statuses);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
+    pageTasks(workspaceId, query) {
+      const listed = pageTasksSql(workspaceId, query);
+      const counted = countTasksSql(workspaceId, query.statuses);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Array<TaskRow & RankedRow>;
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      return rankedPage(rows, query.limit, total, mapTask);
+    },
+
+    countTasks(workspaceId, statuses) {
+      const statement = countTasksSql(workspaceId, statuses);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
+    pageFindings(workspaceId, query) {
+      const listed = pageFindingsSql(workspaceId, query);
+      const counted = countRowsSql("findings", workspaceId);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Array<FindingRow & RankedRow>;
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      return rankedPage(rows, query.limit, total, mapFinding);
+    },
+
+    pageArtifacts(workspaceId, query) {
+      const listed = pageArtifactsSql(workspaceId, query);
+      const counted = countRowsSql("artifacts", workspaceId);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Array<ArtifactRow & RankedRow>;
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    pageContributions(workspaceId, query) {
+      const listed = pageContributionsSql(workspaceId, query);
+      const counted = countContributionsPageSql(workspaceId, query);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ContributionRow[];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapContribution),
+        total,
+        hasMore: page.hasMore,
+        ...(page.hasMore && last ? { next: { rank: 0, at: last.created_at, id: last.id } } : {}),
+      };
+    },
+
+    listRecentContributionWindow(workspaceId, limit) {
+      const listed = recentContributionsSql(workspaceId, limit);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ContributionRow[];
+      const total = this.countObjects("contributions", workspaceId);
+      return { items: rows.map(mapContribution), total, hasMore: total > rows.length };
+    },
+
+    listContributionsSince(workspaceId, contributionId, limit) {
+      const anchor = contributionAnchor(workspaceId, contributionId);
+      if (anchor === undefined) return { found: false, items: [], total: 0, hasMore: false };
+      const listed = contributionsSinceSql(workspaceId, anchor, limit);
+      const counted = countContributionsSinceSql(workspaceId, anchor);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ContributionRow[];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = newestChronologicalWindow(rows, limit);
+      return { found: true, items: page.items.map(mapContribution), total, hasMore: page.hasMore };
+    },
+
+    listContributionsBefore(workspaceId, contributionId, limit) {
+      const anchor = contributionAnchor(workspaceId, contributionId);
+      if (anchor === undefined) return { found: false, items: [], total: 0, hasMore: false };
+      const listed = contributionsBeforeSql(workspaceId, anchor, limit);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ContributionRow[];
+      const total = this.countObjects("contributions", workspaceId);
+      const page = newestChronologicalWindow(rows, limit);
+      return { found: true, items: page.items.map(mapContribution), total, hasMore: page.hasMore };
     },
 
     // --- actor tokens (hashes only) ---
@@ -1239,18 +1448,30 @@ function createSqliteStore(db: Database.Database): CampfireStore {
   };
 }
 
-export function openSqliteStore(databasePath: string): CampfireStore {
+export interface SqliteStoreOptions {
+  observeQuery?: (sql: string) => void;
+}
+
+export function openSqliteStore(databasePath: string, options?: SqliteStoreOptions): CampfireStore {
   const db = new Database(databasePath);
   db.pragma("foreign_keys = ON");
   if (!db.memory) {
     db.pragma("journal_mode = WAL");
   }
   applyMigrations(db);
+  if (options?.observeQuery !== undefined) {
+    const observeQuery = options.observeQuery;
+    const prepare = db.prepare.bind(db);
+    db.prepare = ((sql: string) => {
+      observeQuery(sql);
+      return prepare(sql);
+    }) as Database.Database["prepare"];
+  }
   return createSqliteStore(db);
 }
 
-export function openInMemoryStore(): CampfireStore {
-  return openSqliteStore(":memory:");
+export function openInMemoryStore(options?: SqliteStoreOptions): CampfireStore {
+  return openSqliteStore(":memory:", options);
 }
 
 /** Read-only open for operator inspection. Does not migrate or take the write lock. */

@@ -79,6 +79,7 @@ import { formatOnboardReceipt, onboardInstallation, type OnboardReceipt } from "
 import { setupContract } from "../bootstrap/setup-contract.js";
 import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
+import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import {
   ActorNotFound,
@@ -92,9 +93,11 @@ import {
 import { installedCampfireVersion } from "../bootstrap/version.js";
 import type {
   ActorRef,
+  Artifact,
   ArtifactType,
   Contribution,
   Decision,
+  Finding,
   GoalStatus,
   ParticipantRole,
   Task,
@@ -129,7 +132,9 @@ import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
   GetActivityInput,
   SuggestedNextAction,
+  WorkspaceCatchUp,
   WorkspaceContext,
+  WorkspaceObjectPage,
   WorkspaceView,
   ReadinessStatus,
   WorkspaceSummary,
@@ -536,6 +541,14 @@ function section(title: string, lines: string[]): string[] {
   return [title, ...lines.map((line) => `  ${line}`)];
 }
 
+function appendShowing(
+  lines: string[],
+  slice: { returned: number; total: number; truncated: boolean } | undefined,
+): string[] {
+  if (lines.length === 0 || slice === undefined || !slice.truncated) return lines;
+  return [...lines, `Showing ${slice.returned} of ${slice.total}`];
+}
+
 function provenanceSection(
   title: string,
   contributions: Contribution[],
@@ -626,20 +639,39 @@ function formatOrientation(context: WorkspaceContext, since?: string): string {
       formatSuggestedNextAction(context.suggestedNextAction),
     ]),
     ...section("Participants", context.participants.map(formatParticipant)),
-    ...section("Proposed decisions", context.proposedDecisions.map(formatDecision)),
-    ...section("Accepted decisions", context.acceptedDecisions.map(formatDecision)),
-    ...section("Open tasks", context.openTasks.map(formatTask)),
-    ...section(
-      "Findings",
-      context.findings.map((finding) => joinFields(finding.id, finding.summary)),
+    ...appendShowing(
+      section("Proposed decisions", context.proposedDecisions.map(formatDecision)),
+      context.slices.decisions,
     ),
-    ...section(
-      "Artifacts",
-      context.artifacts.map((artifact) =>
-        joinFields(artifact.id, artifact.type, artifact.uriOrPath, artifact.title),
+    ...appendShowing(
+      section("Accepted decisions", context.acceptedDecisions.map(formatDecision)),
+      context.slices.decisions,
+    ),
+    ...appendShowing(section("Open tasks", context.openTasks.map(formatTask)), context.slices.tasks),
+    ...appendShowing(
+      section(
+        "Findings",
+        context.findings.map((finding) => joinFields(finding.id, finding.summary)),
       ),
+      context.slices.findings,
+    ),
+    ...appendShowing(
+      section(
+        "Artifacts",
+        context.artifacts.map((artifact) =>
+          joinFields(artifact.id, artifact.type, artifact.uriOrPath, artifact.title),
+        ),
+      ),
+      context.slices.artifacts,
     ),
     ...formatDeltaSection(context, since),
+    ...appendShowing(
+      section(
+        "Recent changes",
+        context.slices.recentChanges.items.map((change) => joinFields(change.materiality, change.summary)),
+      ),
+      context.slices.recentChanges,
+    ),
     ...provenanceSection(
       "Recent provenance",
       context.provenance,
@@ -651,6 +683,9 @@ function formatOrientation(context: WorkspaceContext, since?: string): string {
   if (resumeCursor !== undefined) {
     lines.push(resumeCursor);
   }
+  lines.push(
+    `History is not fully included. Drill down with campfire decisions, findings, tasks, artifacts, and catch-up. orientationCursor ${context.orientationCursor}`,
+  );
   return lines.join("\n");
 }
 
@@ -1337,15 +1372,117 @@ async function cmdAgents(parsed: ParsedArgs, argv: string[]): Promise<void> {
 async function cmdDecisions(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const mode = commandOutput(parsed);
   const explicit = explicitWorkspaceArgument(parsed);
+  const limit = optionalPositiveInt(parsed.flags, "limit") ?? MAX_PAGE_SIZE;
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  const status = optionalFlag(parsed.flags, "status");
   await withBackend(argv, async (backend) => {
     const selection = await resolveReadWorkspace(backend, explicit);
     if ("awaiting" in selection) {
       throw workspaceSelectionError([]);
     }
-    const view = (await backend.call("get_workspace", {
-      workspaceId: selection.workspaceId,
-    })) as WorkspaceView;
-    emitResult(buildWorkspaceDecisions(view), mode, formatWorkspaceDecisions);
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId, limit };
+    if (cursor !== undefined) params.cursor = cursor;
+    if (status !== undefined) params.status = status;
+    const page = (await backend.call("list_decisions", params)) as WorkspaceObjectPage<Decision>;
+    emitResult(buildWorkspaceDecisions(page), mode, formatWorkspaceDecisions);
+  });
+}
+
+async function cmdContext(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  if (parsed.flags.full === true) {
+    throw new ValidationError("context does not accept --full", { field: "full" });
+  }
+  const mode = commandOutput(parsed);
+  const since = optionalFlag(parsed.flags, "since");
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId };
+    if (since !== undefined) params.since = since;
+    const context = (await backend.call("get_workspace_context", params)) as WorkspaceContext;
+    emitResult(context, mode, (value) => formatOrientation(value, since));
+  });
+}
+
+function formatCatchUp(page: WorkspaceCatchUp): string {
+  const lines = [labeled("From", page.fromCursor), labeled("To", page.toCursor)];
+  for (const change of page.changes.items) {
+    lines.push(joinFields(change.materiality, change.summary));
+  }
+  if (page.changes.truncated) {
+    lines.push(`Showing ${page.changes.returned} of ${page.changes.total}`);
+  }
+  return lines.join("\n");
+}
+
+async function cmdCatchUp(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const after = requireFlag(parsed.flags, "after");
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId, after };
+    if (limit !== undefined) params.limit = limit;
+    const page = (await backend.call("get_workspace_changes", params)) as WorkspaceCatchUp;
+    emitResult(page, mode, formatCatchUp);
+  });
+}
+
+function formatObjectPage<T>(page: WorkspaceObjectPage<T>, line: (item: T) => string): string {
+  const lines = [labeled("Workspace", page.workspaceId), ...page.items.map((item) => `  ${line(item)}`)];
+  if (page.truncated) lines.push(`Showing ${page.returned} of ${page.total}`);
+  return lines.join("\n");
+}
+
+async function cmdFindings(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await cmdObjectPage(parsed, argv, "list_findings", (page) =>
+    formatObjectPage(page as WorkspaceObjectPage<Finding>, (finding) => joinFields(finding.id, finding.summary)),
+  );
+}
+
+async function cmdTasks(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await cmdObjectPage(parsed, argv, "list_tasks", (page) =>
+    formatObjectPage(page as WorkspaceObjectPage<Task>, (task) => joinFields(task.id, `[${task.status}]`, task.title)),
+  );
+}
+
+async function cmdArtifacts(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await cmdObjectPage(parsed, argv, "list_artifacts", (page) =>
+    formatObjectPage(page as WorkspaceObjectPage<Artifact>, (artifact) =>
+      joinFields(artifact.id, artifact.type, artifact.uriOrPath, artifact.title),
+    ),
+  );
+}
+
+async function cmdObjectPage(
+  parsed: ParsedArgs,
+  argv: string[],
+  method: "list_findings" | "list_tasks" | "list_artifacts",
+  render: (page: WorkspaceObjectPage<Finding | Task | Artifact>) => string,
+): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  const status = method === "list_tasks" ? optionalFlag(parsed.flags, "status") : undefined;
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId };
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    if (status !== undefined) params.status = status;
+    const page = (await backend.call(method, params)) as WorkspaceObjectPage<Finding | Task | Artifact>;
+    emitResult(page, mode, render);
   });
 }
 
@@ -1472,6 +1609,13 @@ async function cmdInspect(parsed: ParsedArgs, argv: string[]): Promise<void> {
   }
   const workspaceId = kind === "workspace" ? (workspaceFlag ?? id) : workspaceFlag!;
   await withBackend(argv, async (backend) => {
+    if (kind === "task" || kind === "finding" || kind === "decision" || kind === "artifact") {
+      const method =
+        kind === "task" ? "get_task" : kind === "finding" ? "get_finding" : kind === "decision" ? "get_decision" : "get_artifact";
+      const object = await backend.call(method, { workspaceId, [`${kind}Id`]: id });
+      emitResult(buildWorkspaceInspect(workspaceId, kind, object), mode, formatWorkspaceInspect);
+      return;
+    }
     const view = (await backend.call("get_workspace", { workspaceId })) as WorkspaceView;
     const object = selectInspectObject(view, kind, id);
     emitResult(buildWorkspaceInspect(workspaceId, kind, object), mode, formatWorkspaceInspect);
@@ -2088,6 +2232,11 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   status: (parsed, argv) => cmdStatus(parsed, argv),
   agents: (parsed, argv) => cmdAgents(parsed, argv),
   decisions: (parsed, argv) => cmdDecisions(parsed, argv),
+  context: (parsed, argv) => cmdContext(parsed, argv),
+  "catch-up": (parsed, argv) => cmdCatchUp(parsed, argv),
+  findings: (parsed, argv) => cmdFindings(parsed, argv),
+  tasks: (parsed, argv) => cmdTasks(parsed, argv),
+  artifacts: (parsed, argv) => cmdArtifacts(parsed, argv),
   changes: (parsed, argv) => cmdChanges(parsed, argv),
   inspect: (parsed, argv) => cmdInspect(parsed, argv),
   capabilities: (parsed) => cmdCapabilities(parsed),

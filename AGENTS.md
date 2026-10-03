@@ -129,6 +129,17 @@ platform: per-command instrumentation, session replay, dashboard UI, billing, an
 any workspace content remain out of scope. The dataset is not provisioned and no
 founder metric has been produced. Telemetry must never fail a Campfire
 operation.
+Sprint CTX-001 — Keep Shared Understanding Current is a local `1.10.0`
+release candidate; its contract is
+`docs/Campfire-v1.10-CTX-001-Keep-Shared-Understanding-Current.md` and its
+result is `docs/SPRINT_CTX_001_RESULT.md`. Orientation is bounded and reports
+`total`, `returned`, and `truncated`. Catch-up pages by a durable
+per-workspace append position and freezes a stream tip for that run.
+Drill-down reads one page at a time. `get_workspace` stays the full inspector.
+One Codex agent passed the cold-orientation, saved-cursor, and unauthorized-workspace
+gate on a single machine. The candidate is not tagged, published, or deployed.
+Gate B and Gate C remain unmeasured. Do not add embeddings, finding or
+decision supersession, Viewer writes, or per-command telemetry for this sprint.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
@@ -471,6 +482,8 @@ provenance
 ```
 
 Do not add embeddings simply to retrieve a small known workspace.
+
+CTX-001 bounds `get_workspace_context`. A truncated slice says so with `total`, `returned`, and `truncated`. The caller drills down or catches up. It does not infer completeness from array length.
 
 The first question is whether the **state model** enables continuation, not whether semantic search can hide a weak state model.
 

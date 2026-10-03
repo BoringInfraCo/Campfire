@@ -13,8 +13,20 @@ const owner = { actorId: "hum_owner", actorType: "human" as const };
 const close: (() => void)[] = [];
 afterEach(() => { for (const fn of close.splice(0)) fn(); });
 
+let nextAppendPosition = 0;
+
 function contribution(id: string): Contribution {
-  return { id, workspaceId: "ws_shared", actor: owner, action: "create", objectType: "participant", objectId: id, createdAt: NOW };
+  nextAppendPosition += 1;
+  return {
+    id,
+    workspaceId: "ws_shared",
+    actor: owner,
+    action: "create",
+    objectType: "participant",
+    objectId: id,
+    createdAt: NOW,
+    appendPosition: nextAppendPosition,
+  };
 }
 const invitation: EnrollmentInvitation = {
   id: "eni_first", workspaceId: "ws_shared", teamId: "team", issuedByHumanId: owner.actorId,

@@ -53,6 +53,24 @@ import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
+import {
+  contributionsBeforeSql,
+  contributionsSinceSql,
+  countByStatusSql,
+  countContributionsPageSql,
+  countContributionsSinceSql,
+  countDecisionsSql,
+  countRowsSql,
+  countTasksSql,
+  pageArtifactsSql,
+  pageContributionsSql,
+  pageDecisionsSql,
+  pageFindingsSql,
+  pageTasksSql,
+  recentContributionsSql,
+  takeLimitPlusOne,
+  type ObjectPage,
+} from "../store/context-queries.js";
 
 /** Async mirror of `CampfireStore`: identical shape, Promise returns. */
 export type AsyncCampfireStore = Omit<
@@ -208,6 +226,7 @@ interface ContributionRow {
   object_type: string;
   object_id: string;
   payload: string | null;
+  append_position: number | bigint | string;
   created_at: string;
 }
 
@@ -437,6 +456,7 @@ function mapContribution(row: ContributionRow): Contribution {
     objectType: row.object_type as ContributionObjectType,
     objectId: row.object_id,
     payload: parseJson(row.payload),
+    appendPosition: Number(row.append_position),
     createdAt: row.created_at,
   };
 }
@@ -528,6 +548,61 @@ function emptyDeliveryCounts(): WebhookDeliveryCounts {
   return { pending: 0, delivering: 0, delivered: 0, exhausted: 0 };
 }
 
+interface RankedRow {
+  id: string;
+  context_rank: number | bigint | string;
+  updated_at?: string | null;
+  created_at?: string | null;
+}
+
+function readCount(row: { count?: number | bigint | string | null } | undefined): number {
+  if (row === undefined || row.count === undefined || row.count === null) return 0;
+  return Number(row.count);
+}
+
+function rankedPage<TRow extends RankedRow, T>(
+  rows: readonly TRow[],
+  limit: number,
+  total: number,
+  mapRow: (row: TRow) => T,
+): ObjectPage<T> {
+  const page = takeLimitPlusOne(rows, limit);
+  const last = page.items[page.items.length - 1];
+  return {
+    items: page.items.map(mapRow),
+    total,
+    hasMore: page.hasMore,
+    ...(page.hasMore && last
+      ? { next: { rank: Number(last.context_rank), at: last.updated_at ?? last.created_at ?? "", id: last.id } }
+      : {}),
+  };
+}
+
+/** The inner LIMIT keeps the newest rows; chronological order puts the extra oldest row first. */
+function newestChronologicalWindow<T>(rows: readonly T[], limit: number): { items: T[]; hasMore: boolean } {
+  const page = takeLimitPlusOne([...rows].reverse(), limit);
+  return { items: [...page.items].reverse(), hasMore: page.hasMore };
+}
+
+const CONTRIBUTION_INSERT_SQL = `INSERT INTO contributions (
+  id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, append_position, created_at
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?, ?,
+  (SELECT COALESCE(MAX(append_position), 0) + 1 FROM contributions WHERE workspace_id = ?),
+  ?
+)`;
+
+const APPEND_POSITION_ATTEMPTS = 3;
+
+/** Only a lost race on the per-workspace position is retried. Other constraints propagate. */
+function isAppendPositionConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const code = "code" in error && typeof error.code === "string" ? error.code : "";
+  const message = "message" in error && typeof error.message === "string" ? error.message : "";
+  const constraint = code.startsWith("SQLITE_CONSTRAINT") || /unique constraint failed/i.test(message);
+  return constraint && (message.includes("append_position") || message.includes("idx_contributions_workspace_position"));
+}
+
 /** Apply the Campfire schema to a D1 database (idempotent). */
 export async function migrateD1(db: D1Database): Promise<void> {
   await db.exec(CAMPFIRE_D1_SCHEMA_SQL);
@@ -536,6 +611,18 @@ export async function migrateD1(db: D1Database): Promise<void> {
 export function createD1Store(db: D1Database): AsyncCampfireStore {
   let txnDepth = 0;
   let dirty = false;
+
+  async function contributionAnchor(
+    workspaceId: string,
+    contributionId: string,
+  ): Promise<{ occurredAt: string; rowid: number } | undefined> {
+    const row = await first<{ entry_rowid: number; workspace_id: string; created_at: string }>(
+      "SELECT rowid AS entry_rowid, workspace_id, created_at FROM contributions WHERE id = ?",
+      contributionId,
+    );
+    if (row === undefined || row.workspace_id !== workspaceId) return undefined;
+    return { occurredAt: row.created_at, rowid: Number(row.entry_rowid) };
+  }
   // Batch commits the state change, Contribution, and domain event atomically; no network inside the transaction.
   const buffered: D1PreparedStatement[] = [];
 
@@ -581,7 +668,16 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     // This operation owns its complete atomic batch. Letting an outer buffer
     // defer it would break its claim result and could split administrative state.
     if (txnDepth !== 0) throw new Error("Enrollment provisioning cannot nest inside a buffered D1 transaction");
-    const results = await db.batch(statements.map((statement) => db.prepare(statement.sql).bind(...statement.values)));
+    const prepared = statements.map((statement) => db.prepare(statement.sql).bind(...statement.values));
+    let results: unknown[] = [];
+    for (let attempt = 0; attempt < APPEND_POSITION_ATTEMPTS; attempt += 1) {
+      try {
+        results = await db.batch(prepared);
+        break;
+      } catch (error) {
+        if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+      }
+    }
     const claim = results[0] as { success?: boolean; meta?: { changes?: number } } | undefined;
     if (claim?.success !== true) throw new Error("Enrollment persistence failed");
     return claim.meta?.changes === 1;
@@ -869,13 +965,27 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
 
     async createContribution(contribution) {
-      await run(
-        "INSERT INTO contributions (id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      const params = [
         contribution.id, contribution.workspaceId, contribution.actor.actorId,
         contribution.actor.actorType, contribution.agentSessionId ?? null,
         contribution.action, contribution.objectType, contribution.objectId,
         contribution.payload === undefined ? null : JSON.stringify(contribution.payload),
-        contribution.createdAt);
+        contribution.workspaceId, contribution.createdAt,
+      ];
+      // Inside a D1 transaction the statement is only buffered. The batch retry
+      // below covers a unique position collision. A direct insert retries here.
+      if (txnDepth > 0) {
+        await run(CONTRIBUTION_INSERT_SQL, ...params);
+        return;
+      }
+      for (let attempt = 0; attempt < APPEND_POSITION_ATTEMPTS; attempt += 1) {
+        try {
+          await run(CONTRIBUTION_INSERT_SQL, ...params);
+          return;
+        } catch (error) {
+          if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+        }
+      }
     },
 
     async getContribution(id) {
@@ -886,6 +996,110 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     async listContributions(workspaceId) {
       return (await all<ContributionRow>(
         "SELECT * FROM contributions WHERE workspace_id = ? ORDER BY created_at, rowid", workspaceId)).map(mapContribution);
+    },
+
+    async maxAppendPosition(workspaceId) {
+      const row = await first<{ append_position: number | bigint | string | null }>(
+        "SELECT COALESCE(MAX(append_position), 0) AS append_position FROM contributions WHERE workspace_id = ?",
+        workspaceId,
+      );
+      return Number(row?.append_position ?? 0);
+    },
+
+    async countObjectsByStatus(kind, workspaceId) {
+      const statement = countByStatusSql(kind, workspaceId);
+      const rows = await all<{ status: string; count: number | bigint | string }>(statement.sql, ...statement.params);
+      return rows.map((row) => ({ status: row.status, count: Number(row.count) }));
+    },
+
+    async countObjects(kind, workspaceId) {
+      const statement = countRowsSql(kind, workspaceId);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
+    async pageDecisions(workspaceId, query) {
+      const listed = pageDecisionsSql(workspaceId, query);
+      const counted = countDecisionsSql(workspaceId, query.statuses);
+      const rows = await all<DecisionRow & RankedRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      return rankedPage(rows, query.limit, total, mapDecision);
+    },
+
+    async countDecisions(workspaceId, statuses) {
+      const statement = countDecisionsSql(workspaceId, statuses);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
+    async pageTasks(workspaceId, query) {
+      const listed = pageTasksSql(workspaceId, query);
+      const counted = countTasksSql(workspaceId, query.statuses);
+      const rows = await all<TaskRow & RankedRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      return rankedPage(rows, query.limit, total, mapTask);
+    },
+
+    async countTasks(workspaceId, statuses) {
+      const statement = countTasksSql(workspaceId, statuses);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
+    async pageFindings(workspaceId, query) {
+      const listed = pageFindingsSql(workspaceId, query);
+      const counted = countRowsSql("findings", workspaceId);
+      const rows = await all<FindingRow & RankedRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      return rankedPage(rows, query.limit, total, mapFinding);
+    },
+
+    async pageArtifacts(workspaceId, query) {
+      const listed = pageArtifactsSql(workspaceId, query);
+      const counted = countRowsSql("artifacts", workspaceId);
+      const rows = await all<ArtifactRow & RankedRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    async pageContributions(workspaceId, query) {
+      const listed = pageContributionsSql(workspaceId, query);
+      const counted = countContributionsPageSql(workspaceId, query);
+      const rows = await all<ContributionRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapContribution),
+        total,
+        hasMore: page.hasMore,
+        ...(page.hasMore && last ? { next: { rank: 0, at: last.created_at, id: last.id } } : {}),
+      };
+    },
+
+    async listRecentContributionWindow(workspaceId, limit) {
+      const listed = recentContributionsSql(workspaceId, limit);
+      const rows = await all<ContributionRow>(listed.sql, ...listed.params);
+      const total = await this.countObjects("contributions", workspaceId);
+      return { items: rows.map(mapContribution), total, hasMore: total > rows.length };
+    },
+
+    async listContributionsSince(workspaceId, contributionId, limit) {
+      const anchor = await contributionAnchor(workspaceId, contributionId);
+      if (anchor === undefined) return { found: false, items: [], total: 0, hasMore: false };
+      const listed = contributionsSinceSql(workspaceId, anchor, limit);
+      const counted = countContributionsSinceSql(workspaceId, anchor);
+      const rows = await all<ContributionRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = newestChronologicalWindow(rows, limit);
+      return { found: true, items: page.items.map(mapContribution), total, hasMore: page.hasMore };
+    },
+
+    async listContributionsBefore(workspaceId, contributionId, limit) {
+      const anchor = await contributionAnchor(workspaceId, contributionId);
+      if (anchor === undefined) return { found: false, items: [], total: 0, hasMore: false };
+      const listed = contributionsBeforeSql(workspaceId, anchor, limit);
+      const rows = await all<ContributionRow>(listed.sql, ...listed.params);
+      const total = await this.countObjects("contributions", workspaceId);
+      const page = newestChronologicalWindow(rows, limit);
+      return { found: true, items: page.items.map(mapContribution), total, hasMore: page.hasMore };
     },
 
     async createActorToken(token) {
@@ -1082,7 +1296,16 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
         if (outer && buffered.length > 0) {
           const statements = buffered.splice(0, buffered.length);
           dirty = false;
-          await db.batch(statements);
+          // The batch is atomic. A position collision retries the same statements;
+          // any other failure is not retried.
+          for (let attempt = 0; attempt < APPEND_POSITION_ATTEMPTS; attempt += 1) {
+            try {
+              await db.batch(statements);
+              break;
+            } catch (error) {
+              if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+            }
+          }
         }
         return result;
       } catch (error) {

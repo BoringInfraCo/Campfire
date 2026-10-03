@@ -52,7 +52,9 @@ cp -R dist "$STAGE/lib/campfire/dist"
 # packages. Copy only those directories; copying every dev dependency before
 # pruning made packaging unnecessarily slow on macOS. This stays offline and
 # preserves the host-built better-sqlite3 binding without rebuilding it.
-PROJECT_ROOT="$(pwd)"
+# npm ls prints the canonical path. On a case-insensitive volume, `pwd`
+# can differ in case from that path and reject every dependency line.
+PROJECT_ROOT="$(node -e 'import { realpathSync } from "node:fs"; console.log(realpathSync("."))')"
 npm ls --omit=dev --parseable --all > "$STAGE/production-dependencies" || {
   echo "package.sh: error: could not list installed production dependencies" >&2
   exit 1

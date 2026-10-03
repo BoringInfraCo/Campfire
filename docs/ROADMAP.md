@@ -1355,6 +1355,8 @@ Sprint 019 — Carry the Work Out   GO ✓; v1.7.1 released; one signed webhook 
 Sprint CLI-001 — Agent-Native Interface Contract   GO ✓; v1.8.0 released + deployed; first-class CLI for humans and agents; Gate B/C/F unmeasured
         ↓
 Sprint 020 — Bring the Next Teammate In   IMPLEMENTED CANDIDATE; v1.9.0; CONDITIONAL GO pending independent two-human/two-machine and both live recipient paths; not published/deployed; see docs/SPRINT_020_RESULT.md; Gate B/C unmeasured
+        ↓
+Sprint CTX-001 — Keep Shared Understanding Current   GO for the local release gate; package 1.10.0 candidate; one Codex agent passed scenarios A/B/C; not tagged, published, or deployed; see docs/SPRINT_CTX_001_RESULT.md; Gate B/C unmeasured
 ```
 
 The roadmap provides direction.

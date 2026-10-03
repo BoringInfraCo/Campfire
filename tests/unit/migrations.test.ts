@@ -8,8 +8,10 @@ import {
   V3_SQL as sqliteV3Sql,
   V4_SQL as sqliteV4Sql,
   V5_SQL as sqliteV5Sql,
+  V6_SQL as sqliteV6Sql,
 } from "../../src/store/migrations.js";
-import { V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql } from "../../src/worker/schema.js";
+import { openInMemoryStore } from "../../src/store/sqlite-store.js";
+import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql } from "../../src/worker/schema.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const LATER = "2026-01-02T00:00:00.000Z";
@@ -60,6 +62,7 @@ describe("schema migrations", () => {
       { version: 3, applied_at: NOW },
       { version: 4, applied_at: NOW },
       { version: 5, applied_at: NOW },
+      { version: 6, applied_at: NOW },
     ]);
   });
 
@@ -115,6 +118,10 @@ describe("schema migrations", () => {
     const v4Body = v4.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
     expect(sqliteV4Sql).toBe(workerV4Sql);
     expect(v4Body).toBe(sqliteV4Sql);
+    const v6 = readFileSync(new URL("../../migrations/0005_contribution_append_position.sql", import.meta.url), "utf8");
+    const v6Body = v6.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
+    expect(sqliteV6Sql).toBe(workerV6Sql);
+    expect(v6Body).toBe(sqliteV6Sql);
   });
 
   it("keeps enrollment migrations identical and upgrades v4 without altering collaboration state", () => {
@@ -123,10 +130,10 @@ describe("schema migrations", () => {
     expect(workerV5Sql).toBe(sqliteV5Sql);
     const db = memory();
     applyMigrations(db, () => NOW);
-    db.exec("DROP TABLE managed_agent_slots; DROP TABLE enrollment_invitations; DELETE FROM schema_migrations WHERE version = 5;");
+    db.exec("DROP TABLE managed_agent_slots; DROP TABLE enrollment_invitations; DELETE FROM schema_migrations WHERE version >= 5;");
     const before = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
     applyMigrations(db, () => LATER);
-    expect(schemaVersion(db)).toBe(5);
+    expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
     const after = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT IN ('enrollment_invitations', 'managed_agent_slots') ORDER BY name").all();
     expect(after).toEqual(before);
     expect(db.prepare("SELECT applied_at FROM schema_migrations WHERE version = 5").get()).toEqual({ applied_at: LATER });
@@ -205,5 +212,97 @@ describe("schema migrations", () => {
       last_error: expect.stringContaining("destination fingerprinting"),
     });
     expect(rows.find((row) => row.id === "dlv_legacy_delivered")?.status).toBe("delivered");
+  });
+
+  it("backfills append order by created_at and rowid without rewriting payloads", () => {
+    const db = memory();
+    db.pragma("foreign_keys = ON");
+    db.exec(SCHEMA_SQL);
+    db.exec(workerV2Sql);
+    db.exec(sqliteV3Sql);
+    db.exec(sqliteV4Sql);
+    db.exec(sqliteV5Sql);
+    const stamp = db.prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)");
+    for (let version = 1; version <= 5; version += 1) stamp.run(version, NOW);
+
+    db.prepare("INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?)").run("org_1", "Org", NOW);
+    db.prepare("INSERT INTO teams (id, organization_id, name, created_at) VALUES (?, ?, ?, ?)").run("team_1", "org_1", "Team", NOW);
+    const workspace = db.prepare(
+      `INSERT INTO workspaces (
+         id, team_id, name, description, status, created_by_actor_id, created_by_actor_type, created_at, updated_at
+       ) VALUES (?, ?, ?, NULL, 'active', 'hum_1', 'human', ?, ?)`,
+    );
+    workspace.run("ws_1", "team_1", "One", NOW, NOW);
+    workspace.run("ws_2", "team_1", "Two", NOW, NOW);
+    const contribution = db.prepare(
+      `INSERT INTO contributions (
+         id, workspace_id, actor_id, actor_type, agent_session_id, action, object_type, object_id, payload, created_at
+       ) VALUES (?, ?, 'hum_1', 'human', NULL, 'create', ?, ?, ?, ?)`,
+    );
+    const at = "2026-05-01T00:00:00.000Z";
+    contribution.run("con_z", "ws_1", "task", "task_z", "{\"title\":\"kept\"}", at);
+    contribution.run("con_a", "ws_1", "finding", "find_a", null, at);
+    contribution.run("con_b", "ws_2", "task", "task_b", null, at);
+
+    applyMigrations(db, () => NOW);
+    expect(schemaVersion(db)).toBe(6);
+
+    const rows = db
+      .prepare("SELECT id, append_position, payload FROM contributions ORDER BY id")
+      .all() as Array<{ id: string; append_position: number; payload: string | null }>;
+    expect(rows).toEqual([
+      { id: "con_a", append_position: 2, payload: null },
+      { id: "con_b", append_position: 1, payload: null },
+      { id: "con_z", append_position: 1, payload: "{\"title\":\"kept\"}" },
+    ]);
+
+    db.prepare("UPDATE contributions SET append_position = 7 WHERE id = 'con_a'").run();
+    db.prepare("DELETE FROM schema_migrations WHERE version = 6").run();
+    applyMigrations(db, () => LATER);
+    const again = db
+      .prepare("SELECT id, append_position, payload FROM contributions ORDER BY id")
+      .all();
+    expect(again).toEqual([
+      { id: "con_a", append_position: 7, payload: null },
+      { id: "con_b", append_position: 1, payload: null },
+      { id: "con_z", append_position: 1, payload: "{\"title\":\"kept\"}" },
+    ]);
+    expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
+    expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 6").get()).toEqual({ count: 1 });
+  });
+
+  it("assigns append positions in insert order when timestamps match", () => {
+    const store = openInMemoryStore();
+    try {
+      const at = "2026-05-01T00:00:00.000Z";
+      store.createOrganization({ id: "org_1", name: "Org", createdAt: NOW });
+      store.createTeam({ id: "team_1", organizationId: "org_1", name: "Team", createdAt: NOW });
+      const workspace = {
+        teamId: "team_1",
+        status: "active" as const,
+        createdBy: { actorId: "hum_1", actorType: "human" as const },
+        createdAt: NOW,
+        updatedAt: NOW,
+      };
+      store.createWorkspace({ ...workspace, id: "ws_1", name: "One" });
+      store.createWorkspace({ ...workspace, id: "ws_2", name: "Two" });
+      const base = {
+        actor: { actorId: "hum_1", actorType: "human" as const },
+        action: "create" as const,
+        objectType: "task" as const,
+        createdAt: at,
+      };
+      store.createContribution({ ...base, id: "con_z", workspaceId: "ws_1", objectId: "task_z", payload: { title: "kept" } });
+      store.createContribution({ ...base, id: "con_a", workspaceId: "ws_1", objectId: "find_a", objectType: "finding" });
+      store.createContribution({ ...base, id: "con_b", workspaceId: "ws_2", objectId: "task_b" });
+      expect(store.getContribution("con_z")).toMatchObject({ appendPosition: 1, id: "con_z", payload: { title: "kept" }, createdAt: at });
+      expect(store.getContribution("con_a")?.appendPosition).toBe(2);
+      expect(store.getContribution("con_b")?.appendPosition).toBe(1);
+      expect(store.maxAppendPosition("ws_1")).toBe(2);
+      expect(store.maxAppendPosition("ws_2")).toBe(1);
+      expect(store.maxAppendPosition("ws_missing")).toBe(0);
+    } finally {
+      store.close();
+    }
   });
 });
