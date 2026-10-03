@@ -137,8 +137,8 @@ result is `docs/SPRINT_CTX_001_RESULT.md`. Orientation is bounded and reports
 per-workspace append position and freezes a stream tip for that run.
 Drill-down reads one page at a time. `get_workspace` stays the full inspector.
 One Codex agent passed the cold-orientation, saved-cursor, and unauthorized-workspace
-gate on a single machine. The candidate is not tagged, published, or deployed.
-Gate B and Gate C remain unmeasured. Do not add embeddings, finding or
+gate on a single machine. It is published as `v1.10.0`. The private tag is
+`aab21cb680b198ef7a077e6b73f2f71f9d808059`. Gate B and Gate C remain unmeasured. Do not add embeddings, finding or
 decision supersession, Viewer writes, or per-command telemetry for this sprint.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,

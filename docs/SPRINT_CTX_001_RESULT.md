@@ -1,6 +1,6 @@
 # Campfire — Sprint CTX-001 Result: Keep Shared Understanding Current
 
-**Status:** Local release candidate. Not tagged, not published, not deployed.
+**Status:** Published as `v1.10.0`. The private tag remains the pre-promotion source commit.
 
 **Decision:** GO for the CTX-001 release gate on one machine. This is not Gate B, Gate C, or Gate F.
 
@@ -84,7 +84,22 @@ Node.js 22.23.2.
 
 ## 5. Not in this change
 
-- No private tag, public snapshot, GitHub Release, or Worker deploy.
 - No second human, second machine, or OpenCode pass. Gate B, Gate C, and Gate F remain unmeasured.
 - No embeddings, supersession workflow, Viewer write path, or new memory model.
 - `listWorkspaces` still counts open tasks by reading the task table. That was left as it was.
+
+## 6. Release promotion
+
+Recorded after the tag. The tag was not moved.
+
+- Private source commit and annotated tag: `aab21cb680b198ef7a077e6b73f2f71f9d808059` / `v1.10.0`.
+- Export wrote 240 allowlisted files from that tag. The audit reported no forbidden path or secret pattern.
+- Public snapshot commit: `c79b3cfd80b80ef0ac70f3fb526c7bc183672a15`.
+- Public main CI and tag CI passed, including the blank-database bootstrap smoke.
+- GitHub Release: <https://github.com/BoringInfraCo/Campfire/releases/tag/v1.10.0>.
+- Release workflow `37155511744` built and attached Darwin and Linux archives for ARM64 and x64. All four checksums verified.
+- Remote D1 applied `0005_contribution_append_position.sql` before the Worker deploy.
+- Production Worker version `6ab4128c-f1b2-4e2f-bce9-8f17c11065e4` on `boringinfra.company/campfire/*`.
+- `https://boringinfra.company/campfire/v1.10.0/install.sh` matches the tracked installer. A clean pinned install verified the Darwin ARM64 archive checksum `8806f5e5d3cd83955bdbaef5281ede033a0c03a62b85a86568a4e8e713aaa58c`, reported Campfire `1.10.0`, and listed `context` and `catch-up`.
+
+Gate B, Gate C, and Gate F remain unmeasured.
