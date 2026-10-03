@@ -161,8 +161,8 @@ describe("install.sh install_completed report", () => {
     expect(payload.event).toBe("install_completed");
     expect(payload.campfireVersion).toBe("1.9.1");
     expect(payload.installMethod).toBe("curl");
-    expect(payload.os).toBe("darwin");
-    expect(payload.arch).toBe("arm64");
+    expect(payload.os).toBe(process.platform);
+    expect(payload.arch).toBe(process.arch);
     expect(String(payload.installationId)).toMatch(UUID_PATTERN);
   });
 
