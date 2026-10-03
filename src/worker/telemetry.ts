@@ -8,8 +8,9 @@
  * outbound request, because telemetry must never become a way to observe or
  * delay a Campfire call. The only privacy-relevant decisions here are the ones
  * spelled out below; everything else — the allow-list, the vocabulary, the
- * index positions — belongs to the contract module, which the CLI and the
- * installer share.
+ * blob positions — belongs to the contract module, which the CLI and the
+ * installer share. AE allows one sampling index, so the dimensions do not
+ * live in `indexes`.
  *
  * Note the contract is imported directly rather than through
  * `src/telemetry/index.ts`: that barrel also pulls in the local state file and

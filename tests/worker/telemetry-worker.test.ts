@@ -40,13 +40,26 @@ interface DataPoint {
   doubles?: number[];
 }
 
-/** Analytics Engine stand-in: `writeDataPoint` is the entire API the adapter uses. */
+/**
+ * Analytics Engine stand-in. `writeDataPoint` is the entire API the adapter
+ * uses. An illegal point is rejected before it is stored: AE accepts at most
+ * one index, twenty blobs, and twenty doubles, and a thrown write is what the
+ * adapter already reports as `recorded: false`.
+ */
 function fakeDataset(): { dataset: AnalyticsEngineDataset; points: DataPoint[] } {
   const points: DataPoint[] = [];
   return {
     points,
     dataset: {
       writeDataPoint(point) {
+        const indexes = point.indexes?.length ?? 0;
+        const blobs = point.blobs?.length ?? 0;
+        const doubles = point.doubles?.length ?? 0;
+        if (indexes > 1 || blobs > 20 || doubles > 20) {
+          throw new Error(
+            "Analytics Engine accepts at most one index, twenty blobs, and twenty doubles",
+          );
+        }
         points.push(point);
       },
     },
@@ -125,7 +138,10 @@ describe("measured installer route", () => {
     expect(await response.text()).toBe(INSTALLER_BODY);
     expect(fetched).toEqual(["/campfire/install.sh"]);
     expect(points).toHaveLength(1);
-    expect(points[0]?.indexes).toEqual([
+    expect(points[0]?.indexes).toEqual(["install_requested"]);
+    // No installation id exists yet, and none may be invented from the request.
+    // It stays blob8, never the sampling index.
+    expect(points[0]?.blobs).toEqual([
       "install_requested",
       "1",
       "unknown",
@@ -133,9 +149,8 @@ describe("measured installer route", () => {
       "unknown",
       "curl",
       "none",
+      "",
     ]);
-    // No installation id exists yet, and none may be invented from the request.
-    expect(points[0]?.blobs).toEqual([""]);
   });
 
   it("behaves identically on the prefix-stripped /install route", async () => {
@@ -241,8 +256,8 @@ describe("telemetry ingestion", () => {
     expect(await response.json()).toEqual({ ok: true, result: { recorded: true } });
     expect(points).toHaveLength(1);
     expect(points[0]).toEqual({
-      indexes: ["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli"],
-      blobs: [ID_A],
+      indexes: ["activated"],
+      blobs: ["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli", ID_A],
     });
   });
 
@@ -251,7 +266,10 @@ describe("telemetry ingestion", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true, result: { recorded: true } });
     expect(points).toHaveLength(1);
-    expect(points[0]?.indexes).toEqual(["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli"]);
+    expect(points[0]).toEqual({
+      indexes: ["activated"],
+      blobs: ["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli", ID_A],
+    });
   });
 
   it("accepts an anonymous install_requested with no installation id", async () => {
@@ -260,8 +278,17 @@ describe("telemetry ingestion", () => {
       validEvent({ event: "install_requested", installationId: "", installMethod: "curl", surface: undefined }),
     );
     expect(response.status).toBe(200);
-    expect(points[0]?.indexes).toEqual(["install_requested", "1", "1.9.1", "darwin", "arm64", "curl", "none"]);
-    expect(points[0]?.blobs).toEqual([""]);
+    expect(points[0]?.indexes).toEqual(["install_requested"]);
+    expect(points[0]?.blobs).toEqual([
+      "install_requested",
+      "1",
+      "1.9.1",
+      "darwin",
+      "arm64",
+      "curl",
+      "none",
+      "",
+    ]);
   });
 
   it("reports recorded false when no dataset is bound, without failing the client", async () => {
@@ -484,8 +511,8 @@ describe("d1 handler parity", () => {
     expect(ingest.status).toBe(200);
     expect(points).toHaveLength(2);
     expect(points[1]).toEqual({
-      indexes: ["active", "1", "1.9.1", "darwin", "arm64", "none", "agent"],
-      blobs: [ID_A],
+      indexes: ["active"],
+      blobs: ["active", "1", "1.9.1", "darwin", "arm64", "none", "agent", ID_A],
     });
   });
 });

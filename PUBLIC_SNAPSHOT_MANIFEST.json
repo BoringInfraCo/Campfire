@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "1.9.2",
-  "sourceCommit": "4150728952df3cc266cc6cb1fa2b1a3bbb56c2cb",
-  "sourceDate": "2026-10-02T23:50:58-04:00",
+  "version": "1.9.3",
+  "sourceCommit": "9233f6eb7c532b6f4c6ff52d04f1dbd8924ce7cc",
+  "sourceDate": "2026-10-03T13:05:07-04:00",
   "exportedAt": "2026-10-03T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
@@ -54,6 +54,7 @@
     "public/campfire/v1.9.0/install.sh",
     "public/campfire/v1.9.1/install.sh",
     "public/campfire/v1.9.2/install.sh",
+    "public/campfire/v1.9.3/install.sh",
     "public/index.html",
     "scripts/package.sh",
     "scripts/run-acceptance-002.ts",
@@ -220,6 +221,7 @@
     "tests/unit/telemetry-cli.test.ts",
     "tests/unit/telemetry-lifecycle.test.ts",
     "tests/unit/telemetry-privacy.test.ts",
+    "tests/unit/telemetry-queries.test.ts",
     "tests/unit/telemetry.test.ts",
     "tests/unit/wrangler-deploy.test.ts",
     "tests/worker/async-service.test.ts",

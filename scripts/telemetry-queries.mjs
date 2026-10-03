@@ -37,10 +37,11 @@
  * sample weight: `sum(_sample_interval)` is the documented correct aggregate and
  * is what this script uses. It is an estimate whenever `_sample_interval > 1`.
  *
- * Deduplicated installation counts are `count(DISTINCT blob1)`. That aggregate
+ * Deduplicated installation counts are `count(DISTINCT blob8)`. That aggregate
  * cannot be sample-weighted — there is no sample-weighted form of a distinct
- * count, and the installation id is deliberately a blob rather than an index so
- * it never drives an index group. Under sampling the distinct count therefore
+ * count. `blob8` is the installation id because the one legal index is the
+ * event-name sampling key, not a per-installation index, so the id never
+ * drives an index group. Under sampling the distinct count therefore
  * *undercounts*: a sampled-away row can carry an installation id that appears
  * in no surviving row. Those figures are labelled "lower bound" whenever
  * sampling is observed, and they are anonymous installations, never people —
@@ -87,6 +88,20 @@ const EARLIEST_POSSIBLE_DAY = "2020-01-01";
  * `install_requested` data point, so a reported number cannot be the product of
  * choosing a metric after seeing the data (§20 rule 5). Changing this constant
  * is a metric-definition change and must be recorded.
+ *
+ * On 2026-10-03 the column positions were corrected to the layout below because
+ * the previous index1–index7 layout was rejected by Analytics Engine and stored
+ * nothing. That is a storage-layout correction, not a metric redefinition, so
+ * this date stays 2026-10-02. Queries must not read index1: the one legal index
+ * is the event-name sampling key, not a query dimension.
+ *   blob1  event name (filter here)
+ *   blob2  schema version ("1")
+ *   blob3  campfire version
+ *   blob4  os
+ *   blob5  arch
+ *   blob6  install method, or "none"
+ *   blob7  surface, or "none"
+ *   blob8  installation id, or "" — count(DISTINCT blob8)
  */
 const DEFINITIONS_FROZEN_ON = "2026-10-02";
 
@@ -270,7 +285,7 @@ function windowClause(fromDay, untilExclusiveDay) {
 
 const WEIGHTED = "sample-weighted SUM(_sample_interval); an estimate while _sample_interval > 1";
 const DEDUPLICATED =
-  "deduplicated COUNT(DISTINCT blob1); a distinct count cannot be sample-weighted, so it is a lower bound while _sample_interval > 1";
+  "deduplicated count(DISTINCT blob8); blob8 is the installation id because the one legal index is the event-name sampling key, not a per-installation index; a distinct count cannot be sample-weighted, so it is a lower bound while _sample_interval > 1";
 
 function installerRequestsWindow(id, title, purpose, windowKey) {
   return {
@@ -283,7 +298,7 @@ function installerRequestsWindow(id, title, purpose, windowKey) {
   sum(_sample_interval) AS installer_requests,
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = 'install_requested'
+WHERE blob1 = 'install_requested'
   AND ${windowClause(window[windowKey], window.untilExclusive)}`,
   };
 }
@@ -302,10 +317,10 @@ function funnelStage(id, title, event, alias, purpose) {
     sql: (window) =>
       `SELECT
   sum(_sample_interval) AS ${event}_events,
-  count(DISTINCT blob1) AS ${alias},
+  count(DISTINCT blob8) AS ${alias},
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = '${event}'
+WHERE blob1 = '${event}'
   AND ${windowClause(window.since, window.untilExclusive)}`,
   };
 }
@@ -321,22 +336,22 @@ function activeWindow(id, title, windowKey, alias) {
     sampling: `${DEDUPLICATED}; the client emits at most one active event per installation per UTC day, so repetition cannot inflate this`,
     sql: (window) =>
       `SELECT
-  count(DISTINCT blob1) AS ${alias},
+  count(DISTINCT blob8) AS ${alias},
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = 'active'
+WHERE blob1 = 'active'
   AND ${windowClause(window[windowKey], window.untilExclusive)}`,
   };
 }
 
 /**
- * `install_requested` carries no installation id by contract, so `blob1` is
+ * `install_requested` carries no installation id by contract, so `blob8` is
  * empty there and a distinct count would be a constant 1. That breakdown
  * reports sample-weighted installer requests instead, and says so.
  */
-function breakdown(id, title, label, event, indexColumn, alias, windowKey, deduplicated) {
+function breakdown(id, title, label, event, column, alias, windowKey, deduplicated) {
   const measure = deduplicated
-    ? "  count(DISTINCT blob1) AS anonymous_installations,\n  sum(_sample_interval) AS events,"
+    ? "  count(DISTINCT blob8) AS anonymous_installations,\n  sum(_sample_interval) AS events,"
     : "  sum(_sample_interval) AS installer_requests,";
   const order = deduplicated ? "anonymous_installations DESC" : "installer_requests DESC";
   return {
@@ -347,11 +362,11 @@ function breakdown(id, title, label, event, indexColumn, alias, windowKey, dedup
     breakdown: { dimension: alias, event, measure: deduplicated ? "anonymous_installations" : "installer_requests" },
     sql: (window) =>
       `SELECT
-  ${indexColumn} AS ${alias},
+  ${column} AS ${alias},
 ${measure}
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = '${event}'
+WHERE blob1 = '${event}'
   AND ${windowClause(window[windowKey], window.untilExclusive)}
 GROUP BY ${alias}
 ORDER BY ${order}, ${alias} ASC
@@ -418,10 +433,10 @@ const QUERIES = [
     sql: (window) =>
       `SELECT
   formatDateTime(toStartOfDay(timestamp), '%Y-%m-%d') AS utc_day,
-  count(DISTINCT blob1) AS active_installations,
+  count(DISTINCT blob8) AS active_installations,
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = 'active'
+WHERE blob1 = 'active'
   AND ${windowClause(window.trailing7, window.untilExclusive)}
 GROUP BY utc_day
 ORDER BY utc_day`,
@@ -434,10 +449,10 @@ ORDER BY utc_day`,
     sql: (window) =>
       `SELECT
   formatDateTime(toStartOfWeek(timestamp), '%Y-%m-%d') AS utc_week_start,
-  count(DISTINCT blob1) AS active_installations,
+  count(DISTINCT blob8) AS active_installations,
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE index1 = 'active'
+WHERE blob1 = 'active'
   AND ${windowClause(window.trailing30, window.untilExclusive)}
 GROUP BY utc_week_start
 ORDER BY utc_week_start`,
@@ -456,12 +471,12 @@ ORDER BY utc_week_start`,
   max(max_sample_interval) AS max_sample_interval
 FROM (
   SELECT
-    blob1 AS installation_id,
+    blob8 AS installation_id,
     min(formatDateTime(timestamp, '%Y-%m-%d')) AS first_active_day,
     max(formatDateTime(timestamp, '%Y-%m-%d')) AS last_active_day,
     max(_sample_interval) AS max_sample_interval
   FROM ${DATASET}
-  WHERE index1 = 'active'
+  WHERE blob1 = 'active'
     AND ${windowClause(window.since, window.untilExclusive)}
   GROUP BY installation_id
 )
@@ -469,23 +484,23 @@ WHERE first_active_day < last_active_day`,
   },
   breakdown(
     "by_campfire_version", "Breakdown — Campfire version", "Campfire version",
-    "install_completed", "index3", "campfire_version", "since", true,
+    "install_completed", "blob3", "campfire_version", "since", true,
   ),
   breakdown(
     "by_os", "Breakdown — operating system", "operating system",
-    "install_completed", "index4", "os", "since", true,
+    "install_completed", "blob4", "os", "since", true,
   ),
   breakdown(
     "by_arch", "Breakdown — architecture", "architecture",
-    "install_completed", "index5", "arch", "since", true,
+    "install_completed", "blob5", "arch", "since", true,
   ),
   breakdown(
     "by_install_method", "Breakdown — install method", "install method",
-    "install_requested", "index6", "install_method", "since", false,
+    "install_requested", "blob6", "install_method", "since", false,
   ),
   breakdown(
     "by_surface", "Breakdown — surface", "surface",
-    "active", "index7", "surface", "trailing30", true,
+    "active", "blob7", "surface", "trailing30", true,
   ),
 ];
 
@@ -500,7 +515,7 @@ const FIRST_OBSERVED_QUERY = {
     `SELECT
   formatDateTime(min(timestamp), '%Y-%m-%d') AS first_observed_install_request_day
 FROM ${DATASET}
-WHERE index1 = 'install_requested'
+WHERE blob1 = 'install_requested'
   AND ${windowClause(EARLIEST_POSSIBLE_DAY, window.untilExclusive)}`,
 };
 

@@ -276,7 +276,7 @@ describe("hostile content cannot enter a serialized payload", () => {
 });
 
 describe("analytics engine dimensions carry no content", () => {
-  it("puts only the seven documented dimensions in indexes and the id in blobs", () => {
+  it("keeps one sampling index and the seven dimensions plus the id in blobs", () => {
     const point = telemetryDataPoint(
       buildTelemetryEvent({
         event: "active",
@@ -288,26 +288,40 @@ describe("analytics engine dimensions carry no content", () => {
         surface: "mcp",
       }),
     );
-    expect(point.indexes).toEqual(["active", "1", "1.9.1", "darwin", "arm64", "curl", "mcp"]);
-    expect(point.indexes).toHaveLength(7);
-    expect(point.blobs).toEqual([ID_A]);
-    expect(point.blobs).toHaveLength(1);
+    // The index is only the sampling key. A UUID here would sample each
+    // installation separately, so the id stays blob8.
+    expect(point.indexes).toEqual(["active"]);
+    expect(point.indexes).toHaveLength(1);
+    expect(point.blobs).toEqual(["active", "1", "1.9.1", "darwin", "arm64", "curl", "mcp", ID_A]);
+    expect(point.blobs).toHaveLength(8);
+    expect(point.blobs[0]).toBe(point.indexes[0]);
+    expect(point.blobs[1]).toBe("1");
+    expect(point.blobs[7]).toBe(ID_A);
   });
 
   it("records none as the value of an inapplicable dimension rather than a leak", () => {
     const point = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }));
-    expect(point.indexes).toEqual(["install_requested", "1", "unknown", "unknown", "unknown", "none", "none"]);
-    expect(point.blobs).toEqual([""]);
+    expect(point.indexes).toEqual(["install_requested"]);
+    expect(point.indexes).toHaveLength(1);
+    expect(point.blobs).toEqual(["install_requested", "1", "unknown", "unknown", "unknown", "none", "none", ""]);
+    expect(point.blobs).toHaveLength(8);
+    expect(point.blobs[0]).toBe(point.indexes[0]);
+    expect(point.blobs[1]).toBe("1");
+    expect(point.blobs[7]).toBe("");
   });
 
-  it("keeps index positions stable for every event name", () => {
+  it("keeps blob positions stable for every event name", () => {
     const events: TelemetryEventName[] = ["install_requested", "install_completed", "activated", "active"];
     for (const event of events) {
       const point = telemetryDataPoint(fullEvent({ event }));
-      expect(point.indexes[0], event).toBe(event);
-      expect(point.indexes[1], event).toBe("1");
-      expect(point.indexes).toHaveLength(7);
-      expect(point.blobs).toHaveLength(1);
+      expect(point.indexes, event).toEqual([event]);
+      expect(point.indexes, event).toHaveLength(1);
+      expect(point.blobs, event).toHaveLength(8);
+      expect(point.blobs[0], event).toBe(point.indexes[0]);
+      expect(point.blobs[1], event).toBe("1");
+      // `fullEvent` always carries an installation id. The empty-id case is
+      // the install_requested assertion above; this loop locks blob8's slot.
+      expect(point.blobs[7], event).toBe(ID_A);
     }
   });
 });

@@ -69,6 +69,30 @@ the installer script is fetched, and it deliberately carries no installation id
 and no platform: at that moment the requester is an anonymous shell pipeline,
 and the installer reports its real platform truthfully a moment later.
 
+### Where a recorded event is stored
+
+The table above is the client payload. It is not the Analytics Engine column
+layout. Workers Analytics Engine accepts one index per data point. That index
+is only the sampling key, and the sampling key is the event name. Founder
+queries do not read `index1`. They read `blob1` through `blob8`.
+
+| Column | What is stored |
+| --- | --- |
+| `index1` | event name — sampling key only; queries must not read it |
+| `blob1` | event name — filter here (`install_requested`, `install_completed`, `activated`, `active`) |
+| `blob2` | schema version, `"1"` |
+| `blob3` | Campfire version |
+| `blob4` | OS |
+| `blob5` | architecture |
+| `blob6` | install method, or `"none"` when the payload omits it |
+| `blob7` | surface, or `"none"` when the payload omits it |
+| `blob8` | installation id, or `""` when absent. `count(DISTINCT blob8)` is the deduplicated installation count |
+
+Schema version remains `1`. The payload contract did not change, and the
+rejected writes that sent seven indexes stored no rows, so nothing was migrated
+and no new field is collected. `"none"` and `""` are how an already-optional
+payload field is stored when it is absent. They are not extra dimensions.
+
 ---
 
 ## What is not collected

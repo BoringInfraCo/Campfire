@@ -14,8 +14,9 @@
  * is the machine-readable form of that list and is asserted against the
  * allow-list so a future field cannot silently reintroduce one of them.
  *
- * Field positions are stable. Analytics Engine queries index by position, so
- * appending a dimension in a later schema version is safe; reordering is not.
+ * Field positions are stable. Analytics Engine queries blobs by position and
+ * allows only one sampling index, so appending a dimension later is safe;
+ * reordering is not. The stored layout is `telemetryDataPoint`.
  */
 
 /** Current wire contract. A payload declaring another version is rejected, not coerced. */
@@ -155,8 +156,9 @@ export const PROHIBITED_FIELD_NAMES = [
 ] as const;
 
 /**
- * The complete allow-list, in stable Analytics Engine index order. Nothing else
- * is ever serialized.
+ * The complete allow-list. Nothing else is ever serialized. This is the payload
+ * vocabulary, not Analytics Engine indexes: AE allows one sampling index, and
+ * the stored positions are the blobs in `telemetryDataPoint`.
  */
 export const TELEMETRY_FIELDS = [
   "schemaVersion",
@@ -304,17 +306,27 @@ export function parseTelemetryEventV1(raw: unknown): TelemetryParseResult {
 }
 
 /**
- * Analytics Engine data point. The seven queryable dimensions are `indexes`
- * (stable positions, queried by name); the installation id is a blob because it
- * is high-cardinality and never queried directly — deduplicated installation
- * counts are derived from blob counts, never from an index.
+ * Analytics Engine data point.
+ *
+ * AE allows one index. That index is the sampling key, not a dimension column.
+ * A per-installation id is the wrong key: Analytics Engine samples within an
+ * index value, and a unique key makes aggregate queries scan one series per
+ * installation. The event name is the sampling key because the funnel is four
+ * low-cardinality series.
+ * The seven former index dimensions are blob1..blob7 in the same order (event,
+ * schema version, campfire version, os, arch, install method, surface). blob1
+ * repeats the sampling index so a query can filter on blobs. The installation
+ * id is blob8, never an index. These positions are the stable layout because
+ * the 7-index layout never stored a row — extra indexes are rejected and the
+ * write records nothing.
  */
 export function telemetryDataPoint(event: TelemetryEventV1): {
   indexes: string[];
   blobs: string[];
 } {
   return {
-    indexes: [
+    indexes: [event.event],
+    blobs: [
       event.event,
       String(event.schemaVersion),
       event.campfireVersion,
@@ -322,7 +334,7 @@ export function telemetryDataPoint(event: TelemetryEventV1): {
       event.arch,
       event.installMethod ?? "none",
       event.surface ?? "none",
+      event.installationId,
     ],
-    blobs: [event.installationId],
   };
 }
