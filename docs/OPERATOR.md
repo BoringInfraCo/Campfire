@@ -2,11 +2,12 @@
 
 Requirements: Node.js 22+.
 
-The source tree targets a v1.9.2 telemetry candidate. The v1.9.2 source
-snapshot and GitHub Release are published, while the Worker and versioned
-installer have not been promoted to production. The last documented deployed
-installer is v1.8.0. The independent two-human acceptance trace remains
-pending; see `SPRINT_020_RESULT.md` for that verdict.
+The source tree targets v1.9.3. This patch keeps telemetry schema version 1
+and writes one Analytics Engine index, the event name. The seven dimensions
+and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
+were rejected and stored nothing. The versioned installer in this tag matches
+the v1.9.2 script. The independent two-human acceptance trace remains pending;
+see `SPRINT_020_RESULT.md` for that verdict.
 
 Install the CLI on an operator or teammate machine (curl path):
 
@@ -338,6 +339,15 @@ refuses to send anything without `--confirm`. It defaults to the documented
 Analytics Engine SQL API; `--runner wrangler` uses
 `npx wrangler analytics-engine sql` on Wrangler builds that ship that
 subcommand.
+
+Analytics Engine accepts one index. On `campfire_telemetry`, `index1` is the
+event name and is only the sampling key. Do not query `index2`–`index7`: those
+columns are not written. Read the blobs instead: `blob1` event name
+(`install_requested`, `install_completed`, `activated`, `active`), `blob2`
+schema version (`"1"`), `blob3` Campfire version, `blob4` OS, `blob5`
+architecture, `blob6` install method or `"none"`, `blob7` surface or `"none"`,
+`blob8` installation id or `""`. Deduplicate installations with
+`count(DISTINCT blob8)`.
 
 ## 1. Initialize
 

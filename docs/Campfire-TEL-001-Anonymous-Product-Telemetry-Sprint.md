@@ -301,6 +301,22 @@ surface
 anonymous_install_id (where necessary)
 ```
 
+Storage positions. "Schema-versioned" means payload `schemaVersion` 1.
+Field positions are blobs; the single index is the event name and is a
+sampling key, not a query dimension.
+
+``` text
+index1  event name (sampling key only; not a query dimension)
+blob1   event name
+blob2   schema version ("1")
+blob3   campfire version
+blob4   os
+blob5   arch
+blob6   install method, or "none"
+blob7   surface, or "none"
+blob8   anonymous install id, or "" when absent
+```
+
 Queries must account for Analytics Engine sampling semantics. Do not
 assume raw `COUNT(*)` always represents the underlying unsampled total.
 

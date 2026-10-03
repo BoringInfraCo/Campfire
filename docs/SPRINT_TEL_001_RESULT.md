@@ -117,6 +117,14 @@ event.
    against a clean `HEAD` worktree. Pre-existing and out of TEL-001 scope; not
    fixed here. The blank-DB smoke above uses `bootstrap --human-name`, which
    passes.
+7. **2026-10-03 — one Analytics Engine index.** Production writes were rejected
+   because seven indexes were sent. Analytics Engine allows one index. The
+   stored layout is now `index1` = event (sampling key only) and `blob1`..`blob7`
+   = the seven dimensions, `blob8` = installation id. Client `schemaVersion`
+   stays 1. No rows existed to migrate. Founder queries were rewritten to blobs.
+   This records a storage-layout correction only. It does not change the
+   section 1 disposition. The correction ships as patch `v1.9.3` because
+   `v1.9.2` is already tagged.
 
 ## 5. Unresolved contradiction for the founder
 
