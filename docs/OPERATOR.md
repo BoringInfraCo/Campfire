@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+.
 
-The source tree targets a v1.9.1 telemetry candidate. The v1.9.0 source
+The source tree targets a v1.9.2 telemetry candidate. The v1.9.2 source
 snapshot and GitHub Release are published, while the Worker and versioned
 installer have not been promoted to production. The last documented deployed
 installer is v1.8.0. The independent two-human acceptance trace remains
