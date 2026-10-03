@@ -1,7 +1,7 @@
 /** Sprint 020's narrow enrollment capability and deterministic provisioning plans. */
 import { ValidationError } from "./errors.js";
 import type { IdSource } from "./ids.js";
-import type { ActorRef, ActorToken, Agent, Contribution, Human, Workspace, WorkspaceParticipant } from "./types.js";
+import type { ActorRef, ActorToken, Agent, Human, NewContribution, Workspace, WorkspaceParticipant } from "./types.js";
 
 export const ENROLLMENT_HARNESSES = ["codex", "opencode"] as const;
 export type EnrollmentHarness = (typeof ENROLLMENT_HARNESSES)[number];
@@ -89,7 +89,7 @@ export interface EnrollmentProvisionPlan {
   agents: Agent[];
   tokens: ActorToken[];
   participants: WorkspaceParticipant[];
-  contributions: Contribution[];
+  contributions: NewContribution[];
   receipt: EnrollmentReceipt;
 }
 export interface EnrollOwnedAgentInput {
@@ -123,14 +123,14 @@ export interface OwnedAgentProvisionPlan {
   agent: Agent;
   token: ActorToken;
   participant: WorkspaceParticipant;
-  contributions: Contribution[];
+  contributions: NewContribution[];
 }
 export interface RevokeEnrollmentInvitationPlan {
   invitationId: string;
   workspaceId: string;
   actor: ActorRef;
   revokedAt: string;
-  contribution: Contribution;
+  contribution: NewContribution;
 }
 
 function object(value: unknown, keys: readonly string[], field: string): Record<string, unknown> {
@@ -203,7 +203,7 @@ export function buildEnrollmentPlan(invitation: EnrollmentInvitation, workspace:
   const agents: Agent[] = input.agents.map((prepared) => ({ id: idSource("agent"), teamId: invitation.teamId, humanId: human.id, name: prepared.name!, harness: prepared.harness, createdAt: now }));
   const tokens: ActorToken[] = [{ id: idSource("token"), actor: humanActor, tokenHash: input.humanTokenHash, createdAt: now }, ...agents.map((agent, index) => ({ id: idSource("token"), actor: { actorId: agent.id, actorType: "agent" as const }, tokenHash: input.agents[index]!.tokenHash, createdAt: now }))];
   const participants: WorkspaceParticipant[] = [{ workspaceId: workspace.id, actor: humanActor, role: "member", joinedAt: now }, ...agents.map((agent) => ({ workspaceId: workspace.id, actor: { actorId: agent.id, actorType: "agent" as const }, role: "agent" as const, joinedAt: now }))];
-  const contributions: Contribution[] = [
+  const contributions: NewContribution[] = [
     { id: idSource("contribution"), workspaceId: workspace.id, actor: humanActor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { consumedAt: now, issuedByHumanId: invitation.issuedByHumanId }, createdAt: now },
     ...participants.map((participant) => ({ id: idSource("contribution"), workspaceId: workspace.id, actor: humanActor, action: "join" as const, objectType: "participant" as const, objectId: participant.actor.actorId, payload: { role: participant.role, actorType: participant.actor.actorType, invitationId: invitation.id, ...(participant.actor.actorType === "agent" ? { humanOwnerId: human.id } : {}) }, createdAt: now })),
   ];
@@ -218,6 +218,6 @@ export function buildOwnedAgentPlan(human: Human, input: EnrollOwnedAgentInput, 
   const token: ActorToken = { id: idSource("token"), actor: agentActor, tokenHash: input.tokenHash, createdAt: now };
   const participant: WorkspaceParticipant = { workspaceId: input.workspaceId, actor: agentActor, role: "agent", joinedAt: now };
   const receipt: OwnedAgentReceipt = { version: 1, kind: "owned_agent_enrollment", requestId: input.requestId, workspaceId: input.workspaceId, humanId: human.id, agent: { id: agent.id, name: agent.name, harness: input.harness }, enrolledAt: now };
-  const contributions: Contribution[] = [{ id: idSource("contribution"), workspaceId: input.workspaceId, actor, action: "join", objectType: "participant", objectId: agent.id, payload: { role: "agent", actorType: "agent", humanOwnerId: human.id }, createdAt: now }];
+  const contributions: NewContribution[] = [{ id: idSource("contribution"), workspaceId: input.workspaceId, actor, action: "join", objectType: "participant", objectId: agent.id, payload: { role: "agent", actorType: "agent", humanOwnerId: human.id }, createdAt: now }];
   return { record: { workspaceId: input.workspaceId, humanId: human.id, harness: input.harness, requestId: input.requestId, requestDigest, tokenHash: input.tokenHash, receipt }, claimedAt: now, agent, token, participant, contributions };
 }

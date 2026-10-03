@@ -6,6 +6,7 @@
  */
 import type { ActorContext } from "./authorization.js";
 import type { EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
+import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
 import type {
   ActorRef,
   Agent,
@@ -255,6 +256,28 @@ export interface SinceProjection {
 }
 
 export interface WorkspaceContext {
+  /** CTX-001. Orientation is a bounded current view, not workspace history. */
+  schemaVersion: 1;
+  generatedAt: string;
+  /** Opaque stream tip. Pass to catch-up to read changes recorded after this orientation. */
+  orientationCursor: string;
+  completeness: {
+    fullHistoryIncluded: false;
+    drillDownAvailable: true;
+  };
+  /**
+   * Bounded sections. `total` counts the authorized workspace set.
+   * The legacy arrays below repeat these items so existing readers keep working.
+   */
+  slices: {
+    decisions: ContextSlice<Decision>;
+    findings: ContextSlice<Finding>;
+    tasks: ContextSlice<Task>;
+    blockers: ContextSlice<Task>;
+    artifacts: ContextSlice<Artifact>;
+    recentChanges: ContextSlice<ChangeSummary>;
+  };
+  budget: ContextBudget;
   workspace: Workspace;
   goal?: Goal;
   participants: ParticipantView[];
@@ -303,8 +326,47 @@ export interface ReadinessStatus {
 export interface GetActivityInput {
   workspaceId: string;
   limit?: number;
-  /** Contribution id: return items strictly older than this contribution. */
+  /** Contribution id or opaque contribution cursor: return items strictly older than it. */
   before?: string;
+}
+
+export interface GetWorkspaceChangesInput {
+  workspaceId: string;
+  /** Opaque cursor from orientation or a previous catch-up. */
+  after: string;
+  limit?: number;
+}
+
+export interface WorkspaceCatchUp {
+  schemaVersion: 1;
+  workspaceId: string;
+  fromCursor: string;
+  toCursor: string;
+  changes: ContextSlice<ChangeSummary>;
+  affected: {
+    decisions: string[];
+    findings: string[];
+    tasks: string[];
+    artifacts: string[];
+  };
+  generatedAt: string;
+  /**
+   * Material changes are returned before normal changes. Inside a phase the
+   * order is chronological. A row stamped earlier than the cursor is not replayed.
+   */
+  ordering: "material-then-chronological";
+}
+
+export interface ListWorkspaceObjectsInput {
+  workspaceId: string;
+  limit?: number;
+  cursor?: string;
+  status?: string;
+}
+
+export interface WorkspaceObjectPage<T> extends ContextSlice<T> {
+  schemaVersion: 1;
+  workspaceId: string;
 }
 
 export interface CampfireService {
@@ -321,8 +383,17 @@ export interface CampfireService {
   getWorkspaceContext(
     ctx: ActorContext,
     workspaceId: string,
-    options?: { since?: string },
+    options?: { since?: string; budget?: Partial<ContextBudget> },
   ): WorkspaceContext;
+  getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): WorkspaceCatchUp;
+  listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Decision>;
+  getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Decision;
+  listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Finding>;
+  getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Finding;
+  listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Task>;
+  getTaskInWorkspace(ctx: ActorContext, workspaceId: string, taskId: string): Task;
+  listArtifactsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Artifact>;
+  getArtifactInWorkspace(ctx: ActorContext, workspaceId: string, artifactId: string): Artifact;
   getActivity(ctx: ActorContext, input: GetActivityInput): ActivityPage;
 
   createHuman(ctx: ActorContext | undefined, input: CreateHumanInput): CreateHumanResult;
@@ -372,6 +443,12 @@ function compareByUpdatedThenId(
 export function deriveRecordedAlignment(
   decisions: readonly Decision[],
   tasks: readonly Task[],
+  /**
+   * When the arrays are an orientation page, pass workspace counts so a
+   * proposed decision that did not fit the page still keeps the boundary open.
+   * Id lists stay the ids actually present in the arrays.
+   */
+  counts?: { proposedDecisions?: number; acceptedDecisions?: number },
 ): RecordedAlignment {
   const proposedDecisionIds = decisions
     .filter((decision) => decision.status === "proposed")
@@ -386,10 +463,13 @@ export function deriveRecordedAlignment(
     .sort(compareByUpdatedThenId)
     .map((task) => task.id);
 
+  const proposedCount = counts?.proposedDecisions ?? proposedDecisionIds.length;
+  const acceptedCount = counts?.acceptedDecisions ?? acceptedDecisionIds.length;
+
   let status: RecordedAlignmentStatus;
-  if (proposedDecisionIds.length > 0) {
+  if (proposedCount > 0) {
     status = "open";
-  } else if (acceptedDecisionIds.length > 0) {
+  } else if (acceptedCount > 0) {
     status = "established";
   } else {
     status = "unspecified";

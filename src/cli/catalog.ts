@@ -17,6 +17,11 @@ export const CLI_COMMAND_NAMES = [
   "status",
   "agents",
   "decisions",
+  "context",
+  "catch-up",
+  "findings",
+  "tasks",
+  "artifacts",
   "changes",
   "inspect",
   "capabilities",
@@ -246,10 +251,59 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "decisions",
     "workspace",
     "List proposed, accepted, and superseded decisions.",
-    "campfire decisions [workspace] [--output auto|human|json]",
-    { ...READ, workspaceScoped: true, related: ["status", "inspect"], notes: [
+    "campfire decisions [workspace] [--status proposed|accepted|superseded] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["status", "inspect", "context"], notes: [
       "Read projection over the existing decision lifecycle. No new approval model.",
       "Acceptance remains a Campfire lifecycle transition, not permission for an external action.",
+      "Default page size is 100. The result includes total, returned, truncated, and nextCursor.",
+    ] },
+  ),
+  context: spec(
+    "context",
+    "workspace",
+    "Show the bounded orientation projection for a workspace.",
+    "campfire context [workspace] [--since <contributionId>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["catch-up", "findings", "tasks", "artifacts", "decisions"], notes: [
+      "Bounded orientation. Truncated slices report how many rows were returned.",
+      "Does not accept --full. Drill down with findings, tasks, artifacts, decisions, and catch-up.",
+    ] },
+  ),
+  "catch-up": spec(
+    "catch-up",
+    "workspace",
+    "Read bounded changes after an orientation cursor.",
+    "campfire catch-up [workspace] --after <opaque cursor> [--limit <n>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "changes"], notes: [
+      "Requires the opaque cursor from context or a previous catch-up.",
+      "The result is bounded. A later cursor continues the same stream.",
+    ] },
+  ),
+  findings: spec(
+    "findings",
+    "workspace",
+    "List a bounded page of findings.",
+    "campfire findings [workspace] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "inspect"], notes: [
+      "Bounded page. Pass the returned cursor to continue the list.",
+    ] },
+  ),
+  tasks: spec(
+    "tasks",
+    "workspace",
+    "List a bounded page of tasks.",
+    "campfire tasks [workspace] [--status open|in_progress|blocked|completed] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "inspect"], notes: [
+      "Bounded page. Pass the returned cursor to continue the list.",
+      "--status filters one lifecycle state.",
+    ] },
+  ),
+  artifacts: spec(
+    "artifacts",
+    "workspace",
+    "List a bounded page of artifacts.",
+    "campfire artifacts [workspace] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "inspect"], notes: [
+      "Bounded page. Pass the returned cursor to continue the list.",
     ] },
   ),
   changes: spec(
@@ -269,7 +323,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "Inspect one workspace object by kind and id.",
     "campfire inspect <workspace|agent|goal|task|finding|decision|artifact|contribution> <id> --workspace <workspaceId> [--output auto|human|json]",
     { ...READ, workspaceScoped: true, related: ["status", "decisions"], notes: [
-      "Retrieves the authorized workspace and selects the object from its existing full projection.",
+      "Task, finding, decision, and artifact use the bounded get for that object. Workspace, agent, goal, and contribution still come from the full projection.",
       "Except for workspace itself, --workspace is required. No cross-workspace lookup.",
       "An inspected agent is a static participant record, not a live process inspection.",
     ] },

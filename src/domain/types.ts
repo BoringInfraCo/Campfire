@@ -201,5 +201,10 @@ export interface Contribution {
   objectType: ContributionObjectType;
   objectId: string;
   payload?: Record<string, unknown>;
+  /** Per-workspace 1-based append order. The store assigns it; ids are not monotonic. */
+  appendPosition: number;
   createdAt: string;
 }
+
+/** A contribution before the store assigns `appendPosition`. */
+export type NewContribution = Omit<Contribution, "appendPosition">;

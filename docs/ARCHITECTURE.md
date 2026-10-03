@@ -675,6 +675,8 @@ WorkspaceContext
 
 The first implementation can be simple and explicit.
 
+CTX-001 keeps that projection as an orientation, not a copy of the history. `get_workspace_context` returns bounded slices. Each slice reports `total`, `returned`, and `truncated`, and `completeness.fullHistoryIncluded` is false. Drill-down is `list_decisions`, `list_findings`, `list_tasks`, `list_artifacts`, and the matching get-by-id methods. Catch-up is `get_workspace_changes` from `orientationCursor`, ordered by a durable per-workspace append position and bounded by a frozen stream tip. `get_workspace` remains the full inspector. Findings are not linked to tasks or decisions; the only relationship used for ranking is `Finding.sourceArtifactId`. Authorization still runs before any of those reads.
+
 No embeddings or semantic ranking are required to prove the thesis.
 
 Example:

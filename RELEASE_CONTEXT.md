@@ -1,6 +1,6 @@
-# Campfire 1.9.3 release context
+# Campfire 1.10.0 release context
 
-This public source snapshot was exported on 2026-10-03 from private canonical source commit `9233f6eb7c532b6f4c6ff52d04f1dbd8924ce7cc` (dated 2026-10-03T13:05:07-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-03 from private canonical source commit `aab21cb680b198ef7a077e6b73f2f71f9d808059` (dated 2026-10-03T17:31:58-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -23,6 +23,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Contribution and Workspace lifecycle writes preserve actor and active agent-session provenance across local and Workers services.
 - Completed Workspaces remain readable with their structured state and contribution history intact.
 - Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
+- Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
 
 ## Artifacts
 

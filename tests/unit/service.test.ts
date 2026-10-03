@@ -855,8 +855,11 @@ describe("Sprint 008 orientation projection", () => {
       orientationHint: true,
     });
 
-    // Provenance summary reuses describeContribution over the full activity.
-    expect(context.provenanceSummary.length).toBe(context.provenanceTotal);
+    // Provenance summary covers the bounded window. This fixture is over the cap.
+    expect(context.provenance.length).toBe(ORIENTATION_PROVENANCE_LIMIT);
+    expect(context.provenanceTruncated).toBe(true);
+    expect(context.provenanceTotal).toBeGreaterThan(context.provenance.length);
+    expect(context.provenanceSummary.length).toBe(context.provenance.length);
     expect(context.provenanceSummary.some((line) => line.includes("Finding A"))).toBe(true);
 
     // No cursor supplied, no `since` projection.

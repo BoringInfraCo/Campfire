@@ -8,9 +8,11 @@
 import { readFileSync } from "node:fs";
 import type Database from "better-sqlite3";
 import { V5_SQL } from "./enrollment-schema.js";
+import { V6_ADD_COLUMN_SQL, V6_BACKFILL_SQL, V6_INDEX_SQL } from "./contribution-position-schema.js";
 export { V5_SQL } from "./enrollment-schema.js";
+export { V6_SQL } from "./contribution-position-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -134,6 +136,17 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   { version: 5, up: (db) => { db.exec(V5_SQL); } },
+  {
+    version: 6,
+    up: (db) => {
+      const columns = db.prepare("PRAGMA table_info(contributions)").all() as Array<{ name: string }>;
+      if (!columns.some((column) => column.name === "append_position")) {
+        db.exec(`${V6_ADD_COLUMN_SQL};`);
+      }
+      db.exec(`${V6_BACKFILL_SQL};`);
+      db.exec(`${V6_INDEX_SQL};`);
+    },
+  },
 ];
 
 function currentVersion(db: Database.Database): number {

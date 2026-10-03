@@ -150,6 +150,8 @@ const ARTIFACT_B: Artifact = {
   createdAt: at(42),
 };
 
+let nextAppendPosition = 0;
+
 function makeContribution(
   id: string,
   actor: ActorRef,
@@ -159,6 +161,7 @@ function makeContribution(
   action: Contribution["action"],
   createdAt: string,
 ): Contribution {
+  nextAppendPosition += 1;
   return {
     id,
     workspaceId: WORKSPACE_ID,
@@ -168,6 +171,7 @@ function makeContribution(
     objectType,
     objectId,
     createdAt,
+    appendPosition: nextAppendPosition,
   };
 }
 

@@ -8,7 +8,9 @@
  */
 import SCHEMA_SQL from "../store/schema.sql";
 import { V5_SQL } from "../store/enrollment-schema.js";
+import { V6_SQL } from "../store/contribution-position-schema.js";
 export { V5_SQL } from "../store/enrollment-schema.js";
+export { V6_SQL } from "../store/contribution-position-schema.js";
 
 /** v2 delta: actor tokens + workspace invites (mirrors migrations.ts v2). */
 export const V2_SQL = `
@@ -87,4 +89,4 @@ SET status = 'exhausted',
     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 WHERE config_fingerprint IS NULL AND status IN ('pending', 'delivering')`;
 
-export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n`;
+export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n${V6_SQL};\n`;

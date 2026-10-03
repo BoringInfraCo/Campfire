@@ -10,6 +10,27 @@
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitationView, normalizeEnrollOwnedAgentInput, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
+import { assembleWorkspaceContext } from "./context-assembly.js";
+import {
+  affectedObjectIds,
+  assertCursorWorkspace,
+  assembleCatchUp,
+  clampPageLimit,
+  compareDecisionKeyset,
+  CONTEXT_SCHEMA_VERSION,
+  contributionCursor,
+  decodeContextCursor,
+  decisionFetchLimits,
+  decisionRank,
+  DEFAULT_CONTEXT_BUDGET,
+  encodeContextCursor,
+  genesisContributionCursor,
+  objectCursor,
+  ORIENTATION_CHANGE_LOOKAHEAD,
+  selectRecentChanges,
+  toContextSlice,
+  type ContextBudget,
+} from "../domain/context-policy.js";
 import {
   deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
@@ -28,8 +49,10 @@ import {
   type CreateWorkspaceInput,
   type CurrentWork,
   type GetActivityInput,
+  type GetWorkspaceChangesInput,
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
+  type ListWorkspaceObjectsInput,
   type ParticipantView,
   type ReadinessStatus,
   type RegisterAgentSessionInput,
@@ -38,7 +61,9 @@ import {
   type UpdateGoalInput,
   type UpdateTaskInput,
   type UpdateWorkspaceInput,
+  type WorkspaceCatchUp,
   type WorkspaceContext,
+  type WorkspaceObjectPage,
   type WorkspaceSummary,
   type WorkspaceView,
 } from "./service.js";
@@ -51,10 +76,12 @@ import type {
   ContributionAction,
   ContributionObjectType,
   Decision,
+  DecisionStatus,
   Finding,
   Goal,
   Human,
   Task,
+  TaskStatus,
   Workspace,
   WorkspaceInvite,
   WorkspaceParticipant,
@@ -68,6 +95,7 @@ import {
   Conflict,
   CrossWorkspaceReference,
   DecisionNotFound,
+  FindingNotFound,
   GoalNotFound,
   ParticipantRequired,
   SessionNotFound,
@@ -519,19 +547,123 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     };
   }
 
-  function buildSince(activity: Contribution[], since: string): SinceProjection {
-    const index = activity.findIndex((contribution) => contribution.id === since);
-    if (index === -1) {
-      throw new ValidationError(`Unknown contribution id for since: ${since}`, {
-        field: "since",
-        since,
-      });
+  function resolveContextBudget(override?: Partial<ContextBudget>): ContextBudget {
+    const budget: ContextBudget = { ...DEFAULT_CONTEXT_BUDGET };
+    if (override === undefined) return budget;
+    for (const key of Object.keys(DEFAULT_CONTEXT_BUDGET) as (keyof ContextBudget)[]) {
+      const value = override[key];
+      if (value !== undefined) {
+        budget[key] = clampPageLimit(value, DEFAULT_CONTEXT_BUDGET[key]);
+      }
     }
-    const after = activity.slice(index + 1);
-    const truncated = after.length > ORIENTATION_PROVENANCE_LIMIT;
-    const items = truncated ? after.slice(-ORIENTATION_PROVENANCE_LIMIT) : after;
-    const newest = activity[activity.length - 1]?.id ?? since;
-    return { cursor: newest, items, truncated };
+    return budget;
+  }
+
+  function statusCount(rows: ReadonlyArray<{ status: string; count: number }>, status: string): number {
+    return rows.find((row) => row.status === status)?.count ?? 0;
+  }
+
+  function requireReadableWorkspace(ctx: ActorContext, workspaceId: string): Workspace {
+    authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+    const workspace = store.getWorkspace(workspaceId);
+    if (workspace === undefined) throw new WorkspaceNotFound(workspaceId);
+    return workspace;
+  }
+
+  function pageContributionQuery(
+    limit: number,
+    materiality: "high" | "normal",
+    afterPosition: number,
+    tip: number,
+  ): { limit: number; materiality: "high" | "normal"; afterPosition?: number; throughPosition?: number } {
+    return {
+      limit,
+      materiality,
+      ...(afterPosition > 0 ? { afterPosition } : {}),
+      ...(tip > 0 ? { throughPosition: tip } : {}),
+    };
+  }
+
+  function objectAfter(
+    token: string | undefined,
+    workspaceId: string,
+    kind: "decision" | "task" | "finding" | "artifact",
+  ): { rank: number; at: string; id: string } | undefined {
+    if (token === undefined) return undefined;
+    const cursor = decodeContextCursor(token);
+    assertCursorWorkspace(cursor, workspaceId);
+    if (cursor.kind !== kind) {
+      throw new ValidationError(`Cursor is not a ${kind} cursor`, { field: "cursor", kind });
+    }
+    return { rank: cursor.rank, at: cursor.at, id: cursor.id };
+  }
+
+  function decisionStatuses(status: string | undefined): DecisionStatus[] | undefined {
+    if (status === undefined) return undefined;
+    if (status !== "proposed" && status !== "accepted" && status !== "superseded") {
+      throw new ValidationError("Invalid decision status", { field: "status", status });
+    }
+    return [status];
+  }
+
+  function taskStatuses(status: string | undefined): TaskStatus[] | undefined {
+    if (status === undefined) return undefined;
+    if (status !== "open" && status !== "in_progress" && status !== "blocked" && status !== "completed") {
+      throw new ValidationError("Invalid task status", { field: "status", status });
+    }
+    return [status];
+  }
+
+  function rejectObjectStatus(status: string | undefined): void {
+    if (status !== undefined) {
+      throw new ValidationError("status is not a filter for this object", { field: "status" });
+    }
+  }
+
+  function pageNextCursor(
+    kind: "decision" | "task" | "finding" | "artifact",
+    workspaceId: string,
+    page: { hasMore: boolean; next?: { rank: number; at: string; id: string } },
+  ): string | undefined {
+    if (!page.hasMore || page.next === undefined) return undefined;
+    return objectCursor({ kind, workspaceId, rank: page.next.rank, at: page.next.at, id: page.next.id });
+  }
+
+  function finishObjectPage<T>(
+    workspaceId: string,
+    items: readonly T[],
+    total: number,
+    nextCursor?: string,
+  ): WorkspaceObjectPage<T> {
+    return { schemaVersion: CONTEXT_SCHEMA_VERSION, workspaceId, ...toContextSlice(items, total, nextCursor) };
+  }
+
+  function resolveActivityBefore(workspaceId: string, before: string | undefined): string | undefined {
+    if (before === undefined) return undefined;
+    if (!before.startsWith("cf1.")) return before;
+    const cursor = decodeContextCursor(before);
+    assertCursorWorkspace(cursor, workspaceId);
+    if (cursor.kind !== "contribution") {
+      throw new ValidationError("Cursor is not a contribution cursor", { field: "before" });
+    }
+    return cursor.id === "" ? undefined : cursor.id;
+  }
+
+  function unknownBefore(beforeId: string): ValidationError {
+    return new ValidationError(`Unknown contribution id for before: ${beforeId}`, {
+      field: "before",
+      before: beforeId,
+    });
+  }
+
+  function readInWorkspace<T extends { workspaceId: string }>(
+    row: T | undefined,
+    workspaceId: string,
+    id: string,
+    missing: (objectId: string) => Error,
+  ): T {
+    if (row === undefined || row.workspaceId !== workspaceId) throw missing(id);
+    return row;
   }
 
   return {
@@ -542,7 +674,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       const now = clock();
       const secret = generateRawToken().replace(/^cft_/, "cfe_");
       const invitation: EnrollmentInvitation = { id: `ein_${idSource("invite")}`, workspaceId: workspace.id, teamId: workspace.teamId, issuedByHumanId: ctx.actor.actorId, secretHash: hashToken(secret), createdAt: now, expiresAt: new Date(Date.parse(now) + input.expiresInHours * 3_600_000).toISOString(), permittedHarnesses: [...ENROLLMENT_HARNESSES] };
-      const contribution: Contribution = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
+      const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
       if (!store.createEnrollmentInvitation(invitation, contribution)) throw new Unauthorized("Workspace owner authority changed before invitation issuance", { recoveryCode: "owner_required" });
       return { version: 1, kind: "enrollment_invitation", invitationId: invitation.id, secret, workspace: { id: workspace.id, name: workspace.name, teamId: workspace.teamId }, expiresAt: invitation.expiresAt, permittedHarnesses: [...invitation.permittedHarnesses] };
     },
@@ -562,7 +694,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       if (invitation === undefined || invitation.workspaceId !== input.workspaceId) throw new Unauthorized("Invitation is unavailable in this workspace", { recoveryCode: "invalid_enrollment_invitation" });
       if (invitation.revokedAt !== undefined) return revocationReceipt(invitation);
       const now = clock();
-      const contribution: Contribution = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
+      const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
       if (!store.revokeEnrollmentInvitation({ invitationId: invitation.id, workspaceId: input.workspaceId, actor: ctx.actor, revokedAt: now, contribution })) throw new Unauthorized("Workspace owner authority changed before invitation revocation", { recoveryCode: "owner_required" });
       return revocationReceipt({ ...invitation, revokedAt: now });
     },
@@ -781,53 +913,314 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     getWorkspaceContext(
       ctx: ActorContext,
       workspaceId: string,
-      options?: { since?: string },
+      options?: { since?: string; budget?: Partial<ContextBudget> },
     ): WorkspaceContext {
-      authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      const workspace = store.getWorkspace(workspaceId);
-      if (workspace === undefined) {
-        throw new WorkspaceNotFound(workspaceId);
+      const workspace = requireReadableWorkspace(ctx, workspaceId);
+      const budget = resolveContextBudget(options?.budget);
+
+      const decisionCounts = store.countObjectsByStatus("decisions", workspaceId);
+      const acceptedCount = statusCount(decisionCounts, "accepted");
+      const proposedCount = statusCount(decisionCounts, "proposed");
+      const supersededCount = statusCount(decisionCounts, "superseded");
+      const decisionLimits = decisionFetchLimits(budget.decisions, {
+        accepted: acceptedCount,
+        proposed: proposedCount,
+      });
+      const acceptedPage =
+        decisionLimits.accepted > 0
+          ? store.pageDecisions(workspaceId, { limit: decisionLimits.accepted, statuses: ["accepted"] })
+          : { items: [], hasMore: false, total: 0 };
+      const proposedPage =
+        decisionLimits.proposed > 0
+          ? store.pageDecisions(workspaceId, { limit: decisionLimits.proposed, statuses: ["proposed"] })
+          : { items: [], hasMore: false, total: 0 };
+      const decisionItems = [...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset);
+      const decisionTotal = acceptedCount + proposedCount + supersededCount;
+      const decisionNext =
+        decisionItems.length < decisionTotal && !acceptedPage.hasMore
+          ? (() => {
+              const last = decisionItems[decisionItems.length - 1];
+              return last === undefined
+                ? undefined
+                : objectCursor({
+                    kind: "decision",
+                    workspaceId,
+                    rank: decisionRank(last.status),
+                    at: last.updatedAt,
+                    id: last.id,
+                  });
+            })()
+          : undefined;
+
+      const taskCounts = store.countObjectsByStatus("tasks", workspaceId);
+      const blockedCount = statusCount(taskCounts, "blocked");
+      const taskPage = store.pageTasks(workspaceId, { limit: budget.tasks });
+      const taskTotal = store.countTasks(workspaceId);
+      const blockerTotal = store.countTasks(workspaceId, ["blocked"]);
+      const blockerPage =
+        blockedCount === 0
+          ? { items: [] as Task[], hasMore: false, total: blockerTotal }
+          : store.pageTasks(workspaceId, { limit: budget.blockers, statuses: ["blocked"] });
+
+      const findingTotal = store.countObjects("findings", workspaceId);
+      const findingPage = store.pageFindings(workspaceId, { limit: budget.findings });
+      const artifactTotal = store.countObjects("artifacts", workspaceId);
+      const artifactPage = store.pageArtifacts(workspaceId, { limit: budget.artifacts });
+
+      const provenanceWindow = store.listRecentContributionWindow(workspaceId, ORIENTATION_PROVENANCE_LIMIT);
+      const provenance = provenanceWindow.items;
+      const contributionTotal = store.countObjects("contributions", workspaceId);
+      const provenanceSummary = provenance.map((contribution) =>
+        describeContribution(contribution, actorName(contribution.actor)),
+      );
+
+      const changeWindow = store.listRecentContributionWindow(workspaceId, ORIENTATION_CHANGE_LOOKAHEAD);
+      const selectedChanges = selectRecentChanges(changeWindow.items, budget.recentChanges, workspaceId);
+
+      const newest = provenance[provenance.length - 1];
+      const orientationCursor =
+        newest === undefined
+          ? encodeContextCursor(genesisContributionCursor(workspaceId))
+          : encodeContextCursor(
+              contributionCursor({
+                workspaceId,
+                occurredAt: newest.createdAt,
+                id: newest.id,
+                phase: "high",
+                originOccurredAt: newest.createdAt,
+                originId: newest.id,
+                position: newest.appendPosition,
+                originPosition: newest.appendPosition,
+                tip: 0,
+              }),
+            );
+
+      const participants = store.listParticipants(workspaceId).map(resolveParticipant);
+      const goal = store.getGoalForWorkspace(workspaceId);
+      const orientation = deriveOrientation(ctx, workspaceId, taskPage.items, decisionItems);
+      const alignment = deriveRecordedAlignment(decisionItems, taskPage.items, {
+        proposedDecisions: proposedCount,
+        acceptedDecisions: acceptedCount,
+      });
+
+      let since: SinceProjection | undefined;
+      if (options?.since !== undefined) {
+        const window = store.listContributionsSince(workspaceId, options.since, ORIENTATION_PROVENANCE_LIMIT);
+        if (!window.found) {
+          throw new ValidationError(`Unknown contribution id for since: ${options.since}`, {
+            field: "since",
+            since: options.since,
+          });
+        }
+        const last = window.items[window.items.length - 1];
+        since = {
+          cursor: last?.id ?? options.since,
+          items: window.items,
+          truncated: window.total > window.items.length,
+        };
       }
-      const decisions = store.listDecisions(workspaceId);
-      const tasks = store.listTasks(workspaceId);
-      const activity = store.listContributions(workspaceId);
-      const provenance =
-        activity.length > ORIENTATION_PROVENANCE_LIMIT
-          ? activity.slice(-ORIENTATION_PROVENANCE_LIMIT)
-          : activity;
-      const orientation = deriveOrientation(ctx, workspaceId, tasks, decisions);
-      const context: WorkspaceContext = {
+
+      return assembleWorkspaceContext({
         workspace,
-        goal: store.getGoalForWorkspace(workspaceId),
-        participants: store.listParticipants(workspaceId).map(resolveParticipant),
-        proposedDecisions: decisions.filter((decision) => decision.status === "proposed"),
-        acceptedDecisions: decisions.filter((decision) => decision.status === "accepted"),
-        supersededDecisions: decisions
-          .filter((decision) => decision.status === "superseded")
-          .map((decision) => ({
-            id: decision.id,
-            summary: decision.summary,
-            updatedAt: decision.updatedAt,
-          })),
-        openTasks: tasks.filter((task) => task.status !== "completed"),
-        findings: store.listFindings(workspaceId),
-        artifacts: store.listArtifacts(workspaceId),
+        ...(goal === undefined ? {} : { goal }),
+        participants,
+        generatedAt: clock(),
+        budget,
+        orientationCursor,
+        decisions: { items: decisionItems, total: decisionTotal, ...(decisionNext === undefined ? {} : { nextCursor: decisionNext }) },
+        findings: {
+          items: findingPage.items,
+          total: findingTotal,
+          ...(pageNextCursor("finding", workspaceId, findingPage) === undefined
+            ? {}
+            : { nextCursor: pageNextCursor("finding", workspaceId, findingPage) }),
+        },
+        tasks: {
+          items: taskPage.items,
+          total: taskTotal,
+          ...(pageNextCursor("task", workspaceId, taskPage) === undefined
+            ? {}
+            : { nextCursor: pageNextCursor("task", workspaceId, taskPage) }),
+        },
+        blockers: {
+          items: blockerPage.items,
+          total: blockerTotal,
+          ...(pageNextCursor("task", workspaceId, blockerPage) === undefined
+            ? {}
+            : { nextCursor: pageNextCursor("task", workspaceId, blockerPage) }),
+        },
+        artifacts: {
+          items: artifactPage.items,
+          total: artifactTotal,
+          ...(pageNextCursor("artifact", workspaceId, artifactPage) === undefined
+            ? {}
+            : { nextCursor: pageNextCursor("artifact", workspaceId, artifactPage) }),
+        },
+        recentChanges: {
+          items: selectedChanges,
+          total: contributionTotal,
+        },
         provenance,
-        provenanceTotal: activity.length,
-        provenanceTruncated: activity.length > ORIENTATION_PROVENANCE_LIMIT,
+        provenanceTotal: contributionTotal,
+        provenanceSummary,
         needsYou: orientation.needsYou,
         needsAttention: orientation.needsAttention,
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
-        alignment: deriveRecordedAlignment(decisions, tasks),
-        provenanceSummary: activity.map((contribution) =>
-          describeContribution(contribution, actorName(contribution.actor)),
-        ),
-      };
-      if (options?.since !== undefined) {
-        context.since = buildSince(activity, options.since);
+        alignment,
+        ...(since === undefined ? {} : { since }),
+      });
+    },
+
+    getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): WorkspaceCatchUp {
+      requireReadableWorkspace(ctx, input.workspaceId);
+      const cursor = decodeContextCursor(input.after);
+      assertCursorWorkspace(cursor, input.workspaceId);
+      if (cursor.kind !== "contribution") {
+        throw new ValidationError("Cursor is not a contribution cursor", { field: "after" });
       }
-      return context;
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.recentChanges);
+      // tip 0 is not frozen. Pin the append high-water mark and do not raise it,
+      // or a row written between pages joins this run and the next one skips or repeats it.
+      const tip = cursor.tip === 0 ? store.maxAppendPosition(input.workspaceId) : cursor.tip;
+      const origin = { occurredAt: cursor.originOccurredAt, id: cursor.originId, position: cursor.originPosition };
+
+      let high: Contribution[] = [];
+      let highHasMore = false;
+      let normal: Contribution[] = [];
+      let normalHasMore = false;
+      if (cursor.phase === "high") {
+        const highPage = store.pageContributions(
+          input.workspaceId,
+          pageContributionQuery(limit, "high", cursor.position, tip),
+        );
+        high = highPage.items;
+        highHasMore = highPage.hasMore;
+        if (!highHasMore) {
+          const room = limit - high.length;
+          if (room > 0) {
+            const normalPage = store.pageContributions(
+              input.workspaceId,
+              pageContributionQuery(room, "normal", cursor.originPosition, tip),
+            );
+            normal = normalPage.items;
+            normalHasMore = normalPage.hasMore;
+          } else {
+            // A full material page still has to learn whether normal rows remain.
+            // limit 1 returns the row itself, so existence is not the same as hasMore.
+            const probe = store.pageContributions(
+              input.workspaceId,
+              pageContributionQuery(1, "normal", cursor.originPosition, tip),
+            );
+            normalHasMore = probe.items.length > 0 || probe.hasMore;
+          }
+        }
+      } else {
+        const normalPage = store.pageContributions(
+          input.workspaceId,
+          pageContributionQuery(limit, "normal", cursor.position, tip),
+        );
+        normal = normalPage.items;
+        normalHasMore = normalPage.hasMore;
+      }
+
+      const assembled = assembleCatchUp({
+        workspaceId: input.workspaceId,
+        fromCursor: input.after,
+        phase: cursor.phase,
+        origin,
+        tip,
+        high,
+        highHasMore,
+        normal,
+        normalHasMore,
+      });
+      const highCount = store.pageContributions(
+        input.workspaceId,
+        pageContributionQuery(1, "high", cursor.originPosition, tip),
+      );
+      const normalCount = store.pageContributions(
+        input.workspaceId,
+        pageContributionQuery(1, "normal", cursor.originPosition, tip),
+      );
+      return {
+        schemaVersion: CONTEXT_SCHEMA_VERSION,
+        workspaceId: input.workspaceId,
+        fromCursor: input.after,
+        toCursor: assembled.toCursor,
+        changes: toContextSlice(assembled.items, highCount.total + normalCount.total, assembled.hasMore ? assembled.toCursor : undefined),
+        affected: affectedObjectIds(assembled.items),
+        generatedAt: clock(),
+        ordering: "material-then-chronological",
+      };
+    },
+
+    listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Decision> {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.decisions);
+      const statuses = decisionStatuses(input.status);
+      const after = objectAfter(input.cursor, input.workspaceId, "decision");
+      const page = store.pageDecisions(input.workspaceId, {
+        limit,
+        ...(after === undefined ? {} : { after }),
+        ...(statuses === undefined ? {} : { statuses }),
+      });
+      const total = store.countDecisions(input.workspaceId, statuses);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("decision", input.workspaceId, page));
+    },
+
+    getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Decision {
+      authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(store.getDecision(decisionId), workspaceId, decisionId, (id) => new DecisionNotFound(id));
+    },
+
+    listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Finding> {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      rejectObjectStatus(input.status);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.findings);
+      const after = objectAfter(input.cursor, input.workspaceId, "finding");
+      const page = store.pageFindings(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
+      const total = store.countObjects("findings", input.workspaceId);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("finding", input.workspaceId, page));
+    },
+
+    getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Finding {
+      authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(store.getFinding(findingId), workspaceId, findingId, (id) => new FindingNotFound(id));
+    },
+
+    listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Task> {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.tasks);
+      const statuses = taskStatuses(input.status);
+      const after = objectAfter(input.cursor, input.workspaceId, "task");
+      const page = store.pageTasks(input.workspaceId, {
+        limit,
+        ...(after === undefined ? {} : { after }),
+        ...(statuses === undefined ? {} : { statuses }),
+      });
+      const total = store.countTasks(input.workspaceId, statuses);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("task", input.workspaceId, page));
+    },
+
+    getTaskInWorkspace(ctx: ActorContext, workspaceId: string, taskId: string): Task {
+      authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(store.getTask(taskId), workspaceId, taskId, (id) => new TaskNotFound(id));
+    },
+
+    listArtifactsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Artifact> {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      rejectObjectStatus(input.status);
+      const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.artifacts);
+      const after = objectAfter(input.cursor, input.workspaceId, "artifact");
+      const page = store.pageArtifacts(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
+      const total = store.countObjects("artifacts", input.workspaceId);
+      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("artifact", input.workspaceId, page));
+    },
+
+    getArtifactInWorkspace(ctx: ActorContext, workspaceId: string, artifactId: string): Artifact {
+      authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
+      return readInWorkspace(store.getArtifact(artifactId), workspaceId, artifactId, (id) => new ArtifactNotFound(id));
     },
 
     getActivity(ctx: ActorContext, input: GetActivityInput): ActivityPage {
@@ -838,31 +1231,35 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           limit: input.limit,
         });
       }
-      const all = store.listContributions(input.workspaceId);
-      let remaining = all;
-      if (input.before !== undefined) {
-        const index = all.findIndex((contribution) => contribution.id === input.before);
-        if (index === -1) {
-          throw new ValidationError(`Unknown contribution id for before: ${input.before}`, {
-            field: "before",
-            before: input.before,
-          });
+      const beforeId = resolveActivityBefore(input.workspaceId, input.before);
+      if (input.limit === undefined) {
+        const all = store.listContributions(input.workspaceId);
+        let remaining = all;
+        if (beforeId !== undefined) {
+          const index = all.findIndex((contribution) => contribution.id === beforeId);
+          if (index === -1) throw unknownBefore(beforeId);
+          remaining = all.slice(0, index);
         }
-        remaining = all.slice(0, index);
+        return { items: remaining, total: all.length, truncated: false };
       }
-      if (input.limit !== undefined && remaining.length > input.limit) {
-        const items = remaining.slice(-input.limit);
+      if (beforeId === undefined) {
+        const window = store.listRecentContributionWindow(input.workspaceId, input.limit);
+        const nextBefore = window.hasMore ? window.items[0]?.id : undefined;
         return {
-          items,
-          total: all.length,
-          truncated: true,
-          nextBefore: items[0]?.id,
+          items: window.items,
+          total: window.total,
+          truncated: window.hasMore,
+          ...(nextBefore === undefined ? {} : { nextBefore }),
         };
       }
+      const window = store.listContributionsBefore(input.workspaceId, beforeId, input.limit);
+      if (!window.found) throw unknownBefore(beforeId);
+      const nextBefore = window.hasMore ? window.items[0]?.id : undefined;
       return {
-        items: remaining,
-        total: all.length,
-        truncated: false,
+        items: window.items,
+        total: window.total,
+        truncated: window.hasMore,
+        ...(nextBefore === undefined ? {} : { nextBefore }),
       };
     },
 

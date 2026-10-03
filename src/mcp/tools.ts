@@ -285,10 +285,118 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "get_workspace_context",
     {
       description:
-        "Retrieve the compact orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Pass `since` (a contribution id) to also receive contributions strictly after it.",
+        "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Each slice carries total, returned, and truncated. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
       inputSchema: { workspaceId: z.string(), since: z.string().optional() },
     },
     (args) => run("get_workspace_context", () => invoke("get_workspace_context", args)),
+  );
+
+  server.registerTool(
+    "get_workspace_changes",
+    {
+      description:
+        "Read the bounded catch-up after an orientationCursor or a previous catch-up cursor. The result is bounded; pass the returned cursor to continue.",
+      inputSchema: {
+        workspaceId: z.string(),
+        after: z.string(),
+        limit: z.number().int().positive().optional(),
+      },
+    },
+    (args) => run("get_workspace_changes", () => invoke("get_workspace_changes", args)),
+  );
+
+  server.registerTool(
+    "list_decisions",
+    {
+      description:
+        "List a bounded page of decisions in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+        status: z.enum(DECISION_STATUSES).optional(),
+      },
+    },
+    (args) => run("list_decisions", () => invoke("list_decisions", args)),
+  );
+
+  server.registerTool(
+    "list_findings",
+    {
+      description:
+        "List a bounded page of findings in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("list_findings", () => invoke("list_findings", args)),
+  );
+
+  server.registerTool(
+    "list_tasks",
+    {
+      description:
+        "List a bounded page of tasks in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+        status: z.enum(TASK_STATUSES).optional(),
+      },
+    },
+    (args) => run("list_tasks", () => invoke("list_tasks", args)),
+  );
+
+  server.registerTool(
+    "list_artifacts",
+    {
+      description:
+        "List a bounded page of artifacts in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("list_artifacts", () => invoke("list_artifacts", args)),
+  );
+
+  server.registerTool(
+    "get_decision",
+    {
+      description: "Read one decision in a workspace.",
+      inputSchema: { workspaceId: z.string(), decisionId: z.string() },
+    },
+    (args) => run("get_decision", () => invoke("get_decision", args)),
+  );
+
+  server.registerTool(
+    "get_finding",
+    {
+      description: "Read one finding in a workspace.",
+      inputSchema: { workspaceId: z.string(), findingId: z.string() },
+    },
+    (args) => run("get_finding", () => invoke("get_finding", args)),
+  );
+
+  server.registerTool(
+    "get_task",
+    {
+      description: "Read one task in a workspace.",
+      inputSchema: { workspaceId: z.string(), taskId: z.string() },
+    },
+    (args) => run("get_task", () => invoke("get_task", args)),
+  );
+
+  server.registerTool(
+    "get_artifact",
+    {
+      description: "Read one artifact in a workspace.",
+      inputSchema: { workspaceId: z.string(), artifactId: z.string() },
+    },
+    (args) => run("get_artifact", () => invoke("get_artifact", args)),
   );
 
   server.registerTool(

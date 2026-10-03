@@ -313,6 +313,7 @@ describe("contribution object persistence and JSON columns", () => {
       objectType: "task",
       objectId: "task_1",
       payload: { note: "created via agent", nested: { count: 3 } },
+      appendPosition: 1,
       createdAt: NOW,
     });
 

@@ -40,6 +40,7 @@ function contribution(id: string, createdAt = NOW): Contribution {
     objectType: "finding",
     objectId: "find_1",
     createdAt,
+    appendPosition: 1,
   };
 }
 
