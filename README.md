@@ -30,7 +30,7 @@ Onboard is the first-run path to one human, one agent they own, one workspace, a
 For a version-pinned install:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.9.1/install.sh | sh -s -- --version 1.9.1
+curl -fsSL https://boringinfra.company/campfire/v1.9.2/install.sh | sh -s -- --version 1.9.2
 ```
 
 ## Build and verify
