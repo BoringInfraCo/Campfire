@@ -61,6 +61,47 @@ export function commandForNextAction(
   const workspace = hint?.workspaceId !== undefined && hint.workspaceId.length > 0 ? hint.workspaceId : "<workspaceId>";
   const harness = hint?.harness !== undefined && hint.harness.length > 0 ? hint.harness : "<name>";
   switch (nextAction) {
+    case "join_with_invitation_file":
+    case "retry_saved_enrollment":
+    case "recover_pending_enrollment":
+    case "check_invitation_file":
+      return 'campfire join --invitation-file <original-private-file> --human-name <original-name> --harness codex|opencode';
+    case "enroll_selected_harness":
+      return `campfire connect --harness ${harness} --enroll`;
+    case "reconnect_selected_harness":
+      return `campfire connect --harness ${harness}`;
+    case "use_isolated_profile":
+      return "CAMPFIRE_CONFIG_DIR=<new-private-directory> campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode";
+    case "use_isolated_harness_config":
+      return `campfire connect --harness ${harness} --config <private-config-path>`;
+    case "check_invitation_scope":
+    case "select_supported_harness":
+      return "campfire join --help";
+    case "choose_invitation_output":
+      return "campfire invite-teammate <workspaceId> --out <new-private-file>";
+    case "recover_original_enrollment":
+    case "recover_enrollment_credentials":
+    case "check_enrollment_receipt":
+    case "request_new_invitation":
+      return "campfire join --invitation-file <original-private-file> --human-name <original-name> --harness codex|opencode";
+    case "select_harness_config":
+      return "campfire join --help";
+    case "use_recipient_human_credential":
+    case "use_recipient_agent_credential":
+    case "use_remote_profile_backend":
+      return "campfire status";
+    case "use_no_connect_for_override":
+      return "campfire status --url <endpoint> --token <endpoint-credential>";
+    case "verify_campfire_token":
+      return "campfire doctor";
+    case "reload_or_new_process":
+      return `campfire connect --harness ${harness}`;
+    case "open_viewer_url":
+      return "campfire up";
+    case "use_enrolled_endpoint":
+      return "campfire status";
+    case "supply_override_credential":
+      return "campfire status --url <endpoint> --token <endpoint-credential>";
     case "set_agent_token":
       return `campfire doctor ${workspace} --harness ${harness} --token <agent-token>`;
     case "use_agent_token":
@@ -102,6 +143,10 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
         ? error.message.slice("Unknown command: ".length)
         : undefined;
 
+  const recoveryCode = typeof details.recoveryCode === "string" ? details.recoveryCode : undefined;
+  if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire invite-teammate <workspaceId> --out <new-private-file>",when:"Ask the workspace owner for a fresh invitation; keep any pending credentials for recovery"}];
+  if (recoveryCode === "agent_already_enrolled") return [{command:"campfire connect --harness codex|opencode",when:"Reconnect the existing enrolled harness"}];
+  if (recoveryCode === "invitation_already_claimed") return [{command:"campfire join --help",when:"Retry the original prepared request; another recipient needs a new invitation"}];
   if (unknown !== undefined) {
     const steps: CliNextStep[] = suggestCommands(unknown).map((name) => ({
       command: `campfire ${name}`,
@@ -143,6 +188,11 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
         when: "Point hosted commands at that endpoint",
       },
     ];
+  }
+
+  if (nextAction !== undefined) {
+    const command = commandForNextAction(nextAction);
+    if (command !== undefined) return [{command, when:"Resume using the original identity and scope"}];
   }
 
   if (field === "credentials") {

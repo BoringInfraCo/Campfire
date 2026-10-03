@@ -7,8 +7,10 @@
  */
 import { readFileSync } from "node:fs";
 import type Database from "better-sqlite3";
+import { V5_SQL } from "./enrollment-schema.js";
+export { V5_SQL } from "./enrollment-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -131,6 +133,7 @@ const MIGRATIONS: readonly Migration[] = [
       db.exec(`${V4_EXHAUST_LEGACY_SQL};`);
     },
   },
+  { version: 5, up: (db) => { db.exec(V5_SQL); } },
 ];
 
 function currentVersion(db: Database.Database): number {

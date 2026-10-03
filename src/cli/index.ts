@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { joinFromInvitation, saveInvitationFile } from "../bootstrap/enrollment-client.js";
+import type { EnrollmentHarness, IssuedEnrollmentInvitation } from "../domain/enrollment.js";
 /**
  * Campfire developer CLI.
  *
@@ -12,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
 import {
   defaultHarnessConfigPath,
+  assertConnectionCompatible,
   detectInstalledHarnesses,
   prepareConnection,
 } from "../bootstrap/connect.js";
@@ -21,6 +24,7 @@ import {
   formatStatus,
   loadCredentials,
   loadProfile,
+  loadAnyProfile,
   persistHumanProfile,
   persistOnboardProfile,
   readOperatorAgentToken,
@@ -28,10 +32,13 @@ import {
   rememberAgentCredential,
   rememberProfileAgents,
 } from "../bootstrap/profile.js";
+import { canonicalEndpoint, loadRemoteProfile, resolveRemoteAccess, recipientHandoffNames } from "../bootstrap/remote-profile.js";
+import { enrollRemoteAgent } from "../bootstrap/enrollment-client.js";
 import { defaultHumanName, promptHumanName } from "./first-run.js";
 import {
   CLI_COMMAND_NAMES,
   commandSpec,
+  commandSpecForArgs,
   formatCommandUsage,
   formatUsage,
   isKnownCommand,
@@ -204,8 +211,11 @@ async function withBackend<T>(
     stripIdentityFlags?: string[];
   },
 ): Promise<T> {
-  const url = readCampfireUrl();
-  const token = readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
+  const parsed = parseArgs(argv);
+  const remoteProfile = loadRemoteProfile();
+  const access = remoteProfile === undefined ? undefined : resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
+  const url = access?.url ?? readCampfireUrl();
+  const token = access?.token ?? readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
 
   if (url !== undefined) {
     if (token === undefined) {
@@ -214,7 +224,7 @@ async function withBackend<T>(
       });
     }
     const identity: ServerIdentity = {
-      ctx: { actor: { actorId: DEFAULT_ACTOR_ID, actorType: DEFAULT_ACTOR_TYPE } },
+      ctx: { actor: { actorId: access?.profile.humanId ?? DEFAULT_ACTOR_ID, actorType: "human" } },
     };
     const backend: CliBackend = {
       identity,
@@ -261,7 +271,7 @@ function commandOutput(parsed: ParsedArgs): ResolvedOutput {
     // CAMPFIRE_OUTPUT=json still selects JSON.
     return resolveExplicitOutput(parsed) === "json" ? "json" : "human";
   }
-  return resolveOutputMode(parsed, commandSpec(parsed.command));
+  return resolveOutputMode(parsed, commandSpecForArgs(parsed.command, parsed.flags));
 }
 
 /** Render one command result in the selected mode from the same object. */
@@ -317,7 +327,7 @@ async function resolveReadWorkspace(
   if (explicit !== undefined && explicit.trim().length > 0) {
     return { workspaceId: explicit };
   }
-  const profile = loadProfile();
+  const profile = loadAnyProfile();
   if (profile?.workspaceId !== undefined) {
     return { workspaceId: profile.workspaceId };
   }
@@ -653,7 +663,7 @@ function printBridgeReport(report: BridgeReport, asJson: boolean): void {
 async function cmdBridge(parsed: ParsedArgs): Promise<void> {
   const asJson = commandOutput(parsed) === "json";
   const webhookConfig = readWebhookBridgeConfig(process.env);
-  const hostedUrl = readCampfireUrl();
+  const hostedUrl = readCampfireUrl() ?? loadRemoteProfile()?.url;
   if (hostedUrl !== undefined) {
     const token = optionalFlag(parsed.flags, "token") ?? readBridgeOperatorToken(process.env);
     if (token === undefined) {
@@ -753,36 +763,65 @@ function cmdSetup(parsed: ParsedArgs): void {
       "MCP: campfire mcp with CAMPFIRE_URL, CAMPFIRE_TOKEN, CAMPFIRE_HARNESS",
       "Agent steps: register_agent_session, preflight, get_workspace_context",
       "Viewer: campfire view on loopback. The browser does not receive a token.",
+      `Owner invitation: ${contract.enrollment.invitation}`,
+      `Recipient: ${contract.enrollment.join}`,
+      "Remote startup: campfire up proxies the shared instance; it opens no local collaboration database.",
+      `Additional harness: ${contract.enrollment.additionalAgent}`,
+      "Enrollment prepares connections. The agent explicitly registers a session before contributing.",
       "A harness reload or explicit approval is required before MCP tools appear.",
       "",
     ].join("\n"),
   );
 }
 
-function cmdConnect(parsed: ParsedArgs): void {
+async function cmdConnect(parsed: ParsedArgs): Promise<void> {
   const flags = parsed.flags;
   const harness = requireFlag(flags, "harness");
-  const profile = loadProfile();
+  const profile = loadAnyProfile();
   const configPath =
     optionalFlag(flags, "config") ??
     (harness === "codex" || harness === "opencode" ? defaultHarnessConfigPath(harness) : undefined);
   if (configPath === undefined) {
     throw new ValidationError("Missing required --config argument", { field: "config" });
   }
-  const url = optionalFlag(flags, "url") ?? profile?.url ?? "http://127.0.0.1:9414";
-  const agentToken =
+  const mcpCommand = optionalFlag(flags, "mcp-command") ?? process.argv[1] ?? "campfire";
+  if (flags.enroll === true) {
+    if (profile?.mode !== "remote") {
+      throw new ValidationError("--enroll requires a joined remote profile", { field: "enroll", nextAction: "join_with_invitation_file" });
+    }
+    const ownerAccess = resolveRemoteAccess({ url: optionalFlag(flags, "url") });
+    if (ownerAccess.url !== profile.url) {
+      throw new ValidationError("Agent enrollment must use the enrolled endpoint", { field: "endpoint", nextAction: "use_enrolled_endpoint" });
+    }
+    const known = profile.agents.find((agent) => agent.harness === harness);
+    const knownToken = known === undefined ? undefined : resolveRemoteAccess({ harness }).token;
+    assertConnectionCompatible({ harness, configPath, url: profile.url, ...(knownToken === undefined ? {} : { agentToken: knownToken }) });
+    const enrollmentHarness = requireEnum(harness, ["codex", "opencode"] as const, "harness") as EnrollmentHarness;
+    await enrollRemoteAgent({ harness: enrollmentHarness, name: optionalFlag(flags, "agent-name"), configPath, mcpCommand });
+  }
+  const access = profile?.mode === "remote"
+    ? resolveRemoteAccess({ harness, url: optionalFlag(flags, "url"), token: optionalFlag(flags, "token") })
+    : undefined;
+  const url = access?.url ?? optionalFlag(flags, "url") ?? profile?.url ?? "http://127.0.0.1:9414";
+  const agentToken = access?.token ??
     optionalFlag(flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken(process.env, harness);
   if (agentToken === undefined) {
     throw new ValidationError("Missing agent token: pass --token or set CAMPFIRE_TOKEN", { field: "token" });
   }
+  if (access !== undefined && (optionalFlag(flags, "token") !== undefined || readCampfireToken(process.env, []) !== undefined)) {
+    const who = await campfireHttpCall<{ actor: ActorRef }>({ baseUrl: access.url, token: agentToken, method: "whoami" });
+    if (who.actor.actorType !== "agent" || access.url === access.profile.url && who.actor.actorId !== access.agent?.id) {
+      throw new ValidationError("Connection requires the selected recipient agent credential", { field: "token", nextAction: "use_recipient_agent_credential" });
+    }
+  }
   const workspaceId = optionalFlag(flags, "workspace") ?? profile?.workspaceId;
-  const mcpCommand = optionalFlag(flags, "mcp-command") ?? process.argv[1] ?? "campfire";
   const plan = prepareConnection({
     harness,
     configPath,
     mcpCommand,
     url,
     agentToken,
+    ...(access === undefined ? {} : { rejectConflicting: true }),
     ...(workspaceId === undefined ? {} : { workspaceId }),
   });
   if (commandOutput(parsed) === "json") {
@@ -802,17 +841,21 @@ function cmdConnect(parsed: ParsedArgs): void {
 }
 
 async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
-  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  const remoteProfile = loadRemoteProfile();
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0] ?? remoteProfile?.workspaceId;
   if (workspaceId === undefined || workspaceId.trim().length === 0) {
     throw new ValidationError("Missing required <workspaceId> argument", { field: "workspaceId" });
   }
   const harness = requireFlag(parsed.flags, "harness");
-  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken();
+  const access = remoteProfile === undefined ? undefined : resolveRemoteAccess({
+    harness, url: optionalFlag(parsed.flags, "url"), token: optionalFlag(parsed.flags, "token"),
+  });
+  const token = access?.token ?? optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken(process.env, harness);
   // Flag wins over the environment. Hosted doctor must be told the session id;
   // it does not look one up.
   const sessionFromFlag = optionalFlag(parsed.flags, "session");
   const sessionId = sessionFromFlag ?? readCampfireSessionId(process.env, []);
-  const url = readCampfireUrl();
+  const url = access?.url ?? optionalFlag(parsed.flags, "url") ?? readCampfireUrl();
   const asJson = commandOutput(parsed) === "json";
   if (url !== undefined) {
     if (token === undefined) {
@@ -832,7 +875,7 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
           throw new CampfireError("ValidationError", "Unable to reach Campfire", { nextAction: "start_campfire_serve" });
         }
       },
-      { workspaceId, harness, reachable: true, sessionId },
+      { workspaceId, harness, reachable: true, sessionId, expectedAgentId: access?.agent?.id },
     );
     printDoctor(report, asJson, { workspaceId, harness });
     return;
@@ -848,15 +891,44 @@ async function cmdDoctor(parsed: ParsedArgs): Promise<void> {
 }
 
 async function cmdHandoff(parsed: ParsedArgs): Promise<void> {
-  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  const remoteProfile = loadRemoteProfile();
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0] ?? remoteProfile?.workspaceId;
   if (workspaceId === undefined || workspaceId.trim().length === 0) {
     throw new ValidationError("Missing required <workspaceId> argument", { field: "workspaceId" });
   }
   const harness = requireFlag(parsed.flags, "harness");
   const viewerUrl = requireFlag(parsed.flags, "viewer-url");
-  const token = optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken();
+  const access = remoteProfile === undefined ? undefined : resolveRemoteAccess({
+    harness, url: optionalFlag(parsed.flags, "url"), token: optionalFlag(parsed.flags, "token"),
+  });
+  const token = access?.token ?? optionalFlag(parsed.flags, "token") ?? process.env.CAMPFIRE_TOKEN ?? readOperatorAgentToken(process.env, harness);
   if (token === undefined) {
     throw new ValidationError("Missing agent token: pass --token or set CAMPFIRE_TOKEN", { field: "token" });
+  }
+  const url = access?.url ?? optionalFlag(parsed.flags, "url") ?? readCampfireUrl();
+  if (url !== undefined) {
+    const sessionId = optionalFlag(parsed.flags, "session") ?? readCampfireSessionId(process.env, []);
+    const call = (method: string, params: Record<string, unknown>) => campfireHttpCall({ baseUrl: url, token, method, params });
+    const doctor = await diagnoseHosted(call, { workspaceId, harness, reachable: true, sessionId, expectedAgentId: access?.agent?.id });
+    if (!doctor.ready) {
+      throw new ValidationError("Setup is not ready for handoff", { field: "handoff", nextAction: doctor.nextAction });
+    }
+    const view = await call("get_workspace", { workspaceId, ...(sessionId === undefined ? {} : { agentSessionId: sessionId }) }) as WorkspaceView;
+    let names: { humanName: string; agentName: string };
+    if (remoteProfile !== undefined) names = recipientHandoffNames(remoteProfile, harness);
+    else {
+      const who = await call("whoami", {}) as { actor: ActorRef };
+      const agent = view.participants.find((participant) => participant.actor.actorId === who.actor.actorId);
+      const human = agent?.humanOwnerId === undefined ? undefined : view.participants.find((participant) => participant.actor.actorId === agent.humanOwnerId);
+      if (agent === undefined || human === undefined) throw new ValidationError("Workspace is missing the selected recipient identity", { field: "handoff" });
+      names = { humanName: human.name, agentName: agent.name };
+    }
+    if (view.goal === undefined) throw new ValidationError("Workspace is missing a goal for handoff", { field: "workspaceId" });
+    const receipt = buildHandoff({ version: doctor.version, workspaceName: view.workspace.name, workspaceId,
+      goalTitle: view.goal.title, ...names, viewerUrl, doctor });
+    if (commandOutput(parsed) === "json") printJson(receipt);
+    else console.log(formatHandoff(receipt));
+    return;
   }
   const config = loadConfig();
   ensureParentDir(config.databasePath);
@@ -865,8 +937,8 @@ async function cmdHandoff(parsed: ParsedArgs): Promise<void> {
     const doctor = diagnoseLocal(runtime, { workspaceId, harness, token });
     const actor = runtime.service.resolveToken(token);
     const view = runtime.service.getWorkspace({ actor }, workspaceId);
-    const human = view.participants.find((participant) => participant.role === "owner");
-    const agent = view.participants.find((participant) => participant.harness === harness);
+    const agent = view.participants.find((participant) => participant.actor.actorId === actor.actorId && participant.harness === harness);
+    const human = view.participants.find((participant) => participant.actor.actorType === "human" && participant.actor.actorId === agent?.humanOwnerId);
     if (human === undefined || agent === undefined || view.goal === undefined) {
       throw new ValidationError("Workspace is missing the owner, agent, or goal for handoff", { field: "workspaceId" });
     }
@@ -967,7 +1039,7 @@ async function cmdBootstrap(flags: Record<string, string | boolean>): Promise<vo
 
 async function cmdWhoami(argv: string[]): Promise<void> {
   await withBackend(argv, async (backend) => {
-    if (readCampfireUrl() === undefined) {
+    if (backend.store !== undefined) {
       await backend.call("list_workspaces", {});
       printJson({
         actor: backend.identity.ctx.actor,
@@ -981,20 +1053,22 @@ async function cmdWhoami(argv: string[]): Promise<void> {
 }
 
 async function cmdPreflight(parsed: ParsedArgs, argv: string[]): Promise<void> {
-  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0];
+  const remote = loadRemoteProfile();
+  const workspaceId = optionalFlag(parsed.flags, "workspace") ?? parsed.positionals[0] ?? remote?.workspaceId;
   if (workspaceId === undefined || workspaceId.trim().length === 0) {
     throw new ValidationError("Missing required <workspaceId> argument or --workspace", {
       field: "workspaceId",
     });
   }
-  const url = readCampfireUrl();
+  const access = remote===undefined ? undefined : resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv),harness:readHarness(process.env,argv)});
+  const url = access?.url ?? readCampfireUrl();
   if (url === undefined) {
     throw new ValidationError(
       "CAMPFIRE_URL is required for hosted preflight; set it to the Campfire serve endpoint",
       { field: "CAMPFIRE_URL" },
     );
   }
-  const token = readCampfireToken(process.env, argv);
+  const token = access?.token ?? readCampfireToken(process.env, argv);
   if (token === undefined) {
     throw new ValidationError(
       "CAMPFIRE_TOKEN is required for hosted preflight; set it to the actor-specific token",
@@ -1376,7 +1450,44 @@ async function cmdUpdateTask(parsed: ParsedArgs, argv: string[]): Promise<void> 
   });
 }
 
+async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> {
+  const workspaceId=requirePositional(parsed,"workspaceId"); const path=requireFlag(parsed.flags,"out");
+  const remote=loadRemoteProfile();
+  const access=remote===undefined?undefined:resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
+  const endpoint=canonicalEndpoint(access?.url ?? optionalFlag(parsed.flags,"url") ?? readCampfireUrl() ?? "",{allowLoopbackHttp:parsed.flags["allow-loopback"]===true});
+  const token=access?.token ?? readCampfireToken(process.env,argv);
+  if(token===undefined) throw new ValidationError("Invitation issuance requires a credential for this shared endpoint; pass --token or CAMPFIRE_TOKEN",{field:"token"});
+  const call=(method:string,params:Record<string,unknown>)=>campfireHttpCall({baseUrl:endpoint,token,method,params});
+  const hours=optionalFlag(parsed.flags,"expires-in-hours");
+  const invitation=await call("issue_enrollment_invitation",{workspaceId,...(hours===undefined?{}:{expiresInHours:Number(hours)})}) as IssuedEnrollmentInvitation;
+  let receipt;
+  try { receipt=saveInvitationFile(path,invitation,endpoint,parsed.flags["allow-loopback"]===true); }
+  catch(error) { try { await call("revoke_enrollment_invitation",{workspaceId,invitationId:invitation.invitationId}); } catch {} throw error; }
+  emitResult(receipt,commandOutput(parsed),value=>`Private invitation saved to ${value.path}.\nExpires ${value.expiresAt}. Transfer this file privately to your teammate.\nAnyone holding this file can claim its enrollment authority; it does not verify their identity.\nThey run: campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`);
+}
+async function cmdRevokeInvitation(parsed:ParsedArgs,argv:string[]):Promise<void> {
+  const invitationId=requirePositional(parsed,"invitationId"); const workspaceId=requireFlag(parsed.flags,"workspace");
+  await withBackend(argv,async backend=>emitResult(await backend.call("revoke_enrollment_invitation",{workspaceId,invitationId}),commandOutput(parsed),(value:any)=>value.revokedAuthority==="consumed_receipt_replay"
+      ? "Invitation consumed. Receipt replay for the original claimant is now revoked. That human, their agents, credentials, and membership remain enrolled; this is not offboarding."
+      : "Invitation revoked before anyone claimed it. No enrollment happened, and existing members are unaffected."));
+}
+
 async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const invitationFile = optionalFlag(parsed.flags,"invitation-file");
+  if (invitationFile !== undefined) {
+    if (parsed.positionals.length > 0 || parsed.flags.workspace !== undefined || parsed.flags.token !== undefined || parsed.flags.url !== undefined) throw new ValidationError("Invitation join uses the invitation scope; remove workspace, URL, and token overrides");
+    const selected = parsed.occurrences.harness ?? [];
+    if (selected.length===0 || selected.some(harness=>harness!=="codex" && harness!=="opencode")) throw new ValidationError("Select --harness codex or --harness opencode; both may be selected once",{field:"harness"});
+    if (parsed.flags.config !== undefined && selected.length!==1) throw new ValidationError("--config requires one selected harness; use --codex-config and --opencode-config when selecting both",{field:"config"});
+    const configPaths:Partial<Record<EnrollmentHarness,string>> = {};
+    for(const harness of selected as EnrollmentHarness[]) {
+      const path=optionalFlag(parsed.flags,`${harness}-config`) ?? optionalFlag(parsed.flags,"config");
+      if(path!==undefined) configPaths[harness]=path;
+    }
+    const receipt = await joinFromInvitation({invitationFile,humanName:requireFlag(parsed.flags,"human-name"),harnesses:selected as EnrollmentHarness[],configPaths,mcpCommand:optionalFlag(parsed.flags,"mcp-command"),allowLoopback:parsed.flags["allow-loopback"]===true});
+    emitResult(receipt,commandOutput(parsed),value=>`Joined ${value.workspace.name} as ${value.human.name}.\nCompleted: ${value.stages.join(", ")}.\nConnected ${value.agents.map(agent=>agent.harness).join(" and ")}. Reload the harness and approve Campfire tools.\nNext: campfire up`);
+    return;
+  }
   const workspaceId = requirePositional(parsed, "workspaceId");
   await withBackend(argv, async (backend) => {
     printJson(await backend.call("join_workspace", { workspaceId }));
@@ -1523,11 +1634,87 @@ async function cmdMcp(argv: string[]): Promise<void> {
 }
 
 async function cmdUp(parsed: ParsedArgs): Promise<void> {
-  const profile = loadProfile();
+  const profile = loadAnyProfile();
   if (profile === undefined) {
     throw new ValidationError("No Campfire profile yet. Run campfire in a terminal, or pass --human-name.", {
       field: "up",
     });
+  }
+  if (profile.mode === "remote") {
+    const access = resolveRemoteAccess({ url: optionalFlag(parsed.flags, "url"), token: optionalFlag(parsed.flags, "token") });
+    const connect = parsed.flags["no-connect"] !== true;
+    if (connect && access.url !== profile.url) {
+      throw new ValidationError("An endpoint override can run a Viewer with --no-connect; enrolled agent credentials remain bound to their original endpoint", {
+        field: "endpoint", nextAction: "use_no_connect_for_override",
+      });
+    }
+    const viewerPortRaw = optionalFlag(parsed.flags, "viewer-port");
+    const viewerPort = viewerPortRaw === undefined ? DEFAULT_VIEWER_PORT : Number(viewerPortRaw);
+    if (!Number.isInteger(viewerPort) || viewerPort < 0 || viewerPort > 65535) {
+      throw new ValidationError("--viewer-port must be an integer between 0 and 65535", { field: "viewer-port" });
+    }
+    const call = (method: string, params: Record<string, unknown> = {}) => campfireHttpCall({ baseUrl: access.url, token: access.token, method, params });
+    const who = await call("whoami") as { actor: ActorRef };
+    if (who.actor?.actorType !== "human" || access.url === profile.url && who.actor.actorId !== profile.humanId) {
+      throw new ValidationError("Remote Viewer requires the recipient's human credential", { field: "credentials", nextAction: "use_recipient_human_credential" });
+    }
+    const workspaces = await call("list_workspaces") as WorkspaceSummary[];
+    const connected: string[] = [];
+    if (connect) {
+      const selected = optionalFlag(parsed.flags, "harness");
+      const installed = detectInstalledHarnesses();
+      const harnesses = profile.agents.map((agent) => agent.harness).filter((harness) => selected === undefined ? installed.includes(harness as "codex" | "opencode") : harness === selected);
+      if (selected !== undefined && harnesses.length === 0) {
+        throw new ValidationError("Selected harness has no enrolled recipient agent", { field: "harness", nextAction: "enroll_selected_harness" });
+      }
+      const override = optionalFlag(parsed.flags, "config");
+      if (override !== undefined && harnesses.length !== 1) {
+        throw new ValidationError("Select one enrolled --harness when using --config", { field: "config" });
+      }
+      const plans = harnesses.map((harness) => {
+        const agentAccess = resolveRemoteAccess({ harness }, { ...process.env, CAMPFIRE_TOKEN: undefined });
+        const configPath = override ?? defaultHarnessConfigPath(harness as "codex" | "opencode");
+        const input = { harness, configPath, url: agentAccess.url, agentToken: agentAccess.token,
+          workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire", rejectConflicting: true };
+        assertConnectionCompatible(input);
+        return input;
+      });
+      for (const input of plans) connected.push(prepareConnection(input).harness);
+    }
+    const viewer = await startCampfireViewer({ call, host: DEFAULT_VIEWER_HOST, port: viewerPort,
+      theme: optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME });
+    try {
+      const openBrowser = parsed.flags["no-open"] !== true && shouldOpenBrowser();
+      if (openBrowser) {
+        try { openLoopbackUrl(viewer.url); } catch { /* Browser launch is optional. */ }
+      }
+      if (commandOutput(parsed) === "json") {
+        printJson({ mode: "remote", human: profile.humanName, workspaceId: profile.workspaceId,
+          workspaces: workspaces.map((workspace) => ({ id: workspace.id, name: workspace.name, goal: workspace.goalTitle })),
+          agents: connected, connectionPrepared: connected.length > 0, reloadRequired: connected.length > 0,
+          sessionRegistered: false, apiUrl: access.url, viewerUrl: viewer.url, openedBrowser: openBrowser, pastSessionsImported: false });
+      } else {
+        console.log([wordmark(false), `  You        ${profile.humanName}`,
+          connected.length === 0 ? "  Agents     no connection prepared" : `  Agents     ${connected.join(", ")}`,
+          ...workspaces.map((workspace) => `  Workspace  ${workspace.name}`), "",
+          `  Viewer     ${viewer.url}`, ...(connected.length === 0 ? [] : ["  Agent      reload the harness, then continue in that session"]),
+          "  The Viewer is read-only; an agent registers its own session before contributing.", ""].join("\n"));
+      }
+      console.error(`[campfire] remote workspace  viewer ${viewer.url}`);
+      await new Promise<void>((resolve) => {
+        const shutdown = (): void => {
+          process.removeListener("SIGINT", shutdown);
+          process.removeListener("SIGTERM", shutdown);
+          void viewer.close().finally(resolve);
+        };
+        process.once("SIGINT", shutdown);
+        process.once("SIGTERM", shutdown);
+      });
+    } catch (error) {
+      await viewer.close();
+      throw error;
+    }
+    return;
   }
   const humanToken = readOperatorHumanToken();
   if (humanToken === undefined) {
@@ -1699,7 +1886,19 @@ function startHuman(humanName: string): void {
 }
 
 async function cmdDefault(parsed: ParsedArgs): Promise<void> {
-  if (loadProfile() !== undefined) {
+  const existing = loadAnyProfile();
+  if (existing?.mode === "remote") {
+    const result = { mode: "remote", human: existing.humanName, humanId: existing.humanId,
+      workspaceId: existing.workspaceId, workspace: existing.workspaceName, agents: existing.agents,
+      nextAction: "campfire up", pastSessionsImported: false };
+    if (commandOutput(parsed) === "json") printJson(result);
+    else console.log([wordmark(false), `  You        ${existing.humanName}`,
+      `  Workspace  ${existing.workspaceName ?? existing.workspaceId}`,
+      `  Agents     ${existing.agents.map((agent) => `${agent.name} (${agent.harness})`).join(", ")}`,
+      "", "  campfire up     open the shared workspace journal and prepare your agents", "  campfire status read current authorized work", ""].join("\n"));
+    return;
+  }
+  if (existing !== undefined) {
     printStatus(commandOutput(parsed) === "json");
     return;
   }
@@ -1786,6 +1985,8 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   "revoke-token": (parsed, argv) => cmdRevokeToken(parsed, argv),
   invite: (parsed, argv) => cmdInvite(parsed, argv),
   join: (parsed, argv) => cmdJoin(parsed, argv),
+  "invite-teammate": (parsed, argv) => cmdInviteTeammate(parsed, argv),
+  "revoke-invitation": (parsed, argv) => cmdRevokeInvitation(parsed, argv),
   serve: (parsed) => cmdServe(parsed),
   view: (parsed, argv) => cmdView(parsed, argv),
   mcp: (_parsed, argv) => cmdMcp(argv),
@@ -1814,7 +2015,7 @@ export async function runCli(argv: string[]): Promise<void> {
 
   // Validate the output request once for every catalogued command, including
   // JSON-only commands whose handlers never consult the mode.
-  resolveOutputMode(parsed, commandSpec(parsed.command));
+  resolveOutputMode(parsed, commandSpecForArgs(parsed.command, parsed.flags));
 
   return CLI_COMMAND_HANDLERS[parsed.command](parsed, argv);
 }

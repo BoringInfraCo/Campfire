@@ -10,6 +10,8 @@ import type { ActorRef, ArtifactType, ParticipantRole } from "../domain/types.js
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 
+import { normalizeIssueEnrollmentInput, normalizeInvitationLookup, normalizeEnrollOwnedAgentInput } from "../domain/enrollment.js";
+
 export const CAMPFIRE_HTTP_METHODS = [
   "preflight",
   "whoami",
@@ -21,6 +23,9 @@ export const CAMPFIRE_HTTP_METHODS = [
   "get_activity",
   "join_workspace",
   "invite_workspace",
+  "issue_enrollment_invitation",
+  "revoke_enrollment_invitation",
+  "enroll_owned_agent",
   "register_agent_session",
   "create_goal",
   "update_goal",
@@ -224,6 +229,12 @@ export function dispatchCampfireMethod(
     case "join_workspace":
       // Role, if supplied, is ignored by the service; invite supplies the role.
       return service.joinWorkspace(ctx, { workspaceId: str(params, "workspaceId") });
+    case "issue_enrollment_invitation":
+      return service.issueEnrollmentInvitation(ctx, normalizeIssueEnrollmentInput(params));
+    case "revoke_enrollment_invitation":
+      return service.revokeEnrollmentInvitation(ctx, normalizeInvitationLookup(params));
+    case "enroll_owned_agent":
+      return service.enrollOwnedAgent(ctx, normalizeEnrollOwnedAgentInput(params));
     case "invite_workspace":
       return service.inviteToWorkspace(ctx, {
         workspaceId: str(params, "workspaceId"),

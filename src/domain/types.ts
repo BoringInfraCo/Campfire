@@ -168,6 +168,7 @@ export type ContributionObjectType =
   | "artifact"
   | "participant"
   | "agent_session"
+  | "enrollment_invitation"
   | "invite";
 
 /** SHA-256 hash of a raw actor token. The secret itself is never persisted. */

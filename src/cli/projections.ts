@@ -526,6 +526,7 @@ export interface CliCommandManifestEntry {
   workspaceScoped: boolean;
   outputModes: readonly CliOutputMode[];
   protocol: boolean;
+  variants?: readonly {selector:string;usage:string;mutates:boolean;outputModes:readonly CliOutputMode[]}[];
   related?: readonly string[];
 }
 
@@ -553,6 +554,7 @@ export function buildCommandManifest(campfireVersion: string): CliCommandManifes
         workspaceScoped: entry.workspaceScoped,
         outputModes: entry.outputModes,
         protocol: entry.protocol,
+        ...(entry.variants===undefined?{}:{variants:entry.variants}),
         ...(entry.related === undefined ? {} : { related: entry.related }),
       };
     }),

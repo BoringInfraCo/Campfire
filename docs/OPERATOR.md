@@ -2,6 +2,11 @@
 
 Requirements: Node.js 22+.
 
+The source tree targets a v1.9.0 candidate. Public v1.9 promotion and the
+independent two-human acceptance trace remain pending; the deployed installer
+continues to serve v1.8.0. Build the candidate from source or use its staged
+package for enrollment evaluation. See `SPRINT_020_RESULT.md` for the verdict.
+
 Install the CLI on an operator or teammate machine (curl path):
 
 ```bash
@@ -14,7 +19,7 @@ deploy; `--help` for all flags; env equivalents
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.6.0/install.sh | sh -s -- --version 1.6.0
+curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --version 1.8.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -26,7 +31,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.6.0`), not the word `latest`.
+the installed package metadata (for example `1.8.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -104,6 +109,109 @@ session.
 A second onboard refuses when humans or workspaces already exist and points at
 `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
 and `join`. There is no reset flag.
+
+## Enroll a new teammate into existing work
+
+The instance must already be provisioned, reachable over HTTPS, and running
+the candidate API/schema. Invitation creation does not provision hosting or
+expose a local service. The owner uses their existing human credentials for
+that exact endpoint; another-machine invitations cannot use the owner's
+localhost URL. A path prefix such as `/campfire` is supported.
+
+An authenticated human owner of the active workspace runs:
+
+```bash
+campfire invite-teammate <workspaceId> --out ./alice.invitation.json
+# Optional expiry override, from 1 through 168 hours:
+campfire invite-teammate <workspaceId> --out ./bob.invitation.json --expires-in-hours 48
+```
+
+The file is written with mode 0600, never silently replaces an existing file,
+and contains an expiring enrollment secret. Transfer it through a private
+channel of your choice. Campfire sends no message or email. Possession grants
+one new-person enrollment; a display name is not verified email/account identity.
+The receipt reports safe metadata, not the secret, in both human and JSON output.
+
+On the teammate's machine:
+
+```bash
+campfire join --invitation-file ./alice.invitation.json \
+  --human-name "Alice" --harness opencode
+campfire status
+campfire up
+```
+
+To select both validated harnesses, repeat `--harness codex --harness opencode`.
+The endpoint and workspace come from the invitation. Do not pass a workspace,
+URL, or actor token override. Review the declared endpoint before submitting
+the credential-bearing invitation. Only an explicitly enabled loopback HTTP
+exception is available for same-machine developer tests; it is not a remotely
+usable workspace.
+
+Join creates the recipient's human identity and supported owned agent identities,
+token hashes, explicit memberships and administrative history in one guarded
+server operation. The recipient CLI prepares and stores raw actor credentials
+locally; the server stores their hashes. No Goal, Workspace or AgentSession is
+created. Each harness configuration contains only its own agent token.
+
+The saved remote profile makes normal CLI reads use the shared backend without
+exported environment variables. Remote `up` prepares the enrolled connections
+and serves the read-only Viewer on local loopback; it does not open SQLite,
+run another shared API, or start a process on the owner's machine. Reload or
+restart each harness and approve its normal tool access. Preparing configuration
+does not prove that a harness has retrieved context. Incoming agents read before
+acting and explicitly register their own sessions before contributing.
+
+To add the other supported harness or reapply an existing connection:
+
+```bash
+campfire connect --harness codex --enroll
+campfire connect --harness codex
+```
+
+`--enroll` creates one additional managed agent for this human/harness/workspace
+with explicit membership. Ordinary reconnect does not mint or rotate an identity.
+Doctor and handoff select the recipient's own agent for the requested harness.
+For hosted doctor, supply the session ID returned by explicit session registration.
+
+A successful join reports the local stages it actually reached —
+`enrolled`, `credentials_saved`, `connection_prepared`, `reload_required` — so a
+partial local run is never reported as a working connection. The server commit
+and this machine's filesystem are separate transactions.
+
+If enrollment is interrupted, retry the same join command with the original
+file, human name, harness selection and profile directory. Protected pending
+state holds the original request binding and prepared credentials. A consumed
+invitation's exact replay may recover its nonsecret receipt before its original
+expiry; valid prepared actor credentials support local completion afterward.
+No retry creates a replacement human/agent. Keep pending files until local
+credential/profile/connection finalization completes. Total loss of all actor
+credentials requires owner assistance; this is not an account recovery system.
+
+A preexisting unrelated profile or conflicting harness block is refused rather
+than replaced. Choose an isolated `CAMPFIRE_CONFIG_DIR` and an isolated harness
+configuration for evaluation; account switching and profile merging are outside
+this flow. Never copy the owner's human/agent token or their database.
+
+Invitation files, pending enrollment state, the saved receipt, and the private
+credential bundle are gitignored by pattern (`*.invitation.json`,
+`pending-enrollment.json`, `pending-agent-*.json`, `enrollment-receipt.json`,
+`credentials.json`). Do not commit them or paste them into evidence.
+
+The workspace owner may cancel invitation authority:
+
+```bash
+campfire revoke-invitation <invitationId> --workspace <workspaceId>
+```
+
+Revocation reports which authority it withdrew: `unclaimed_enrollment` cancels an
+invitation nobody claimed, and `consumed_receipt_replay` stops the original
+claimant's receipt replay for an invitation that was already enrolled. It does
+not remove already enrolled identities or revoke their actor tokens.
+Existing actor-targeted `invite` / `join <workspaceId>` keep their previous
+roles and semantics. The new invitation path grants a human `member` role and
+each explicitly enrolled owned agent the `agent` role; members/agents cannot
+issue new-person invitations.
 
 `campfire seed --reset` stays available. It loads a deterministic
 demo/evaluation fixture. It is not how a new operator creates their

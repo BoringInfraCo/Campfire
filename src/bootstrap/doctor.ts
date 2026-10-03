@@ -44,7 +44,7 @@ function fail(id: string, nextAction: string): DoctorCheck {
 
 export function diagnoseLocal(
   runtime: CampfireRuntime,
-  input: { workspaceId: string; harness: string; token: string | undefined },
+  input: { workspaceId: string; harness: string; token: string | undefined; expectedAgentId?: string },
 ): DoctorReport {
   const checks: DoctorCheck[] = [pass("version"), pass("mode")];
   if (input.token === undefined || input.token.trim().length === 0) {
@@ -64,6 +64,10 @@ export function diagnoseLocal(
     return report("local", checks);
   }
   checks.push(pass("actor"));
+  if (input.expectedAgentId !== undefined && actor.actorId !== input.expectedAgentId) {
+    checks.push(fail("recipient", "recipient_agent_mismatch"));
+    return report("local", checks);
+  }
 
   const workspace = runtime.store.getWorkspace(input.workspaceId);
   if (workspace === undefined) {
@@ -155,7 +159,7 @@ interface ActivityItem {
 
 export async function diagnoseHosted(
   call: HostedDoctorCall,
-  input: { workspaceId: string; harness: string; reachable: boolean; sessionId?: string },
+  input: { workspaceId: string; harness: string; reachable: boolean; sessionId?: string; expectedAgentId?: string },
 ): Promise<DoctorReport> {
   const checks: DoctorCheck[] = [pass("version")];
   if (!input.reachable) {
@@ -179,6 +183,10 @@ export async function diagnoseHosted(
     return report("hosted", checks);
   }
   checks.push(pass("actor"));
+  if (input.expectedAgentId !== undefined && who.actor.actorId !== input.expectedAgentId) {
+    checks.push(fail("recipient", "recipient_agent_mismatch"));
+    return report("hosted", checks);
+  }
 
   if (supplied === undefined) {
     try {

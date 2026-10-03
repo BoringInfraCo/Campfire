@@ -41,6 +41,8 @@ export const CLI_COMMAND_NAMES = [
   "issue-token",
   "revoke-token",
   "invite",
+  "invite-teammate",
+  "revoke-invitation",
   "join",
   "serve",
   "view",
@@ -85,6 +87,7 @@ export interface CliCommandSpec {
    * token; the credential receipt requires explicit JSON (CLI-001).
    */
   readonly credentials: boolean;
+  readonly variants?: readonly { selector: string; usage: string; mutates: boolean; outputModes: readonly CliOutputMode[] }[];
   readonly related?: readonly CliCommand[];
   readonly notes?: readonly string[];
 }
@@ -103,6 +106,7 @@ function spec(
     protocol?: boolean;
     alwaysJson?: boolean;
     credentials?: boolean;
+    variants?: CliCommandSpec["variants"];
     related?: readonly CliCommand[];
     notes?: readonly string[];
   },
@@ -119,6 +123,7 @@ function spec(
     protocol: options.protocol ?? false,
     alwaysJson: options.alwaysJson ?? (outputModes.length === 2 && !outputModes.includes("human")),
     credentials: options.credentials ?? false,
+    ...(options.variants === undefined ? {} : { variants: options.variants }),
     ...(options.related === undefined ? {} : { related: options.related }),
     ...(options.notes === undefined ? {} : { notes: options.notes }),
   };
@@ -128,6 +133,17 @@ const READ = { mutates: false } as const;
 const WRITE = { mutates: true } as const;
 
 export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
+  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation for a new teammate.", "campfire invite-teammate <workspaceId> --out <private-file> --url <https-endpoint> [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["join", "revoke-invitation"], notes: [
+    "Owner-only: authorizes one new human to join this workspace with bounded agent identities.",
+    "The written file holds a credential. Anyone who holds it can claim that enrollment.",
+    "A display name is not a verified email or an account identity.",
+    "Transfer the file yourself over a channel you choose. Campfire sends no message and hosts no share URL.",
+    "--allow-loopback is same-machine-only: it is for isolated developer tests, never for another machine.",
+  ] }),
+  "revoke-invitation": spec("revoke-invitation", "recover", "Revoke an enrollment invitation without removing existing members.", "campfire revoke-invitation <invitationId> --workspace <workspaceId>", { ...WRITE, workspaceScoped: true, notes: [
+    "Cancels an unclaimed invitation, or stops receipt replay for a consumed one.",
+    "It does not remove already enrolled humans, agents, credentials, or membership. It is not offboarding.",
+  ] }),
   setup: spec(
     "setup",
     "start",
@@ -618,10 +634,11 @@ export function formatUsage(): string {
 
 export function formatCommandUsage(command: CliCommand): string {
   const entry = CLI_CATALOG[command];
-  const lines = ["Usage:", `  ${entry.usage}`];
+  const lines = ["Usage:", `  ${entry.usage}`, ...(entry.variants ?? []).map(variant=>`  ${variant.usage}`)];
   if (entry.notes !== undefined && entry.notes.length > 0) {
     lines.push("", ...entry.notes);
   }
+  if (entry.variants?.length) lines.push("", "Variant output and mutability are listed by campfire capabilities --output json.");
   const modes = entry.protocol
     ? "Output: protocol-owned. --output does not change it."
     : entry.alwaysJson
@@ -637,3 +654,14 @@ export function formatCommandUsage(command: CliCommand): string {
   );
   return lines.join("\n");
 }
+
+/** Variants preserve the legacy JSON-only join contract. */
+export function commandSpecForArgs(name: CliCommand, flags: Record<string, string | boolean>): CliCommandSpec {
+  const base = commandSpec(name);
+  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Join existing work as a new teammate and connect selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  if (name === "connect" && flags.enroll === true) return { ...base, mutates: true, usage: "campfire connect --harness codex|opencode --enroll", description: "Enroll an additional recipient-owned harness and connect it." };
+  return base;
+}
+
+CLI_CATALOG.join = { ...CLI_CATALOG.join, variants: [{ selector: "--invitation-file", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", mutates: true, outputModes: DUAL }] };
+CLI_CATALOG.connect = { ...CLI_CATALOG.connect, variants: [{ selector: "--enroll", usage: "campfire connect --harness codex|opencode --enroll", mutates: true, outputModes: DUAL }] };
