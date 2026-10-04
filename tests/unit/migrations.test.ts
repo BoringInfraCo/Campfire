@@ -9,9 +9,10 @@ import {
   V4_SQL as sqliteV4Sql,
   V5_SQL as sqliteV5Sql,
   V6_SQL as sqliteV6Sql,
+  V7_SQL as sqliteV7Sql,
 } from "../../src/store/migrations.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
-import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql } from "../../src/worker/schema.js";
+import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql, V7_SQL as workerV7Sql } from "../../src/worker/schema.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const LATER = "2026-01-02T00:00:00.000Z";
@@ -63,6 +64,7 @@ describe("schema migrations", () => {
       { version: 4, applied_at: NOW },
       { version: 5, applied_at: NOW },
       { version: 6, applied_at: NOW },
+      { version: 7, applied_at: NOW },
     ]);
   });
 
@@ -122,6 +124,10 @@ describe("schema migrations", () => {
     const v6Body = v6.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
     expect(sqliteV6Sql).toBe(workerV6Sql);
     expect(v6Body).toBe(sqliteV6Sql);
+    const v7 = readFileSync(new URL("../../migrations/0006_correct_the_record.sql", import.meta.url), "utf8");
+    const v7Body = v7.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
+    expect(sqliteV7Sql).toBe(workerV7Sql);
+    expect(v7Body).toBe(sqliteV7Sql);
   });
 
   it("keeps enrollment migrations identical and upgrades v4 without altering collaboration state", () => {
@@ -243,9 +249,33 @@ describe("schema migrations", () => {
     contribution.run("con_z", "ws_1", "task", "task_z", "{\"title\":\"kept\"}", at);
     contribution.run("con_a", "ws_1", "finding", "find_a", null, at);
     contribution.run("con_b", "ws_2", "task", "task_b", null, at);
+    db.prepare(
+      `INSERT INTO findings (
+         id, workspace_id, summary, detail, confidence, source_artifact_id,
+         created_by_actor_id, created_by_actor_type, agent_session_id, created_at
+       ) VALUES ('find_old', 'ws_1', 'kept assertion', NULL, NULL, NULL, 'hum_1', 'human', NULL, ?)`,
+    ).run(at);
 
     applyMigrations(db, () => NOW);
-    expect(schemaVersion(db)).toBe(6);
+    expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
+    const migrated = db
+      .prepare(
+        "SELECT summary, currentness, correction_reason, predecessor_id, successor_id FROM findings WHERE id = 'find_old'",
+      )
+      .get() as {
+      summary: string;
+      currentness: string;
+      correction_reason: string | null;
+      predecessor_id: string | null;
+      successor_id: string | null;
+    };
+    expect(migrated).toEqual({
+      summary: "kept assertion",
+      currentness: "current",
+      correction_reason: null,
+      predecessor_id: null,
+      successor_id: null,
+    });
 
     const rows = db
       .prepare("SELECT id, append_position, payload FROM contributions ORDER BY id")
@@ -257,7 +287,7 @@ describe("schema migrations", () => {
     ]);
 
     db.prepare("UPDATE contributions SET append_position = 7 WHERE id = 'con_a'").run();
-    db.prepare("DELETE FROM schema_migrations WHERE version = 6").run();
+    db.prepare("DELETE FROM schema_migrations WHERE version >= 6").run();
     applyMigrations(db, () => LATER);
     const again = db
       .prepare("SELECT id, append_position, payload FROM contributions ORDER BY id")
@@ -269,6 +299,10 @@ describe("schema migrations", () => {
     ]);
     expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 6").get()).toEqual({ count: 1 });
+    expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 7").get()).toEqual({ count: 1 });
+    expect(
+      db.prepare("SELECT summary, currentness, correction_reason FROM findings WHERE id = 'find_old'").get(),
+    ).toEqual({ summary: "kept assertion", currentness: "current", correction_reason: null });
   });
 
   it("assigns append positions in insert order when timestamps match", () => {

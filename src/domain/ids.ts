@@ -16,6 +16,8 @@ export const ID_PREFIXES = {
   task: "task",
   finding: "find",
   decision: "dec",
+  findingEvidence: "fev",
+  decisionCitation: "cit",
   artifact: "art",
   contribution: "con",
   token: "tok",

@@ -22,6 +22,7 @@ const VIEWER_WRITE_OPERATIONS: ReadonlySet<Operation> = new Set<Operation>([
   "goal:create",
   "goal:update",
   "finding:create",
+  "finding:update",
   "decision:create",
   "decision:update",
   "task:create",

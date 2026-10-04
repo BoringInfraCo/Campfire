@@ -7,7 +7,7 @@
  */
 import { Unauthorized, ValidationError } from "../domain/errors.js";
 import type { ContextBudget } from "../domain/context-policy.js";
-import type { ActorRef, ArtifactType, ParticipantRole } from "../domain/types.js";
+import type { ActorRef, ArtifactType, FindingEvidenceRelation, ParticipantRole } from "../domain/types.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { ListWorkspaceObjectsInput } from "../service/service.js";
 import type { AsyncCampfireService } from "./async-service.js";
@@ -41,8 +41,15 @@ export const CAMPFIRE_HTTP_METHODS = [
   "create_goal",
   "update_goal",
   "add_finding",
+  "correct_finding",
+  "withdraw_finding",
+  "cite_finding_evidence",
+  "remove_finding_evidence",
   "add_decision",
+  "cite_decision_basis",
+  "remove_decision_basis",
   "accept_decision",
+  "retire_decision",
   "create_task",
   "update_task",
   "add_artifact",
@@ -59,6 +66,8 @@ const WORKSPACE_STATUSES = ["active", "completed", "archived"] as const;
 const GOAL_STATUSES = ["active", "completed", "abandoned"] as const;
 const TASK_STATUSES = ["open", "in_progress", "blocked", "completed"] as const;
 const DECISION_STATUSES = ["proposed", "accepted", "superseded"] as const;
+const FINDING_CURRENTNESS = ["current", "superseded", "withdrawn", "all"] as const;
+const EVIDENCE_RELATIONS = ["supports", "contradicts"] as const;
 const PARTICIPANT_ROLES = ["owner", "member", "agent", "viewer"] as const;
 const ACTOR_TYPES = ["human", "agent"] as const;
 const ARTIFACT_TYPES = [
@@ -207,6 +216,38 @@ function requireActorRef(params: Record<string, unknown>): ActorRef {
   return actor;
 }
 
+function findingEvidenceList(
+  params: Record<string, unknown>,
+): Array<{ artifactId: string; relation: FindingEvidenceRelation; note?: string }> | undefined {
+  if (params.evidence === undefined) return undefined;
+  if (!Array.isArray(params.evidence)) {
+    throw new ValidationError("evidence must be an array", { field: "evidence" });
+  }
+  return params.evidence.map((item, index) => {
+    if (!isRecord(item)) {
+      throw new ValidationError("evidence item must be an object", { field: "evidence", index });
+    }
+    const artifactId = item.artifactId;
+    const relation = item.relation;
+    if (typeof artifactId !== "string" || artifactId.trim().length === 0) {
+      throw new ValidationError("evidence.artifactId is required", { field: "artifactId", index });
+    }
+    if (typeof relation !== "string" || relation.trim().length === 0) {
+      throw new ValidationError("evidence.relation is required", { field: "relation", index });
+    }
+    const checked = requireEnum(relation, EVIDENCE_RELATIONS, "relation");
+    const note = item.note;
+    if (note !== undefined && note !== null && typeof note !== "string") {
+      throw new ValidationError("evidence.note must be a string", { field: "note", index });
+    }
+    return {
+      artifactId,
+      relation: checked,
+      ...(typeof note === "string" && note.length > 0 ? { note } : {}),
+    };
+  });
+}
+
 function optionalMetadata(params: Record<string, unknown>): Record<string, unknown> | undefined {
   const value = params.metadata;
   if (value === undefined) {
@@ -268,8 +309,12 @@ export async function dispatchCampfireMethodAsync(
     }
     case "list_decisions":
       return await service.listDecisionsPage(ctx, objectListInput(params));
-    case "list_findings":
-      return await service.listFindingsPage(ctx, objectListInput(params));
+    case "list_findings": {
+      const input = objectListInput(params);
+      const currentness = optionalEnum(params, "currentness", FINDING_CURRENTNESS);
+      if (currentness !== undefined) Object.assign(input, { currentness });
+      return await service.listFindingsPage(ctx, input);
+    }
     case "list_tasks":
       return await service.listTasksPage(ctx, objectListInput(params));
     case "list_artifacts":
@@ -349,15 +394,62 @@ export async function dispatchCampfireMethodAsync(
         confidence: optionalNum(params, "confidence"),
         sourceArtifactId: optionalStr(params, "sourceArtifactId"),
       });
-    case "add_decision":
-      return await service.addDecision(ctx, {
+    case "correct_finding": {
+      const evidence = findingEvidenceList(params);
+      return await service.correctFinding(ctx, {
+        findingId: str(params, "findingId"),
+        summary: str(params, "summary"),
+        detail: optionalStr(params, "detail"),
+        confidence: optionalNum(params, "confidence"),
+        sourceArtifactId: optionalStr(params, "sourceArtifactId"),
+        reason: str(params, "reason"),
+        ...(evidence === undefined ? {} : { evidence }),
+      });
+    }
+    case "withdraw_finding":
+      return await service.withdrawFinding(ctx, {
+        findingId: str(params, "findingId"),
+        reason: str(params, "reason"),
+      });
+    case "cite_finding_evidence":
+      return await service.citeFindingEvidence(ctx, {
+        findingId: str(params, "findingId"),
+        artifactId: str(params, "artifactId"),
+        relation: requireEnum(str(params, "relation"), EVIDENCE_RELATIONS, "relation"),
+        note: optionalStr(params, "note"),
+      });
+    case "remove_finding_evidence":
+      return await service.removeFindingEvidence(ctx, { evidenceId: str(params, "evidenceId") });
+    case "add_decision": {
+      const input = {
         workspaceId: str(params, "workspaceId"),
         summary: str(params, "summary"),
         rationale: optionalStr(params, "rationale"),
         status: optionalEnum(params, "status", DECISION_STATUSES),
+      };
+      const replacesDecisionId = optionalStr(params, "replacesDecisionId");
+      if (replacesDecisionId !== undefined) Object.assign(input, { replacesDecisionId });
+      return await service.addDecision(ctx, input);
+    }
+    case "cite_decision_basis":
+      return await service.citeDecisionBasis(ctx, {
+        decisionId: str(params, "decisionId"),
+        findingId: str(params, "findingId"),
+        note: optionalStr(params, "note"),
       });
-    case "accept_decision":
-      return await service.acceptDecision(ctx, str(params, "decisionId"));
+    case "remove_decision_basis":
+      return await service.removeDecisionBasis(ctx, { citationId: str(params, "citationId") });
+    case "accept_decision": {
+      const decisionId = str(params, "decisionId");
+      const reason = optionalStr(params, "reason");
+      if (reason === undefined) return await service.acceptDecision(ctx, decisionId);
+      return await service.acceptDecision(ctx, decisionId, { reason });
+    }
+    case "retire_decision":
+      return await service.retireDecision(ctx, {
+        decisionId: str(params, "decisionId"),
+        reason: str(params, "reason"),
+      });
     case "create_task":
       return await service.createTask(ctx, {
         workspaceId: str(params, "workspaceId"),

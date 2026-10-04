@@ -9,10 +9,12 @@ import { readFileSync } from "node:fs";
 import type Database from "better-sqlite3";
 import { V5_SQL } from "./enrollment-schema.js";
 import { V6_ADD_COLUMN_SQL, V6_BACKFILL_SQL, V6_INDEX_SQL } from "./contribution-position-schema.js";
+import { V7_SQL } from "./correction-schema.js";
 export { V5_SQL } from "./enrollment-schema.js";
 export { V6_SQL } from "./contribution-position-schema.js";
+export { V7_SQL } from "./correction-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 7;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -145,6 +147,15 @@ const MIGRATIONS: readonly Migration[] = [
       }
       db.exec(`${V6_BACKFILL_SQL};`);
       db.exec(`${V6_INDEX_SQL};`);
+    },
+  },
+  {
+    version: 7,
+    up: (db) => {
+      const columns = db.prepare("PRAGMA table_info(findings)").all() as Array<{ name: string }>;
+      if (!columns.some((column) => column.name === "currentness")) {
+        db.exec(V7_SQL);
+      }
     },
   },
 ];

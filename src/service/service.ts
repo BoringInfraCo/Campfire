@@ -15,8 +15,11 @@ import type {
   ArtifactType,
   Contribution,
   Decision,
+  DecisionCitation,
   DecisionStatus,
   Finding,
+  FindingEvidence,
+  FindingEvidenceRelation,
   Goal,
   Human,
   ParticipantRole,
@@ -114,6 +117,53 @@ export interface AddDecisionInput {
   summary: string;
   rationale?: string;
   status?: DecisionStatus;
+  /** An accepted decision in the same workspace that this proposal would replace. */
+  replacesDecisionId?: string;
+}
+
+export interface CorrectFindingInput {
+  findingId: string;
+  summary: string;
+  detail?: string;
+  confidence?: number;
+  sourceArtifactId?: string;
+  reason: string;
+  evidence?: Array<{ artifactId: string; relation: FindingEvidenceRelation; note?: string }>;
+}
+
+export interface WithdrawFindingInput {
+  findingId: string;
+  reason: string;
+}
+
+export interface CiteFindingEvidenceInput {
+  findingId: string;
+  artifactId: string;
+  relation: FindingEvidenceRelation;
+  note?: string;
+}
+
+export interface RemoveFindingEvidenceInput {
+  evidenceId: string;
+}
+
+export interface CiteDecisionBasisInput {
+  decisionId: string;
+  findingId: string;
+  note?: string;
+}
+
+export interface RemoveDecisionBasisInput {
+  citationId: string;
+}
+
+export interface RetireDecisionInput {
+  decisionId: string;
+  reason: string;
+}
+
+export interface AcceptDecisionOptions {
+  reason?: string;
 }
 
 export interface CreateTaskInput {
@@ -299,6 +349,8 @@ export interface WorkspaceContext {
   suggestedNextAction: SuggestedNextAction;
   /** Recorded boundary derived from decision and task status. Not permission to execute. */
   alignment: RecordedAlignment;
+  /** Counts that do not consume the current-item budget. */
+  historicalCounts: { findings: number; decisions: number };
   /** Reused `describeContribution` narrative over the full activity list. */
   provenanceSummary: string[];
   /** Present only when the caller supplied a `since` cursor. */
@@ -362,6 +414,8 @@ export interface ListWorkspaceObjectsInput {
   limit?: number;
   cursor?: string;
   status?: string;
+  /** Findings only. Defaults to current. `all` includes historical rows. */
+  currentness?: string;
 }
 
 export interface WorkspaceObjectPage<T> extends ContextSlice<T> {
@@ -411,8 +465,15 @@ export interface CampfireService {
   updateGoal(ctx: ActorContext, input: UpdateGoalInput): Goal;
 
   addFinding(ctx: ActorContext, input: AddFindingInput): Finding;
+  correctFinding(ctx: ActorContext, input: CorrectFindingInput): Finding;
+  withdrawFinding(ctx: ActorContext, input: WithdrawFindingInput): Finding;
+  citeFindingEvidence(ctx: ActorContext, input: CiteFindingEvidenceInput): FindingEvidence;
+  removeFindingEvidence(ctx: ActorContext, input: RemoveFindingEvidenceInput): FindingEvidence;
   addDecision(ctx: ActorContext, input: AddDecisionInput): Decision;
-  acceptDecision(ctx: ActorContext, decisionId: string): Decision;
+  acceptDecision(ctx: ActorContext, decisionId: string, options?: AcceptDecisionOptions): Decision;
+  retireDecision(ctx: ActorContext, input: RetireDecisionInput): Decision;
+  citeDecisionBasis(ctx: ActorContext, input: CiteDecisionBasisInput): DecisionCitation;
+  removeDecisionBasis(ctx: ActorContext, input: RemoveDecisionBasisInput): DecisionCitation;
   createTask(ctx: ActorContext, input: CreateTaskInput): Task;
   updateTask(ctx: ActorContext, input: UpdateTaskInput): Task;
   addArtifact(ctx: ActorContext, input: AddArtifactInput): Artifact;

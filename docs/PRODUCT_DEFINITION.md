@@ -1,9 +1,9 @@
 # Campfire — Product Definition v0.2
 
-**Status:** Product Definition  
+**Status:** Revised after `v1.10.0`
 **Company:** Boring Infra Co.  
 **Version:** 0.2  
-**Date:** September 11, 2026
+**Date:** October 3, 2026
 
 ---
 
@@ -272,6 +272,10 @@ What did the team decide, and why?
 ### Artifact
 What was produced or referenced?
 
+An Artifact is a typed reference. It carries identity, type, title, a URI or path, metadata, and provenance. Campfire records that reference. The system that produced the work keeps the canonical content. The roadmap states the same integration rule: external systems continue to own their native artifacts.
+
+Presentation is not Artifact content. Renderer selection, preview, safe fetching, and interaction belong to a Viewer projection. A media type, render hint, or renderer registry is added only when a real viewing need requires it. Markdown, log, image, trace, diff, and pull-request rendering can remain Viewer concerns.
+
 Examples include:
 
 - pull requests;
@@ -438,6 +442,15 @@ Access must remain bounded by identity, workspace, policy, and delegated authori
 ### An agent-to-agent messaging protocol
 Agent communication may occur, but the core product is the shared environment in which collaborative work becomes durable and understandable.
 
+### An artifact host
+Campfire records a typed reference to work that was produced elsewhere. It does not become the store for that work's canonical content, and it does not store a presentation inside the Artifact.
+
+### A second collection beside the workspace
+Workspace is the collaboration boundary. A Channel, or any other collection of artifacts, would duplicate that primitive.
+
+### A skills platform or workflow engine
+Guidance for how to record useful state may be tested later as one workspace playbook. That playbook does not execute workflow and does not add domain machinery. The only candidate named for that experiment is incident investigation.
+
 ---
 
 ## 13. Initial User
@@ -601,6 +614,18 @@ Sessions end. The team's work state should not.
 
 ### Existing tools remain sources of truth
 Campfire connects and coordinates rather than unnecessarily replacing the engineering stack.
+
+### The interface projects the workspace
+Campfire should make shared work state tangible without making the interface the source of truth. A view, preview, highlight, or generated page is derived from authorized workspace state.
+
+### Salience is separate from currentness
+A highlight means "keep this visible." Currentness is decided by correction and supersession. A superseded finding or a rejected decision stays historical while it remains highlighted. The first highlights, when they exist, are shared workspace records with provenance. They follow v1.11 currentness semantics.
+
+### Setup may recede; authorization stays visible
+Campfire can detect and configure an MCP-capable agent inside that agent's normal workflow. The promise is: if an agent supports MCP, it can work from the caller's authorized Campfire context. Enrollment, membership, and the session boundary stay explicit. The ceremony may be brief.
+
+### Ways of working stay small
+A workspace playbook tells an agent how to record useful state. The first experiment, if it is run, is incident investigation. It is measured by whether it produces better findings, evidence, decisions, and handoffs. Further playbooks wait on that evidence.
 
 ---
 

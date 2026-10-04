@@ -18,6 +18,8 @@ An earlier candidate ordered catch-up by `created_at, id`. Contribution ids are 
 
 The release gate below is one human operator and one Codex agent on one machine. The Vault workspace existed so the unauthorized path could be probed. It is not a second person and not a second machine.
 
+Publication of `v1.10.0` does not authorize a visual-understanding release. The adopted sequence and its evidence gate are in `docs/ROADMAP.md`.
+
 ## 2. What landed
 
 | Surface | Behavior |

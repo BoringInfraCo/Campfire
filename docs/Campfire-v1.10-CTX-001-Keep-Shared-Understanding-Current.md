@@ -1345,6 +1345,8 @@ v1.10.0 — Keep Shared Understanding Current
 v1.11 — Correct the Record
 ```
 
+`v1.10.0` is published. The sequence adopted after that release, including the evidence gate before any visual-understanding release, is in `docs/ROADMAP.md`. This contract does not authorize that later work.
+
 v1.10 is the bridge between **shared participation** and **trustworthy evolving shared knowledge**.
 
 v1.9 answered:

@@ -11,6 +11,9 @@ import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitat
 import type { EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
 import { assembleWorkspaceContext } from "../service/context-assembly.js";
+import { createAsyncCorrectionActions } from "../service/async-correction-actions.js";
+import { attachCitations, attachEvidence } from "../service/correction-read.js";
+import { assertFindingCurrentness } from "../store/context-queries.js";
 import {
   affectedObjectIds,
   assertCursorWorkspace,
@@ -35,9 +38,13 @@ import {
   deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
+  type AcceptDecisionOptions,
   type AddArtifactInput,
   type AddDecisionInput,
   type AddFindingInput,
+  type CiteDecisionBasisInput,
+  type CiteFindingEvidenceInput,
+  type CorrectFindingInput,
   type AttentionItem,
   type AttentionReason,
   type CheckReadinessInput,
@@ -55,11 +62,15 @@ import {
   type ParticipantView,
   type ReadinessStatus,
   type RegisterAgentSessionInput,
+  type RemoveDecisionBasisInput,
+  type RemoveFindingEvidenceInput,
+  type RetireDecisionInput,
   type SinceProjection,
   type SuggestedNextAction,
   type UpdateGoalInput,
   type UpdateTaskInput,
   type UpdateWorkspaceInput,
+  type WithdrawFindingInput,
   type WorkspaceCatchUp,
   type WorkspaceContext,
   type WorkspaceObjectPage,
@@ -75,8 +86,10 @@ import type {
   ContributionAction,
   ContributionObjectType,
   Decision,
+  DecisionCitation,
   DecisionStatus,
   Finding,
+  FindingEvidence,
   Goal,
   Human,
   Task,
@@ -105,11 +118,7 @@ import {
   WorkspaceNotFound,
 } from "../domain/errors.js";
 import { normalizeArtifactUri } from "../domain/artifacts.js";
-import {
-  assertDecisionTransition,
-  assertTaskTransition,
-  assertWorkspaceTransition,
-} from "../domain/lifecycle.js";
+import { assertTaskTransition, assertWorkspaceTransition } from "../domain/lifecycle.js";
 import type { GoalPatch, TaskPatch } from "../store/store.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
 import type { QualifyingMutation } from "../domain/event-qualify.js";
@@ -166,8 +175,15 @@ export interface AsyncCampfireService {
   createGoal(ctx: ActorContext, input: CreateGoalInput): Promise<Goal>;
   updateGoal(ctx: ActorContext, input: UpdateGoalInput): Promise<Goal>;
   addFinding(ctx: ActorContext, input: AddFindingInput): Promise<Finding>;
+  correctFinding(ctx: ActorContext, input: CorrectFindingInput): Promise<Finding>;
+  withdrawFinding(ctx: ActorContext, input: WithdrawFindingInput): Promise<Finding>;
+  citeFindingEvidence(ctx: ActorContext, input: CiteFindingEvidenceInput): Promise<FindingEvidence>;
+  removeFindingEvidence(ctx: ActorContext, input: RemoveFindingEvidenceInput): Promise<FindingEvidence>;
   addDecision(ctx: ActorContext, input: AddDecisionInput): Promise<Decision>;
-  acceptDecision(ctx: ActorContext, decisionId: string): Promise<Decision>;
+  acceptDecision(ctx: ActorContext, decisionId: string, options?: AcceptDecisionOptions): Promise<Decision>;
+  retireDecision(ctx: ActorContext, input: RetireDecisionInput): Promise<Decision>;
+  citeDecisionBasis(ctx: ActorContext, input: CiteDecisionBasisInput): Promise<DecisionCitation>;
+  removeDecisionBasis(ctx: ActorContext, input: RemoveDecisionBasisInput): Promise<DecisionCitation>;
   createTask(ctx: ActorContext, input: CreateTaskInput): Promise<Task>;
   updateTask(ctx: ActorContext, input: UpdateTaskInput): Promise<Task>;
   addArtifact(ctx: ActorContext, input: AddArtifactInput): Promise<Artifact>;
@@ -338,6 +354,9 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
             ? payload.status
             : undefined;
 
+    if (typeof payload.changeType === "string" && typeof payload.reason === "string") {
+      return `${name} ${payload.changeType} ${contribution.objectType} ${contribution.objectId}: ${payload.reason}`;
+    }
     if (contribution.action === "join") {
       return `${name} joined ${contribution.objectType} ${contribution.objectId}`;
     }
@@ -710,6 +729,42 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     });
   }
 
+  async function decorateFindings(findings: readonly Finding[]): Promise<Finding[]> {
+    if (findings.length === 0) return [];
+    return attachEvidence(findings, await store.listFindingEvidence(findings.map((finding) => finding.id)));
+  }
+
+  async function decorateFinding(finding: Finding): Promise<Finding> {
+    return (await decorateFindings([finding]))[0] ?? finding;
+  }
+
+  async function decorateDecisions(decisions: readonly Decision[]): Promise<Decision[]> {
+    if (decisions.length === 0) return [];
+    const ids = decisions.map((decision) => decision.id);
+    return attachCitations(
+      decisions,
+      await store.listDecisionCitations(ids),
+      new Set(await store.listStaleCitedFindingIds(ids)),
+    );
+  }
+
+  async function decorateDecision(decision: Decision): Promise<Decision> {
+    return (await decorateDecisions([decision]))[0] ?? decision;
+  }
+
+  const corrections = createAsyncCorrectionActions({
+    store,
+    authorizer,
+    idSource,
+    clock,
+    requireAgentSession,
+    record,
+    behalfOf,
+    writeOutbox,
+    decorateFinding,
+    decorateDecision,
+  });
+
   function readInWorkspace<T extends { workspaceId: string }>(
     row: T | undefined,
     workspaceId: string,
@@ -950,8 +1005,8 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         goal,
         participants: await Promise.all(participants.map((p) => resolveParticipant(p))),
         tasks,
-        findings,
-        decisions,
+        findings: await decorateFindings(findings),
+        decisions: await decorateDecisions(decisions),
         artifacts,
         activity,
         provenanceSummary: activity.map((contribution, i) =>
@@ -984,8 +1039,10 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         decisionLimits.proposed > 0
           ? await store.pageDecisions(workspaceId, { limit: decisionLimits.proposed, statuses: ["proposed"] })
           : { items: [] as Decision[], hasMore: false, total: 0 };
-      const decisionItems = [...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset);
-      const decisionTotal = acceptedCount + proposedCount + supersededCount;
+      const decisionItems = await decorateDecisions(
+        [...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset),
+      );
+      const decisionTotal = acceptedCount + proposedCount;
       const decisionNext =
         decisionItems.length < decisionTotal && !acceptedPage.hasMore
           ? (() => {
@@ -1012,8 +1069,9 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           ? { items: [] as Task[], hasMore: false, total: blockerTotal }
           : await store.pageTasks(workspaceId, { limit: budget.blockers, statuses: ["blocked"] });
 
-      const findingTotal = await store.countObjects("findings", workspaceId);
-      const findingPage = await store.pageFindings(workspaceId, { limit: budget.findings });
+      const findingTotal = await store.countFindings(workspaceId, "current");
+      const findingPage = await store.pageFindings(workspaceId, { limit: budget.findings, currentness: "current" });
+      const historicalFindings = await store.countHistoricalFindings(workspaceId);
       const artifactTotal = await store.countObjects("artifacts", workspaceId);
       const artifactPage = await store.pageArtifacts(workspaceId, { limit: budget.artifacts });
 
@@ -1087,7 +1145,11 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         budget,
         orientationCursor,
         decisions: { items: decisionItems, total: decisionTotal, ...(decisionNext === undefined ? {} : { nextCursor: decisionNext }) },
-        findings: { items: findingPage.items, total: findingTotal, ...(findingNext === undefined ? {} : { nextCursor: findingNext }) },
+        findings: {
+          items: await decorateFindings(findingPage.items),
+          total: findingTotal,
+          ...(findingNext === undefined ? {} : { nextCursor: findingNext }),
+        },
         tasks: { items: taskPage.items, total: taskTotal, ...(taskNext === undefined ? {} : { nextCursor: taskNext }) },
         blockers: { items: blockerPage.items, total: blockerTotal, ...(blockerNext === undefined ? {} : { nextCursor: blockerNext }) },
         artifacts: { items: artifactPage.items, total: artifactTotal, ...(artifactNext === undefined ? {} : { nextCursor: artifactNext }) },
@@ -1100,6 +1162,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
         alignment,
+        historicalCounts: { findings: historicalFindings, decisions: supersededCount },
         ...(since === undefined ? {} : { since }),
       });
     },
@@ -1198,27 +1261,54 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         ...(statuses === undefined ? {} : { statuses }),
       });
       const total = await store.countDecisions(input.workspaceId, statuses);
-      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("decision", input.workspaceId, page));
+      return finishObjectPage(
+        input.workspaceId,
+        await decorateDecisions(page.items),
+        total,
+        pageNextCursor("decision", input.workspaceId, page),
+      );
     },
 
     async getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Promise<Decision> {
       await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      return readInWorkspace(await store.getDecision(decisionId), workspaceId, decisionId, (id) => new DecisionNotFound(id));
+      const decision = readInWorkspace(
+        await store.getDecision(decisionId),
+        workspaceId,
+        decisionId,
+        (id) => new DecisionNotFound(id),
+      );
+      return decorateDecision(decision);
     },
 
     async listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Finding>> {
       await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
       rejectObjectStatus(input.status);
+      const currentness = assertFindingCurrentness(input.currentness ?? "current");
       const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.findings);
       const after = objectAfter(input.cursor, input.workspaceId, "finding");
-      const page = await store.pageFindings(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
-      const total = await store.countObjects("findings", input.workspaceId);
-      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("finding", input.workspaceId, page));
+      const page = await store.pageFindings(input.workspaceId, {
+        limit,
+        currentness,
+        ...(after === undefined ? {} : { after }),
+      });
+      const total = await store.countFindings(input.workspaceId, currentness);
+      return finishObjectPage(
+        input.workspaceId,
+        await decorateFindings(page.items),
+        total,
+        pageNextCursor("finding", input.workspaceId, page),
+      );
     },
 
     async getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Promise<Finding> {
       await authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      return readInWorkspace(await store.getFinding(findingId), workspaceId, findingId, (id) => new FindingNotFound(id));
+      const finding = readInWorkspace(
+        await store.getFinding(findingId),
+        workspaceId,
+        findingId,
+        (id) => new FindingNotFound(id),
+      );
+      return decorateFinding(finding);
     },
 
     async listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Task>> {
@@ -1743,6 +1833,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         detail: input.detail,
         confidence: input.confidence,
         sourceArtifactId: input.sourceArtifactId,
+        currentness: "current",
       };
       const onBehalfOf = await behalfOf(ctx, input.workspaceId);
       await store.transaction(async () => {
@@ -1776,94 +1867,40 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       return finding;
     },
 
-    async addDecision(ctx: ActorContext, input: AddDecisionInput): Promise<Decision> {
-      await authorizer.assertAllowed(ctx, "decision:create", input.workspaceId);
-      await requireAgentSession(ctx);
-      assertNonEmpty(input.summary, "Decision summary");
-      // Decisions are always created proposed; acceptance is an explicit
-      // transition through acceptDecision so approval provenance is kept.
-      if (input.status !== undefined && input.status !== "proposed") {
-        throw new ValidationError("Decisions must be created as proposed; use acceptDecision to accept", {
-          field: "status",
-          value: input.status,
-        });
-      }
-      const now = clock();
-      const status = "proposed" as const;
-      const decision: Decision = {
-        ...provenance(ctx, now),
-        id: idSource("decision"),
-        workspaceId: input.workspaceId,
-        summary: input.summary,
-        rationale: input.rationale,
-        status,
-        updatedAt: now,
-      };
-      const onBehalfOf = await behalfOf(ctx, input.workspaceId);
-      await store.transaction(async () => {
-        await store.createDecision(decision);
-        const contributionId = await record(
-          ctx,
-          input.workspaceId,
-          "create",
-          "decision",
-          decision.id,
-          { summary: decision.summary, status },
-          now,
-        );
-        await writeOutbox(ctx, {
-          mutation: { kind: "decision.created", status },
-          occurredAt: now,
-          workspaceId: input.workspaceId,
-          subjectType: "decision",
-          subjectId: decision.id,
-          summary: decision.summary,
-          data: { summary: decision.summary, status, rationale: decision.rationale },
-          contributionId,
-          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
-        });
-      });
-      return decision;
+    correctFinding(ctx, input) {
+      return corrections.correctFinding(ctx, input);
     },
 
-    async acceptDecision(ctx: ActorContext, decisionId: string): Promise<Decision> {
-      const decision = await store.getDecision(decisionId);
-      if (decision === undefined) {
-        throw new DecisionNotFound(decisionId);
-      }
-      await authorizer.assertAllowed(ctx, "decision:update", decision.workspaceId);
-      await requireAgentSession(ctx);
-      assertDecisionTransition(decision.status, "accepted");
-      const now = clock();
-      const onBehalfOf = await behalfOf(ctx, decision.workspaceId);
-      await store.transaction(async () => {
-        await store.updateDecision(decisionId, { status: "accepted", approvedBy: ctx.actor, updatedAt: now });
-        const contributionId = await record(
-          ctx,
-          decision.workspaceId,
-          "update",
-          "decision",
-          decisionId,
-          { status: "accepted" },
-          now,
-        );
-        await writeOutbox(ctx, {
-          mutation: { kind: "decision.updated", from: decision.status, to: "accepted" },
-          occurredAt: now,
-          workspaceId: decision.workspaceId,
-          subjectType: "decision",
-          subjectId: decisionId,
-          summary: decision.summary,
-          data: { summary: decision.summary, status: "accepted", previousStatus: decision.status },
-          contributionId,
-          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
-        });
-      });
-      const updated = await store.getDecision(decisionId);
-      if (updated === undefined) {
-        throw new DecisionNotFound(decisionId);
-      }
-      return updated;
+    withdrawFinding(ctx, input) {
+      return corrections.withdrawFinding(ctx, input);
+    },
+
+    citeFindingEvidence(ctx, input) {
+      return corrections.citeFindingEvidence(ctx, input);
+    },
+
+    removeFindingEvidence(ctx, input) {
+      return corrections.removeFindingEvidence(ctx, input);
+    },
+
+    addDecision(ctx, input) {
+      return corrections.addDecision(ctx, input);
+    },
+
+    acceptDecision(ctx, decisionId, options) {
+      return corrections.acceptDecision(ctx, decisionId, options);
+    },
+
+    retireDecision(ctx, input) {
+      return corrections.retireDecision(ctx, input);
+    },
+
+    citeDecisionBasis(ctx, input) {
+      return corrections.citeDecisionBasis(ctx, input);
+    },
+
+    removeDecisionBasis(ctx, input) {
+      return corrections.removeDecisionBasis(ctx, input);
     },
 
     async createTask(ctx: ActorContext, input: CreateTaskInput): Promise<Task> {

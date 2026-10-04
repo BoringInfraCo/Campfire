@@ -138,8 +138,17 @@ per-workspace append position and freezes a stream tip for that run.
 Drill-down reads one page at a time. `get_workspace` stays the full inspector.
 One Codex agent passed the cold-orientation, saved-cursor, and unauthorized-workspace
 gate on a single machine. It is published as `v1.10.0`. The private tag is
-`aab21cb680b198ef7a077e6b73f2f71f9d808059`. Gate B and Gate C remain unmeasured. Do not add embeddings, finding or
-decision supersession, Viewer writes, or per-command telemetry for this sprint.
+`aab21cb680b198ef7a077e6b73f2f71f9d808059`. Gate B and Gate C remain unmeasured. CTX-001
+did not add embeddings, finding or decision supersession, Viewer writes, or per-command telemetry.
+Sprint COR-001 — Correct the Record is the `v1.11.0` release source.
+Its contract is `docs/Campfire-v1.11-COR-001-Correct-the-Record.md` and its result
+is `docs/SPRINT_COR_001_RESULT.md`. A correction or withdrawal records a new
+currentness state and leaves the old finding text in place. A decision changes only
+through an explicit accept, replace, or retire. Evidence and citations stay inside
+one workspace. `needsReview` is computed at read time. The webhook vocabulary is
+unchanged. The recorded verdict is CONDITIONAL GO: both local harnesses passed on
+one machine with fixture participants. Production is not deployed. Gate B and Gate C
+remain unmeasured. Do not add embeddings, Viewer writes, or per-command telemetry.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

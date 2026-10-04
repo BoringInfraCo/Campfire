@@ -19,7 +19,12 @@ import type {
   Contribution,
   NewContribution,
   Decision,
+  DecisionCitation,
+  DecisionTransitionKind,
   Finding,
+  FindingEvidence,
+  FindingTransitionKind,
+  FindingCurrentness,
   Goal,
   Human,
   Organization,
@@ -65,6 +70,28 @@ export interface DecisionPatch {
   status?: DecisionStatus;
   approvedBy?: ActorRef | null;
   updatedAt: string;
+}
+
+/** One committed finding correction. The primary key is the finding being left behind. */
+export interface FindingTransitionClaim {
+  findingId: string;
+  successorId?: string;
+  kind: FindingTransitionKind;
+  reason: string;
+  actor: ActorRef;
+  agentSessionId?: string;
+  createdAt: string;
+}
+
+/** One committed decision transition. The primary key is the decision being left behind. */
+export interface DecisionTransitionClaim {
+  decisionId: string;
+  successorId?: string;
+  kind: DecisionTransitionKind;
+  reason: string;
+  actor: ActorRef;
+  agentSessionId?: string;
+  createdAt: string;
 }
 
 export interface CampfireStore {
@@ -115,11 +142,27 @@ export interface CampfireStore {
   createFinding(finding: Finding): void;
   getFinding(id: string): Finding | undefined;
   listFindings(workspaceId: string): Finding[];
+  countFindings(workspaceId: string, currentness?: FindingCurrentness | "all"): number;
+  countHistoricalFindings(workspaceId: string): number;
+  listFindingEvidence(findingIds: readonly string[]): FindingEvidence[];
+  getFindingEvidence(id: string): FindingEvidence | undefined;
+  insertFindingEvidence(evidence: FindingEvidence): void;
+  deleteFindingEvidence(findingId: string, artifactId: string): boolean;
+  /** Inserts the transition and updates the finding. Must run inside a transaction. */
+  claimFindingTransition(claim: FindingTransitionClaim): void;
 
   createDecision(decision: Decision): void;
   getDecision(id: string): Decision | undefined;
   listDecisions(workspaceId: string): Decision[];
   updateDecision(id: string, patch: DecisionPatch): void;
+  listDecisionCitations(decisionIds: readonly string[]): DecisionCitation[];
+  getDecisionCitation(id: string): DecisionCitation | undefined;
+  /** Cited finding ids whose currentness is not current. */
+  listStaleCitedFindingIds(decisionIds: readonly string[]): string[];
+  insertDecisionCitation(citation: DecisionCitation): void;
+  deleteDecisionCitation(decisionId: string, findingId: string): boolean;
+  /** Inserts the transition and supersedes the decision. Must run inside a transaction. */
+  claimDecisionTransition(claim: DecisionTransitionClaim): void;
 
   createArtifact(artifact: Artifact): void;
   getArtifact(id: string): Artifact | undefined;
@@ -206,7 +249,10 @@ export interface CampfireStore {
   countDecisions(workspaceId: string, statuses?: DecisionStatus[]): number;
   pageTasks(workspaceId: string, query: ObjectPageQuery & { statuses?: TaskStatus[] }): ObjectPage<Task>;
   countTasks(workspaceId: string, statuses?: TaskStatus[]): number;
-  pageFindings(workspaceId: string, query: ObjectPageQuery): ObjectPage<Finding>;
+  pageFindings(
+    workspaceId: string,
+    query: ObjectPageQuery & { currentness?: FindingCurrentness | "all" },
+  ): ObjectPage<Finding>;
   pageArtifacts(workspaceId: string, query: ObjectPageQuery): ObjectPage<Artifact>;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
   /** Newest `limit` contributions in the workspace, chronological. `total` is the workspace count. */

@@ -363,15 +363,91 @@ export function buildWorkspaceDecisions(page: WorkspaceObjectPage<Decision>): Wo
   };
 }
 
-function decisionLines(decisions: readonly Decision[]): string[] {
-  return decisions.map((decision) =>
-    joinFields(
-      decision.id,
-      decision.summary,
-      `[${decision.status}]`,
-      decision.rationale === undefined ? undefined : `rationale=${decision.rationale}`,
-    ),
+const CORRECTION_FIELDS = [
+  "currentness",
+  "reason",
+  "predecessorId",
+  "successorId",
+  "needsReview",
+  "needsReviewFindingIds",
+  "correctedBy",
+  "correctedSessionId",
+  "correctedAt",
+  "supersededBy",
+  "supersededSessionId",
+  "supersededAt",
+  "evidence",
+  "citations",
+] as const;
+
+function correctionFieldValue(
+  record: Record<string, unknown>,
+  field: (typeof CORRECTION_FIELDS)[number],
+): unknown {
+  if (field === "reason") return record.reason ?? record.correctionReason ?? record.supersedeReason;
+  return record[field];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Labels already on the object. Absent fields are omitted; nothing is invented. */
+export function formatPresentRecordFields(value: object): string | undefined {
+  const record = value as Record<string, unknown>;
+  const parts: string[] = [];
+  for (const field of CORRECTION_FIELDS) {
+    const rendered = renderFieldValue(correctionFieldValue(record, field));
+    if (rendered !== undefined && rendered.length > 0) {
+      parts.push(`${field}=${rendered}`);
+    }
+  }
+  return parts.length === 0 ? undefined : parts.join("  ");
+}
+
+export function formatFindingLine(finding: { id: string; summary: string }): string {
+  return joinFields(finding.id, finding.summary, formatPresentRecordFields(finding));
+}
+
+export function formatDecisionLine(decision: Decision): string {
+  return joinFields(
+    decision.id,
+    decision.summary,
+    `[${decision.status}]`,
+    decision.rationale === undefined ? undefined : `rationale=${decision.rationale}`,
+    formatPresentRecordFields(decision),
   );
+}
+
+export function formatCorrectionResult(value: unknown): string {
+  if (!isRecord(value)) return "";
+  const lines: string[] = [];
+  const head = joinFields(
+    typeof value.id === "string" ? value.id : undefined,
+    typeof value.summary === "string" ? value.summary : undefined,
+    typeof value.status === "string" ? `[${value.status}]` : undefined,
+    formatPresentRecordFields(value),
+  );
+  if (head.length > 0) lines.push(head);
+  for (const key of ["finding", "decision"] as const) {
+    const nested = value[key];
+    if (isRecord(nested)) {
+      const nestedLine = formatCorrectionResult(nested);
+      if (nestedLine.length > 0) lines.push(nestedLine);
+    }
+  }
+  if (lines.length > 0) return lines.join("\n");
+  const id =
+    typeof value.evidenceId === "string"
+      ? value.evidenceId
+      : typeof value.citationId === "string"
+        ? value.citationId
+        : undefined;
+  return id ?? "";
+}
+
+function decisionLines(decisions: readonly Decision[]): string[] {
+  return decisions.map((decision) => formatDecisionLine(decision));
 }
 
 export function formatWorkspaceDecisions(result: WorkspaceDecisionsResult): string {
@@ -489,8 +565,8 @@ const INSPECT_FIELDS: Record<InspectKind, readonly string[]> = {
   agent: ["id", "actorType", "name", "role", "harness", "humanOwnerId", "joinedAt"],
   goal: ["id", "title", "status", "description", "createdBy", "agentSessionId", "createdAt", "updatedAt"],
   task: ["id", "title", "status", "description", "assignee", "createdBy", "agentSessionId", "createdAt", "updatedAt"],
-  finding: ["id", "summary", "detail", "confidence", "sourceArtifactId", "createdBy", "agentSessionId", "createdAt"],
-  decision: ["id", "summary", "rationale", "status", "approvedBy", "createdBy", "agentSessionId", "createdAt", "updatedAt"],
+  finding: ["id", "summary", "detail", "confidence", "sourceArtifactId", "currentness", "reason", "correctionReason", "predecessorId", "successorId", "needsReview", "needsReviewFindingIds", "correctedBy", "correctedSessionId", "correctedAt", "evidence", "citations", "createdBy", "agentSessionId", "createdAt"],
+  decision: ["id", "summary", "rationale", "status", "predecessorId", "successorId", "supersedeReason", "needsReview", "needsReviewFindingIds", "supersededBy", "supersededSessionId", "supersededAt", "evidence", "citations", "approvedBy", "createdBy", "agentSessionId", "createdAt", "updatedAt"],
   artifact: ["id", "type", "title", "uriOrPath", "createdBy", "agentSessionId", "createdAt"],
   contribution: ["id", "actor", "agentSessionId", "action", "objectType", "objectId", "payload", "createdAt"],
 };

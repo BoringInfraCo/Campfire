@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** September 15, 2026
+**Date:** October 3, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -287,6 +287,12 @@ recipient-harness paths pending. It is not published or deployed. Enrollment
 atomicity, safe retry/recovery, and remote-profile support are part of that slice; finding lifecycle, context-budget redesign, broader concurrency
 work, and new integrations remain separate. Gate B and Gate C remain unmeasured
 until qualifying behavior is independently observed.
+
+Sprint CTX-001 — Keep Shared Understanding Current is published as `v1.10.0`.
+Orientation, catch-up, and drill-down are in tree. One Codex agent passed the
+cold-orientation, saved-cursor, and unauthorized-workspace gate on a single
+machine. Gate B and Gate C remain unmeasured. Publication does not authorize
+the later visual-understanding work in section 21.
 
 If Sprint 001 proves continuity, the next goal is to make the workspace useful for ongoing team work rather than a single handoff demonstration.
 
@@ -911,6 +917,51 @@ Do not build a collaboration dashboard before knowing what humans actually need 
 
 The UI should expose the collaboration model rather than invent a second product model.
 
+> Campfire should make shared work state tangible without making the interface the source of truth.
+
+### Visible understanding
+
+v1.10 made Orient, Catch Up, and Drill Down the context contract. The Viewer
+may later become a visual projection of that same contract. It stays read-only.
+`docs/SPRINT_VIEWER_001.md` still defines it as a projection, not a dashboard
+and not a second store.
+
+Workspace remains the only collection primitive. A Channel, or any second
+collection of artifacts, would duplicate it.
+
+```text
+Workspace state
+        |
+        | authorized read
+        v
+Viewer projection
+├── visual orientation
+├── visual catch-up
+├── workspace overview
+├── current versus historical state
+├── safe artifact previews
+├── shared highlights
+└── the existing activity timeline
+```
+
+Views are derived from Campfire state. The workspace remains canonical.
+Artifact stays a typed reference. Renderer selection, preview, safe fetching,
+and interaction stay in the Viewer. A highlight means "keep this visible."
+Currentness is a separate fact. Highlights are not introduced before v1.11
+correction and currentness semantics exist, and the first form is a shared
+workspace highlight with provenance.
+
+The release that would do this work is named **Make Shared Understanding
+Visible**. It is directional. Section 21 states the evidence required before
+it becomes sprint scope.
+
+Generated workspace views come later still. They are derived from authorized
+structured state, sandboxed, and non-canonical. They receive no Campfire
+credentials and no unrestricted writes. Arbitrary HTML is untrusted:
+agent-authored markup needs sandboxing, a content security policy, capability
+isolation, and no path to Campfire credentials. Campfire is a multi-principal
+authorization boundary, so a personal-agent rendering model does not transfer.
+
 ---
 
 # 13. Deployment Roadmap
@@ -987,7 +1038,17 @@ Do not commit yet to:
 - a generalized agent runtime,
 - agent marketplaces,
 - no-code agent builders,
-- autonomous company management.
+- autonomous company management,
+- a Channel object beside Workspace,
+- canonical presentation or hosted content inside Artifact,
+- a skills platform or workflow engine,
+- generated workspace views before structured state is trustworthy,
+- highlights that override correction and currentness,
+- treating MCP compatibility as identity, membership, or authorization.
+
+One incident-investigation playbook may be tested after currentness exists.
+That experiment is guidance for recording useful state. It is not permission
+to build a skills platform. Section 21 sequences it.
 
 Some may eventually interact with Campfire.
 
@@ -1009,7 +1070,9 @@ Required before Phase 2.
 
 **Question:** Do humans/agents choose to reuse the workspace across multiple sessions?
 
-Required before investing heavily in collaboration UX.
+Required before investing heavily in collaboration UX. The v1.12 visual
+surface in section 21 is that kind of investment. It stays directional while
+Gate B is unmeasured.
 
 Sprint 004 showed repeat-session behavior in a deterministic trace. Field
 Trace 001 was cancelled by founder decision before a qualifying multi-day human
@@ -1357,7 +1420,75 @@ Sprint CLI-001 — Agent-Native Interface Contract   GO ✓; v1.8.0 released + d
 Sprint 020 — Bring the Next Teammate In   IMPLEMENTED CANDIDATE; v1.9.0; CONDITIONAL GO pending independent two-human/two-machine and both live recipient paths; not published/deployed; see docs/SPRINT_020_RESULT.md; Gate B/C unmeasured
         ↓
 Sprint CTX-001 — Keep Shared Understanding Current   GO for the local release gate; published v1.10.0; one Codex agent passed scenarios A/B/C; see docs/SPRINT_CTX_001_RESULT.md; Gate B/C unmeasured
+        ↓
+Sprint COR-001 — Correct the Record   CONDITIONAL GO; v1.11.0 release source; production not deployed; one operator, one machine; Codex and OpenCode cold and catch-up traces passed; fixture participants only; see docs/SPRINT_COR_001_RESULT.md; Gate B/C unmeasured
+        ↓
+v1.12 — Make Shared Understanding Visible   directional; evidence gate below
+        ↓
+v1.13 — Prove a Way of Working   directional; one playbook, then measure
+        ↓
+Later — Generated workspace views   after structured state is trustworthy
 ```
+
+`v1.10.0` is published. The sequence adopted on October 3, 2026 is:
+
+```text
+v1.10 — KEEP SHARED UNDERSTANDING CURRENT
+        shipped
+        Orient, Catch Up, and Drill Down
+        one cold Codex trace on one machine
+        Gate B and Gate C unmeasured
+
+v1.11 — CORRECT THE RECORD
+        v1.11.0 release source
+        CONDITIONAL GO
+        supersession, correction, evidence relationships, visible currentness
+        one operator, one machine, both local harnesses
+        production not deployed
+        Gate B and Gate C unmeasured
+        see docs/SPRINT_COR_001_RESULT.md
+
+v1.12 — MAKE SHARED UNDERSTANDING VISIBLE
+        visual orientation and catch-up
+        workspace overview
+        current versus historical state
+        safe artifact previews
+        shared workspace highlights
+        refinement of the existing activity timeline
+
+v1.13 — PROVE A WAY OF WORKING
+        one incident-investigation playbook
+        measure recording quality and continuation quality
+        expand only with evidence
+
+Later — GENERATED WORKSPACE VIEWS
+        derived from authorized structured state
+        sandboxed and non-canonical
+        no direct credentials or unrestricted writes
+```
+
+v1.12 is not sprint scope until all of these are true:
+
+- v1.10 has live cold-agent evidence against a realistically large workspace, beyond the single-machine CTX-001 gate;
+- v1.11 correction and currentness semantics exist in the v1.11.0 release source, CONDITIONAL GO. v1.12 still waits on the other three bullets;
+- at least one observation shows that humans struggle to understand Campfire state that is otherwise correct;
+- there is evidence about which artifacts people actually try to open.
+
+The product risk is polishing a surface before teams repeatedly rely on the collaboration state. Leaving that state in structured form for another release is acceptable.
+
+These boundaries govern the sequence:
+
+- Workspace stays the only collection primitive.
+- Artifact stays identity, type, title, reference, metadata, and provenance. Presentation is a Viewer concern. See `docs/ARCHITECTURE.md` and `docs/PRODUCT_DEFINITION.md`.
+- A highlight is shared workspace salience with provenance. It does not make a superseded finding or a rejected decision current. Introduce highlights with or after v1.11.
+- Setup may disappear into the agent's normal workflow. Authorization stays visible. The promise is: if an agent supports MCP, it can work from the caller's authorized Campfire context. Enrollment and the session boundary stay explicit.
+- A playbook is guidance for how to record useful state. It is not workflow execution and not new domain machinery. The only candidate is `incident-investigation`. Call it a workspace playbook, not a harness skill.
+
+Television is an adjacent personal-agent product that organizes persistent interactive artifacts into Channels and pins those Channels. Its repository is [telepath-computer/television](https://github.com/telepath-computer/television), and its channel specification is [channels.md](https://github.com/telepath-computer/television/blob/main/specs/product/channels.md). That contrast is useful. It is not a roadmap to copy.
+
+> Television organizes things. Campfire should organize understanding.
+
+Telepath Stash is worth monitoring and not worth adopting. It describes shared planning files, artifacts, and coordination state across agents, and it points toward indexing, meaning, versioning, and collaboration layers. The note is [Introducing Stash](https://buttondown.com/telepath/archive/introducing-stash-local-first-sync-for-agents/). That territory is adjacent to Campfire. It does not change this sequence.
 
 The roadmap provides direction.
 

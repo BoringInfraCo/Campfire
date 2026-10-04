@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { Conflict } from "../domain/errors.js";
 import { applyMigrations } from "./migrations.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
@@ -37,12 +38,36 @@ import type {
 } from "../domain/events.js";
 import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
 import {
+  asCorrectionConflict,
+  citationInsertParams,
+  decisionClaimStatements,
+  decisionCorrectionFields,
+  decisionInsertParams,
+  evidenceInsertParams,
+  findingClaimStatements,
+  findingCorrectionFields,
+  findingInsertParams,
+  INSERT_DECISION_CITATION_SQL,
+  INSERT_DECISION_SQL,
+  INSERT_FINDING_EVIDENCE_SQL,
+  INSERT_FINDING_SQL,
+  listDecisionCitationsSql,
+  listFindingEvidenceSql,
+  listStaleCitedFindingIdsSql,
+  mapCitation,
+  mapEvidence,
+  type CitationRow,
+  type EvidenceRow,
+} from "./correction-records.js";
+import {
   contributionsBeforeSql,
   contributionsSinceSql,
   countByStatusSql,
   countContributionsPageSql,
   countContributionsSinceSql,
   countDecisionsSql,
+  countFindingsSql,
+  countHistoricalFindingsSql,
   countRowsSql,
   countTasksSql,
   pageArtifactsSql,
@@ -156,6 +181,14 @@ interface FindingRow {
   created_by_actor_type: string;
   agent_session_id: string | null;
   created_at: string;
+  currentness?: string | null;
+  predecessor_id?: string | null;
+  successor_id?: string | null;
+  correction_reason?: string | null;
+  corrected_by_actor_id?: string | null;
+  corrected_by_actor_type?: string | null;
+  corrected_session_id?: string | null;
+  corrected_at?: string | null;
 }
 
 interface DecisionRow {
@@ -171,6 +204,13 @@ interface DecisionRow {
   agent_session_id: string | null;
   created_at: string;
   updated_at: string;
+  predecessor_id?: string | null;
+  successor_id?: string | null;
+  supersede_reason?: string | null;
+  superseded_by_actor_id?: string | null;
+  superseded_by_actor_type?: string | null;
+  superseded_session_id?: string | null;
+  superseded_at?: string | null;
 }
 
 interface ArtifactRow {
@@ -384,6 +424,7 @@ function mapFinding(row: FindingRow): Finding {
     detail: row.detail ?? undefined,
     confidence: row.confidence ?? undefined,
     sourceArtifactId: row.source_artifact_id ?? undefined,
+    ...findingCorrectionFields(row),
   };
 }
 
@@ -401,6 +442,7 @@ function mapDecision(row: DecisionRow): Decision {
     status: row.status as DecisionStatus,
     approvedBy,
     updatedAt: row.updated_at,
+    ...decisionCorrectionFields(row),
   };
 }
 
@@ -919,20 +961,11 @@ function createSqliteStore(db: Database.Database): CampfireStore {
     },
 
     createFinding(finding) {
-      db.prepare(
-        "INSERT INTO findings (id, workspace_id, summary, detail, confidence, source_artifact_id, created_by_actor_id, created_by_actor_type, agent_session_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      ).run(
-        finding.id,
-        finding.workspaceId,
-        finding.summary,
-        finding.detail ?? null,
-        finding.confidence ?? null,
-        finding.sourceArtifactId ?? null,
-        finding.createdBy.actorId,
-        finding.createdBy.actorType,
-        finding.agentSessionId ?? null,
-        finding.createdAt,
-      );
+      try {
+        db.prepare(INSERT_FINDING_SQL).run(...findingInsertParams(finding));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
     },
 
     getFinding(id) {
@@ -948,22 +981,11 @@ function createSqliteStore(db: Database.Database): CampfireStore {
     },
 
     createDecision(decision) {
-      db.prepare(
-        "INSERT INTO decisions (id, workspace_id, summary, rationale, status, approved_by_actor_id, approved_by_actor_type, created_by_actor_id, created_by_actor_type, agent_session_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      ).run(
-        decision.id,
-        decision.workspaceId,
-        decision.summary,
-        decision.rationale ?? null,
-        decision.status,
-        decision.approvedBy?.actorId ?? null,
-        decision.approvedBy?.actorType ?? null,
-        decision.createdBy.actorId,
-        decision.createdBy.actorType,
-        decision.agentSessionId ?? null,
-        decision.createdAt,
-        decision.updatedAt,
-      );
+      try {
+        db.prepare(INSERT_DECISION_SQL).run(...decisionInsertParams(decision));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
     },
 
     getDecision(id) {
@@ -1123,7 +1145,7 @@ function createSqliteStore(db: Database.Database): CampfireStore {
 
     pageFindings(workspaceId, query) {
       const listed = pageFindingsSql(workspaceId, query);
-      const counted = countRowsSql("findings", workspaceId);
+      const counted = countFindingsSql(workspaceId, query.currentness);
       const rows = db.prepare(listed.sql).all(...listed.params) as Array<FindingRow & RankedRow>;
       const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
       return rankedPage(rows, query.limit, total, mapFinding);
@@ -1435,6 +1457,105 @@ function createSqliteStore(db: Database.Database): CampfireStore {
           claimToken,
         );
       return info.changes === 1;
+    },
+
+    countFindings(workspaceId, currentness) {
+      const statement = countFindingsSql(workspaceId, currentness);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
+    countHistoricalFindings(workspaceId) {
+      const statement = countHistoricalFindingsSql(workspaceId);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
+    listFindingEvidence(findingIds) {
+      const statement = listFindingEvidenceSql(findingIds);
+      if (statement === undefined) return [];
+      return (db.prepare(statement.sql).all(...statement.params) as EvidenceRow[]).map(mapEvidence);
+    },
+
+    getFindingEvidence(id) {
+      const row = db.prepare("SELECT * FROM finding_evidence WHERE id = ?").get(id) as EvidenceRow | undefined;
+      return row === undefined ? undefined : mapEvidence(row);
+    },
+
+    insertFindingEvidence(evidence) {
+      try {
+        db.prepare(INSERT_FINDING_EVIDENCE_SQL).run(...evidenceInsertParams(evidence));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    deleteFindingEvidence(findingId, artifactId) {
+      const result = db.prepare("DELETE FROM finding_evidence WHERE finding_id = ? AND artifact_id = ?").run(findingId, artifactId);
+      return result.changes === 1;
+    },
+
+    claimFindingTransition(claim) {
+      const statements = findingClaimStatements(claim);
+      const apply = db.transaction(() => {
+        try {
+          db.prepare(statements.insert.sql).run(...(statements.insert.params as never[]));
+          const updated = db.prepare(statements.update.sql).run(...(statements.update.params as never[]));
+          if (updated.changes !== 1) {
+            throw new Conflict("The record changed before this correction could commit");
+          }
+        } catch (error) {
+          throw asCorrectionConflict(error);
+        }
+      });
+      apply();
+    },
+
+    listDecisionCitations(decisionIds) {
+      const statement = listDecisionCitationsSql(decisionIds);
+      if (statement === undefined) return [];
+      return (db.prepare(statement.sql).all(...statement.params) as CitationRow[]).map(mapCitation);
+    },
+
+    getDecisionCitation(id) {
+      const row = db.prepare("SELECT * FROM decision_citations WHERE id = ?").get(id) as CitationRow | undefined;
+      return row === undefined ? undefined : mapCitation(row);
+    },
+
+    listStaleCitedFindingIds(decisionIds) {
+      const statement = listStaleCitedFindingIdsSql(decisionIds);
+      if (statement === undefined) return [];
+      const rows = db.prepare(statement.sql).all(...statement.params) as Array<{ finding_id: string }>;
+      return rows.map((row) => row.finding_id);
+    },
+
+    insertDecisionCitation(citation) {
+      try {
+        db.prepare(INSERT_DECISION_CITATION_SQL).run(...citationInsertParams(citation));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    deleteDecisionCitation(decisionId, findingId) {
+      const result = db
+        .prepare("DELETE FROM decision_citations WHERE decision_id = ? AND finding_id = ?")
+        .run(decisionId, findingId);
+      return result.changes === 1;
+    },
+
+    claimDecisionTransition(claim) {
+      const statements = decisionClaimStatements(claim);
+      const apply = db.transaction(() => {
+        try {
+          db.prepare(statements.insert.sql).run(...(statements.insert.params as never[]));
+          const updated = db.prepare(statements.update.sql).run(...(statements.update.params as never[]));
+          if (updated.changes !== 1) {
+            throw new Conflict("The record changed before this correction could commit");
+          }
+        } catch (error) {
+          throw asCorrectionConflict(error);
+        }
+      });
+      apply();
     },
 
     // --- infrastructure ---

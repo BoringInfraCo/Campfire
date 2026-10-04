@@ -1,8 +1,8 @@
 # Campfire — Architecture
 
-**Status:** Revised  
-**Version:** 0.2  
-**Date:** September 11, 2026  
+**Status:** Revised after `v1.10.0`
+**Version:** 0.2
+**Date:** October 3, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -425,6 +425,10 @@ Finding
 - detail?
 - confidence?
 - source_artifact_id?
+- currentness          current | superseded | withdrawn
+- predecessor_id?
+- successor_id?
+- correction_reason?
 - created_by
 - created_at
 ```
@@ -432,6 +436,8 @@ Finding
 A finding is not automatically truth.
 
 It is a provenance-backed contribution to shared work state.
+
+COR-001 gives a finding a currentness state. Existing rows are `current`. Superseding creates a new finding in the same workspace, keeps the old summary and detail, and records the reason, actor, and successor. Withdrawal records a reason and no replacement. Evidence is a same-workspace link to an artifact, `supports` or `contradicts`, with an optional short note. The artifact stays a typed reference.
 
 ### Decision
 
@@ -444,19 +450,24 @@ Decision
 - summary
 - rationale?
 - status
+- predecessor_id?
+- successor_id?
+- supersede_reason?
 - proposed_by
 - approved_by?
 - created_at
 - updated_at
 ```
 
-Initial decision states may remain minimal:
+Decision states:
 
 ```text
 proposed
 accepted
 superseded
 ```
+
+A proposed decision may name one accepted predecessor. Acceptance is still explicit. Accepting a replacement supersedes that predecessor in the same transaction, with a reason and one successor. An accepted decision may be retired without a replacement. A proposed decision may be rejected. Neither transition is inferred from text. A citation of a finding records what the decision relied on. If that finding is later superseded or withdrawn, current reads mark the decision `needsReview`. The lifecycle stays put until an explicit transition.
 
 ### Artifact
 
@@ -475,6 +486,28 @@ Artifact
 ```
 
 Campfire should reference artifacts where possible rather than copying every external system into its own store.
+
+An Artifact is a registry record. It is not a hosted document, and it does not carry presentation.
+
+```text
+Artifact
+├── identity
+├── type
+├── title
+├── reference
+├── metadata
+└── provenance
+
+Viewer projection
+├── renderer selection
+├── preview
+├── safe fetching
+└── interaction
+```
+
+`content` and `presentation` do not belong on Artifact. Markdown, log, image, trace, diff, and pull-request previews stay in the Viewer. A media type or render hint may be added only when a viewer needs it to choose a renderer.
+
+Agent-authored HTML is untrusted. Any future preview needs sandboxing, a content security policy, capability isolation, and no Campfire credentials. Campfire authorizes multiple principals, so a rendering model built for a personal agent surface does not transfer.
 
 ---
 
@@ -675,7 +708,7 @@ WorkspaceContext
 
 The first implementation can be simple and explicit.
 
-CTX-001 keeps that projection as an orientation, not a copy of the history. `get_workspace_context` returns bounded slices. Each slice reports `total`, `returned`, and `truncated`, and `completeness.fullHistoryIncluded` is false. Drill-down is `list_decisions`, `list_findings`, `list_tasks`, `list_artifacts`, and the matching get-by-id methods. Catch-up is `get_workspace_changes` from `orientationCursor`, ordered by a durable per-workspace append position and bounded by a frozen stream tip. `get_workspace` remains the full inspector. Findings are not linked to tasks or decisions; the only relationship used for ranking is `Finding.sourceArtifactId`. Authorization still runs before any of those reads.
+CTX-001 keeps that projection as an orientation, not a copy of the history. `get_workspace_context` returns bounded slices. Each slice reports `total`, `returned`, and `truncated`, and `completeness.fullHistoryIncluded` is false. Drill-down is `list_decisions`, `list_findings`, `list_tasks`, `list_artifacts`, and the matching get-by-id methods. Catch-up is `get_workspace_changes` from `orientationCursor`, ordered by a durable per-workspace append position and bounded by a frozen stream tip. `get_workspace` remains the full inspector. Orientation counts and lists current findings, and accepted plus proposed decisions. Historical counts are separate and do not spend the current-item budget. `Finding.sourceArtifactId` still ranks findings. A finding may also cite artifacts as `supports` or `contradicts`, and a decision may cite findings. Those links are explicit rows with provenance. `needsReview` is computed when a current decision cites a finding that is no longer current. Authorization still runs before any of those reads.
 
 No embeddings or semantic ranking are required to prove the thesis.
 
@@ -1025,6 +1058,16 @@ Sprint 001 needs authorization boundaries, not a complete enterprise identity pl
 
 Updates that erase who made a prior decision or why it changed undermine one of Campfire's core assets.
 
+### Interface becomes the source of truth
+
+A view, preview, highlight, or generated page is a projection of authorized workspace state. If that projection is required to know what the team believes, the workspace has stopped being canonical.
+
+A highlight means "keep this visible." It does not mean "this is still true." A superseded finding or a rejected decision stays out of current understanding while it remains highlighted. Highlights, when they exist, are shared workspace records with provenance. They are interpreted only after correction and currentness semantics exist.
+
+### Presentation stored as artifact content
+
+Rendered content or arbitrary HTML stored on Artifact turns the registry into a host. The external system that owns the native artifact remains the source of that content.
+
 ---
 
 ## 20. Security Boundaries
@@ -1051,6 +1094,18 @@ Automatic artifact permission
 Agent capability
         !=
 Human capability
+
+MCP compatibility
+        !=
+Identity, membership, or authorization
+
+Viewer projection
+        !=
+Canonical workspace state
+
+Highlight
+        !=
+Current truth
 ```
 
 Future cloud/team architecture should assume:
@@ -1156,7 +1211,14 @@ Potential future capabilities include:
 - policy engines,
 - autonomous organization-owned agents.
 
-None is required for Sprint 001.
+Later projection work, if the roadmap's evidence gate is met, stays inside the same boundary:
+
+- visual orientation, catch-up, and drill-down read the workspace; they do not replace it;
+- shared highlights record salience and provenance, and they follow currentness;
+- one workspace playbook may guide how an agent records an incident investigation; it does not execute workflow or add domain objects;
+- generated workspace views are derived, sandboxed, and non-canonical, with no Campfire credentials and no unrestricted writes.
+
+None is required for Sprint 001. The post-v1.10 sequence and its evidence gate are in `docs/ROADMAP.md`.
 
 ---
 

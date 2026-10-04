@@ -324,11 +324,12 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "list_findings",
     {
       description:
-        "List a bounded page of findings in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+        "List a bounded page of findings in a workspace. Pass currentness current, superseded, withdrawn, or all. The result is bounded; pass the returned cursor to continue the list.",
       inputSchema: {
         workspaceId: z.string(),
         limit: z.number().int().positive().optional(),
         cursor: z.string().optional(),
+        currentness: z.enum(["current", "superseded", "withdrawn", "all"]).optional(),
       },
     },
     (args) => run("list_findings", () => invoke("list_findings", args)),
@@ -516,28 +517,118 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   );
 
   server.registerTool(
+    "correct_finding",
+    {
+      description:
+        "Record a new correction of a finding. It does not edit the old assertion. The predecessor remains; the returned finding is the successor.",
+      inputSchema: {
+        findingId: z.string(),
+        summary: z.string(),
+        reason: z.string(),
+        detail: z.string().optional(),
+        confidence: z.number().optional(),
+        sourceArtifactId: z.string().optional(),
+        evidence: z
+          .array(z.object({ artifactId: z.string(), relation: z.string(), note: z.string().optional() }))
+          .optional(),
+      },
+    },
+    (args) => run("correct_finding", () => invoke("correct_finding", args)),
+  );
+
+  server.registerTool(
+    "withdraw_finding",
+    {
+      description:
+        "Withdraw a finding by an explicit transition. It does not edit the old assertion.",
+      inputSchema: { findingId: z.string(), reason: z.string() },
+    },
+    (args) => run("withdraw_finding", () => invoke("withdraw_finding", args)),
+  );
+
+  server.registerTool(
+    "cite_finding_evidence",
+    {
+      description:
+        "Cite an artifact as evidence for a finding. Records an explicit citation and does not edit the old assertion.",
+      inputSchema: {
+        findingId: z.string(),
+        artifactId: z.string(),
+        relation: z.string(),
+        note: z.string().optional(),
+      },
+    },
+    (args) => run("cite_finding_evidence", () => invoke("cite_finding_evidence", args)),
+  );
+
+  server.registerTool(
+    "remove_finding_evidence",
+    {
+      description:
+        "Remove one finding evidence citation by an explicit transition. It does not edit the old assertion.",
+      inputSchema: { evidenceId: z.string() },
+    },
+    (args) => run("remove_finding_evidence", () => invoke("remove_finding_evidence", args)),
+  );
+
+  server.registerTool(
     "add_decision",
     {
       description:
-        "Record a direction that still needs explicit acceptance. Creating a decision only proposes it; it does not approve it.",
+        "Record a direction that still needs explicit acceptance. Creating a decision only proposes it; it does not approve it. replacesDecisionId records a new decision and does not edit the old assertion.",
       inputSchema: {
         workspaceId: z.string(),
         summary: z.string(),
         rationale: z.string().optional(),
         status: z.enum(DECISION_STATUSES).optional(),
+        replacesDecisionId: z.string().optional(),
       },
     },
     (args) => run("add_decision", () => invoke("add_decision", args)),
   );
 
   server.registerTool(
+    "cite_decision_basis",
+    {
+      description:
+        "Cite a finding as a basis for a decision. Records an explicit citation and does not edit the old assertion.",
+      inputSchema: {
+        decisionId: z.string(),
+        findingId: z.string(),
+        note: z.string().optional(),
+      },
+    },
+    (args) => run("cite_decision_basis", () => invoke("cite_decision_basis", args)),
+  );
+
+  server.registerTool(
+    "remove_decision_basis",
+    {
+      description:
+        "Remove one decision basis citation by an explicit transition. It does not edit the old assertion.",
+      inputSchema: { citationId: z.string() },
+    },
+    (args) => run("remove_decision_basis", () => invoke("remove_decision_basis", args)),
+  );
+
+  server.registerTool(
     "accept_decision",
     {
       description:
-        "Accept a proposed decision only for an explicit approval. Never call it as an automatic follow-up to proposing.",
-      inputSchema: { decisionId: z.string() },
+        "Accept a proposed decision only for an explicit approval. Never call it as an automatic follow-up to proposing. reason records why this acceptance happened and does not edit the old assertion.",
+      inputSchema: { decisionId: z.string(), reason: z.string().optional() },
     },
     (args) => run("accept_decision", () => invoke("accept_decision", args)),
+  );
+
+  server.registerTool(
+    "retire_decision",
+    {
+      description:
+        "Retire a decision by an explicit transition. It does not edit the old assertion.",
+      inputSchema: { decisionId: z.string(), reason: z.string() },
+    },
+    (args) => run("retire_decision", () => invoke("retire_decision", args)),
   );
 
   server.registerTool(

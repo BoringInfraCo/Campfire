@@ -54,6 +54,23 @@ export function assertWorkspaceTransition(current: WorkspaceStatus, next: Worksp
   assertTransition(current, next, WORKSPACE_TRANSITIONS, "workspace");
 }
 
+/** Walks predecessor ids. A repeated id is a cycle and is rejected before any write. */
+export function assertAcyclicPredecessor(
+  startId: string,
+  predecessorOf: (id: string) => string | undefined,
+  kind: "finding" | "decision",
+): void {
+  const seen = new Set<string>();
+  let current: string | undefined = startId;
+  while (current !== undefined) {
+    if (seen.has(current)) {
+      throw new InvalidTransition(`${kind} chain is cyclic`, { kind, id: startId });
+    }
+    seen.add(current);
+    current = predecessorOf(current);
+  }
+}
+
 export function canTransition<T extends string>(
   current: T,
   next: T,

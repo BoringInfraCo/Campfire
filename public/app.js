@@ -23,6 +23,7 @@ const els = {
   since: document.getElementById("since"),
   stream: document.getElementById("stream"),
   hint: document.getElementById("hint"),
+  recordNotes: document.getElementById("record-notes"),
 };
 
 const state = {
@@ -345,12 +346,17 @@ function kindLabel(item) {
     const status = strField(payload.status, resolved && resolved.status);
     return TASK_STATUSES.includes(status) ? status : "task";
   }
-  if (type === "decision" && (action === "create" || action === "update" || action === "accept")) {
+  if (type === "decision" && (action === "create" || action === "update" || action === "accept" || action === "retire")) {
     const resolved = matchObject(item);
     const status = strField(payload.status, resolved && resolved.status);
     return DECISION_STATUSES.includes(status) ? status : "decision";
   }
-  if (action === "create" && type === "finding") return "finding";
+  if (type === "finding") {
+    const resolved = matchObject(item);
+    const currentness = strField(payload.currentness, resolved && resolved.currentness);
+    if (currentness) return `finding ${currentness}`;
+    if (action === "create" || action === "correct" || action === "withdraw") return "finding";
+  }
   if (action === "create" && type === "artifact") return "artifact";
   if (action === "create" && type === "goal") return "goal";
   return type || "";
@@ -374,6 +380,9 @@ function extras(item) {
   const lines = [];
   const summary = strField(payload.summary, obj.summary);
 
+  if (type === "finding" || type === "decision") {
+    lines.push(...compactRecordLines(payload, obj));
+  }
   if (type === "finding") {
     const detail = strField(payload.detail, obj.detail);
     if (detail && detail !== summary) lines.push(detail);
@@ -555,7 +564,13 @@ function workTaskHtml(task) {
 
 function workDecisionHtml(decision) {
   const title = strField(decision.summary, decision.title, decision.id);
-  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span></li>`;
+  const ids = Array.isArray(decision.needsReviewFindingIds)
+    ? decision.needsReviewFindingIds.filter((id) => typeof id === "string" && id)
+    : [];
+  const review = decision.needsReview === true || ids.length > 0
+    ? `needs review${ids.length ? ` ${ids.join(", ")}` : ""}`
+    : "";
+  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${review ? `<span class="oreason">${esc(review)}</span>` : ""}</li>`;
 }
 
 function workGroup(label, items, renderItem) {
@@ -626,7 +641,80 @@ function renderAlignment(el, alignment, context) {
     blocked;
 }
 
+function scalarText(value) {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (!isRecord(value)) return "";
+  const bits = [];
+  for (const key of Object.keys(value)) {
+    const child = value[key];
+    if (typeof child === "string" || typeof child === "number" || typeof child === "boolean") {
+      bits.push(`${key} ${child}`);
+    }
+  }
+  return bits.join("  ");
+}
+
+function compactRecordLines(payload, obj) {
+  const lines = [];
+  const currentness = strField(payload.currentness, obj.currentness);
+  if (currentness) lines.push(currentness);
+  const reason = strField(
+    payload.reason,
+    payload.correctionReason,
+    payload.supersedeReason,
+    obj.reason,
+    obj.correctionReason,
+    obj.supersedeReason,
+  );
+  if (reason) lines.push(reason);
+  const predecessorId = strField(payload.predecessorId, obj.predecessorId);
+  if (predecessorId) lines.push(`predecessor ${predecessorId}`);
+  const successorId = strField(payload.successorId, obj.successorId);
+  if (successorId) lines.push(`successor ${successorId}`);
+  const reviewIds = []
+    .concat(Array.isArray(payload.needsReviewFindingIds) ? payload.needsReviewFindingIds : [])
+    .concat(Array.isArray(obj.needsReviewFindingIds) ? obj.needsReviewFindingIds : [])
+    .filter((id, index, all) => typeof id === "string" && id && all.indexOf(id) === index);
+  if (reviewIds.length) lines.push(`needs review ${reviewIds.join(", ")}`);
+  else if (payload.needsReview === true || obj.needsReview === true) lines.push("needs review");
+  const evidence = Array.isArray(payload.evidence) ? payload.evidence.length : Array.isArray(obj.evidence) ? obj.evidence.length : 0;
+  if (evidence) lines.push(`evidence ${evidence}`);
+  const citations = Array.isArray(payload.citations) ? payload.citations.length : Array.isArray(obj.citations) ? obj.citations.length : 0;
+  if (citations) lines.push(`citations ${citations}`);
+  return lines;
+}
+
+// Compact orientation text only. Nested objects are not printed, so artifact
+// bodies and transcripts never appear here. No controls.
+function recordNotesText(context) {
+  if (!isRecord(context)) return "";
+  const parts = [];
+  const currentness = scalarText(context.currentness);
+  if (currentness) parts.push(`currentness ${currentness}`);
+  const historical = scalarText(context.historicalCounts);
+  if (historical) parts.push(`historical ${historical}`);
+  if (typeof context.correctionReason === "string" && context.correctionReason) {
+    parts.push(`correction ${context.correctionReason}`);
+  }
+  if (context.needsReview === true) parts.push("needs review");
+  else if (typeof context.needsReview === "number") parts.push(`needs review ${context.needsReview}`);
+  else if (typeof context.needsReview === "string" && context.needsReview) parts.push(`needs review ${context.needsReview}`);
+  else if (Array.isArray(context.needsReview)) {
+    const ids = context.needsReview.filter((id) => typeof id === "string" && id);
+    if (ids.length) parts.push(`needs review ${ids.join(", ")}`);
+  }
+  return parts.join(" · ");
+}
+
+function renderRecordNotes(el, context) {
+  if (!el) return;
+  const text = recordNotesText(context);
+  el.textContent = text;
+  el.hidden = text.length === 0;
+}
+
 function renderOrientation() {
+  renderRecordNotes(els.recordNotes, state.context);
   renderAlignment(els.alignment, deriveAlignment(state.context), state.context);
   renderAttentionList(els.needsYou, deriveNeedsYou(state.context), "You're all caught up");
   renderAttentionList(els.needsAttention, deriveNeedsAttention(state.context), "Nothing needs attention");

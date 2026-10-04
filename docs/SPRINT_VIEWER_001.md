@@ -13,6 +13,8 @@
 
 The Viewer is a **projection**. It is not a chat, harness, or dashboard.
 
+Later visual work may project orientation, catch-up, and drill-down. It remains a read-only projection of workspace state. Direction and the evidence gate are in `docs/ROADMAP.md`. This sprint's scope is unchanged.
+
 ---
 
 ## 2. In scope (only this)

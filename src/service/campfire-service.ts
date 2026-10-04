@@ -11,6 +11,8 @@ import type { ActorContext, Authorizer } from "./authorization.js";
 import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitationView, normalizeEnrollOwnedAgentInput, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import { assembleWorkspaceContext } from "./context-assembly.js";
+import { createCorrectionActions } from "./correction-actions.js";
+import { attachCitations, attachEvidence } from "./correction-read.js";
 import {
   affectedObjectIds,
   assertCursorWorkspace,
@@ -106,11 +108,8 @@ import {
   WorkspaceNotFound,
 } from "../domain/errors.js";
 import { normalizeArtifactUri } from "../domain/artifacts.js";
-import {
-  assertDecisionTransition,
-  assertTaskTransition,
-  assertWorkspaceTransition,
-} from "../domain/lifecycle.js";
+import { assertTaskTransition, assertWorkspaceTransition } from "../domain/lifecycle.js";
+import { assertFindingCurrentness } from "../store/context-queries.js";
 import type { CampfireStore, GoalPatch, TaskPatch } from "../store/store.js";
 import type { QualifyingMutation } from "../domain/event-qualify.js";
 import type { DomainEventSubjectType } from "../domain/events.js";
@@ -287,6 +286,9 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
             ? payload.status
             : undefined;
 
+    if (typeof payload.changeType === "string" && typeof payload.reason === "string") {
+      return `${name} ${payload.changeType} ${contribution.objectType} ${contribution.objectId}: ${payload.reason}`;
+    }
     if (contribution.action === "join") {
       return `${name} joined ${contribution.objectType} ${contribution.objectId}`;
     }
@@ -656,6 +658,42 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     });
   }
 
+  function decorateFindings(findings: readonly Finding[]): Finding[] {
+    if (findings.length === 0) return [];
+    return attachEvidence(findings, store.listFindingEvidence(findings.map((finding) => finding.id)));
+  }
+
+  function decorateFinding(finding: Finding): Finding {
+    return decorateFindings([finding])[0] ?? finding;
+  }
+
+  function decorateDecisions(decisions: readonly Decision[]): Decision[] {
+    if (decisions.length === 0) return [];
+    const ids = decisions.map((decision) => decision.id);
+    return attachCitations(
+      decisions,
+      store.listDecisionCitations(ids),
+      new Set(store.listStaleCitedFindingIds(ids)),
+    );
+  }
+
+  function decorateDecision(decision: Decision): Decision {
+    return decorateDecisions([decision])[0] ?? decision;
+  }
+
+  const corrections = createCorrectionActions({
+    store,
+    authorizer,
+    idSource,
+    clock,
+    requireAgentSession,
+    record,
+    behalfOf,
+    writeOutbox,
+    decorateFinding,
+    decorateDecision,
+  });
+
   function readInWorkspace<T extends { workspaceId: string }>(
     row: T | undefined,
     workspaceId: string,
@@ -902,8 +940,8 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         goal: store.getGoalForWorkspace(workspaceId),
         participants: store.listParticipants(workspaceId).map(resolveParticipant),
         tasks: store.listTasks(workspaceId),
-        findings: store.listFindings(workspaceId),
-        decisions: store.listDecisions(workspaceId),
+        findings: decorateFindings(store.listFindings(workspaceId)),
+        decisions: decorateDecisions(store.listDecisions(workspaceId)),
         artifacts: store.listArtifacts(workspaceId),
         activity,
         provenanceSummary: activity.map((contribution) => describeContribution(contribution, actorName(contribution.actor))),
@@ -934,8 +972,8 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         decisionLimits.proposed > 0
           ? store.pageDecisions(workspaceId, { limit: decisionLimits.proposed, statuses: ["proposed"] })
           : { items: [], hasMore: false, total: 0 };
-      const decisionItems = [...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset);
-      const decisionTotal = acceptedCount + proposedCount + supersededCount;
+      const decisionItems = decorateDecisions([...acceptedPage.items, ...proposedPage.items].sort(compareDecisionKeyset));
+      const decisionTotal = acceptedCount + proposedCount;
       const decisionNext =
         decisionItems.length < decisionTotal && !acceptedPage.hasMore
           ? (() => {
@@ -962,8 +1000,9 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           ? { items: [] as Task[], hasMore: false, total: blockerTotal }
           : store.pageTasks(workspaceId, { limit: budget.blockers, statuses: ["blocked"] });
 
-      const findingTotal = store.countObjects("findings", workspaceId);
-      const findingPage = store.pageFindings(workspaceId, { limit: budget.findings });
+      const findingTotal = store.countFindings(workspaceId, "current");
+      const findingPage = store.pageFindings(workspaceId, { limit: budget.findings, currentness: "current" });
+      const historicalFindings = store.countHistoricalFindings(workspaceId);
       const artifactTotal = store.countObjects("artifacts", workspaceId);
       const artifactPage = store.pageArtifacts(workspaceId, { limit: budget.artifacts });
 
@@ -1029,7 +1068,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         orientationCursor,
         decisions: { items: decisionItems, total: decisionTotal, ...(decisionNext === undefined ? {} : { nextCursor: decisionNext }) },
         findings: {
-          items: findingPage.items,
+          items: decorateFindings(findingPage.items),
           total: findingTotal,
           ...(pageNextCursor("finding", workspaceId, findingPage) === undefined
             ? {}
@@ -1068,6 +1107,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         currentWork: orientation.currentWork,
         suggestedNextAction: orientation.suggestedNextAction,
         alignment,
+        historicalCounts: { findings: historicalFindings, decisions: supersededCount },
         ...(since === undefined ? {} : { since }),
       });
     },
@@ -1166,27 +1206,42 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         ...(statuses === undefined ? {} : { statuses }),
       });
       const total = store.countDecisions(input.workspaceId, statuses);
-      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("decision", input.workspaceId, page));
+      return finishObjectPage(
+        input.workspaceId,
+        decorateDecisions(page.items),
+        total,
+        pageNextCursor("decision", input.workspaceId, page),
+      );
     },
 
     getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Decision {
       authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      return readInWorkspace(store.getDecision(decisionId), workspaceId, decisionId, (id) => new DecisionNotFound(id));
+      return decorateDecision(readInWorkspace(store.getDecision(decisionId), workspaceId, decisionId, (id) => new DecisionNotFound(id)));
     },
 
     listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Finding> {
       authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
       rejectObjectStatus(input.status);
+      const currentness = assertFindingCurrentness(input.currentness ?? "current");
       const limit = clampPageLimit(input.limit, DEFAULT_CONTEXT_BUDGET.findings);
       const after = objectAfter(input.cursor, input.workspaceId, "finding");
-      const page = store.pageFindings(input.workspaceId, { limit, ...(after === undefined ? {} : { after }) });
-      const total = store.countObjects("findings", input.workspaceId);
-      return finishObjectPage(input.workspaceId, page.items, total, pageNextCursor("finding", input.workspaceId, page));
+      const page = store.pageFindings(input.workspaceId, {
+        limit,
+        currentness,
+        ...(after === undefined ? {} : { after }),
+      });
+      const total = store.countFindings(input.workspaceId, currentness);
+      return finishObjectPage(
+        input.workspaceId,
+        decorateFindings(page.items),
+        total,
+        pageNextCursor("finding", input.workspaceId, page),
+      );
     },
 
     getFindingInWorkspace(ctx: ActorContext, workspaceId: string, findingId: string): Finding {
       authorizer.assertAllowed(ctx, "workspace:read", workspaceId);
-      return readInWorkspace(store.getFinding(findingId), workspaceId, findingId, (id) => new FindingNotFound(id));
+      return decorateFinding(readInWorkspace(store.getFinding(findingId), workspaceId, findingId, (id) => new FindingNotFound(id)));
     },
 
     listTasksPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Task> {
@@ -1711,6 +1766,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         detail: input.detail,
         confidence: input.confidence,
         sourceArtifactId: input.sourceArtifactId,
+        currentness: "current",
       };
       const onBehalfOf = behalfOf(ctx, input.workspaceId);
       store.transaction(() => {
@@ -1744,94 +1800,40 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       return finding;
     },
 
-    addDecision(ctx: ActorContext, input: AddDecisionInput): Decision {
-      authorizer.assertAllowed(ctx, "decision:create", input.workspaceId);
-      requireAgentSession(ctx);
-      assertNonEmpty(input.summary, "Decision summary");
-      // Decisions are always created proposed; acceptance is an explicit
-      // transition through acceptDecision so approval provenance is kept.
-      if (input.status !== undefined && input.status !== "proposed") {
-        throw new ValidationError("Decisions must be created as proposed; use acceptDecision to accept", {
-          field: "status",
-          value: input.status,
-        });
-      }
-      const now = clock();
-      const status = "proposed" as const;
-      const decision: Decision = {
-        ...provenance(ctx, now),
-        id: idSource("decision"),
-        workspaceId: input.workspaceId,
-        summary: input.summary,
-        rationale: input.rationale,
-        status,
-        updatedAt: now,
-      };
-      const onBehalfOf = behalfOf(ctx, input.workspaceId);
-      store.transaction(() => {
-        store.createDecision(decision);
-        const contributionId = record(
-          ctx,
-          input.workspaceId,
-          "create",
-          "decision",
-          decision.id,
-          { summary: decision.summary, status },
-          now,
-        );
-        writeOutbox(ctx, {
-          mutation: { kind: "decision.created", status },
-          occurredAt: now,
-          workspaceId: input.workspaceId,
-          subjectType: "decision",
-          subjectId: decision.id,
-          summary: decision.summary,
-          data: { summary: decision.summary, status, rationale: decision.rationale },
-          contributionId,
-          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
-        });
-      });
-      return decision;
+    correctFinding(ctx, input) {
+      return corrections.correctFinding(ctx, input);
     },
 
-    acceptDecision(ctx: ActorContext, decisionId: string): Decision {
-      const decision = store.getDecision(decisionId);
-      if (decision === undefined) {
-        throw new DecisionNotFound(decisionId);
-      }
-      authorizer.assertAllowed(ctx, "decision:update", decision.workspaceId);
-      requireAgentSession(ctx);
-      assertDecisionTransition(decision.status, "accepted");
-      const now = clock();
-      const onBehalfOf = behalfOf(ctx, decision.workspaceId);
-      store.transaction(() => {
-        store.updateDecision(decisionId, { status: "accepted", approvedBy: ctx.actor, updatedAt: now });
-        const contributionId = record(
-          ctx,
-          decision.workspaceId,
-          "update",
-          "decision",
-          decisionId,
-          { status: "accepted" },
-          now,
-        );
-        writeOutbox(ctx, {
-          mutation: { kind: "decision.updated", from: decision.status, to: "accepted" },
-          occurredAt: now,
-          workspaceId: decision.workspaceId,
-          subjectType: "decision",
-          subjectId: decisionId,
-          summary: decision.summary,
-          data: { summary: decision.summary, status: "accepted", previousStatus: decision.status },
-          contributionId,
-          ...(onBehalfOf !== undefined ? { onBehalfOf } : {}),
-        });
-      });
-      const updated = store.getDecision(decisionId);
-      if (updated === undefined) {
-        throw new DecisionNotFound(decisionId);
-      }
-      return updated;
+    withdrawFinding(ctx, input) {
+      return corrections.withdrawFinding(ctx, input);
+    },
+
+    citeFindingEvidence(ctx, input) {
+      return corrections.citeFindingEvidence(ctx, input);
+    },
+
+    removeFindingEvidence(ctx, input) {
+      return corrections.removeFindingEvidence(ctx, input);
+    },
+
+    addDecision(ctx, input) {
+      return corrections.addDecision(ctx, input);
+    },
+
+    acceptDecision(ctx, decisionId, options) {
+      return corrections.acceptDecision(ctx, decisionId, options);
+    },
+
+    retireDecision(ctx, input) {
+      return corrections.retireDecision(ctx, input);
+    },
+
+    citeDecisionBasis(ctx, input) {
+      return corrections.citeDecisionBasis(ctx, input);
+    },
+
+    removeDecisionBasis(ctx, input) {
+      return corrections.removeDecisionBasis(ctx, input);
     },
 
     createTask(ctx: ActorContext, input: CreateTaskInput): Task {

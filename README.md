@@ -149,7 +149,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire decisions [workspace]` | One page of decisions. Default page size is 100. `--limit`, `--cursor`, and `--status` continue the list. The page reports total, returned, and truncated |
 | `campfire context [workspace]` | Bounded orientation, the same read as `show` without `--full`. Truncated sections say how many rows are showing |
 | `campfire catch-up [workspace] --after <cursor>` | Changes after an orientation or catch-up cursor. Material changes come first. Pass the returned cursor to continue |
-| `campfire findings` / `tasks` / `artifacts [workspace]` | One bounded page of that object. `tasks` accepts `--status`. Pass `--cursor` to continue |
+| `campfire findings` / `tasks` / `artifacts [workspace]` | One bounded page of that object. `tasks` accepts `--status`. `findings` accepts `--currentness current\|superseded\|withdrawn\|all` and defaults to current. Pass `--cursor` to continue |
 | `campfire changes [workspace] [--since <contributionId>]` | Contributions after a contribution id, or the recent provenance window, plus the cursor to retain next |
 | `campfire inspect <kind> <id> --workspace <workspaceId>` | Inspect one workspace object by kind and id. Task, finding, decision, and artifact reads load that object. No cross-workspace lookup |
 | `campfire capabilities` | The installed CLI command manifest for shell discovery; not the future Campfire Capability domain object |
@@ -162,7 +162,11 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire init` / `seed [--reset]` | Bootstrap org/team; `seed --reset` loads the deterministic demo/evaluation fixture, not a new operator workspace |
 | `campfire list` / `show <workspace>` / `activity <workspace>` | `show` is the bounded orientation. `show --full` remains the full inspector. `show --since <contributionId>` adds the delta since that observation. `activity` is the contribution history |
 | `campfire create-workspace` / `create-goal` / `create-task` | Shape the work (goals, tasks with explicit lifecycle) |
-| `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance |
+| `campfire add-finding` / `add-decision` / `add-artifact` | Contribute structured state with provenance. `add-decision --replaces <decisionId>` proposes a successor and leaves the accepted decision unchanged |
+| `campfire correct-finding` / `withdraw-finding` | Record a new finding that corrects an earlier one, or withdraw it with a reason. The old summary and detail stay |
+| `campfire cite-evidence` / `uncite-evidence` | Attach or remove one artifact evidence link (`supports` or `contradicts`) on a finding |
+| `campfire cite-basis` / `uncite-basis` | Attach or remove one finding citation on a decision |
+| `campfire accept-decision` / `retire-decision` | Accept a proposal, optionally with `--reason`. Retire a proposed or accepted decision with a required reason. Accepting a replacement supersedes its predecessor |
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |
 | `campfire invite` / `join` | Grant and accept invite-only workspace membership |
 | `campfire invite-teammate` / `join --invitation-file` | Owner authorizes one new human; recipient enrolls their own supported agents into existing shared work |
@@ -189,6 +193,8 @@ curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --v
 
 The v1.9.0 source snapshot and GitHub Release are published. Its Worker assets,
 including the versioned installer URL, have not yet been promoted to production.
+This source commit is `1.11.0`, CONDITIONAL GO. `public/campfire/v1.11.0/install.sh`
+is tracked here and is not a live production URL until a later deploy.
 
 Or build from source:
 
