@@ -19,11 +19,12 @@ import type { AsyncCampfireStore } from "../../src/worker/d1-store.js";
  *
  * Two adapters are under test:
  *
- *   - `GET /install` (and its zone-prefixed spelling) is the *measured*
- *     installer route. It must serve the same installer body as before and add
- *     exactly one anonymous `install_requested` data point — no installation id,
- *     `unknown` platform — because at that point in the funnel no installation
- *     exists and the requestor is a shell pipeline (section 5, section 11).
+ *   - `GET /install`, `/campfire/install`, `/campfire/install.sh`, and
+ *     `/campfire/vX.Y.Z/install.sh` are measured installer routes. Each must
+ *     serve the installer body and add exactly one anonymous `install_requested`
+ *     data point — no installation id, `unknown` platform — because at that
+ *     point in the funnel no installation exists and the requestor is a shell
+ *     pipeline (section 5, section 11).
  *   - `POST /v1/telemetry` is the ingestion endpoint. It accepts only the
  *     documented schema-1 events and fields, refuses an oversized body without
  *     trusting `content-length`, and reports a lost measurement as a success so
@@ -100,8 +101,66 @@ async function flush(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function get(path: string): Promise<Response> {
-  return handle(new Request(`https://campfire.test${path}`));
+function requestWithCf(path: string, cf?: Record<string, unknown>): Request {
+  const request = new Request(`https://campfire.test${path}`);
+  if (cf !== undefined) {
+    Object.defineProperty(request, "cf", { value: cf });
+  }
+  return request;
+}
+
+function get(path: string, cf?: Record<string, unknown>): Promise<Response> {
+  return handle(requestWithCf(path, cf));
+}
+
+function getWith(
+  path: string,
+  headers: Record<string, string>,
+  cf?: Record<string, unknown>,
+): Promise<Response> {
+  const request = new Request(`https://campfire.test${path}`, { headers });
+  if (cf !== undefined) {
+    Object.defineProperty(request, "cf", { value: cf });
+  }
+  return handle(request);
+}
+
+function installerRequestedBlobs(region: string, route = "latest", family = "unknown"): string[] {
+  return [
+    "install_requested",
+    "1",
+    "unknown",
+    "unknown",
+    "unknown",
+    "curl",
+    "none",
+    "",
+    region,
+    route,
+    family,
+    "none",
+  ];
+}
+
+function ingestedBlobs(
+  event: string,
+  surface: string,
+  extras: { method?: string; region?: string; harness?: string } = {},
+): string[] {
+  return [
+    event,
+    "1",
+    "1.9.1",
+    "darwin",
+    "arm64",
+    extras.method ?? "none",
+    surface,
+    ID_A,
+    extras.region ?? "none",
+    "none",
+    "none",
+    extras.harness ?? "none",
+  ];
 }
 
 function post(path: string, body: string, headers: Record<string, string> = {}): Promise<Response> {
@@ -141,16 +200,35 @@ describe("measured installer route", () => {
     expect(points[0]?.indexes).toEqual(["install_requested"]);
     // No installation id exists yet, and none may be invented from the request.
     // It stays blob8, never the sampling index.
-    expect(points[0]?.blobs).toEqual([
-      "install_requested",
-      "1",
-      "unknown",
-      "unknown",
-      "unknown",
-      "curl",
-      "none",
-      "",
-    ]);
+    expect(points[0]?.blobs).toEqual(installerRequestedBlobs("unknown"));
+  });
+
+  it("records country-level region from Cloudflare on install_requested", async () => {
+    const response = await get("/install", { country: "ca" });
+    await flush();
+    expect(response.status).toBe(200);
+    expect(points[0]?.blobs).toEqual(installerRequestedBlobs("CA"));
+  });
+
+  it("does not store city, colo, or other Cloudflare metadata on install_requested", async () => {
+    const response = await get("/install", {
+      country: "US",
+      city: "Austin",
+      colo: "DFW",
+      postalCode: "78701",
+      latitude: "30.2672",
+      longitude: "-97.7431",
+      region: "Texas",
+      regionCode: "TX",
+      asOrganization: "Example ISP",
+    });
+    await flush();
+    expect(response.status).toBe(200);
+    expect(points[0]?.blobs?.[8]).toBe("US");
+    const stored = JSON.stringify(points[0]);
+    for (const leak of ["Austin", "DFW", "78701", "30.2672", "-97.7431", "Texas", "TX", "Example ISP"]) {
+      expect(stored).not.toContain(leak);
+    }
   });
 
   it("behaves identically on the prefix-stripped /install route", async () => {
@@ -164,17 +242,35 @@ describe("measured installer route", () => {
     expect(points[0]?.indexes?.[0]).toBe("install_requested");
   });
 
-  it("records nothing for the pre-existing installer asset route", async () => {
-    for (const path of ["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]) {
-      const response = await get(path);
+  it("records latest and versioned installer script routes", async () => {
+    const latest = await get("/campfire/install.sh");
+    await flush();
+    expect(latest.status).toBe(200);
+    expect(points[0]?.blobs).toEqual(installerRequestedBlobs("unknown", "latest"));
+
+    const versioned = await get("/campfire/v1.1.0/install.sh");
+    await flush();
+    expect(versioned.status).toBe(200);
+    expect(points[1]?.blobs).toEqual(installerRequestedBlobs("unknown", "versioned"));
+    expect(fetched).toEqual(["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]);
+  });
+
+  it("classifies the User-Agent into a closed family and never stores the raw header", async () => {
+    const cases: Array<{ ua: string; family: string; leak: string }> = [
+      { ua: "curl/8.7.1", family: "curl", leak: "8.7.1" },
+      { ua: "Wget/1.21.4 (linux-gnu)", family: "wget", leak: "linux-gnu" },
+      { ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0", family: "browser", leak: "10_15_7" },
+      { ua: "GitHub-Actions runner/2.321.0", family: "ci", leak: "2.321.0" },
+    ];
+    for (const [index, { ua, family, leak }] of cases.entries()) {
+      const response = await getWith("/install", { "user-agent": ua });
       await flush();
       expect(response.status).toBe(200);
-      expect(await response.text()).toBe(INSTALLER_BODY);
+      expect(points[index]?.blobs).toEqual(installerRequestedBlobs("unknown", "latest", family));
+      const stored = JSON.stringify(points[index]);
+      expect(stored).not.toContain(leak);
+      expect(stored).not.toContain(ua);
     }
-    expect(fetched).toEqual(["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]);
-    // Fetching the script itself is not an installer request: it is a route that
-    // already existed, and counting it would inflate the top of the funnel.
-    expect(points).toEqual([]);
   });
 
   it("records nothing when the asset fetch fails with 404 or 502", async () => {
@@ -257,8 +353,55 @@ describe("telemetry ingestion", () => {
     expect(points).toHaveLength(1);
     expect(points[0]).toEqual({
       indexes: ["activated"],
-      blobs: ["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli", ID_A],
+      blobs: ingestedBlobs("activated", "cli"),
     });
+  });
+
+  it("does not geolocate a client-posted event from request.cf", async () => {
+    const posted = new Request(`https://campfire.test${TELEMETRY_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: validEvent(),
+    });
+    Object.defineProperty(posted, "cf", { value: { country: "US", city: "Austin" } });
+    const ingested = await handle(posted);
+    expect(ingested.status).toBe(200);
+    expect(points[0]?.blobs?.[8]).toBe("none");
+    expect(JSON.stringify(points[0])).not.toContain("Austin");
+    expect(JSON.stringify(points[0])).not.toContain("US");
+  });
+
+  it("stamps country-level region on install_completed only", async () => {
+    const completed = new Request(`https://campfire.test${TELEMETRY_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: validEvent({ event: "install_completed", surface: undefined, installMethod: "curl" }),
+    });
+    Object.defineProperty(completed, "cf", { value: { country: "mx", city: "Monterrey" } });
+    const recorded = await handle(completed);
+    expect(recorded.status).toBe(200);
+    expect(points[0]?.blobs).toEqual(ingestedBlobs("install_completed", "none", { method: "curl", region: "MX" }));
+    expect(JSON.stringify(points[0])).not.toContain("Monterrey");
+
+    const joined = new Request(`https://campfire.test${TELEMETRY_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: validEvent({ event: "teammate_joined", harness: "codex" }),
+    });
+    Object.defineProperty(joined, "cf", { value: { country: "CA" } });
+    const teammate = await handle(joined);
+    expect(teammate.status).toBe(200);
+    expect(points[1]?.blobs).toEqual(ingestedBlobs("teammate_joined", "cli", { harness: "codex" }));
+  });
+
+  it("stores a closed harness on blob12 and rejects country as a client field", async () => {
+    const accepted = await post(TELEMETRY_PATH, validEvent({ harness: "opencode" }));
+    expect(accepted.status).toBe(200);
+    expect(points[0]?.blobs).toEqual(ingestedBlobs("activated", "cli", { harness: "opencode" }));
+
+    const rejected = await post(TELEMETRY_PATH, validEvent({ country: "US" }));
+    expect(rejected.status).toBe(400);
+    expect(points).toHaveLength(1);
   });
 
   it("serves the zone-prefixed route identically to the origin-root route", async () => {
@@ -268,7 +411,7 @@ describe("telemetry ingestion", () => {
     expect(points).toHaveLength(1);
     expect(points[0]).toEqual({
       indexes: ["activated"],
-      blobs: ["activated", "1", "1.9.1", "darwin", "arm64", "none", "cli", ID_A],
+      blobs: ingestedBlobs("activated", "cli"),
     });
   });
 
@@ -288,6 +431,10 @@ describe("telemetry ingestion", () => {
       "curl",
       "none",
       "",
+      "none",
+      "none",
+      "none",
+      "none",
     ]);
   });
 
@@ -512,7 +659,7 @@ describe("d1 handler parity", () => {
     expect(points).toHaveLength(2);
     expect(points[1]).toEqual({
       indexes: ["active"],
-      blobs: ["active", "1", "1.9.1", "darwin", "arm64", "none", "agent", ID_A],
+      blobs: ingestedBlobs("active", "agent"),
     });
   });
 });

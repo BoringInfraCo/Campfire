@@ -102,6 +102,10 @@ const EARLIEST_POSSIBLE_DAY = "2020-01-01";
  *   blob6  install method, or "none"
  *   blob7  surface, or "none"
  *   blob8  installation id, or "" — count(DISTINCT blob8)
+ *   blob9  country-level region (ISO 3166-1 alpha-2), or "none"/"unknown"
+ *   blob10 installer route (latest|versioned), or "none"
+ *   blob11 client family (curl|wget|browser|ci|unknown), or "none"
+ *   blob12 harness (codex|opencode), or "none"
  */
 const DEFINITIONS_FROZEN_ON = "2026-10-02";
 
@@ -413,6 +417,13 @@ const QUERIES = [
     "activated_installations",
     "§15 activated installations.",
   ),
+  funnelStage(
+    "teammate_joined_installations",
+    "Teammate-joined installations",
+    "teammate_joined",
+    "teammate_joined_installations",
+    "Installations that completed a successful enrollment (invitation join or additional harness).",
+  ),
   activeWindow(
     "active_installations_7d",
     "Active installations — trailing 7 days (UTC)",
@@ -499,8 +510,28 @@ WHERE first_active_day < last_active_day`,
     "install_requested", "blob6", "install_method", "since", false,
   ),
   breakdown(
+    "by_region", "Breakdown — installer request region", "installer request region",
+    "install_requested", "blob9", "region", "since", false,
+  ),
+  breakdown(
+    "completed_by_region", "Breakdown — successful installation region", "successful installation region",
+    "install_completed", "blob9", "region", "since", true,
+  ),
+  breakdown(
+    "by_installer_route", "Breakdown — installer route", "installer route",
+    "install_requested", "blob10", "installer_route", "since", false,
+  ),
+  breakdown(
+    "by_client_family", "Breakdown — installer client family", "installer client family",
+    "install_requested", "blob11", "client_family", "since", false,
+  ),
+  breakdown(
     "by_surface", "Breakdown — surface", "surface",
     "active", "blob7", "surface", "trailing30", true,
+  ),
+  breakdown(
+    "by_harness", "Breakdown — harness", "harness",
+    "active", "blob12", "harness", "trailing30", true,
   ),
 ];
 

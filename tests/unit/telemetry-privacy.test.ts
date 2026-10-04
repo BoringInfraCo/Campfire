@@ -76,6 +76,7 @@ function fullEvent(overrides: Record<string, unknown> = {}): ReturnType<typeof b
     arch: "arm64",
     installMethod: "curl",
     surface: "cli",
+    harness: "codex",
     ...overrides,
   } as Parameters<typeof buildTelemetryEvent>[0]);
 }
@@ -94,6 +95,8 @@ describe("allow-list and prohibited-list hygiene", () => {
     for (const required of [
       "ip",
       "location",
+      "country",
+      "city",
       "email",
       "username",
       "hostname",
@@ -133,6 +136,7 @@ describe("allow-list and prohibited-list hygiene", () => {
       "arch",
       "installMethod",
       "surface",
+      "harness",
       "installationId",
     ]);
     expect(TELEMETRY_SCHEMA_VERSION).toBe(1);
@@ -191,7 +195,7 @@ describe("hostile content cannot enter a serialized payload", () => {
 
     // (1c) In every closed-vocabulary slot, where it must normalize away.
     const viaVocabulary = serializeTelemetryEvent(
-      fullEvent({ os: value, arch: value, installMethod: value, surface: value, installationId: value }),
+      fullEvent({ os: value, arch: value, installMethod: value, surface: value, harness: value, installationId: value }),
     );
 
     for (const [label, body] of [
@@ -221,7 +225,13 @@ describe("hostile content cannot enter a serialized payload", () => {
   });
 
   it("emits only allow-listed keys for every documented event", () => {
-    const events: TelemetryEventName[] = ["install_requested", "install_completed", "activated", "active"];
+    const events: TelemetryEventName[] = [
+      "install_requested",
+      "install_completed",
+      "activated",
+      "active",
+      "teammate_joined",
+    ];
     for (const event of events) {
       const payload = JSON.parse(serializeTelemetryEvent(fullEvent({ event }))) as Record<string, unknown>;
       for (const key of keysOf(payload)) {
@@ -276,7 +286,7 @@ describe("hostile content cannot enter a serialized payload", () => {
 });
 
 describe("analytics engine dimensions carry no content", () => {
-  it("keeps one sampling index and the seven dimensions plus the id in blobs", () => {
+  it("keeps one sampling index and the documented blob positions", () => {
     const point = telemetryDataPoint(
       buildTelemetryEvent({
         event: "active",
@@ -292,31 +302,127 @@ describe("analytics engine dimensions carry no content", () => {
     // installation separately, so the id stays blob8.
     expect(point.indexes).toEqual(["active"]);
     expect(point.indexes).toHaveLength(1);
-    expect(point.blobs).toEqual(["active", "1", "1.9.1", "darwin", "arm64", "curl", "mcp", ID_A]);
-    expect(point.blobs).toHaveLength(8);
+    expect(point.blobs).toEqual([
+      "active",
+      "1",
+      "1.9.1",
+      "darwin",
+      "arm64",
+      "curl",
+      "mcp",
+      ID_A,
+      "none",
+      "none",
+      "none",
+      "none",
+    ]);
+    expect(point.blobs).toHaveLength(12);
     expect(point.blobs[0]).toBe(point.indexes[0]);
     expect(point.blobs[1]).toBe("1");
     expect(point.blobs[7]).toBe(ID_A);
+    expect(point.blobs[8]).toBe("none");
+    expect(point.blobs[9]).toBe("none");
+    expect(point.blobs[10]).toBe("none");
+    expect(point.blobs[11]).toBe("none");
   });
 
   it("records none as the value of an inapplicable dimension rather than a leak", () => {
     const point = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }));
     expect(point.indexes).toEqual(["install_requested"]);
     expect(point.indexes).toHaveLength(1);
-    expect(point.blobs).toEqual(["install_requested", "1", "unknown", "unknown", "unknown", "none", "none", ""]);
-    expect(point.blobs).toHaveLength(8);
+    expect(point.blobs).toEqual([
+      "install_requested",
+      "1",
+      "unknown",
+      "unknown",
+      "unknown",
+      "none",
+      "none",
+      "",
+      "none",
+      "none",
+      "none",
+      "none",
+    ]);
+    expect(point.blobs).toHaveLength(12);
     expect(point.blobs[0]).toBe(point.indexes[0]);
     expect(point.blobs[1]).toBe("1");
     expect(point.blobs[7]).toBe("");
+    expect(point.blobs[8]).toBe("none");
+  });
+
+  it("stores only a normalized country-level region on blob9", () => {
+    const point = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }), {
+      region: "us",
+    });
+    expect(point.blobs[8]).toBe("US");
+    const hostile = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }), {
+      region: "Austin",
+    });
+    expect(hostile.blobs[8]).toBe("unknown");
+    expect(JSON.stringify(hostile)).not.toContain("Austin");
+  });
+
+  it("stores only closed installer-route and client-family enums on blob10 and blob11", () => {
+    const point = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }), {
+      installerRoute: "/campfire/v1.11.0/install.sh",
+      clientFamily: "curl/8.7.1",
+    });
+    expect(point.blobs[9]).toBe("versioned");
+    expect(point.blobs[10]).toBe("curl");
+    expect(JSON.stringify(point)).not.toContain("/campfire/v1.11.0/install.sh");
+    expect(JSON.stringify(point)).not.toContain("curl/8.7.1");
+
+    const hostile = telemetryDataPoint(buildTelemetryEvent({ event: "install_requested" }), {
+      installerRoute: "/secret/path",
+      clientFamily: "Mozilla/5.0 example-repo",
+    });
+    expect(hostile.blobs[9]).toBe("none");
+    expect(hostile.blobs[10]).toBe("browser");
+    expect(JSON.stringify(hostile)).not.toContain("/secret/path");
+    expect(JSON.stringify(hostile)).not.toContain("example-repo");
+  });
+
+  it("stores only a closed harness on blob12", () => {
+    const point = telemetryDataPoint(
+      buildTelemetryEvent({
+        event: "activated",
+        installationId: ID_A,
+        campfireVersion: "1.9.1",
+        os: "darwin",
+        arch: "arm64",
+        harness: "opencode",
+      }),
+    );
+    expect(point.blobs[11]).toBe("opencode");
+    const dropped = telemetryDataPoint(
+      buildTelemetryEvent({
+        event: "activated",
+        installationId: ID_A,
+        harness: "claude-code",
+      }),
+    );
+    expect(dropped.blobs[11]).toBe("none");
+    expect(JSON.stringify(dropped)).not.toContain("claude-code");
   });
 
   it("keeps blob positions stable for every event name", () => {
-    const events: TelemetryEventName[] = ["install_requested", "install_completed", "activated", "active"];
+    const events: TelemetryEventName[] = [
+      "install_requested",
+      "install_completed",
+      "activated",
+      "active",
+      "teammate_joined",
+    ];
     for (const event of events) {
       const point = telemetryDataPoint(fullEvent({ event }));
       expect(point.indexes, event).toEqual([event]);
       expect(point.indexes, event).toHaveLength(1);
-      expect(point.blobs, event).toHaveLength(8);
+      expect(point.blobs, event).toHaveLength(12);
+      expect(point.blobs[8], event).toBe("none");
+      expect(point.blobs[9], event).toBe("none");
+      expect(point.blobs[10], event).toBe("none");
+      expect(point.blobs[11], event).toBe("codex");
       expect(point.blobs[0], event).toBe(point.indexes[0]);
       expect(point.blobs[1], event).toBe("1");
       // `fullEvent` always carries an installation id. The empty-id case is
@@ -344,7 +450,7 @@ describe("payload ceiling", () => {
   });
 
   it("stays under the limit for every documented event and surface", () => {
-    for (const event of ["install_requested", "install_completed", "activated", "active"] as const) {
+    for (const event of ["install_requested", "install_completed", "activated", "active", "teammate_joined"] as const) {
       for (const surface of [undefined, "cli", "agent", "mcp"] as const) {
         const body = serializeTelemetryEvent(
           buildTelemetryEvent({ event, installationId: ID_A, campfireVersion: "1.9.1", surface }),

@@ -18,6 +18,9 @@
  */
 import {
   buildTelemetryEvent,
+  normalizeTelemetryClientFamily,
+  normalizeTelemetryInstallerRoute,
+  normalizeTelemetryRegion,
   parseTelemetryEventV1,
   TELEMETRY_MAX_PAYLOAD_BYTES,
   telemetryDataPoint,
@@ -132,7 +135,11 @@ export async function handleTelemetryEvent(
   }
 
   try {
-    options.dataset.writeDataPoint(telemetryDataPoint(parsed.event));
+    const extras =
+      parsed.event.event === "install_completed"
+        ? { region: installerRegionFrom(request) }
+        : undefined;
+    options.dataset.writeDataPoint(telemetryDataPoint(parsed.event, extras));
   } catch {
     // A measurement write must not become a client error: the caller has
     // nothing to fix, and a 500 here would make a successful install look
@@ -143,20 +150,48 @@ export async function handleTelemetryEvent(
 }
 
 /**
+ * Cloudflare's request metadata. Typed structurally so the Worker stays free
+ * of `@cloudflare/workers-types`. Only `country` is ever read.
+ */
+interface IncomingRequestCfCountry {
+  country?: unknown;
+}
+
+function installerRegionFrom(request: Request | undefined): string {
+  if (request === undefined || !("cf" in request)) return "unknown";
+  const cf = (request as Request & { cf?: IncomingRequestCfCountry }).cf;
+  return normalizeTelemetryRegion(cf?.country);
+}
+
+function installerRouteFrom(request: Request | undefined): "latest" | "versioned" | "none" {
+  if (request === undefined) return "none";
+  return normalizeTelemetryInstallerRoute(new URL(request.url).pathname);
+}
+
+function clientFamilyFrom(request: Request | undefined): string | undefined {
+  if (request === undefined) return undefined;
+  return normalizeTelemetryClientFamily(request.headers.get("user-agent"));
+}
+
+/**
  * Record `install_requested` for the public installer route (TEL-001D).
  *
  * Anonymous by contract: no installation id exists yet at this point in the
- * funnel, and none is sent. The requestor is a shell pipeline, so the Worker
- * genuinely cannot know its platform — reading it from request headers (or
- * from Cloudflare-added client metadata) would be fingerprinting to fill in a
- * dimension the installer already reports truthfully in `install_completed`.
- * os/arch therefore stay `unknown`, and no address, host, or token header is
- * ever read.
+ * funnel, and none is sent. The requestor is a shell pipeline, so os/arch stay
+ * `unknown` — the installer reports platform truthfully in `install_completed`.
+ * Country-level region is the one Cloudflare field this write reads
+ * (`request.cf.country`, ISO 3166-1 alpha-2 such as US, CA, MX). The User-Agent
+ * header is classified into a closed family and then discarded. Address, city,
+ * colo, host, token headers, and the raw User-Agent are never stored.
  */
-export function recordInstallRequested(dataset: AnalyticsEngineDataset | undefined): Promise<void> {
+export function recordInstallRequested(
+  dataset: AnalyticsEngineDataset | undefined,
+  request?: Request,
+): Promise<void> {
   if (dataset === undefined) return Promise.resolve();
   return Promise.resolve().then(() => {
     try {
+      const route = installerRouteFrom(request);
       dataset.writeDataPoint(
         telemetryDataPoint(
           buildTelemetryEvent({
@@ -165,6 +200,11 @@ export function recordInstallRequested(dataset: AnalyticsEngineDataset | undefin
             os: "unknown",
             arch: "unknown",
           }),
+          {
+            region: installerRegionFrom(request),
+            ...(route === "none" ? {} : { installerRoute: route }),
+            clientFamily: clientFamilyFrom(request) ?? "unknown",
+          },
         ),
       );
     } catch {

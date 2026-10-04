@@ -236,10 +236,10 @@ Harness-specific logic lives at the MCP adapter boundary; the domain model never
 
 ## Telemetry
 
-Campfire records four anonymous events so it can tell whether the project is being installed, activated, and used again: `install_requested`, `install_completed`, `activated`, and `active`. A payload carries a random local installation id plus Campfire version, OS, architecture, install method, and surface, and nothing else. There is no dashboard and no third-party analytics SDK.
+Campfire records five anonymous events so it can tell whether the project is being installed, activated, used again, and joined by a teammate: `install_requested`, `install_completed`, `activated`, `active`, and `teammate_joined`. A payload carries a random local installation id plus Campfire version, OS, architecture, install method, surface, and closed harness (`codex` or `opencode`), and nothing else. The Worker also stores country-level region, installer route, and a coarse client family on installer fetches, and country on successful installs. There is no dashboard and no third-party analytics SDK.
 
 - **No content.** No prompts, messages, code, diffs, findings, decisions, goals, task or artifact contents, file paths, or repository, branch, workspace, and team names.
-- **No identity.** No name, email, handle, hostname, machine fingerprint, IP address, or location.
+- **No identity.** No name, email, handle, hostname, machine fingerprint, or IP address. Installer fetches record a country code (`US`, `CA`, `MX`, …), not a city or precise location.
 - **No credentials.** No tokens, keys, secrets, or raw command arguments.
 - **Enforced by an allow-list, not by policy.** Every payload is built from a fixed field list, and the endpoint rejects any undocumented field.
 - **An installation, not a person.** The id is a random UUID generated locally; a deduplicated count is an anonymous installation.

@@ -108,12 +108,12 @@ const ACTIVITY_METHODS: ReadonlySet<string> = new Set(["get_workspace_context"])
  * Fire-and-forget is mandatory: an MCP tool result must never be delayed or
  * rejected by measurement (TEL-001 sections 8 and 12).
  */
-function reportMcpSuccess(method: string): void {
+function reportMcpSuccess(method: string, harness?: string): void {
   if (ACTIVATION_METHODS.has(method)) {
-    telemetryInBackground(reportActivated("mcp"));
+    telemetryInBackground(reportActivated("mcp", { harness }));
   }
   if (ACTIVITY_METHODS.has(method)) {
-    telemetryInBackground(reportActive("mcp"));
+    telemetryInBackground(reportActive("mcp", { harness }));
   }
 }
 
@@ -190,7 +190,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       const result = await fn();
       // Success only. A throw below is a failed setup or failed authentication
       // (section 9) and must never activate.
-      reportMcpSuccess(method);
+      reportMcpSuccess(method, identity?.harness);
       return ok(result);
     } catch (error) {
       if (error instanceof CampfireError) {

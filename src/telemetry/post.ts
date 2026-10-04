@@ -39,6 +39,7 @@ export interface TelemetryPostInput {
   arch?: string;
   installMethod?: string;
   surface?: TelemetrySurface;
+  harness?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }

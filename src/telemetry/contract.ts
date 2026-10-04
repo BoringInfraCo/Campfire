@@ -16,7 +16,9 @@
  *
  * Field positions are stable. Analytics Engine queries blobs by position and
  * allows only one sampling index, so appending a dimension later is safe;
- * reordering is not. The stored layout is `telemetryDataPoint`.
+ * reordering is not. The stored layout is `telemetryDataPoint`. blob9–blob11
+ * are Worker-derived (region, installer route, client family) and are not
+ * client payload fields. blob12 is the closed harness enum from the payload.
  */
 
 /** Current wire contract. A payload declaring another version is rejected, not coerced. */
@@ -32,6 +34,7 @@ export const TELEMETRY_EVENTS = [
   "install_completed",
   "activated",
   "active",
+  "teammate_joined",
 ] as const;
 
 export type TelemetryEventName = (typeof TELEMETRY_EVENTS)[number];
@@ -54,6 +57,19 @@ export const TELEMETRY_SURFACES = ["cli", "agent", "mcp"] as const;
 export type TelemetrySurface = (typeof TELEMETRY_SURFACES)[number];
 
 /**
+ * Closed harness vocabulary on `activated`, `active`, and `teammate_joined`.
+ * Anything else is dropped, so a free-text harness name cannot become a dimension.
+ */
+export const TELEMETRY_HARNESSES = ["codex", "opencode"] as const;
+export type TelemetryHarness = (typeof TELEMETRY_HARNESSES)[number];
+
+export const TELEMETRY_INSTALLER_ROUTES = ["latest", "versioned"] as const;
+export type TelemetryInstallerRoute = (typeof TELEMETRY_INSTALLER_ROUTES)[number];
+
+export const TELEMETRY_CLIENT_FAMILIES = ["curl", "wget", "browser", "ci", "unknown"] as const;
+export type TelemetryClientFamily = (typeof TELEMETRY_CLIENT_FAMILIES)[number];
+
+/**
  * Normalized platform vocabulary, matching `public/campfire/install.sh` so the
  * client and the installer report the same strings for the same machine.
  * Anything outside the allow-list becomes `unknown` rather than being sent raw.
@@ -67,6 +83,77 @@ export function normalizeTelemetryOs(platform: string): string {
 export function normalizeTelemetryArch(arch: string): string {
   if (arch === "arm64" || arch === "aarch64") return "arm64";
   if (arch === "x64" || arch === "amd64") return "x64";
+  return "unknown";
+}
+
+/**
+ * Country-level region for an installer fetch.
+ *
+ * Cloudflare supplies ISO 3166-1 alpha-2 on `request.cf.country` (US, CA, MX).
+ * `T1` is Cloudflare's Tor exit marker. Anything else, including a missing
+ * value, a city name, or a three-letter spelling, becomes `unknown` rather
+ * than being stored raw. This is not a client-payload field.
+ */
+export function normalizeTelemetryRegion(value: unknown): string {
+  if (typeof value !== "string") return "unknown";
+  const region = value.trim().toUpperCase();
+  if (region === "T1") return "T1";
+  if (/^[A-Z]{2}$/.test(region)) return region;
+  return "unknown";
+}
+
+/** Latest curl URL vs a pinned `vX.Y.Z` installer script. */
+export function normalizeTelemetryInstallerRoute(pathname: unknown): TelemetryInstallerRoute | "none" {
+  if (typeof pathname !== "string") return "none";
+  const path = pathname.trim();
+  if (/^\/(?:campfire\/)?v\d+\.\d+\.\d+\/install\.sh$/.test(path)) return "versioned";
+  if (
+    path === "/install" ||
+    path === "/campfire/install" ||
+    path === "/campfire/install.sh" ||
+    path === "/install.sh"
+  ) {
+    return "latest";
+  }
+  return "none";
+}
+
+/**
+ * Coarse User-Agent family. The raw header is never stored; only this enum is.
+ */
+export function normalizeTelemetryClientFamily(userAgent: unknown): TelemetryClientFamily {
+  if (typeof userAgent !== "string" || userAgent.trim().length === 0) return "unknown";
+  const ua = userAgent.toLowerCase();
+  if (/\bcurl\b/.test(ua)) return "curl";
+  if (/\bwget\b/.test(ua)) return "wget";
+  if (
+    ua.includes("mozilla/") ||
+    ua.includes("chrome/") ||
+    ua.includes("safari/") ||
+    ua.includes("firefox/") ||
+    ua.includes("edg/") ||
+    ua.includes("opera")
+  ) {
+    return "browser";
+  }
+  if (
+    ua.includes("github-actions") ||
+    ua.includes("github-hookshot") ||
+    ua.includes("gitlab") ||
+    ua.includes("jenkins") ||
+    ua.includes("circleci") ||
+    ua.includes("travis") ||
+    ua.includes("azure-pipelines") ||
+    ua.includes("buildkite") ||
+    ua.includes("python-requests") ||
+    ua.includes("python-urllib") ||
+    ua.includes("go-http-client") ||
+    ua.includes("axios/") ||
+    ua.includes("node-fetch") ||
+    ua.includes("httpie")
+  ) {
+    return "ci";
+  }
   return "unknown";
 }
 
@@ -85,6 +172,7 @@ export interface TelemetryEventV1 {
   arch: string;
   installMethod?: TelemetryInstallMethod;
   surface?: TelemetrySurface;
+  harness?: TelemetryHarness;
 }
 
 /**
@@ -168,6 +256,7 @@ export const TELEMETRY_FIELDS = [
   "arch",
   "installMethod",
   "surface",
+  "harness",
   "installationId",
 ] as const;
 
@@ -205,6 +294,7 @@ export function buildTelemetryEvent(input: {
   arch?: string;
   installMethod?: string;
   surface?: string;
+  harness?: string;
 }): TelemetryEventV1 {
   const event: TelemetryEventV1 = {
     schemaVersion: TELEMETRY_SCHEMA_VERSION,
@@ -218,6 +308,8 @@ export function buildTelemetryEvent(input: {
   if (installMethod !== undefined) event.installMethod = installMethod;
   const surface = normalizedEnum(input.surface, TELEMETRY_SURFACES);
   if (surface !== undefined) event.surface = surface;
+  const harness = normalizedEnum(input.harness, TELEMETRY_HARNESSES);
+  if (harness !== undefined) event.harness = harness;
   return event;
 }
 
@@ -236,6 +328,7 @@ export function serializeTelemetryEvent(event: TelemetryEventV1): string {
   };
   if (event.installMethod !== undefined) payload.installMethod = event.installMethod;
   if (event.surface !== undefined) payload.surface = event.surface;
+  if (event.harness !== undefined) payload.harness = event.harness;
   return JSON.stringify(payload);
 }
 
@@ -252,6 +345,7 @@ const ALLOWED_KEY_SET: ReadonlySet<string> = new Set([
   "arch",
   "installMethod",
   "surface",
+  "harness",
 ]);
 
 /**
@@ -302,7 +396,21 @@ export function parseTelemetryEventV1(raw: unknown): TelemetryParseResult {
   if (installMethod !== undefined) event.installMethod = installMethod;
   const surface = normalizedEnum(source.surface, TELEMETRY_SURFACES);
   if (surface !== undefined) event.surface = surface;
+  const harness = normalizedEnum(source.harness, TELEMETRY_HARNESSES);
+  if (harness !== undefined) event.harness = harness;
   return { ok: true, event };
+}
+
+function storedInstallerRoute(value: string | undefined): string {
+  if (value === undefined) return "none";
+  if (value === "latest" || value === "versioned") return value;
+  return normalizeTelemetryInstallerRoute(value);
+}
+
+function storedClientFamily(value: string | undefined): string {
+  if (value === undefined) return "none";
+  if ((TELEMETRY_CLIENT_FAMILIES as readonly string[]).includes(value)) return value;
+  return normalizeTelemetryClientFamily(value);
 }
 
 /**
@@ -311,16 +419,25 @@ export function parseTelemetryEventV1(raw: unknown): TelemetryParseResult {
  * AE allows one index. That index is the sampling key, not a dimension column.
  * A per-installation id is the wrong key: Analytics Engine samples within an
  * index value, and a unique key makes aggregate queries scan one series per
- * installation. The event name is the sampling key because the funnel is four
- * low-cardinality series.
+ * installation. The event name is the sampling key because the funnel is a
+ * handful of low-cardinality series.
  * The seven former index dimensions are blob1..blob7 in the same order (event,
  * schema version, campfire version, os, arch, install method, surface). blob1
  * repeats the sampling index so a query can filter on blobs. The installation
- * id is blob8, never an index. These positions are the stable layout because
+ * id is blob8, never an index. blob9 is country-level region, blob10 installer
+ * route, blob11 client family, blob12 harness. `"none"` means the event does
+ * not collect that dimension. These positions are the stable layout because
  * the 7-index layout never stored a row — extra indexes are rejected and the
  * write records nothing.
  */
-export function telemetryDataPoint(event: TelemetryEventV1): {
+export function telemetryDataPoint(
+  event: TelemetryEventV1,
+  extras?: {
+    region?: string;
+    installerRoute?: string;
+    clientFamily?: string;
+  },
+): {
   indexes: string[];
   blobs: string[];
 } {
@@ -335,6 +452,10 @@ export function telemetryDataPoint(event: TelemetryEventV1): {
       event.installMethod ?? "none",
       event.surface ?? "none",
       event.installationId,
+      extras?.region === undefined ? "none" : normalizeTelemetryRegion(extras.region),
+      storedInstallerRoute(extras?.installerRoute),
+      storedClientFamily(extras?.clientFamily),
+      event.harness ?? "none",
     ],
   };
 }

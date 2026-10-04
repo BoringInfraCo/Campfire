@@ -113,6 +113,7 @@ import {
   TELEMETRY_ENDPOINT_ENV_VAR,
   reportActivated,
   reportActive,
+  reportTeammateJoined,
   telemetryInBackground,
 } from "../telemetry/report.js";
 import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
@@ -950,6 +951,7 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
     assertConnectionCompatible({ harness, configPath, url: profile.url, ...(knownToken === undefined ? {} : { agentToken: knownToken }) });
     const enrollmentHarness = requireEnum(harness, ["codex", "opencode"] as const, "harness") as EnrollmentHarness;
     await enrollRemoteAgent({ harness: enrollmentHarness, name: optionalFlag(flags, "agent-name"), configPath, mcpCommand });
+    telemetryInBackground(reportTeammateJoined("cli", { env: process.env, harness: enrollmentHarness }));
   }
   const access = profile?.mode === "remote"
     ? resolveRemoteAccess({ harness, url: optionalFlag(flags, "url"), token: optionalFlag(flags, "token") })
@@ -1886,6 +1888,8 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
     // the invitation variant reaches it; background so a committed join is
     // never failed by measurement.
     telemetryInBackground(reportActivated("cli", { env: process.env }));
+    const joinedHarness = selected.length === 1 ? (selected[0] as EnrollmentHarness) : undefined;
+    telemetryInBackground(reportTeammateJoined("cli", { env: process.env, harness: joinedHarness }));
     emitResult(receipt,commandOutput(parsed),value=>`Joined ${value.workspace.name} as ${value.human.name}.\nCompleted: ${value.stages.join(", ")}.\nConnected ${value.agents.map(agent=>agent.harness).join(" and ")}. Reload the harness and approve Campfire tools.\nNext: campfire up`);
     return;
   }

@@ -346,8 +346,12 @@ columns are not written. Read the blobs instead: `blob1` event name
 (`install_requested`, `install_completed`, `activated`, `active`), `blob2`
 schema version (`"1"`), `blob3` Campfire version, `blob4` OS, `blob5`
 architecture, `blob6` install method or `"none"`, `blob7` surface or `"none"`,
-`blob8` installation id or `""`. Deduplicate installations with
-`count(DISTINCT blob8)`.
+`blob8` installation id or `""`, `blob9` country-level region (ISO 3166-1
+alpha-2 such as `US`/`CA`/`MX`, or `"none"`/`"unknown"`), `blob10` installer
+route (`latest`/`versioned`/`none`), `blob11` client family, `blob12` harness
+(`codex`/`opencode`/`none`). Deduplicate installations with
+`count(DISTINCT blob8)`. Group installer requests by region with `blob9` and
+successful installations by `blob9` on `install_completed`.
 
 ## 1. Initialize
 
