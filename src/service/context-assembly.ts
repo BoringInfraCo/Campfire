@@ -44,6 +44,7 @@ export interface OrientationAssembly {
   currentWork: CurrentWork;
   suggestedNextAction: SuggestedNextAction;
   alignment: RecordedAlignment;
+  historicalCounts: { findings: number; decisions: number };
   since?: SinceProjection;
 }
 
@@ -82,6 +83,7 @@ export function assembleWorkspaceContext(parts: OrientationAssembly): WorkspaceC
     currentWork: parts.currentWork,
     suggestedNextAction: parts.suggestedNextAction,
     alignment: parts.alignment,
+    historicalCounts: parts.historicalCounts,
     provenanceSummary: parts.provenanceSummary,
   };
   if (parts.goal !== undefined) context.goal = parts.goal;

@@ -1,6 +1,6 @@
-# Campfire 1.10.0 release context
+# Campfire 1.11.0 release context
 
-This public source snapshot was exported on 2026-10-03 from private canonical source commit `aab21cb680b198ef7a077e6b73f2f71f9d808059` (dated 2026-10-03T17:31:58-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-04 from private canonical source commit `67f9e2e73095f7e5ca5abd9c9b59da2873e1d88c` (dated 2026-10-03T21:05:37-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -24,6 +24,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Completed Workspaces remain readable with their structured state and contribution history intact.
 - Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
 - Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
+- A finding can be corrected or withdrawn in place, and a decision can name one predecessor. The old text stays on the old row. Orientation keeps the current record and marks a decision that still cites a non-current finding. This release is conditional: one operator, one machine, and fixture participants. Gate B and Gate C remain unmeasured. Production deployment is separate.
 
 ## Artifacts
 

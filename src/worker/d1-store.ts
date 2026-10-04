@@ -54,12 +54,36 @@ import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
+  asCorrectionConflict,
+  citationInsertParams,
+  decisionClaimStatements,
+  decisionCorrectionFields,
+  decisionInsertParams,
+  evidenceInsertParams,
+  findingClaimStatements,
+  findingCorrectionFields,
+  findingInsertParams,
+  INSERT_DECISION_CITATION_SQL,
+  INSERT_DECISION_SQL,
+  INSERT_FINDING_EVIDENCE_SQL,
+  INSERT_FINDING_SQL,
+  listDecisionCitationsSql,
+  listFindingEvidenceSql,
+  listStaleCitedFindingIdsSql,
+  mapCitation,
+  mapEvidence,
+  type CitationRow,
+  type EvidenceRow,
+} from "../store/correction-records.js";
+import {
   contributionsBeforeSql,
   contributionsSinceSql,
   countByStatusSql,
   countContributionsPageSql,
   countContributionsSinceSql,
   countDecisionsSql,
+  countFindingsSql,
+  countHistoricalFindingsSql,
   countRowsSql,
   countTasksSql,
   pageArtifactsSql,
@@ -186,6 +210,14 @@ interface FindingRow {
   created_by_actor_type: string;
   agent_session_id: string | null;
   created_at: string;
+  currentness?: string | null;
+  predecessor_id?: string | null;
+  successor_id?: string | null;
+  correction_reason?: string | null;
+  corrected_by_actor_id?: string | null;
+  corrected_by_actor_type?: string | null;
+  corrected_session_id?: string | null;
+  corrected_at?: string | null;
 }
 
 interface DecisionRow {
@@ -201,6 +233,13 @@ interface DecisionRow {
   agent_session_id: string | null;
   created_at: string;
   updated_at: string;
+  predecessor_id?: string | null;
+  successor_id?: string | null;
+  supersede_reason?: string | null;
+  superseded_by_actor_id?: string | null;
+  superseded_by_actor_type?: string | null;
+  superseded_session_id?: string | null;
+  superseded_at?: string | null;
 }
 
 interface ArtifactRow {
@@ -414,6 +453,7 @@ function mapFinding(row: FindingRow): Finding {
     detail: row.detail ?? undefined,
     confidence: row.confidence ?? undefined,
     sourceArtifactId: row.source_artifact_id ?? undefined,
+    ...findingCorrectionFields(row),
   };
 }
 
@@ -431,6 +471,7 @@ function mapDecision(row: DecisionRow): Decision {
     status: row.status as DecisionStatus,
     approvedBy,
     updatedAt: row.updated_at,
+    ...decisionCorrectionFields(row),
   };
 }
 
@@ -664,6 +705,41 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     return db.prepare(query).bind(...params).run();
   }
 
+  // A buffered D1 delete cannot see meta.changes until the batch commits.
+  // The guard insert fails the whole batch when that delete matched no row,
+  // so a following contribution cannot commit on its own.
+  async function deleteOne(sql: string, ...params: unknown[]): Promise<boolean> {
+    if (txnDepth > 0) {
+      await runNow(
+        `CREATE TEMP TABLE IF NOT EXISTS _campfire_delete_guard (
+           n INTEGER NOT NULL CONSTRAINT campfire_delete_guard_one_row CHECK (n = 1)
+         )`,
+      );
+      await run("DELETE FROM _campfire_delete_guard");
+      await run(sql, ...params);
+      await run("INSERT INTO _campfire_delete_guard (n) SELECT changes()");
+      return true;
+    }
+    const result = await run(sql, ...params);
+    return result.meta?.changes === 1;
+  }
+
+  async function applyClaim(statements: { insert: { sql: string; params: unknown[] }; update: { sql: string; params: unknown[] } }): Promise<void> {
+    if (txnDepth > 0) {
+      await run(statements.insert.sql, ...statements.insert.params);
+      await run(statements.update.sql, ...statements.update.params);
+      return;
+    }
+    try {
+      await db.batch([
+        db.prepare(statements.insert.sql).bind(...statements.insert.params),
+        db.prepare(statements.update.sql).bind(...statements.update.params),
+      ]);
+    } catch (error) {
+      throw asCorrectionConflict(error);
+    }
+  }
+
   async function executeEnrollment(statements: EnrollmentStatement[]): Promise<boolean> {
     // This operation owns its complete atomic batch. Letting an outer buffer
     // defer it would break its claim result and could split administrative state.
@@ -893,12 +969,11 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
 
     async createFinding(finding) {
-      await run(
-        "INSERT INTO findings (id, workspace_id, summary, detail, confidence, source_artifact_id, created_by_actor_id, created_by_actor_type, agent_session_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        finding.id, finding.workspaceId, finding.summary, finding.detail ?? null,
-        finding.confidence ?? null, finding.sourceArtifactId ?? null,
-        finding.createdBy.actorId, finding.createdBy.actorType,
-        finding.agentSessionId ?? null, finding.createdAt);
+      try {
+        await run(INSERT_FINDING_SQL, ...findingInsertParams(finding));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
     },
 
     async getFinding(id) {
@@ -912,12 +987,11 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
 
     async createDecision(decision) {
-      await run(
-        "INSERT INTO decisions (id, workspace_id, summary, rationale, status, approved_by_actor_id, approved_by_actor_type, created_by_actor_id, created_by_actor_type, agent_session_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        decision.id, decision.workspaceId, decision.summary, decision.rationale ?? null,
-        decision.status, decision.approvedBy?.actorId ?? null, decision.approvedBy?.actorType ?? null,
-        decision.createdBy.actorId, decision.createdBy.actorType,
-        decision.agentSessionId ?? null, decision.createdAt, decision.updatedAt);
+      try {
+        await run(INSERT_DECISION_SQL, ...decisionInsertParams(decision));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
     },
 
     async getDecision(id) {
@@ -1045,7 +1119,7 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
 
     async pageFindings(workspaceId, query) {
       const listed = pageFindingsSql(workspaceId, query);
-      const counted = countRowsSql("findings", workspaceId);
+      const counted = countFindingsSql(workspaceId, query.currentness);
       const rows = await all<FindingRow & RankedRow>(listed.sql, ...listed.params);
       const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
       return rankedPage(rows, query.limit, total, mapFinding);
@@ -1288,6 +1362,85 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       return result.meta?.changes === 1;
     },
 
+    async countFindings(workspaceId, currentness) {
+      const statement = countFindingsSql(workspaceId, currentness);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
+    async countHistoricalFindings(workspaceId) {
+      const statement = countHistoricalFindingsSql(workspaceId);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
+    async listFindingEvidence(findingIds) {
+      const statement = listFindingEvidenceSql(findingIds);
+      if (statement === undefined) return [];
+      return (await all<EvidenceRow>(statement.sql, ...statement.params)).map(mapEvidence);
+    },
+
+    async getFindingEvidence(id) {
+      const row = await first<EvidenceRow>("SELECT * FROM finding_evidence WHERE id = ?", id);
+      return row === undefined ? undefined : mapEvidence(row);
+    },
+
+    async insertFindingEvidence(evidence) {
+      try {
+        await run(INSERT_FINDING_EVIDENCE_SQL, ...evidenceInsertParams(evidence));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    async deleteFindingEvidence(findingId, artifactId) {
+      return deleteOne(
+        "DELETE FROM finding_evidence WHERE finding_id = ? AND artifact_id = ?",
+        findingId,
+        artifactId,
+      );
+    },
+
+    async claimFindingTransition(claim) {
+      await applyClaim(findingClaimStatements(claim));
+    },
+
+    async listDecisionCitations(decisionIds) {
+      const statement = listDecisionCitationsSql(decisionIds);
+      if (statement === undefined) return [];
+      return (await all<CitationRow>(statement.sql, ...statement.params)).map(mapCitation);
+    },
+
+    async getDecisionCitation(id) {
+      const row = await first<CitationRow>("SELECT * FROM decision_citations WHERE id = ?", id);
+      return row === undefined ? undefined : mapCitation(row);
+    },
+
+    async listStaleCitedFindingIds(decisionIds) {
+      const statement = listStaleCitedFindingIdsSql(decisionIds);
+      if (statement === undefined) return [];
+      const rows = await all<{ finding_id: string }>(statement.sql, ...statement.params);
+      return rows.map((row) => row.finding_id);
+    },
+
+    async insertDecisionCitation(citation) {
+      try {
+        await run(INSERT_DECISION_CITATION_SQL, ...citationInsertParams(citation));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    async deleteDecisionCitation(decisionId, findingId) {
+      return deleteOne(
+        "DELETE FROM decision_citations WHERE decision_id = ? AND finding_id = ?",
+        decisionId,
+        findingId,
+      );
+    },
+
+    async claimDecisionTransition(claim) {
+      await applyClaim(decisionClaimStatements(claim));
+    },
+
     async transaction<T>(fn: () => Promise<T>): Promise<T> {
       const outer = txnDepth === 0;
       txnDepth += 1;
@@ -1303,7 +1456,9 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
               await db.batch(statements);
               break;
             } catch (error) {
-              if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) throw error;
+              if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) {
+                throw asCorrectionConflict(error);
+              }
             }
           }
         }
@@ -1311,7 +1466,7 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       } catch (error) {
         buffered.length = 0;
         dirty = false;
-        throw error;
+        throw asCorrectionConflict(error);
       } finally {
         txnDepth -= 1;
       }

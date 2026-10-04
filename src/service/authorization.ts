@@ -17,6 +17,7 @@ export type Operation =
   | "goal:create"
   | "goal:update"
   | "finding:create"
+  | "finding:update"
   | "decision:create"
   | "decision:update"
   | "task:create"

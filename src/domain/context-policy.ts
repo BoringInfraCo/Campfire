@@ -4,8 +4,9 @@
  * Orientation, catch-up, and drill-down share this module so CLI, MCP, and
  * HTTP cannot grow a second ranking rule. Selection uses structured fields
  * that already exist. Findings are not attached to tasks or decisions; the
- * only relationship is `Finding.sourceArtifactId`. This sprint does not add
- * one. Superseding a finding or decision is a later lifecycle.
+ * ranking relationship remains `Finding.sourceArtifactId`. COR-001 currentness
+ * filters orientation; it does not change this rank. Evidence relations are
+ * not a ranking signal.
  */
 import { ValidationError } from "./errors.js";
 import type { ActorRef, Contribution, ContributionObjectType, Decision, DecisionStatus, Task, TaskStatus } from "./types.js";
@@ -119,6 +120,10 @@ export interface ChangeSummary {
   changeType: string;
   summary: string;
   materiality: "high" | "normal";
+  /** Set when the contribution recorded an explicit correction reason. */
+  reason?: string;
+  predecessorId?: string;
+  successorId?: string;
 }
 
 /**
@@ -132,6 +137,15 @@ export function contributionMateriality(input: {
   payload?: Record<string, unknown> | null;
 }): "high" | "normal" {
   const status = input.payload && typeof input.payload.status === "string" ? input.payload.status : undefined;
+  const changeType = input.payload && typeof input.payload.changeType === "string" ? input.payload.changeType : undefined;
+  if (
+    changeType === "finding.corrected" ||
+    changeType === "finding.withdrawn" ||
+    changeType === "decision.superseded" ||
+    changeType === "decision.rejected"
+  ) {
+    return "high";
+  }
   if (input.objectType === "finding" && input.action === "create") return "high";
   if (input.objectType === "artifact" && input.action === "create") return "high";
   if (input.objectType === "goal" && (input.action === "create" || input.action === "update")) return "high";
@@ -153,10 +167,18 @@ export function describeChange(input: {
   payload?: Record<string, unknown> | null;
 }): { changeType: string; summary: string } {
   const payload = input.payload ?? {};
+  const explicit = typeof payload.changeType === "string" && payload.changeType.length > 0 ? payload.changeType : undefined;
   const status = typeof payload.status === "string" ? payload.status : undefined;
+  const reason = typeof payload.reason === "string" ? payload.reason : undefined;
   const label =
-    typeof payload.summary === "string" ? payload.summary : typeof payload.title === "string" ? payload.title : undefined;
-  const changeType = status === undefined ? input.action : `${input.action}:${status}`;
+    reason !== undefined
+      ? reason
+      : typeof payload.summary === "string"
+        ? payload.summary
+        : typeof payload.title === "string"
+          ? payload.title
+          : undefined;
+  const changeType = explicit ?? (status === undefined ? input.action : `${input.action}:${status}`);
   const summary =
     label === undefined
       ? `${changeType} ${input.objectType} ${input.objectId}`
@@ -316,6 +338,10 @@ export function toChangeSummary(
 ): ChangeSummary {
   const materiality = contributionMateriality(row);
   const described = describeChange(row);
+  const payload = row.payload ?? {};
+  const reason = typeof payload.reason === "string" ? payload.reason : undefined;
+  const predecessorId = typeof payload.predecessorId === "string" ? payload.predecessorId : undefined;
+  const successorId = typeof payload.successorId === "string" ? payload.successorId : undefined;
   return {
     cursor: encodeContextCursor(
       contributionCursor({
@@ -338,6 +364,9 @@ export function toChangeSummary(
     changeType: described.changeType,
     summary: described.summary,
     materiality,
+    ...(reason !== undefined ? { reason } : {}),
+    ...(predecessorId !== undefined ? { predecessorId } : {}),
+    ...(successorId !== undefined ? { successorId } : {}),
   };
 }
 

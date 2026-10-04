@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+.
 
-The source tree targets v1.10.0. The v1.9.3 telemetry patch keeps telemetry schema version 1
+This source commit is v1.11.0. The verdict is CONDITIONAL GO. Production is not deployed, so the versioned installer URL is not live until that later deploy. The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches
@@ -444,11 +444,23 @@ The handoff lists the version, workspace, goal, participant names, readiness, an
 npx tsx src/cli/index.ts show <workspaceId>
 npx tsx src/cli/index.ts show <workspaceId> --since <contributionId>
 npx tsx src/cli/index.ts add-finding --workspace <workspaceId> --summary "..."
+npx tsx src/cli/index.ts findings --workspace <workspaceId> --currentness current
+npx tsx src/cli/index.ts correct-finding <findingId> --summary "..." --reason "..."
+npx tsx src/cli/index.ts withdraw-finding <findingId> --reason "..."
+npx tsx src/cli/index.ts cite-evidence <findingId> --artifact <artifactId> --relation supports
+npx tsx src/cli/index.ts uncite-evidence <evidenceId>
 npx tsx src/cli/index.ts create-task --workspace <workspaceId> --title "..."
 npx tsx src/cli/index.ts add-decision --workspace <workspaceId> --summary "..."
+npx tsx src/cli/index.ts add-decision --workspace <workspaceId> --summary "..." --replaces <decisionId>
 npx tsx src/cli/index.ts accept-decision <decisionId>
+npx tsx src/cli/index.ts accept-decision <decisionId> --reason "..."
+npx tsx src/cli/index.ts cite-basis <decisionId> --finding <findingId>
+npx tsx src/cli/index.ts uncite-basis <citationId>
+npx tsx src/cli/index.ts retire-decision <decisionId> --reason "..."
 npx tsx src/cli/index.ts update-task <taskId> --status in_progress
 ```
+
+`findings --currentness` accepts `current`, `superseded`, `withdrawn`, or `all`. The default is `current`. `correct-finding` and `withdraw-finding` record a new correction or an explicit withdrawal. They leave the old summary and detail in place. `--replaces` proposes a successor and leaves the accepted decision unchanged until `accept-decision --reason`. `retire-decision` supersedes an accepted decision, or rejects a proposed one, with a required reason and no replacement. Evidence and citations stay inside one workspace. The Viewer can show the resulting currentness. It still has no write path.
 
 Pass `--since <contributionId>` to print only the contributions recorded
 strictly after that observation, a `truncated` flag when older post-cursor rows

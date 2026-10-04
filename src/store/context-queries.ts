@@ -7,7 +7,7 @@
  */
 import { ValidationError } from "../domain/errors.js";
 import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
-import type { Contribution, DecisionStatus, TaskStatus } from "../domain/types.js";
+import type { Contribution, DecisionStatus, FindingCurrentness, TaskStatus } from "../domain/types.js";
 
 export const DECISION_RANK_SQL = "CASE status WHEN 'accepted' THEN 0 WHEN 'proposed' THEN 1 ELSE 2 END";
 export const TASK_RANK_SQL = "CASE status WHEN 'blocked' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'open' THEN 2 ELSE 3 END";
@@ -22,6 +22,8 @@ export const ARTIFACT_RANK_SQL =
  */
 export const HIGH_MATERIAL_SQL = `(CASE WHEN (
   (object_type = 'finding' AND action = 'create')
+  OR (object_type = 'finding' AND json_extract(payload, '$.changeType') IN ('finding.corrected', 'finding.withdrawn'))
+  OR (object_type = 'decision' AND json_extract(payload, '$.changeType') IN ('decision.superseded', 'decision.rejected'))
   OR (object_type = 'artifact' AND action = 'create')
   OR (object_type = 'goal' AND action IN ('create', 'update'))
   OR (object_type = 'decision' AND action = 'update' AND json_extract(payload, '$.status') = 'accepted')
@@ -199,10 +201,27 @@ export function countTasksSql(workspaceId: string, statuses?: TaskStatus[]): Sql
   };
 }
 
-export function pageFindingsSql(workspaceId: string, query: ObjectPageQuery): SqlStatement {
+export type FindingCurrentnessFilter = FindingCurrentness | "all";
+
+export function assertFindingCurrentness(value: string): FindingCurrentnessFilter {
+  if (value === "current" || value === "superseded" || value === "withdrawn" || value === "all") return value;
+  throw new ValidationError("currentness must be current, superseded, withdrawn, or all", {
+    field: "currentness",
+    value,
+  });
+}
+
+export function pageFindingsSql(
+  workspaceId: string,
+  query: ObjectPageQuery & { currentness?: FindingCurrentnessFilter },
+): SqlStatement {
   const limit = assertPageLimit(query.limit);
   const params: unknown[] = [workspaceId];
   const where = ["workspace_id = ?"];
+  if (query.currentness !== undefined && query.currentness !== "all") {
+    where.push("currentness = ?");
+    params.push(query.currentness);
+  }
   if (query.after !== undefined) {
     where.push(keysetAfter(FINDING_RANK_SQL, "created_at"));
     params.push(query.after.rank, query.after.rank, query.after.at, query.after.at, query.after.id);
@@ -211,6 +230,23 @@ export function pageFindingsSql(workspaceId: string, query: ObjectPageQuery): Sq
   return {
     sql: `SELECT *, (${FINDING_RANK_SQL}) AS context_rank FROM findings WHERE ${where.join(" AND ")} ORDER BY (${FINDING_RANK_SQL}) ASC, created_at DESC, id ASC LIMIT ?`,
     params,
+  };
+}
+
+export function countFindingsSql(workspaceId: string, currentness?: FindingCurrentnessFilter): SqlStatement {
+  if (currentness === undefined || currentness === "all") {
+    return countRowsSql("findings", workspaceId);
+  }
+  return {
+    sql: "SELECT COUNT(*) AS count FROM findings WHERE workspace_id = ? AND currentness = ?",
+    params: [workspaceId, currentness],
+  };
+}
+
+export function countHistoricalFindingsSql(workspaceId: string): SqlStatement {
+  return {
+    sql: "SELECT COUNT(*) AS count FROM findings WHERE workspace_id = ? AND currentness IN ('superseded', 'withdrawn')",
+    params: [workspaceId],
   };
 }
 

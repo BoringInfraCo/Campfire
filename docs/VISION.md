@@ -1,8 +1,8 @@
 # Campfire — Vision
 
-**Status:** Revised  
-**Version:** 0.2  
-**Date:** September 11, 2026  
+**Status:** Revised after `v1.10.0`
+**Version:** 0.2
+**Date:** October 3, 2026
 **Company:** Boring Infra Co.
 
 ## Vision
@@ -373,6 +373,18 @@ The strongest Campfire experience is:
 
 Every investigation, decision, artifact, outcome, correction, and completed task should improve the organization's ability to work with agents in the future.
 
+### 11. Understanding is the asset
+
+Adjacent products can organize persistent artifacts into collections. Campfire's differentiated asset is shared understanding: what the team currently believes, what changed, what is historical, and why.
+
+> Television organizes things. Campfire should organize understanding.
+
+Making that understanding visible is a projection of workspace state. The workspace remains canonical. The interface does not become a second source of truth.
+
+### 12. Authorization stays visible
+
+The experience to earn is: a person opens the agent they already use, and that agent can work from the team's authorized Campfire context. MCP support makes that connection possible. It does not create identity, membership, or permission. Enrollment and the session boundary stay explicit even when setup itself is brief.
+
 ---
 
 ## From Team Memory to Organizational Learning
@@ -468,6 +480,8 @@ Not by centralizing every private conversation.
 But by providing a durable place where:
 
 > **The work that belongs to the team can belong to the team.**
+
+That place is the workspace. A visual surface can make the workspace understandable. Generated views, when they exist, stay derived from authorized structured state, sandboxed, and non-canonical. They do not hold Campfire credentials, and they do not write unless a later sprint gives them an explicit, bounded capability.
 
 ---
 

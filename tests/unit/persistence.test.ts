@@ -289,6 +289,7 @@ describe("contribution object persistence and JSON columns", () => {
       createdBy: AGENT,
       agentSessionId: "ses_1",
       createdAt: NOW,
+      currentness: "current",
     });
 
     expect(store.getDecision("dec_1")).toEqual({

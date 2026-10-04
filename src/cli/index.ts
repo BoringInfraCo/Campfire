@@ -59,7 +59,10 @@ import {
   formatCommandManifest,
   formatContributionDeltaLine,
   formatContributionLine,
+  formatCorrectionResult,
+  formatFindingLine,
   formatParticipant,
+  formatPresentRecordFields,
   formatTelemetryStatus,
   formatWorkspaceAgents,
   formatWorkspaceChanges,
@@ -520,7 +523,7 @@ function formatResumeCursor(context: WorkspaceContext): string | undefined {
 }
 
 function formatDecision(decision: Decision): string {
-  return joinFields(decision.id, decision.summary);
+  return joinFields(decision.id, decision.summary, formatPresentRecordFields(decision));
 }
 
 function formatTask(task: Task): string {
@@ -651,7 +654,7 @@ function formatOrientation(context: WorkspaceContext, since?: string): string {
     ...appendShowing(
       section(
         "Findings",
-        context.findings.map((finding) => joinFields(finding.id, finding.summary)),
+        context.findings.map((finding) => formatFindingLine(finding)),
       ),
       context.slices.findings,
     ),
@@ -1441,9 +1444,53 @@ function formatObjectPage<T>(page: WorkspaceObjectPage<T>, line: (item: T) => st
   return lines.join("\n");
 }
 
+const FINDING_CURRENTNESS = ["current", "superseded", "withdrawn", "all"] as const;
+
+function optionalCurrentness(
+  flags: Record<string, string | boolean>,
+): (typeof FINDING_CURRENTNESS)[number] | undefined {
+  const raw = flags.currentness;
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string" || !(FINDING_CURRENTNESS as readonly string[]).includes(raw)) {
+    throw new ValidationError(`Invalid --currentness: expected ${FINDING_CURRENTNESS.join("|")}`, {
+      field: "currentness",
+      value: raw,
+    });
+  }
+  return raw as (typeof FINDING_CURRENTNESS)[number];
+}
+
+function evidenceFromFlags(
+  occurrences: ParsedArgs["occurrences"],
+): Array<{ artifactId: string; relation: string; note?: string }> | undefined {
+  const values = occurrences.evidence;
+  if (values === undefined || values.length === 0) return undefined;
+  return values.map((value) => {
+    if (typeof value !== "string" || value.trim().length === 0) {
+      throw new ValidationError("--evidence requires artifactId:relation[:note]", { field: "evidence" });
+    }
+    const parts = value.split(":");
+    const artifactId = parts[0]?.trim() ?? "";
+    const relation = parts[1]?.trim() ?? "";
+    if (artifactId.length === 0 || relation.length === 0) {
+      throw new ValidationError("--evidence requires artifactId:relation[:note]", {
+        field: "evidence",
+        value,
+      });
+    }
+    const note = parts.slice(2).join(":").trim();
+    return note.length === 0 ? { artifactId, relation } : { artifactId, relation, note };
+  });
+}
+
 async function cmdFindings(parsed: ParsedArgs, argv: string[]): Promise<void> {
-  await cmdObjectPage(parsed, argv, "list_findings", (page) =>
-    formatObjectPage(page as WorkspaceObjectPage<Finding>, (finding) => joinFields(finding.id, finding.summary)),
+  const currentness = optionalCurrentness(parsed.flags);
+  await cmdObjectPage(
+    parsed,
+    argv,
+    "list_findings",
+    (page) => formatObjectPage(page as WorkspaceObjectPage<Finding>, (finding) => formatFindingLine(finding)),
+    currentness === undefined ? undefined : { currentness },
   );
 }
 
@@ -1466,6 +1513,7 @@ async function cmdObjectPage(
   argv: string[],
   method: "list_findings" | "list_tasks" | "list_artifacts",
   render: (page: WorkspaceObjectPage<Finding | Task | Artifact>) => string,
+  extra?: Record<string, unknown>,
 ): Promise<void> {
   const mode = commandOutput(parsed);
   const explicit = explicitWorkspaceArgument(parsed);
@@ -1481,6 +1529,7 @@ async function cmdObjectPage(
     if (limit !== undefined) params.limit = limit;
     if (cursor !== undefined) params.cursor = cursor;
     if (status !== undefined) params.status = status;
+    if (extra !== undefined) Object.assign(params, extra);
     const page = (await backend.call(method, params)) as WorkspaceObjectPage<Finding | Task | Artifact>;
     emitResult(page, mode, render);
   });
@@ -1680,19 +1729,99 @@ async function cmdAddFinding(parsed: ParsedArgs, argv: string[]): Promise<void> 
   });
 }
 
+async function emitCorrection(parsed: ParsedArgs, argv: string[], method: string, params: Record<string, unknown>): Promise<void> {
+  const mode = commandOutput(parsed);
+  await withBackend(argv, async (backend) => {
+    emitResult(await backend.call(method, params), mode, formatCorrectionResult);
+  });
+}
+
+async function cmdCorrectFinding(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const findingId = requirePositional(parsed, "findingId");
+  const summary = requireFlag(parsed.flags, "summary");
+  const reason = requireFlag(parsed.flags, "reason");
+  const evidence = evidenceFromFlags(parsed.occurrences);
+  await emitCorrection(parsed, argv, "correct_finding", {
+    findingId,
+    summary,
+    reason,
+    detail: optionalFlag(parsed.flags, "detail"),
+    confidence: optionalNumber(parsed.flags, "confidence"),
+    sourceArtifactId: optionalFlag(parsed.flags, "source-artifact"),
+    ...(evidence === undefined ? {} : { evidence }),
+  });
+}
+
+async function cmdWithdrawFinding(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "withdraw_finding", {
+    findingId: requirePositional(parsed, "findingId"),
+    reason: requireFlag(parsed.flags, "reason"),
+  });
+}
+
+async function cmdCiteEvidence(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "cite_finding_evidence", {
+    findingId: requirePositional(parsed, "findingId"),
+    artifactId: requireFlag(parsed.flags, "artifact"),
+    relation: requireFlag(parsed.flags, "relation"),
+    note: optionalFlag(parsed.flags, "note"),
+  });
+}
+
+async function cmdUnciteEvidence(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "remove_finding_evidence", {
+    evidenceId: requirePositional(parsed, "evidenceId"),
+  });
+}
+
 async function cmdAddDecision(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const workspaceId = requireFlag(parsed.flags, "workspace");
   const summary = requireFlag(parsed.flags, "summary");
   const rationale = optionalFlag(parsed.flags, "rationale");
+  const replaces = optionalFlag(parsed.flags, "replaces");
   await withBackend(argv, async (backend) => {
-    printJson(await backend.call("add_decision", { workspaceId, summary, rationale }));
+    printJson(
+      await backend.call("add_decision", {
+        workspaceId,
+        summary,
+        rationale,
+        ...(replaces === undefined ? {} : { replacesDecisionId: replaces }),
+      }),
+    );
+  });
+}
+
+async function cmdCiteBasis(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "cite_decision_basis", {
+    decisionId: requirePositional(parsed, "decisionId"),
+    findingId: requireFlag(parsed.flags, "finding"),
+    note: optionalFlag(parsed.flags, "note"),
+  });
+}
+
+async function cmdUnciteBasis(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "remove_decision_basis", {
+    citationId: requirePositional(parsed, "citationId"),
   });
 }
 
 async function cmdAcceptDecision(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const decisionId = requirePositional(parsed, "decisionId");
+  const reason = optionalFlag(parsed.flags, "reason");
   await withBackend(argv, async (backend) => {
-    printJson(await backend.call("accept_decision", { decisionId }));
+    printJson(
+      await backend.call("accept_decision", {
+        decisionId,
+        ...(reason === undefined ? {} : { reason }),
+      }),
+    );
+  });
+}
+
+async function cmdRetireDecision(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  await emitCorrection(parsed, argv, "retire_decision", {
+    decisionId: requirePositional(parsed, "decisionId"),
+    reason: requireFlag(parsed.flags, "reason"),
   });
 }
 
@@ -2251,8 +2380,15 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   "create-goal": (parsed, argv) => cmdCreateGoal(parsed, argv),
   "update-goal": (parsed, argv) => cmdUpdateGoal(parsed, argv),
   "add-finding": (parsed, argv) => cmdAddFinding(parsed, argv),
+  "correct-finding": (parsed, argv) => cmdCorrectFinding(parsed, argv),
+  "withdraw-finding": (parsed, argv) => cmdWithdrawFinding(parsed, argv),
+  "cite-evidence": (parsed, argv) => cmdCiteEvidence(parsed, argv),
+  "uncite-evidence": (parsed, argv) => cmdUnciteEvidence(parsed, argv),
   "add-decision": (parsed, argv) => cmdAddDecision(parsed, argv),
+  "cite-basis": (parsed, argv) => cmdCiteBasis(parsed, argv),
+  "uncite-basis": (parsed, argv) => cmdUnciteBasis(parsed, argv),
   "accept-decision": (parsed, argv) => cmdAcceptDecision(parsed, argv),
+  "retire-decision": (parsed, argv) => cmdRetireDecision(parsed, argv),
   "create-task": (parsed, argv) => cmdCreateTask(parsed, argv),
   "update-task": (parsed, argv) => cmdUpdateTask(parsed, argv),
   "add-artifact": (parsed, argv) => cmdAddArtifact(parsed, argv),

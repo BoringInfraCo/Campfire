@@ -18,6 +18,11 @@ export type WorkspaceStatus = "active" | "completed" | "archived";
 export type GoalStatus = "active" | "completed" | "abandoned";
 export type TaskStatus = "open" | "in_progress" | "blocked" | "completed";
 export type DecisionStatus = "proposed" | "accepted" | "superseded";
+/** Whether a finding is what the workspace currently believes. */
+export type FindingCurrentness = "current" | "superseded" | "withdrawn";
+export type FindingEvidenceRelation = "supports" | "contradicts";
+export type FindingTransitionKind = "superseded" | "withdrawn";
+export type DecisionTransitionKind = "superseded" | "rejected";
 export type ParticipantRole = "owner" | "member" | "agent" | "viewer";
 
 export type ArtifactType =
@@ -131,6 +136,32 @@ export interface Finding extends Provenance {
   detail?: string;
   confidence?: number;
   sourceArtifactId?: string;
+  /**
+   * Reads from the store always set this. A write may omit it; the store
+   * records `current`. Historical text is never rewritten in place.
+   */
+  currentness?: FindingCurrentness;
+  predecessorId?: string;
+  successorId?: string;
+  correctionReason?: string;
+  correctedBy?: ActorRef;
+  correctedSessionId?: string;
+  correctedAt?: string;
+  /** Read decoration. Evidence rows live in their own table. */
+  evidence?: FindingEvidence[];
+}
+
+/** One artifact's relationship to a finding. The artifact stays a typed reference. */
+export interface FindingEvidence {
+  id: string;
+  workspaceId: string;
+  findingId: string;
+  artifactId: string;
+  relation: FindingEvidenceRelation;
+  note?: string;
+  createdBy: ActorRef;
+  agentSessionId?: string;
+  createdAt: string;
 }
 
 export interface Decision extends Provenance {
@@ -141,6 +172,32 @@ export interface Decision extends Provenance {
   status: DecisionStatus;
   approvedBy?: ActorRef;
   updatedAt: string;
+  predecessorId?: string;
+  successorId?: string;
+  supersedeReason?: string;
+  supersededBy?: ActorRef;
+  supersededSessionId?: string;
+  supersededAt?: string;
+  /** Read decoration. Citation rows live in their own table. */
+  citations?: DecisionCitation[];
+  /**
+   * Computed at read time when a current decision cites a finding that is no
+   * longer current. Not stored, and not a lifecycle change.
+   */
+  needsReview?: true;
+  needsReviewFindingIds?: string[];
+}
+
+/** A decision's cited finding. Citation does not validate or revoke the decision. */
+export interface DecisionCitation {
+  id: string;
+  workspaceId: string;
+  decisionId: string;
+  findingId: string;
+  note?: string;
+  createdBy: ActorRef;
+  agentSessionId?: string;
+  createdAt: string;
 }
 
 export interface Artifact extends Provenance {
