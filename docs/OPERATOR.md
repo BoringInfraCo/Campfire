@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+.
 
-This source commit is v1.11.0. The verdict is CONDITIONAL GO. Production is not deployed, so the versioned installer URL is not live until that later deploy. The v1.9.3 telemetry patch keeps telemetry schema version 1
+v1.11.0 is published. The verdict is CONDITIONAL GO. Production is not deployed, so `https://boringinfra.company/campfire/v1.11.0/install.sh` is not live until that later deploy. The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches

@@ -1421,7 +1421,7 @@ Sprint 020 — Bring the Next Teammate In   IMPLEMENTED CANDIDATE; v1.9.0; CONDI
         ↓
 Sprint CTX-001 — Keep Shared Understanding Current   GO for the local release gate; published v1.10.0; one Codex agent passed scenarios A/B/C; see docs/SPRINT_CTX_001_RESULT.md; Gate B/C unmeasured
         ↓
-Sprint COR-001 — Correct the Record   CONDITIONAL GO; v1.11.0 release source; production not deployed; one operator, one machine; Codex and OpenCode cold and catch-up traces passed; fixture participants only; see docs/SPRINT_COR_001_RESULT.md; Gate B/C unmeasured
+Sprint COR-001 — Correct the Record   CONDITIONAL GO; published v1.11.0; production not deployed; one operator, one machine; Codex and OpenCode cold and catch-up traces passed; fixture participants only; see docs/SPRINT_COR_001_RESULT.md; Gate B/C unmeasured
         ↓
 v1.12 — Make Shared Understanding Visible   directional; evidence gate below
         ↓
@@ -1440,7 +1440,7 @@ v1.10 — KEEP SHARED UNDERSTANDING CURRENT
         Gate B and Gate C unmeasured
 
 v1.11 — CORRECT THE RECORD
-        v1.11.0 release source
+        published v1.11.0
         CONDITIONAL GO
         supersession, correction, evidence relationships, visible currentness
         one operator, one machine, both local harnesses

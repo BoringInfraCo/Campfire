@@ -193,7 +193,7 @@ curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --v
 
 The v1.9.0 source snapshot and GitHub Release are published. Its Worker assets,
 including the versioned installer URL, have not yet been promoted to production.
-This source commit is `1.11.0`, CONDITIONAL GO. `public/campfire/v1.11.0/install.sh`
+`v1.11.0` is published, CONDITIONAL GO. `public/campfire/v1.11.0/install.sh`
 is tracked here and is not a live production URL until a later deploy.
 
 Or build from source:

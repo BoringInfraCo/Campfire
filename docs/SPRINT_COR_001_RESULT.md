@@ -1,6 +1,6 @@
 # Campfire — Sprint COR-001 Result: Correct the Record
 
-**Status:** Release source for package `1.11.0`. CONDITIONAL GO. Production is not deployed. The public snapshot is recorded after this commit and does not move the tag.
+**Status:** Published as `v1.11.0`. CONDITIONAL GO. The private tag remains the source commit. Production is not deployed.
 
 **Decision:** CONDITIONAL GO. This is not a full GO. The trace used one operator, one machine, and fixture participants.
 
@@ -162,3 +162,22 @@ reason. Therefore this rerun independently confirms the local product,
 authorization, catch-up, and real Viewer paths, but it does not add a new live
 model/harness trace. The overall verdict remains **CONDITIONAL GO**; Gate B and
 Gate C remain unmeasured.
+
+## 8. Release promotion
+
+Recorded after the tag. The tag was not moved.
+
+- Private source commit and annotated tag: `67f9e2e73095f7e5ca5abd9c9b59da2873e1d88c` / `v1.11.0`.
+- Export wrote 251 allowlisted files from that tag. The audit reported no forbidden path or secret pattern.
+- Public snapshot commit: `4c4a29f5097f55a1632a3cff7590afb539162ca1`.
+- Public main CI `37166993263` and tag CI `37166994205` passed, including the blank-database bootstrap smoke.
+- GitHub Release: <https://github.com/BoringInfraCo/Campfire/releases/tag/v1.11.0>.
+- Release workflow `37167002324` built and attached Darwin and Linux archives for ARM64 and x64. All four checksums verified:
+  - `campfire-darwin-arm64.tar.gz` `f48554d6845fed298116c4b444ae2592ff0fa0b98d9692de292fe15ca92a3fae`
+  - `campfire-darwin-x64.tar.gz` `023135e791504cfbd3af2c7ac6346f2934250ea285affb6a655e740559dc516c`
+  - `campfire-linux-arm64.tar.gz` `b1691515f4778ba9e8801a60207e0448ed05ae8ba76ec53c0460a37cce5eb5d2`
+  - `campfire-linux-x64.tar.gz` `7212dd81e153abaf12d70dcc9adcf606ecd46db1119d23f2cea10e046ab41a5d`
+- Each archive `package.json` says `1.11.0` and stays private.
+- Production was not deployed. `https://boringinfra.company/campfire/v1.11.0/install.sh` returned 404. The `v1.10.0` installer and the unversioned installer still returned 200.
+
+Gate B and Gate C remain unmeasured.

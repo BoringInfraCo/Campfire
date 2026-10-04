@@ -147,7 +147,9 @@ currentness state and leaves the old finding text in place. A decision changes o
 through an explicit accept, replace, or retire. Evidence and citations stay inside
 one workspace. `needsReview` is computed at read time. The webhook vocabulary is
 unchanged. The recorded verdict is CONDITIONAL GO: both local harnesses passed on
-one machine with fixture participants. Production is not deployed. Gate B and Gate C
+one machine with fixture participants. It is published as `v1.11.0`. The private tag is
+`67f9e2e73095f7e5ca5abd9c9b59da2873e1d88c`. The public snapshot is
+`4c4a29f5097f55a1632a3cff7590afb539162ca1`. Production is not deployed. Gate B and Gate C
 remain unmeasured. Do not add embeddings, Viewer writes, or per-command telemetry.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,

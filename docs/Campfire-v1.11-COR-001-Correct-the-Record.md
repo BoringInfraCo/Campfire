@@ -2,7 +2,7 @@
 
 **Sprint ID:** COR-001  
 **Target release:** v1.11.0  
-**Status:** Release source for package `1.11.0`. CONDITIONAL GO. See `docs/SPRINT_COR_001_RESULT.md`. Production is not deployed.  
+**Status:** Published as `v1.11.0`. CONDITIONAL GO. See `docs/SPRINT_COR_001_RESULT.md`. The private tag remains the source commit. Production is not deployed.  
 **Depends on:** CTX-001 / v1.10.0  
 **Theme:** Explicit correction, supersession, evidence, and currentness
 
