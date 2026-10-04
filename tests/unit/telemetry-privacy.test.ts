@@ -77,6 +77,8 @@ function fullEvent(overrides: Record<string, unknown> = {}): ReturnType<typeof b
     installMethod: "curl",
     surface: "cli",
     harness: "codex",
+    deploymentMode: "local",
+    participantBucket: "2",
     ...overrides,
   } as Parameters<typeof buildTelemetryEvent>[0]);
 }
@@ -137,6 +139,8 @@ describe("allow-list and prohibited-list hygiene", () => {
       "installMethod",
       "surface",
       "harness",
+      "deploymentMode",
+      "participantBucket",
       "installationId",
     ]);
     expect(TELEMETRY_SCHEMA_VERSION).toBe(1);
@@ -195,7 +199,16 @@ describe("hostile content cannot enter a serialized payload", () => {
 
     // (1c) In every closed-vocabulary slot, where it must normalize away.
     const viaVocabulary = serializeTelemetryEvent(
-      fullEvent({ os: value, arch: value, installMethod: value, surface: value, harness: value, installationId: value }),
+      fullEvent({
+        os: value,
+        arch: value,
+        installMethod: value,
+        surface: value,
+        harness: value,
+        deploymentMode: value,
+        participantBucket: value,
+        installationId: value,
+      }),
     );
 
     for (const [label, body] of [
@@ -231,6 +244,7 @@ describe("hostile content cannot enter a serialized payload", () => {
       "activated",
       "active",
       "teammate_joined",
+      "contributed",
     ];
     for (const event of events) {
       const payload = JSON.parse(serializeTelemetryEvent(fullEvent({ event }))) as Record<string, unknown>;
@@ -315,8 +329,10 @@ describe("analytics engine dimensions carry no content", () => {
       "none",
       "none",
       "none",
+      "none",
+      "none",
     ]);
-    expect(point.blobs).toHaveLength(12);
+    expect(point.blobs).toHaveLength(14);
     expect(point.blobs[0]).toBe(point.indexes[0]);
     expect(point.blobs[1]).toBe("1");
     expect(point.blobs[7]).toBe(ID_A);
@@ -324,6 +340,8 @@ describe("analytics engine dimensions carry no content", () => {
     expect(point.blobs[9]).toBe("none");
     expect(point.blobs[10]).toBe("none");
     expect(point.blobs[11]).toBe("none");
+    expect(point.blobs[12]).toBe("none");
+    expect(point.blobs[13]).toBe("none");
   });
 
   it("records none as the value of an inapplicable dimension rather than a leak", () => {
@@ -343,8 +361,10 @@ describe("analytics engine dimensions carry no content", () => {
       "none",
       "none",
       "none",
+      "none",
+      "none",
     ]);
-    expect(point.blobs).toHaveLength(12);
+    expect(point.blobs).toHaveLength(14);
     expect(point.blobs[0]).toBe(point.indexes[0]);
     expect(point.blobs[1]).toBe("1");
     expect(point.blobs[7]).toBe("");
@@ -406,6 +426,30 @@ describe("analytics engine dimensions carry no content", () => {
     expect(JSON.stringify(dropped)).not.toContain("claude-code");
   });
 
+  it("stores only closed deployment mode and participant bucket on blob13 and blob14", () => {
+    const point = telemetryDataPoint(
+      buildTelemetryEvent({
+        event: "contributed",
+        installationId: ID_A,
+        deploymentMode: "remote",
+        participantBucket: "3plus",
+      }),
+    );
+    expect(point.blobs[12]).toBe("remote");
+    expect(point.blobs[13]).toBe("3plus");
+    const dropped = telemetryDataPoint(
+      buildTelemetryEvent({
+        event: "contributed",
+        installationId: ID_A,
+        deploymentMode: "https://example.invalid",
+        participantBucket: "12",
+      }),
+    );
+    expect(dropped.blobs[12]).toBe("none");
+    expect(dropped.blobs[13]).toBe("none");
+    expect(JSON.stringify(dropped)).not.toContain("example.invalid");
+  });
+
   it("keeps blob positions stable for every event name", () => {
     const events: TelemetryEventName[] = [
       "install_requested",
@@ -413,16 +457,19 @@ describe("analytics engine dimensions carry no content", () => {
       "activated",
       "active",
       "teammate_joined",
+      "contributed",
     ];
     for (const event of events) {
       const point = telemetryDataPoint(fullEvent({ event }));
       expect(point.indexes, event).toEqual([event]);
       expect(point.indexes, event).toHaveLength(1);
-      expect(point.blobs, event).toHaveLength(12);
+      expect(point.blobs, event).toHaveLength(14);
       expect(point.blobs[8], event).toBe("none");
       expect(point.blobs[9], event).toBe("none");
       expect(point.blobs[10], event).toBe("none");
       expect(point.blobs[11], event).toBe("codex");
+      expect(point.blobs[12], event).toBe("local");
+      expect(point.blobs[13], event).toBe("2");
       expect(point.blobs[0], event).toBe(point.indexes[0]);
       expect(point.blobs[1], event).toBe("1");
       // `fullEvent` always carries an installation id. The empty-id case is
@@ -450,7 +497,14 @@ describe("payload ceiling", () => {
   });
 
   it("stays under the limit for every documented event and surface", () => {
-    for (const event of ["install_requested", "install_completed", "activated", "active", "teammate_joined"] as const) {
+    for (const event of [
+      "install_requested",
+      "install_completed",
+      "activated",
+      "active",
+      "teammate_joined",
+      "contributed",
+    ] as const) {
       for (const surface of [undefined, "cli", "agent", "mcp"] as const) {
         const body = serializeTelemetryEvent(
           buildTelemetryEvent({ event, installationId: ID_A, campfireVersion: "1.9.1", surface }),

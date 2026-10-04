@@ -139,6 +139,14 @@ event.
    event `teammate_joined` fires once per installation on successful
    enrollment. Raw User-Agent, city, IP, and colo remain unread. This does
    not change the section 1 disposition.
+10. **2026-10-04 — collaboration usage columns.** Same dataset, still
+    `schemaVersion` 1. `activated`/`active`/`teammate_joined`/`contributed` may
+    carry closed `deploymentMode` as `blob13` (`local`/`remote`). `active` and
+    `contributed` may carry `participantBucket` as `blob14` (`1`/`2`/`3plus`).
+    New bounded event `contributed` fires once per installation per UTC day on
+    a successful goal, finding, decision, task, or artifact write. Exact
+    headcount, workspace names, and per-command events remain unread. This does
+    not change the section 1 disposition.
 
 ## 5. Unresolved contradiction for the founder
 

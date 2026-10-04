@@ -36,6 +36,8 @@ export interface TelemetryState {
   activatedOn?: string;
   /** UTC day of the most recent `active` event, for local rate limiting. */
   lastActiveOn?: string;
+  /** UTC day of the most recent `contributed` event. */
+  lastContributedOn?: string;
   /** One-time `teammate_joined` claim after a successful enrollment. */
   teammateJoinedReported?: boolean;
 }
@@ -114,6 +116,8 @@ export function loadTelemetryState(env: NodeJS.ProcessEnv = process.env): Teleme
   if (activatedOn !== undefined) state.activatedOn = activatedOn;
   const lastActiveOn = optionalDay(parsed, "lastActiveOn");
   if (lastActiveOn !== undefined) state.lastActiveOn = lastActiveOn;
+  const lastContributedOn = optionalDay(parsed, "lastContributedOn");
+  if (lastContributedOn !== undefined) state.lastContributedOn = lastContributedOn;
   const teammateJoined = optionalBoolean(parsed, "teammateJoinedReported");
   if (teammateJoined !== undefined) state.teammateJoinedReported = teammateJoined;
   return state;
@@ -221,6 +225,19 @@ export function claimActiveEvent(env: NodeJS.ProcessEnv = process.env, now: Date
   const day = utcDay(now);
   if (state.lastActiveOn === day) return "";
   saveTelemetryState({ ...state, lastActiveOn: day }, env);
+  return state.installationId;
+}
+
+/**
+ * Claim a rate-limited `contributed` event. Bounded to one per installation per
+ * UTC day, independent of `active`, so a write and a context read on the same
+ * day can both be counted once.
+ */
+export function claimContributedEvent(env: NodeJS.ProcessEnv = process.env, now: Date = new Date()): string {
+  const state = loadTelemetryState(env) ?? createInstallationState(env);
+  const day = utcDay(now);
+  if (state.lastContributedOn === day) return "";
+  saveTelemetryState({ ...state, lastContributedOn: day }, env);
   return state.installationId;
 }
 

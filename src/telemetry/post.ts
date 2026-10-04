@@ -40,6 +40,8 @@ export interface TelemetryPostInput {
   installMethod?: string;
   surface?: TelemetrySurface;
   harness?: string;
+  deploymentMode?: string;
+  participantBucket?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }

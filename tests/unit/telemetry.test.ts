@@ -11,6 +11,8 @@ import {
   normalizeTelemetryInstallerRoute,
   normalizeTelemetryOs,
   normalizeTelemetryRegion,
+  participantBucketFromUnknown,
+  telemetryParticipantBucket,
   parseTelemetryEventV1,
   serializeTelemetryEvent,
   TELEMETRY_EVENTS,
@@ -22,6 +24,7 @@ import {
 import {
   claimActivation,
   claimActiveEvent,
+  claimContributedEvent,
   claimInstallCompleted,
   claimTeammateJoined,
   ensureInstallationId,
@@ -38,6 +41,7 @@ import {
   DEFAULT_TELEMETRY_ENDPOINT,
   reportActivated,
   reportActive,
+  reportContributed,
   reportInstallCompleted,
   reportTeammateJoined,
   reportTelemetryEvent,
@@ -146,6 +150,8 @@ describe("telemetry event contract", () => {
       installMethod: "curl",
       surface: "cli",
       harness: "codex",
+      deploymentMode: "local",
+      participantBucket: "2",
     });
     expect(JSON.parse(serializeTelemetryEvent(full))).toEqual({
       schemaVersion: 1,
@@ -157,6 +163,8 @@ describe("telemetry event contract", () => {
       installMethod: "curl",
       surface: "cli",
       harness: "codex",
+      deploymentMode: "local",
+      participantBucket: "2",
     });
     expect(Object.keys(JSON.parse(serializeTelemetryEvent(full)) as object).sort()).toEqual(
       [...TELEMETRY_FIELDS].sort(),
@@ -190,7 +198,16 @@ describe("telemetry event contract", () => {
     } as unknown as TelemetryEventV1;
     const payload = JSON.parse(serializeTelemetryEvent(hostile)) as Record<string, unknown>;
     expect(Object.keys(payload).sort()).toEqual(
-      [...TELEMETRY_FIELDS].filter((field) => field !== "installMethod" && field !== "surface" && field !== "harness").sort(),
+      [...TELEMETRY_FIELDS]
+        .filter(
+          (field) =>
+            field !== "installMethod" &&
+            field !== "surface" &&
+            field !== "harness" &&
+            field !== "deploymentMode" &&
+            field !== "participantBucket",
+        )
+        .sort(),
     );
     for (const leak of ["workspaceName", "prompt", "token", "example-repo", "REDACTED"]) {
       expect(serializeTelemetryEvent(hostile)).not.toContain(leak);
@@ -235,6 +252,13 @@ describe("telemetry event contract", () => {
     for (const garbage of ["", "   ", "example-agent/1.0", 7, null, undefined]) {
       expect(normalizeTelemetryClientFamily(garbage)).toBe("unknown");
     }
+    expect(telemetryParticipantBucket(1)).toBe("1");
+    expect(telemetryParticipantBucket(2)).toBe("2");
+    expect(telemetryParticipantBucket(3)).toBe("3plus");
+    expect(telemetryParticipantBucket(12)).toBe("3plus");
+    expect(telemetryParticipantBucket(0)).toBeUndefined();
+    expect(participantBucketFromUnknown({ participants: [{}, {}] })).toBe("2");
+    expect(participantBucketFromUnknown({ participants: "alice" })).toBeUndefined();
   });
 
   it("normalizes a garbage platform on the built event rather than sending it raw", () => {
@@ -265,10 +289,14 @@ describe("telemetry event contract", () => {
       installMethod: "homebrew",
       surface: "vscode",
       harness: "claude-code",
+      deploymentMode: "https://example.invalid",
+      participantBucket: "4",
     });
     expect(event.installMethod).toBeUndefined();
     expect(event.surface).toBeUndefined();
     expect(event.harness).toBeUndefined();
+    expect(event.deploymentMode).toBeUndefined();
+    expect(event.participantBucket).toBeUndefined();
   });
 
   it("blanks an installation id that is not the documented UUID shape", () => {
@@ -282,6 +310,7 @@ describe("telemetry event contract", () => {
     expect([...TELEMETRY_EVENTS].sort()).toEqual([
       "activated",
       "active",
+      "contributed",
       "install_completed",
       "install_requested",
       "teammate_joined",
@@ -371,6 +400,17 @@ describe("parseTelemetryEventV1", () => {
     expect(dropped.ok).toBe(true);
     if (!dropped.ok) throw new Error("expected acceptance");
     expect(dropped.event.harness).toBeUndefined();
+  });
+
+  it("accepts contributed with closed deploymentMode and participantBucket", () => {
+    const parsed = parseTelemetryEventV1(
+      valid({ event: "contributed", deploymentMode: "remote", participantBucket: "3plus" }),
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) throw new Error("expected acceptance");
+    expect(parsed.event.event).toBe("contributed");
+    expect(parsed.event.deploymentMode).toBe("remote");
+    expect(parsed.event.participantBucket).toBe("3plus");
   });
 });
 
@@ -555,6 +595,13 @@ describe("activation and activity claims", () => {
     expect(claimTeammateJoined(env)).toMatch(UUID_V4);
     expect(claimTeammateJoined(env)).toBe("");
     expect(readState().teammateJoinedReported).toBe(true);
+  });
+
+  it("claims contributed once per UTC day", () => {
+    expect(claimContributedEvent(env, DAY_ONE)).toMatch(UUID_V4);
+    expect(claimContributedEvent(env, DAY_ONE)).toBe("");
+    expect(readState().lastContributedOn).toBe("2026-03-01");
+    expect(claimContributedEvent(env, DAY_TWO)).toMatch(UUID_V4);
   });
 });
 
@@ -773,6 +820,7 @@ describe("telemetry reporting entry points", () => {
     await reportActive("cli", { env: disabled, fetchImpl });
     await reportInstallCompleted({ env: disabled, fetchImpl });
     await reportTeammateJoined("cli", { env: disabled, fetchImpl });
+    await reportContributed("cli", { env: disabled, fetchImpl });
     expect(calls).toHaveLength(0);
     expect(existsSync(stateFile())).toBe(false);
     expect(await reportTelemetryEvent("activated", { surface: "cli" }, { env: disabled, fetchImpl })).toBeUndefined();
@@ -864,6 +912,28 @@ describe("telemetry reporting entry points", () => {
       surface: "cli",
       harness: "opencode",
       installationId: ensureInstallationId(env),
+    });
+  });
+
+  it("sends one contributed per UTC day with mode and participant bucket", async () => {
+    const { fetchImpl, calls } = stubFetch(() => jsonOk());
+    const options = {
+      env: { ...env, [TELEMETRY_ENDPOINT_ENV_VAR]: loopback },
+      fetchImpl,
+      now: DAY_ONE,
+      harness: "codex" as const,
+      deploymentMode: "local" as const,
+      participantBucket: "2" as const,
+    };
+    await reportContributed("mcp", options);
+    await reportContributed("mcp", options);
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse(String(calls[0]!.init?.body))).toMatchObject({
+      event: "contributed",
+      surface: "mcp",
+      harness: "codex",
+      deploymentMode: "local",
+      participantBucket: "2",
     });
   });
 

@@ -106,6 +106,8 @@ const EARLIEST_POSSIBLE_DAY = "2020-01-01";
  *   blob10 installer route (latest|versioned), or "none"
  *   blob11 client family (curl|wget|browser|ci|unknown), or "none"
  *   blob12 harness (codex|opencode), or "none"
+ *   blob13 deployment mode (local|remote), or "none"
+ *   blob14 participant bucket (1|2|3plus), or "none"
  */
 const DEFINITIONS_FROZEN_ON = "2026-10-02";
 
@@ -424,6 +426,13 @@ const QUERIES = [
     "teammate_joined_installations",
     "Installations that completed a successful enrollment (invitation join or additional harness).",
   ),
+  funnelStage(
+    "contributed_installations",
+    "Contributed installations",
+    "contributed",
+    "contributed_installations",
+    "Installations that recorded a durable goal, finding, decision, task, or artifact.",
+  ),
   activeWindow(
     "active_installations_7d",
     "Active installations — trailing 7 days (UTC)",
@@ -532,6 +541,18 @@ WHERE first_active_day < last_active_day`,
   breakdown(
     "by_harness", "Breakdown — harness", "harness",
     "active", "blob12", "harness", "trailing30", true,
+  ),
+  breakdown(
+    "by_deployment_mode", "Breakdown — deployment mode", "deployment mode",
+    "active", "blob13", "deployment_mode", "trailing30", true,
+  ),
+  breakdown(
+    "by_participant_bucket", "Breakdown — participant bucket", "participant bucket",
+    "active", "blob14", "participant_bucket", "trailing30", true,
+  ),
+  breakdown(
+    "contributed_by_participant_bucket", "Breakdown — contributed participant bucket", "contributed participant bucket",
+    "contributed", "blob14", "participant_bucket", "since", true,
   ),
 ];
 

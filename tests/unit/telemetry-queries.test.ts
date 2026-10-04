@@ -21,7 +21,14 @@ describe("telemetry founder queries", () => {
     expect(result.status).toBe(0);
     const sql = result.stdout ?? "";
 
-    for (const event of ["install_requested", "install_completed", "activated", "active", "teammate_joined"]) {
+    for (const event of [
+      "install_requested",
+      "install_completed",
+      "activated",
+      "active",
+      "teammate_joined",
+      "contributed",
+    ]) {
       expect(sql).toContain(`blob1 = '${event}'`);
     }
     expect(sql).toContain("count(DISTINCT blob8)");
@@ -34,6 +41,8 @@ describe("telemetry founder queries", () => {
     expect(sql).toContain("blob10 AS installer_route");
     expect(sql).toContain("blob11 AS client_family");
     expect(sql).toContain("blob12 AS harness");
+    expect(sql).toContain("blob13 AS deployment_mode");
+    expect(sql).toContain("blob14 AS participant_bucket");
     for (const column of ["index1", "index2", "index3", "index4", "index5", "index6", "index7"]) {
       expect(sql).not.toContain(column);
     }

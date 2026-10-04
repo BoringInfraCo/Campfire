@@ -343,15 +343,17 @@ subcommand.
 Analytics Engine accepts one index. On `campfire_telemetry`, `index1` is the
 event name and is only the sampling key. Do not query `index2`–`index7`: those
 columns are not written. Read the blobs instead: `blob1` event name
-(`install_requested`, `install_completed`, `activated`, `active`), `blob2`
+(`install_requested`, `install_completed`, `activated`, `active`,
+`teammate_joined`, `contributed`), `blob2`
 schema version (`"1"`), `blob3` Campfire version, `blob4` OS, `blob5`
 architecture, `blob6` install method or `"none"`, `blob7` surface or `"none"`,
 `blob8` installation id or `""`, `blob9` country-level region (ISO 3166-1
 alpha-2 such as `US`/`CA`/`MX`, or `"none"`/`"unknown"`), `blob10` installer
 route (`latest`/`versioned`/`none`), `blob11` client family, `blob12` harness
-(`codex`/`opencode`/`none`). Deduplicate installations with
-`count(DISTINCT blob8)`. Group installer requests by region with `blob9` and
-successful installations by `blob9` on `install_completed`.
+(`codex`/`opencode`/`none`), `blob13` deployment mode (`local`/`remote`/`none`),
+`blob14` participant bucket (`1`/`2`/`3plus`/`none`). Deduplicate installations
+with `count(DISTINCT blob8)`. Group installer requests by region with `blob9`
+and successful installations by `blob9` on `install_completed`.
 
 ## 1. Initialize
 

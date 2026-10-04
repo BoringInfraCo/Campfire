@@ -139,13 +139,15 @@ function installerRequestedBlobs(region: string, route = "latest", family = "unk
     route,
     family,
     "none",
+    "none",
+    "none",
   ];
 }
 
 function ingestedBlobs(
   event: string,
   surface: string,
-  extras: { method?: string; region?: string; harness?: string } = {},
+  extras: { method?: string; region?: string; harness?: string; mode?: string; bucket?: string } = {},
 ): string[] {
   return [
     event,
@@ -160,6 +162,8 @@ function ingestedBlobs(
     "none",
     "none",
     extras.harness ?? "none",
+    extras.mode ?? "none",
+    extras.bucket ?? "none",
   ];
 }
 
@@ -404,6 +408,22 @@ describe("telemetry ingestion", () => {
     expect(points).toHaveLength(1);
   });
 
+  it("stores deployment mode and participant bucket on contributed", async () => {
+    const accepted = await post(
+      TELEMETRY_PATH,
+      validEvent({
+        event: "contributed",
+        deploymentMode: "remote",
+        participantBucket: "2",
+        harness: "codex",
+      }),
+    );
+    expect(accepted.status).toBe(200);
+    expect(points[0]?.blobs).toEqual(
+      ingestedBlobs("contributed", "cli", { harness: "codex", mode: "remote", bucket: "2" }),
+    );
+  });
+
   it("serves the zone-prefixed route identically to the origin-root route", async () => {
     const response = await post("/campfire/v1/telemetry", validEvent());
     expect(response.status).toBe(200);
@@ -431,6 +451,8 @@ describe("telemetry ingestion", () => {
       "curl",
       "none",
       "",
+      "none",
+      "none",
       "none",
       "none",
       "none",
