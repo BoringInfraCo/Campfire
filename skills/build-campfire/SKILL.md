@@ -1522,7 +1522,12 @@ Optimize only after measurement or real user need.
 
 Campfire stays `private: true` and is **not published to npm**.
 
-Distribution is via the install script and GitHub Release assets.
+Distribution is the curl install script, the Homebrew tap
+`BoringInfraCo/homebrew-campfire`, and the Nix flake. Homebrew and Nix install
+the same checksummed GitHub Release archives as the curl installer. They do
+not compile `better-sqlite3` and they do not send telemetry. The curl
+installer's `npm install -g github:BoringInfraCo/Campfire#vX.Y.Z` fallback
+remains a source build for a platform with no release archive.
 
 ## Release-Mirror Workflow
 

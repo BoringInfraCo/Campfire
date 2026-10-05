@@ -4,6 +4,12 @@ name: release-tarball
 # OPERATOR.md) and attach them to an existing GitHub Release. Local packaging
 # is only a fallback: the tarball contains a native better-sqlite3 binding, so
 # it must be built on the target platform.
+#
+# After the four archives exist, pin Homebrew and Nix from the private
+# repository with `node scripts/sync-install-channels.mjs --version X.Y.Z`,
+# commit that pin there, and copy packaging/homebrew/campfire.rb to
+# BoringInfraCo/homebrew-campfire. Do not commit the pin back onto this
+# public snapshot from this workflow.
 on:
   release:
     types: [published]

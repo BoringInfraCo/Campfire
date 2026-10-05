@@ -179,11 +179,23 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 
 ## Installation
 
-Requires Node.js **22 or newer**. SQLite is the store; one process owns the file, others call it over HTTP.
+The curl and Homebrew installs require Node.js **22 or newer**. Nix provides Node.js 22. SQLite is the store; one process owns the file, others call it over HTTP.
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
+
+Homebrew and Nix install the same checksummed GitHub Release archives. Homebrew uses its keg-only Node.js 22. Nix wraps Node.js 22 into the install, so a separate Node install is not required. Neither one sends install telemetry or starts a service.
+
+```bash
+brew install boringinfraco/campfire/campfire
+```
+
+```bash
+nix profile install github:BoringInfraCo/Campfire
+```
+
+The Nix command works from a checkout that contains `flake.nix`, and from GitHub after the public snapshot that includes the flake is promoted. `packaging/homebrew/campfire.rb` is the formula to copy into the `BoringInfraCo/homebrew-campfire` tap.
 
 For the production-deployed pinned v1.8.0 installer:
 
@@ -204,7 +216,7 @@ npm run build
 npm test
 ```
 
-The package stays `private: true` and is **not published to npm**; distribution is via the install script and GitHub Release assets. The installer verifies the release tarball checksum before installing. The versioned script requires the static-site deploy as well as the GitHub Release assets; see [docs/OPERATOR.md](docs/OPERATOR.md).
+The package stays `private: true` and is **not published to npm**. Distribution is the install script, the Homebrew tap, and the Nix flake, all of which use the GitHub Release archives. The curl installer verifies the release tarball checksum before installing. The versioned script requires the static-site deploy as well as the GitHub Release assets; see [docs/OPERATOR.md](docs/OPERATOR.md).
 
 ---
 
