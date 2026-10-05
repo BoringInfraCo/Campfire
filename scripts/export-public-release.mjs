@@ -45,6 +45,14 @@ const EXACT_SOURCE_PATHS = new Set([
 ]);
 
 const SOURCE_PREFIXES = ["fixtures/", "migrations/", "public/", "src/", "tests/"];
+// A published release may gain install channels after its immutable source tag.
+// Only these packaging files may come from a later private commit.
+const INSTALL_CHANNEL_PATHS = [
+  "flake.lock",
+  "flake.nix",
+  "packaging/homebrew/campfire.rb",
+  "scripts/sync-install-channels.mjs",
+];
 const TEMPLATE_ROOT = "public-release/root";
 const OVERRIDE_ROOT = "public-release/overrides";
 
@@ -71,13 +79,14 @@ function git(args, encoding = "utf8") {
 }
 
 function parseArgs(argv) {
-  const result = { ref: undefined, output: undefined };
+  const result = { ref: undefined, output: undefined, installChannelsRef: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--ref") result.ref = argv[++index];
     else if (arg === "--output") result.output = argv[++index];
+    else if (arg === "--install-channels-ref") result.installChannelsRef = argv[++index];
     else if (arg === "--help") {
-      console.log("Usage: npm run export:public -- --ref <tag-or-commit> --output <empty-directory>");
+      console.log("Usage: npm run export:public -- --ref <tag-or-commit> --output <empty-directory> [--install-channels-ref <commit>]");
       process.exit(0);
     } else fail(`unknown argument: ${arg}`);
   }
@@ -163,6 +172,12 @@ if (status.trim()) fail("working tree must be clean; commit or stash changes bef
 
 const sourceCommit = git(["rev-parse", `${args.ref}^{commit}`]).trim();
 const templateCommit = git(["rev-parse", "HEAD^{commit}"]).trim();
+const installChannelsCommit = args.installChannelsRef
+  ? git(["rev-parse", `${args.installChannelsRef}^{commit}`]).trim()
+  : undefined;
+if (installChannelsCommit && installChannelsCommit !== templateCommit) {
+  fail("--install-channels-ref must identify HEAD, the reviewed private main commit");
+}
 const output = resolve(args.output);
 const relativeToRoot = relative(root, output);
 if (!isAbsolute(output) || output === root || (!relativeToRoot.startsWith(`..${sep}`) && relativeToRoot !== "..")) {
@@ -175,6 +190,14 @@ const sourceEntries = listTree(sourceCommit, ".").filter(
   (entry) => entry.type === "blob" && sourcePathAllowed(entry.path),
 );
 for (const entry of sourceEntries) writeBlob(sourceCommit, entry, join(output, entry.path));
+
+if (installChannelsCommit) {
+  for (const path of INSTALL_CHANNEL_PATHS) {
+    const entry = listTree(installChannelsCommit, path).find((candidate) => candidate.path === path);
+    if (!entry || entry.type !== "blob") fail(`install channel file missing: ${path}`);
+    writeBlob(installChannelsCommit, entry, join(output, path));
+  }
+}
 
 copyTree(templateCommit, TEMPLATE_ROOT, output, `${TEMPLATE_ROOT}/`);
 copyTree(templateCommit, OVERRIDE_ROOT, output, `${OVERRIDE_ROOT}/`);
@@ -202,6 +225,7 @@ writeFileSync(
       schemaVersion: 1,
       version: packageJson.version,
       sourceCommit,
+      ...(installChannelsCommit ? { installChannelsCommit } : {}),
       sourceDate,
       exportedAt: `${exportDate}T00:00:00.000Z`,
       files: [...files, "PUBLIC_SNAPSHOT_MANIFEST.json"].sort(),
