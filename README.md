@@ -12,10 +12,20 @@ Git is excellent at recording changes to code. Agent-native development also dep
 
 ## Install
 
-Campfire requires Node.js 22 or newer.
+The curl and Homebrew installs require Node.js 22 or newer. Nix provides Node.js 22.
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
+```
+
+Homebrew and Nix install the same checksummed GitHub Release archives. Homebrew uses its keg-only Node.js 22. Nix wraps Node.js 22 into the install. Neither sends install telemetry or starts a service.
+
+```bash
+brew install boringinfraco/campfire/campfire
+nix profile install github:BoringInfraCo/Campfire
+```
+
+```bash
 campfire onboard \
   --human-name "Sergio" \
   --agent-name "Codex" \
@@ -48,7 +58,7 @@ npm run build
 npm test
 ```
 
-Campfire remains `private: true` in `package.json` and is not published to npm. Distribution uses the install script and checksummed GitHub Release archives.
+Campfire remains `private: true` in `package.json` and is not published to npm. Distribution uses the install script, the Homebrew tap, and the Nix flake. All three install checksummed GitHub Release archives.
 
 ## Telemetry
 
