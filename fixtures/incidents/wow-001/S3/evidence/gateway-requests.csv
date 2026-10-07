@@ -1,0 +1,8 @@
+observed_at_utc,region,route,request_id,status,duration_ms,gateway_note
+2026-09-18T09:42:11Z,iad,/v1/exports,gw-071,200,820,completed
+2026-09-18T09:46:08Z,iad,/v1/exports,gw-084,504,30000,upstream_response_timeout
+2026-09-18T09:51:24Z,iad,/v1/exports,gw-093,504,30000,upstream_response_timeout
+2026-09-18T09:55:06Z,iad,/v1/exports,gw-101,200,1460,completed
+2026-09-18T09:58:13Z,ord,/v1/exports,gw-108,200,910,completed
+2026-09-18T10:04:00Z,iad,/v1/exports,aggregate_0945_1000,504,,26_of_402_requests_in_09:45_to_10:00_UTC
+2026-09-18T10:04:00Z,ord,/v1/exports,aggregate_0945_1000,504,,0_of_388_requests_in_09:45_to_10:00_UTC

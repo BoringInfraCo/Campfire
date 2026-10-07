@@ -174,6 +174,12 @@ establishes that a person can now identify the current decision. Gate B and Gate
 C remain unmeasured, and the reported 550+ installed base is not treated as
 evidence for either. Do not read this release as gate satisfaction.
 
+Sprint WOW-001 — Prove a Way of Working has a **proposed**, unimplemented
+v1.13 contract at `docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md` and
+draft synthetic pilot fixtures at `fixtures/incidents/wow-001/`. Complete and
+commit the preregistration and environment lock before product implementation;
+the proposal does not change VIS-001's open evidence or authorize a release.
+
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
 

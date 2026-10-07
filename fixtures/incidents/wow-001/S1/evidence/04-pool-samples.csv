@@ -1,0 +1,8 @@
+timestamp_utc,revision,pod,pool_max,in_use,pending,pool_wait_p95_ms,connection_hold_p95_ms,pool_wait_timeouts_1m
+2026-09-18T09:09:00Z,order-api-r183,old-1,24,10,0,8,681,0
+2026-09-18T09:16:00Z,order-api-r183,old-1,24,11,0,9,695,0
+2026-09-18T09:16:00Z,order-api-r184,new-1,4,4,38,3000,702,291
+2026-09-18T09:16:00Z,order-api-r184,new-2,4,4,41,3000,711,307
+2026-09-18T09:21:00Z,order-api-r183,old-2,24,12,0,10,688,0
+2026-09-18T09:21:00Z,order-api-r184,new-1,4,4,44,3000,705,316
+2026-09-18T09:21:00Z,order-api-r184,new-2,4,4,43,3000,709,322

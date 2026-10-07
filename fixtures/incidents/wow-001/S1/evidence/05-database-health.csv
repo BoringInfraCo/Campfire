@@ -1,0 +1,4 @@
+timestamp_utc,cluster,cpu_percent,query_p95_ms,db_errors_1m,available_connections
+2026-09-18T09:09:00Z,orders-primary,31,18,0,188
+2026-09-18T09:16:00Z,orders-primary,34,19,0,182
+2026-09-18T09:21:00Z,orders-primary,33,18,0,181

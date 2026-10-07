@@ -1,0 +1,5 @@
+observed_at_utc,region,metric,value,window_utc,note
+2026-09-18T09:40:00Z,iad,db_query_p95_ms,140,09:30_to_09:40,all_routes_aggregate
+2026-09-18T09:50:00Z,iad,db_query_p95_ms,1090,09:40_to_09:50,all_routes_aggregate
+2026-09-18T10:00:00Z,iad,db_query_p95_ms,980,09:50_to_10:00,all_routes_aggregate
+2026-09-18T10:00:00Z,ord,db_query_p95_ms,155,09:50_to_10:00,all_routes_aggregate

@@ -1,0 +1,27 @@
+{
+  "capturedAtUtc": "2026-09-18T09:23:00Z",
+  "service": "order-api",
+  "region": "us-east-1",
+  "rollout": {
+    "startedAtUtc": "2026-09-18T09:10:00Z",
+    "pausedAtUtc": "2026-09-18T09:22:00Z",
+    "targetRevision": "order-api-r184",
+    "previousRevision": "order-api-r183",
+    "targetTrafficPercent": 25,
+    "targetPods": 2,
+    "previousPods": 6,
+    "state": "paused"
+  },
+  "configuration": {
+    "order-api-r183": {
+      "DB_POOL_MAX": "24",
+      "CHECKOUT_TIMEOUT_MS": "3000",
+      "LOG_LEVEL": "info"
+    },
+    "order-api-r184": {
+      "DB_POOL_MAX": "4",
+      "CHECKOUT_TIMEOUT_MS": "3000",
+      "LOG_LEVEL": "info"
+    }
+  }
+}

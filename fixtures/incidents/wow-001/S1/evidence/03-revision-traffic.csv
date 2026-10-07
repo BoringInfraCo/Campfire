@@ -1,0 +1,6 @@
+window_end_utc,revision,pods,requests,http_503,checkout_successes
+2026-09-18T09:10:00Z,order-api-r183,8,30120,119,30001
+2026-09-18T09:15:00Z,order-api-r183,6,22490,91,22399
+2026-09-18T09:15:00Z,order-api-r184,2,7490,2987,4503
+2026-09-18T09:20:00Z,order-api-r183,6,22530,93,22437
+2026-09-18T09:20:00Z,order-api-r184,2,7510,3061,4449

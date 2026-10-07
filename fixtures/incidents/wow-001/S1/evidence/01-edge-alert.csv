@@ -1,0 +1,6 @@
+timestamp_utc,region,route,window_minutes,requests,http_503,alert_state
+2026-09-18T09:05:00Z,us-east-1,POST /v1/checkouts,5,29840,111,normal
+2026-09-18T09:10:00Z,us-east-1,POST /v1/checkouts,5,30120,119,normal
+2026-09-18T09:15:00Z,us-east-1,POST /v1/checkouts,5,29980,3078,firing
+2026-09-18T09:20:00Z,us-east-1,POST /v1/checkouts,5,30040,3154,firing
+2026-09-18T09:20:00Z,us-east-1,GET /health,5,2400,0,normal
