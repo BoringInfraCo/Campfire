@@ -81,6 +81,7 @@ describe("install channels", () => {
       "flake.lock",
       "packaging/homebrew/campfire.rb",
       "scripts/sync-install-channels.mjs",
+      "scripts/sync-install-channels.d.mts",
     ]) {
       expect(exporter).toContain(`"${path}"`);
     }
