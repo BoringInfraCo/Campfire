@@ -49,10 +49,13 @@ const SOURCE_PREFIXES = ["fixtures/", "migrations/", "public/", "src/", "tests/"
 // A published release may gain install channels after its immutable source tag.
 // Only these packaging files may come from a later private commit.
 const INSTALL_CHANNEL_PATHS = [
+  ".github/workflows/release-tarball.yml",
   "flake.lock",
   "flake.nix",
   "packaging/homebrew/campfire.rb",
+  "scripts/sync-install-channels.d.mts",
   "scripts/sync-install-channels.mjs",
+  "tests/unit/install-channels.test.ts",
 ];
 const TEMPLATE_ROOT = "public-release/root";
 const OVERRIDE_ROOT = "public-release/overrides";
