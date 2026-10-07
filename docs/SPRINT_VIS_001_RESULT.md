@@ -7,15 +7,16 @@ authorizing publication of that bounded slice. Verdict: **CONDITIONAL**. Usabili
 is **unverified**.
 
 **Date:** October 4, 2026. Corrected October 7, 2026 — see §11. Slice implemented
-and released under founder override — see §12 and §13.
+and prepared for release under founder override — see §12 and §13.
 
 **Contract:** `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`
 
 **Preserved evidence:** `docs/evidence/vis-001/` (sanitized, tracked)
 
-**Package version:** still `1.11.0`. `v1.12.0` is **authorized but not yet
-published** — the release is staged, not cut. See §13.6 for the sequencing
-constraint that blocks a standalone version bump. The October 4 gate work
+**Package version:** `1.12.0` in the isolated release candidate. `v1.12.0` is
+**authorized but not yet published** — the release is staged, not cut. See
+§13.6 for the sequencing constraint that leaves install-channel pins at the
+last published version until new archives exist. The October 4 gate work
 made no product-source changes. The October 7 slice changes
 `src/service/campfire-service.ts` and the Viewer static assets under an explicit
 founder override; see §12. Separate sprint-002 evidence-manifest work is present
@@ -493,7 +494,9 @@ The pre-existing build failure is also fixed: `scripts/sync-install-channels.mjs
 had no type declaration, so `tests/unit/install-channels.test.ts` failed
 typecheck with TS7016 and `npm run build` could not complete. Added
 `scripts/sync-install-channels.d.mts`. `npm run typecheck`, `npm run build`,
-`npm test` (883 passed, 73 files), and `npm run pack:tarball` all succeed.
+`npm test` and `npm run pack:tarball` succeeded in the prior working tree.
+That test run included an unrelated, untracked sprint-002 test file; the
+isolated release-source results are stated in §13.5.
 
 Deliberately **not** done, and why:
 
@@ -509,8 +512,10 @@ Deliberately **not** done, and why:
 
 ### 12.2 Verification
 
-`npm test` — **883 passed, 73 files, 0 failures.** `node --check` on the Viewer
-bundle. `public/` re-synced from `src/viewer/static/`.
+`npm test` — **883 passed, 73 files, 0 failures in the prior working tree**, which
+included an unrelated, untracked sprint-002 test file. See §13.5 for the
+isolated release candidate. `node --check` on the Viewer bundle.
+`public/` re-synced from `src/viewer/static/`.
 
 New `tests/integration/viewer-vis-001.test.ts` — 16 checks, one per observed
 failure, including that the review marker survives without color (badge border
@@ -608,9 +613,14 @@ out here rather than left to be discovered.
 
 ### 13.5 Verification at release time
 
-`npm run typecheck`, `npm run build`, `npm run pack:tarball`, and `npm test`
-(**883 passed, 73 files**) all succeed. `node --check` passes on the Viewer
-bundle. Security posture unchanged from `v1.11.0`: no write path added, no
+On the isolated `1.12.0` release candidate, `npm run typecheck`, `npm run build`,
+`npm run pack:tarball`, and `npm run deploy:dry-run` succeed. The 71 test files
+outside `install-channels.test.ts` pass (**865 tests**). The install-channel
+file has three passing checks and one expected version-pin failure; the
+remaining test cannot pass until the four new release checksums exist. The
+earlier 883-test count included an untracked sprint-002 test and is not a
+reproducible release-source count. `node --check` passes on the Viewer bundle.
+Security posture unchanged from `v1.11.0`: no write path added, no
 credential handling touched, no external fetch introduced.
 
 ### 13.6 Release sequencing constraint, found during preparation
@@ -636,8 +646,9 @@ order is:
 3. Run `node scripts/sync-install-channels.mjs --version 1.12.0`, commit the pin.
 4. Record the promotion in this section.
 
-The version was reverted after this was discovered, so the tree is green and
-`1.11.0` remains current until the release is actually cut.
+The version was reverted in the main working tree after this was discovered.
+An isolated release candidate now carries the `1.12.0` version bump and
+versioned installer; no tag or public release has been created.
 
 ### 13.7 Trace collection is decoupled
 
