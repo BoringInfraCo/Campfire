@@ -158,12 +158,17 @@ Its result is `docs/SPRINT_VIS_001_RESULT.md` and its preserved evidence is
 `docs/evidence/vis-001/`. The entry gate is **3 of 4 met; decision REFRAME.**
 Cold-agent evidence on a shared instance, the v1.11 release source, and one
 observed human comprehension failure are recorded. **Condition 4 — evidence about
-which artifacts people actually try to open — is NOT met**, so v1.12 is not
-sprint scope and no Viewer implementation has started. Nothing shipped: no tag,
-no release, no deployment. VIS-001 made no product-source changes. Artifact
-previews and shared highlights are deferred for want of observation, not capacity.
-The next step is one participant attempting to open a real, accessible artifact
-reference. Gate B and Gate C remain unmeasured.
+which artifacts people actually try to open — is NOT met.** On October 7, 2026
+the repository owner exercised a **founder override** and directed that the
+condition-3 Viewer slice proceed anyway, with the gate still open; see §0 and §12
+of the result. That slice is implemented and `npm test` passes at 881 tests, but
+it is **not a release**: no version bump, no tag, no snapshot, no deployment, and
+the package remains `1.11.0`. Gate B and Gate C remain unmeasured, and no human
+product trace was run for the slice. **Artifact previews and shared highlights
+remain deferred** — the override covered only the condition-3 presentation
+defects, so no preview, no external fetch, and no change to
+`VIEWER_READ_METHODS` was made. Do not read the shipped slice as gate
+satisfaction.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

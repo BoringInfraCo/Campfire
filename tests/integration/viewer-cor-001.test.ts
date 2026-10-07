@@ -146,8 +146,10 @@ describe("COR-001 viewer orientation text", () => {
     };
     const lines = evalIn<string[]>(sandbox, "extras(item)");
     expect(lines).toContain("current");
-    expect(lines).toContain("first record");
-    expect(lines).toContain("evidence 1");
+    // Reason is labelled so it cannot read as the object's own summary, and
+    // evidence names its cited reference instead of only counting rows.
+    expect(lines).toContain("reason: first record");
+    expect(lines.join("\n")).toContain("evidence (1): a1");
     expect(lines.join("\n")).not.toContain("full artifact body");
     expect(lines.join("\n")).not.toContain("<button");
 
@@ -160,7 +162,10 @@ describe("COR-001 viewer orientation text", () => {
     };
     const decisionHtml = evalIn<string>(sandbox, "workDecisionHtml(decision)");
     expect(decisionHtml).toContain("Skip the cache flush");
-    expect(decisionHtml).toContain("needs review f9");
+    expect(decisionHtml).toContain("needs review");
+    expect(decisionHtml).toContain("f9");
+    // The badge carries an accessible name; the marker is not color-only.
+    expect(decisionHtml).toContain('aria-label="accepted decision needing review"');
     expect(decisionHtml).not.toContain("<button");
 
     sandbox.item = {

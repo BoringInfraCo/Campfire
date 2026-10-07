@@ -1,18 +1,57 @@
 # Campfire — Sprint VIS-001 Result: Make Shared Understanding Visible
 
-**Status:** Entry gate **NOT fully met**. Decision: **REFRAME — no product
-implementation was started.** No release, no tag, no deployment.
+**Status:** Entry gate **NOT fully met** — condition 4 remains open. Decision:
+**REFRAME**, then **FOUNDER OVERRIDE** on October 7, 2026 authorizing the
+condition-3 Viewer slice. No release, no tag, no deployment.
 
-**Date:** October 4, 2026. Corrected October 7, 2026 — see §11.
+**Date:** October 4, 2026. Corrected October 7, 2026 — see §11. Slice implemented
+October 7, 2026 under founder override — see §12.
 
 **Contract:** `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`
 
 **Preserved evidence:** `docs/evidence/vis-001/` (sanitized, tracked)
 
-**Package version:** unchanged at `1.11.0`. **VIS-001 made no product-source
-changes**: no file under `src/`, no migration, no canonical product document, and
-no release artifact. Separate sprint-002 evidence-manifest work is present in the
-working tree and is unrelated to this gate; see §9.
+**Package version:** unchanged at `1.11.0`. The October 4 gate work made no
+product-source changes. The October 7 slice changes `src/service/campfire-service.ts`
+and the Viewer static assets under an explicit founder override; see §12. Separate
+sprint-002 evidence-manifest work is present in the working tree and is unrelated
+to both; see §9.
+
+---
+
+## 0. Founder override, October 7, 2026
+
+**The gate is still open. Condition 4 was never met.** This section exists so
+that no reader mistakes the shipped slice for gate satisfaction.
+
+The repository owner exercised a founder override and directed implementation to
+proceed without closing condition 4, on the grounds that the product now has an
+installed user base that will supply feedback faster than the observation could
+be collected.
+
+What that changes and what it does not:
+
+| | |
+| --- | --- |
+| Condition 4 (artifact-open evidence) | **Still NOT MET.** No participant has attempted to open an artifact reference. |
+| Condition 3 (observed comprehension failure) | **MET** — the only basis for the slice in §12. |
+| Contract §8.1 "do not start product implementation while the gate is open" | **Waived by the owner**, not satisfied. |
+| Gate B (voluntary repeat use) | **Still unmeasured.** |
+| Gate C (ordinary multi-participant value) | **Still unmeasured.** |
+| Release verdict | **Unchanged: none.** See §8. |
+
+Scope was held to condition 3's actual findings — the presentation defects
+observed on correct data. **Nothing gated on condition 4 was built**: no artifact
+preview, no preview type, no external fetch, no change to `VIEWER_READ_METHODS`,
+no §4.4 threat surface, and no shared highlight. Previews remain deferred
+pending an observation that has still not occurred.
+
+One factual conflict is recorded rather than resolved: `AGENTS.md` and
+`docs/TELEMETRY.md` state that telemetry is unprovisioned and that no founder
+metric has been produced, while the override cites an installed base of 550+
+users. If that base is real, real artifact-use feedback likely already exists and
+condition 4 could be closed cheaply. That is the owner's call; the discrepancy is
+surfaced, not silently reconciled.
 
 ---
 
@@ -255,11 +294,14 @@ condition 3 on its own — see section 5.
 
 ## 5. Scope decisions recorded at the gate
 
-- **Artifact previews: excluded.** No observed artifact-open attempt.
+- **Artifact previews: excluded.** No observed artifact-open attempt. Still
+  excluded after the October 7 slice; the override did not extend to anything
+  gated on condition 4.
 - **Shared highlights: excluded.** No observation warrants shared salience.
   Per contract section 4.3 they are left out and the reason is recorded here.
 - **Workspace overview, catch-up paging, currentness/history presentation:
-  justified by condition 3 but not started**, because the gate is not closed.
+  justified by condition 3**, implemented October 7, 2026 under the founder
+  override in §0. See §12. The gate itself is still open on condition 4.
 
   If the gate closes, the smallest observed improvement is bounded by condition
   3's actual finding — five items, in priority order:
@@ -400,3 +442,72 @@ gaps. All are corrected above; the gate decision is unchanged.
    as a statement about the tree, because unrelated sprint-002 evidence work is
    present. Narrowed to "VIS-001 made no product-source changes" and disclosed
    in §9. The `grace.token` credential was resolved and revoked; see §8.
+## 12. Condition-3 Viewer slice, October 7, 2026
+
+Implemented under the founder override in §0. Scope is exactly condition 3's five
+recorded findings. Nothing here depends on condition 4.
+
+### 12.1 What changed
+
+**Service** — `src/service/campfire-service.ts`. `currentWork.acceptedDecisions`
+is now sorted explicitly with `compareByUpdatedThenId` instead of inheriting the
+orientation page's recency tiebreak. This is the half of the ordering fix the
+Viewer cannot make on its own: the current-work panel and the alignment panel now
+agree, because both derive from one comparator. Order remains presentation only
+and never decides which decision is operative.
+
+**Viewer** — `src/viewer/static/app.js`, `src/viewer/static/app.css`:
+
+| Finding | Change |
+| --- | --- |
+| 1 — conflicting order, no salience notion | Accepted decisions are partitioned into settled and needing-review groups in **both** the current-work and alignment panels. |
+| 1 — marker unreadable | `needsReview` is a bordered `.oreview` badge with `aria-label`, not dim text. |
+| 2 — clipped IDs | `.oreason` now wraps (`overflow-wrap: anywhere`, no `nowrap`/`ellipsis`) and uses `--muted` instead of `--dim`. Cited finding IDs render in full. |
+| 2 — next action unreachable | `open` tasks are enumerated in the current-work panel, newest first, de-duplicated against in-progress and blocked. |
+| 2 — hint kind dropped | `renderNextAction` shows the hint's `kind` and `id`, so a proposed-decision hint cannot read as a work step. |
+| 3 — basis not surfaced | Reason renders as `reason: …` rather than as an unlabelled line, and evidence/citations name their referenced IDs instead of counting rows. |
+| Completeness discarded | `slices.*.{total,returned,truncated}` now render as `showing N of M · more available`. A truncated section can no longer look empty. |
+
+Deliberately **not** done, and why:
+
+- **Both panels newest-first.** Explicitly rejected: it leaves the original
+  confusion intact, because the confusion came from a recently *touched* decision
+  outranking the *operative* one. Grouping distinguishes them; sorting alone does
+  not.
+- **Deciding which decision is "operative."** No such rule exists in the data, and
+  inventing one in the Viewer would violate the contract's rule against
+  Viewer-only decision logic. The two-current-findings ambiguity from the
+  data-modelling note above remains a COR-001 follow-up, untouched.
+- **Anything in §4.4.** No preview, no fetch, no allowlist change.
+
+### 12.2 Verification
+
+`npm test` — **881 passed, 73 files, 0 failures.** `node --check` on the Viewer
+bundle. `public/` re-synced from `src/viewer/static/`.
+
+New `tests/integration/viewer-vis-001.test.ts` — 14 checks, one per observed
+failure, including that the review marker survives without color (badge border
+plus `aria-label`), that `.oreason` carries no clipping rule, that a flagged
+decision cannot appear in the settled group, that the distinction holds in the
+alignment panel too, and that the surface still renders no write control and
+escapes injected markup.
+
+One existing assertion in `tests/integration/viewer-cor-001.test.ts` was updated:
+it pinned the old unlabelled `reason` and the bare `evidence 1` count, both of
+which this slice deliberately changes. Updated to assert the labelled form.
+
+`tests/unit/service.test.ts` gains a check that `currentWork.acceptedDecisions`
+and `alignment.acceptedDecisionIds` return the same order, which is the
+regression this slice exists to prevent.
+
+### 12.3 Known limits
+
+- **`npm run build` fails, pre-existing and unrelated.** `tests/unit/install-channels.test.ts`
+  imports `scripts/sync-install-channels.mjs`, which has no type declaration
+  (TS7016). Verified failing on a clean tree with all changes stashed. Untouched
+  here because it belongs to the install-channel work, not this slice.
+- **No human trace.** Per the override, the product trace in contract §6 was not
+  run. The slice is verified deterministically, not against a participant, so it
+  is **not** evidence that a human now understands the state better.
+- **Not a release.** No version bump, no tag, no snapshot, no deployment. The
+  package remains `1.11.0`.
