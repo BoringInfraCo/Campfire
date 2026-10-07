@@ -684,7 +684,14 @@ quieten the verdict.
   The Homebrew and Nix pins were resolved from those published checksum files;
   `sync-install-channels.mjs --check` confirms both channels match them.
 - After pinning, `npm run typecheck`, `npm run build`, and `npm test` pass in the
-  private release worktree (**848 tests, 72 files**). The public pin addendum,
-  tap update, clean installation, and production Worker deploy are separate
-  promotion steps. No human Viewer trace has occurred; the CONDITIONAL verdict
-  and every unverified claim in §13.2 remain unchanged.
+  private release worktree (**848 tests, 72 files**). The audited public pin
+  addendum is `92c231f`; its CI run `37693135679` passed, and the exported
+  public checkout also passed all 848 tests. The Homebrew tap formula was
+  updated at `617a504`. A clean version-pinned Darwin/ARM64 install verified
+  the published SHA-256 and installed `1.12.0` into an empty temporary prefix.
+- Production Worker deployment remains pending. Its versioned installer URL
+  currently returns 404. A production-configured deployment dry run passed,
+  and the local D1 binding was checked against the sole remote database named
+  `campfire`; no Worker or D1 mutation was made. No human Viewer trace has
+  occurred; the CONDITIONAL verdict and every unverified claim in §13.2 remain
+  unchanged.
