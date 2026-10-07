@@ -67,7 +67,9 @@ jobs:
           cache-dependency-path: release-source/package-lock.json
 
       - name: Use hardened release packaging
-        run: cp scripts/package.sh release-source/scripts/package.sh
+        run: |
+          cp scripts/package.sh release-source/scripts/package.sh
+          cp scripts/sync-install-channels.d.mts release-source/scripts/sync-install-channels.d.mts
 
       # `npm ci` runs the `prepare` script, which builds dist/.
       - run: npm ci

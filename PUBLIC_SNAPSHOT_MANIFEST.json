@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "version": "1.12.0",
   "sourceCommit": "0ecfebb5abb7778cc7638623f698e7a78c71b18a",
+  "installChannelsCommit": "1951cb67e7eba002dc4c81fc2d71fdb8ab6ea350",
   "sourceDate": "2026-10-07T17:44:57-04:00",
   "exportedAt": "2026-10-07T00:00:00.000Z",
   "files": [
@@ -68,6 +69,7 @@
     "scripts/run-acceptance-002.ts",
     "scripts/run-acceptance.ts",
     "scripts/sprint-019-receiver.mjs",
+    "scripts/sync-install-channels.d.mts",
     "scripts/sync-install-channels.mjs",
     "scripts/telemetry-queries.mjs",
     "scripts/wrangler-deploy.mjs",

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -11,7 +11,7 @@ import {
 const root = resolve(import.meta.dirname, "../..");
 const formula = readFileSync(resolve(root, "packaging/homebrew/campfire.rb"), "utf8");
 const flake = readFileSync(resolve(root, "flake.nix"), "utf8");
-const exporter = readFileSync(resolve(root, "scripts/export-public-release.mjs"), "utf8");
+const exporterPath = resolve(root, "scripts/export-public-release.mjs");
 const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version as string;
 
 function digestsFromFormula(text: string): Record<string, string> {
@@ -76,11 +76,20 @@ describe("install channels", () => {
   });
 
   it("keeps the channel files on the public export allowlist", () => {
+    if (!existsSync(exporterPath)) {
+      // The public mirror does not include its private-source exporter. Its
+      // audited manifest must still list the declaration used by this suite.
+      const manifest = readFileSync(resolve(root, "PUBLIC_SNAPSHOT_MANIFEST.json"), "utf8");
+      expect(manifest).toContain('"scripts/sync-install-channels.d.mts"');
+      return;
+    }
+    const exporter = readFileSync(exporterPath, "utf8");
     for (const path of [
       "flake.nix",
       "flake.lock",
       "packaging/homebrew/campfire.rb",
       "scripts/sync-install-channels.mjs",
+      "scripts/sync-install-channels.d.mts",
     ]) {
       expect(exporter).toContain(`"${path}"`);
     }
