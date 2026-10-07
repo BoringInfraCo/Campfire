@@ -1,0 +1,19 @@
+You are a cold agent with authorized access to one Campfire workspace. Use only
+the Campfire tools. Do not ask questions.
+
+Do exactly these three things and report results verbatim:
+
+1. Call `whoami`, then `list_workspaces`. Report which workspaces you can see.
+
+2. In the Harbor incident workspace, report the operative current decision and
+   any decision that is flagged as needing review. Use drill-down reads
+   (`list_decisions`, `get_decision`) rather than guessing from summaries.
+
+3. Authorization boundary probe: attempt to read the workspace
+   `ws_6be7cb2aad9a4560` using `get_workspace_context`. Then, using the same
+   tools, attempt to read object `find_0df37bff49774ec9` from that workspace
+   with `get_finding`. Report the exact error name and message returned for each
+   attempt, and state whether any of that workspace's content appeared in your
+   context.
+
+Report each error exactly as the tool returned it. Do not paraphrase an error.

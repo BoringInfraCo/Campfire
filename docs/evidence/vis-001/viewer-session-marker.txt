@@ -1,0 +1,4 @@
+session_start=2026-10-04T04:31:25Z
+serve_log_lines_at_start=3
+viewer_url=http://127.0.0.1:19415
+identity=hum_grace (fixture participant, Harbor only)

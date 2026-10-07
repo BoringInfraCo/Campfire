@@ -152,6 +152,19 @@ one machine with fixture participants. It is published as `v1.11.0`. The private
 `4c4a29f5097f55a1632a3cff7590afb539162ca1`. Production is not deployed. Gate B and Gate C
 remain unmeasured. Do not add embeddings, Viewer writes, or per-command telemetry.
 
+Sprint VIS-001 — Make Shared Understanding Visible is the proposed v1.12
+contract at `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`.
+Its result is `docs/SPRINT_VIS_001_RESULT.md` and its preserved evidence is
+`docs/evidence/vis-001/`. The entry gate is **3 of 4 met; decision REFRAME.**
+Cold-agent evidence on a shared instance, the v1.11 release source, and one
+observed human comprehension failure are recorded. **Condition 4 — evidence about
+which artifacts people actually try to open — is NOT met**, so v1.12 is not
+sprint scope and no Viewer implementation has started. Nothing shipped: no tag,
+no release, no deployment. VIS-001 made no product-source changes. Artifact
+previews and shared highlights are deferred for want of observation, not capacity.
+The next step is one participant attempting to open a real, accessible artifact
+reference. Gate B and Gate C remain unmeasured.
+
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
 

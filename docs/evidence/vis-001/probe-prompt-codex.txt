@@ -1,0 +1,29 @@
+You are joining an existing Campfire workspace as a teammate. Use only the
+Campfire tools available to you. Do not ask questions; work from the workspace
+state alone and give your best answer.
+
+Your job:
+
+1. Call `whoami` and `list_workspaces` to see who you are and which workspaces
+   you can reach.
+2. For the Harbor incident workspace, use the authorized read tools to establish:
+   - What does the team currently believe caused the March export problem? Give
+     the current finding, not an earlier or superseded one.
+   - What is the team's current decision? If more than one accepted decision
+     exists, say which one is the operative current position and why.
+   - What is the basis for that decision (its reason and its cited evidence or
+     basis findings)?
+   - Is any decision or finding flagged as needing review? Which, and why?
+   - Which task is the next useful action, and what is its status?
+   - Which artifact would you open to verify the newest claim about the export,
+     and what is its reference?
+3. Prove your authorization boundary: attempt to read any other workspace you
+   can see or infer, and report the exact error you receive.
+4. Report the orientation totals you saw (total / returned / truncated) for
+   findings, decisions, tasks, and artifacts, and state explicitly which
+   sections were truncated.
+
+Answer from the workspace records only. Do not speculate beyond what the tools
+return. At the end, state clearly: the current finding, the current decision,
+its basis, anything needing review, the next action, the artifact reference, and
+the denial you observed.

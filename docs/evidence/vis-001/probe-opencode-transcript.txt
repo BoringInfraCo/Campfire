@@ -1,0 +1,12 @@
+
+> build · big-pickle
+
+⚙ campfire_whoami Unknown
+⚙ campfire_list_workspaces Unknown
+⚙ campfire_list_decisions {"workspaceId":"ws_e844657c1dcc4e5a","limit":50}
+⚙ campfire_get_decision {"workspaceId":"ws_e844657c1dcc4e5a","decisionId":"dec_f9bd16ad4d8f44e6"}
+⚙ campfire_get_decision {"workspaceId":"ws_e844657c1dcc4e5a","decisionId":"dec_80dad7d77e47449d"}
+✗ campfire_get_workspace_context {"workspaceId":"ws_6be7cb2aad9a4560"} failed
+Error: {"error":"ParticipantRequired","message":"Actor agt_cce432a8b91341f9 is not a participant of workspace ws_6be7cb2aad9a4560","details":{"httpStatus":403}}
+✗ campfire_get_finding {"workspaceId":"ws_6be7cb2aad9a4560","findingId":"find_0df37bff49774ec9"} failed
+Error: {"error":"ParticipantRequired","message":"Actor agt_cce432a8b91341f9 is not a participant of workspace ws_6be7cb2aad9a4560","details":{"httpStatus":403}}
