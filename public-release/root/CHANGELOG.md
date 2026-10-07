@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.12.0 — 2026-10-07
+
+- Made the read-only Viewer distinguish accepted decisions that need review, show open tasks and cited references, and report completeness even when no rows are displayed.
+- Aligned accepted-decision ordering across the service's current-work and alignment projections.
+- Published with a CONDITIONAL verdict under the recorded founder override. Human comprehension on the updated Viewer and artifact-open behavior remain unverified; previews and shared highlights are deferred.
+
 ## 1.2.0 — 2026-09-25
 
 - Added agent readiness preflight and compact, authorization-aware workspace orientation.
