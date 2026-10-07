@@ -1423,7 +1423,7 @@ Sprint CTX-001 — Keep Shared Understanding Current   GO for the local release 
         ↓
 Sprint COR-001 — Correct the Record   CONDITIONAL GO; published v1.11.0; production not deployed; one operator, one machine; Codex and OpenCode cold and catch-up traces passed; fixture participants only; see docs/SPRINT_COR_001_RESULT.md; Gate B/C unmeasured
         ↓
-v1.12 — Make Shared Understanding Visible   directional; evidence gate below
+Sprint VIS-001 — Make Shared Understanding Visible   CONDITIONAL; bounded condition-3 Viewer slice published and deployed as v1.12.0 under founder override; condition 4 and human comprehension trace open; see docs/SPRINT_VIS_001_RESULT.md
         ↓
 v1.13 — Prove a Way of Working   directional; one playbook, then measure
         ↓
@@ -1449,12 +1449,13 @@ v1.11 — CORRECT THE RECORD
         see docs/SPRINT_COR_001_RESULT.md
 
 v1.12 — MAKE SHARED UNDERSTANDING VISIBLE
-        visual orientation and catch-up
-        workspace overview
-        current versus historical state
-        safe artifact previews
-        shared workspace highlights
-        refinement of the existing activity timeline
+        published and deployed v1.12.0, CONDITIONAL
+        bounded read-only Viewer clarity fixes for decisions, tasks,
+        reasons, cited evidence, and truncated sections
+        artifact previews and shared highlights deferred
+        condition 4 and human comprehension trace outstanding
+        Gate B and Gate C unmeasured
+        see docs/SPRINT_VIS_001_RESULT.md
 
 v1.13 — PROVE A WAY OF WORKING
         one incident-investigation playbook
@@ -1467,12 +1468,19 @@ Later — GENERATED WORKSPACE VIEWS
         no direct credentials or unrestricted writes
 ```
 
-v1.12 is not sprint scope until all of these are true:
+The original v1.12 entry contract required all of these before sprint scope:
 
 - v1.10 has live cold-agent evidence against a realistically large workspace, beyond the single-machine CTX-001 gate;
-- v1.11 correction and currentness semantics exist in the v1.11.0 release source, CONDITIONAL GO. v1.12 still waits on the other three bullets;
+- v1.11 correction and currentness semantics exist in the v1.11.0 release source, CONDITIONAL GO;
 - at least one observation shows that humans struggle to understand Campfire state that is otherwise correct;
 - there is evidence about which artifacts people actually try to open.
+
+Condition 4 remains unmet. On October 7, 2026, the founder authorized the
+bounded condition-3 Viewer slice and its release despite that open condition.
+This was an explicit override of the contract's implementation and release
+sequence, not evidence that the entry gate passed. The remaining visual scope
+remains deferred; the v1.12.0 verdict is CONDITIONAL until a human trace
+tests comprehension on the shipped surface. See `docs/SPRINT_VIS_001_RESULT.md`.
 
 The product risk is polishing a surface before teams repeatedly rely on the collaboration state. Leaving that state in structured form for another release is acceptable.
 

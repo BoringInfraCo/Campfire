@@ -9,8 +9,8 @@ It makes accepted decisions needing review, open work, cited evidence, and
 truncated sections easier to distinguish. The release verdict is CONDITIONAL:
 no human has yet verified comprehension on this updated surface, and artifact
 previews remain deferred. See `docs/SPRINT_VIS_001_RESULT.md` for the scope and
-founder override. The v1.12.0 source snapshot and checksummed archives are
-published; production Worker deployment is separate.
+founder override. The v1.12.0 source snapshot, checksummed archives, and
+production Worker are published. The pinned installer is live.
 
 - **Share work state** — goals, tasks, findings, decisions, and artifacts with provenance
 - **Continue anywhere** — pick up work in a fresh session on any supported harness
@@ -200,16 +200,15 @@ nix profile install github:BoringInfraCo/Campfire
 
 The Nix command works from a checkout that contains `flake.nix`, and from GitHub after the public snapshot that includes the flake is promoted. `packaging/homebrew/campfire.rb` is the formula to copy into the `BoringInfraCo/homebrew-campfire` tap.
 
-For the production-deployed pinned v1.8.0 installer:
+For a version-pinned v1.12.0 install:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --version 1.8.0
+curl -fsSL https://boringinfra.company/campfire/v1.12.0/install.sh | sh -s -- --version 1.12.0
 ```
 
-The v1.9.0 source snapshot and GitHub Release are published. Its Worker assets,
-including the versioned installer URL, have not yet been promoted to production.
-`v1.11.0` is published, CONDITIONAL GO. `public/campfire/v1.11.0/install.sh`
-is tracked here and is not a live production URL until a later deploy.
+Earlier releases remain available as versioned archives. The v1.12.0 Worker
+deploy also serves tracked versioned installer assets, including v1.9.0 and
+v1.11.0. The v1.12.0 usability verdict remains CONDITIONAL.
 
 Or build from source:
 

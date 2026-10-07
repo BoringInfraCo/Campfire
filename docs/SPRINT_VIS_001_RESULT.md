@@ -13,9 +13,9 @@ and published under founder override — see §12 and §13.
 
 **Preserved evidence:** `docs/evidence/vis-001/` (sanitized, tracked)
 
-**Package version:** `1.12.0`. The public snapshot and GitHub Release are
-published; production Worker deployment is separate. See §13.6–13.8 for the
-archive, pinning, and publication record. The October 4 gate work
+**Package version:** `1.12.0`. The public snapshot, GitHub Release, and
+production Worker are published. See §13.6–13.8 for the archive, pinning,
+publication, and deployment record. The October 4 gate work
 made no product-source changes. The October 7 slice changes
 `src/service/campfire-service.ts` and the Viewer static assets under an explicit
 founder override; see §12. Separate sprint-002 evidence-manifest work was present
@@ -666,7 +666,7 @@ A trace is still worth having. If it fails — if a participant still cannot tel
 which decision is operative — the honest response is to fix the surface, not to
 quieten the verdict.
 
-### 13.8 Publication and post-tag repair
+### 13.8 Publication, post-tag repair, and production deployment
 
 - The immutable private source tag `v1.12.0` points to
   `0ecfebb5abb7778cc7638623f698e7a78c71b18a`. The audited public source
@@ -689,9 +689,20 @@ quieten the verdict.
   public checkout also passed all 848 tests. The Homebrew tap formula was
   updated at `617a504`. A clean version-pinned Darwin/ARM64 install verified
   the published SHA-256 and installed `1.12.0` into an empty temporary prefix.
-- Production Worker deployment remains pending. Its versioned installer URL
-  currently returns 404. A production-configured deployment dry run passed,
-  and the local D1 binding was checked against the sole remote database named
-  `campfire`; no Worker or D1 mutation was made. No human Viewer trace has
-  occurred; the CONDITIONAL verdict and every unverified claim in §13.2 remain
-  unchanged.
+- Before deployment, `wrangler d1 migrations list campfire --remote` reported
+  **no pending migrations**. The configured D1 binding was checked against the
+  sole remote database named `campfire`. No migration was applied for this
+  release.
+- The production `campfire` Worker was deployed on October 7, 2026 to
+  `boringinfra.company/campfire/*` with version ID
+  `46242eb5-c855-4dd3-bfae-51380ee38b7a`. Wrangler confirmed the D1,
+  Analytics Engine, and asset bindings and the five-minute scheduled trigger.
+  The v1.12.0 versioned installer and latest installer both return HTTP 200 and
+  match their tracked assets byte-for-byte. A clean install from the live pinned
+  URL verified the published archive SHA-256 and installed package `1.12.0`.
+  The live Viewer `whoami` GET returns 401 without a bearer token; a GET to
+  `api/call` returns 403. The production Worker serves the installer and API;
+  the read-only Viewer interface runs locally through `campfire serve`.
+- No human Viewer trace has occurred. The CONDITIONAL verdict and every
+  unverified usability claim in §13.2 remain unchanged. Condition 4 and Gates
+  B/C remain open.

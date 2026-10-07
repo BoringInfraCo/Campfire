@@ -2,9 +2,8 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.12.0 is published with a CONDITIONAL verdict. Production deployment remains
-pending; the v1.12.0 versioned installer URL is not
-live until the Worker asset deploy. The human Viewer trace remains outstanding.
+v1.12.0 is published and deployed with a CONDITIONAL verdict. The versioned
+installer URL is live. The human Viewer trace remains outstanding.
 See `SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions

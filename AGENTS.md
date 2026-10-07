@@ -152,7 +152,7 @@ one machine with fixture participants. It is published as `v1.11.0`. The private
 `4c4a29f5097f55a1632a3cff7590afb539162ca1`. Production is not deployed. Gate B and Gate C
 remain unmeasured. Do not add embeddings, Viewer writes, or per-command telemetry.
 
-Sprint VIS-001 — Make Shared Understanding Visible is the proposed v1.12
+Sprint VIS-001 — Make Shared Understanding Visible is the retained v1.12
 contract at `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`.
 Its result is `docs/SPRINT_VIS_001_RESULT.md` and its preserved evidence is
 `docs/evidence/vis-001/`. The entry gate is **3 of 4 met; decision REFRAME.**
@@ -165,8 +165,8 @@ override directing that the condition-3 Viewer slice proceed with the gate open
 with a **CONDITIONAL** verdict (§13). `v1.12.0` is published as an audited
 public snapshot and GitHub Release with four checksummed platform archives.
 The post-archive Homebrew and Nix pins match the published checksums, and the
-isolated release source passes 848 tests across 72 files. Production Worker
-deployment remains separate; see §13.8 for the publication record.
+isolated release source passes 848 tests across 72 files. The production Worker
+is deployed; see §13.8 for the publication and deployment record.
 **Artifact previews and shared highlights remain deferred** — no
 preview, no external fetch, and no change to `VIEWER_READ_METHODS`. **Usability
 is unverified**: no human trace has been run against the surface, so nothing here
