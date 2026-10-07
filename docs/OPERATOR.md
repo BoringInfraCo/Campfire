@@ -2,8 +2,8 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-This source stages v1.12.0 with a CONDITIONAL verdict. The release and
-production deployment are pending; the v1.12.0 versioned installer URL is not
+v1.12.0 is published with a CONDITIONAL verdict. Production deployment remains
+pending; the v1.12.0 versioned installer URL is not
 live until the Worker asset deploy. The human Viewer trace remains outstanding.
 See `SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
@@ -26,7 +26,7 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` works after `packaging/homebrew/campfire.rb` is on the public tap `BoringInfraCo/homebrew-campfire`. The Nix command works from this checkout, and from GitHub after the next public snapshot. The package stays unpublished on the npm registry.
+`brew install` works after `packaging/homebrew/campfire.rb` is on the public tap `BoringInfraCo/homebrew-campfire`. The Nix command works from this checkout and from GitHub after the pin addendum reaches the public mirror. The package stays unpublished on the npm registry.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 

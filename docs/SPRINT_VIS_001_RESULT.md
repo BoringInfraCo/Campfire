@@ -7,20 +7,19 @@ authorizing publication of that bounded slice. Verdict: **CONDITIONAL**. Usabili
 is **unverified**.
 
 **Date:** October 4, 2026. Corrected October 7, 2026 — see §11. Slice implemented
-and prepared for release under founder override — see §12 and §13.
+and published under founder override — see §12 and §13.
 
 **Contract:** `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`
 
 **Preserved evidence:** `docs/evidence/vis-001/` (sanitized, tracked)
 
-**Package version:** `1.12.0` in the isolated release candidate. `v1.12.0` is
-**authorized but not yet published** — the release is staged, not cut. See
-§13.6 for the sequencing constraint that leaves install-channel pins at the
-last published version until new archives exist. The October 4 gate work
+**Package version:** `1.12.0`. The public snapshot and GitHub Release are
+published; production Worker deployment is separate. See §13.6–13.8 for the
+archive, pinning, and publication record. The October 4 gate work
 made no product-source changes. The October 7 slice changes
 `src/service/campfire-service.ts` and the Viewer static assets under an explicit
-founder override; see §12. Separate sprint-002 evidence-manifest work is present
-in the working tree and is unrelated to both; see §9.
+founder override; see §12. Separate sprint-002 evidence-manifest work was present
+in the original working tree and was excluded from the release source; see §9.
 
 ---
 
@@ -43,7 +42,7 @@ What that changes and what it does not:
 | Contract §8.1 "do not start product implementation while the gate is open" | **Waived by the owner**, not satisfied. |
 | Gate B (voluntary repeat use) | **Still unmeasured.** |
 | Gate C (ordinary multi-participant value) | **Still unmeasured.** |
-| Release verdict | **Unchanged: none.** See §8. |
+| Release verdict at this first override | **None at that time.** Superseded by the separate release-scope override in §13. |
 
 Scope was held to condition 3's actual findings — the presentation defects
 observed on correct data. **Nothing gated on condition 4 was built**: no artifact
@@ -51,12 +50,10 @@ preview, no preview type, no external fetch, no change to `VIEWER_READ_METHODS`,
 no §4.4 threat surface, and no shared highlight. Previews remain deferred
 pending an observation that has still not occurred.
 
-One factual conflict is recorded rather than resolved: `AGENTS.md` and
-`docs/TELEMETRY.md` state that telemetry is unprovisioned and that no founder
-metric has been produced, while the override cites an installed base of 550+
-users. If that base is real, real artifact-use feedback likely already exists and
-condition 4 could be closed cheaply. That is the owner's call; the discrepancy is
-surfaced, not silently reconciled.
+The owner reports an installed base of 550+ users. Campfire's telemetry dataset
+is unprovisioned and has produced no founder metric, so this figure comes from
+outside that system; its source and definition have not been recorded here. It
+does not by itself establish artifact-open behavior, Gate B, or Gate C.
 
 ---
 
@@ -363,8 +360,8 @@ condition 3 on its own — see section 5.
 - The shared instance is a probe. It is not a deployment, not a hosted team
   environment, and does not establish hosted Stage C.
 - Section 3's authorization and sentinel results are operator-attested only.
-- No production deployment occurred. `v1.12` remains directional in the roadmap
-  and its gate remains open on condition 4.
+- No production deployment occurred. The `v1.12.0` release exists under the
+  founder override, while the contract gate remains open on condition 4.
 
 ## 8. Release verdict
 
@@ -619,11 +616,11 @@ out here rather than left to be discovered.
 
 ### 13.5 Verification at release time
 
-On the isolated `1.12.0` release candidate, `npm run typecheck`, `npm run build`,
-`npm run pack:tarball`, and `npm run deploy:dry-run` succeed. The 71 test files
-outside `install-channels.test.ts` pass (**844 tests**). The install-channel
-file has three passing checks and one expected version-pin failure; the
-remaining test cannot pass until the four new release checksums exist. The
+On the isolated `1.12.0` release source, `npm run typecheck`, `npm run build`,
+`npm run pack:tarball`, and `npm run deploy:dry-run` succeeded. Before the four
+archive checksums existed, 844 tests across 71 files passed; the one
+install-channel pin assertion was expected to fail. After the published
+checksums were pinned, **848 tests across all 72 files passed**. The
 earlier 883-test count included an untracked sprint-002 test and later telemetry
 commits absent from this scoped release. It is not a reproducible release-source
 count. `node --check` passes on the Viewer bundle.
@@ -653,9 +650,10 @@ order is:
 3. Run `node scripts/sync-install-channels.mjs --version 1.12.0`, commit the pin.
 4. Record the promotion in this section.
 
-The version was reverted in the main working tree after this was discovered.
-An isolated release candidate now carries the `1.12.0` version bump and
-versioned installer; no tag or public release has been created.
+The version was reverted in the original working tree during preparation. The
+isolated mainline release worktree carried the committed `1.12.0` bump and
+versioned installer into the immutable source tag. Archive publication and
+pinning completed in that order; see §13.8.
 
 ### 13.7 Trace collection is decoupled
 
@@ -667,3 +665,26 @@ claim in §13.2 stays unverified, and this verdict stays CONDITIONAL.
 A trace is still worth having. If it fails — if a participant still cannot tell
 which decision is operative — the honest response is to fix the surface, not to
 quieten the verdict.
+
+### 13.8 Publication and post-tag repair
+
+- The immutable private source tag `v1.12.0` points to
+  `0ecfebb5abb7778cc7638623f698e7a78c71b18a`. The audited public source
+  snapshot is `0e8c0e2`, with its own public `v1.12.0` tag and a GitHub Release.
+- The first four-platform archive workflow failed at `npm ci`: the public
+  exporter omitted `scripts/sync-install-channels.d.mts`, although the private
+  source tag contained it. No archive from that run was published. The tags
+  were left untouched. A reviewed post-tag packaging addendum added the
+  declaration to the public source and taught the release workflow to copy it
+  from the protected default branch into the tagged build checkout. The
+  addendum is recorded by `installChannelsCommit` in the public manifest.
+- Workflow run `37692345499` then built, verified, and uploaded all four
+  Darwin/Linux × ARM64/x64 archives and their four SHA-256 files to
+  [the v1.12.0 GitHub Release](https://github.com/BoringInfraCo/Campfire/releases/tag/v1.12.0).
+  The Homebrew and Nix pins were resolved from those published checksum files;
+  `sync-install-channels.mjs --check` confirms both channels match them.
+- After pinning, `npm run typecheck`, `npm run build`, and `npm test` pass in the
+  private release worktree (**848 tests, 72 files**). The public pin addendum,
+  tap update, clean installation, and production Worker deploy are separate
+  promotion steps. No human Viewer trace has occurred; the CONDITIONAL verdict
+  and every unverified claim in §13.2 remain unchanged.
