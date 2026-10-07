@@ -1210,6 +1210,33 @@ describe("Sprint 008 attention edge cases", () => {
   });
 });
 
+describe("VIS-001 accepted-decision ordering agreement", () => {
+  it("orders currentWork.acceptedDecisions the same way the alignment panel does", () => {
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Ordering" });
+    const older = service.addDecision(ctxHuman1, { workspaceId: workspace.id, summary: "Older stamp" });
+    service.acceptDecision(ctxHuman1, older.id);
+    const newer = service.addDecision(ctxHuman1, { workspaceId: workspace.id, summary: "Newer stamp" });
+    service.acceptDecision(ctxHuman1, newer.id);
+
+    // The page returns newest-first. Without an explicit sort the current-work
+    // panel inherited that while the alignment panel sorted oldest-first, so the
+    // same two decisions appeared in opposite orders.
+    const earlier = clock.tick();
+    const later = clock.tick();
+    store.updateDecision(older.id, { updatedAt: earlier });
+    store.updateDecision(newer.id, { updatedAt: later });
+
+    const context = service.getWorkspaceContext(ctxHuman1, workspace.id);
+    expect(context.currentWork.acceptedDecisions.map((decision) => decision.id)).toEqual([
+      older.id,
+      newer.id,
+    ]);
+    expect(context.currentWork.acceptedDecisions.map((decision) => decision.id)).toEqual(
+      context.alignment.acceptedDecisionIds,
+    );
+  });
+});
+
 describe("Sprint 009 recorded alignment", () => {
   it("is open when a proposed decision exists, even alongside an accepted one", () => {
     const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Open" });

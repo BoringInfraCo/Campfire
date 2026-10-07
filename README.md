@@ -40,13 +40,13 @@ Onboard is the first-run path to one human, one agent they own, one workspace, a
 For a version-pinned install after this version is deployed:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.11.0/install.sh | sh -s -- --version 1.11.0
+curl -fsSL https://boringinfra.company/campfire/v1.12.0/install.sh | sh -s -- --version 1.12.0
 ```
 
 Until that production deploy, the current installer can select the GitHub Release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.11.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.12.0
 ```
 
 ## Build and verify

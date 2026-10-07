@@ -490,7 +490,13 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     const proposed = decisions
       .filter((decision) => decision.status === "proposed")
       .sort(compareByUpdatedThenId);
-    const accepted = decisions.filter((decision) => decision.status === "accepted");
+    // Sorted explicitly so the current-work panel and the alignment panel cannot
+    // disagree. Unordered, this array inherited the orientation page's recency
+    // tiebreak (newest-first) while deriveRecordedAlignment sorts oldest-first.
+    // Order is presentation only: it never decides which decision is operative.
+    const accepted = decisions
+      .filter((decision) => decision.status === "accepted")
+      .sort(compareByUpdatedThenId);
 
     const sortedTasks = [...tasks].sort(compareByUpdatedThenId);
     const inProgressTasks = sortedTasks.filter((task) => task.status === "in_progress");

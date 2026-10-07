@@ -562,15 +562,91 @@ function workTaskHtml(task) {
   return `<li class="oitem">${status ? `<span class="ometa">${esc(status)}</span>` : ""}<span class="osentence">${esc(title)}</span></li>`;
 }
 
-function workDecisionHtml(decision) {
-  const title = strField(decision.summary, decision.title, decision.id);
-  const ids = Array.isArray(decision.needsReviewFindingIds)
+function reviewFindingIds(decision) {
+  return Array.isArray(decision.needsReviewFindingIds)
     ? decision.needsReviewFindingIds.filter((id) => typeof id === "string" && id)
     : [];
-  const review = decision.needsReview === true || ids.length > 0
-    ? `needs review${ids.length ? ` ${ids.join(", ")}` : ""}`
+}
+
+function needsReview(decision) {
+  return decision.needsReview === true || reviewFindingIds(decision).length > 0;
+}
+
+// An accepted decision that needs review is not the team's current position.
+// It is separated from the accepted list and marked by a bordered badge plus an
+// aria label, so the distinction survives without color and without relying on
+// row order.
+function workDecisionHtml(decision) {
+  const title = strField(decision.summary, decision.title, decision.id);
+  const ids = reviewFindingIds(decision);
+  const flagged = needsReview(decision);
+  const marker = flagged
+    ? `<span class="oreason"><span class="oreview" aria-label="accepted decision needing review">needs review</span>${
+        // "non-current", not "withdrawn": a stale citation is any finding whose
+        // currentness is not "current", which includes superseded findings.
+        ids.length ? ` cites non-current finding${ids.length > 1 ? "s" : ""} ${esc(ids.join(", "))}` : ""
+      }</span>`
     : "";
-  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${review ? `<span class="oreason">${esc(review)}</span>` : ""}</li>`;
+  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${marker}</li>`;
+}
+
+function partitionAcceptedDecisions(decisions) {
+  const settled = [];
+  const flagged = [];
+  for (const decision of decisions) {
+    (needsReview(decision) ? flagged : settled).push(decision);
+  }
+  return { settled, flagged };
+}
+
+// A section with zero rows and a section with undisplayed rows must look
+// different. Slices the service already returns are never discarded.
+function sliceTotals(context) {
+  const slices = isRecord(context) && isRecord(context.slices) ? context.slices : {};
+  const read = (name) => {
+    const slice = slices[name];
+    if (!isRecord(slice)) return null;
+    const total = slice.total;
+    const returned = slice.returned;
+    if (typeof total !== "number" && typeof returned !== "number") return null;
+    return {
+      total: typeof total === "number" ? total : undefined,
+      returned: typeof returned === "number" ? returned : undefined,
+      truncated: slice.truncated === true,
+    };
+  };
+  return {
+    tasks: read("tasks"),
+    decisions: read("decisions"),
+    findings: read("findings"),
+    artifacts: read("artifacts"),
+  };
+}
+
+// Counts describe a whole slice, not the group being rendered.
+function completenessNote(totals) {
+  if (!totals) return "";
+  const shown = typeof totals.returned === "number" ? totals.returned : undefined;
+  const total = typeof totals.total === "number" ? totals.total : undefined;
+  const parts = [];
+  if (shown !== undefined && total !== undefined) parts.push(`showing ${shown} of ${total}`);
+  else if (total !== undefined) parts.push(`${total} total`);
+  if (totals.truncated) parts.push("more available — open the list for the rest");
+  return parts.join(" · ");
+}
+
+// One row per bounded slice the service reported. Rendered unconditionally so
+// completeness never depends on a group happening to have rows.
+function renderSliceCompleteness(totals) {
+  const names = ["tasks", "decisions", "findings", "artifacts"];
+  const rows = [];
+  for (const name of names) {
+    const note = completenessNote(totals[name]);
+    if (!note) continue;
+    rows.push(`<div class="oslice-complete"><span class="ometa">${esc(name)}</span><span class="osentence">${esc(note)}</span></div>`);
+  }
+  if (!rows.length) return "";
+  return `<div class="ogroup"><div class="ogroup-label">orientation completeness</div><div class="olist">${rows.join("")}</div></div>`;
 }
 
 function workGroup(label, items, renderItem) {
@@ -578,13 +654,42 @@ function workGroup(label, items, renderItem) {
   return `<div class="ogroup"><div class="ogroup-label">${esc(label)}</div><ul class="olist">${items.map(renderItem).join("")}</ul></div>`;
 }
 
-function renderCurrentWork(el, work) {
+function compareByUpdatedDescThenId(a, b) {
+  const left = strField(a.updatedAt, a.createdAt);
+  const right = strField(b.updatedAt, b.createdAt);
+  if (left !== right) return left < right ? 1 : -1;
+  const leftId = strField(a.id);
+  const rightId = strField(b.id);
+  if (leftId === rightId) return 0;
+  return leftId < rightId ? -1 : 1;
+}
+
+function renderCurrentWork(el, work, context) {
   if (!el) return;
-  const html =
+  const decisions = partitionAcceptedDecisions(work.acceptedDecisions);
+  // Open tasks are enumerated, not left to id lookup. Previously they were
+  // returned by the service but never listed, so the next action was
+  // unreachable whenever nothing was in progress or blocked.
+  const listed = new Set();
+  for (const task of [...work.inProgressTasks, ...work.blockedTasks]) {
+    if (isRecord(task) && typeof task.id === "string") listed.add(task.id);
+  }
+  const openTasks = asArray(isRecord(context) ? context.openTasks : undefined)
+    .filter((task) => isRecord(task) && strField(task.status) === "open" && !listed.has(task.id))
+    .sort(compareByUpdatedDescThenId);
+  const totals = sliceTotals(context);
+  const groups =
     workGroup("in progress", work.inProgressTasks, workTaskHtml) +
     workGroup("blocked", work.blockedTasks, workTaskHtml) +
-    workGroup("accepted decisions", work.acceptedDecisions, workDecisionHtml);
-  el.innerHTML = html || `<div class="empty">No current work</div>`;
+    workGroup("open", openTasks, workTaskHtml) +
+    workGroup("accepted decisions", decisions.settled, workDecisionHtml) +
+    workGroup("accepted decisions needing review", decisions.flagged, workDecisionHtml);
+  // Stated once per bounded slice, outside the groups. Attaching counts to a
+  // group made them vanish whenever that group had no rows — a flagged-only
+  // decision list lost its decision count — which left a truncated section
+  // looking empty.
+  const html = groups + renderSliceCompleteness(totals);
+  el.innerHTML = groups.length > 0 ? html : `<div class="empty">No current work</div>` + renderSliceCompleteness(totals);
 }
 
 function sinceItemHtml(item) {
@@ -605,7 +710,9 @@ function renderSince(el, view) {
   el.innerHTML = trunc + `<ul class="olist">${view.items.map(sinceItemHtml).join("")}</ul>`;
 }
 
-// Orientation hint only: plain text, never an actionable control.
+// Orientation hint only: plain text, never an actionable control. The kind and
+// id are shown so the hint cannot read as a work step when it points at a
+// proposed decision.
 function renderNextAction(el, action) {
   if (!el) return;
   if (!action) {
@@ -615,6 +722,7 @@ function renderNextAction(el, action) {
   el.innerHTML =
     `<span class="hint-label">SUGGESTED NEXT — orientation hint, not an action</span>` +
     `<span class="hint-summary">${esc(action.summary || action.id)}</span>` +
+    (action.kind ? `<span class="hint-reason">${esc(action.kind)}${action.id ? ` ${esc(action.id)}` : ""}</span>` : "") +
     (action.reason ? `<span class="hint-reason">${esc(action.reason)}</span>` : "");
 }
 
@@ -627,7 +735,16 @@ function renderAlignment(el, alignment, context) {
   const proposed = workGroup("proposed", alignment.proposedDecisionIds, (id) =>
     alignmentItemHtml(id, summaryForDecisionId(context && context.proposedDecisions, id)),
   );
-  const accepted = workGroup("accepted", alignment.acceptedDecisionIds, (id) =>
+  // Same needs-review distinction as the current-work panel, so one decision
+  // cannot read as settled in one list and suspect in the other.
+  const acceptedRecords = asArray(context && context.acceptedDecisions);
+  const acceptedIds = alignment.acceptedDecisionIds;
+  const flaggedIds = acceptedIds.filter((id) => needsReview(pickById(acceptedRecords, id) || {}));
+  const settledIds = acceptedIds.filter((id) => !flaggedIds.includes(id));
+  const accepted = workGroup("accepted", settledIds, (id) =>
+    alignmentItemHtml(id, summaryForDecisionId(context && context.acceptedDecisions, id)),
+  );
+  const acceptedFlagged = workGroup("accepted needing review", flaggedIds, (id) =>
     alignmentItemHtml(id, summaryForDecisionId(context && context.acceptedDecisions, id)),
   );
   const blocked = workGroup("unresolved blocked tasks", alignment.unresolvedBlockedTaskIds, (id) =>
@@ -638,6 +755,7 @@ function renderAlignment(el, alignment, context) {
     `<div class="oitem"><span class="osentence">${esc(ALIGNMENT_BOUNDARY_SENTENCE)}</span></div>` +
     proposed +
     accepted +
+    acceptedFlagged +
     blocked;
 }
 
@@ -658,6 +776,8 @@ function compactRecordLines(payload, obj) {
   const lines = [];
   const currentness = strField(payload.currentness, obj.currentness);
   if (currentness) lines.push(currentness);
+  // Labelled. Unlabelled, this read as the finding's own summary, because the
+  // same text renders on both the superseded and the current row.
   const reason = strField(
     payload.reason,
     payload.correctionReason,
@@ -666,7 +786,7 @@ function compactRecordLines(payload, obj) {
     obj.correctionReason,
     obj.supersedeReason,
   );
-  if (reason) lines.push(reason);
+  if (reason) lines.push(`reason: ${reason}`);
   const predecessorId = strField(payload.predecessorId, obj.predecessorId);
   if (predecessorId) lines.push(`predecessor ${predecessorId}`);
   const successorId = strField(payload.successorId, obj.successorId);
@@ -677,10 +797,30 @@ function compactRecordLines(payload, obj) {
     .filter((id, index, all) => typeof id === "string" && id && all.indexOf(id) === index);
   if (reviewIds.length) lines.push(`needs review ${reviewIds.join(", ")}`);
   else if (payload.needsReview === true || obj.needsReview === true) lines.push("needs review");
-  const evidence = Array.isArray(payload.evidence) ? payload.evidence.length : Array.isArray(obj.evidence) ? obj.evidence.length : 0;
-  if (evidence) lines.push(`evidence ${evidence}`);
-  const citations = Array.isArray(payload.citations) ? payload.citations.length : Array.isArray(obj.citations) ? obj.citations.length : 0;
-  if (citations) lines.push(`citations ${citations}`);
+  // Cited references, not bare counts. "evidence 1" did not let a reader name the
+  // basis of a decision; the ids are already authorized records in this workspace.
+  const evidenceRows = Array.isArray(payload.evidence)
+    ? payload.evidence
+    : Array.isArray(obj.evidence)
+      ? obj.evidence
+      : [];
+  if (evidenceRows.length) {
+    const ids = evidenceRows
+      .map((row) => strField(isRecord(row) ? row.findingId || row.artifactId || row.id : ""))
+      .filter((id) => id);
+    lines.push(`evidence (${evidenceRows.length})${ids.length ? `: ${ids.join(", ")}` : ""}`);
+  }
+  const citationRows = Array.isArray(payload.citations)
+    ? payload.citations
+    : Array.isArray(obj.citations)
+      ? obj.citations
+      : [];
+  if (citationRows.length) {
+    const ids = citationRows
+      .map((row) => strField(isRecord(row) ? row.findingId || row.id : ""))
+      .filter((id) => id);
+    lines.push(`cites (${citationRows.length})${ids.length ? `: ${ids.join(", ")}` : ""}`);
+  }
   return lines;
 }
 
@@ -718,7 +858,7 @@ function renderOrientation() {
   renderAlignment(els.alignment, deriveAlignment(state.context), state.context);
   renderAttentionList(els.needsYou, deriveNeedsYou(state.context), "You're all caught up");
   renderAttentionList(els.needsAttention, deriveNeedsAttention(state.context), "Nothing needs attention");
-  renderCurrentWork(els.currentWork, deriveCurrentWork(state.context));
+  renderCurrentWork(els.currentWork, deriveCurrentWork(state.context), state.context);
   renderSince(els.since, state.sinceView);
   renderNextAction(els.nextAction, deriveSuggestedNextAction(state.context));
 }

@@ -471,14 +471,35 @@ main {
   white-space: nowrap;
 }
 
+/* Reason and review markers wrap. They previously used nowrap + ellipsis, which
+   clipped the cited finding IDs that explain WHY a decision needs review. */
 .oreason {
   flex-basis: 100%;
   min-width: 0;
   padding-left: 1.5ch;
-  color: var(--dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* A decision needing review is not the team's current position. That must not be
+   carried by color alone: the marker is a bordered badge, and the row is marked
+   with a leading glyph plus an aria label. */
+.oreview {
+  display: inline-block;
+  border: 1px solid var(--warn-line, var(--muted));
+  border-radius: 3px;
+  padding: 0 0.4ch;
+  font-weight: 600;
+}
+
+/* Per-slice completeness rows, rendered outside the work groups so counts
+   never depend on a group having rows. */
+.oslice-complete {
+  display: flex;
+  gap: 1ch;
+  align-items: baseline;
+  min-width: 0;
 }
 
 @media (max-width: 70ch) {
