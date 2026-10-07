@@ -38,7 +38,9 @@ describe("install channels", () => {
 
     const digests = digestsFromFormula(formula);
     for (const archive of INSTALL_CHANNEL_ARCHIVES) {
-      expect(flake).toContain(`${hexToSri(digests[archive])}"; # ${archive}`);
+      const digest = digests[archive];
+      expect(digest, archive).toBeDefined();
+      expect(flake).toContain(`${hexToSri(digest ?? "")}"; # ${archive}`);
       expect(flake).toContain('url = "https://github.com/BoringInfraCo/Campfire/releases/download/v${version}/${archive.name}";');
       expect(formula).toContain(`/v${packageVersion}/${archive}`);
     }
@@ -60,8 +62,10 @@ describe("install channels", () => {
     expect(next.flake).toContain("v${version}");
     expect(next.flake).not.toContain("/v9.9.9/");
     expect(next.flake).toContain(`${hexToSri("a".repeat(64))}"; # campfire-darwin-arm64.tar.gz`);
+    const linuxDigest = digests["campfire-linux-x64.tar.gz"];
+    expect(linuxDigest).toBeDefined();
     expect(next.flake).toContain(
-      `${hexToSri(digests["campfire-linux-x64.tar.gz"])}"; # campfire-linux-x64.tar.gz`,
+      `${hexToSri(linuxDigest ?? "")}"; # campfire-linux-x64.tar.gz`,
     );
   });
 

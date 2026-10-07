@@ -493,9 +493,13 @@ main {
   font-weight: 600;
 }
 
-.owork-flag {
-  flex: none;
-  color: var(--muted);
+/* Per-slice completeness rows, rendered outside the work groups so counts
+   never depend on a group having rows. */
+.oslice-complete {
+  display: flex;
+  gap: 1ch;
+  align-items: baseline;
+  min-width: 0;
 }
 
 @media (max-width: 70ch) {

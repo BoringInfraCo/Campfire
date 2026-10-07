@@ -582,7 +582,9 @@ function workDecisionHtml(decision) {
   const flagged = needsReview(decision);
   const marker = flagged
     ? `<span class="oreason"><span class="oreview" aria-label="accepted decision needing review">needs review</span>${
-        ids.length ? ` cites withdrawn finding${ids.length > 1 ? "s" : ""} ${esc(ids.join(", "))}` : ""
+        // "non-current", not "withdrawn": a stale citation is any finding whose
+        // currentness is not "current", which includes superseded findings.
+        ids.length ? ` cites non-current finding${ids.length > 1 ? "s" : ""} ${esc(ids.join(", "))}` : ""
       }</span>`
     : "";
   return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${marker}</li>`;
@@ -621,9 +623,8 @@ function sliceTotals(context) {
   };
 }
 
-// Counts describe the whole slice, not the subgroup being rendered, so the note
-// names the slice and is attached once rather than repeated per group.
-function completenessNote(totals, sliceName) {
+// Counts describe a whole slice, not the group being rendered.
+function completenessNote(totals) {
   if (!totals) return "";
   const shown = typeof totals.returned === "number" ? totals.returned : undefined;
   const total = typeof totals.total === "number" ? totals.total : undefined;
@@ -631,15 +632,26 @@ function completenessNote(totals, sliceName) {
   if (shown !== undefined && total !== undefined) parts.push(`showing ${shown} of ${total}`);
   else if (total !== undefined) parts.push(`${total} total`);
   if (totals.truncated) parts.push("more available — open the list for the rest");
-  if (!parts.length) return "";
-  const label = sliceName ? `${sliceName}: ` : "";
-  return `<span class="owork-flag">${esc(label + parts.join(" · "))}</span>`;
+  return parts.join(" · ");
 }
 
-function workGroup(label, items, renderItem, totals, sliceName) {
+// One row per bounded slice the service reported. Rendered unconditionally so
+// completeness never depends on a group happening to have rows.
+function renderSliceCompleteness(totals) {
+  const names = ["tasks", "decisions", "findings", "artifacts"];
+  const rows = [];
+  for (const name of names) {
+    const note = completenessNote(totals[name]);
+    if (!note) continue;
+    rows.push(`<div class="oslice-complete"><span class="ometa">${esc(name)}</span><span class="osentence">${esc(note)}</span></div>`);
+  }
+  if (!rows.length) return "";
+  return `<div class="ogroup"><div class="ogroup-label">orientation completeness</div><div class="olist">${rows.join("")}</div></div>`;
+}
+
+function workGroup(label, items, renderItem) {
   if (!items.length) return "";
-  const note = completenessNote(totals, sliceName);
-  return `<div class="ogroup"><div class="ogroup-label">${esc(label)}${note ? ` ${note}` : ""}</div><ul class="olist">${items.map(renderItem).join("")}</ul></div>`;
+  return `<div class="ogroup"><div class="ogroup-label">${esc(label)}</div><ul class="olist">${items.map(renderItem).join("")}</ul></div>`;
 }
 
 function compareByUpdatedDescThenId(a, b) {
@@ -666,24 +678,18 @@ function renderCurrentWork(el, work, context) {
     .filter((task) => isRecord(task) && strField(task.status) === "open" && !listed.has(task.id))
     .sort(compareByUpdatedDescThenId);
   const totals = sliceTotals(context);
-  // Each slice's completeness is stated once. Task counts attach to the first
-  // non-empty task group; decision counts to the settled accepted group.
-  const taskGroups = [
-    workGroup("in progress", work.inProgressTasks, workTaskHtml),
-    workGroup("blocked", work.blockedTasks, workTaskHtml),
-    workGroup("open", openTasks, workTaskHtml),
-  ].filter((group) => group.length > 0);
-  if (taskGroups.length > 0 && totals.tasks) {
-    taskGroups[0] = taskGroups[0].replace(
-      "</div><ul",
-      ` ${completenessNote(totals.tasks, "tasks")}</div><ul`,
-    );
-  }
-  const html =
-    taskGroups.join("") +
-    workGroup("accepted decisions", decisions.settled, workDecisionHtml, totals.decisions, "decisions") +
+  const groups =
+    workGroup("in progress", work.inProgressTasks, workTaskHtml) +
+    workGroup("blocked", work.blockedTasks, workTaskHtml) +
+    workGroup("open", openTasks, workTaskHtml) +
+    workGroup("accepted decisions", decisions.settled, workDecisionHtml) +
     workGroup("accepted decisions needing review", decisions.flagged, workDecisionHtml);
-  el.innerHTML = html || `<div class="empty">No current work</div>`;
+  // Stated once per bounded slice, outside the groups. Attaching counts to a
+  // group made them vanish whenever that group had no rows — a flagged-only
+  // decision list lost its decision count — which left a truncated section
+  // looking empty.
+  const html = groups + renderSliceCompleteness(totals);
+  el.innerHTML = groups.length > 0 ? html : `<div class="empty">No current work</div>` + renderSliceCompleteness(totals);
 }
 
 function sinceItemHtml(item) {

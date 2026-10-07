@@ -466,7 +466,28 @@ and never decides which decision is operative.
 | 2 — next action unreachable | `open` tasks are enumerated in the current-work panel, newest first, de-duplicated against in-progress and blocked. |
 | 2 — hint kind dropped | `renderNextAction` shows the hint's `kind` and `id`, so a proposed-decision hint cannot read as a work step. |
 | 3 — basis not surfaced | Reason renders as `reason: …` rather than as an unlabelled line, and evidence/citations name their referenced IDs instead of counting rows. |
-| Completeness discarded | `slices.*.{total,returned,truncated}` now render as `showing N of M · more available`. A truncated section can no longer look empty. |
+| Completeness discarded | `slices.*.{total,returned,truncated}` now render per bounded slice in an `orientation completeness` block: `showing N of M · more available`. A truncated section can no longer look empty. |
+
+Two review findings were fixed on October 7, 2026, both from the same commit review:
+
+- **"cites withdrawn finding" was wrong for the fixture.** The stale-citation
+  rule is `findings.currentness <> 'current'`
+  (`src/store/correction-records.ts:258-266`), which covers both `superseded`
+  and `withdrawn` findings. The VIS-001 fixture cites a **superseded** finding,
+  so the Viewer asserted a state that was not true. Now reads
+  "cites non-current finding", which is true for either case.
+- **The completeness note disappeared when its group had no rows.** Counts were
+  attached to a group heading, so a flagged-only decision list lost its decision
+  count and a truncated section could still read as empty — the exact defect the
+  slice set out to close. Counts now render in their own `orientation
+  completeness` block, independent of whether any group has rows, and the
+  zero-rows case shows both "No current work" and the completeness figures.
+
+The pre-existing build failure is also fixed: `scripts/sync-install-channels.mjs`
+had no type declaration, so `tests/unit/install-channels.test.ts` failed
+typecheck with TS7016 and `npm run build` could not complete. Added
+`scripts/sync-install-channels.d.mts`. `npm run typecheck`, `npm run build`,
+`npm test` (883 passed, 73 files), and `npm run pack:tarball` all succeed.
 
 Deliberately **not** done, and why:
 
@@ -482,15 +503,16 @@ Deliberately **not** done, and why:
 
 ### 12.2 Verification
 
-`npm test` — **881 passed, 73 files, 0 failures.** `node --check` on the Viewer
+`npm test` — **883 passed, 73 files, 0 failures.** `node --check` on the Viewer
 bundle. `public/` re-synced from `src/viewer/static/`.
 
-New `tests/integration/viewer-vis-001.test.ts` — 14 checks, one per observed
+New `tests/integration/viewer-vis-001.test.ts` — 16 checks, one per observed
 failure, including that the review marker survives without color (badge border
 plus `aria-label`), that `.oreason` carries no clipping rule, that a flagged
 decision cannot appear in the settled group, that the distinction holds in the
 alignment panel too, and that the surface still renders no write control and
-escapes injected markup.
+escapes injected markup. Two added after review cover the flagged-only decision
+list and the zero-rows case, where completeness must still be stated.
 
 One existing assertion in `tests/integration/viewer-cor-001.test.ts` was updated:
 it pinned the old unlabelled `reason` and the bare `evidence 1` count, both of
@@ -502,10 +524,10 @@ regression this slice exists to prevent.
 
 ### 12.3 Known limits
 
-- **`npm run build` fails, pre-existing and unrelated.** `tests/unit/install-channels.test.ts`
-  imports `scripts/sync-install-channels.mjs`, which has no type declaration
-  (TS7016). Verified failing on a clean tree with all changes stashed. Untouched
-  here because it belongs to the install-channel work, not this slice.
+- **Build fixed.** `npm run build` failed before this slice on TS7016 in
+  `tests/unit/install-channels.test.ts`, because `scripts/sync-install-channels.mjs`
+  had no type declaration. Resolved with `scripts/sync-install-channels.d.mts`.
+  `typecheck`, `build`, and `pack:tarball` now all succeed.
 - **No human trace.** Per the override, the product trace in contract §6 was not
   run. The slice is verified deterministically, not against a participant, so it
   is **not** evidence that a human now understands the state better.

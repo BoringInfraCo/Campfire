@@ -101,7 +101,10 @@ describe("VIS-001 accepted-decision salience", () => {
     const settledIndex = html.indexOf(">accepted decisions");
     expect(settledIndex).toBeGreaterThanOrEqual(0);
     expect(flaggedIndex).toBeGreaterThan(settledIndex);
-    expect(html).toContain("cites withdrawn finding find_d64c878a8016415a");
+    // "non-current", not "withdrawn": the stale-citation rule is
+    // currentness <> 'current', which includes superseded findings.
+    expect(html).toContain("cites non-current finding find_d64c878a8016415a");
+    expect(html).not.toContain("withdrawn");
   });
 
   it("shows the full cited finding id, not a clipped marker", () => {
@@ -186,6 +189,64 @@ describe("VIS-001 completeness is visible", () => {
     const html = evalIn<string>(sandbox, "el.innerHTML");
     expect(html).toContain("showing 10 of 14");
     expect(html).toContain("showing 20 of 22");
+    expect(html).toContain("more available");
+  });
+
+  it("still states completeness when every displayed decision needs review", () => {
+    const sandbox = loadAppSandbox();
+    sandbox.el = { innerHTML: "" };
+    sandbox.context = {
+      ...GATE_CONTEXT,
+      openTasks: [],
+      currentWork: {
+        inProgressTasks: [],
+        blockedTasks: [],
+        // The settled group is empty, which previously swallowed the count.
+        acceptedDecisions: [GATE_WORK.acceptedDecisions[0]],
+      },
+      acceptedDecisions: [GATE_WORK.acceptedDecisions[0]],
+    };
+    const flaggedOnly = {
+      ...GATE_CONTEXT,
+      openTasks: [],
+      currentWork: {
+        inProgressTasks: [],
+        blockedTasks: [],
+        // The settled group is empty, which previously swallowed the count.
+        acceptedDecisions: [GATE_WORK.acceptedDecisions[0]],
+      },
+      acceptedDecisions: [GATE_WORK.acceptedDecisions[0]],
+    };
+    sandbox.work = flaggedOnly.currentWork;
+    sandbox.context = flaggedOnly;
+    evalIn(sandbox, "renderCurrentWork(el, work, context)");
+    const html = evalIn<string>(sandbox, "el.innerHTML");
+    expect(html).not.toContain(">accepted decisions<");
+    expect(html).toContain("accepted decisions needing review");
+    expect(html).toContain("decisions");
+    expect(html).toContain("showing 10 of 14");
+  });
+
+  it("states completeness when the section has no rows at all", () => {
+    const sandbox = loadAppSandbox();
+    sandbox.el = { innerHTML: "" };
+    sandbox.context = {
+      ...GATE_CONTEXT,
+      openTasks: [],
+      currentWork: { inProgressTasks: [], blockedTasks: [], acceptedDecisions: [] },
+    };
+    const empty = {
+      ...GATE_CONTEXT,
+      openTasks: [],
+      currentWork: { inProgressTasks: [], blockedTasks: [], acceptedDecisions: [] },
+    };
+    sandbox.work = empty.currentWork;
+    sandbox.context = empty;
+    evalIn(sandbox, "renderCurrentWork(el, work, context)");
+    const html = evalIn<string>(sandbox, "el.innerHTML");
+    // Zero rows and undisplayed rows must look different.
+    expect(html).toContain("No current work");
+    expect(html).toContain("orientation completeness");
     expect(html).toContain("more available");
   });
 
