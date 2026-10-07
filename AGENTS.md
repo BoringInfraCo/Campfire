@@ -163,7 +163,7 @@ the repository owner exercised **two founder decisions**: an implementation
 override directing that the condition-3 Viewer slice proceed with the gate open
 (§0), and a release-scope override authorizing publication of that bounded slice
 with a **CONDITIONAL** verdict (§13). The slice is implemented. The isolated
-`1.12.0` release candidate passes 865 tests across 71 files; the remaining
+`1.12.0` release candidate passes 844 tests across 71 files; the remaining
 install-channel file has three passing checks and one expected version-pin
 failure until the new release archives exist. `v1.12.0` is authorized but
 **not yet published**; see §13.6 for the required archive and pinning order.

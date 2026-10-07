@@ -615,11 +615,12 @@ out here rather than left to be discovered.
 
 On the isolated `1.12.0` release candidate, `npm run typecheck`, `npm run build`,
 `npm run pack:tarball`, and `npm run deploy:dry-run` succeed. The 71 test files
-outside `install-channels.test.ts` pass (**865 tests**). The install-channel
+outside `install-channels.test.ts` pass (**844 tests**). The install-channel
 file has three passing checks and one expected version-pin failure; the
 remaining test cannot pass until the four new release checksums exist. The
-earlier 883-test count included an untracked sprint-002 test and is not a
-reproducible release-source count. `node --check` passes on the Viewer bundle.
+earlier 883-test count included an untracked sprint-002 test and later telemetry
+commits absent from this scoped release. It is not a reproducible release-source
+count. `node --check` passes on the Viewer bundle.
 Security posture unchanged from `v1.11.0`: no write path added, no
 credential handling touched, no external fetch introduced.
 

@@ -2,7 +2,11 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.11.0 is published. The verdict is CONDITIONAL GO. Production is not deployed, so `https://boringinfra.company/campfire/v1.11.0/install.sh` is not live until that later deploy. The v1.9.3 telemetry patch keeps telemetry schema version 1
+This source stages v1.12.0 with a CONDITIONAL verdict. The release and
+production deployment are pending; the v1.12.0 versioned installer URL is not
+live until the Worker asset deploy. The human Viewer trace remains outstanding.
+See `SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
+The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches
@@ -27,10 +31,10 @@ nix profile install github:BoringInfraCo/Campfire
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.11.0
+node scripts/sync-install-channels.mjs --version 1.12.0
 ```
 
-Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin.
+Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
 
 Pinned / explicit variants (the versioned URL works after the Workers asset
 deploy; `--help` for all flags; env equivalents

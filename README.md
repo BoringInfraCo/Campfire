@@ -4,10 +4,12 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
-This checkout targets the **v1.9.0 candidate**: bring a new teammate into an
-existing shared workspace with their own identities and agents. The independent
-two-human acceptance trace is pending; v1.9 has not been published or deployed.
-The published installer remains on v1.8 until release promotion.
+This checkout stages **v1.12.0**, a bounded improvement to the read-only Viewer.
+It makes accepted decisions needing review, open work, cited evidence, and
+truncated sections easier to distinguish. The release verdict is CONDITIONAL:
+no human has yet verified comprehension on this updated surface, and artifact
+previews remain deferred. See `docs/SPRINT_VIS_001_RESULT.md` for the scope and
+founder override. The published release remains v1.11.0 until promotion.
 
 - **Share work state** — goals, tasks, findings, decisions, and artifacts with provenance
 - **Continue anywhere** — pick up work in a fresh session on any supported harness
