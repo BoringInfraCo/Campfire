@@ -604,6 +604,12 @@ Everything in §12.1, plus the build fix. Concretely:
 authorization rule.** The Viewer remains read-only and its
 `VIEWER_READ_METHODS` allowlist is unchanged.
 
+The release source also reverses the two post-v1.11 telemetry expansion commits
+(`fbff49e` and `37cac65`). Those changes were present on the development
+mainline but were outside this founder-approved Viewer release scope. The
+existing v1.9.3 telemetry contract remains; the reversed expansions can be
+reviewed and reapplied in a separate release.
+
 One behavior change is visible to non-browser consumers: `currentWork.acceptedDecisions`
 now returns in `updatedAt` order rather than the orientation page's incidental
 order. Any agent that inferred salience from array position would see different
