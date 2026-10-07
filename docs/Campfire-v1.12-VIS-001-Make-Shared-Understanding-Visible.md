@@ -2,7 +2,7 @@
 
 **Sprint ID:** VIS-001  
 **Target release:** v1.12.0  
-**Status:** Proposed; evidence gate open. This document is a candidate contract, not authorization to implement or release.  
+**Status:** Contract retained as written. The evidence gate remains open (condition 4 NOT met). On October 7, 2026 the owner issued a founder implementation override (§0 of the result) and a release-scope override authorizing publication of the bounded condition-3 slice with a CONDITIONAL verdict and usability unverified (§13 of the result). Read literally, this contract's own rubric yields NO-GO, because its NO-GO clause treats an unmet entry gate as disqualifying; that discrepancy is recorded rather than resolved by rewriting the rubric below. Artifact previews and shared highlights remain deferred.  
 **Depends on:** CTX-001 / v1.10.0 and COR-001 / v1.11.0  
 **Theme:** Visual orientation, catch-up, and source inspection in the existing read-only Viewer
 

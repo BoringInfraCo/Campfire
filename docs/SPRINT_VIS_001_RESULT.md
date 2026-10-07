@@ -2,20 +2,24 @@
 
 **Status:** Entry gate **NOT fully met** — condition 4 remains open. Decision:
 **REFRAME**, then **FOUNDER OVERRIDE** on October 7, 2026 authorizing the
-condition-3 Viewer slice. No release, no tag, no deployment.
+condition-3 Viewer slice, then **RELEASE-SCOPE OVERRIDE** the same day
+authorizing publication of that bounded slice. Verdict: **CONDITIONAL**. Usability
+is **unverified**.
 
 **Date:** October 4, 2026. Corrected October 7, 2026 — see §11. Slice implemented
-October 7, 2026 under founder override — see §12.
+and released under founder override — see §12 and §13.
 
 **Contract:** `docs/Campfire-v1.12-VIS-001-Make-Shared-Understanding-Visible.md`
 
 **Preserved evidence:** `docs/evidence/vis-001/` (sanitized, tracked)
 
-**Package version:** unchanged at `1.11.0`. The October 4 gate work made no
-product-source changes. The October 7 slice changes `src/service/campfire-service.ts`
-and the Viewer static assets under an explicit founder override; see §12. Separate
-sprint-002 evidence-manifest work is present in the working tree and is unrelated
-to both; see §9.
+**Package version:** still `1.11.0`. `v1.12.0` is **authorized but not yet
+published** — the release is staged, not cut. See §13.6 for the sequencing
+constraint that blocks a standalone version bump. The October 4 gate work
+made no product-source changes. The October 7 slice changes
+`src/service/campfire-service.ts` and the Viewer static assets under an explicit
+founder override; see §12. Separate sprint-002 evidence-manifest work is present
+in the working tree and is unrelated to both; see §9.
 
 ---
 
@@ -363,9 +367,11 @@ condition 3 on its own — see section 5.
 
 ## 8. Release verdict
 
-**No release verdict. Nothing shipped.** No tag was created, no public snapshot
-was exported, no GitHub Release was published, and no Worker was deployed to
-production.
+**Superseded by §13.** As originally recorded on October 4, 2026: no tag, no
+public snapshot, no GitHub Release, no deployment. The October 7 release-scope
+override authorized publishing the bounded condition-3 slice as `v1.12.0` with a
+CONDITIONAL verdict; see §13 for the release record and the exact set of claims
+that remain unverified.
 
 The temporary probe resources were torn down after the evidence was recorded:
 Worker `campfire-vis-001-probe` and D1 `campfire_vis001_probe` were both deleted,
@@ -532,4 +538,114 @@ regression this slice exists to prevent.
   run. The slice is verified deterministically, not against a participant, so it
   is **not** evidence that a human now understands the state better.
 - **Not a release.** No version bump, no tag, no snapshot, no deployment. The
-  package remains `1.11.0`.
+  package remains `1.11.0`. *(Superseded by §13: the release-scope override of
+  October 7, 2026 authorized publishing this slice as `v1.12.0` with a
+  CONDITIONAL verdict.)*
+
+## 13. Release-scope override and conditional verdict, October 7, 2026
+
+A second founder decision, distinct from the implementation override in §0. The
+first authorized *writing* the slice. This one authorizes *shipping* it.
+
+### 13.1 What is authorized
+
+Publish the bounded condition-3 slice to existing users as `v1.12.0`, with a
+CONDITIONAL verdict and usability recorded as unverified.
+
+**Verdict: CONDITIONAL.** Not GO. Not NO-GO.
+
+### 13.2 What is explicitly not claimed
+
+This is the load-bearing part of the record. Shipping does not close anything the
+gate left open.
+
+| Claim | Status |
+| --- | --- |
+| A human can now identify the current work and decision from the Viewer | **UNVERIFIED.** No human trace has been run against the shipped surface. |
+| The slice resolves the observed comprehension failure | **UNVERIFIED in practice.** The underlying defects are fixed and deterministically tested; whether a person reads the screen correctly is untested. |
+| Condition 4 (artifact-open evidence) | **NOT MET.** Unchanged by this release. |
+| Artifact previews | **Deferred.** Not built. |
+| Shared highlights | **Deferred.** Not built. |
+| Gate B (voluntary repeat use) | **Unmeasured.** |
+| Gate C (ordinary multi-participant value) | **Unmeasured.** The 550+ installed-base figure is **not** treated as evidence for either gate, and is not inferred from Campfire's unprovisioned telemetry. |
+| Which accepted decision is "operative" | **Still undetermined.** No such rule exists in the data; see §12.1. |
+
+### 13.3 Relationship to the contract's own rubric
+
+Worth stating plainly, because the contract and this verdict do not line up.
+
+The contract's NO-GO clause lists "the entry gate is not met" as a NO-GO trigger,
+and the gate is not met. The contract's CONDITIONAL GO clause contemplates the
+entry evidence *passing* with the human trace unavailable — which is not this
+situation, because the entry evidence has not fully passed.
+
+So the contract, read literally, yields **NO-GO** for this release. The owner has
+overridden that on release scope and issued a CONDITIONAL verdict instead. This
+is recorded as an override rather than as contract compliance, and the
+discrepancy is left visible rather than resolved by rewriting the rubric.
+
+### 13.4 Shipping scope
+
+Everything in §12.1, plus the build fix. Concretely:
+
+- `src/service/campfire-service.ts` — `currentWork.acceptedDecisions` sorted
+  explicitly.
+- `src/viewer/static/app.{js,css}` and the synced `public/` copies — decision
+  grouping, review badge, wrapping review markers, enumerated open tasks, hint
+  kind/id, labelled reason, cited references, unconditional completeness block.
+- `scripts/sync-install-channels.d.mts` — build fix, no runtime effect.
+
+**No database migration. No schema change. No new read method. No new
+authorization rule.** The Viewer remains read-only and its
+`VIEWER_READ_METHODS` allowlist is unchanged.
+
+One behavior change is visible to non-browser consumers: `currentWork.acceptedDecisions`
+now returns in `updatedAt` order rather than the orientation page's incidental
+order. Any agent that inferred salience from array position would see different
+results. No consumer could have relied on the old order meaningfully — it was a
+page-query tiebreak — but this is a real contract-visible change and is called
+out here rather than left to be discovered.
+
+### 13.5 Verification at release time
+
+`npm run typecheck`, `npm run build`, `npm run pack:tarball`, and `npm test`
+(**883 passed, 73 files**) all succeed. `node --check` passes on the Viewer
+bundle. Security posture unchanged from `v1.11.0`: no write path added, no
+credential handling touched, no external fetch introduced.
+
+### 13.6 Release sequencing constraint, found during preparation
+
+**The version bump cannot be committed on its own.** `packaging/homebrew/campfire.rb`
+and `flake.nix` are pinned to the released version's checksums, and
+`tests/unit/install-channels.test.ts` asserts the pin matches `package.json`.
+Bumping to `1.12.0` with the pin still at `1.11.0` fails that test.
+
+`scripts/sync-install-channels.mjs` resolves real digests by fetching
+`<release>/v1.12.0/<archive>.sha256` from GitHub, so **the pin can only be
+updated after the release archives are published.** `docs/OPERATOR.md` documents
+this order: publish first, then pin, then commit the pin.
+
+Consequence: between the version bump and the pin commit, `npm test` is expected
+to fail on `install-channels.test.ts`. That is the designed sequence, not a
+regression, and it must not be "fixed" by loosening the assertion. The correct
+order is:
+
+1. Commit the version bump and the slice.
+2. Tag `v1.12.0`, export the public snapshot, publish the GitHub Release so the
+   release workflow builds and attaches the four archives.
+3. Run `node scripts/sync-install-channels.mjs --version 1.12.0`, commit the pin.
+4. Record the promotion in this section.
+
+The version was reverted after this was discovered, so the tree is green and
+`1.11.0` remains current until the release is actually cut.
+
+### 13.7 Trace collection is decoupled
+
+The human participant trace is no longer a release blocker; it is an outstanding
+evidence obligation that can be collected from ordinary use by any participant,
+not necessarily the repository owner. Until it is collected, every usability
+claim in §13.2 stays unverified, and this verdict stays CONDITIONAL.
+
+A trace is still worth having. If it fails — if a participant still cannot tell
+which decision is operative — the honest response is to fix the surface, not to
+quieten the verdict.

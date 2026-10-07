@@ -159,16 +159,19 @@ Its result is `docs/SPRINT_VIS_001_RESULT.md` and its preserved evidence is
 Cold-agent evidence on a shared instance, the v1.11 release source, and one
 observed human comprehension failure are recorded. **Condition 4 — evidence about
 which artifacts people actually try to open — is NOT met.** On October 7, 2026
-the repository owner exercised a **founder override** and directed that the
-condition-3 Viewer slice proceed anyway, with the gate still open; see §0 and §12
-of the result. That slice is implemented and `npm test` passes at 881 tests, but
-it is **not a release**: no version bump, no tag, no snapshot, no deployment, and
-the package remains `1.11.0`. Gate B and Gate C remain unmeasured, and no human
-product trace was run for the slice. **Artifact previews and shared highlights
-remain deferred** — the override covered only the condition-3 presentation
-defects, so no preview, no external fetch, and no change to
-`VIEWER_READ_METHODS` was made. Do not read the shipped slice as gate
-satisfaction.
+the repository owner exercised **two founder decisions**: an implementation
+override directing that the condition-3 Viewer slice proceed with the gate open
+(§0), and a release-scope override authorizing publication of that bounded slice
+with a **CONDITIONAL** verdict (§13). The slice is implemented; `npm test` passes
+at 883 tests. `v1.12.0` is authorized but **not yet published** — the version
+bump cannot be committed alone, because the Homebrew and Nix pins resolve
+real checksums that only exist after the archives are released; see §13.6 for the
+required order. **Artifact previews and shared highlights remain deferred** — no
+preview, no external fetch, and no change to `VIEWER_READ_METHODS`. **Usability
+is unverified**: no human trace has been run against the surface, so nothing here
+establishes that a person can now identify the current decision. Gate B and Gate
+C remain unmeasured, and the reported 550+ installed base is not treated as
+evidence for either. Do not read this release as gate satisfaction.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
