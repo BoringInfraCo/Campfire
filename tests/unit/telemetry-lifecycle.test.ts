@@ -16,7 +16,7 @@ import { openSqliteStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
 import { runCli } from "../../src/cli/index.js";
 import { isTelemetryInstallationId } from "../../src/telemetry/contract.js";
-import { reportActivated, reportActive, reportContributed, reportTeammateJoined } from "../../src/telemetry/report.js";
+import { reportActivated, reportActive } from "../../src/telemetry/report.js";
 import { utcDay } from "../../src/telemetry/state.js";
 
 /**
@@ -195,9 +195,6 @@ describe("the mcp activation boundary", () => {
     expect(isTelemetryInstallationId(String(state.installationId))).toBe(true);
     expect(countsByEvent()).toEqual({ activated: 1, active: 1 });
     expect(posted.every((body) => body.surface === "mcp")).toBe(true);
-    expect(posted.every((body) => body.harness === "codex")).toBe(true);
-    expect(posted.every((body) => body.deploymentMode === "local")).toBe(true);
-    expect(posted.find((body) => body.event === "active")?.participantBucket).toBe("3plus");
     expect(posted.every((body) => body.installationId === state.installationId)).toBe(true);
   });
 
@@ -284,10 +281,8 @@ describe("the mcp activation boundary", () => {
     // Every one of these really succeeded: a failing call proves nothing about
     // the post-success hook.
     expect(outcomes.map((outcome) => outcome.isError)).toEqual(outcomes.map(() => false));
-    expect(telemetryState().activatedOn).toBeUndefined();
-    expect(countsByEvent()).toEqual({ contributed: 1 });
-    expect(posted[0]?.deploymentMode).toBe("local");
-    expect(posted[0]?.participantBucket).toBe("3plus");
+    expect(hasTelemetryState()).toBe(false);
+    expect(posted).toEqual([]);
   });
 
   it("does not activate when the meaningful call fails", async () => {
@@ -395,38 +390,6 @@ describe("bounded lifecycle claims", () => {
     expect(countsByEvent()).toEqual({ activated: 1, active: 1 });
     expect(telemetryState().activatedOn).toBe("2026-03-01");
     expect(telemetryState().lastActiveOn).toBe("2026-03-01");
-  });
-
-  it("claims one teammate_joined for fifty enrollment reports", async () => {
-    const env = { ...process.env, CAMPFIRE_CONFIG_DIR: configDir };
-    const options = { env, fetchImpl, now: DAY_ONE, harness: "opencode" as const };
-    for (let i = 0; i < 50; i += 1) {
-      await reportTeammateJoined("cli", options);
-    }
-
-    expect(countsByEvent()).toEqual({ teammate_joined: 1 });
-    expect(telemetryState().teammateJoinedReported).toBe(true);
-    expect(posted[0]?.harness).toBe("opencode");
-  });
-
-  it("claims one contributed for fifty write reports", async () => {
-    const env = { ...process.env, CAMPFIRE_CONFIG_DIR: configDir };
-    const options = {
-      env,
-      fetchImpl,
-      now: DAY_ONE,
-      harness: "codex" as const,
-      deploymentMode: "remote" as const,
-      participantBucket: "2" as const,
-    };
-    for (let i = 0; i < 50; i += 1) {
-      await reportContributed("mcp", options);
-    }
-
-    expect(countsByEvent()).toEqual({ contributed: 1 });
-    expect(telemetryState().lastContributedOn).toBe("2026-03-01");
-    expect(posted[0]?.deploymentMode).toBe("remote");
-    expect(posted[0]?.participantBucket).toBe("2");
   });
 
   it("claims exactly one more active on a later utc day and no second activated", async () => {

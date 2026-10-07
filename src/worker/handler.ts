@@ -11,15 +11,14 @@ import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
  *   `dispatchCampfireMethod` + `CampfireService` (sync, local SQLite/tests).
  * - `POST /api/call` and `GET /api/<viewerMethod>` — bearer-authenticated,
  *   read-only compatibility APIs for non-browser clients.
- * - `GET /campfire/install` (`/install`) — the measured latest installer alias:
- *   same installer asset, plus one anonymous `install_requested` data point.
+ * - `GET /campfire/install` (`/install`) — the measured installer route: same
+ *   installer asset, plus one anonymous `install_requested` data point.
  * - `POST /v1/telemetry` — anonymous telemetry ingestion (TEL-001F). No
  *   bearer: it authenticates no Campfire state and writes only Analytics
  *   Engine data points.
- * - `GET /campfire/install.sh` and versioned installer paths — installer
- *   assets through `env.ASSETS.fetch`, each recording `install_requested`
- *   (`latest` or `versioned`). The journal itself is served by the loopback
- *   Viewer process, where the bearer stays server-side.
+ * - `GET /campfire/install.sh` and versioned installer paths — the installer
+ *   assets served through `env.ASSETS.fetch`. The journal itself is
+ *   served by the loopback Viewer process, where the bearer stays server-side.
  *
  * `createD1WorkerHandler` is the production entry: same routes over
  * `AsyncCampfireService` (D1). Same validation, same status mapping.
@@ -73,10 +72,12 @@ function isInstallerPath(path: string): boolean {
 }
 
 /**
- * The measured installer alias (TEL-001D). `/install` and `/campfire/install`
- * serve the latest script and record `install_requested` with route `latest`.
- * The `.sh` asset paths are measured in `handleInstaller`: unversioned as
- * `latest`, versioned as `versioned`.
+ * The measured installer route (TEL-001D). Deliberately not an
+ * `isInstallerPath` case: those `.sh` paths serve an asset unchanged and stay
+ * unmeasured, while this one additionally records `install_requested`. Both
+ * spellings are matched — the zone-prefixed original and the prefix-stripped
+ * one — so the route behaves the same on the production zone and on a custom
+ * domain.
  */
 function isInstallRequestPath(path: string): boolean {
   return path === "/campfire/install" || apiPath(path) === "/install";
@@ -244,15 +245,10 @@ async function fetchInstallerAsset(
 async function handleInstaller(
   request: Request,
   assetsFetch: AssetsFetch | undefined,
-  telemetryDataset?: AnalyticsEngineDataset,
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
   if (!isInstallerPath(path)) return undefined;
-  const response = await fetchInstallerAsset(request, assetsFetch, path);
-  if (response.status >= 200 && response.status < 300) {
-    void recordInstallRequested(telemetryDataset, request).catch(() => undefined);
-  }
-  return response;
+  return fetchInstallerAsset(request, assetsFetch, path);
 }
 
 /**
@@ -273,7 +269,7 @@ async function handleInstallRequest(
   if (!isInstallRequestPath(path)) return undefined;
   const response = await fetchInstallerAsset(request, assetsFetch, INSTALLER_ASSET_PATH);
   if (response.status >= 200 && response.status < 300) {
-    void recordInstallRequested(telemetryDataset, request).catch(() => undefined);
+    void recordInstallRequested(telemetryDataset).catch(() => undefined);
   }
   return response;
 }
@@ -300,7 +296,7 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       if (request.method === "GET") {
         const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
         if (installRequest !== undefined) return installRequest;
-        const installerResponse = await handleInstaller(request, assetsFetch, telemetryDataset);
+        const installerResponse = await handleInstaller(request, assetsFetch);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleSyncViewerGet(service, request, url);
@@ -356,7 +352,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
       if (request.method === "GET") {
         const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
         if (installRequest !== undefined) return installRequest;
-        const installerResponse = await handleInstaller(request, assetsFetch, telemetryDataset);
+        const installerResponse = await handleInstaller(request, assetsFetch);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleAsyncViewerGet(service, request, url);

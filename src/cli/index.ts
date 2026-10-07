@@ -109,24 +109,14 @@ import type {
 } from "../domain/types.js";
 import { campfireHttpBridgeReport, campfireHttpCall, hostedPreflightError } from "../http/client.js";
 import {
-  participantBucketFromUnknown,
-  TELEMETRY_CONTRIBUTION_METHODS,
-  telemetryParticipantBucket,
-  workspaceIdFromUnknown,
-} from "../telemetry/contract.js";
-import {
   DEFAULT_TELEMETRY_ENDPOINT,
   TELEMETRY_ENDPOINT_ENV_VAR,
   reportActivated,
   reportActive,
-  reportContributed,
-  reportTeammateJoined,
   telemetryInBackground,
 } from "../telemetry/report.js";
 import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
-import type { ActorContext } from "../service/authorization.js";
-import type { CampfireService } from "../service/service.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
 import {
@@ -252,40 +242,12 @@ interface CliBackend {
  */
 function measuredCall(
   call: (method: string, params?: Record<string, unknown>) => Promise<unknown>,
-  extras: {
-    deploymentMode: "local" | "remote";
-    harness?: string;
-    service?: CampfireService;
-    ctx?: ActorContext;
-  },
 ): CliBackend["call"] {
   return async (method, params) => {
     const result = await call(method, params);
-    let participantBucket = participantBucketFromUnknown(result);
-    if (participantBucket === undefined && extras.service !== undefined && extras.ctx !== undefined) {
-      const workspaceId = workspaceIdFromUnknown(result, params);
-      if (workspaceId !== undefined) {
-        try {
-          participantBucket = telemetryParticipantBucket(
-            extras.service.getWorkspace(extras.ctx, workspaceId).participants.length,
-          );
-        } catch {
-          // Measurement never fails the command.
-        }
-      }
-    }
-    const options = {
-      env: process.env,
-      harness: extras.harness,
-      deploymentMode: extras.deploymentMode,
-      participantBucket,
-    };
     if (method === "get_workspace_context") {
-      telemetryInBackground(reportActivated("cli", options));
-      telemetryInBackground(reportActive("cli", options));
-    }
-    if (TELEMETRY_CONTRIBUTION_METHODS.has(method)) {
-      telemetryInBackground(reportContributed("cli", options));
+      telemetryInBackground(reportActivated("cli", { env: process.env }));
+      telemetryInBackground(reportActive("cli", { env: process.env }));
     }
     return result;
   };
@@ -319,9 +281,8 @@ async function withBackend<T>(
     };
     const backend: CliBackend = {
       identity,
-      call: measuredCall(
-        (method, params) => campfireHttpCall({ baseUrl: url, token, method, params: params ?? {} }),
-        { deploymentMode: "remote", harness: identity.harness },
+      call: measuredCall((method, params) =>
+        campfireHttpCall({ baseUrl: url, token, method, params: params ?? {} }),
       ),
     };
     return await fn(backend);
@@ -343,10 +304,8 @@ async function withBackend<T>(
     const backend: CliBackend = {
       identity: bound,
       store: runtime.store,
-      call: measuredCall(
-        (method, params) =>
-          Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {})),
-        { deploymentMode: "local", harness: bound.harness, service: runtime.service, ctx: bound.ctx },
+      call: measuredCall((method, params) =>
+        Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {})),
       ),
     };
     return await fn(backend);
@@ -991,9 +950,6 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
     assertConnectionCompatible({ harness, configPath, url: profile.url, ...(knownToken === undefined ? {} : { agentToken: knownToken }) });
     const enrollmentHarness = requireEnum(harness, ["codex", "opencode"] as const, "harness") as EnrollmentHarness;
     await enrollRemoteAgent({ harness: enrollmentHarness, name: optionalFlag(flags, "agent-name"), configPath, mcpCommand });
-    telemetryInBackground(
-      reportTeammateJoined("cli", { env: process.env, harness: enrollmentHarness, deploymentMode: "remote" }),
-    );
   }
   const access = profile?.mode === "remote"
     ? resolveRemoteAccess({ harness, url: optionalFlag(flags, "url"), token: optionalFlag(flags, "token") })
@@ -1198,7 +1154,7 @@ async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
   // database is closed and after the profile is persisted, and sent in the
   // background: an onboarding that already succeeded is never failed, delayed,
   // or rolled back by measurement.
-  telemetryInBackground(reportActivated("cli", { env: process.env, deploymentMode: "local" }));
+  telemetryInBackground(reportActivated("cli", { env: process.env }));
   if (commandOutput(parsed) === "json") {
     printJson(receipt);
     return;
@@ -1929,11 +1885,7 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
     // committed and verified, so this installation demonstrably works. Only
     // the invitation variant reaches it; background so a committed join is
     // never failed by measurement.
-    telemetryInBackground(reportActivated("cli", { env: process.env, deploymentMode: "remote" }));
-    const joinedHarness = selected.length === 1 ? (selected[0] as EnrollmentHarness) : undefined;
-    telemetryInBackground(
-      reportTeammateJoined("cli", { env: process.env, harness: joinedHarness, deploymentMode: "remote" }),
-    );
+    telemetryInBackground(reportActivated("cli", { env: process.env }));
     emitResult(receipt,commandOutput(parsed),value=>`Joined ${value.workspace.name} as ${value.human.name}.\nCompleted: ${value.stages.join(", ")}.\nConnected ${value.agents.map(agent=>agent.harness).join(" and ")}. Reload the harness and approve Campfire tools.\nNext: campfire up`);
     return;
   }

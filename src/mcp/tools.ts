@@ -15,13 +15,7 @@ import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
-import {
-  participantBucketFromUnknown,
-  TELEMETRY_CONTRIBUTION_METHODS,
-  telemetryParticipantBucket,
-  workspaceIdFromUnknown,
-} from "../telemetry/contract.js";
-import { reportActivated, reportActive, reportContributed, telemetryInBackground } from "../telemetry/report.js";
+import { reportActivated, reportActive, telemetryInBackground } from "../telemetry/report.js";
 import type { ServerIdentity } from "./context.js";
 import { SESSION_INSTRUCTIONS } from "./instructions.js";
 
@@ -103,6 +97,26 @@ const ACTIVATION_METHODS: ReadonlySet<string> = new Set([
  */
 const ACTIVITY_METHODS: ReadonlySet<string> = new Set(["get_workspace_context"]);
 
+/**
+ * Attach to an MCP success boundary without changing its result.
+ *
+ * Both reporters are bounded internally — `activated` once per installation,
+ * `active` once per UTC day — so an agent loop calling a tool hundreds of times
+ * still produces at most one of each. That bound is the reason this hook can sit
+ * on the shared post-success path without any sampling or debounce here.
+ *
+ * Fire-and-forget is mandatory: an MCP tool result must never be delayed or
+ * rejected by measurement (TEL-001 sections 8 and 12).
+ */
+function reportMcpSuccess(method: string): void {
+  if (ACTIVATION_METHODS.has(method)) {
+    telemetryInBackground(reportActivated("mcp"));
+  }
+  if (ACTIVITY_METHODS.has(method)) {
+    telemetryInBackground(reportActive("mcp"));
+  }
+}
+
 export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer {
   const { identity, remote, unavailable } = options;
   const service = options.service;
@@ -130,44 +144,6 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       throw new ValidationError("Campfire MCP server is missing an identity");
     }
     return ctx;
-  }
-
-  /**
-   * Attach to an MCP success boundary without changing its result.
-   *
-   * Reporters are bounded internally — `activated` once per installation,
-   * `active`/`contributed` once per UTC day — so an agent loop calling a tool
-   * hundreds of times still produces at most one of each.
-   *
-   * Fire-and-forget is mandatory: an MCP tool result must never be delayed or
-   * rejected by measurement (TEL-001 sections 8 and 12).
-   */
-  function reportMcpSuccess(method: string, result: unknown): void {
-    const harness = identity?.harness;
-    const deploymentMode = remote !== undefined ? "remote" : "local";
-    let participantBucket = participantBucketFromUnknown(result);
-    if (participantBucket === undefined && service !== undefined) {
-      const workspaceId = workspaceIdFromUnknown(result);
-      if (workspaceId !== undefined) {
-        try {
-          participantBucket = telemetryParticipantBucket(
-            service.getWorkspace(requireCtx(), workspaceId).participants.length,
-          );
-        } catch {
-          // Measurement never fails the tool.
-        }
-      }
-    }
-    const reportOptions = { harness, deploymentMode, participantBucket };
-    if (ACTIVATION_METHODS.has(method)) {
-      telemetryInBackground(reportActivated("mcp", reportOptions));
-    }
-    if (ACTIVITY_METHODS.has(method)) {
-      telemetryInBackground(reportActive("mcp", reportOptions));
-    }
-    if (TELEMETRY_CONTRIBUTION_METHODS.has(method)) {
-      telemetryInBackground(reportContributed("mcp", reportOptions));
-    }
   }
 
   async function invoke(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
@@ -214,7 +190,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       const result = await fn();
       // Success only. A throw below is a failed setup or failed authentication
       // (section 9) and must never activate.
-      reportMcpSuccess(method, result);
+      reportMcpSuccess(method);
       return ok(result);
     } catch (error) {
       if (error instanceof CampfireError) {

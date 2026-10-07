@@ -18,9 +18,7 @@ import { postTelemetryEvent } from "./post.js";
 import {
   claimActivation,
   claimActiveEvent,
-  claimContributedEvent,
   claimInstallCompleted,
-  claimTeammateJoined,
   ensureInstallationId,
   isTelemetryEnabled,
 } from "./state.js";
@@ -40,9 +38,6 @@ export interface TelemetryReportOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   now?: Date;
-  harness?: string;
-  deploymentMode?: string;
-  participantBucket?: string;
 }
 
 /** The version is read from disk and can throw in an unusual layout; telemetry must not. */
@@ -97,13 +92,7 @@ export function resolveTelemetryTarget(
  */
 export async function reportTelemetryEvent(
   event: TelemetryEventName,
-  extra: {
-    installMethod?: "curl";
-    surface?: TelemetrySurface;
-    harness?: string;
-    deploymentMode?: string;
-    participantBucket?: string;
-  },
+  extra: { installMethod?: "curl"; surface?: TelemetrySurface },
   options: TelemetryReportOptions = {},
 ): Promise<{ ok: boolean; error?: string } | undefined> {
   const target = resolveTelemetryTarget(options);
@@ -117,9 +106,6 @@ export async function reportTelemetryEvent(
     arch: target.arch,
     installMethod: extra.installMethod,
     surface: extra.surface,
-    harness: extra.harness,
-    deploymentMode: extra.deploymentMode,
-    participantBucket: extra.participantBucket,
     fetchImpl: options.fetchImpl,
     timeoutMs: options.timeoutMs,
   });
@@ -138,11 +124,7 @@ export async function reportActivated(
   if (!isTelemetryEnabled(env)) return;
   const installationId = claimActivation(env, options.now ?? new Date());
   if (installationId === "") return;
-  await reportTelemetryEvent(
-    "activated",
-    { surface, harness: options.harness, deploymentMode: options.deploymentMode },
-    { ...options, env },
-  );
+  await reportTelemetryEvent("activated", { surface }, { ...options, env });
 }
 
 /**
@@ -158,60 +140,7 @@ export async function reportActive(
   if (!isTelemetryEnabled(env)) return;
   const installationId = claimActiveEvent(env, options.now ?? new Date());
   if (installationId === "") return;
-  await reportTelemetryEvent(
-    "active",
-    {
-      surface,
-      harness: options.harness,
-      deploymentMode: options.deploymentMode,
-      participantBucket: options.participantBucket,
-    },
-    { ...options, env },
-  );
-}
-
-/**
- * First successful enrollment on this installation: invitation join or an
- * additional recipient-owned harness. Bounded locally to once, so a later
- * `connect --enroll` cannot inflate the count.
- */
-export async function reportTeammateJoined(
-  surface: TelemetrySurface,
-  options: TelemetryReportOptions = {},
-): Promise<void> {
-  const env = options.env ?? process.env;
-  if (!isTelemetryEnabled(env)) return;
-  const installationId = claimTeammateJoined(env);
-  if (installationId === "") return;
-  await reportTelemetryEvent(
-    "teammate_joined",
-    { surface, harness: options.harness, deploymentMode: options.deploymentMode },
-    { ...options, env },
-  );
-}
-
-/**
- * First durable write of shared work on this UTC day: a goal, finding, decision,
- * task, or artifact. Bounded locally to one event per installation per UTC day.
- */
-export async function reportContributed(
-  surface: TelemetrySurface,
-  options: TelemetryReportOptions = {},
-): Promise<void> {
-  const env = options.env ?? process.env;
-  if (!isTelemetryEnabled(env)) return;
-  const installationId = claimContributedEvent(env, options.now ?? new Date());
-  if (installationId === "") return;
-  await reportTelemetryEvent(
-    "contributed",
-    {
-      surface,
-      harness: options.harness,
-      deploymentMode: options.deploymentMode,
-      participantBucket: options.participantBucket,
-    },
-    { ...options, env },
-  );
+  await reportTelemetryEvent("active", { surface }, { ...options, env });
 }
 
 /**

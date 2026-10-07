@@ -14,50 +14,34 @@ installation** — not you, and not anyone else.
 
 ## What is collected
 
-Campfire records six events. Nothing else is ever sent, and the server rejects
+Campfire records four events. Nothing else is ever sent, and the server rejects
 any payload containing a field that is not in this table.
 
 | Event | Recorded when | Carries an installation id |
 | --- | --- | --- |
-| `install_requested` | an official installer URL is fetched | no — it is anonymous by contract |
+| `install_requested` | the official installer URL is fetched | no — it is anonymous by contract |
 | `install_completed` | the installer finishes successfully | yes |
 | `activated` | Campfire first does something meaningful | yes |
 | `active` | Campfire is used after activation | yes |
-| `teammate_joined` | enrollment succeeds (invitation join or additional harness) | yes |
-| `contributed` | a goal, finding, decision, task, or artifact is written | yes |
 
 `activated` is emitted at most once per installation, `install_completed` is
-claimed at most once per installation, and `active` and `contributed` at most
-once per installation per UTC day. Those bounds are decided locally, so a
-repeated command, a polling Viewer, or an agent loop cannot inflate the
-counters.
+claimed at most once per installation, and `active` at most once per
+installation per UTC day. Those bounds are decided locally, so a repeated
+command, a polling Viewer, or an agent loop cannot inflate the counters.
 
-Every client payload carries these dimensions:
+Every payload carries these seven dimensions:
 
 | Field | Values | Meaning |
 | --- | --- | --- |
 | `schemaVersion` | `1` | payload contract version |
-| `event` | the six names above | which event this is |
+| `event` | the four names above | which event this is |
 | `campfireVersion` | for example `1.8.0`, or `unknown` | the installed release |
 | `os` | `darwin`, `linux`, `win32`, or `unknown` | normalized platform |
 | `arch` | `arm64`, `x64`, or `unknown` | normalized architecture |
 | `installMethod` | `curl`, or absent | how Campfire was installed |
 | `surface` | `cli`, `agent`, `mcp`, or absent | where the event came from |
-| `harness` | `codex`, `opencode`, or absent | which closed harness produced the event |
-| `deploymentMode` | `local`, `remote`, or absent | local SQLite vs a hosted endpoint |
-| `participantBucket` | `1`, `2`, `3plus`, or absent | distinct workspace participants, bucketed |
 
 plus `installationId`: a random UUIDv4 created on your machine, described below.
-
-The Worker adds stored dimensions that are never accepted from a client:
-
-- country-level region from Cloudflare (`US`, `CA`, `MX`, …) on
-  `install_requested` and `install_completed`
-- installer route `latest` or `versioned` on `install_requested`
-- client family `curl`, `wget`, `browser`, `ci`, or `unknown` on
-  `install_requested` (classified from User-Agent; the raw header is discarded)
-
-Region is not attached to `activated`, `active`, `teammate_joined`, or `contributed`.
 
 `os` and `arch` are normalized from the same platform list the installer uses,
 so the installer and the CLI report identical strings for the same machine.
@@ -74,34 +58,28 @@ A completed installation sends exactly this, and nothing else:
 Activation and later use add `surface`:
 
 ```json
-{"schemaVersion":1,"event":"active","installationId":"3f6b0e2a-1c4d-4a7e-9b8f-0d2e5c7a91b3","campfireVersion":"1.8.0","os":"darwin","arch":"arm64","surface":"agent","harness":"codex","deploymentMode":"local","participantBucket":"2"}
+{"schemaVersion":1,"event":"active","installationId":"3f6b0e2a-1c4d-4a7e-9b8f-0d2e5c7a91b3","campfireVersion":"1.8.0","os":"darwin","arch":"arm64","surface":"agent"}
 ```
 
 Payloads are hard-capped at 2 KB by the receiving endpoint. A larger body is
 refused rather than stored.
 
 `install_requested` is never sent by a client. It is written by the Worker when
-an official installer URL is fetched (`/install`, `/campfire/install`,
-`/campfire/install.sh`, or `/campfire/vX.Y.Z/install.sh`), and it deliberately
-carries no installation id and no platform: at that moment the requester is an
-anonymous shell pipeline, and the installer reports its real platform
-truthfully a moment later. The Worker stores country-level region, installer
-route, and a coarse client family for that fetch. City, colo, IP address, and
-the raw User-Agent are not stored. `install_completed` receives the same
-country code from the completion POST. Later events that carry an installation
-id do not receive a region.
+the installer script is fetched, and it deliberately carries no installation id
+and no platform: at that moment the requester is an anonymous shell pipeline,
+and the installer reports its real platform truthfully a moment later.
 
 ### Where a recorded event is stored
 
 The table above is the client payload. It is not the Analytics Engine column
 layout. Workers Analytics Engine accepts one index per data point. That index
 is only the sampling key, and the sampling key is the event name. Founder
-queries do not read `index1`. They read `blob1` through `blob14`.
+queries do not read `index1`. They read `blob1` through `blob8`.
 
 | Column | What is stored |
 | --- | --- |
 | `index1` | event name — sampling key only; queries must not read it |
-| `blob1` | event name — filter here (`install_requested`, `install_completed`, `activated`, `active`, `teammate_joined`, `contributed`) |
+| `blob1` | event name — filter here (`install_requested`, `install_completed`, `activated`, `active`) |
 | `blob2` | schema version, `"1"` |
 | `blob3` | Campfire version |
 | `blob4` | OS |
@@ -109,18 +87,11 @@ queries do not read `index1`. They read `blob1` through `blob14`.
 | `blob6` | install method, or `"none"` when the payload omits it |
 | `blob7` | surface, or `"none"` when the payload omits it |
 | `blob8` | installation id, or `""` when absent. `count(DISTINCT blob8)` is the deduplicated installation count |
-| `blob9` | country-level region: ISO 3166-1 alpha-2 (`US`, `CA`, `MX`, …), `T1` for Tor, `unknown` when Cloudflare did not supply a country, or `"none"` on events that do not collect region |
-| `blob10` | installer route: `latest`, `versioned`, or `"none"` |
-| `blob11` | installer client family: `curl`, `wget`, `browser`, `ci`, `unknown`, or `"none"` |
-| `blob12` | harness: `codex`, `opencode`, or `"none"` |
-| `blob13` | deployment mode: `local`, `remote`, or `"none"` |
-| `blob14` | participant bucket: `1`, `2`, `3plus`, or `"none"` |
 
-Schema version remains `1`. Region, installer route, and client family are
-Worker-derived storage columns and are never accepted on `POST /v1/telemetry`.
-`harness` is an optional client field with a closed vocabulary. Rows written
-before a column exists have an empty value there. `"none"` and `""` are how an
-already-optional field is stored when it is absent.
+Schema version remains `1`. The payload contract did not change, and the
+rejected writes that sent seven indexes stored no rows, so nothing was migrated
+and no new field is collected. `"none"` and `""` are how an already-optional
+payload field is stored when it is absent. They are not extra dimensions.
 
 ---
 
@@ -151,11 +122,8 @@ applies the same list again and rejects a payload containing any undocumented
 key, so a future client cannot smuggle content past the list while being told
 it succeeded.
 
-The receiving endpoint never reads an address, host, or token header. The
-installer routes and the `install_completed` POST read Cloudflare's country
-code. Installer fetches also classify User-Agent into a closed family and
-then discard the header. IP, city, colo, and raw User-Agent are not stored.
-Region is not attached to `activated`, `active`, `teammate_joined`, or `contributed`.
+The receiving endpoint also never reads an address, host, or token header. It
+does not need one.
 
 ---
 

@@ -125,28 +125,6 @@ event.
    This records a storage-layout correction only. It does not change the
    section 1 disposition. The correction ships as patch `v1.9.3` because
    `v1.9.2` is already tagged.
-8. **2026-10-04 — installer-fetch region.** `install_requested` now stores
-   Cloudflare `request.cf.country` as `blob9` (ISO 3166-1 alpha-2). Client
-   `schemaVersion` stays 1. Region is not a client payload field, is not
-   accepted on `POST /v1/telemetry`, and is not attached to events that carry
-   an installation id. City, colo, IP, and other request metadata remain
-   unread. This does not change the section 1 disposition.
-9. **2026-10-04 — investor measurement columns.** Same dataset, still
-   `schemaVersion` 1. `install_completed` also stores `blob9` from the
-   completion POST. `install_requested` stores `blob10` installer route
-   (`latest`/`versioned`) and `blob11` client family. `activated`/`active`/
-   `teammate_joined` may carry closed `harness` as `blob12`. New bounded
-   event `teammate_joined` fires once per installation on successful
-   enrollment. Raw User-Agent, city, IP, and colo remain unread. This does
-   not change the section 1 disposition.
-10. **2026-10-04 — collaboration usage columns.** Same dataset, still
-    `schemaVersion` 1. `activated`/`active`/`teammate_joined`/`contributed` may
-    carry closed `deploymentMode` as `blob13` (`local`/`remote`). `active` and
-    `contributed` may carry `participantBucket` as `blob14` (`1`/`2`/`3plus`).
-    New bounded event `contributed` fires once per installation per UTC day on
-    a successful goal, finding, decision, task, or artifact write. Exact
-    headcount, workspace names, and per-command events remain unread. This does
-    not change the section 1 disposition.
 
 ## 5. Unresolved contradiction for the founder
 

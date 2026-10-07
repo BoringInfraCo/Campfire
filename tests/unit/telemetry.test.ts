@@ -7,12 +7,7 @@ import {
   isTelemetryEventName,
   isTelemetryInstallationId,
   normalizeTelemetryArch,
-  normalizeTelemetryClientFamily,
-  normalizeTelemetryInstallerRoute,
   normalizeTelemetryOs,
-  normalizeTelemetryRegion,
-  participantBucketFromUnknown,
-  telemetryParticipantBucket,
   parseTelemetryEventV1,
   serializeTelemetryEvent,
   TELEMETRY_EVENTS,
@@ -24,9 +19,7 @@ import {
 import {
   claimActivation,
   claimActiveEvent,
-  claimContributedEvent,
   claimInstallCompleted,
-  claimTeammateJoined,
   ensureInstallationId,
   loadTelemetryState,
   resolveTelemetryPreference,
@@ -41,9 +34,7 @@ import {
   DEFAULT_TELEMETRY_ENDPOINT,
   reportActivated,
   reportActive,
-  reportContributed,
   reportInstallCompleted,
-  reportTeammateJoined,
   reportTelemetryEvent,
   resolveTelemetryTarget,
   TELEMETRY_ENDPOINT_ENV_VAR,
@@ -149,9 +140,6 @@ describe("telemetry event contract", () => {
       arch: "arm64",
       installMethod: "curl",
       surface: "cli",
-      harness: "codex",
-      deploymentMode: "local",
-      participantBucket: "2",
     });
     expect(JSON.parse(serializeTelemetryEvent(full))).toEqual({
       schemaVersion: 1,
@@ -162,9 +150,6 @@ describe("telemetry event contract", () => {
       arch: "arm64",
       installMethod: "curl",
       surface: "cli",
-      harness: "codex",
-      deploymentMode: "local",
-      participantBucket: "2",
     });
     expect(Object.keys(JSON.parse(serializeTelemetryEvent(full)) as object).sort()).toEqual(
       [...TELEMETRY_FIELDS].sort(),
@@ -197,18 +182,7 @@ describe("telemetry event contract", () => {
       campfireVersionRaw: "not-a-field",
     } as unknown as TelemetryEventV1;
     const payload = JSON.parse(serializeTelemetryEvent(hostile)) as Record<string, unknown>;
-    expect(Object.keys(payload).sort()).toEqual(
-      [...TELEMETRY_FIELDS]
-        .filter(
-          (field) =>
-            field !== "installMethod" &&
-            field !== "surface" &&
-            field !== "harness" &&
-            field !== "deploymentMode" &&
-            field !== "participantBucket",
-        )
-        .sort(),
-    );
+    expect(Object.keys(payload).sort()).toEqual([...TELEMETRY_FIELDS].filter((field) => field !== "installMethod" && field !== "surface").sort());
     for (const leak of ["workspaceName", "prompt", "token", "example-repo", "REDACTED"]) {
       expect(serializeTelemetryEvent(hostile)).not.toContain(leak);
     }
@@ -228,37 +202,6 @@ describe("telemetry event contract", () => {
     for (const garbage of ["riscv64", "", "AMD64", "arm"]) {
       expect(normalizeTelemetryArch(garbage)).toBe("unknown");
     }
-    expect(normalizeTelemetryRegion("US")).toBe("US");
-    expect(normalizeTelemetryRegion("ca")).toBe("CA");
-    expect(normalizeTelemetryRegion(" mx ")).toBe("MX");
-    expect(normalizeTelemetryRegion("T1")).toBe("T1");
-    for (const garbage of ["USA", "United States", "Austin", "US-TX", "", 7, null, undefined]) {
-      expect(normalizeTelemetryRegion(garbage)).toBe("unknown");
-    }
-    expect(normalizeTelemetryInstallerRoute("/campfire/install")).toBe("latest");
-    expect(normalizeTelemetryInstallerRoute("/install")).toBe("latest");
-    expect(normalizeTelemetryInstallerRoute("/campfire/install.sh")).toBe("latest");
-    expect(normalizeTelemetryInstallerRoute("/install.sh")).toBe("latest");
-    expect(normalizeTelemetryInstallerRoute("/campfire/v1.11.0/install.sh")).toBe("versioned");
-    expect(normalizeTelemetryInstallerRoute("/v1.10.0/install.sh")).toBe("versioned");
-    for (const garbage of ["/campfire/v1.11.0/install", "/secret/path", "/campfire/v1/install.sh", "", 7, null]) {
-      expect(normalizeTelemetryInstallerRoute(garbage)).toBe("none");
-    }
-    expect(normalizeTelemetryClientFamily("curl/8.7.1")).toBe("curl");
-    expect(normalizeTelemetryClientFamily("Wget/1.21.4")).toBe("wget");
-    expect(normalizeTelemetryClientFamily("Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/120.0.0.0")).toBe("browser");
-    expect(normalizeTelemetryClientFamily("GitHub-Actions runner 2.0")).toBe("ci");
-    expect(normalizeTelemetryClientFamily("python-requests/2.32.0")).toBe("ci");
-    for (const garbage of ["", "   ", "example-agent/1.0", 7, null, undefined]) {
-      expect(normalizeTelemetryClientFamily(garbage)).toBe("unknown");
-    }
-    expect(telemetryParticipantBucket(1)).toBe("1");
-    expect(telemetryParticipantBucket(2)).toBe("2");
-    expect(telemetryParticipantBucket(3)).toBe("3plus");
-    expect(telemetryParticipantBucket(12)).toBe("3plus");
-    expect(telemetryParticipantBucket(0)).toBeUndefined();
-    expect(participantBucketFromUnknown({ participants: [{}, {}] })).toBe("2");
-    expect(participantBucketFromUnknown({ participants: "alice" })).toBeUndefined();
   });
 
   it("normalizes a garbage platform on the built event rather than sending it raw", () => {
@@ -282,21 +225,15 @@ describe("telemetry event contract", () => {
     expect(event.campfireVersion).toHaveLength(32);
   });
 
-  it("drops an install method, surface, or harness outside the closed vocabulary", () => {
+  it("drops an install method or surface outside the closed vocabulary", () => {
     const event = buildTelemetryEvent({
       event: "active",
       installationId: ID_A,
       installMethod: "homebrew",
       surface: "vscode",
-      harness: "claude-code",
-      deploymentMode: "https://example.invalid",
-      participantBucket: "4",
     });
     expect(event.installMethod).toBeUndefined();
     expect(event.surface).toBeUndefined();
-    expect(event.harness).toBeUndefined();
-    expect(event.deploymentMode).toBeUndefined();
-    expect(event.participantBucket).toBeUndefined();
   });
 
   it("blanks an installation id that is not the documented UUID shape", () => {
@@ -306,15 +243,8 @@ describe("telemetry event contract", () => {
     expect(isTelemetryInstallationId("not-a-uuid")).toBe(false);
   });
 
-  it("recognises only the documented event names", () => {
-    expect([...TELEMETRY_EVENTS].sort()).toEqual([
-      "activated",
-      "active",
-      "contributed",
-      "install_completed",
-      "install_requested",
-      "teammate_joined",
-    ]);
+  it("recognises only the four documented event names", () => {
+    expect([...TELEMETRY_EVENTS].sort()).toEqual(["activated", "active", "install_completed", "install_requested"]);
     for (const name of TELEMETRY_EVENTS) expect(isTelemetryEventName(name)).toBe(true);
     for (const name of ["session_replay", "", "Activated", 7]) {
       expect(isTelemetryEventName(name)).toBe(false);
@@ -387,30 +317,6 @@ describe("parseTelemetryEventV1", () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) throw new Error("expected acceptance");
     expect(parsed.event.installationId).toBe("");
-  });
-
-  it("accepts teammate_joined and a closed harness, and drops an undocumented harness", () => {
-    const parsed = parseTelemetryEventV1(valid({ event: "teammate_joined", harness: "codex" }));
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) throw new Error("expected acceptance");
-    expect(parsed.event.event).toBe("teammate_joined");
-    expect(parsed.event.harness).toBe("codex");
-
-    const dropped = parseTelemetryEventV1(valid({ harness: "claude-code" }));
-    expect(dropped.ok).toBe(true);
-    if (!dropped.ok) throw new Error("expected acceptance");
-    expect(dropped.event.harness).toBeUndefined();
-  });
-
-  it("accepts contributed with closed deploymentMode and participantBucket", () => {
-    const parsed = parseTelemetryEventV1(
-      valid({ event: "contributed", deploymentMode: "remote", participantBucket: "3plus" }),
-    );
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) throw new Error("expected acceptance");
-    expect(parsed.event.event).toBe("contributed");
-    expect(parsed.event.deploymentMode).toBe("remote");
-    expect(parsed.event.participantBucket).toBe("3plus");
   });
 });
 
@@ -590,19 +496,6 @@ describe("activation and activity claims", () => {
     expect(claimInstallCompleted(env)).toBe("");
     expect(readState().installCompletedReported).toBe(true);
   });
-
-  it("claims teammate_joined exactly once per installation", () => {
-    expect(claimTeammateJoined(env)).toMatch(UUID_V4);
-    expect(claimTeammateJoined(env)).toBe("");
-    expect(readState().teammateJoinedReported).toBe(true);
-  });
-
-  it("claims contributed once per UTC day", () => {
-    expect(claimContributedEvent(env, DAY_ONE)).toMatch(UUID_V4);
-    expect(claimContributedEvent(env, DAY_ONE)).toBe("");
-    expect(readState().lastContributedOn).toBe("2026-03-01");
-    expect(claimContributedEvent(env, DAY_TWO)).toMatch(UUID_V4);
-  });
 });
 
 describe("telemetry transport", () => {
@@ -640,34 +533,6 @@ describe("telemetry transport", () => {
       arch: "arm64",
       surface: "cli",
     });
-  });
-
-  it("posts a closed harness and omits it when absent", async () => {
-    const withHarness = stubFetch(() => jsonOk());
-    await postTelemetryEvent({
-      endpoint: "https://example.invalid/v1/telemetry",
-      event: "activated",
-      installationId: ID_A,
-      campfireVersion: "1.9.1",
-      os: "darwin",
-      arch: "arm64",
-      surface: "mcp",
-      harness: "opencode",
-      fetchImpl: withHarness.fetchImpl,
-    });
-    expect(JSON.parse(String(withHarness.calls[0]!.init?.body))).toMatchObject({
-      event: "activated",
-      harness: "opencode",
-    });
-
-    const withoutHarness = stubFetch(() => jsonOk());
-    await postTelemetryEvent({
-      endpoint: "https://example.invalid/v1/telemetry",
-      event: "activated",
-      installationId: ID_A,
-      fetchImpl: withoutHarness.fetchImpl,
-    });
-    expect(JSON.parse(String(withoutHarness.calls[0]!.init?.body)).harness).toBeUndefined();
   });
 
   it("accepts any 2xx as delivered", async () => {
@@ -819,8 +684,6 @@ describe("telemetry reporting entry points", () => {
     await reportActivated("cli", { env: disabled, fetchImpl });
     await reportActive("cli", { env: disabled, fetchImpl });
     await reportInstallCompleted({ env: disabled, fetchImpl });
-    await reportTeammateJoined("cli", { env: disabled, fetchImpl });
-    await reportContributed("cli", { env: disabled, fetchImpl });
     expect(calls).toHaveLength(0);
     expect(existsSync(stateFile())).toBe(false);
     expect(await reportTelemetryEvent("activated", { surface: "cli" }, { env: disabled, fetchImpl })).toBeUndefined();
@@ -851,23 +714,6 @@ describe("telemetry reporting entry points", () => {
     const payload = JSON.parse(String(calls[0]!.init?.body)) as Record<string, unknown>;
     expect(payload).toMatchObject({ event: "activated", surface: "cli", installationId: ensureInstallationId(env) });
     expect(payload.os).toBe(process.platform);
-    expect(payload.harness).toBeUndefined();
-  });
-
-  it("sends a closed harness on activated when the reporter supplies one", async () => {
-    const { fetchImpl, calls } = stubFetch(() => jsonOk());
-    const options = {
-      env: { ...env, [TELEMETRY_ENDPOINT_ENV_VAR]: loopback },
-      fetchImpl,
-      now: DAY_ONE,
-      harness: "codex" as const,
-    };
-    await reportActivated("mcp", options);
-    expect(JSON.parse(String(calls[0]!.init?.body))).toMatchObject({
-      event: "activated",
-      surface: "mcp",
-      harness: "codex",
-    });
   });
 
   it("sends one active per utc day and stays silent afterwards", async () => {
@@ -892,49 +738,6 @@ describe("telemetry reporting entry points", () => {
     const payload = JSON.parse(String(calls[0]!.init?.body)) as Record<string, unknown>;
     expect(payload).toMatchObject({ event: "install_completed", installMethod: "curl" });
     expect(payload.surface).toBeUndefined();
-    expect(payload.harness).toBeUndefined();
-  });
-
-  it("sends one teammate_joined for a first successful enrollment", async () => {
-    const { fetchImpl, calls } = stubFetch(() => jsonOk());
-    const options = {
-      env: { ...env, [TELEMETRY_ENDPOINT_ENV_VAR]: loopback },
-      fetchImpl,
-      harness: "opencode" as const,
-    };
-    await reportTeammateJoined("cli", options);
-    await reportTeammateJoined("cli", { ...options, harness: "codex" });
-
-    expect(calls).toHaveLength(1);
-    const payload = JSON.parse(String(calls[0]!.init?.body)) as Record<string, unknown>;
-    expect(payload).toMatchObject({
-      event: "teammate_joined",
-      surface: "cli",
-      harness: "opencode",
-      installationId: ensureInstallationId(env),
-    });
-  });
-
-  it("sends one contributed per UTC day with mode and participant bucket", async () => {
-    const { fetchImpl, calls } = stubFetch(() => jsonOk());
-    const options = {
-      env: { ...env, [TELEMETRY_ENDPOINT_ENV_VAR]: loopback },
-      fetchImpl,
-      now: DAY_ONE,
-      harness: "codex" as const,
-      deploymentMode: "local" as const,
-      participantBucket: "2" as const,
-    };
-    await reportContributed("mcp", options);
-    await reportContributed("mcp", options);
-    expect(calls).toHaveLength(1);
-    expect(JSON.parse(String(calls[0]!.init?.body))).toMatchObject({
-      event: "contributed",
-      surface: "mcp",
-      harness: "codex",
-      deploymentMode: "local",
-      participantBucket: "2",
-    });
   });
 
   it("records the activation claim even when delivery fails", async () => {
