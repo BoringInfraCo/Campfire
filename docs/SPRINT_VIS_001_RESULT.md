@@ -360,8 +360,9 @@ condition 3 on its own — see section 5.
 - The shared instance is a probe. It is not a deployment, not a hosted team
   environment, and does not establish hosted Stage C.
 - Section 3's authorization and sentinel results are operator-attested only.
-- No production deployment occurred. The `v1.12.0` release exists under the
-  founder override, while the contract gate remains open on condition 4.
+- At the time of the October 4 trace, no production deployment had occurred.
+  The later `v1.12.0` release and production deployment are recorded in §13.8.
+  The contract gate remains open on condition 4.
 
 ## 8. Release verdict
 
