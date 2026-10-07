@@ -37,13 +37,13 @@ CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
 
 Onboard is the first-run path to one human, one agent they own, one workspace, and one goal. It does not start the server and does not register an agent session. `campfire seed --reset` loads a deterministic demo/evaluation fixture; it is not how a new operator creates a workspace.
 
-For a version-pinned install after this version is deployed:
+For a version-pinned v1.12.0 install:
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/v1.12.0/install.sh | sh -s -- --version 1.12.0
 ```
 
-Until that production deploy, the current installer can select the GitHub Release:
+The latest installer also accepts an explicit version:
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.12.0

@@ -2,16 +2,14 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-This source stages v1.12.0 with a CONDITIONAL verdict. The release and
-production deployment are pending; the v1.12.0 versioned installer URL is not
-live until the Worker asset deploy. The human Viewer trace remains outstanding.
-See `SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
+v1.12.0 is published and deployed with a CONDITIONAL verdict. The versioned
+installer URL is live. The human Viewer trace remains outstanding. See the
+root `RELEASE_CONTEXT.md` for the bounded Viewer scope and unverified claims.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches
-the v1.9.2 script. The independent two-human acceptance trace remains pending;
-see `SPRINT_020_RESULT.md` for that verdict.
+the v1.9.2 script. The independent two-human acceptance trace remains pending.
 
 Install the CLI on an operator or teammate machine (curl path):
 
@@ -36,13 +34,12 @@ node scripts/sync-install-channels.mjs --version 1.12.0
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
 
-Pinned / explicit variants (the versioned URL works after the Workers asset
-deploy; `--help` for all flags; env equivalents
+Pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.0.0
-curl -fsSL https://boringinfra.company/campfire/v1.8.0/install.sh | sh -s -- --version 1.8.0
+curl -fsSL https://boringinfra.company/campfire/v1.12.0/install.sh | sh -s -- --version 1.12.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -54,7 +51,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.8.0`), not the word `latest`.
+the installed package metadata (for example `1.12.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
