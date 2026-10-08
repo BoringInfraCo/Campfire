@@ -9,7 +9,7 @@
 **Depends on:** CTX-001 / v1.10.0; COR-001 / v1.11.0; VIS-001 / v1.12.0 (CONDITIONAL)
 **Theme:** One measured `incident-investigation` workspace playbook
 
-**Sequencing decision, October 7, 2026:** The founder chose implementation first and the exact harness/model lock later. The scenario bundles and scoring rubric were committed before implementation. The remaining environment lock and sealed-key isolation proof must be committed before any pilot run; implementation alone is not pilot evidence.
+**Sequencing decision, October 7, 2026:** The founder chose implementation first and the exact harness/model lock later. The scenario bundles and scoring rubric were committed before implementation. The environment lock (`fixtures/incidents/wow-001/RUN-LOCK.md`) and the sealed-key isolation demonstration (`docs/evidence/wow-001/`) are committed before any pilot run; implementation alone is not pilot evidence. The six runs have not started.
 
 ---
 
@@ -30,7 +30,7 @@ The experiment measures the two outcomes the roadmap names: recording quality an
 | v1.12 Viewer comprehension | v1.12.0 shipped, CONDITIONAL; no human trace on the shipped surface yet | Run the human Viewer comprehension trace now, in parallel. This sprint neither blocks on it nor claims it. |
 | Artifact-open observation (VIS-001 condition 4) | Open. Review by October 14, 2026 | Parallel. If no opportunity occurs, scope the read-only Viewer reference affordance as an observation tool. Previews stay deferred. |
 | CLI decision-ordering inconsistency | Open; tracked separately | Out of scope. Fix without assigning operative status by position. |
-| Pre-registration | Scenario bundles, ground truth, prompts, applicability matrix, and rubric committed before implementation; dated harness/model lock and sealed-key isolation demonstration outstanding | Freeze and commit the remaining environment lock, implementation commit, and isolation evidence before the first pilot run. The playbook definition is frozen before that run. |
+| Pre-registration | Scenario bundles, ground truth, prompts, applicability matrix, and rubric committed before implementation; implementation commit `977c0e3`; dated run lock committed in `fixtures/incidents/wow-001/RUN-LOCK.md`; sealed-key isolation demonstration committed in `docs/evidence/wow-001/` | Frozen. The playbook definition and environment are frozen; record any post-freeze deviation rather than hiding it. The six pilot runs remain unexecuted. |
 
 Six runs are pilot evidence. They do not establish Gate B, Gate C, Gate D, Gate E, Gate F, or Gate G. The v1.12 human trace and artifact observation are separate v1.12 evidence; this sprint must not absorb their outcomes, and they must not be credited to this sprint.
 
@@ -174,7 +174,7 @@ Otherwise the pilot does not support expansion, and the result records why. The 
 
 1. The contract and scenario bundles, sealed ground truth and scoring keys, prompts, applicability matrix, order, budgets, and rubric were committed before implementation. Check fixture validity without exposing keys to pilot agents.
 2. Implement `src/playbooks/incident-investigation.ts`, the registry, `campfire playbook`, and the gated `get_playbook`. Add parity, gating, unknown-name, and no-write tests. Commit this implementation before the pilot.
-3. Run focused suites, `npm run typecheck`, `npm test`, `npm run build`, and `npm run pack:tarball`. Before the first pilot run, commit a dated addendum with exact harness/model settings, the implementation commit, and a demonstrated sealed-key isolation boundary. Freeze the shared playbook definition at that point.
+3. Run focused suites, `npm run typecheck`, `npm test`, `npm run build`, and `npm run pack:tarball`. The dated addendum with the exact harness/model settings, the implementation commit, and the demonstrated sealed-key isolation boundary is `fixtures/incidents/wow-001/RUN-LOCK.md`; the boundary evidence is `docs/evidence/wow-001/`. The shared playbook definition is frozen at that point.
 4. Run the six-valid-run pilot with fresh workspaces, matched arms, isolated agent inputs, and frozen materials. Preserve invalid attempts and replacements as evidence.
 5. Score, then write `docs/SPRINT_WOW_001_RESULT.md` with the pilot verdict, observed versus fixture evidence, deviations, contamination, and explicit non-claims. Update canonical docs only where the result warrants it.
 

@@ -181,10 +181,11 @@ fixtures at `fixtures/incidents/wow-001/`. The frozen playbook definition
 `campfire playbook` CLI command, and the opt-in `get_playbook` MCP tool are
 implemented behind `CAMPFIRE_PLAYBOOK=1` / `--with-playbook`; default CLI,
 MCP, and Viewer surfaces are unchanged, and no workspace data or write path
-was added. The dated harness/model environment lock, the pilot-agent commit
-record, and the sealed-key isolation demonstration remain open and must be
-committed before the first pilot run. The proposal does not change VIS-001's
-open evidence or authorize a release.
+was added. The dated harness/model environment lock is
+`fixtures/incidents/wow-001/RUN-LOCK.md` and the synthetic sealed-key isolation
+demonstration is `docs/evidence/wow-001/`; both are committed. The six pilot
+runs, scoring, and verdict remain pending. The proposal does not change
+VIS-001's open evidence or authorize a release.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

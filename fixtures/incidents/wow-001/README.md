@@ -1,9 +1,12 @@
 # WOW-001 incident pilot packet
 
-**Status:** Draft preregistration. The three scenario bundles, keys, prompts,
-environment lock, and playbook version must be reviewed and committed before the
-first run. The contract is `docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md`.
-Do not treat these synthetic runs as Gate B or Gate C evidence.
+**Status:** Preregistration complete for the pilot start. The scenario bundles,
+keys, prompts, applicability matrix, rubric, and playbook version are committed;
+the dated environment lock is `RUN-LOCK.md`; the sealed-key isolation
+demonstration is `docs/evidence/wow-001/`. The six pilot runs have not been
+executed. The contract is
+`docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md`. Do not treat these
+synthetic runs as Gate B or Gate C evidence.
 
 ## File boundary
 
