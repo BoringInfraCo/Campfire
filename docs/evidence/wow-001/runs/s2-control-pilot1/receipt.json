@@ -1,0 +1,72 @@
+{
+  "runId": "s2-control-pilot1",
+  "scenario": "S2",
+  "arm": "control",
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "harness": "OpenCode 1.18.35",
+  "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+  "workspaceId": "ws_50a315301f434e6b",
+  "firstAgentId": "agt_c9ec6174fe834878",
+  "secondAgentId": "agt_9d67e3f667294acd",
+  "seeded": {
+    "priorAgentId": "agt_11fc14ee597f40ae",
+    "sessionId": "ses_dc347586b12a4579",
+    "artifactId": "art_6a8f00f63d49483f",
+    "findingId": "find_bc3248b208ac44c2"
+  },
+  "setupStreamTip": 13,
+  "frozenStreamTip": 25,
+  "stagedManifestSha256": "142df6336d98066b4bfdb4446cbce823e4c7ac0cf33791a16678e9eaae60aa33",
+  "first": {
+    "role": "first",
+    "scenario": "S2",
+    "arm": "control",
+    "startedAt": "2026-10-08T04:30:19.622Z",
+    "endedAt": "2026-10-08T04:31:21.155Z",
+    "durationMs": 61533,
+    "stopReason": "completed",
+    "toolCallCount": 26,
+    "sessionToolCallCount": 26,
+    "overshoot": false,
+    "valid": true,
+    "failures": [],
+    "exitCode": 0,
+    "logPath": "<home>/.campfire-pilot/wow-001/runs/s2-control-pilot1/run-first.log"
+  },
+  "second": {
+    "role": "second",
+    "scenario": "S2",
+    "arm": "control",
+    "startedAt": "2026-10-08T04:31:32.919Z",
+    "endedAt": "2026-10-08T04:31:53.043Z",
+    "durationMs": 20124,
+    "stopReason": "completed",
+    "toolCallCount": 2,
+    "sessionToolCallCount": 2,
+    "overshoot": false,
+    "valid": true,
+    "failures": [],
+    "exitCode": 0,
+    "logPath": "<home>/.campfire-pilot/wow-001/runs/s2-control-pilot1-second/run-second.log"
+  },
+  "firstTools": {
+    "campfire_add_artifact": 5,
+    "campfire_add_decision": 1,
+    "campfire_add_finding": 2,
+    "campfire_cite_decision_basis": 1,
+    "campfire_correct_finding": 2,
+    "campfire_create_task": 1,
+    "campfire_get_workspace_context": 2,
+    "campfire_list_workspaces": 1,
+    "campfire_register_agent_session": 1,
+    "campfire_whoami": 1,
+    "read": 9
+  },
+  "secondTools": {
+    "campfire_get_workspace_context": 1,
+    "campfire_list_workspaces": 1
+  },
+  "playbookFetches": 0,
+  "firstTextEvents": 1,
+  "secondTextEvents": 1
+}

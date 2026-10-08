@@ -4,10 +4,13 @@ Sanitized primary evidence for the synthetic pre-run isolation boundary
 demonstration supporting the proposed v1.13 WOW-001 contract
 (`docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md`).
 
-**This is a synthetic boundary check, not a pilot run.** Nothing here is Gate B
-or Gate C evidence, and nothing here scores an agent or a scenario. The six
-pilot runs have not been executed. The purpose is to show, before a first real
-run, that the sanitized agent image and the staged run trees cannot reach the
+**The evidence in this README's original section is a synthetic boundary check,
+not a scored pilot run.** The six pilot arms and handoffs were later executed
+on October 8, 2026; their sanitized records are under `runs/`, and the
+execution status is in `docs/SPRINT_WOW_001_RESULT.md`. Independent scoring
+is pending. Nothing here is Gate B or Gate C evidence. The pre-run check's
+purpose was to show, before a first scored run, that the sanitized agent image
+and the staged run trees cannot reach the
 sealed material (ground truth, scoring key, setup notes, contract, playbook
 source) and that the opt-in playbook gate behaves as designed. Two additional
 disposable checks verify the locked real-run path itself: the authenticated
@@ -61,6 +64,8 @@ recorded there.
 | `probe-agent-s1-second.md` | Second-agent (control) boundary check: command, exit, duration, final text, key actions. |
 | `auth-check.md` | Disposable authenticated verification of the locked real-run path (real database/token mounts, one OpenCode session, host-side checks); not a scored run. |
 | `budget-enforcement.md` | Dry check that the runner stops a session at the locked tool-call budget with no overshoot; not a scored run. |
+| `preparation-check.md` | Disposable fresh-workspace, S2 fixture, and frozen handoff setup checks. |
+| `runs/` | Six sanitized pilot workspace exports, run receipts, logs, and verbatim agent answers; independent score sheets pending. |
 
 ## Sanitization applied
 
@@ -80,8 +85,9 @@ force-added. If these files are committed, use `git add -f`.
 
 ## What this evidence does not establish
 
-- **Not a pilot run.** No scenario was investigated, no scoring occurred, and
-  the six pilot runs remain unexecuted.
+- The original probe files in this directory are not pilot runs. For the later
+  six run records, see `runs/` and the execution result document. No rubric
+  verdict has yet been recorded.
 - **Gate B and Gate C remain unmeasured.**
 - The treatment agent's successful `get_playbook` call is the intended
   treatment, not a leak: the playbook is guidance, not sealed material.

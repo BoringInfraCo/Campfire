@@ -183,8 +183,10 @@ implemented behind `CAMPFIRE_PLAYBOOK=1` / `--with-playbook`; default CLI,
 MCP, and Viewer surfaces are unchanged, and no workspace data or write path
 was added. The dated harness/model environment lock is
 `fixtures/incidents/wow-001/RUN-LOCK.md` and the synthetic sealed-key isolation
-demonstration is `docs/evidence/wow-001/`; both are committed. The six pilot
-runs, scoring, and verdict remain pending. The proposal does not change
+demonstration is `docs/evidence/wow-001/`; both are committed. Six arms and six
+handoffs were executed October 8; the sanitized records and execution status
+are in `docs/SPRINT_WOW_001_RESULT.md`. Independent scoring and the verdict
+remain pending. The proposal does not change
 VIS-001's open evidence or authorize a release.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,

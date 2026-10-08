@@ -4,12 +4,15 @@
 
 **Target release:** v1.13.0
 
-**Status:** Delivery surfaces implemented; pilot not run and verdict pending. This contract fixes the one playbook, its two delivery surfaces, the baseline, the rubric, and the pilot pass criteria. Record the pilot verdict in `docs/SPRINT_WOW_001_RESULT.md` after the runs.
+**Status (October 8, 2026):** Delivery surfaces implemented and all six pilot
+arms executed; independent scoring and the verdict are pending in
+`docs/SPRINT_WOW_001_RESULT.md`. This contract fixes the one playbook, its two
+delivery surfaces, the baseline, the rubric, and the pilot pass criteria.
 
 **Depends on:** CTX-001 / v1.10.0; COR-001 / v1.11.0; VIS-001 / v1.12.0 (CONDITIONAL)
 **Theme:** One measured `incident-investigation` workspace playbook
 
-**Sequencing decision, October 7, 2026:** The founder chose implementation first and the exact harness/model lock later. The scenario bundles and scoring rubric were committed before implementation. The environment lock (`fixtures/incidents/wow-001/RUN-LOCK.md`) and the sealed-key isolation demonstration (`docs/evidence/wow-001/`) are committed before any pilot run; implementation alone is not pilot evidence. The six runs have not started.
+**Sequencing decision, October 7, 2026:** The founder chose implementation first and the exact harness/model lock later. The scenario bundles and scoring rubric were committed before implementation. The environment lock (`fixtures/incidents/wow-001/RUN-LOCK.md`) and the sealed-key isolation demonstration (`docs/evidence/wow-001/`) were committed before any pilot run; implementation alone was not pilot evidence. The six arms were run on October 8. Their scoring is pending.
 
 ---
 
@@ -30,7 +33,7 @@ The experiment measures the two outcomes the roadmap names: recording quality an
 | v1.12 Viewer comprehension | v1.12.0 shipped, CONDITIONAL; no human trace on the shipped surface yet | Run the human Viewer comprehension trace now, in parallel. This sprint neither blocks on it nor claims it. |
 | Artifact-open observation (VIS-001 condition 4) | Open. Review by October 14, 2026 | Parallel. If no opportunity occurs, scope the read-only Viewer reference affordance as an observation tool. Previews stay deferred. |
 | CLI decision-ordering inconsistency | Open; tracked separately | Out of scope. Fix without assigning operative status by position. |
-| Pre-registration | Scenario bundles, ground truth, prompts, applicability matrix, and rubric committed before implementation; implementation commit `977c0e3`; dated run lock committed in `fixtures/incidents/wow-001/RUN-LOCK.md`; sealed-key isolation demonstration committed in `docs/evidence/wow-001/` | Frozen. The playbook definition and environment are frozen; record any post-freeze deviation rather than hiding it. The six pilot runs remain unexecuted. |
+| Pre-registration | Scenario bundles, ground truth, prompts, applicability matrix, and rubric committed before implementation; implementation commit `977c0e3`; dated run lock committed in `fixtures/incidents/wow-001/RUN-LOCK.md`; sealed-key isolation demonstration committed in `docs/evidence/wow-001/` | Frozen. The playbook definition and environment are frozen; record any post-freeze deviation rather than hiding it. The six arms executed October 8; scoring is pending. |
 
 Six runs are pilot evidence. They do not establish Gate B, Gate C, Gate D, Gate E, Gate F, or Gate G. The v1.12 human trace and artifact observation are separate v1.12 evidence; this sprint must not absorb their outcomes, and they must not be credited to this sprint.
 
