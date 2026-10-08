@@ -193,5 +193,7 @@ The first public snapshot export failed closed on
 fixture allowlist selected the private pilot packet and the export's forbidden
 `evidence/` path check rejected it. The exporter now excludes exactly
 `fixtures/incidents/wow-001/` before copying source. The forbidden-path and
-content audit remain in force. The successful export and complete diff are
-verified as part of release promotion below.
+content audit remain in force. Two pilot-runner tests that import non-exported
+private scripts are also excluded by exact path; the playbook CLI/MCP product
+tests remain in the public snapshot. The successful export and complete diff
+are verified as part of release promotion below.
