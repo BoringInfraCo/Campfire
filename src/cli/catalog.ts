@@ -7,6 +7,8 @@
  * paths live in `src/cli/index.ts`; tests fail when the catalog and dispatch
  * map diverge. The catalog never holds business logic.
  */
+import { playbookEnabled } from "../playbooks/index.js";
+
 export const CLI_COMMAND_NAMES = [
   "setup",
   "onboard",
@@ -25,6 +27,7 @@ export const CLI_COMMAND_NAMES = [
   "changes",
   "inspect",
   "capabilities",
+  "playbook",
   "bridge",
   "whoami",
   "list",
@@ -348,6 +351,17 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "An installed command is not a grant; authorization still happens in Campfire Core.",
     ] },
   ),
+  playbook: spec(
+    "playbook",
+    "discover",
+    "Show the incident-investigation workspace playbook (opt-in pilot).",
+    "campfire playbook list|incident-investigation [--output auto|human|json]",
+    { ...READ, workspaceScoped: false, related: ["capabilities", "help"], notes: [
+      "Opt-in: requires CAMPFIRE_PLAYBOOK=1 in this release.",
+      "Reads the static definition without opening a database or resolving an actor.",
+      "The playbook is recording guidance, not workflow execution.",
+    ] },
+  ),
   bridge: spec(
     "bridge",
     "admin",
@@ -623,11 +637,12 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "mcp",
     "admin",
     "Speak MCP JSON-RPC on stdio.",
-    "campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>]",
+    "campfire mcp [--actor <id>] [--type human|agent] [--session <id>] [--harness <name>] [--db <path>] [--token <token>] [--with-playbook]",
     { ...READ, workspaceScoped: false, outputModes: PROTOCOL, protocol: true, notes: [
       "Speaks MCP JSON-RPC on stdio. No result document.",
       "On a loopback CAMPFIRE_URL, starts campfire up when nothing is listening.",
       "Does not open the database, read the operator credential, or register a session.",
+      "get_playbook is registered only with --with-playbook or CAMPFIRE_PLAYBOOK=1; the default MCP tool list is unchanged.",
     ] },
   ),
   init: spec(
@@ -702,6 +717,19 @@ export function isKnownCommand(name: string): name is CliCommand {
 
 export function commandSpec(command: CliCommand): CliCommandSpec {
   return CLI_CATALOG[command];
+}
+
+/**
+ * Whether a catalogued command is discoverable in this process. The playbook is
+ * the only gated command today; keep the gate explicit rather than introducing
+ * a generic gate framework.
+ */
+export function commandDiscoverable(name: CliCommand, env: NodeJS.ProcessEnv = process.env): boolean {
+  return name !== "playbook" || playbookEnabled(env);
+}
+
+export function discoverableCommandNames(env: NodeJS.ProcessEnv = process.env): readonly CliCommand[] {
+  return CLI_COMMAND_NAMES.filter((name) => commandDiscoverable(name, env));
 }
 
 const GROUP_TITLES: Record<CliGroup, string> = {
@@ -782,7 +810,7 @@ function groupLines(group: CliGroup): string[] {
   if (group === "start") {
     lines.push("  campfire                        Record you, then listen. Agents appear when a harness connects");
   }
-  for (const name of CLI_COMMAND_NAMES) {
+  for (const name of discoverableCommandNames()) {
     const entry = CLI_CATALOG[name];
     if (entry.group !== group) continue;
     lines.push(`  ${entry.usage}`);

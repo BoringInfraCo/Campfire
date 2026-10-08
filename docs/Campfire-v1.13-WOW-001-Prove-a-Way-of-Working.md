@@ -4,10 +4,12 @@
 
 **Target release:** v1.13.0
 
-**Status:** Proposed. Not implemented. This contract fixes the one playbook, its two delivery surfaces, the baseline, the rubric, and the pilot pass criteria before code starts. The pilot verdict is recorded in `docs/SPRINT_WOW_001_RESULT.md`.
+**Status:** Delivery surfaces implemented; pilot not run and verdict pending. This contract fixes the one playbook, its two delivery surfaces, the baseline, the rubric, and the pilot pass criteria. Record the pilot verdict in `docs/SPRINT_WOW_001_RESULT.md` after the runs.
 
 **Depends on:** CTX-001 / v1.10.0; COR-001 / v1.11.0; VIS-001 / v1.12.0 (CONDITIONAL)
 **Theme:** One measured `incident-investigation` workspace playbook
+
+**Sequencing decision, October 7, 2026:** The founder chose implementation first and the exact harness/model lock later. The scenario bundles and scoring rubric were committed before implementation. The remaining environment lock and sealed-key isolation proof must be committed before any pilot run; implementation alone is not pilot evidence.
 
 ---
 
@@ -28,13 +30,13 @@ The experiment measures the two outcomes the roadmap names: recording quality an
 | v1.12 Viewer comprehension | v1.12.0 shipped, CONDITIONAL; no human trace on the shipped surface yet | Run the human Viewer comprehension trace now, in parallel. This sprint neither blocks on it nor claims it. |
 | Artifact-open observation (VIS-001 condition 4) | Open. Review by October 14, 2026 | Parallel. If no opportunity occurs, scope the read-only Viewer reference affordance as an observation tool. Previews stay deferred. |
 | CLI decision-ordering inconsistency | Open; tracked separately | Out of scope. Fix without assigning operative status by position. |
-| Pre-registration | Not yet frozen | Implementation starts only after the scenarios, ground truth, prompts, applicability matrix, and rubric are frozen and committed. The playbook definition is frozen before the first pilot run. |
+| Pre-registration | Scenario bundles, ground truth, prompts, applicability matrix, and rubric committed before implementation; dated harness/model lock and sealed-key isolation demonstration outstanding | Freeze and commit the remaining environment lock, implementation commit, and isolation evidence before the first pilot run. The playbook definition is frozen before that run. |
 
 Six runs are pilot evidence. They do not establish Gate B, Gate C, Gate D, Gate E, Gate F, or Gate G. The v1.12 human trace and artifact observation are separate v1.12 evidence; this sprint must not absorb their outcomes, and they must not be credited to this sprint.
 
 ## 3. Smallest product journey
 
-1. Before implementation, the three scenario bundles, ground truth, task prompts, applicability matrix, and rubric are frozen in the repository. The implemented playbook definition is frozen before any run.
+1. The three scenario bundles, ground truth, task prompts, applicability matrix, and rubric were committed before implementation. Before any run, freeze the implemented playbook definition and commit the exact harness/model environment lock and sealed-key isolation demonstration.
 2. For each run, a fresh workspace is created and a first agent receives the scenario prompt for its arm. The agent investigates with its normal harness and records the investigation through existing CLI/MCP operations.
 3. The first agent stops. The record is frozen. No manual cleanup or preparation for the next agent occurs.
 4. A fresh second agent session, with no private transcript or scenario files, reads only the authorized workspace and answers the continuation questions.
@@ -170,13 +172,13 @@ Otherwise the pilot does not support expansion, and the result records why. The 
 
 ## 8. Execution and result
 
-1. Freeze this contract and commit the scenario bundles, sealed ground truth and scoring keys, prompts, applicability matrix, order, budgets, and rubric before implementing the two surfaces. Check fixture validity without exposing keys to pilot agents. The shared playbook definition is implemented next and frozen before the first run.
-2. Implement `src/playbooks/incident-investigation.ts`, the registry, `campfire playbook`, and the gated `get_playbook`. Add parity, gating, unknown-name, and no-write tests.
-3. Run focused suites, `npm run typecheck`, `npm test`, `npm run build`, and `npm run pack:tarball`.
+1. The contract and scenario bundles, sealed ground truth and scoring keys, prompts, applicability matrix, order, budgets, and rubric were committed before implementation. Check fixture validity without exposing keys to pilot agents.
+2. Implement `src/playbooks/incident-investigation.ts`, the registry, `campfire playbook`, and the gated `get_playbook`. Add parity, gating, unknown-name, and no-write tests. Commit this implementation before the pilot.
+3. Run focused suites, `npm run typecheck`, `npm test`, `npm run build`, and `npm run pack:tarball`. Before the first pilot run, commit a dated addendum with exact harness/model settings, the implementation commit, and a demonstrated sealed-key isolation boundary. Freeze the shared playbook definition at that point.
 4. Run the six-valid-run pilot with fresh workspaces, matched arms, isolated agent inputs, and frozen materials. Preserve invalid attempts and replacements as evidence.
 5. Score, then write `docs/SPRINT_WOW_001_RESULT.md` with the pilot verdict, observed versus fixture evidence, deviations, contamination, and explicit non-claims. Update canonical docs only where the result warrants it.
 
-This proposed document does not change the status of v1.13 in the roadmap, mark any gate complete, or authorize release promotion or production deployment.
+This implementation does not mark any pilot or release gate complete or authorize release promotion or production deployment.
 
 ## 9. GO / CONDITIONAL GO / NO-GO
 

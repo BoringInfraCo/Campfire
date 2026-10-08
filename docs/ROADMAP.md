@@ -1425,7 +1425,7 @@ Sprint COR-001 — Correct the Record   CONDITIONAL GO; published v1.11.0; produ
         ↓
 Sprint VIS-001 — Make Shared Understanding Visible   CONDITIONAL; bounded condition-3 Viewer slice published and deployed as v1.12.0 under founder override; condition 4 and human comprehension trace open; see docs/SPRINT_VIS_001_RESULT.md
         ↓
-v1.13 — Prove a Way of Working   directional; one playbook, then measure; proposed WOW-001 contract and pilot fixtures (preregistration incomplete, no implementation yet)
+v1.13 — Prove a Way of Working   one opt-in playbook and two delivery surfaces implemented; pilot environment lock, isolation demonstration, runs, verdict, and release pending
         ↓
 Later — Generated workspace views   after structured state is trustworthy
 ```
@@ -1463,6 +1463,7 @@ v1.13 — PROVE A WAY OF WORKING
         expand only with evidence
         proposed contract: docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md
         draft pilot fixtures: fixtures/incidents/wow-001/
+        opt-in CLI and MCP delivery surfaces implemented; no pilot or release verdict
 
 Later — GENERATED WORKSPACE VIEWS
         derived from authorized structured state

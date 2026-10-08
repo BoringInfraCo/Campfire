@@ -24,6 +24,7 @@ import {
   CLI_CATALOG,
   CLI_GROUPS,
   CLI_COMMAND_NAMES,
+  commandDiscoverable,
   type CliGroup,
   type CliOutputMode,
 } from "./catalog.js";
@@ -630,7 +631,7 @@ export function buildCommandManifest(campfireVersion: string): CliCommandManifes
     kind: "cli_command_manifest",
     manifestVersion: PROJECTION_VERSION,
     campfireVersion,
-    commands: CLI_COMMAND_NAMES.map((name) => {
+    commands: CLI_COMMAND_NAMES.filter((name) => commandDiscoverable(name)).map((name) => {
       const entry = CLI_CATALOG[name];
       return {
         name: entry.name,

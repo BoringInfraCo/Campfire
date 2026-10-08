@@ -57,13 +57,13 @@ placed in either agent's accessible working directory.
 > decision status, the next action, and what remains uncertain or needs review.
 > Cite the Campfire objects supporting your answer. Do not write to Campfire.
 
-## Run lock to complete before implementation
+## Run lock to complete before the first pilot run
 
 Record the exact first- and second-agent harness names, model versions, tool
 allowlists, base-release commit, setup procedure, budgets, stop rule, and
-isolation check in a dated committed addendum to this file before implementing
-the delivery surfaces. Record the implemented CLI/package commit and playbook
-version in a second addendum before the first pilot run. Use the same lock in
+isolation check in a dated committed addendum to this file before the first
+pilot run. Record the implemented CLI/package commit and playbook version in
+that addendum. Use the same lock in
 both arms of a scenario. The first
 agent's maximum is 30 elapsed minutes or 100 tool calls, and the second's is
 10 elapsed minutes or 30 tool calls; the earlier limit stops the run. A run

@@ -6,7 +6,7 @@
  * array when a recovery command exists. Never interpolates a bearer token.
  */
 import { CampfireError } from "../domain/errors.js";
-import { CLI_COMMANDS, isKnownCommand } from "./catalog.js";
+import { CLI_COMMANDS, commandDiscoverable, isKnownCommand } from "./catalog.js";
 
 export interface CliNextStep {
   command: string;
@@ -16,7 +16,7 @@ export interface CliNextStep {
 export function suggestCommands(unknown: string, limit = 3): string[] {
   const needle = unknown.trim().toLowerCase();
   if (needle.length === 0) return [];
-  const ranked = CLI_COMMANDS.filter((name) => name !== "help")
+  const ranked = CLI_COMMANDS.filter((name) => name !== "help" && commandDiscoverable(name))
     .map((name) => ({ name, score: commandScore(needle, name) }))
     .filter((row) => row.score < 4)
     .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name));

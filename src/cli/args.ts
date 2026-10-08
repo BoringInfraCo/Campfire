@@ -24,6 +24,7 @@ const BOOLEAN_FLAGS = new Set([
   "no-connect",
   "open",
   "no-open",
+  "with-playbook",
 ]);
 
 export function parseArgs(argv: string[]): ParsedArgs {
