@@ -24,6 +24,7 @@ import { parsePilotArgs } from "../../scripts/wow-001/pilot.js";
 import {
   AGENT_IMAGE_CONTEXT_ALLOWLIST,
   FIRST_AGENT_PROMPT,
+  LOCKED_AGENT_IMAGE,
   PROBE_PROMPT,
   REPO_ROOT,
   SECOND_AGENT_PROMPT,
@@ -361,6 +362,12 @@ describe("agent harness config and playbook gate", () => {
 });
 
 describe("agent image context and Dockerfile", () => {
+  it("selects the image recorded in the committed run lock after HEAD changes", () => {
+    const lock = readFileSync(join(REPO_ROOT, "fixtures/incidents/wow-001/RUN-LOCK.md"), "utf8");
+    expect(lock).toContain(`| Agent image | \`${LOCKED_AGENT_IMAGE.tag}\` |`);
+    expect(lock).toContain(`| Agent image id / digest | \`${LOCKED_AGENT_IMAGE.id}\` |`);
+  });
+
   it("allows only package manifests and dist", () => {
     expect(AGENT_IMAGE_CONTEXT_ALLOWLIST).toEqual(["package.json", "package-lock.json", "dist"]);
     expect(isAllowedContextEntry("package.json")).toBe(true);

@@ -85,3 +85,13 @@ has been executed as of this date.** The sealed-key isolation demonstration is
 
 If any run's boundary check fails, that run is invalid and the exposure is
 preserved in the result. No pilot run has started as of this lock.
+
+## Runner follow-up before the first run
+
+After this lock was committed, review found that `pilot.ts` derived its image
+tag from the current Git HEAD. Committing the lock changed HEAD from
+`977c0e3` to `41cf786`, so later runner commands would select an unverified
+image tag. The runner now uses the locked tag above and checks the image ID
+before probes. A rebuild uses a candidate tag and is accepted only if its ID
+matches this lock. The model, prompts, image, scoring rules, and arm order did
+not change. No scored pilot run preceded this correction.

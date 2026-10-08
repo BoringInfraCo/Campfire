@@ -37,6 +37,7 @@ import {
   findSealedMatches,
   hasCredentialShape,
   isAllowedContextEntry,
+  LOCKED_AGENT_IMAGE,
   resolvePilotRoot,
   sanitizeText,
   sha256File,
@@ -52,7 +53,6 @@ const PILOT_USAGE =
 const SCENARIOS: readonly Scenario[] = ["S1", "S2", "S3"];
 const ARMS: readonly Arm[] = ["control", "treatment"];
 const ROLES: readonly Role[] = ["first", "second"];
-const IMAGE_OPENCODE_VERSION = "opencode1.18.35";
 const PILOT_MODEL = "opencode-go/deepseek-v4.1-flash";
 const PROBE_GATES_MARKER = "WOW001_GATE_REPORT ";
 const DOCKER_MAX_BUFFER = 64 * 1024 * 1024;
@@ -154,8 +154,7 @@ function gitOutput(args: string[]): string {
 }
 
 function imageTag(): string {
-  const shortHead = gitOutput(["rev-parse", "--short", "HEAD"]);
-  return `campfire-wow-001-agent:${shortHead}-${IMAGE_OPENCODE_VERSION}`;
+  return LOCKED_AGENT_IMAGE.tag;
 }
 
 function requireCleanSource(): void {
@@ -201,6 +200,13 @@ function docker(args: string[], opts: { cwd?: string } = {}): string {
     throw new Error(`docker ${args[0] ?? ""} exited ${result.status}:\n${stderrLines}`);
   }
   return result.stdout;
+}
+
+function assertLockedImage(): void {
+  const actual = docker(["image", "inspect", "--format", "{{.Id}}", imageTag()]).trim();
+  if (actual !== LOCKED_AGENT_IMAGE.id) {
+    throw new Error(`Pilot image differs from RUN-LOCK.md: expected ${LOCKED_AGENT_IMAGE.id}, got ${actual}`);
+  }
 }
 
 function removeContainer(name: string): void {
@@ -293,8 +299,14 @@ function cmdBuildImage(): void {
   writeFileSync(join(contextDir, "Dockerfile"), agentDockerfile(), "utf8");
 
   const tag = imageTag();
-  docker(["build", "-t", tag, contextDir]);
-  const imageId = docker(["image", "inspect", "--format", "{{.Id}}", tag]).trim();
+  // Never overwrite the locked tag with a rebuild until its bytes are checked.
+  const candidateTag = `${tag}-candidate`;
+  docker(["build", "-t", candidateTag, contextDir]);
+  const imageId = docker(["image", "inspect", "--format", "{{.Id}}", candidateTag]).trim();
+  if (imageId !== LOCKED_AGENT_IMAGE.id) {
+    throw new Error(`Rebuilt image differs from RUN-LOCK.md: expected ${LOCKED_AGENT_IMAGE.id}, got ${imageId}`);
+  }
+  docker(["tag", candidateTag, tag]);
   const repoDigestsRaw = docker(["image", "inspect", "--format", "{{json .RepoDigests}}", tag]).trim();
   const repoDigests = JSON.parse(repoDigestsRaw) as string[];
 
@@ -419,6 +431,7 @@ function probeFsScript(repoPaths: string[]): string {
 }
 
 function cmdProbeFs(flags: Record<string, string | boolean>): number {
+  assertLockedImage();
   const runId = requireRunId(flags);
   const root = runRoot(runId);
   const name = containerName(runId, "first", "control");
@@ -549,6 +562,7 @@ function runGateContainer(
 }
 
 function cmdProbeGates(flags: Record<string, string | boolean>): number {
+  assertLockedImage();
   const runId = requireRunId(flags);
   const root = runRoot(runId);
   const control = runGateContainer("control", runId, root);
@@ -620,6 +634,7 @@ function extractLastText(sanitizedStdout: string): string {
 }
 
 async function cmdProbeAgent(flags: Record<string, string | boolean>): Promise<number> {
+  assertLockedImage();
   const runId = requireRunId(flags);
   const arm = requireChoice(flags, "arm", ARMS);
   const role: Role = flags.role === undefined ? "first" : requireChoice(flags, "role", ROLES);

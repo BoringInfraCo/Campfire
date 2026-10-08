@@ -53,6 +53,12 @@ export interface StageRunResult {
 /** This file lives at `<repo>/scripts/wow-001/pilot-lib.ts`. */
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
+/** The image identity frozen in fixtures/incidents/wow-001/RUN-LOCK.md. */
+export const LOCKED_AGENT_IMAGE = {
+  tag: "campfire-wow-001-agent:977c0e3-opencode1.18.35",
+  id: "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+} as const;
+
 export function resolvePilotRoot(env: NodeJS.ProcessEnv = process.env): string {
   return env.CAMPFIRE_PILOT_ROOT ?? join(homedir(), ".campfire-pilot", "wow-001");
 }
