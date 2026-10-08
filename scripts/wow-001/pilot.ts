@@ -24,6 +24,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import Database from "better-sqlite3";
+import { prepareArm, prepareSecond } from "./prepare.js";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,7 +57,7 @@ import {
 } from "./pilot-lib.js";
 
 const PILOT_USAGE =
-  "usage: pilot.ts <build-image|stage|probe-fs|probe-gates|probe-agent|probe-budget|auth-check|run|sanitize> [flags]";
+  "usage: pilot.ts <build-image|stage|prepare|prepare-second|probe-fs|probe-gates|probe-agent|probe-budget|auth-check|run|sanitize> [flags]";
 const SCENARIOS: readonly Scenario[] = ["S1", "S2", "S3"];
 const ARMS: readonly Arm[] = ["control", "treatment"];
 const ROLES: readonly Role[] = ["first", "second"];
@@ -1016,6 +1017,8 @@ interface ScoredRunReport {
   toolCallCount: number;
   sessionToolCallCount: number | null;
   overshoot: boolean;
+  valid: boolean;
+  failures: string[];
   exitCode: number | null;
   logPath: string;
 }
@@ -1028,6 +1031,10 @@ async function cmdRun(flags: Record<string, string | boolean>): Promise<number> 
   const manifest = readRunManifest(root);
   const prompt = readStagedPrompt(root);
   assertRunArtifacts(root);
+  const reportPath = join(root, `run-${role}.json`);
+  if (existsSync(reportPath) || existsSync(join(root, `run-${role}.jsonl`))) {
+    throw new Error(`Run evidence already exists for ${runId}/${role}; preserve it and use a fresh run ID`);
+  }
 
   const budget = budgetFor(role);
   const outcome = await executeOpenCodeSession({
@@ -1046,6 +1053,17 @@ async function cmdRun(flags: Record<string, string | boolean>): Promise<number> 
     Date.parse(outcome.startedAt),
   );
   const overshoot = sessionToolCallCount !== null && sessionToolCallCount > budget.toolCalls;
+  const failures: string[] = [];
+  if (outcome.spawnFailed) failures.push("OpenCode container failed to start");
+  if (outcome.stopReason === "completed" && outcome.exitCode !== 0) {
+    failures.push(`OpenCode exited ${outcome.exitCode ?? "without a code"}`);
+  }
+  if (sessionToolCallCount === null) failures.push("Session tool-call count unavailable");
+  else if (sessionToolCallCount !== outcome.toolCallCount) {
+    failures.push(`Stream/session tool-call mismatch: ${outcome.toolCallCount}/${sessionToolCallCount}`);
+  }
+  if (overshoot) failures.push(`Session exceeded the ${budget.toolCalls}-call budget`);
+  const valid = failures.length === 0;
   const report: ScoredRunReport = {
     role,
     scenario: manifest.scenario,
@@ -1057,15 +1075,14 @@ async function cmdRun(flags: Record<string, string | boolean>): Promise<number> 
     toolCallCount: outcome.toolCallCount,
     sessionToolCallCount,
     overshoot,
+    valid,
+    failures,
     exitCode: outcome.exitCode,
     logPath: outcome.logPath,
   };
-  writeFileSync(join(root, `run-${role}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8");
-
-  const ok =
-    !outcome.spawnFailed && (outcome.stopReason !== "completed" || outcome.exitCode === 0);
-  console.log(JSON.stringify({ ok, ...report }));
-  return ok ? 0 : 1;
+  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  console.log(JSON.stringify({ ok: valid, ...report }));
+  return valid ? 0 : 1;
 }
 
 function requireIntegerFlag(
@@ -1571,6 +1588,24 @@ async function main(argv: string[]): Promise<number> {
       case "stage":
         cmdStage(parsed.flags);
         return 0;
+      case "prepare": {
+        assertLockedImage();
+        const scenario = requireChoice(parsed.flags, "scenario", SCENARIOS);
+        const arm = requireChoice(parsed.flags, "arm", ARMS);
+        const runId = requireRunId(parsed.flags);
+        console.log(JSON.stringify({ ok: true, ...prepareArm(scenario, arm, runId) }));
+        return 0;
+      }
+      case "prepare-second": {
+        assertLockedImage();
+        const firstRunId = requireRunId(parsed.flags);
+        const secondRunId = requireFlagValue(parsed.flags, "second-run-id");
+        if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(secondRunId)) {
+          throw new Error("Invalid --second-run-id");
+        }
+        console.log(JSON.stringify({ ok: true, ...await prepareSecond(firstRunId, secondRunId) }));
+        return 0;
+      }
       case "probe-fs":
         return cmdProbeFs(parsed.flags);
       case "probe-gates":

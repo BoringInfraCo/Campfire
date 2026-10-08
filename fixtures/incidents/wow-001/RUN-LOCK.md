@@ -47,16 +47,17 @@ has been executed as of this date.** The sealed-key isolation demonstration is
 1. From the implementation commit: `npm ci && npm run build`; then
    `npx tsx scripts/wow-001/pilot.ts build-image`; confirm the image id and
    `contextTreeSha256` above.
-2. Create one fresh workspace and its actor memberships for the run, plus the
-   first- and second-agent identities and tokens. For S2, seed the single
-   prior-shift false-lead finding exactly as `S2/setup.md` specifies. Record the
-   workspace id and the stream tip, and do no other preparation.
-3. Stage the run, for example:
-   `npx tsx scripts/wow-001/pilot.ts stage --scenario S1 --arm control --role first --run-id <id> --workspace-id <ws> --deadline "<time>" --campfire-db /campfire/campfire.db --campfire-token-file /campfire/agent.token`
-   The defaults (`/tmp/campfire-probe.db`, no token) are for the isolation
-   probes only. Before starting, place the run database at
-   `<runDir>/campfire/campfire.db` and the acting agent token at
-   `<runDir>/campfire/agent.token` (mode 600). Never commit either file.
+2. Prepare one fresh workspace, goal, two owned agent identities, memberships,
+   and private tokens with
+   `npx tsx scripts/wow-001/pilot.ts prepare --scenario S1 --arm control --run-id <id>`.
+   This stages the first-agent prompt and evidence, writes only the acting token
+   into the container's `/campfire` mount, and records the setup stream tip.
+   For S2 it also creates exactly the prior-shift session, artifact, finding,
+   and citation in `S2/setup.md`. Never commit a run database or token.
+3. Inspect the `prepare.json` receipt and the staged `MANIFEST.json`. Run
+   `probe-fs` and `probe-gates` against the staged run before the scored agent.
+   The older `stage` command remains available for isolation probes; its
+   default probe database and absent token are refused by `run`.
 4. Start the first agent with
    `npx tsx scripts/wow-001/pilot.ts run --run-id <id>`. The runner passes the
    staged prompt (`<runDir>/prompt.txt`), streams `opencode run --format json`,
@@ -64,10 +65,11 @@ has been executed as of this date.** The sealed-key isolation demonstration is
    limits, writing `run-first.jsonl`, a sanitized log, and `run-first.json`
    with the stop reason and counts. The enforcement mechanics were checked
    before the pilot (see the isolation check section).
-5. On stop: freeze the workspace with a read-only export and stream tip, take
-   no later write to it, and copy its database for the second agent. Stage the
-   second agent's run (role `second`) with its own token and the frozen
-   database copy, then start it with
+5. On stop: freeze the workspace with a consistent SQLite backup and stream
+   tip, and take no later write to it. Run
+   `npx tsx scripts/wow-001/pilot.ts prepare-second --run-id <id> --second-run-id <second-id>`
+   to stage the second agent with its distinct token and a copy of the frozen
+   database, then start it with
    `npx tsx scripts/wow-001/pilot.ts run --run-id <second-id> --role second`
    in a fresh container with `CAMPFIRE_PLAYBOOK` unset, no `/run` mount, and the
    neutral prompt.
@@ -114,3 +116,9 @@ image tag. The runner now uses the locked tag above and checks the image ID
 before probes. A rebuild uses a candidate tag and is accepted only if its ID
 matches this lock. The model, prompts, image, scoring rules, and arm order did
 not change. No scored pilot run preceded this correction.
+
+The pre-run preparation command was added after the lock to make fresh-workspace
+creation and the S2 fixture setup repeatable. Disposable S1, S2, and frozen
+handoff checks are recorded in `docs/evidence/wow-001/preparation-check.md`;
+their temporary databases and tokens were deleted. The six scored runs still
+had not started when this addendum was written.
