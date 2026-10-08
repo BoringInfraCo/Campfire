@@ -74,3 +74,14 @@ one pair (S2) would show a strict recording gain. **That is not the pilot
 verdict.** Borderline calls, independent sheets, and frozen-key resolutions
 are outstanding. In particular, S1 R3, S3 R1/R5/R10, and the exact scope
 of S2 R10 could change after the required review.
+
+## Later resolution (initial sheet preserved)
+
+The owner subsequently authorized two external blind scorers. Their original
+item scores and the frozen-key source audit are preserved under `scoring/`.
+The audit found that this provisional sheet under-credited several valid
+`source_artifact_id` links and decision-basis citations in treatment records.
+It also correctly flagged four items that the blind scorers over-credited or
+disagreed on. The resolved pilot verdict is GO; see
+`docs/SPRINT_WOW_001_RESULT.md`. The table above remains the operator's
+unaltered pre-review judgment, not the final score.

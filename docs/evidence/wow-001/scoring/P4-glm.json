@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P4",
+  "runId": "s3-treatment-pilot1",
+  "scenario": "S3",
+  "scorer": "opencode-go/glm-5.3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_4834f659837b4366 records the IAD /v1/exports timeout symptom with impact and the 09:44–10:00 window, cites support artifact art_6aa8bc75b3c74f73 (plus gateway art_24d569d1427e486f via fev_24ff66ab2e4e4811), and names no cause."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "Four distinct signals recorded with times and source artifacts: tenant reports (find_4834f659837b4366), gateway failures/aggregate (find_7267d5d770a94f53, find_128ca2d0ca984431), DB p95 aggregate (find_bce58bec5aa242a1), and trace coverage (find_2672022d7a6a46b1)."
+    },
+    "R3": {
+      "pass": true,
+      "reason": "find_59e9cd2eb5cd4c9a (confidence 0.35) and find_4228073accd84466 (confidence 0.2) are explicitly tentative, state confirming/refuting tests, and neither asserts a cause as fact."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A: the frozen matrix applies R4 only to S2, and this is scenario S3."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_5c5b5222d8d34862 explicitly states the cause is not established with confidence 0.6 and detail explaining the uncertainty, cites the trace-coverage gap and observations via fev_2516c9dfe0764315/fev_47cdcbaacc6d4453/fev_db5cd95dc6214e91, and names the discriminating diagnostic."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_82ef0d50fb394a8a proposes the diagnostic-first response (correlated evidence before remediation) with rationale for deferring remediation pending cause, and its citations (cit_0038593321a14bdd, cit_09db88ec96a24d82, cit_4e93edd6cdd140be) link findings find_5c5b5222d8d34862 and find_2672022d7a6a46b1, which cite the gateway (art_24d569d1427e486f via fev_2516c9dfe0764315) and trace-coverage (art_7546bacd9f654b9d) artifacts; no cause is asserted."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "Both decisions dec_82ef0d50fb394a8a and dec_44cd603a30a54b97 are honestly recorded as status 'proposed' with approved_by_actor_id null, decisionTransitions is empty, each rationale states it requires incident-lead approval, and no approver or acceptance was fabricated."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open task task_3f84f2537b5744a3 requests correlated gateway+application+database evidence for failed IAD exports (gw-084, gw-093, 09:45-10:00 window) with 100% sampling enabled for the next window; additional open tasks task_31c304e8327b4f11, task_3ff4477d51344c7e, and task_f9f0f12445ac45d2 are acceptable, and no diagnostic task is falsely marked completed."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All agent writes (findings, decisions, tasks, artifacts, citations) carry created_by_actor_id agt_f966eab3a01c47bb and agent_session_id ses_c5b74dd631a2449c, matching the registered session (con_d040a442ad924cbd); no transcript is pasted into any record, and both decisions have approved_by_actor_id null with no tenant or fixture actor represented as an approver."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "Every evidence reference resolves to a registered artifact (findingEvidence fev_2516c9dfe0764315/fev_47cdcbaacc6d4453/fev_db5cd95dc6214e91 link to art_24d569d1427e486f, art_7546bacd9f654b9d, art_039c358aaf434d7c) and all five decisionCitations point to existing findings; no cause is asserted — find_5c5b5222d8d34862 explicitly records the cause as not established."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Answer names IAD POST /v1/exports 504 timeouts with dashboard reads succeeding and 'IAD-only as observed' scope, matching find_4834f659837b4366; no broadening to all requests or regions."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "States the cause is not established per find_5c5b5222d8d34862 and presents DB latency (find_59e9cd2eb5cd4c9a, confidence 0.35) and pre-application stall (find_4228073accd84466, confidence 0.2) only as hypotheses."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Identifies the diagnostic-first decision dec_82ef0d50fb394a8a (correlated evidence before remediation), gives its evidence-gap rationale, and correctly reports both decisions as 'proposed' with no acceptance or approval; no proposal is treated as operative remediation."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names the open correlated-trace investigation task task_3f84f2537b5744a3 plus the other recorded open tasks (task_f9f0f12445ac45d2, task_31c304e8327b4f11, task_3ff4477d51344c7e); all exist and are open in the export, none invented."
+    },
+    "C5": {
+      "pass": true,
+      "reason": "C5 applies in S3 and the answer reports the missing failed-request traces and ~10% sampling gap (find_2672022d7a6a46b1) plus unresolved export-specific DB/p99/pool data (find_bce58bec5aa242a1)."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites actual Campfire record IDs throughout, including findings (find_4834f659837b4366, find_5c5b5222d8d34862), decisions (dec_82ef0d50fb394a8a, dec_44cd603a30a54b97), tasks (task_3f84f2537b5744a3), and artifacts (art_24d569d1427e486f), all present in the frozen export."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Every claim matches the export (symptom, 26/402 vs 0/388 aggregate, confidences 0.35/0.2, proposed-only status with null approvers and empty decisionTransitions); no invented approval, completed diagnostic, proven cause, or unaffected region, and it correctly flags the 10:02 no-other-region-reports as a report count, not zero-failure evidence."
+    }
+  }
+}

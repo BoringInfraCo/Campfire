@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P6",
+  "runId": "s2-treatment-pilot1",
+  "scenario": "S2",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_ddd41c03c6624470 records the eu-west-1 POST /orders/submit 503 symptom from 09:17:11 UTC with impact (0.2%→21.8%), explicitly asserting no cause, citing art_7f525e1d87544f48 (evidence/01-checkout-alert.md)."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "First agent agt_55bd9c6044454837 recorded five distinct time-stamped observations with citations: find_985de55d52f44a66 (route change 09:16:42, art_ece5ac999e3647b2/05), find_bfefeee8f5864646 (upstream health, art_b0598ec9c7bd43de/06), find_63adc11dc89749a2 (edge traces, art_77c933497e9e4552/04), find_4e0f04e4cc304b98 (per-service DB wait, art_504640121a4942fb/03), find_70ca0c8f745d47e5 (09:30 probes, art_b0598ec9c7bd43de/06)."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "The only tentative hypothesis with a test is the seeded find_b77e52e19b884d58 by agt_9e5f6d179c894ec2, which the key excludes; every first-agent finding is stated as Fact, Symptom, or Cause with no investigator-recorded provisional hypothesis and stated confirm/refute test."
+    },
+    "R4": {
+      "pass": true,
+      "reason": "find_b77e52e19b884d58 is currentness=withdrawn via findingTransitions kind=withdrawn by agt_55bd9c6044454837 at 04:28:49, with a correction_reason identifying the later contrary signals (art_504640121a4942fb/evidence 03 and art_77c933497e9e4552/evidence 04); the original statement is preserved as history."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_b700efa3c5ba42c3 names route change chg-eu-2048 sending traffic to zero-endpoint checkout-v2-eu as the cause of the edge 503s at confidence 0.9, citing traces (art_77c933497e9e4552/04), route change (art_ece5ac999e3647b2/05 as source), health (art_b0598ec9c7bd43de/06), plus 01 and a contradicts link to 03 ruling out the database."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_12821ac6eed34c4f proposes reverting chg-eu-2048 to the healthy checkout-v1-eu upstream with a rationale, and decisionCitations link it to findings backed by evidence 01/04/05/06 (find_b700efa3c5ba42c3, find_985de55d52f44a66, find_bfefeee8f5864646, find_70ca0c8f745d47e5)."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_12821ac6eed34c4f status is proposed with approved_by_actor_id null and decisionTransitions empty; the rationale states acceptance requires explicit incident-commander approval and nothing has been executed."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open tasks cover the immediate actions: task_9e009a9a9e994297 (on IC approval, revert chg-eu-2048) and task_35b93469d82d48e4 (post-change verification of the 503 rate), both status open, plus rollout follow-up task_897d2d76205448f9."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "Contributions attribute all investigator work to agt_55bd9c6044454837 in session ses_48421111760a486f (harness opencode, human hum_98ba5d9a9e414d28) and the seed to agt_9e5f6d179c894ec2/ses_8ed5d9ed3e274880 (fixture); no transcript content appears in state."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "Every artifact referenced by findings and findingEvidence exists with a usable evidence/ path: art_7f525e1d87544f48→01, art_99c0826af0814f97→02, art_504640121a4942fb→03, art_77c933497e9e4552→04, art_ece5ac999e3647b2→05, art_b0598ec9c7bd43de→06; the cause finding's citations are artifact-backed."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "The answer names customers in eu-west-1 submitting POST /orders/submit receiving HTTP 503s from 09:17:11 UTC with the 5-minute rate rising from <0.2% to 21.8%, citing find_ddd41c03c6624470."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "It states the recorded cause (chg-eu-2048/rollout-842 routing all traffic to zero-healthy-endpoint checkout-v2-eu, find_b700efa3c5ba42c3, confidence 0.9) and correctly describes the payments-DB hypothesis find_b77e52e19b884d58 as withdrawn/refuted rather than current."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "It identifies dec_12821ac6eed34c4f (revert chg-eu-2048 to checkout-v1-eu) with its rationale and states the status is proposed only, not accepted or executed, pending explicit incident-commander approval."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "It names task_9e009a9a9e994297 (revert chg-eu-2048 only after explicit IC approval) as the next action, then task_35b93469d82d48e4 (verify the 503 rate returns below 0.2%)."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "The answer cites specific Campfire object IDs for substantive claims, including find_ddd41c03c6624470, find_b700efa3c5ba42c3, dec_12821ac6eed34c4f, art_7f525e1d87544f48, and task_9e009a9a9e994297."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "It claims no approval, execution, rollback, or completed recovery, correctly reports the single proposed decision and empty accepted/superseded sets, and flags art_99c0826af0814f97 as backing only the withdrawn hypothesis; all statements match the workspace."
+    }
+  }
+}

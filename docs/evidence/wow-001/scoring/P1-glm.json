@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P1",
+  "runId": "s2-control-pilot1",
+  "scenario": "S2",
+  "scorer": "opencode-go/glm-5.3",
+  "score": {
+    "R1": {
+      "pass": false,
+      "reason": "No symptom finding exists: the only investigator finding containing the EU POST /orders/submit 503 and 09:17:11 detail is root-cause find_392e265849f54d51, whose summary presents the cause and which has no findingEvidence record or source_artifact_id citing evidence 01 (art_86b4240e93a54ecb) or 04 (art_fd813e3ccb8347b0); its prose 'Evidence 01' mention is not an artifact citation."
+    },
+    "R2": {
+      "pass": false,
+      "reason": "Only two artifact-cited observations exist — evidence 03 (fev_c961f94b0ca14602 → art_991a453966b944d9) and evidence 04 (fev_6fd505ea0cd54b5e → art_fd813e3ccb8347b0), both inside find_c2833b67250e4e81; find_392e265849f54d51's route-change/health/alert observations carry no findingEvidence links, and the seeded evidence-02 finding find_bc3248b208ac44c2 is not credited to the investigator."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "The investigator's own findings are conclusions without stated tests — root-cause find_392e265849f54d51 (confidence 0.85, asserted as cause) and refutation find_c2833b67250e4e81 (confidence 0.2, no test); the only hypothesis with confidence and a test is the pre-seeded find_bc3248b208ac44c2 by agt_11fc14ee597f40ae, which does not earn this item."
+    },
+    "R4": {
+      "pass": true,
+      "reason": "The preseeded false lead find_bc3248b208ac44c2 was superseded through the currentness transition to find_c2833b67250e4e81 with a correction_reason identifying the later contrary signals (evidence 03 per-service split, evidence 04 edge traces), recorded in findingTransitions and contributions con_7040c79e76834b8a/con_f5891881e7034cf9 by the first agent's session ses_045b424ccb43467e."
+    },
+    "R5": {
+      "pass": false,
+      "reason": "Cause finding find_392e265849f54d51 identifies the EU route to endpoint-free checkout-v2-eu with confidence 0.85, but it has no findingEvidence record or source_artifact_id linking it to the trace (04), route-change (05), or health (06) artifacts; its prose 'Evidence 05/06/04' mentions are bare file references that do not count as citations under the key."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_f09b0b6a950d4c0b proposes reverting chg-eu-2048 to the healthy checkout-v1-eu (six healthy endpoints, 200 probe) with an explanatory rationale, and decision-basis citation cit_382ac7cae7404800 links it to find_392e265849f54d51, whose detail is grounded in evidence 01, 05, and 06."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_f09b0b6a950d4c0b remains status 'proposed' with approved_by_actor_id null and decisionTransitions empty; the proposing agent agt_c9ec6174fe834878 did not accept it, and no approval or deployment appears anywhere in the packet."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open task task_bfe056ab4e9349d7 directs incident-commander approval (accept_decision) then execution of the route rollback, and step 4 verifies the eu-orders-submit-5xx 503 rate returns to baseline."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All first-agent contributions (append positions 14-25, con_02c4a0cf7c6d4f0a through con_70f97936885541d7) identify the actual acting agent agt_c9ec6174fe834878 and bound session ses_045b424ccb43467e, registered with honest harness 'opencode' and humanId hum_c0867bce3ef646a3. The seeded prior-shift state is honestly attributed to fixture-harness session ses_dc347586b12a4579/agt_11fc14ee597f40ae, and no contribution payload or finding/decision/task text contains a pasted transcript."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "Every evidence item cited by findings exists as a Campfire artifact with a usable evidence/ reference (01→art_86b4240e93a54ecb, 02→art_6a8f00f63d49483f, 03→art_991a453966b944d9, 04→art_fd813e3ccb8347b0, 05→art_00f561834b4146be, 06→art_494a6713c74d43c3). The cause is asserted only in find_392e265849f54d51 with artifact-backed citations to Evidence 01/04/05/06 (and the decision cites that finding via cit_382ac7cae7404800); no cited item is a bare file name without an artifact record."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Second answer names the EU POST /orders/submit 503 symptom with customer impact (EU order-submit traffic failing from 09:17:11 UTC, alert eu-orders-submit-5xx at 09:21 UTC), citing art_86b4240e93a54ecb (evidence 01), matching the workspace symptom record."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "States the recorded cause as find_392e265849f54d51 (confidence 0.85): chg-eu-2048 sent eu-west-1 /orders/submit traffic to endpoint-free checkout-v2-eu, and reports the prior DB hypothesis find_bc3248b208ac44c2 as corrected into find_c2833b67250e4e81 without resurrecting it or overstating certainty."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Identifies dec_f09b0b6a950d4c0b (revert route to checkout-v1-eu, keep rollout-842 paused) with rationale via cit_382ac7cae7404800 citing find_392e265849f54d51, and explicitly says its status is proposed only — not accepted and not executed — matching the workspace (no approver, decisionTransitions empty)."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names open task task_bfe056ab4e9349d7: get incident-commander approval then execute the route rollback and verify the eu-orders-submit-5xx rate returns to baseline, matching the recorded task."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario: the frozen matrix applies C5 only to S3."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites specific Campfire objects for substantive claims — find_392e265849f54d51, dec_f09b0b6a950d4c0b, cit_382ac7cae7404800, task_bfe056ab4e9349d7, and artifacts art_86b4240e93a54ecb, art_00f561834b4146be, art_494a6713c74d43c3 — all present in workspace.json."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Asserts no approval, execution, rollback, database causation, or completed recovery; it states the decision is proposed with nothing authorized or executed and the DB lead superseded, all consistent with the workspace record."
+    }
+  }
+}

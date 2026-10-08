@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "frozenRubric": "WOW-001 §4.5",
+  "runs": [
+    {
+      "packetId": "P1",
+      "runId": "s2-control-pilot1",
+      "scenario": "S2",
+      "arm": "control",
+      "playbookFetches": 0,
+      "firstToolCalls": 26,
+      "secondToolCalls": 2,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 4,
+        "applicable": 10,
+        "threshold": 8,
+        "pass": false
+      },
+      "continuation": {
+        "passed": 6,
+        "applicable": 6,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": false,
+        "R2": false,
+        "R3": false,
+        "R4": true,
+        "R5": false,
+        "R6": false,
+        "R7": true,
+        "R8": true,
+        "R9": true,
+        "R10": false,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": null,
+        "C6": true,
+        "C7": true
+      }
+    },
+    {
+      "packetId": "P2",
+      "runId": "s3-control-pilot1",
+      "scenario": "S3",
+      "arm": "control",
+      "playbookFetches": 0,
+      "firstToolCalls": 39,
+      "secondToolCalls": 3,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 7,
+        "applicable": 9,
+        "threshold": 8,
+        "pass": false
+      },
+      "continuation": {
+        "passed": 7,
+        "applicable": 7,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": true,
+        "R2": true,
+        "R3": false,
+        "R4": null,
+        "R5": false,
+        "R6": true,
+        "R7": true,
+        "R8": true,
+        "R9": true,
+        "R10": true,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true,
+        "C6": true,
+        "C7": true
+      }
+    },
+    {
+      "packetId": "P3",
+      "runId": "s1-control-pilot1",
+      "scenario": "S1",
+      "arm": "control",
+      "playbookFetches": 0,
+      "firstToolCalls": 41,
+      "secondToolCalls": 2,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 7,
+        "applicable": 9,
+        "threshold": 8,
+        "pass": false
+      },
+      "continuation": {
+        "passed": 6,
+        "applicable": 6,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": true,
+        "R2": true,
+        "R3": false,
+        "R4": null,
+        "R5": true,
+        "R6": true,
+        "R7": true,
+        "R8": false,
+        "R9": true,
+        "R10": true,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": null,
+        "C6": true,
+        "C7": true
+      }
+    },
+    {
+      "packetId": "P4",
+      "runId": "s3-treatment-pilot1",
+      "scenario": "S3",
+      "arm": "treatment",
+      "playbookFetches": 1,
+      "firstToolCalls": 46,
+      "secondToolCalls": 2,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 9,
+        "applicable": 9,
+        "threshold": 8,
+        "pass": true
+      },
+      "continuation": {
+        "passed": 7,
+        "applicable": 7,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "R4": null,
+        "R5": true,
+        "R6": true,
+        "R7": true,
+        "R8": true,
+        "R9": true,
+        "R10": true,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true,
+        "C6": true,
+        "C7": true
+      }
+    },
+    {
+      "packetId": "P5",
+      "runId": "s1-treatment-pilot1",
+      "scenario": "S1",
+      "arm": "treatment",
+      "playbookFetches": 1,
+      "firstToolCalls": 43,
+      "secondToolCalls": 4,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 9,
+        "applicable": 9,
+        "threshold": 8,
+        "pass": true
+      },
+      "continuation": {
+        "passed": 6,
+        "applicable": 6,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": true,
+        "R2": true,
+        "R3": true,
+        "R4": null,
+        "R5": true,
+        "R6": true,
+        "R7": true,
+        "R8": true,
+        "R9": true,
+        "R10": true,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": null,
+        "C6": true,
+        "C7": true
+      }
+    },
+    {
+      "packetId": "P6",
+      "runId": "s2-treatment-pilot1",
+      "scenario": "S2",
+      "arm": "treatment",
+      "playbookFetches": 1,
+      "firstToolCalls": 43,
+      "secondToolCalls": 5,
+      "model": "opencode-go/deepseek-v4.1-flash",
+      "harness": "OpenCode 1.18.35",
+      "imageId": "sha256:349b90635fd4b584599aba5e01f989f44c38689f857eb217b1fbcb3fc078943a",
+      "recording": {
+        "passed": 9,
+        "applicable": 10,
+        "threshold": 8,
+        "pass": true
+      },
+      "continuation": {
+        "passed": 6,
+        "applicable": 6,
+        "threshold": 5,
+        "pass": true
+      },
+      "items": {
+        "R1": true,
+        "R2": true,
+        "R3": false,
+        "R4": true,
+        "R5": true,
+        "R6": true,
+        "R7": true,
+        "R8": true,
+        "R9": true,
+        "R10": true,
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": null,
+        "C6": true,
+        "C7": true
+      }
+    }
+  ],
+  "overrides": [
+    {
+      "packetId": "P1",
+      "item": "R6",
+      "pass": false,
+      "reason": "S2 decision dec_f09b0b6a950d4c0b cites only cause finding find_392e265849f54d51. That finding has neither source_artifact_id nor findingEvidence, so the decision basis is not backed by evidence 01, 05, and 06 as the frozen S2 R6 key requires."
+    },
+    {
+      "packetId": "P1",
+      "item": "R10",
+      "pass": false,
+      "reason": "Cause finding find_392e265849f54d51 has no artifact-backed citation. Its evidence file names occur only in prose. The frozen S2 R10 key excludes bare file names; Kimi's initial failure is supported by the export."
+    },
+    {
+      "packetId": "P2",
+      "item": "R5",
+      "pass": false,
+      "reason": "Inconclusive finding find_b942fe68d3ec4f3d identifies missing failed-request traces but does not state the discriminating diagnostic. The collection plan appears in a decision and task. Frozen S3 R5 requires the separate finding itself to identify that diagnostic."
+    },
+    {
+      "packetId": "P3",
+      "item": "R8",
+      "pass": false,
+      "reason": "The open tasks request approval and monitoring after the rollout pause, but none records performing remediation after approval and verifying edge 503 and pool-wait recovery after remediation. Frozen S1 R8 requires those next actions."
+    }
+  ],
+  "pairs": [
+    {
+      "scenario": "S1",
+      "control": "s1-control-pilot1",
+      "treatment": "s1-treatment-pilot1",
+      "noWorse": true,
+      "strictlyBetter": true,
+      "qualifies": true
+    },
+    {
+      "scenario": "S2",
+      "control": "s2-control-pilot1",
+      "treatment": "s2-treatment-pilot1",
+      "noWorse": true,
+      "strictlyBetter": true,
+      "qualifies": true
+    },
+    {
+      "scenario": "S3",
+      "control": "s3-control-pilot1",
+      "treatment": "s3-treatment-pilot1",
+      "noWorse": true,
+      "strictlyBetter": true,
+      "qualifies": true
+    }
+  ],
+  "criteria": {
+    "treatmentPasses": 3,
+    "qualifyingPairs": 3,
+    "playbookFetches": 3,
+    "treatmentR9AndC7Pass": true,
+    "authorizationOrKeyLeak": false,
+    "replacementRun": false,
+    "harnessMismatch": false
+  },
+  "supportsExpansion": true,
+  "pilotVerdict": "GO"
+}

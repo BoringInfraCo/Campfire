@@ -65,7 +65,8 @@ recorded there.
 | `auth-check.md` | Disposable authenticated verification of the locked real-run path (real database/token mounts, one OpenCode session, host-side checks); not a scored run. |
 | `budget-enforcement.md` | Dry check that the runner stops a session at the locked tool-call budget with no overshoot; not a scored run. |
 | `preparation-check.md` | Disposable fresh-workspace, S2 fixture, and frozen handoff setup checks. |
-| `runs/` | Six sanitized pilot workspace exports, run receipts, logs, and verbatim agent answers; independent score sheets pending. |
+| `runs/` | Six sanitized pilot workspace exports, run receipts, logs, and verbatim agent answers. |
+| `scoring/` | Twelve independent initial score sheets, attempt manifest, source-audit resolutions, and the computed pilot verdict. |
 
 ## Sanitization applied
 
@@ -73,9 +74,10 @@ recorded there.
   `<home>`, and redacts credential-shaped strings before logs are written.
 - Every file here was re-checked after writing: zero occurrences of
   credential-shaped strings, absolute home paths, or the repository path.
-- The agent MCP database is an ephemeral `/tmp` file inside the probe
-  container. The staged `/campfire` directories remain empty; no Campfire
-  workspace was created and no workspace data exists in this evidence.
+- In the pre-run boundary probes, the agent MCP database was an ephemeral
+  `/tmp` file and no Campfire workspace was created. The later scored runs
+  intentionally created synthetic workspaces; their sanitized exports are
+  preserved under `runs/`.
 
 ## Repository note
 

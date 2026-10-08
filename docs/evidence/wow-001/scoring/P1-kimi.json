@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P1",
+  "runId": "s2-control-pilot1",
+  "scenario": "S2",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": false,
+      "reason": "No symptom finding exists in the export; the only findings are refutation find_c2833b67250e4e81 and root-cause find_392e265849f54d51, and no findingEvidence links any finding to alert artifact art_86b4240e93a54ecb (evidence 01) as a symptom record."
+    },
+    "R2": {
+      "pass": false,
+      "reason": "The first agent recorded only two findings (find_c2833b67250e4e81, find_392e265849f54d51), and only the former carries artifact citations (art_991a453966b944d9, art_fd813e3ccb8347b0); fewer than three independently supported, cited observations exist."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "The only tentative hypothesis with a stated test is preseeded find_bc3248b208ac44c2 by agt_11fc14ee597f40ae (contributions at/below setupStreamTip 13); agt_c9ec6174fe834878 recorded no new hypothesis with confidence and a confirm/refute test."
+    },
+    "R4": {
+      "pass": true,
+      "reason": "find_bc3248b208ac44c2 is superseded by find_c2833b67250e4e81 via findingTransitions with a reason identifying the later contrary signals (per-service split evidence 03, edge traces evidence 04), corrected by agt_c9ec6174fe834878 in ses_045b424ccb43467e."
+    },
+    "R5": {
+      "pass": false,
+      "reason": "find_392e265849f54d51 correctly names the checkout-v2-eu route cause at confidence 0.85, but it has zero findingEvidence rows; prose mentions of 'Evidence 04/05/06' are not citations to artifacts covering traces, route change, and health."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_f09b0b6a950d4c0b proposes reverting the eu-west-1 route to healthy checkout-v1-eu with a stated rationale and cites the cause finding find_392e265849f54d51 through the decision-basis relation cit_382ac7cae7404800."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_f09b0b6a950d4c0b remains status 'proposed' with approved_by_actor_id null and decisionTransitions empty; no approval or acceptance appears anywhere in the packet."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open task task_bfe056ab4e9349d7 identifies incident-commander approval, execution of the rollback, and post-change verification that eu-orders-submit-5xx returns to baseline as the next work."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "Contributions attribute all first-agent actions to agt_c9ec6174fe834878 bound to ses_045b424ccb43467e with honest harness ('opencode') and human (hum_c0867bce3ef646a3) attribution; no transcript is pasted into state."
+    },
+    "R10": {
+      "pass": false,
+      "reason": "All formally cited artifacts exist with evidence/ paths, but cause finding find_392e265849f54d51 is asserted with no findingEvidence citations; its bare 'Evidence 01/04/05/06' prose references do not count as citations, so the cause lacks artifact-backed support."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Names the symptom: eu-west-1 POST /orders/submit failing with HTTP 503 from 09:17:11 UTC, with impact on 100% of EU order-submit traffic."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "Names route change chg-eu-2048 to endpoint-free checkout-v2-eu as the recorded cause (find_392e265849f54d51, confidence 0.85) and presents the database hypothesis only as corrected/refuted into find_c2833b67250e4e81."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Identifies decision dec_f09b0b6a950d4c0b (revert to checkout-v1-eu, keep rollout-842 paused) with rationale and explicitly states status 'proposed only — not accepted and not executed'."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names open task task_bfe056ab4e9349d7: incident-commander review/approval, execute the rollback, then verify the eu-orders-submit-5xx rate returns to baseline."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites specific Campfire object IDs for substantive claims, including find_392e265849f54d51, dec_f09b0b6a950d4c0b, cit_382ac7cae7404800, task_bfe056ab4e9349d7, and artifact IDs such as art_86b4240e93a54ecb."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Asserts no approval, executed rollback, database causation, or completed recovery; all reported statuses (decision proposed, prior hypothesis superseded, task open) match the workspace export."
+    }
+  }
+}

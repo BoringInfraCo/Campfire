@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P2",
+  "runId": "s3-control-pilot1",
+  "scenario": "S3",
+  "scorer": "opencode-go/glm-5.3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_8ff0598092454a6e records the symptom — IAD /v1/exports 504 timeouts, impact 26/402 (~6.5%) vs 0/388 in ORD, known window 09:45–10:00 UTC — citing registered gateway artifact art_465517d93b3247bd via fev_f779ffec5c084da9, and names no confirmed cause."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "At least four independently supported findings cover distinct signals, each with an observation time/signal and artifact citation: tenant reports (find_3e6c575035c849c2 → art_d0b9719758954be3), gateway sample/aggregate (find_acdd83e925614cdf, find_8ff0598092454a6e → art_465517d93b3247bd), DB latency (find_91dee61060d14dee → art_1151c89b868042bd), and trace coverage (find_4596aab54e91498d → art_f2c66c6525864c88)."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "The only tentative causal record, find_b942fe68d3ec4f3d (confidence 0.8, 'could be an export-specific query tail, a downstream dependency, or another cause'), names no test; the confirming/refuting tests appear only in dec_f949414ac9e4444f and task_6be8c256ac594fbc, which are decision/task records without confidence, so no hypothesis with confidence and a stated test is recorded."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A: setup.json scenario is S3 and the frozen matrix applies R4 only to S2."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_b942fe68d3ec4f3d explicitly states the root cause is not established with honest confidence (0.8) and detail explaining the uncertainty; it cites the failed-request trace-coverage gap (art_f2c66c6525864c88 via fev_a4e7007c159246d8) and DB/gateway observations (art_1151c89b868042bd, art_465517d93b3247bd), and identifies the discriminating evidence — no correlated failed-request traces and a non-export-specific all-routes DB metric — with the diagnostic itself recorded in dec_f949414ac9e4444f/task_6be8c256ac594fbc."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_f949414ac9e4444f proposes the diagnostic-first response and its rationale defers remediation because root cause is unproven (all-routes DB aggregate, no correlated traces), citing findings via cit_d9d7b85b53934292/cit_457090407e7a4997/cit_b19595e11eb24660/cit_e79bf7d827264f44; those findings cite gateway art_465517d93b3247bd and trace-coverage art_f2c66c6525864c88."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_f949414ac9e4444f is recorded status 'proposed' with approved_by_actor_id null, no decisionTransitions, and text explicitly requiring incident-lead approval; the proposing agent did not accept it or fabricate an approver."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open task task_6be8c256ac594fbc requests request IDs and correlated gateway+application+database traces for failed IAD /v1/exports in the next observation window (next shift 10:30 UTC), with an additional open approval task task_b688d807f9304627."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All agent writes in contributions (positions 8–34) carry actor agt_aa9fd1acaaf24477 (matches firstAgentId) and session ses_2343397d1fb7494d, with pre-setupStreamTip actions properly attributed; no transcript is pasted into findings/decisions/tasks/artifacts and no synthetic tenant is represented as an approver."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "All findingEvidence records (e.g., fev_f779ffec5c084da9→art_465517d93b3247bd, fev_6b3ac9b93ad84f8b→art_f2c66c6525864c88, fev_d8d07bd5c8ff403c→art_1151c89b868042bd) and decision citations resolve to existing records; find_b942fe68d3ec4f3d explicitly states root cause is not established, so no unequivocal cause is asserted."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Names intermittent IAD-only /v1/exports HTTP 504 timeouts in the 09:45–10:00 UTC window (26 of 402, vs 0 of 388 ORD, find_8ff0598092454a6e), without broadening to all API requests or all regions."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "States root cause is explicitly not established and presents the DB p95 spike and 30 s upstream timeouts as correlation in time/region only (find_b942fe68d3ec4f3d), matching the recorded unresolved-cause finding without overstatement."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Identifies dec_f949414ac9e4444f, the diagnostic-first response (collect request IDs/correlated traces, test export-specificity), with rationale and actual status 'proposed — not approved'; the export confirms no acceptance or supersession exists."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names the open correlated-trace investigation task task_6be8c256ac594fbc (request IDs plus gateway/app/db traces for failed IAD exports) as the next action, matching the recorded open task."
+    },
+    "C5": {
+      "pass": true,
+      "reason": "Reports the missing failed-request correlated traces with ~10% sampling inconclusiveness (find_4596aab54e91498d) plus other recorded uncertainties and open review gates (decision needs acceptance; task_b688d807f9304627 unaddressed)."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites actual Campfire objects throughout — findings (find_8ff0598092454a6e, find_b942fe68d3ec4f3d, find_4596aab54e91498d), decision dec_f949414ac9e4444f with its four citations, and tasks task_6be8c256ac594fbc and task_b688d807f9304627 — all present in the export."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Every factual claim matches the export: scope figures, proposed-only decision status, open tasks, and unresolved cause; no invented approval, completed diagnostic, proven cause, or unsupported region claim (ORD 0/388 follows find_8ff0598092454a6e citing art_465517d93b3247bd)."
+    }
+  }
+}

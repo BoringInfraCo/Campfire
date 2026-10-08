@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P2",
+  "runId": "s3-control-pilot1",
+  "scenario": "S3",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_acdd83e925614cdf and find_8ff0598092454a6e describe IAD /v1/exports 504 timeouts, impact (26/402 IAD vs 0/388 ORD) and the 09:45-10:00 UTC window, citing registered artifact art_465517d93b3247bd via fev_5bd4d602410f436e/fev_f779ffec5c084da9, without asserting a confirmed root cause."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "At least four distinct signals are recorded with times and citations: tenant reports (find_3e6c575035c849c2, 09:44/09:47/09:54, art_d0b9719758954be3), gateway failures/aggregate (find_acdd83e925614cdf, find_8ff0598092454a6e, art_465517d93b3247bd), DB latency (find_91dee61060d14dee, art_1151c89b868042bd), and trace coverage (find_4596aab54e91498d, art_f2c66c6525864c88)."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "No finding is recorded as an explicitly tentative hypothesis naming a test; find_b942fe68d3ec4f3d lists candidate causes ('could be an export-specific query tail...') but states no confirming/refuting test, and the discriminating test appears only in task_6be8c256ac594fbc and dec_f949414ac9e4444f, not in any hypothesis record."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A for this scenario: the frozen matrix applies R4 only to S2, and this run is S3."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_b942fe68d3ec4f3d explicitly states 'Root cause is not established' with confidence 0.8, cites the trace-coverage gap artifact art_f2c66c6525864c88 plus art_1151c89b868042bd and art_465517d93b3247bd, and identifies the missing correlated failed-request traces as the discriminating evidence."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_f949414ac9e4444f proposes a diagnostic-first response (collect request IDs and correlated gateway/app/db traces, determine export-specificity of the DB spike) with rationale deferring remediation pending evidence, citing findings find_8ff0598092454a6e, find_b942fe68d3ec4f3d, find_4596aab54e91498d and find_91dee61060d14dee, which in turn cite gateway artifact art_465517d93b3247bd and trace artifact art_f2c66c6525864c88."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_f949414ac9e4444f is status 'proposed' with approved_by_actor_id null and decisionTransitions empty; no self-acceptance, fabricated approver, or approval reason exists."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "task_6be8c256ac594fbc (open) requests request IDs and correlated gateway/application/database traces for failed IAD exports in the next window, and task_b688d807f9304627 (open) covers escalation for incident-lead approval; no diagnostic task is falsely marked complete."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All writes are attributed to agent agt_aa9fd1acaaf24477 with session ses_2343397d1fb7494d (setup writes to hum_ee38c9d0f360436e at positions 1-7), and no transcript text is pasted into findings, decisions, tasks, or artifacts."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "Every findingEvidence row references an existing artifact record (art_d0b9719758954be3, art_465517d93b3247bd, art_1151c89b868042bd, art_f2c66c6525864c88) and all decisionCitations reference existing findings; no root cause is asserted anywhere, with find_b942fe68d3ec4f3d explicitly recording the cause as unproven."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "The answer names IAD-only /v1/exports 504 timeouts in the 09:45-10:00 UTC window (26/402 IAD vs 0/388 ORD), without broadening to all API requests or all regions."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "The answer states the team does not claim a cause and that root cause is explicitly not established (find_b942fe68d3ec4f3d), mentioning the DB p95 spike only as a non-export-specific aggregate correlation."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "The answer identifies dec_f949414ac9e4444f as the only decision, a diagnostic-first proposal with rationale, and its actual status 'proposed — not approved', with no accepted or superseded decisions, matching the export."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "The answer names open task_6be8c256ac594fbc (obtain request IDs and correlated gateway/app/db traces for failed IAD exports) as the next action, matching the workspace."
+    },
+    "C5": {
+      "pass": true,
+      "reason": "The answer's 'Uncertain / needs review' section reports the missing end-to-end correlated traces for failed requests (find_4596aab54e91498d), the unproven causation, and the open approval gates."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "The answer cites multiple real Campfire identifiers that exist in the export, including find_8ff0598092454a6e, find_b942fe68d3ec4f3d, find_4596aab54e91498d, dec_f949414ac9e4444f, task_6be8c256ac594fbc and art_465517d93b3247bd."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Every claim matches the frozen workspace: proposed-only decision with empty transitions, open tasks with their actual assignees, the 2026-09-18 incident date, 10:30 UTC next shift, and the cited gw-084/gw-093 details; nothing approved, completed, or proven is invented."
+    }
+  }
+}

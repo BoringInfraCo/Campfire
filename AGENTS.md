@@ -174,7 +174,7 @@ establishes that a person can now identify the current decision. Gate B and Gate
 C remain unmeasured, and the reported 550+ installed base is not treated as
 evidence for either. Do not read this release as gate satisfaction.
 
-Sprint WOW-001 — Prove a Way of Working has a **proposed** v1.13 contract at
+Sprint WOW-001 — Prove a Way of Working has its v1.13 contract at
 `docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md` and synthetic pilot
 fixtures at `fixtures/incidents/wow-001/`. The frozen playbook definition
 (`src/playbooks/incident-investigation.ts`, version `1.0.0`), the opt-in
@@ -184,10 +184,13 @@ MCP, and Viewer surfaces are unchanged, and no workspace data or write path
 was added. The dated harness/model environment lock is
 `fixtures/incidents/wow-001/RUN-LOCK.md` and the synthetic sealed-key isolation
 demonstration is `docs/evidence/wow-001/`; both are committed. Six arms and six
-handoffs were executed October 8; the sanitized records and execution status
-are in `docs/SPRINT_WOW_001_RESULT.md`. Independent scoring and the verdict
-remain pending. The proposal does not change
-VIS-001's open evidence or authorize a release.
+handoffs were executed October 8. Two independent arm-blind scorers completed
+the frozen rubric; the item-level source audit and resolved scores are in
+`docs/evidence/wow-001/scoring/`. The pilot verdict is **GO**: 3/3 treatment
+runs passed, 3/3 matched pairs improved recording without lower continuation,
+and treatment fetched the playbook 3/3 times. The owner separately authorized
+v1.13 release preparation. This synthetic pilot does not close VIS-001's open
+human evidence or establish Gate B or C. See `docs/SPRINT_WOW_001_RESULT.md`.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

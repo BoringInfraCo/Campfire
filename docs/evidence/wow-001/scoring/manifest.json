@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "scorerHarness": "OpenCode 1.18.35",
+  "packets": [
+    {
+      "packetId": "P1",
+      "runId": "s2-control-pilot1",
+      "scenario": "S2",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "11ec65ae50299eacb182570472829866ee5651196475e7abbd36a9f41acfe1a8"
+        },
+        {
+          "group": "A-R6R8",
+          "rawJsonlSha256": "99a349f9c201e4de7c8566bda2f44209fb0597c059b2ee1c98e47de4dcabea50"
+        },
+        {
+          "group": "A-R9R10",
+          "rawJsonlSha256": "9fd7ba33e4433ee8b972550837bc71f265853838bfb160bc51a74ed31f9d68eb"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "d158330744639f3cc8b13109498d5622220d6f1e1c3eaa6489a38387406b2f26"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "05b54c17036393e7b9aa65b9e33badea503a1fe71e87b8eef53c4252d0c76852"
+      }
+    },
+    {
+      "packetId": "P2",
+      "runId": "s3-control-pilot1",
+      "scenario": "S3",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "9ff426c44f27c362d01df58a594be6a652a897d444f5a9463c385c92a9d1b35b"
+        },
+        {
+          "group": "A-R6R10",
+          "rawJsonlSha256": "b8a34cf70a1cd7f186930b78d4dd7a662741b85dc7714ce22afd316aab876ce6"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "d1b85e528ed050c90ceb6cc8ec822f8188af68b03446ae424014a6c332c4eb68"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "41849b1270130b69b571707efdfc299d64e700d7f2fa30bdbe8235ca1740620c"
+      }
+    },
+    {
+      "packetId": "P3",
+      "runId": "s1-control-pilot1",
+      "scenario": "S1",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "88cd81f7114622551a654f1d90709046b0741b2ac396c6b382fe1ec6cfd5fa7e"
+        },
+        {
+          "group": "A-R6R10",
+          "rawJsonlSha256": "985e398ef0f2136fd5cb2553d6c40fa9038b1295f897733710bf7ed9b5b87716"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "aa957416a433770e425eb45eeff4929fb9310d841ab10c3ecc8c4b9c9a9cbbe1"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "2cac4d06757cc73966605d9511bea110fcffff518365755af5a31ce6143a6865"
+      }
+    },
+    {
+      "packetId": "P4",
+      "runId": "s3-treatment-pilot1",
+      "scenario": "S3",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "60cec161c04882ccb47da4872d73e6dddca953e99efe54f62e89c31fc8790a09"
+        },
+        {
+          "group": "A-R6R8",
+          "rawJsonlSha256": "67e2e5aa613e8ac6c47cfb8ca21b0ab5ef1d1631e67b909e040efb93cab71bac"
+        },
+        {
+          "group": "A-R9R10",
+          "rawJsonlSha256": "c3d2c3f5816dd533da5733f1b8f8873f8926023a3212a42c8286e3c219b87ec1"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "a06853d0d328dc325866b0f0c12c18762b42b08ee980eda86c6bd1ce21ead8db"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "987aa7d515eefa5075a7fc71eb340f3b1bc580932ef9d3fe72bc1f2857063e0f"
+      }
+    },
+    {
+      "packetId": "P5",
+      "runId": "s1-treatment-pilot1",
+      "scenario": "S1",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "3693fee835cea1bd90dc6bea6fa5499f081f2794a262f44bbe3cfb14dd3d97e2"
+        },
+        {
+          "group": "A-R6R10",
+          "rawJsonlSha256": "534ae09ebd2b6494263b82e194132bf85dc9218ee8f48471ad7c6685c82909d5"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "49fbbb27c6bf508db8046ce3721d6dcaca8ef1de7ff9731f0e5db6a0bd334a2d"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "56b941f565baf314ed0fd01ef34c9f4f16f87dcabcecc9d8f86efeac550fce0b"
+      }
+    },
+    {
+      "packetId": "P6",
+      "runId": "s2-treatment-pilot1",
+      "scenario": "S2",
+      "glmGroups": [
+        {
+          "group": "A-R1R5",
+          "rawJsonlSha256": "20eb92590dd7acc54d15b9d21cce0e3047c9d79a83d23e9c4221985ae7cdbf68"
+        },
+        {
+          "group": "A-R6R10",
+          "rawJsonlSha256": "0df3ab0d6157d245aebf9f4f2f721bcf74e3f930b2b61aec0d4fb80a638b036a"
+        },
+        {
+          "group": "A-C1C7",
+          "rawJsonlSha256": "5ee8900ae444b9dd51d771e1fa84adfc9050ea6e380572116f128a4fe0f13ef2"
+        }
+      ],
+      "kimi": {
+        "rawJsonlSha256": "907ff2412c1ba46b53ab0ad4519cf88b6b6e76378f284ccefbb1e35eaf742cf2"
+      }
+    }
+  ],
+  "invalidScorerAttempts": [
+    {
+      "packetId": "P1",
+      "scorer": "opencode-go/glm-5.3",
+      "directory": "A",
+      "reason": "Model ended at output length with no score text",
+      "rawJsonlSha256": "8b4f2992844dc7c61321c42d045672566a17f60e44fe98c5e9e2c7907bd3e552"
+    },
+    {
+      "packetId": "P1",
+      "scorer": "opencode-go/glm-5.3",
+      "directory": "A-retry",
+      "reason": "Minimal variant ended at output length with no score text",
+      "rawJsonlSha256": "3ed1a07c21e325761d2e45fbc5d4d56736a16f259a02e91363b7464d22785ee5"
+    },
+    {
+      "packetId": "P1",
+      "scorer": "opencode-go/glm-5.3",
+      "directory": "A-R6R10",
+      "reason": "Five-item group ended at output length with no score text",
+      "rawJsonlSha256": "ba83fc03f1d0797513025ede170ff394bbe7a7bf8222ec39985b78b069087276"
+    },
+    {
+      "packetId": "P4",
+      "scorer": "opencode-go/glm-5.3",
+      "directory": "A-R6R10",
+      "reason": "Five-item group ended at output length with no score text",
+      "rawJsonlSha256": "aed5578149f4c5779b4cfccadd96f49f41614cb91f35cb18efc40a6852874256"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P5",
+  "runId": "s1-treatment-pilot1",
+  "scenario": "S1",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_487c49f010e2462f states elevated checkout HTTP 503s on POST /v1/checkouts in us-east-1 from the 09:15Z window through 09:24Z and cites art_7cde44ac92ff4e47, the artifact for evidence/01-edge-alert.csv."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "Five distinct timestamped observations each cite their own artifact: edge 503 increase (find_487c49f010e2462f/art_7cde44ac92ff4e47), rollout/config delta (find_115021c202d04b63, find_122fad635ca64392/art_65daedc5950c46c5), revision error split (find_bdd8be12049749aa/art_fee50746f4304069), pool saturation (find_f9bfdcfb99e04917/art_21329a1f063e4eed), and DB health (find_0bea8b50bf5f4db5/art_ab369b6019b548a8)."
+    },
+    "R3": {
+      "pass": true,
+      "reason": "find_67bfd43a9081400e records a testable pool-exhaustion hypothesis with confidence 0.85, explicit Confirm/Refute tests, and a caveat that it is correlational and unconfirmed by error logs, so it is not asserted as established fact."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "Cause finding find_67bfd43a9081400e links DB_POOL_MAX=4 on r184 to pool saturation/timeouts and checkout 503s with confidence 0.85, citing rollout/config (art_65daedc5950c46c5), revision split (art_fee50746f4304069), pool samples (art_21329a1f063e4eed), and DB health (art_ab369b6019b548a8) via findingEvidence fev_1b24be6ebad149ac, fev_380a510038cc49f1, fev_597829d2822140d4."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_948d10692b3f4595 proposes shifting traffic back to r183 with monitoring, has a full rationale, and cites findings find_487c49f010e2462f, find_bdd8be12049749aa, find_115021c202d04b63, find_67bfd43a9081400e, find_6eb550ba79804a86 through decisionCitations."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_948d10692b3f4595 remains status \"proposed\" with approved_by fields null and decisionTransitions empty; the agent never accepted its own proposal and no executed rollback is recorded."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open tasks cover the required next actions: approval for the proposal (task_6c5227845eff4695), post-approval verification of 503/pool-wait recovery (task_dd4149e1cb474603), config-change investigation (task_41e32820aca84e8b), plus log confirmation (task_0c8d6277cee64ce0) and impact assessment (task_5c0de7b1fa00453a); all status open."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All record creates in contributions carry actor agt_4c8b57d1b1a04528 with registered session ses_2c104e077fe64b3d (registered at append_position 8, after the setup tip 7); no transcript or raw log dump is pasted into state."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "All five referenced evidence files have Artifact records (art_7cde44ac92ff4e47, art_65daedc5950c46c5, art_fee50746f4304069, art_21329a1f063e4eed, art_ab369b6019b548a8), and the only asserted cause (find_67bfd43a9081400e) carries supporting citations."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "The answer names elevated HTTP 503s on POST /v1/checkouts in us-east-1 starting in the window ending 09:15Z, matching find_487c49f010e2462f, without inventing a broader outage."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "It reports the recorded pool-limit explanation with its 0.85 confidence and states it is inferred from correlational metrics and unconfirmed by error logs, matching find_67bfd43a9081400e and find_6eb550ba79804a86 without overstating."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "It names dec_948d10692b3f4595, its rollback-to-r183 rationale, and states status is proposed only and not accepted, correctly noting the 09:22Z pause left r184 serving 25% rather than treating it as an executed rollback."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "It names open task_6c5227845eff4695 (obtain explicit authorized approval of dec_948d10692b3f4595) as the next action, consistent with the workspace task list."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "The answer cites Campfire object IDs throughout, including find_487c49f010e2462f, find_67bfd43a9081400e, dec_948d10692b3f4595, task_6c5227845eff4695, and artifact IDs such as art_7cde44ac92ff4e47."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "It asserts no approval, executed rollback, resolution, data loss, customer count, or database outage; it explicitly states the decision is unaccepted, impact is unknown, and the database stayed healthy, all consistent with the frozen workspace."
+    }
+  }
+}

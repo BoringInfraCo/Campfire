@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P3",
+  "runId": "s1-control-pilot1",
+  "scenario": "S1",
+  "scorer": "opencode-go/glm-5.3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_97da520f74ee4f8c records POST /v1/checkouts 503s in us-east-1 rising ~25x at 09:15–09:20 (health route clean) and cites the edge-counts artifact art_524a3b6e81fb4264 (01-edge-alert.csv) via fev_fdea344e70744c9b."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "Four distinct, independently supported findings each cite their own evidence: edge error increase (find_97da520f74ee4f8c→art_524a3b6e81fb4264), revision-specific 503 split (find_71064097a1bf44da→art_aaf5bff24ea349f0), pool saturation/config delta (find_a35ac458fd8e4ae3→art_51fbc2cf77ff4878 and art_d66f0100572d4d1c), and stable DB health (find_db74f77cbd724854→art_170c6ebb3932425f), each with times/signals."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "No finding explicitly labels a testable hypothesis or describes a confirmation/refutation test: find_fcffc5c21d444a6a is labeled 'Inferred root cause' with confidence 0.85 and hedged as correlation-based, but only lists existing consistent evidence (a)–(d) with no stated test; validation steps appear only in tasks (task_975cec3134ab492e), which are not findings."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A for this scenario: the frozen matrix applies R4 only to S2, and setup.json identifies this record as S1."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_fcffc5c21d444a6a connects DB_POOL_MAX=4 on r184 to pool saturation/3000ms waits and checkout 503s with honest confidence 0.85 (explicitly an inference, not proven), citing rollout/config (art_d66f0100572d4d1c), pool (art_51fbc2cf77ff4878), and revision-specific (art_aaf5bff24ea349f0) evidence, with no database-outage or data-loss claim."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_55d5c756c8fb4334 records the response as proposed with rationale (r184 DB_POOL_MAX=4 pool starvation, lowest-risk revert to r183) and four basis citations to findings find_a35ac458fd8e4ae3, find_fcffc5c21d444a6a, find_71064097a1bf44da, find_db74f77cbd724854."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_55d5c756c8fb4334 remains status proposed with approved_by_actor_id null, decisionTransitions empty, and rationale stating 'PROPOSED ONLY: no approval has been authorized'; no acceptance or executed rollback is claimed anywhere in the workspace."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Three open tasks preserve required next actions: task_975cec3134ab492e (obtain approval, remediate only after approval, confirm whether the config change was intentional), task_b0b53ba14df44875 (verify edge 503 and pool metrics after the pause), and task_9ff03d1e5c7d47d6 (customer/data-loss impact)."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All findings, decision, tasks, and artifacts carry created_by_actor_id agt_cd56c326a91b4851 with agent_session_id ses_817ea686dcc64eea, and contribution con_920cb7a4fdcb4c19 registers that session; no prompt, log dump, or transcript is pasted into state."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "All five cited evidence files have artifact records (art_524a3b6e81fb4264, art_d66f0100572d4d1c, art_aaf5bff24ea349f0, art_51fbc2cf77ff4878, art_170c6ebb3932425f) linked via findingEvidence, and cause finding find_fcffc5c21d444a6a cites four supporting artifacts with the observed signal in its detail."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Names elevated checkout POST /v1/checkouts 503s in us-east-1 jumping ~25x at 09:15 (111→3078) with GET /health clean, matching find_97da520f74ee4f8c; no broader outage is invented."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "Reports find_fcffc5c21d444a6a's pool-limit cause as an inferred root cause with its recorded confidence 0.85 and supporting observations (find_a35ac458fd8e4ae3, find_db74f77cbd724854), and separately flags find_1e1c3b7e3f2448e6's open questions; no overstatement."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Names dec_55d5c756c8fb4334 (halt r184 / revert to r183 or restore DB_POOL_MAX>=24) with its rationale and correctly states its actual status is proposed only, not accepted, with no approval authorized and nothing executed."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names open task_975cec3134ab492e — confirm root cause and obtain explicit human approval for the proposed response — as the next action, plus the other open tasks task_9ff03d1e5c7d47d6 and task_b0b53ba14df44875."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario: C5 applies only to S3, and setup.json/scoring-key.md confirm this run is S1."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites actual Campfire object IDs throughout, e.g. find_97da520f74ee4f8c, find_fcffc5c21d444a6a, dec_55d5c756c8fb4334, task_975cec3134ab492e, and artifacts art_524a3b6e81fb4264 / art_aaf5bff24ea349f0, all present in the frozen export."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Every claim matches the frozen export (symptom counts, cause with 0.85 confidence, proposed-not-accepted status, open tasks, uncertainty gaps); it asserts no approval, executed rollback, resolved incident, data loss, customer count, or database outage, and notes evidence ends 09:24 with no remediation assumed."
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P3",
+  "runId": "s1-control-pilot1",
+  "scenario": "S1",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_97da520f74ee4f8c records POST /v1/checkouts 503s in us-east-1 rising at 09:15 (3078/29980) and 09:20 (3154/30040) and cites art_524a3b6e81fb4264, the Artifact for 01-edge-alert.csv, via fev_fdea344e70744c9b."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "Four distinct findings carry timestamped, independently supported observations: edge 503 spike (find_97da520f74ee4f8c->art_524a3b6e81fb4264), revision-specific error split (find_71064097a1bf44da->art_aaf5bff24ea349f0), pool saturation plus DB_POOL_MAX 24->4 config delta (find_a35ac458fd8e4ae3->art_51fbc2cf77ff4878 and art_d66f0100572d4d1c), and stable DB health (find_db74f77cbd724854->art_170c6ebb3932425f)."
+    },
+    "R3": {
+      "pass": false,
+      "reason": "No finding explicitly labels a testable hypothesis and describes a confirmation or refutation test; find_fcffc5c21d444a6a records confidence 0.85 and disclaims proof but states no test, and validation appears only in task_975cec3134ab492e, not on a hypothesis finding."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "Cause finding find_fcffc5c21d444a6a connects r184's DB_POOL_MAX=4 to pool saturation, 3000ms waits, and checkout 503s with honest confidence 0.85, citing rollout/config (art_d66f0100572d4d1c), pool (art_51fbc2cf77ff4878), revision (art_aaf5bff24ea349f0), and DB-health (art_170c6ebb3932425f) artifacts."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_55d5c756c8fb4334 proposes halting r184 and reverting to r183 (or restoring DB_POOL_MAX>=24) with rationale and four basis citations to findings (cit_1ad1ad6e10a24197, cit_1052e4fbb8d44ae4, cit_74c363b7005b4f1c, cit_ff44dd68826c425c)."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "dec_55d5c756c8fb4334 remains status proposed with approved_by fields null and decisionTransitions empty; its rationale explicitly states no approval is authorized and no rollback may be executed."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open tasks preserve the next actions: task_975cec3134ab492e (confirm cause, investigate the config change, obtain approval before remediation), task_9ff03d1e5c7d47d6 (customer impact/data-loss check), and task_b0b53ba14df44875 (verify 503 recovery after the 09:22 pause), all status open."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "All records carry actor agt_cd56c326a91b4851 with registered session ses_817ea686dcc64eea (con_920cb7a4fdcb4c19), and contributions attribute every action; state contains only short signal excerpts and artifact references, no pasted prompt, log dump, or transcript."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "All five evidence files have Artifact records (art_524a3b6e81fb4264, art_d66f0100572d4d1c, art_aaf5bff24ea349f0, art_51fbc2cf77ff4878, art_170c6ebb3932425f), every findingEvidence row references an existing artifact, and the asserted cause find_fcffc5c21d444a6a cites four supporting artifacts."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "The answer names checkout POST /v1/checkouts 503s in us-east-1 jumping ~25x at 09:15 while /health stayed clean, matching find_97da520f74ee4f8c without inventing a broader outage."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "It reports the recorded pool-starvation explanation with its recorded confidence 0.85 (find_fcffc5c21d444a6a) and the recorded limits via find_1e1c3b7e3f2448e6, without overstating certainty."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "It names dec_55d5c756c8fb4334 (halt r184, revert to r183 or restore DB_POOL_MAX>=24) with rationale and states the status is proposed only, not accepted, matching the workspace's single proposed decision."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "It names task_975cec3134ab492e (confirm root cause and obtain approval for the proposed response) as the next action, plus the two other open tasks task_9ff03d1e5c7d47d6 and task_b0b53ba14df44875."
+    },
+    "C5": {
+      "pass": null,
+      "reason": "N/A for this scenario."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "The answer cites actual Campfire object IDs throughout, including find_97da520f74ee4f8c, find_fcffc5c21d444a6a, dec_55d5c756c8fb4334, task_975cec3134ab492e, and artifact IDs such as art_524a3b6e81fb4264."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "Every stated fact matches the frozen record (decision proposed, no approval, no executed rollback, evidence ends 09:24, no data loss or customer count asserted); nothing absent or contradicted by the workspace is asserted."
+    }
+  }
+}

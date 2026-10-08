@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "packetId": "P4",
+  "runId": "s3-treatment-pilot1",
+  "scenario": "S3",
+  "scorer": "opencode-go/kimi-k3",
+  "score": {
+    "R1": {
+      "pass": true,
+      "reason": "find_4834f659837b4366 records the IAD /v1/exports timeout symptom with impact and time window, citing art_6aa8bc75b3c74f73 and via fev_4927e78842924168 the gateway artifact art_24d569d1427e486f; no cause asserted."
+    },
+    "R2": {
+      "pass": true,
+      "reason": "Distinct signals each with time/signal and artifact: tenant reports (find_4834f659837b4366/art_6aa8bc75b3c74f73), gateway 504s and regional aggregate (find_7267d5d770a94f53, find_128ca2d0ca984431/art_24d569d1427e486f), DB p95 elevation (find_bce58bec5aa242a1/art_039c358aaf434d7c), and trace coverage (find_2672022d7a6a46b1/art_7546bacd9f654b9d)."
+    },
+    "R3": {
+      "pass": true,
+      "reason": "First agent recorded tentative hypotheses find_59e9cd2eb5cd4c9a (confidence 0.35, confirm/refute tests) and find_4228073accd84466 (confidence 0.2, full-sampling test); no S2 seeding applies here."
+    },
+    "R4": {
+      "pass": null,
+      "reason": "N/A for this scenario: R4 applies only to S2 per the frozen matrix."
+    },
+    "R5": {
+      "pass": true,
+      "reason": "find_5c5b5222d8d34862 explicitly states the cause is not established (confidence 0.6), cites the evidence gap via fev_2516c9dfe0764315, fev_db5cd95dc6214e91, fev_47cdcbaacc6d4453 (gateway, DB, trace-coverage artifacts), and names the discriminating diagnostic (correlated traces, export-specific DB/pool metrics)."
+    },
+    "R6": {
+      "pass": true,
+      "reason": "dec_82ef0d50fb394a8a proposes the diagnostic-first response with rationale deferring remediation, citing find_5c5b5222d8d34862, find_bce58bec5aa242a1, and find_2672022d7a6a46b1 (cit_0038593321a14bdd, cit_4e93edd6cdd140be, cit_09db88ec96a24d82), which in turn cite gateway and trace-coverage artifacts."
+    },
+    "R7": {
+      "pass": true,
+      "reason": "Both dec_82ef0d50fb394a8a and dec_44cd603a30a54b97 remain status 'proposed' with null approver fields and empty decisionTransitions; no self-acceptance or fabricated approval."
+    },
+    "R8": {
+      "pass": true,
+      "reason": "Open task_3f84f2537b5744a3 requests correlated gateway/app/DB traces for failed IAD exports; additional open tasks task_31c304e8327b4f11, task_3ff4477d51344c7e, task_f9f0f12445ac45d2 recorded."
+    },
+    "R9": {
+      "pass": true,
+      "reason": "Contributions show all writes by agt_f966eab3a01c47bb under session ses_c5b74dd631a2449c (positions 8-37), assignees are real participants (agt_ee09d75ea6504e20, hum_e2f26110e7474afd), and no transcript text is pasted into state."
+    },
+    "R10": {
+      "pass": true,
+      "reason": "All evidence references resolve to registered artifacts art_6aa8bc75b3c74f73, art_24d569d1427e486f, art_039c358aaf434d7c, art_7546bacd9f654b9d via source_artifact_id or findingEvidence rows; no cause is asserted anywhere."
+    },
+    "C1": {
+      "pass": true,
+      "reason": "Names IAD-region gateway timeouts (504) on POST /v1/exports with window 09:44-10:00 UTC and does not broaden to all APIs or regions."
+    },
+    "C2": {
+      "pass": true,
+      "reason": "States the cause is not established per find_5c5b5222d8d34862 and presents DB latency and pre-application stall only as labeled hypotheses with their recorded confidences."
+    },
+    "C3": {
+      "pass": true,
+      "reason": "Identifies both decisions dec_82ef0d50fb394a8a and dec_44cd603a30a54b97 with rationale and correctly reports both as proposed-only with no approval, not operative."
+    },
+    "C4": {
+      "pass": true,
+      "reason": "Names the open correlated-trace investigation task_3f84f2537b5744a3 (plus task_31c304e8327b4f11) as next actions from the record, alongside the approval-gate task_f9f0f12445ac45d2."
+    },
+    "C5": {
+      "pass": true,
+      "reason": "Reports the missing correlated/failed-request traces, the all-routes-only DB data, unresolved failure location, and unconfirmed retry/other-region status."
+    },
+    "C6": {
+      "pass": true,
+      "reason": "Cites Campfire identifiers throughout: find_4834f659837b4366, find_5c5b5222d8d34862, dec_82ef0d50fb394a8a, task_3f84f2537b5744a3, art_24d569d1427e486f, etc."
+    },
+    "C7": {
+      "pass": true,
+      "reason": "No claim contradicts or is absent from the workspace; it correctly reflects proposed-only decisions, open tasks, unresolved cause, and avoids inventing approvals, completed diagnostics, or unaffected regions."
+    }
+  }
+}
