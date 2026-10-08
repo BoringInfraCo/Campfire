@@ -9,7 +9,10 @@ or Gate C evidence, and nothing here scores an agent or a scenario. The six
 pilot runs have not been executed. The purpose is to show, before a first real
 run, that the sanitized agent image and the staged run trees cannot reach the
 sealed material (ground truth, scoring key, setup notes, contract, playbook
-source) and that the opt-in playbook gate behaves as designed.
+source) and that the opt-in playbook gate behaves as designed. Two additional
+disposable checks verify the locked real-run path itself: the authenticated
+database/token path and the budget stop rule (see `auth-check.md` and
+`budget-enforcement.md`).
 
 ## Harness / model / image / commit
 
@@ -56,6 +59,8 @@ recorded there.
 | `probe-agent-s1-control.md` | Control first-agent boundary check: command, exit, duration, final text, key actions. |
 | `probe-agent-s1-treatment.md` | Treatment first-agent boundary check: command, exit, duration, final text, key actions. |
 | `probe-agent-s1-second.md` | Second-agent (control) boundary check: command, exit, duration, final text, key actions. |
+| `auth-check.md` | Disposable authenticated verification of the locked real-run path (real database/token mounts, one OpenCode session, host-side checks); not a scored run. |
+| `budget-enforcement.md` | Dry check that the runner stops a session at the locked tool-call budget with no overshoot; not a scored run. |
 
 ## Sanitization applied
 

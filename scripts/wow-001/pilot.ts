@@ -10,6 +10,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  appendFileSync,
   chmodSync,
   copyFileSync,
   existsSync,
@@ -22,14 +23,19 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import Database from "better-sqlite3";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  BUDGET_PROBE_PROMPT,
   PROBE_PROMPT,
   REPO_ROOT,
   agentDockerfile,
   assertOutsideRepo,
+  assertRealRunConfig,
+  authCheckPrompt,
+  budgetFor,
   buildAgentConfig,
   containerName,
   containerSpec,
@@ -42,6 +48,7 @@ import {
   sanitizeText,
   sha256File,
   stageRun,
+  toolUseFromJsonLine,
   type Arm,
   type GateReport,
   type Role,
@@ -49,7 +56,7 @@ import {
 } from "./pilot-lib.js";
 
 const PILOT_USAGE =
-  "usage: pilot.ts <build-image|stage|probe-fs|probe-gates|probe-agent|sanitize> [flags]";
+  "usage: pilot.ts <build-image|stage|probe-fs|probe-gates|probe-agent|probe-budget|auth-check|run|sanitize> [flags]";
 const SCENARIOS: readonly Scenario[] = ["S1", "S2", "S3"];
 const ARMS: readonly Arm[] = ["control", "treatment"];
 const ROLES: readonly Role[] = ["first", "second"];
@@ -58,6 +65,11 @@ const PROBE_GATES_MARKER = "WOW001_GATE_REPORT ";
 const DOCKER_MAX_BUFFER = 64 * 1024 * 1024;
 const PROBE_AGENT_TIMEOUT_MS = 15 * 60 * 1000;
 const PROBE_AGENT_KILL_GRACE_MS = 10_000;
+const PROBE_BUDGET_DEFAULT_TOOL_CALLS = 3;
+const PROBE_BUDGET_MAX_TOOL_CALLS = 20;
+const PROBE_BUDGET_DEFAULT_MINUTES = 2;
+const AUTH_CHECK_TIMEOUT_MS = PROBE_AGENT_TIMEOUT_MS;
+const AUTH_CHECK_FINDING_SUMMARY = "Disposable authenticated check";
 
 export interface PilotArgs {
   command?: string;
@@ -583,38 +595,91 @@ interface TimeoutResult {
   stdout: string;
   stderr: string;
   timedOut: boolean;
+  stoppedByHook: boolean;
+  spawnFailed: boolean;
 }
 
-function runDockerWithTimeout(args: string[], name: string, timeoutMs: number): Promise<TimeoutResult> {
+interface DockerStreamOptions {
+  timeoutMs: number;
+  /**
+   * Called once per complete stdout line. Return true to stop the run at a
+   * locked budget; the container is removed and docker is signalled.
+   */
+  onStdoutLine?: (line: string) => boolean;
+}
+
+/**
+ * The one streaming docker runner for probe-agent, budget-probe, auth-check,
+ * and scored runs. It keeps stdout/stderr in memory, splits stdout into lines
+ * across chunk boundaries, enforces the timeout, removes the container on a
+ * timeout or hook stop, and clears every timer before resolving.
+ */
+function runDockerStream(
+  args: string[],
+  name: string,
+  options: DockerStreamOptions,
+): Promise<TimeoutResult> {
   return new Promise((resolvePromise) => {
     const child = spawn("docker", args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let stoppedByHook = false;
+    let spawnFailed = false;
     let forceKill: NodeJS.Timeout | undefined;
     let settled = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
+    let lineBuffer = "";
+    const stop = (): void => {
+      if (settled) return;
+      removeContainer(name);
       child.kill("SIGTERM");
       forceKill = setTimeout(() => {
         child.kill("SIGKILL");
       }, PROBE_AGENT_KILL_GRACE_MS);
-    }, timeoutMs);
+    };
+    const onLine = (line: string): void => {
+      if (settled || stoppedByHook) return;
+      if (options.onStdoutLine?.(line) === true) {
+        stoppedByHook = true;
+        stop();
+      }
+    };
+    const consume = (text: string): void => {
+      lineBuffer += text;
+      let index = lineBuffer.indexOf("\n");
+      while (index >= 0 && !stoppedByHook) {
+        const line = lineBuffer.slice(0, index);
+        lineBuffer = lineBuffer.slice(index + 1);
+        onLine(line);
+        index = lineBuffer.indexOf("\n");
+      }
+    };
+    const timer = setTimeout(() => {
+      timedOut = true;
+      stop();
+    }, options.timeoutMs);
     const finish = (code: number | null): void => {
       if (settled) return;
+      const remainder = lineBuffer;
+      lineBuffer = "";
       settled = true;
+      // A final line without a trailing newline is still a raw line; the
+      // callback records it, but a budget stop is moot once the process exits.
+      if (!stoppedByHook && remainder.length > 0) options.onStdoutLine?.(remainder);
       clearTimeout(timer);
       if (forceKill !== undefined) clearTimeout(forceKill);
-      if (timedOut) removeContainer(name);
-      resolvePromise({ code, stdout, stderr, timedOut });
+      resolvePromise({ code, stdout, stderr, timedOut, stoppedByHook, spawnFailed });
     };
     child.stdout?.on("data", (chunk) => {
-      stdout += String(chunk);
+      const text = String(chunk);
+      stdout += text;
+      consume(text);
     });
     child.stderr?.on("data", (chunk) => {
       stderr += String(chunk);
     });
     child.on("error", (error) => {
+      spawnFailed = true;
       stderr += `${String(error)}\n`;
       finish(null);
     });
@@ -622,6 +687,10 @@ function runDockerWithTimeout(args: string[], name: string, timeoutMs: number): 
       finish(code);
     });
   });
+}
+
+function runDockerWithTimeout(args: string[], name: string, timeoutMs: number): Promise<TimeoutResult> {
+  return runDockerStream(args, name, { timeoutMs });
 }
 
 function extractLastText(sanitizedStdout: string): string {
@@ -711,6 +780,787 @@ function cmdSanitize(flags: Record<string, string | boolean>): void {
   process.stdout.write(sanitized.endsWith("\n") ? sanitized : `${sanitized}\n`);
 }
 
+/* ---------------------------------------------------------------------- */
+/* Scored-run and budget-probe session path                               */
+/* ---------------------------------------------------------------------- */
+
+interface SessionRunInput {
+  runId: string;
+  runDir: string;
+  role: Role;
+  arm: Arm;
+  prompt: string;
+  /** Base name for the .jsonl capture and .log transcript, e.g. `run-first`. */
+  fileBase: string;
+  /** Locked tool-call budget; undefined means no tool stop rule. */
+  maxToolCalls?: number;
+  /** Locked time budget in minutes; undefined falls back to timeoutMs. */
+  maxMinutes?: number;
+  timeoutMs?: number;
+  /** Bind source for /run (the auth-check mounts an empty workspace). */
+  workDir?: string;
+}
+
+interface SessionOutcome {
+  stopReason: "completed" | "tool_budget" | "time_budget" | "timeout";
+  toolCallCount: number;
+  exitCode: number | null;
+  durationMs: number;
+  startedAt: string;
+  endedAt: string;
+  stdout: string;
+  stderr: string;
+  spawnFailed: boolean;
+  logPath: string;
+  jsonlPath: string;
+}
+
+/**
+ * One OpenCode session in one locked-image container, shared by `run` and
+ * `probe-budget` (and `auth-check`). stdout is appended raw to the .jsonl
+ * capture line by line while the budget check runs on the same stream; the
+ * .log transcript is sanitized and refused if a credential shape survives.
+ */
+async function executeOpenCodeSession(input: SessionRunInput): Promise<SessionOutcome> {
+  const name = containerName(input.runId, input.role, input.arm);
+  removeContainer(name);
+  const spec = containerSpec({
+    imageTag: imageTag(),
+    runId: input.runId,
+    runRoot: input.runDir,
+    role: input.role,
+    arm: input.arm,
+    ...(input.workDir === undefined ? {} : { workDir: input.workDir }),
+  });
+  const argv = containerArgv(spec, "opencode", [
+    "run",
+    "--pure",
+    "--format",
+    "json",
+    "--model",
+    PILOT_MODEL,
+    input.prompt,
+  ]);
+
+  const jsonlPath = join(input.runDir, `${input.fileBase}.jsonl`);
+  writeFileSync(jsonlPath, "", "utf8");
+  let toolCallCount = 0;
+  const startedMs = Date.now();
+  const startedAt = new Date(startedMs).toISOString();
+  const result = await runDockerStream(argv, name, {
+    timeoutMs:
+      input.maxMinutes === undefined
+        ? input.timeoutMs ?? PROBE_AGENT_TIMEOUT_MS
+        : input.maxMinutes * 60_000,
+    onStdoutLine: (line) => {
+      appendFileSync(jsonlPath, `${line}\n`, "utf8");
+      if (toolUseFromJsonLine(line) === undefined) return false;
+      toolCallCount += 1;
+      return input.maxToolCalls !== undefined && toolCallCount >= input.maxToolCalls;
+    },
+  });
+  const endedMs = Date.now();
+  const endedAt = new Date(endedMs).toISOString();
+  const stopReason: SessionOutcome["stopReason"] = result.stoppedByHook
+    ? "tool_budget"
+    : result.timedOut
+      ? input.maxMinutes === undefined
+        ? "timeout"
+        : "time_budget"
+      : "completed";
+
+  const sanitizedStdout = sanitizePilotText(result.stdout);
+  const sanitizedStderr = sanitizePilotText(result.stderr);
+  const header = [
+    `command: ${sanitizePilotText(`docker ${argv.join(" ")}`)}`,
+    `stopReason: ${stopReason}`,
+    `toolCallCount: ${toolCallCount}`,
+    `exitCode: ${result.code === null ? "null" : result.code}`,
+    `durationMs: ${endedMs - startedMs}`,
+  ].join("\n");
+  const logContent = `${header}\n\n${sanitizedStdout}${
+    sanitizedStderr.length > 0 ? `\n[stderr]\n${sanitizedStderr}` : ""
+  }`;
+  const logPath = join(input.runDir, `${input.fileBase}.log`);
+  if (hasCredentialShape(logContent)) {
+    throw new Error(`Refusing to write ${logPath}: credential-shaped text survives sanitization`);
+  }
+  writeFileSync(logPath, logContent, "utf8");
+
+  return {
+    stopReason,
+    toolCallCount,
+    exitCode: result.code,
+    durationMs: endedMs - startedMs,
+    startedAt,
+    endedAt,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    spawnFailed: result.spawnFailed,
+    logPath,
+    jsonlPath,
+  };
+}
+
+interface RunManifest {
+  scenario: Scenario;
+  arm: Arm;
+}
+
+function readRunManifest(root: string): RunManifest {
+  const path = join(root, "MANIFEST.json");
+  if (!existsSync(path)) {
+    throw new Error(`Missing ${path}; stage the run before running it`);
+  }
+  let parsed: { scenario?: unknown; arm?: unknown };
+  try {
+    parsed = JSON.parse(readFileSync(path, "utf8")) as { scenario?: unknown; arm?: unknown };
+  } catch {
+    throw new Error(`MANIFEST.json is not valid JSON: ${path}`);
+  }
+  if (
+    !(SCENARIOS as readonly unknown[]).includes(parsed.scenario) ||
+    !(ARMS as readonly unknown[]).includes(parsed.arm)
+  ) {
+    throw new Error(`MANIFEST.json has an invalid scenario or arm: ${path}`);
+  }
+  return { scenario: parsed.scenario as Scenario, arm: parsed.arm as Arm };
+}
+
+function readStagedPrompt(root: string): string {
+  const path = join(root, "prompt.txt");
+  if (!existsSync(path)) {
+    throw new Error(`Missing staged prompt: ${path}; stage the run before running it`);
+  }
+  const prompt = readFileSync(path, "utf8").trim();
+  if (prompt.length === 0) {
+    throw new Error(`Staged prompt is empty: ${path}`);
+  }
+  return prompt;
+}
+
+/**
+ * The config guard and the sealed run material must both be real before a
+ * scored run starts: the mounted database and the acting agent token. A probe
+ * default config fails with the re-stage instruction from assertRealRunConfig.
+ */
+function assertRunArtifacts(root: string): void {
+  const configPath = join(root, "config", "opencode.json");
+  if (!existsSync(configPath)) {
+    throw new Error(
+      `Missing ${configPath}; re-stage with --campfire-db /campfire/campfire.db --campfire-token-file /campfire/agent.token`,
+    );
+  }
+  let config: unknown;
+  try {
+    config = JSON.parse(readFileSync(configPath, "utf8"));
+  } catch {
+    throw new Error(`Config is not valid JSON: ${configPath}`);
+  }
+  assertRealRunConfig(config);
+
+  const dbPath = join(root, "campfire", "campfire.db");
+  if (!existsSync(dbPath)) {
+    throw new Error(
+      `Missing run database: ${dbPath}. Place the frozen run database there before running.`,
+    );
+  }
+  const tokenPath = join(root, "campfire", "agent.token");
+  if (!existsSync(tokenPath)) {
+    throw new Error(
+      `Missing agent token: ${tokenPath}. Place the acting agent token there (mode 600) before running.`,
+    );
+  }
+  const tokenMode = statSync(tokenPath).mode & 0o777;
+  if (tokenMode !== 0o600) {
+    throw new Error(
+      `Agent token must be mode 600: ${tokenPath} is mode ${tokenMode.toString(8)}. This file must never be committed.`,
+    );
+  }
+}
+
+/**
+ * Independent cross-check of the streamed count against the session database.
+ * Only parts created at or after `sinceMs` count, so a reused opencode-data
+ * directory or an earlier invalid attempt cannot inflate the run's count. A
+ * missing file or table returns null instead of failing the run; overshoot is
+ * recorded only from a readable count.
+ */
+function countSessionToolCalls(dbPath: string, sinceMs: number): number | null {
+  if (!existsSync(dbPath)) return null;
+  let db: Database.Database | undefined;
+  try {
+    db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const row = db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM part WHERE json_extract(data, '$.type') = 'tool' AND time_created >= ?",
+      )
+      .get(sinceMs) as { count?: unknown } | undefined;
+    const count = Number(row?.count ?? 0);
+    return Number.isFinite(count) ? count : null;
+  } catch {
+    return null;
+  } finally {
+    db?.close();
+  }
+}
+
+interface ScoredRunReport {
+  role: Role;
+  scenario: Scenario;
+  arm: Arm;
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
+  stopReason: SessionOutcome["stopReason"];
+  toolCallCount: number;
+  sessionToolCallCount: number | null;
+  overshoot: boolean;
+  exitCode: number | null;
+  logPath: string;
+}
+
+async function cmdRun(flags: Record<string, string | boolean>): Promise<number> {
+  assertLockedImage();
+  const runId = requireRunId(flags);
+  const role: Role = flags.role === undefined ? "first" : requireChoice(flags, "role", ROLES);
+  const root = runRoot(runId);
+  const manifest = readRunManifest(root);
+  const prompt = readStagedPrompt(root);
+  assertRunArtifacts(root);
+
+  const budget = budgetFor(role);
+  const outcome = await executeOpenCodeSession({
+    runId,
+    runDir: root,
+    role,
+    arm: manifest.arm,
+    prompt,
+    fileBase: `run-${role}`,
+    maxToolCalls: budget.toolCalls,
+    maxMinutes: budget.minutes,
+  });
+
+  const sessionToolCallCount = countSessionToolCalls(
+    join(root, "opencode-data", "opencode.db"),
+    Date.parse(outcome.startedAt),
+  );
+  const overshoot = sessionToolCallCount !== null && sessionToolCallCount > budget.toolCalls;
+  const report: ScoredRunReport = {
+    role,
+    scenario: manifest.scenario,
+    arm: manifest.arm,
+    startedAt: outcome.startedAt,
+    endedAt: outcome.endedAt,
+    durationMs: outcome.durationMs,
+    stopReason: outcome.stopReason,
+    toolCallCount: outcome.toolCallCount,
+    sessionToolCallCount,
+    overshoot,
+    exitCode: outcome.exitCode,
+    logPath: outcome.logPath,
+  };
+  writeFileSync(join(root, `run-${role}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+  const ok =
+    !outcome.spawnFailed && (outcome.stopReason !== "completed" || outcome.exitCode === 0);
+  console.log(JSON.stringify({ ok, ...report }));
+  return ok ? 0 : 1;
+}
+
+function requireIntegerFlag(
+  flags: Record<string, string | boolean>,
+  name: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const raw = optionalFlagValue(flags, name);
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < min || value > max) {
+    throw new Error(`Invalid --${name}: expected an integer ${min}..${max} (got ${raw})`);
+  }
+  return value;
+}
+
+async function cmdProbeBudget(flags: Record<string, string | boolean>): Promise<number> {
+  assertLockedImage();
+  const runId = requireRunId(flags);
+  const maxToolCalls = requireIntegerFlag(
+    flags,
+    "max-tool-calls",
+    PROBE_BUDGET_DEFAULT_TOOL_CALLS,
+    1,
+    PROBE_BUDGET_MAX_TOOL_CALLS,
+  );
+  const maxMinutes = requireIntegerFlag(
+    flags,
+    "max-minutes",
+    PROBE_BUDGET_DEFAULT_MINUTES,
+    1,
+    24 * 60,
+  );
+  const role: Role = flags.role === undefined ? "first" : requireChoice(flags, "role", ROLES);
+  const root = runRoot(runId);
+  const manifest = readRunManifest(root);
+  assertRunArtifacts(root);
+
+  const outcome = await executeOpenCodeSession({
+    runId,
+    runDir: root,
+    role,
+    arm: manifest.arm,
+    prompt: BUDGET_PROBE_PROMPT,
+    fileBase: `probe-budget-${role}`,
+    maxToolCalls,
+    maxMinutes,
+  });
+  const sessionToolCallCount = countSessionToolCalls(
+    join(root, "opencode-data", "opencode.db"),
+    Date.parse(outcome.startedAt),
+  );
+
+  const failures: string[] = [];
+  if (outcome.stopReason === "completed") {
+    failures.push("completed before reaching the tool-call budget");
+  }
+  if (outcome.stopReason === "time_budget" || outcome.stopReason === "timeout") {
+    failures.push(`stopped on the time budget before the tool-call budget (${outcome.stopReason})`);
+  }
+  if (outcome.toolCallCount < 1) {
+    failures.push("observed no tool calls");
+  }
+  if (outcome.toolCallCount > maxToolCalls) {
+    failures.push(`streamed count overshot: ${outcome.toolCallCount} > ${maxToolCalls}`);
+  }
+  if (sessionToolCallCount === null) {
+    failures.push("session database cross-check was unreadable");
+  } else if (sessionToolCallCount > maxToolCalls) {
+    failures.push(`session count overshot: ${sessionToolCallCount} > ${maxToolCalls}`);
+  }
+  const ok =
+    outcome.stopReason === "tool_budget" &&
+    outcome.toolCallCount >= 1 &&
+    outcome.toolCallCount <= maxToolCalls &&
+    sessionToolCallCount !== null &&
+    sessionToolCallCount <= maxToolCalls;
+
+  console.log(
+    JSON.stringify({
+      ok,
+      role,
+      scenario: manifest.scenario,
+      arm: manifest.arm,
+      startedAt: outcome.startedAt,
+      endedAt: outcome.endedAt,
+      durationMs: outcome.durationMs,
+      stopReason: outcome.stopReason,
+      toolCallCount: outcome.toolCallCount,
+      sessionToolCallCount,
+      overshoot: sessionToolCallCount !== null && sessionToolCallCount > maxToolCalls,
+      exitCode: outcome.exitCode,
+      logPath: outcome.logPath,
+      budget: { toolCalls: maxToolCalls, minutes: maxMinutes },
+      failures,
+    }),
+  );
+  return ok ? 0 : 1;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Disposable authenticated check (auth-check)                            */
+/* ---------------------------------------------------------------------- */
+
+interface HostCliResult {
+  status: number;
+  stdout: string;
+  stderr: string;
+}
+
+function parseLastJson(text: string): Record<string, unknown> | undefined {
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("{"));
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try {
+      return JSON.parse(lines[index]!) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Host-side Campfire CLI runner for auth-check setup and verification. The
+ * environment is scrubbed of Campfire variables so the disposable database and
+ * explicit tokens are the only inputs.
+ */
+function hostCli(args: string[]): HostCliResult {
+  const cli = join(REPO_ROOT, "dist", "src", "cli", "index.js");
+  if (!existsSync(cli)) {
+    throw new Error(`Missing built host CLI at ${cli}; run npm run build first`);
+  }
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  for (const name of [
+    "CAMPFIRE_URL",
+    "CAMPFIRE_TOKEN",
+    "CAMPFIRE_DB",
+    "CAMPFIRE_ACTOR_ID",
+    "CAMPFIRE_ACTOR_TYPE",
+    "CAMPFIRE_SESSION_ID",
+    "CAMPFIRE_HARNESS",
+    "CAMPFIRE_OUTPUT",
+  ]) {
+    delete env[name];
+  }
+  // Isolate host-CLI profiles so an operator remote profile or saved credential
+  // can never redirect a disposable command away from the temp database.
+  const isolatedRoot = join(pilotRoot(), "auth-check", "host-cli");
+  env.CAMPFIRE_CONFIG_DIR = join(isolatedRoot, "config");
+  env.CAMPFIRE_DATA_DIR = join(isolatedRoot, "data");
+  mkdirSync(env.CAMPFIRE_CONFIG_DIR, { recursive: true });
+  mkdirSync(env.CAMPFIRE_DATA_DIR, { recursive: true });
+  const result = spawnSync(process.execPath, [cli, ...args], {
+    encoding: "utf8",
+    maxBuffer: DOCKER_MAX_BUFFER,
+    env,
+  });
+  if (result.error !== undefined) {
+    throw new Error(`campfire ${args.join(" ")} failed to start: ${result.error.message}`);
+  }
+  return { status: result.status ?? 1, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
+}
+
+function hostCliJson<T>(args: string[]): T {
+  const result = hostCli([...args, "--output", "json"]);
+  const parsed = parseLastJson(result.stdout);
+  if (result.status !== 0 || parsed === undefined) {
+    throw new Error(
+      `Host CLI step failed (exit ${result.status}): campfire ${args.join(" ")}\n${sanitizePilotText(result.stderr).trim()}\n${sanitizePilotText(result.stdout).trim()}`,
+    );
+  }
+  return parsed as unknown as T;
+}
+
+interface BootstrapReceipt {
+  teamId: string;
+  human: { id: string };
+  token: string;
+}
+
+interface WorkspaceReceipt {
+  id: string;
+}
+
+interface AgentReceipt {
+  agent: { id: string };
+}
+
+interface TokenReceipt {
+  token: string;
+}
+
+interface HostWorkspaceView {
+  goal?: { id?: string };
+  findings?: Array<{
+    id?: string;
+    summary?: string;
+    createdBy?: { actorId?: string };
+    agentSessionId?: string;
+  }>;
+  activity?: Array<{
+    id?: string;
+    actor?: { actorId?: string };
+    action?: string;
+    objectType?: string;
+    objectId?: string;
+  }>;
+}
+
+const AUTH_CHECK_HUMAN_NAME = "Disposable Auth Check";
+const AUTH_CHECK_AGENT_NAME = "Disposable Auth Check Agent";
+const AUTH_CHECK_WORKSPACE_NAME = "Disposable Auth Check Workspace";
+const AUTH_CHECK_GOAL_TITLE = "Disposable authenticated check goal";
+const AUTH_CHECK_UNAUTHORIZED_WORKSPACE_NAME = "Disposable Auth Check Unauthorized";
+
+/**
+ * Build the disposable authenticated universe in one fresh SQLite database:
+ * human, owned agent, authorized workspace with goal, agent invite + join, one
+ * issued agent token, and a second workspace the agent is never invited to.
+ */
+function buildAuthCheckDatabase(root: string): {
+  dbPath: string;
+  humanId: string;
+  humanToken: string;
+  agentId: string;
+  agentToken: string;
+  workspaceId: string;
+  unauthorizedWorkspaceId: string;
+} {
+  const dbPath = join(root, "campfire.db");
+  const bootstrap = hostCliJson<BootstrapReceipt>([
+    "bootstrap",
+    "--db",
+    dbPath,
+    "--human-name",
+    AUTH_CHECK_HUMAN_NAME,
+  ]);
+  const workspace = hostCliJson<WorkspaceReceipt>([
+    "create-workspace",
+    "--db",
+    dbPath,
+    "--team",
+    bootstrap.teamId,
+    "--name",
+    AUTH_CHECK_WORKSPACE_NAME,
+    "--token",
+    bootstrap.token,
+  ]);
+  hostCliJson([
+    "create-goal",
+    "--db",
+    dbPath,
+    "--workspace",
+    workspace.id,
+    "--title",
+    AUTH_CHECK_GOAL_TITLE,
+    "--token",
+    bootstrap.token,
+  ]);
+  const agent = hostCliJson<AgentReceipt>([
+    "create-agent",
+    "--db",
+    dbPath,
+    "--name",
+    AUTH_CHECK_AGENT_NAME,
+    "--human",
+    bootstrap.human.id,
+    "--harness",
+    "opencode",
+    "--team",
+    bootstrap.teamId,
+    "--token",
+    bootstrap.token,
+  ]);
+  hostCliJson([
+    "invite",
+    workspace.id,
+    "--db",
+    dbPath,
+    "--actor",
+    agent.agent.id,
+    "--type",
+    "agent",
+    "--role",
+    "agent",
+    "--token",
+    bootstrap.token,
+  ]);
+  const issued = hostCliJson<TokenReceipt>([
+    "issue-token",
+    "--db",
+    dbPath,
+    "--actor",
+    agent.agent.id,
+    "--type",
+    "agent",
+    "--token",
+    bootstrap.token,
+  ]);
+  // Join with the agent token: the acting identity comes from the token, and
+  // the operator's default human token must never leak into this database.
+  hostCliJson(["join", workspace.id, "--db", dbPath, "--token", issued.token]);
+  const unauthorized = hostCliJson<WorkspaceReceipt>([
+    "create-workspace",
+    "--db",
+    dbPath,
+    "--team",
+    bootstrap.teamId,
+    "--name",
+    AUTH_CHECK_UNAUTHORIZED_WORKSPACE_NAME,
+    "--token",
+    bootstrap.token,
+  ]);
+
+  return {
+    dbPath,
+    humanId: bootstrap.human.id,
+    humanToken: bootstrap.token,
+    agentId: agent.agent.id,
+    agentToken: issued.token,
+    workspaceId: workspace.id,
+    unauthorizedWorkspaceId: unauthorized.id,
+  };
+}
+
+function authCheckFailedChecks(checks: Record<string, boolean>): string[] {
+  return Object.entries(checks)
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+}
+
+async function cmdAuthCheck(): Promise<number> {
+  assertLockedImage();
+  const authRoot = join(pilotRoot(), "auth-check");
+  assertOutsideRepo(authRoot);
+  rmSync(authRoot, { recursive: true, force: true });
+  mkdirSync(join(authRoot, "config"), { recursive: true });
+  mkdirSync(join(authRoot, "campfire"), { recursive: true });
+  mkdirSync(join(authRoot, "opencode-data"), { recursive: true });
+  mkdirSync(join(authRoot, "workspace"), { recursive: true });
+
+  const built = buildAuthCheckDatabase(authRoot);
+
+  const config = buildAgentConfig({
+    role: "first",
+    arm: "control",
+    campfireDb: "/campfire/campfire.db",
+    campfireTokenFile: "/campfire/agent.token",
+  });
+  writeFileSync(
+    join(authRoot, "config", "opencode.json"),
+    `${JSON.stringify(config, null, 2)}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(authRoot, "config", ".gitignore"),
+    "node_modules\npackage.json\npackage-lock.json\nbun.lock\n.gitignore\n",
+    "utf8",
+  );
+
+  const mountedDb = join(authRoot, "campfire", "campfire.db");
+  copyFileSync(built.dbPath, mountedDb);
+  const tokenPath = join(authRoot, "campfire", "agent.token");
+  writeFileSync(tokenPath, built.agentToken, "utf8");
+  chmodSync(tokenPath, 0o600);
+
+  const authSource = join(homedir(), ".local", "share", "opencode", "auth.json");
+  if (!existsSync(authSource)) {
+    throw new Error(
+      `Missing OpenCode auth at ${authSource}; run opencode login on the host before auth-check.`,
+    );
+  }
+  const authDestination = join(authRoot, "opencode-data", "auth.json");
+  copyFileSync(authSource, authDestination);
+  chmodSync(authDestination, 0o600);
+
+  const prompt = authCheckPrompt(built.workspaceId, built.unauthorizedWorkspaceId);
+  writeFileSync(join(authRoot, "prompt.txt"), `${prompt}\n`, "utf8");
+
+  const outcome = await executeOpenCodeSession({
+    runId: "auth-check",
+    runDir: authRoot,
+    role: "first",
+    arm: "control",
+    prompt,
+    fileBase: "auth-check",
+    timeoutMs: AUTH_CHECK_TIMEOUT_MS,
+    workDir: join(authRoot, "workspace"),
+  });
+
+  const full = hostCliJson<HostWorkspaceView>([
+    "show",
+    built.workspaceId,
+    "--full",
+    "--db",
+    mountedDb,
+    "--token",
+    built.agentToken,
+  ]);
+  const finding = full.findings?.find(
+    (entry) => entry.summary === AUTH_CHECK_FINDING_SUMMARY,
+  );
+  const registeredSession = full.activity?.find(
+    (entry) => entry.objectType === "agent_session" && entry.actor?.actorId === built.agentId,
+  );
+  const findingSessionId =
+    typeof finding?.agentSessionId === "string" && finding.agentSessionId.length > 0
+      ? finding.agentSessionId
+      : undefined;
+  const sessionId =
+    findingSessionId ??
+    (typeof registeredSession?.objectId === "string" ? registeredSession.objectId : undefined) ??
+    null;
+
+  const denied = hostCli([
+    "show",
+    built.unauthorizedWorkspaceId,
+    "--db",
+    mountedDb,
+    "--token",
+    built.agentToken,
+    "--output",
+    "json",
+  ]);
+  const deniedError = parseLastJson(denied.stderr);
+  const deniedDetail =
+    typeof deniedError?.error === "object" && deniedError.error !== null
+      ? (deniedError.error as { code?: unknown; message?: unknown })
+      : undefined;
+  const deniedCode = deniedDetail?.code;
+
+  const unauthorizedFull = hostCliJson<HostWorkspaceView>([
+    "show",
+    built.unauthorizedWorkspaceId,
+    "--full",
+    "--db",
+    mountedDb,
+    "--token",
+    built.humanToken,
+  ]);
+  const unauthorizedAgentFinding = unauthorizedFull.findings?.some(
+    (entry) =>
+      entry.summary === AUTH_CHECK_FINDING_SUMMARY ||
+      entry.agentSessionId === sessionId ||
+      entry.createdBy?.actorId === built.agentId,
+  );
+  const unauthorizedAgentActivity = unauthorizedFull.activity?.some(
+    (entry) => entry.actor?.actorId === built.agentId,
+  );
+
+  const checks = {
+    sessionCompleted: outcome.stopReason === "completed" && outcome.exitCode === 0,
+    goalPresent: typeof full.goal?.id === "string" && full.goal.id.length > 0,
+    findingPresent: finding !== undefined,
+    findingByAgent: finding?.createdBy?.actorId === built.agentId,
+    sessionRegistered: registeredSession !== undefined,
+    sessionOnFinding: findingSessionId !== undefined,
+    unauthorizedDenied: denied.status !== 0 && deniedCode === "ParticipantRequired",
+    unauthorizedHasNoAgentContent: !unauthorizedAgentFinding && !unauthorizedAgentActivity,
+  };
+  const ok = Object.values(checks).every(Boolean);
+  const unauthorizedError =
+    deniedCode !== undefined
+      ? `${String(deniedCode)}${
+          typeof deniedDetail?.message === "string" ? `: ${deniedDetail.message}` : ""
+        }`
+      : sanitizePilotText(denied.stderr.trim()).slice(0, 500);
+  const report = {
+    ok,
+    agentId: built.agentId,
+    workspaceId: built.workspaceId,
+    goalPresent: checks.goalPresent,
+    findingId: finding?.id ?? null,
+    sessionId,
+    unauthorizedError,
+    checks,
+  };
+  const serialized = sanitizePilotText(JSON.stringify(report, null, 2));
+  if (hasCredentialShape(serialized)) {
+    throw new Error(
+      `Refusing to write ${join(authRoot, "auth-check.json")}: credential-shaped text survives sanitization`,
+    );
+  }
+  writeFileSync(join(authRoot, "auth-check.json"), `${serialized}\n`, "utf8");
+
+  const failedChecks = authCheckFailedChecks(checks);
+  console.log(JSON.stringify({ ...report, failedChecks }));
+  return ok ? 0 : 1;
+}
+
 async function main(argv: string[]): Promise<number> {
   const parsed = parsePilotArgs(argv);
   try {
@@ -727,6 +1577,12 @@ async function main(argv: string[]): Promise<number> {
         return cmdProbeGates(parsed.flags);
       case "probe-agent":
         return await cmdProbeAgent(parsed.flags);
+      case "probe-budget":
+        return await cmdProbeBudget(parsed.flags);
+      case "auth-check":
+        return await cmdAuthCheck();
+      case "run":
+        return await cmdRun(parsed.flags);
       case "sanitize":
         cmdSanitize(parsed.flags);
         return 0;

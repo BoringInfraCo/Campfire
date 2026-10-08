@@ -23,9 +23,13 @@ import { ValidationError } from "../../src/domain/errors.js";
 import { parsePilotArgs } from "../../scripts/wow-001/pilot.js";
 import {
   AGENT_IMAGE_CONTEXT_ALLOWLIST,
+  BUDGET_PROBE_PROMPT,
   FIRST_AGENT_PROMPT,
   LOCKED_AGENT_IMAGE,
+  PILOT_BUDGETS,
   PROBE_PROMPT,
+  REAL_RUN_CAMPFIRE_DB,
+  REAL_RUN_CAMPFIRE_TOKEN,
   REPO_ROOT,
   SECOND_AGENT_PROMPT,
   SEALED_BASENAMES,
@@ -33,6 +37,9 @@ import {
   TREATMENT_ADDED_SENTENCE,
   agentDockerfile,
   assertOutsideRepo,
+  assertRealRunConfig,
+  authCheckPrompt,
+  budgetFor,
   buildAgentConfig,
   containerEnv,
   containerName,
@@ -48,6 +55,7 @@ import {
   secondAgentPrompt,
   sha256File,
   stageRun,
+  toolUseFromJsonLine,
   type Arm,
   type GateReport,
   type PromptValues,
@@ -359,6 +367,23 @@ describe("agent harness config and playbook gate", () => {
       expect(source.startsWith(REPO_ROOT)).toBe(false);
     }
   });
+
+  it("swaps the /run bind source for the auth-check workspace", () => {
+    const runRoot = join(workDir, "pilot", "auth-check");
+    const authWorkDir = join(runRoot, "workspace");
+    const spec = containerSpec({
+      imageTag: "campfire-agent:test",
+      runId: "auth-check",
+      runRoot,
+      role: "first",
+      arm: "control",
+      workDir: authWorkDir,
+    });
+    expect(spec.join(" ")).toContain(`type=bind,src=${authWorkDir},dst=/run,readonly`);
+    expect(spec.join(" ")).not.toContain(
+      `type=bind,src=${join(runRoot, "run")},dst=/run,readonly`,
+    );
+  });
 });
 
 describe("agent image context and Dockerfile", () => {
@@ -504,6 +529,127 @@ describe("parsePilotArgs", () => {
       flags: { "dry-run": true },
       positionals: [],
     });
+  });
+});
+
+describe("synthetic authenticated-check prompts", () => {
+  it("substitutes both workspace ids and names every required check step", () => {
+    const prompt = authCheckPrompt("ws_authorized", "ws_unauthorized");
+    expect(prompt).toContain("ws_authorized");
+    expect(prompt).toContain("ws_unauthorized");
+    for (const tool of [
+      "whoami",
+      "list_workspaces",
+      "get_workspace_context",
+      "register_agent_session",
+    ]) {
+      expect(prompt).toContain(tool);
+    }
+    expect(prompt).toContain("Disposable authenticated check");
+    expect(prompt).not.toMatch(/<workspace-id>|<unauthorized-workspace-id>/);
+  });
+
+  it("asks the budget probe for at least 30 one-at-a-time list_workspaces calls", () => {
+    expect(BUDGET_PROBE_PROMPT).toContain("list_workspaces");
+    expect(BUDGET_PROBE_PROMPT).toContain("30");
+    expect(BUDGET_PROBE_PROMPT.toLowerCase()).toContain("one call at a time");
+  });
+});
+
+describe("pilot budgets", () => {
+  it("freezes the RUN-LOCK budgets per role and returns them from budgetFor", () => {
+    expect(PILOT_BUDGETS.first).toEqual({ minutes: 30, toolCalls: 100 });
+    expect(PILOT_BUDGETS.second).toEqual({ minutes: 10, toolCalls: 30 });
+    expect(budgetFor("first")).toBe(PILOT_BUDGETS.first);
+    expect(budgetFor("second")).toBe(PILOT_BUDGETS.second);
+  });
+});
+
+describe("toolUseFromJsonLine", () => {
+  it("counts a tool_use event whose part is a tool, including errored calls", () => {
+    const line = JSON.stringify({
+      type: "tool_use",
+      part: {
+        type: "tool",
+        tool: "campfire_list_workspaces",
+        state: { status: "error", error: "ActorNotFound" },
+      },
+    });
+    expect(toolUseFromJsonLine(line)).toEqual({ tool: "campfire_list_workspaces" });
+  });
+
+  it("ignores step_start, text, step_finish, and an event without the tool part", () => {
+    const events: Array<Record<string, unknown>> = [
+      { type: "step_start", part: { type: "step-start" } },
+      { type: "text", part: { type: "text", text: "hello" } },
+      { type: "step_finish", part: { type: "step-finish" } },
+      { type: "tool", part: { type: "tool", tool: "read" } },
+    ];
+    for (const event of events) {
+      expect(toolUseFromJsonLine(JSON.stringify(event))).toBeUndefined();
+    }
+  });
+
+  it("never throws on invalid JSON and ignores missing fields", () => {
+    expect(toolUseFromJsonLine("not json")).toBeUndefined();
+    expect(toolUseFromJsonLine("")).toBeUndefined();
+    expect(toolUseFromJsonLine("null")).toBeUndefined();
+    expect(toolUseFromJsonLine("42")).toBeUndefined();
+    expect(toolUseFromJsonLine(JSON.stringify({ type: "tool_use" }))).toBeUndefined();
+    expect(
+      toolUseFromJsonLine(JSON.stringify({ type: "tool_use", part: { type: "text" } })),
+    ).toBeUndefined();
+    expect(
+      toolUseFromJsonLine(JSON.stringify({ type: "tool_use", part: { type: "tool" } })),
+    ).toBeUndefined();
+    expect(
+      toolUseFromJsonLine(JSON.stringify({ type: "tool_use", part: { type: "tool", tool: "" } })),
+    ).toBeUndefined();
+  });
+});
+
+describe("assertRealRunConfig", () => {
+  it("accepts the real staged run config whose MCP database is the mounted run database", () => {
+    const config = buildAgentConfig({
+      role: "first",
+      arm: "control",
+      campfireDb: REAL_RUN_CAMPFIRE_DB,
+      campfireTokenFile: "/campfire/agent.token",
+    });
+    expect(() => assertRealRunConfig(config)).not.toThrow();
+    const environment = (config.mcp as { campfire: { environment: Record<string, string> } })
+      .campfire.environment;
+    expect(environment.CAMPFIRE_DB).toBe(REAL_RUN_CAMPFIRE_DB);
+    expect(environment.CAMPFIRE_TOKEN).toBe(REAL_RUN_CAMPFIRE_TOKEN);
+  });
+
+  it("refuses the probe default config and tells the operator how to re-stage", () => {
+    const probe = buildAgentConfig({ role: "first", arm: "control" });
+    let message = "";
+    try {
+      assertRealRunConfig(probe);
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(() => assertRealRunConfig(probe)).toThrow(ValidationError);
+    expect(message).toContain("--campfire-db /campfire/campfire.db");
+    expect(message).toContain("--campfire-token-file /campfire/agent.token");
+  });
+
+  it("refuses a config whose token does not come from the staged token file", () => {
+    const config = buildAgentConfig({
+      role: "first",
+      arm: "control",
+      campfireDb: REAL_RUN_CAMPFIRE_DB,
+      campfireTokenFile: "/tmp/other.token",
+    });
+    expect(() => assertRealRunConfig(config)).toThrow(ValidationError);
+  });
+
+  it("refuses anything that is not an agent config", () => {
+    expect(() => assertRealRunConfig(undefined)).toThrow(ValidationError);
+    expect(() => assertRealRunConfig({ mcp: {} })).toThrow(ValidationError);
+    expect(() => assertRealRunConfig({ mcp: { campfire: {} } })).toThrow(ValidationError);
   });
 });
 

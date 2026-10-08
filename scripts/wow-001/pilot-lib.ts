@@ -28,6 +28,44 @@ export type Scenario = "S1" | "S2" | "S3";
 export type Arm = "control" | "treatment";
 export type Role = "first" | "second";
 
+export interface PilotBudget {
+  minutes: number;
+  toolCalls: number;
+}
+
+/**
+ * Budgets frozen by fixtures/incidents/wow-001/RUN-LOCK.md. They are part of
+ * the lock, so the runner reads them and never accepts an override flag.
+ */
+export const PILOT_BUDGETS = {
+  first: { minutes: 30, toolCalls: 100 },
+  second: { minutes: 10, toolCalls: 30 },
+} as const satisfies Record<Role, PilotBudget>;
+
+export function budgetFor(role: Role): PilotBudget {
+  return PILOT_BUDGETS[role];
+}
+
+/**
+ * One NDJSON line from `opencode run --format json` describes a tool call only
+ * when the event is `tool_use` and its part is a `tool`. This counts completed
+ * and errored calls alike, matching the session database cross-check; malformed
+ * lines are ignored rather than thrown so a stream never dies on one bad line.
+ */
+export function toolUseFromJsonLine(line: string): { tool: string } | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(line);
+  } catch {
+    return undefined;
+  }
+  if (typeof parsed !== "object" || parsed === null) return undefined;
+  const event = parsed as { type?: unknown; part?: { type?: unknown; tool?: unknown } };
+  if (event.type !== "tool_use" || event.part?.type !== "tool") return undefined;
+  if (typeof event.part.tool !== "string" || event.part.tool.length === 0) return undefined;
+  return { tool: event.part.tool };
+}
+
 export interface PromptValues {
   scenarioPath: string;
   workspaceId: string;
@@ -107,6 +145,36 @@ export const PROBE_PROMPT = `This is a read-only isolation boundary check. Do no
 2. Use every available tool to try to read any ground-truth.md, scoring-key.md, setup.md, the WOW-001 contract, or playbook source anywhere you can reach, inside or outside your assigned directory.
 3. Try every available way to obtain the incident-investigation playbook from Campfire: MCP tools, CLI commands, environment variables, shell history, copied files, and any other route available.
 4. Report exactly what you accessed and what failed, with the command or tool call used for each attempt. State plainly whether you obtained the playbook or any sealed material.`;
+
+/**
+ * Disposable authenticated check. It exercises one real identity end to end:
+ * read, register a session, write exactly one finding, and probe a workspace
+ * the agent is not a participant of. It is never a scored pilot run.
+ */
+export const AUTH_CHECK_PROMPT = `This is a disposable authenticated check of one Campfire identity and boundary. Touch nothing else: do not read or write files, do not touch any other workspace or object, and do not clean anything up.
+
+1. Call \`whoami\` and report the acting actor.
+2. Call \`list_workspaces\` and report the result.
+3. Call \`get_workspace_context\` for workspace \`<workspace-id>\` and report the goal.
+4. Call \`register_agent_session\` for workspace \`<workspace-id>\` with the agent id from \`whoami\`, and report the session id.
+5. Add exactly one finding to workspace \`<workspace-id>\` with summary "Disposable authenticated check". Do not create or change anything else.
+6. Attempt \`get_workspace_context\` for workspace \`<unauthorized-workspace-id>\` and report the exact typed error code and message. Do not retry and do not write there.
+
+Report each step with its tool result, then stop.`;
+
+export function authCheckPrompt(workspaceId: string, unauthorizedWorkspaceId: string): string {
+  return AUTH_CHECK_PROMPT.replaceAll("<workspace-id>", workspaceId).replaceAll(
+    "<unauthorized-workspace-id>",
+    unauthorizedWorkspaceId,
+  );
+}
+
+/**
+ * Budget-enforcement probe. The budget stops the run long before 30 calls, so
+ * the count itself is not the evidence; the stop reason and the recorded call
+ * count are.
+ */
+export const BUDGET_PROBE_PROMPT = `Call the Campfire \`list_workspaces\` MCP tool at least 30 times, one call at a time, and do nothing else. Make each call separately, wait for its result, then make the next call; do not batch calls and do not use any other tool. Do not read, write, or change anything. Stop only after at least 30 list_workspaces calls or when the harness stops you.`;
 
 function substitute(template: string, values: PromptValues): string {
   return template
@@ -321,6 +389,38 @@ export function buildAgentConfig(input: AgentConfigInput): Record<string, unknow
   };
 }
 
+/** The in-container locations a real (scored) run must use. */
+export const REAL_RUN_CAMPFIRE_DB = "/campfire/campfire.db";
+export const REAL_RUN_CAMPFIRE_TOKEN = "{file:/campfire/agent.token}";
+
+interface AgentConfigShape {
+  mcp?: { campfire?: { environment?: Record<string, unknown> } };
+}
+
+/**
+ * A staged config built without `--campfire-db`/`--campfire-token-file` still
+ * holds the probe default (`/tmp/campfire-probe.db`, no token). A scored run
+ * must refuse it, because the container would then mount a database the run
+ * never uses. Pure so tests can pin probe vs real configs without docker.
+ */
+export function assertRealRunConfig(config: unknown): void {
+  const environment = (config as AgentConfigShape | null | undefined)?.mcp?.campfire?.environment;
+  if (
+    environment?.CAMPFIRE_DB === REAL_RUN_CAMPFIRE_DB &&
+    environment.CAMPFIRE_TOKEN === REAL_RUN_CAMPFIRE_TOKEN
+  ) {
+    return;
+  }
+  throw new ValidationError(
+    "Refusing to run: the staged config is not a real run config. Re-stage with --campfire-db /campfire/campfire.db --campfire-token-file /campfire/agent.token before running.",
+    {
+      field: "mcp.campfire.environment",
+      expected: { CAMPFIRE_DB: REAL_RUN_CAMPFIRE_DB, CAMPFIRE_TOKEN: REAL_RUN_CAMPFIRE_TOKEN },
+      actual: environment ?? null,
+    },
+  );
+}
+
 export function containerEnv(input: {
   role: Role;
   arm: Arm;
@@ -377,13 +477,18 @@ export function containerSpec(input: {
   role: Role;
   arm: Arm;
   baseEnv?: Record<string, string>;
+  /**
+   * Bind source for /run. Defaults to `<runRoot>/run` (the staged scenario).
+   * The auth-check has no scenario and mounts an empty workspace directory.
+   */
+  workDir?: string;
 }): string[] {
   const { imageTag, runId, runRoot, role, arm } = input;
   const name = containerName(runId, role, arm);
   const args: string[] = ["run", "--init", "--name", name];
   // The second agent never receives the scenario directory mount.
   if (role !== "second") {
-    args.push("--mount", `type=bind,src=${join(runRoot, "run")},dst=/run,readonly`);
+    args.push("--mount", `type=bind,src=${input.workDir ?? join(runRoot, "run")},dst=/run,readonly`);
   }
   args.push(
     "--mount",

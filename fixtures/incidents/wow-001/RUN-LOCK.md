@@ -22,7 +22,7 @@ has been executed as of this date.** The sealed-key isolation demonstration is
 | Pilot root | `~/.campfire-pilot/wow-001` (outside the repository) |
 | Runner | `scripts/wow-001/pilot.ts` (`npx tsx scripts/wow-001/pilot.ts <command>`) |
 | Arm order | from this packet: S1 control→treatment; S2 treatment→control; S3 control→treatment |
-| Budgets / stop rule | from this packet: first agent 30 min or 100 tool calls; second agent 10 min or 30 tool calls; the earlier limit stops the run; an infrastructure failure is invalid |
+| Budgets / stop rule | from this packet: first agent 30 min or 100 tool calls; second agent 10 min or 30 tool calls; the earlier limit stops the run; an infrastructure failure is invalid. Enforced by `pilot.ts run` (wall-clock timer plus a streamed `tool_use` count cross-checked against the session database); `run` has no budget override flags. |
 
 ## Tool allowlist (identical across arms for a role)
 
@@ -57,13 +57,20 @@ has been executed as of this date.** The sealed-key isolation demonstration is
    probes only. Before starting, place the run database at
    `<runDir>/campfire/campfire.db` and the acting agent token at
    `<runDir>/campfire/agent.token` (mode 600). Never commit either file.
-4. Start the first agent with the staged prompt (`<runDir>/prompt.txt`) in its
-   container. Enforce the budget as the hard timeout and stop at the earlier
-   limit. Capture CLI and MCP invocations in the runner's local log.
+4. Start the first agent with
+   `npx tsx scripts/wow-001/pilot.ts run --run-id <id>`. The runner passes the
+   staged prompt (`<runDir>/prompt.txt`), streams `opencode run --format json`,
+   and stops the container at the earlier of the locked time and tool-call
+   limits, writing `run-first.jsonl`, a sanitized log, and `run-first.json`
+   with the stop reason and counts. The enforcement mechanics were checked
+   before the pilot (see the isolation check section).
 5. On stop: freeze the workspace with a read-only export and stream tip, take
-   no later write to it, and copy its database for the second agent. Start the
-   second agent in a fresh container with `CAMPFIRE_PLAYBOOK` unset, no `/run`
-   mount, and the neutral prompt.
+   no later write to it, and copy its database for the second agent. Stage the
+   second agent's run (role `second`) with its own token and the frozen
+   database copy, then start it with
+   `npx tsx scripts/wow-001/pilot.ts run --run-id <second-id> --role second`
+   in a fresh container with `CAMPFIRE_PLAYBOOK` unset, no `/run` mount, and the
+   neutral prompt.
 6. Preserve per-run evidence as contract section 6 requires. A run stopped
    outside the frozen rule is invalid; repeat that arm once with a fresh
    workspace and session, and preserve the invalid attempt.
@@ -82,6 +89,18 @@ has been executed as of this date.** The sealed-key isolation demonstration is
 - Real OpenCode boundary probes could not read sealed material in control-first,
   control-second, or treatment-first, and fetched the playbook only in
   treatment.
+
+The real run path was also checked before the pilot:
+
+- **Authenticated path** (`docs/evidence/wow-001/auth-check.md`): a throwaway
+  agent token through `CAMPFIRE_DB=/campfire/campfire.db` and
+  `CAMPFIRE_TOKEN={file:/campfire/agent.token}` resolved the agent, listed its
+  workspace, read the goal, registered a session, recorded one finding with
+  correct provenance, and was denied `ParticipantRequired` on an unauthorized
+  workspace. The disposable state was deleted after capture.
+- **Budget enforcement** (`docs/evidence/wow-001/budget-enforcement.md`): with
+  tiny dry-check limits, the runner stopped the container at the tool-call
+  limit with no overshoot, and the streamed count matched the session database.
 
 If any run's boundary check fails, that run is invalid and the exposure is
 preserved in the result. No pilot run has started as of this lock.
