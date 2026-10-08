@@ -49,6 +49,20 @@ Until that production deploy, the current installer can select the GitHub Releas
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version {{VERSION}}
 ```
 
+### Experimental incident playbook
+
+The v1.13 playbook is disabled by default. To inspect its versioned,
+read-only guidance in the CLI, run:
+
+```bash
+CAMPFIRE_PLAYBOOK=1 campfire playbook incident-investigation --output json
+```
+
+`campfire mcp --with-playbook` adds the same definition as the `get_playbook`
+tool for that MCP session. Reading it does not change a workspace or run a
+workflow. The synthetic pilot and its limits are summarized in
+`CHANGELOG.md`.
+
 ## Build and verify
 
 ```bash

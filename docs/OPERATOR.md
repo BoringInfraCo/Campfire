@@ -2,9 +2,12 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.12.0 is published and deployed with a CONDITIONAL verdict. The versioned
-installer URL is live. The human Viewer trace remains outstanding.
-See `SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
+v1.13.0 is the current release candidate: one opt-in read-only
+incident-investigation playbook with a GO verdict on a frozen synthetic pilot.
+Publication and production deployment are tracked in
+`SPRINT_WOW_001_RESULT.md`. v1.12.0 is published and deployed with a
+CONDITIONAL Viewer verdict; its human trace remains outstanding. See
+`SPRINT_VIS_001_RESULT.md` for the founder override and unverified claims.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
@@ -30,7 +33,7 @@ nix profile install github:BoringInfraCo/Campfire
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.12.0
+node scripts/sync-install-channels.mjs --version 1.13.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.

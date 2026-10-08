@@ -164,3 +164,26 @@ object, or Gate B/C promotion is part of this release.
 The publication record, checksums, install-channel pins, deployment, and live
 verification will be added after those actions complete. Until then, pilot GO
 is the only finalized verdict here.
+
+The v1.13.0 candidate passed `npm ci`, typecheck, build, Darwin ARM64
+packaging, and the Worker deployment dry run. The pre-pin test suite passed
+**905 tests across 75 files**. The four install-channel tests had three passes
+and the expected package-version assertion failure while the formula and flake
+still point at v1.12.0; that assertion must pass after actual v1.13 archive
+checksums are published and pinned. One earlier broad test attempt timed out in
+the installer fallback case; the isolated test passed, and the complete
+pre-pin rerun passed. The first sandboxed test attempt also timed out while a
+loopback fixture tried to bind; the accepted suite was run with local test
+networking available.
+
+A read-only `npm audit --omit=dev` on the locked dependencies reported four
+production-tree advisories (one critical, one high, two moderate) already
+present through `@modelcontextprotocol/sdk@1.30.0` in the v1.12 lock. The
+critical [`proxy-addr` issue](https://github.com/advisories/GHSA-jqcg-44mw-7w3h)
+requires Express trust-proxy subnet configuration;
+Campfire's MCP server and acceptance client use stdio, and no Campfire source
+imports Express. The SDK high-severity advisory concerns an OAuth HTTP client;
+the [upstream advisory](https://github.com/advisories/GHSA-6qxp-vccf-f47h)
+explicitly excludes stdio clients and SDK servers. No exercised path for
+either issue was identified in this v1.13 slice. The dependency refresh is a
+separate follow-up; the pilot-locked runtime dependency tree is unchanged.

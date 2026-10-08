@@ -4,18 +4,25 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
-This checkout contains **v1.12.0**, a bounded improvement to the read-only Viewer.
-It makes accepted decisions needing review, open work, cited evidence, and
-truncated sections easier to distinguish. The release verdict is CONDITIONAL:
-no human has yet verified comprehension on this updated surface, and artifact
-previews remain deferred. See `docs/SPRINT_VIS_001_RESULT.md` for the scope and
-founder override. The v1.12.0 source snapshot, checksummed archives, and
-production Worker are published. The pinned installer is live.
+This checkout contains the **v1.13.0 candidate**: one opt-in, read-only
+incident-investigation playbook through the CLI and MCP. In the frozen
+synthetic WOW-001 pilot, all three treatment runs passed and all three
+matched pairs improved recording quality without lower continuation quality.
+The pilot does not establish ordinary team value or Gate B/C; see
+`docs/SPRINT_WOW_001_RESULT.md`. v1.12.0 remains the published release until
+the v1.13.0 promotion is complete. Its Viewer usability verdict is still
+CONDITIONAL; see `docs/SPRINT_VIS_001_RESULT.md`.
 
 - **Share work state** — goals, tasks, findings, decisions, and artifacts with provenance
 - **Continue anywhere** — pick up work in a fresh session on any supported harness
 - **Stay authorized** — invite-only workspaces; authorization precedes retrieval
 - **Stay inspectable** — every mutation records who contributed what, when, and on whose behalf
+
+The experimental playbook is disabled by default. An operator can read its
+versioned definition with `CAMPFIRE_PLAYBOOK=1 campfire playbook
+incident-investigation --output json`; `campfire mcp --with-playbook` exposes
+the same definition as the read-only `get_playbook` tool. It supplies recording
+guidance and performs no workflow steps or workspace writes.
 
 Every command honors `--output auto|human|json`; `--json` remains a compatibility alias for `--output json`. Under `auto`, a command renders human text when stdout is a TTY and JSON when it is piped, and `CAMPFIRE_OUTPUT` sets the default mode. Explicit JSON prints exactly one compact JSON value on stdout; a failure prints a structured error object on stderr and exits 1. JSON-only administration commands always print JSON and reject `--output human`. `help` stays text, `mcp` speaks MCP JSON-RPC on stdio, and `serve`/`view` keep their operational notices on stderr with no synthetic result document. Read and inspection results never add token material. Only the credential-minting commands (`onboard`, `issue-token`, `create-human`, `create-agent`, and `bootstrap --human-name`) can print a one-time token, and `onboard` requires explicit `--json` or `--output json` for its credential receipt so a pipe cannot capture tokens by default. Built for humans and agents alike.
 
