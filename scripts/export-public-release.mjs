@@ -46,6 +46,9 @@ const EXACT_SOURCE_PATHS = new Set([
 ]);
 
 const SOURCE_PREFIXES = ["fixtures/", "migrations/", "public/", "src/", "tests/"];
+// The WOW-001 pilot packet contains sealed scoring keys and private evidence.
+// It is preserved in the canonical repository, not distributed as product source.
+const PRIVATE_SOURCE_PREFIXES = ["fixtures/incidents/wow-001/"];
 // A published release may gain install channels after its immutable source tag.
 // Only these packaging files may come from a later private commit.
 const INSTALL_CHANNEL_PATHS = [
@@ -120,6 +123,7 @@ function writeBlob(ref, entry, destinationPath) {
 }
 
 function sourcePathAllowed(path) {
+  if (PRIVATE_SOURCE_PREFIXES.some((prefix) => path.startsWith(prefix))) return false;
   return EXACT_SOURCE_PATHS.has(path) || SOURCE_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 

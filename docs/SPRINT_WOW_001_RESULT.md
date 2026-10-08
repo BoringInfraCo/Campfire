@@ -187,3 +187,11 @@ the [upstream advisory](https://github.com/advisories/GHSA-6qxp-vccf-f47h)
 explicitly excludes stdio clients and SDK servers. No exercised path for
 either issue was identified in this v1.13 slice. The dependency refresh is a
 separate follow-up; the pilot-locked runtime dependency tree is unchanged.
+
+The first public snapshot export failed closed on
+`fixtures/incidents/wow-001/S1/evidence/01-edge-alert.csv`: the existing
+fixture allowlist selected the private pilot packet and the export's forbidden
+`evidence/` path check rejected it. The exporter now excludes exactly
+`fixtures/incidents/wow-001/` before copying source. The forbidden-path and
+content audit remain in force. The successful export and complete diff are
+verified as part of release promotion below.
