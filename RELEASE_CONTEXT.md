@@ -40,10 +40,12 @@ The private v1.13.0 candidate passed `npm ci`, type checking, the production bui
 Darwin ARM64 packaging, a deployment dry run, and **905 tests across 75 files**
 with the install-channel pin test excluded. That test's three independent
 checks passed; its version assertion failed as expected while Homebrew and Nix
-still point at the published v1.12.0 archives. After the four v1.13.0 archives
-exist, pin their actual checksums and run the complete suite. Packaging
-smoke-tests the staged CLI, and each published archive must be verified against
-its SHA-256 checksum. The playbook has deterministic CLI/MCP parity and gating
+still pointed at the published v1.12.0 archives. After publication, all four
+archives passed independent SHA-256 checks, Homebrew and Nix were pinned to
+their actual digests, and the complete private suite passed **909 tests across
+76 files**. Public and private CI passed on the post-pin commits. The live
+versioned installer matched source byte for byte and completed a clean Darwin
+ARM64 install with checksum verification. The playbook has deterministic CLI/MCP parity and gating
 checks plus the preserved synthetic pilot result; no ordinary team-use or
 v1.12 Viewer comprehension claim follows from it.
 
