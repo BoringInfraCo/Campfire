@@ -31,6 +31,11 @@ No transcript was shared. No human handoff occurred. Workspace isolation held.
 **All 31 Sprint 002 acceptance checks pass.** Evidence:
 `evidence/sprint-002/`.
 
+**Evidence note (October 6, 2026):** `evidence/sprint-002/` now contains
+the September 23 rerun, not the artifacts supporting the September 12 GO
+verdict above. See section 20 for the separate run and its CONDITIONAL GO
+result.
+
 Regression: Sprint 001 remains green (typecheck clean; full deterministic suite
 passing).
 
@@ -451,3 +456,311 @@ No transcript forwarding. No manual summary. No hidden answer. No shared
 session. Just durable team work surviving across humans, agents, and harnesses.
 
 > **Make agents work like they are part of the team.**
+
+---
+
+## 20. Addendum — A Second Acceptance Run (September 23, 2026)
+
+**Addendum written:** October 6, 2026.
+
+This section was appended after sections 1–19 were written on September 12, 2026.
+The September 12 **verdict and every finding recorded above stand exactly as
+written**: nothing has been softened, deleted, or restated, and the header block
+still describes that run exactly as it did. Sections 1–19 remain the record of
+that run.
+
+One editorial addition has since been made above them, and it is disclosed here
+rather than left for a reader to find: a dated **Evidence note** was inserted
+into section 1, directly beneath the verdict, warning that `evidence/sprint-002/`
+now holds the September 23 run and pointing forward here. It is additive, it
+touches no verdict, no finding, no measurement, and no claim about what was
+observed on September 12, and section 1 is the only section edited since.
+
+This addendum is here because a second, later acceptance run wrote fresh
+evidence into `evidence/sprint-002/`, and a reader who opens that directory will
+reasonably assume it backs the verdict in section 1. It does not.
+
+### 20.1 Two accounts, two different runs
+
+This document and `evidence/sprint-002/acceptance.json` are both about Sprint
+002's real Codex → real OpenCode handoff. They are not two descriptions of one
+execution. The environment table in section 2 is itself the proof: a different
+Node runtime, different harness builds on both sides, and a duration 5.5× longer
+cannot all come from the same process run.
+
+| Identifier | This document (sections 1–19) | `evidence/sprint-002/acceptance.json` |
+|---|---|---|
+| Run | September 12, 2026 | `2026-09-23T14:06:51.014Z` → `2026-09-23T14:28:55.505Z` |
+| Duration | 240,499 ms (~4 min) | 1,324,491 ms (~22 min) |
+| Node.js | v22.23.0 | v22.23.2 |
+| Campfire revision | `d7e160d` | not recorded in the later evidence |
+| Harness A | `codex` — codex-cli 0.149.1 | `codex` — codex-cli 0.150.1 |
+| Harness A outcome | completed | exit `0`, 9 Campfire calls (2 reads / 7 writes) |
+| Harness B | `opencode` — OpenCode 1.18.30 | `opencode` — OpenCode 1.18.32 |
+| Harness B outcome | completed the work | exit **`124`**, `spawnSync opencode ETIMEDOUT`, 7 calls (2 reads / 5 writes) |
+| Checks | 31 / 31 pass | 30 / 31 pass (`environment.harness_b_real` FAIL) |
+| Verdict | **GO** | **CONDITIONAL GO** |
+| Agent B ergonomics | 16 calls, 5 reads / 11 writes (section 12) | 7 calls, 2 reads / 5 writes |
+
+On the two `16`s: the `16` in section 12 is Agent B's own total for the
+September 12 run. The later run's `16` is a different measurement — 9 (Harness
+A) + 7 (Harness B), split 4 reads / 12 writes. The numbers agree and mean
+different things; they should not be reconciled with each other.
+
+### 20.2 The evidence directory now holds the later run
+
+`evidence/sprint-002/` is gitignored and was overwritten in place. Everything on
+disk today — `acceptance.json`, `notes.md`, `environment.md`, `harness-a.md`,
+`harness-b.md`, `campfire-state-before-b.json`,
+`campfire-state-after-b.json` — is **September 23** evidence, and `notes.md`
+carries its **CONDITIONAL GO**. The `evidence/sprint-002/` pointer at the end of
+section 1 therefore resolves to the later run's artifacts, not the ones the
+section 1 verdict was written from. The September 12 artifacts are no longer in
+the tree.
+
+This is a provenance gap in the evidence directory, not a defect in the
+September 12 verdict. The verdict stands on what was observed on September 12;
+it simply can no longer be re-read from the path it cites. Anyone rebuilding
+Sprint 002 evidence from that directory today will rebuild the wrong run.
+
+### 20.3 What the exit-124 termination means
+
+Harness B in the September 23 run started at `14:08:55.514Z` and was killed at
+`14:28:55.491Z` — 1,199,977 ms, essentially exactly the orchestrator's
+twenty-minute wall-clock budget for the second harness. Exit `124` with
+`spawnSync opencode ETIMEDOUT` is that timeout, not a crash and not an agent
+failure.
+
+The termination did not undo the run's writes. All seven Campfire calls
+returned before the kill, and the last of them — the second `add_finding` —
+landed at `14:28:53.908Z`, roughly 1.6 seconds before the process was killed:
+
+| Harness B call | Result recorded before termination |
+|---|---|
+| `campfire.list_workspaces` | returned `ws_billing_deploy` only |
+| `campfire.get_workspace_context` | read goal, findings, accepted decision, open task, artifact, provenance |
+| `campfire.register_agent_session` | created `ses_46b3c75800f74f84` |
+| `campfire.update_task` | `task_2d89c8a3a8f947f1` → `completed` at `14:28:44.989Z` |
+| `campfire.add_artifact` | `./rollout` package recorded at `14:28:47.579Z` |
+| `campfire.add_finding` (×2) | recorded at `14:28:50.449Z` and `14:28:53.908Z` |
+
+So the September 23 run is honest evidence that state written through Campfire
+survives the death of the process that wrote it — a result worth having in its
+own right. It is **not** evidence of a cleanly completed end-to-end handoff.
+Harness B never produced a summary; its captured `finalMessage` is a truncated
+mid-step fragment (*"The `JOIN` lacks an `ON` clause — switching to `CROSS
+JOIN`:"*), and the process was terminated rather than finishing. The single
+failing check, `environment.harness_b_real`, is precisely that question — did
+Harness B run and exit cleanly — and the honest answer is no. Hence **CONDITIONAL
+GO**.
+
+### 20.4 The isolation findings are not in question
+
+Nothing in this addendum weakens, qualifies, or casts doubt on the isolation
+findings from either run.
+
+- **September 12 (sections 9 and 10):** the sentinel
+  `PRIVATE_TRANSCRIPT_SENTINEL_A_never_shared` was absent from Agent B's final
+  message, its Campfire tool output, its raw stdout, and Campfire state;
+  `ws_auth_migration` was neither visible nor readable.
+- **September 23:** all four `isolation.*` checks pass —
+  `private_transcript_absent`, `unrelated_workspace_hidden`,
+  `unrelated_workspace_denied`, `unrelated_sentinel_absent`.
+
+The September 23 checks passing on a run whose harness was killed is not a
+contradiction and not a caveat. A check evaluates the durable record a run left
+behind; exit `124` is a fact about process lifetime, not about what the process
+managed to write before it ended. The sentinel was absent from every checked
+surface in both runs, and in the later run the unrelated workspace stayed
+invisible to a process that was actively working right up to the kill. Being
+terminated did not widen Agent B's visibility by one object.
+
+One honest nuance, recorded rather than glossed over: in the September 23 run,
+`transcriptIsolation.checkedSources` includes `harnessB.finalMessage`, which was
+a truncated fragment at capture time. The other three surfaces
+(`harnessB.mcpCalls.output`, `harnessB.rawStdoutPath`, `stateAfterB.view`) were
+complete, and the Campfire-state surface is the decisive one. The September 12
+run checked a finished final message.
+
+### 20.5 What each run is good evidence for
+
+| Use this run for | Do not use it for |
+|---|---|
+| **September 12, 2026** — a completed cross-harness handoff: Agent B oriented from Campfire alone, recovered goal / finding / decision / task / artifact / provenance, reasoned to the correct staged rollout, authored work in its own workspace, and wrote new state back. This is the basis for the **GO** in section 17. | A statement about the current contents of `evidence/sprint-002/`. |
+| **September 23, 2026** — a second real harness under real wall-clock pressure: it was killed at twenty minutes, and the correctly attributed, isolated records it had already written survived the kill. This is the basis for **CONDITIONAL GO** in that run, and for the observation that Campfire state outlives the writing process. | Evidence of a cleanly completed end-to-end handoff. |
+
+Read together the two runs support something the September 12 run alone could
+not: durable team state survives both the harness boundary and the writer's
+process lifetime. That is the same thesis as the north star in section 19, with
+a second failure mode now covered.
+
+### 20.6 Other material divergences
+
+A reader comparing sections 5, 8, 12, 14, 16, and 18 against
+`evidence/sprint-002/acceptance.json` will hit these. Each is a real difference
+between two runs, not an error in either document.
+
+1. **Check count.** Section 1's "All 31 Sprint 002 acceptance checks pass"
+   describes the September 12 run. The September 23 run is 30/31. Every
+   `comprehension.*`, `reasoning.*`, `continuation.*`, `preservation.*`,
+   `isolation.*`, `intervention.*`, and `ergonomics.*` check passes there; the
+   only failure is the Harness-B liveness check.
+2. **Orientation cost.** Section 5 has Agent B calling `campfire.whoami`,
+   `campfire.list_workspaces`, `campfire.get_workspace`, and
+   `campfire.get_workspace_context`; section 12 records the first call as
+   `campfire.whoami` with 4 orientation reads. The September 23 run's first call
+   was `campfire.list_workspaces` and orientation cost 2 calls. `whoami` and
+   `get_workspace` were never called in that run.
+3. **Ergonomics inverted.** Section 12 reports 1 redundant read, two overlapping
+   full projections, ~26.9 KB of context, and a doubled `campfire_campfire_*`
+   tool namespace. The September 23 run reports 0 redundant reads, 0
+   missing-context signals, 0 context-noise signals, and single-prefix names
+   such as `campfire_list_workspaces`. Section 18's Sprint 003 items 1, 2, and 4
+   therefore look already satisfied by the harness/server pairing used on
+   September 23 — but which side changed was not recorded, so treat that as an
+   observation rather than a delivered fix.
+4. **Agent B's contribution volume.** Section 8 records 4 findings, 4 artifacts,
+   1 new accepted decision, and a follow-up task assigned to Alice. The
+   September 23 run records 2 findings, 1 artifact, 0 new decisions, and no
+   follow-up task (`continuation.new_state_recorded`:
+   `newFindings=2 newArtifacts=1 newDecisions=0`), consistent with a process
+   killed about a minute after its third write.
+   `continuation.meaningful_work_performed` still passes.
+5. **Agent B's work product.** Section 8 lists
+   `db/migrations/284_expand_add_billing_status.sql`,
+   `jobs/backfill_billing_status.sql`,
+   `db/migrations/285_finalize_billing_status_index.sql`, and
+   `scripts/validate_staged_rollout.mjs`. The September 23 run recorded a single
+   `./rollout` artifact covering `./rollout/*.sql` plus `./test/run_tests.sh`,
+   validated against PostgreSQL 16-alpine in Docker. Both are consistent with
+   the accepted expand/contract decision; they are different artifacts, and a
+   film or deck should describe only one run at a time.
+6. **Agent B's session attribution.** Section 2 states `ses_harness_a_codex`
+   and `ses_harness_b_opencode` were pre-created before each harness started. In
+   the September 23 run Agent B additionally called `register_agent_session`, and
+   its own writes carry `ses_46b3c75800f74f84`. Two session ids for Agent B
+   therefore appear in that run. Attribution stayed correct and distinct
+   (`environment.sessions_isolated`, `preservation.provenance_distinct`, and
+   `preservation.activity_ordered` all pass), but section 2's session-binding
+   story does not describe what the later evidence shows.
+7. **Limitations.** Section 16 lists five; the September 23 evidence lists four,
+   and the two sets are not the same. The later run adds that the Campfire
+   database and pre-bound agent sessions are prepared in-process before the
+   harnesses start, and does not repeat section 16's authorization-simplicity or
+   findings/decisions-lifecycle items. Both runs agree on the Claude Code
+   substitution and on artifacts being references only.
+8. **Which evidence carried the reasoning checks.** Section 14 records that the
+   evaluation heuristics were broadened to match the concept rather than the
+   literal string "split". In the September 23 run the broadened checks passed on
+   state evidence alone: `reasoning.correct_next_step` carries
+   `nextStepMessage=false`, with the correct next step evidenced by the finding
+   and the completed task instead of by a closing narrative — which matters,
+   because that run has no closing narrative to cite.
+   `reasoning.respects_prior_decision` passed on `mentionsSplit=true` with
+   `violatesIncreaseTimeout=false`.
+
+---
+
+## 21. Addendum — September 12 Artifacts Are Unrecoverable (October 6, 2026)
+
+**Addendum written:** October 6, 2026.
+
+Sections 1–19 remain the record of the September 12 run, and their **GO** verdict
+and findings are unchanged. The one edit made above them since September 12 is
+the dated **Evidence note** in section 1, added on October 6, 2026 to point
+readers at section 20; it is disclosed in section 20's opening and alters no
+verdict, finding, or number. Section 20 described the overwrite; this section
+records the outcome of the recovery attempt and the convention that now prevents
+a recurrence. Neither addendum weakens the September 12 verdict.
+
+### 21.1 The GO verdict stands; its artifacts cannot be re-read
+
+The September 12 **GO** verdict remains the historical conclusion of this
+sprint. It was reached from what was observed on September 12 and that
+conclusion is not withdrawn, softened, or restated here.
+
+What is gone is the ability to **independently verify** it from the tree. The
+artifacts that supported it were written to the fixed path
+`evidence/sprint-002/`, were overwritten in place by the September 23 rerun,
+and — because `evidence/` is gitignored — were never in Git history. The
+historical verdict is therefore recorded in this document; the evidence
+underlying it is no longer available for inspection or re-derivation.
+
+Anyone rebuilding Sprint 002 evidence today will rebuild the September 23 run.
+The correct way to cite the September 12 result is to cite this document's §1
+and §17, and to know that the underlying artefacts are gone.
+
+### 21.2 Recovery attempted and unsuccessful
+
+A thorough search on October 6, 2026 for the September 12 artefacts found
+nothing. Checked and ruled out:
+
+- **Git history** — `git log --all -- evidence/` returns nothing; `evidence/`
+  has never been tracked. No other branch, no stash, no worktree
+  (`git worktree list` shows only the main checkout), and no dangling object
+  matches the run's fingerprint.
+- **Other clones** — the sibling `BoringInfraCo/Campfire` public mirror and
+  other Campfire-related directories contain no Sprint 002 evidence.
+- **Agent worktrees** — the local agent-worktree directory for this
+  repository holds three subagent checkouts with September 12 source mtimes,
+  but none contains an `evidence/` directory.
+- **Temp directories** — the runner's own scratch directory
+  (`campfire-sprint002-*` under the per-user temp root) survives only as empty
+  harness work directories; it holds no capture files.
+- **Archives, caches, and history** — no `*.tar*`/`*.zip`/`*.json.gz` referencing
+  the sprint; nothing in `~/Library/Caches`; no shell history entry for
+  `acceptance:002` or `evidence/sprint-002`.
+- **Snapshots and CI** — `tmutil listlocalsnapshots /` reports no local
+  snapshots. `.github/workflows/ci.yml` publishes no artifacts, so there is no CI
+  artifact store to retrieve from.
+- **Campfire traces** — `.campfire/traces/harbor/harbor-trace.db` and
+  `beacon/beacon-trace.db` are October 4 fixtures from unrelated traces and
+  contain no Sprint 002 records.
+
+**Outcome: NOT FOUND.** The September 12 artefacts are not recoverable from this
+machine.
+
+### 21.3 What was reorganised, and the convention that replaces the fixed path
+
+The September 23 run — the only surviving run — now also exists at
+`evidence/sprint-002/run-2026-09-23/`, byte-identical to the files it was copied
+from and verified by SHA-256. That is a reorganisation, not a rescue and not a
+backup: the bytes were copied **within** `evidence/sprint-002/`, onto this same
+disk, inside the same gitignored tree. The files previously written to the fixed
+path were left where they were, so today the same run sits in two byte-identical
+directories on one disk. That is not redundancy — it is one copy reachable by two
+paths, and the loss of this directory loses both.
+
+What the dated directory bought is **identifiability**. The run can now be named,
+hashed and tracked in the manifest as `sprint-002/run-2026-09-23`, and section 1's
+pointer can no longer silently resolve to the wrong run.
+
+No copy of this evidence exists anywhere else. It is not under version control,
+not in CI artifacts, not archived, and not backed up. **If `evidence/` is lost,
+the September 23 artifacts are gone exactly the way the September 12 artifacts
+are gone.** A durable copy requires copying them to controlled storage; that has
+not been done, and the convention below does not do it.
+
+The fix is structural rather than a one-off copy:
+
+1. **One directory per run.** `writeRealEvidence` no longer defaults to the fixed
+   path `evidence/sprint-002/`. It resolves
+   `evidence/sprint-002/run-<YYYY-MM-DD>` from the run's own start time, and a
+   second run on the same date escalates to `run-<date>T<hhmmss>`. It refuses to
+   write into a directory that already holds a run.
+2. **A tracked index.** `evidence/MANIFEST.json` is generated by
+   `npm run evidence:manifest` and records each run's date, harness versions,
+   verdict, check tally, and a SHA-256 per file. Raw evidence stays gitignored;
+   the manifest is tracked via a targeted negation in `.gitignore`.
+   `npm run acceptance:002` regenerates it automatically after a run. It is an
+   index and a tripwire, **not a copy**: the hashes identify a run and reveal
+   that its files have changed or disappeared. Delete the underlying files and
+   the manifest simply records hashes of files that no longer exist — it would
+   report the loss, not prevent or repair it. The manifest preserves nothing.
+3. **An explicit unavailable record.** The manifest carries an `unavailable`
+   entry for `sprint-002/run-2026-09-12` stating this same limitation, so the
+   index never implies the run never happened.
+
+The manifest's entry for September 23 records `CONDITIONAL GO`, 30/31 checks,
+`codex-cli 0.150.1`, and `OpenCode 1.18.32` — matching §20, and identifying the
+surviving files as that run and not the September 12 one.

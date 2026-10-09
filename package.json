@@ -31,6 +31,7 @@
     "view": "tsx src/cli/index.ts view",
     "acceptance": "tsx scripts/run-acceptance.ts",
     "acceptance:002": "tsx scripts/run-acceptance-002.ts",
+    "evidence:manifest": "node scripts/evidence-manifest.mjs",
     "deploy": "node scripts/wrangler-deploy.mjs deploy",
     "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
     "dev:worker": "wrangler dev",

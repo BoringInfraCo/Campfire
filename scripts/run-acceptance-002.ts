@@ -5,6 +5,8 @@
  * model providers, so it is run explicitly and its output is captured as
  * evidence rather than asserted in the deterministic CI suite.
  */
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { runRealAcceptance } from "../src/acceptance/real/run.js";
 
 function line(text = ""): void {
@@ -29,5 +31,14 @@ line(`recommendation: ${evidence.recommendation}`);
 line(`evidence:       ${evidenceDir}`);
 line(`raw captures:   ${rootDir}`);
 line("");
+
+// Every run lands in its own dated directory; refresh the tracked index so the
+// manifest records this run's verdict and per-file hashes without hand-editing.
+const manifest = spawnSync(
+  process.execPath,
+  [fileURLToPath(new URL("./evidence-manifest.mjs", import.meta.url))],
+  { stdio: "inherit" },
+);
+if (manifest.status !== 0) line("warning: evidence manifest was not regenerated; run: npm run evidence:manifest");
 
 process.exitCode = evidence.recommendation === "NO-GO / REFRAME" ? 1 : 0;

@@ -1,0 +1,80 @@
+{
+  "schema": "campfire-evidence-manifest/1",
+  "generator": "scripts/evidence-manifest.mjs",
+  "note": "Raw evidence is gitignored and never committed; it lives in one place on one disk and is not backed up. This manifest is an index and a tripwire, not a copy: it records which acceptance run lives where and what each file in it hashes to, so an altered or missing file is detectable. It preserves nothing — delete the files and the manifest simply records hashes of files that no longer exist. A durable copy requires copying the evidence to controlled storage. Regenerate with `npm run evidence:manifest` after any acceptance run; never hand-edit.",
+  "runs": [
+    {
+      "run": "sprint-002/run-2026-09-23",
+      "runDate": "2026-09-23",
+      "directory": "evidence/sprint-002/run-2026-09-23",
+      "status": "on-disk",
+      "startedAt": "2026-09-23T14:06:51.014Z",
+      "finishedAt": "2026-09-23T14:28:55.505Z",
+      "durationMs": 1324491,
+      "verdict": "CONDITIONAL GO",
+      "checks": {
+        "total": 31,
+        "passed": 30
+      },
+      "harnesses": {
+        "a": "codex-cli 0.150.1",
+        "b": "1.18.32"
+      },
+      "files": [
+        {
+          "path": "acceptance.json",
+          "bytes": 382564,
+          "sha256": "69e50884d9c7c705187a8d253a9ef36ffb53212e1802bb027fecbaf16818d276"
+        },
+        {
+          "path": "campfire-state-after-b.json",
+          "bytes": 22810,
+          "sha256": "324463b90dc2918a01523ddb3fe45dab1d5358ed26f9c17772b331ea47699ea0"
+        },
+        {
+          "path": "campfire-state-before-b.json",
+          "bytes": 15250,
+          "sha256": "a8bf4bb7140528cbf25abd9541f1a43fefba0edd731f07e5f8764ff3d314df16"
+        },
+        {
+          "path": "environment.md",
+          "bytes": 2092,
+          "sha256": "0ad751c182c6d17019fa0be1f6c9b51f83dd8591704a4fc2213088e0a8c6ad5d"
+        },
+        {
+          "path": "harness-a.md",
+          "bytes": 4799,
+          "sha256": "7d62aa8f27e6a224b7297727eae4c861026b8c67018b0e323ffce49d03a4bdf9"
+        },
+        {
+          "path": "harness-b.md",
+          "bytes": 2883,
+          "sha256": "40b330f2b262b6529fe18ad3033a08f60252be38375cd64a84568ba66cc345d6"
+        },
+        {
+          "path": "notes.md",
+          "bytes": 3590,
+          "sha256": "cf10960f2d9cc93175f8a8430c60975339603c77d974b8e2464902c4063347f6"
+        }
+      ]
+    }
+  ],
+  "unavailable": [
+    {
+      "run": "sprint-002/run-2026-09-12",
+      "runDate": "2026-09-12",
+      "verdict": "GO",
+      "checks": {
+        "total": 31,
+        "passed": 31
+      },
+      "campfireRevision": "d7e160d",
+      "harnesses": {
+        "a": "codex-cli 0.149.1",
+        "b": "OpenCode 1.18.30"
+      },
+      "status": "artifacts-not-available",
+      "note": "Artifacts were written to the fixed path evidence/sprint-002/ and overwritten in place by the September 23 rerun on 2026-09-23. Because evidence/ is gitignored they were never in Git history, and no copy survived on disk. The GO verdict remains the historical conclusion recorded in docs/SPRINT_002_RESULT.md sections 1-19; its underlying artifacts can no longer be independently verified. See docs/SPRINT_002_RESULT.md section 20."
+    }
+  ]
+}

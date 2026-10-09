@@ -4,7 +4,8 @@ result-*
 dist/
 release/
 .campfire/
-evidence/
+evidence/*
+!evidence/MANIFEST.json
 docs/internal/
 *.log
 !fixtures/billing/deploy.log

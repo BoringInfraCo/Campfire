@@ -431,7 +431,10 @@ describe("writeRealEvidence", () => {
       recommendation: recommend(checks),
     };
 
-    const dir = mkdtempSync(join(tmpdir(), "campfire-evidence-"));
+    // A caller-supplied directory is reserved by an atomic mkdir, so it must not
+    // already exist; the run claims a fresh leaf under this temp root.
+    const root = mkdtempSync(join(tmpdir(), "campfire-evidence-"));
+    const dir = join(root, "evidence");
     try {
       const result = writeRealEvidence(evidence, dir);
       expect(result.directory).toBe(dir);
@@ -449,7 +452,7 @@ describe("writeRealEvidence", () => {
         expect(existsSync(join(dir, name)), name).toBe(true);
       }
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });
