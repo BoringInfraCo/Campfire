@@ -10,9 +10,9 @@
  * uses it, and re-exported here so `CampfireWorkerEnv` stays the single place
  * the Worker's bindings are described.
  */
-import type { AnalyticsEngineDataset } from "./telemetry.js";
+import type { AnalyticsEngineDataset, RateLimiterBinding } from "./telemetry.js";
 
-export type { AnalyticsEngineDataset };
+export type { AnalyticsEngineDataset, RateLimiterBinding };
 
 export interface D1Result<T = Record<string, unknown>> {
   results: T[];
@@ -46,6 +46,12 @@ export interface CampfireWorkerEnv {
    * reporting `recorded: false` instead of failing.
    */
   TELEMETRY?: AnalyticsEngineDataset;
+  /**
+   * Per-source budget for the anonymous ingestion route
+   * (`[[ratelimits]]`). Optional for the same reason: with no binding the
+   * route is still open, exactly as it was before the limit existed.
+   */
+  TELEMETRY_RATE_LIMITER?: RateLimiterBinding;
   CAMPFIRE_WEBHOOK_ID?: string;
   CAMPFIRE_WEBHOOK_URL?: string;
   CAMPFIRE_WEBHOOK_SECRET?: string;

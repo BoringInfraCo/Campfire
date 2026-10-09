@@ -47,6 +47,17 @@ migrations_dir = "migrations"
 binding = "TELEMETRY"
 dataset = "campfire_telemetry"
 
+# Per-source budget for POST /v1/telemetry. That route carries no bearer by
+# design, so it is open to anyone who learns the URL; this bounds the cost of a
+# flood. `namespace_id` is any stable integer you choose — it is a label, not a
+# remote resource — and the limit is generous because CI and corporate NAT put
+# many honest installations behind one address. Telemetry must never fail a
+# Campfire operation, so the limiter fails open: a thrown binding is ignored.
+[[ratelimits]]
+name = "TELEMETRY_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 120, period = 60 }
+
 [assets]
 # The release installer shares ./public with locally packaged Viewer files.
 # Run the Worker before every asset request so the public Worker serves only

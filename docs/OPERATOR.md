@@ -326,6 +326,37 @@ confirmed durable storage. A misnamed binding can create a different dataset,
 so verify the deployed
 binding name and query `campfire_telemetry` after the first controlled event.
 
+### Ingestion rate limit
+
+`POST /campfire/v1/telemetry` carries no bearer by design, so it is open to
+anyone who learns the URL. The Worker applies a per-source budget through a
+Workers Rate Limiting binding:
+
+```toml
+[[ratelimits]]
+name = "TELEMETRY_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 120, period = 60 }
+```
+
+`namespace_id` is any stable integer you choose; it is a label, not a remote
+resource to create. Two properties matter when tuning it:
+
+- **The key is an opaque hash of Cloudflare's `CF-Connecting-IP`.** The address
+  is used only as a rate-limit key. It is never stored, never logged, and never
+  written to a data point, and `ip` remains a prohibited payload field.
+- **The limiter fails open.** No binding, no address header, or a binding that
+  throws all mean "not limited". A measurement path must never become a new way
+  for a Campfire operation to fail, and a limiter that errors must not be able
+  to silence telemetry for everyone.
+
+Keep the limit generous. `install_completed` and `activated` are each claimed
+once per installation, and `active` at most once per UTC day, so an honest
+installation sends a handful of events across its whole life. CI runners and
+corporate NAT put many
+real installations behind one address; a tight limit would drop honest traffic
+to punish a flood.
+
 Client-side controls are operator/environment configuration:
 
 ```bash

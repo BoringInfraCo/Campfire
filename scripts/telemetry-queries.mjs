@@ -102,6 +102,13 @@ const EARLIEST_POSSIBLE_DAY = "2020-01-01";
  *   blob6  install method, or "none"
  *   blob7  surface, or "none"
  *   blob8  installation id, or "" — count(DISTINCT blob8)
+ *
+ * Client-emitted founder counts omit a declared version below 1.9.1. See
+ * `versionBelowReportingFloor`. That is an integrity correction: a binary
+ * older than the first telemetry release cannot emit these events, so the
+ * rows are provably forged. The frozen date above stays. The rows remain in
+ * the dataset and are listed by `excluded_below_reporting_floor`. Installer
+ * requests are not filtered; the Worker writes them with version "unknown".
  */
 const DEFINITIONS_FROZEN_ON = "2026-10-02";
 
@@ -279,6 +286,59 @@ function windowClause(fromDay, untilExclusiveDay) {
   return `timestamp >= toDateTime('${fromDay} 00:00:00')\n    AND timestamp < toDateTime('${untilExclusiveDay} 00:00:00')`;
 }
 
+/**
+ * First release that contained any telemetry code. Keep this equal to
+ * `TELEMETRY_MIN_REPORTING_VERSION` in `src/telemetry/contract.ts`.
+ *
+ * Analytics Engine has no semver type. A lexical `blob3 < '1.9.1'` is wrong:
+ * the string `1.10.0` sorts before `1.9.1` and would drop every later install.
+ */
+const TELEMETRY_MIN_REPORTING_VERSION = "1.9.1";
+
+/**
+ * Events a Campfire binary sends. `install_requested` is written by the Worker
+ * with version `unknown` and is not a client declaration.
+ */
+const CLIENT_EVENTS = new Set(["install_completed", "activated", "active"]);
+
+/**
+ * SQL predicate, true when `column` parses below `TELEMETRY_MIN_REPORTING_VERSION`.
+ *
+ * `startsWith(blob3, '1.1.')` is false for `1.10.0`: the character after `1.1`
+ * is `0`, not `.`. Unparseable values (`unknown`, `latest`) match nothing and
+ * stay in the report, matching `isTelemetryVersionBelowFloor`.
+ *
+ * `1.9.0` and a prerelease, build, or extra component of that exact triple are
+ * below the floor. `1.9.1` and `1.9.10` are not.
+ */
+function versionBelowReportingFloor(column) {
+  const prefixes = ["0.", "1.9.0-", "1.9.0+", "1.9.0."];
+  for (let minor = 0; minor <= 8; minor += 1) prefixes.push(`1.${minor}.`);
+  const starts = prefixes.map((prefix) => `startsWith(${column}, '${prefix}')`);
+  return `(${starts.join(" OR ")} OR ${column} = '1.9.0')`;
+}
+
+/**
+ * UTC Monday of the week that contains `column`, as a DateTime on that Monday.
+ *
+ * `toStartOfWeek(timestamp)` on the production Analytics Engine starts on
+ * Sunday: `toDayOfWeek` of its result is 7, and a Wednesday (2026-10-07)
+ * rounds to 2026-10-04. Passing a mode is rejected — "TOSTARTOFWEEK() function
+ * does not accept 2 arguments" — even though the published docs say Monday.
+ * `toDayOfWeek` is Monday=1 through Sunday=7, so subtracting that many days
+ * minus one lands on Monday. 2026-10-07 -> 2026-10-05, and Sunday 2026-10-04
+ * -> 2026-09-28.
+ */
+function utcMonday(column) {
+  return `toDateTime(toUnixTimestamp(${column}) - (toDayOfWeek(${column}) - 1) * 86400)`;
+}
+
+/** `blob1` filter, plus the version floor for client-emitted events. */
+function eventWhere(event, windowSql) {
+  const versionGate = CLIENT_EVENTS.has(event) ? `\n  AND NOT ${versionBelowReportingFloor("blob3")}` : "";
+  return `blob1 = '${event}'${versionGate}\n  AND ${windowSql}`;
+}
+
 // ---------------------------------------------------------------------------
 // Query catalogue — the metric definitions, in report order.
 // ---------------------------------------------------------------------------
@@ -320,8 +380,7 @@ function funnelStage(id, title, event, alias, purpose) {
   count(DISTINCT blob8) AS ${alias},
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE blob1 = '${event}'
-  AND ${windowClause(window.since, window.untilExclusive)}`,
+WHERE ${eventWhere(event, windowClause(window.since, window.untilExclusive))}`,
   };
 }
 
@@ -339,8 +398,7 @@ function activeWindow(id, title, windowKey, alias) {
   count(DISTINCT blob8) AS ${alias},
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE blob1 = 'active'
-  AND ${windowClause(window[windowKey], window.untilExclusive)}`,
+WHERE ${eventWhere("active", windowClause(window[windowKey], window.untilExclusive))}`,
   };
 }
 
@@ -366,8 +424,7 @@ function breakdown(id, title, label, event, column, alias, windowKey, deduplicat
 ${measure}
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE blob1 = '${event}'
-  AND ${windowClause(window[windowKey], window.untilExclusive)}
+WHERE ${eventWhere(event, windowClause(window[windowKey], window.untilExclusive))}
 GROUP BY ${alias}
 ORDER BY ${order}, ${alias} ASC
 LIMIT 20`,
@@ -404,8 +461,29 @@ const QUERIES = [
     "Successful installations",
     "install_completed",
     "anonymous_installations",
-    "§15 successful installations. Never combined with installer requests (§20 rule 2).",
+    "§15 successful installations. Never combined with installer requests (§20 rule 2). Omits a declared version below 1.9.1; those rows are listed by excluded_below_reporting_floor.",
   ),
+  {
+    id: "excluded_below_reporting_floor",
+    title: "Excluded installations — declared version below 1.9.1",
+    purpose:
+      "install_completed rows whose declared version is below the first telemetry release. A binary older than 1.9.1 has no telemetry code, so these rows are provably forged. Founder counts omit them. This query keeps the omission visible. The rows are not deleted.",
+    sampling: DEDUPLICATED,
+    exclusion: true,
+    sql: (window) =>
+      `SELECT
+  blob3 AS campfire_version,
+  count(DISTINCT blob8) AS anonymous_installations,
+  sum(_sample_interval) AS events,
+  max(_sample_interval) AS max_sample_interval
+FROM ${DATASET}
+WHERE blob1 = 'install_completed'
+  AND ${versionBelowReportingFloor("blob3")}
+  AND ${windowClause(window.since, window.untilExclusive)}
+GROUP BY campfire_version
+ORDER BY anonymous_installations DESC, campfire_version ASC
+LIMIT 20`,
+  },
   funnelStage(
     "activated_installations",
     "Activated installations",
@@ -436,24 +514,22 @@ const QUERIES = [
   count(DISTINCT blob8) AS active_installations,
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE blob1 = 'active'
-  AND ${windowClause(window.trailing7, window.untilExclusive)}
+WHERE ${eventWhere("active", windowClause(window.trailing7, window.untilExclusive))}
 GROUP BY utc_day
 ORDER BY utc_day`,
   },
   {
     id: "weekly_active_installations",
     title: "Weekly active installations — trailing 30 days (UTC, weeks start Monday)",
-    purpose: "§15 weekly active installations.",
-    sampling: `${DEDUPLICATED}; a UTC week matches the local rate-limit day boundary`,
+    purpose: "§15 weekly active installations. Weeks start Monday UTC. toStartOfWeek is not used: on this engine it starts on Sunday and rejects a mode argument.",
+    sampling: `${DEDUPLICATED}; Monday is derived from toDayOfWeek (1 = Monday) because toStartOfWeek starts on Sunday`,
     sql: (window) =>
       `SELECT
-  formatDateTime(toStartOfWeek(timestamp), '%Y-%m-%d') AS utc_week_start,
+  formatDateTime(${utcMonday("timestamp")}, '%Y-%m-%d') AS utc_week_start,
   count(DISTINCT blob8) AS active_installations,
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
-WHERE blob1 = 'active'
-  AND ${windowClause(window.trailing30, window.untilExclusive)}
+WHERE ${eventWhere("active", windowClause(window.trailing30, window.untilExclusive))}
 GROUP BY utc_week_start
 ORDER BY utc_week_start`,
   },
@@ -461,9 +537,16 @@ ORDER BY utc_week_start`,
     id: "returning_installations",
     title: "Returning installations",
     purpose: "§15 returning installations: the same anonymous installation id active on a later UTC day.",
-    // YYYY-MM-DD sorts chronologically as a string, so comparing the two
-    // formatted aggregates compares UTC days without nesting a date function
-    // inside an aggregate.
+    // min()/max() take a numeric, date, or date-time argument and reject a
+    // String one, and formatDateTime() returns String. Aggregating the formatted
+    // day is therefore not a style question but a rejected statement:
+    // min(formatDateTime(timestamp, ...)) answers HTTP 422 "cannot use the
+    // String type as argument 1". The aggregate is applied to the DateTime
+    // column and the formatting happens after it, which is legal — the same
+    // form the first-observed guard below already uses. The outer comparison
+    // stays a string comparison on purpose: both sides are '%Y-%m-%d', which
+    // sorts chronologically as plain text, so first_active_day < last_active_day
+    // compares UTC days without nesting a date function inside an aggregate.
     sampling: `${DEDUPLICATED}; one derived row per installation, counted with COUNT()`,
     sql: (window) =>
       `SELECT
@@ -472,12 +555,11 @@ ORDER BY utc_week_start`,
 FROM (
   SELECT
     blob8 AS installation_id,
-    min(formatDateTime(timestamp, '%Y-%m-%d')) AS first_active_day,
-    max(formatDateTime(timestamp, '%Y-%m-%d')) AS last_active_day,
+    formatDateTime(min(timestamp), '%Y-%m-%d') AS first_active_day,
+    formatDateTime(max(timestamp), '%Y-%m-%d') AS last_active_day,
     max(_sample_interval) AS max_sample_interval
   FROM ${DATASET}
-  WHERE blob1 = 'active'
-    AND ${windowClause(window.since, window.untilExclusive)}
+  WHERE ${eventWhere("active", windowClause(window.since, window.untilExclusive))}
   GROUP BY installation_id
 )
 WHERE first_active_day < last_active_day`,
@@ -685,13 +767,22 @@ function collectReport(opts, window, results, firstObserved, queries) {
     options: { runner: opts.runner, metric: opts.metric ?? "all", executed: queries.map((query) => query.id) },
   };
 
-  if (ran("installer_requests_recent_day")) {
-    report.counts.installerRequests = {
-      recentDay: { day: window.lastDay, value: number(firstRow(results.installer_requests_recent_day).installer_requests), treatment: WEIGHTED },
-      sinceLaunch: { value: number(firstRow(results.installer_requests_since ?? []).installer_requests), treatment: WEIGHTED },
-      trailing7Days: { value: number(firstRow(results.installer_requests_trailing_7d ?? []).installer_requests), treatment: WEIGHTED },
-      trailing30Days: { value: number(firstRow(results.installer_requests_trailing_30d ?? []).installer_requests), treatment: WEIGHTED },
-    };
+  // Each installer-request window is its own query, so each sub-value reports
+  // only when its own query ran. Gating the group on one of them — the recent-day
+  // query was the gate — silently discarded a `--metric installer_requests_since`
+  // run, because the metric that actually executed was never read back.
+  for (const [key, id] of [
+    ["recentDay", "installer_requests_recent_day"],
+    ["sinceLaunch", "installer_requests_since"],
+    ["trailing7Days", "installer_requests_trailing_7d"],
+    ["trailing30Days", "installer_requests_trailing_30d"],
+  ]) {
+    if (!ran(id)) continue;
+    const measured = { value: number(firstRow(results[id]).installer_requests), treatment: WEIGHTED };
+    // `recentDay` is the only window whose label is the day it measured.
+    report.counts.installerRequests ??= {};
+    report.counts.installerRequests[key] =
+      key === "recentDay" ? { day: window.lastDay, ...measured } : measured;
   }
   if (ran("successful_installations")) {
     report.counts.successfulInstallations = {
@@ -699,6 +790,16 @@ function collectReport(opts, window, results, firstObserved, queries) {
       events: number(firstRow(results.successful_installations).install_completed_events),
       treatment: exactness,
     };
+  }
+  if (ran("excluded_below_reporting_floor")) {
+    // An empty result is a measured zero: the query ran and found no sub-floor
+    // install_completed rows. It is not an unmeasured window.
+    report.counts.excludedBelowReportingFloor = rowsOf(results.excluded_below_reporting_floor).map((row) => ({
+      campfireVersion: String(row.campfire_version ?? ""),
+      anonymousInstallations: number(row.anonymous_installations),
+      events: number(row.events),
+      treatment: exactness,
+    }));
   }
   if (ran("activated_installations")) {
     report.counts.activatedInstallations = {
@@ -765,7 +866,7 @@ function collectReport(opts, window, results, firstObserved, queries) {
   }
 
   for (const query of queries) {
-    if (query.breakdown === undefined) continue;
+    if (query.breakdown === undefined || query.exclusion === true) continue;
     const { dimension, measure } = query.breakdown;
     report.breakdowns[dimension] = rowsOf(results[query.id]).map((row) => ({
       value: String(row[dimension] ?? ""),
@@ -807,14 +908,24 @@ function renderText(report) {
 
   if (requests !== undefined) {
     lines.push("INSTALLER REQUESTS — fetches of the official installer script");
-    lines.push(metricLine(`${requests.recentDay.day} (most recent day)`, requests.recentDay.value, requests.recentDay.treatment));
-    lines.push(metricLine(`since ${range.since}`, requests.sinceLaunch.value, requests.sinceLaunch.treatment));
-    lines.push(metricLine("trailing 7 days", requests.trailing7Days.value, requests.trailing7Days.treatment));
-    lines.push(metricLine("trailing 30 days", requests.trailing30Days.value, requests.trailing30Days.treatment));
+    // A partial run measured only some of the four windows, so each entry is
+    // rendered on its own. Dereferencing all four unconditionally crashed the
+    // render, and filling a missing window with a zero would report a value that
+    // was never measured as one that was.
+    for (const [label, entry] of [
+      [requests.recentDay === undefined ? undefined : `${requests.recentDay.day} (most recent day)`, requests.recentDay],
+      [`since ${range.since}`, requests.sinceLaunch],
+      ["trailing 7 days", requests.trailing7Days],
+      ["trailing 30 days", requests.trailing30Days],
+    ]) {
+      if (entry === undefined) continue;
+      lines.push(metricLine(label, entry.value, entry.treatment));
+    }
     lines.push("");
   }
 
   lines.push("FUNNEL — installer requests and completions are never combined");
+  lines.push("  Client events whose declared version is below 1.9.1 are omitted from the counts below.");
   const funnel = [
     ["installer requests (since launch)", requests?.sinceLaunch],
     ["successful installations", report.counts.successfulInstallations],
@@ -828,6 +939,21 @@ function renderText(report) {
     lines.push(metricLine(label, metric.value, metric.treatment));
   }
   lines.push("");
+
+  if (report.counts.excludedBelowReportingFloor !== undefined) {
+    lines.push("EXCLUDED FROM THE FUNNEL — declared version below 1.9.1");
+    lines.push("  A binary older than 1.9.1 has no telemetry code, so these install_completed rows are provably forged.");
+    lines.push("  They remain in the dataset. Every founder count above omits them.");
+    const excluded = report.counts.excludedBelowReportingFloor;
+    if (excluded.length === 0) {
+      lines.push(metricLine("excluded installations", 0, report.sampling.sampled ? LOWER_BOUND : EXACT));
+    } else {
+      for (const row of excluded) {
+        lines.push(metricLine(row.campfireVersion, row.anonymousInstallations, row.treatment));
+      }
+    }
+    lines.push("");
+  }
 
   if (report.rates.length > 0) {
     lines.push("RATES — the denominator is named on every line");
@@ -884,12 +1010,40 @@ function renderText(report) {
   if (range.note !== undefined) lines.push(`  ${range.note}`);
   lines.push("");
   lines.push("REPORTABLE WORDING — always include the reporting date range");
-  lines.push(
-    `  Since ${range.since}, Campfire has recorded ` +
-      `${formatNumber(report.counts.successfulInstallations?.value ?? 0)} successful anonymous installations, ` +
-      `${formatNumber(report.counts.activatedInstallations?.value ?? 0)} of which activated the product, with ` +
-      `${formatNumber(report.counts.returningInstallations?.value ?? 0)} installations returning on a later day.`,
-  );
+  // The sentence asserts three counts at once, so defaulting a missing one to
+  // zero would state a measured zero for a query that never ran — the same false
+  // statement the returning-installations line produced when that query failed.
+  // In a partial run the sentence is not emitted at all: only the measured
+  // figures are named, and the missing ones are declared unmeasured.
+  const successfulInstallations = report.counts.successfulInstallations?.value;
+  const activatedInstallations = report.counts.activatedInstallations?.value;
+  const returningInstallations = report.counts.returningInstallations?.value;
+  if (successfulInstallations !== undefined && activatedInstallations !== undefined && returningInstallations !== undefined) {
+    lines.push(
+      `  Since ${range.since}, Campfire has recorded ` +
+        `${formatNumber(successfulInstallations)} successful anonymous installations, ` +
+        `${formatNumber(activatedInstallations)} of which activated the product, with ` +
+        `${formatNumber(returningInstallations)} installations returning on a later day.`,
+    );
+  } else {
+    const measured = [
+      [successfulInstallations, "successful anonymous installations"],
+      [activatedInstallations, "activated installations"],
+      [returningInstallations, "installations returning on a later day"],
+    ]
+      .filter(([value]) => value !== undefined)
+      .map(([value, label]) => `${formatNumber(value)} ${label}`);
+    if (measured.length === 0) {
+      lines.push(
+        `  Not available: this run measured no reportable installation count (${report.options.executed.join(", ")}).`,
+      );
+    } else {
+      lines.push(
+        `  PARTIAL RUN — measured here for ${range.since} → ${range.until} (UTC): ${measured.join("; ")}.`,
+      );
+      lines.push("  Not a full statement about the reporting range: re-run without --metric to measure every count.");
+    }
+  }
   return lines.join("\n");
 }
 

@@ -51,6 +51,9 @@ export default {
       // Passed through as-is, including undefined: an unprovisioned dataset
       // must leave the installer and the ingestion route working, not crash.
       telemetryDataset: env.TELEMETRY,
+      // Same for the limiter: absent binding means the ingestion route is
+      // unbounded, which is exactly how it behaved before the binding existed.
+      telemetryRateLimiter: env.TELEMETRY_RATE_LIMITER,
     });
     const response = await handle(request);
     ctx.waitUntil(deliverPending(env).catch(() => undefined));
