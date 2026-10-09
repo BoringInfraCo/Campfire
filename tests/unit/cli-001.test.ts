@@ -13,6 +13,7 @@ import { parseArgs } from "../../src/cli/args.js";
 import {
   CLI_CATALOG,
   CLI_COMMAND_NAMES,
+  commandDiscoverable,
   commandSpec,
   formatUsage,
   isKnownCommand,
@@ -40,6 +41,7 @@ const ENV_KEYS = [
   "CAMPFIRE_TOKEN",
   "CAMPFIRE_BRIDGE_TOKEN",
   "CAMPFIRE_OUTPUT",
+  "CAMPFIRE_PLAYBOOK",
   "NO_COLOR",
   "CAMPFIRE_HARNESS",
   "CAMPFIRE_SESSION_ID",
@@ -719,7 +721,9 @@ describe("command semantics", () => {
     expect(manifest.kind).toBe("cli_command_manifest");
     expect(manifest.manifestVersion).toBe(1);
     expect(manifest.campfireVersion).toMatch(/^\d+\.\d+\.\d+/);
-    expect(manifest.commands.map((command) => command.name)).toEqual([...CLI_COMMAND_NAMES]);
+    expect(manifest.commands.map((command) => command.name)).toEqual(
+      CLI_COMMAND_NAMES.filter((name) => commandDiscoverable(name)),
+    );
 
     for (const command of manifest.commands) {
       expect(command.description.length).toBeGreaterThan(0);
@@ -742,7 +746,9 @@ describe("command semantics", () => {
     expect(dispatched).toEqual(catalogued);
     for (const name of CLI_COMMAND_NAMES) {
       expect(CLI_CATALOG[name].name).toBe(name);
-      expect(formatUsage()).toContain(CLI_CATALOG[name].usage);
+      if (commandDiscoverable(name)) {
+        expect(formatUsage()).toContain(CLI_CATALOG[name].usage);
+      }
     }
     // Only onboard can carry a one-time credential in a successful result.
     expect(commandSpec("onboard").credentials).toBe(true);

@@ -1,6 +1,6 @@
-# Campfire 1.12.0 release context
+# Campfire 1.13.0 release context
 
-This public source snapshot was exported on 2026-10-07 from private canonical source commit `0ecfebb5abb7778cc7638623f698e7a78c71b18a` (dated 2026-10-07T17:44:57-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-08 from private canonical source commit `f2e5343250787658b6be6fda888bfac3a33dc049` (dated 2026-10-08T16:39:23-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -26,6 +26,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
 - A finding can be corrected or withdrawn in place, and a decision can name one predecessor. The old text stays on the old row. Orientation keeps the current record and marks a decision that still cites a non-current finding.
 - The read-only Viewer separates accepted decisions needing review, lists open tasks, labels cited references, and shows completeness for bounded sections even when no rows are displayed. Human comprehension on this updated surface is unverified. Artifact previews and shared highlights remain deferred. Gate B and Gate C remain unmeasured. Production deployment is separate.
+- One opt-in, static incident-investigation playbook is available through read-only CLI and MCP surfaces. It changes no workspace schema, default tool list, Viewer permission, or write path. A frozen synthetic pilot met its GO rubric through better recording in three matched pairs; continuation quality stayed at the baseline ceiling. This is not Gate B/C or ordinary team-use evidence.
 
 ## Artifacts
 
@@ -35,6 +36,15 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 ## Verification
 
-The candidate passed `npm ci`, type checking, the production build, packaging, a deployment dry run, and all 844 tests outside the install-channel pin test. That pin test compares Homebrew and Nix to the package version and can pass only after the new release archives supply their checksums; three of its four checks pass before pinning. Run the complete suite after the four published archives are pinned. Packaging smoke-tests the staged CLI, and each published archive must be verified against its SHA-256 checksum. The Viewer change has deterministic checks and prior human evidence of the presentation problem; no human has yet verified comprehension on the updated surface.
+The private v1.13.0 candidate passed `npm ci`, type checking, the production build,
+Darwin ARM64 packaging, a deployment dry run, and **905 tests across 75 files**
+with the install-channel pin test excluded. That test's three independent
+checks passed; its version assertion failed as expected while Homebrew and Nix
+still point at the published v1.12.0 archives. After the four v1.13.0 archives
+exist, pin their actual checksums and run the complete suite. Packaging
+smoke-tests the staged CLI, and each published archive must be verified against
+its SHA-256 checksum. The playbook has deterministic CLI/MCP parity and gating
+checks plus the preserved synthetic pilot result; no ordinary team-use or
+v1.12 Viewer comprehension claim follows from it.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

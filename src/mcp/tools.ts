@@ -13,6 +13,7 @@ import { z } from "zod";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
+import { getPlaybook } from "../playbooks/index.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
 import { reportActivated, reportActive, telemetryInBackground } from "../telemetry/report.js";
@@ -25,6 +26,8 @@ export interface CampfireMcpOptions {
   identity?: ServerIdentity;
   /** Set when the listener is down. Tools return this error and do not call out. */
   unavailable?: { message: string; details?: Record<string, unknown> };
+  /** Register the opt-in read-only get_playbook tool (WOW-001 pilot). Default off; the default tool list is unchanged. */
+  playbookEnabled?: boolean;
 }
 
 const ACTOR_TYPES = ["human", "agent"] as const;
@@ -677,6 +680,18 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     },
     (args) => run("add_artifact", () => invoke("add_artifact", args)),
   );
+
+  if (options.playbookEnabled === true) {
+    server.registerTool(
+      "get_playbook",
+      {
+        description:
+          "Return one static Campfire playbook definition by name. Read-only guidance for recording an investigation; it carries no workspace data, performs no workspace authorization, and changes no Campfire state.",
+        inputSchema: { name: z.string() },
+      },
+      (args) => run("get_playbook", () => getPlaybook(args.name)),
+    );
+  }
 
   return server;
 }

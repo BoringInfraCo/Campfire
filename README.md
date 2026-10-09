@@ -37,17 +37,31 @@ CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
 
 Onboard is the first-run path to one human, one agent they own, one workspace, and one goal. It does not start the server and does not register an agent session. `campfire seed --reset` loads a deterministic demo/evaluation fixture; it is not how a new operator creates a workspace.
 
-For a version-pinned v1.12.0 install:
+For a version-pinned install after this version is deployed:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.12.0/install.sh | sh -s -- --version 1.12.0
+curl -fsSL https://boringinfra.company/campfire/v1.13.0/install.sh | sh -s -- --version 1.13.0
 ```
 
-The latest installer also accepts an explicit version:
+Until that production deploy, the current installer can select the GitHub Release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.12.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.13.0
 ```
+
+### Experimental incident playbook
+
+The v1.13 playbook is disabled by default. To inspect its versioned,
+read-only guidance in the CLI, run:
+
+```bash
+CAMPFIRE_PLAYBOOK=1 campfire playbook incident-investigation --output json
+```
+
+`campfire mcp --with-playbook` adds the same definition as the `get_playbook`
+tool for that MCP session. Reading it does not change a workspace or run a
+workflow. The synthetic pilot and its limits are summarized in
+`CHANGELOG.md`.
 
 ## Build and verify
 

@@ -37,6 +37,7 @@ import { enrollRemoteAgent } from "../bootstrap/enrollment-client.js";
 import { defaultHumanName, promptHumanName } from "./first-run.js";
 import {
   CLI_COMMAND_NAMES,
+  commandDiscoverable,
   commandSpec,
   commandSpecForArgs,
   formatCommandUsage,
@@ -75,6 +76,7 @@ import {
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
+import { getPlaybook, listPlaybooks, type PlaybookDefinition } from "../playbooks/index.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
 import { buildHandoff, formatHandoff } from "../bootstrap/handoff.js";
@@ -1671,6 +1673,56 @@ async function cmdInspect(parsed: ParsedArgs, argv: string[]): Promise<void> {
   });
 }
 
+interface PlaybookList {
+  kind: "campfire_playbook_list";
+  schemaVersion: 1;
+  playbooks: Array<{ name: string; version: string }>;
+}
+
+/** CLI-only list projection: names and versions, never the full guidance. */
+function buildPlaybookList(): PlaybookList {
+  return {
+    kind: "campfire_playbook_list",
+    schemaVersion: 1,
+    playbooks: listPlaybooks().map((playbook) => ({ name: playbook.name, version: playbook.version })),
+  };
+}
+
+function formatPlaybookList(list: PlaybookList): string {
+  return list.playbooks.map((playbook) => `${playbook.name}  ${playbook.version}`).join("\n");
+}
+
+function formatPlaybook(playbook: PlaybookDefinition): string {
+  const lines: string[] = [`${playbook.name}  ${playbook.version}`];
+  playbook.stages.forEach((stage, index) => {
+    lines.push("", `${index + 1}. ${stage.title}`);
+    for (const guidance of stage.guidance) {
+      lines.push(`   - ${guidance}`);
+    }
+  });
+  lines.push("", "Rules:");
+  for (const rule of playbook.rules) {
+    lines.push(`  - ${rule}`);
+  }
+  return lines.join("\n");
+}
+
+/** Static guidance only: no backend, no database, no actor resolution. */
+async function cmdPlaybook(parsed: ParsedArgs): Promise<void> {
+  const mode = commandOutput(parsed);
+  const selector = parsed.positionals[0];
+  if (selector === undefined || selector.trim().length === 0) {
+    throw new ValidationError("Missing playbook selector: use campfire playbook list or campfire playbook <name>", {
+      field: "name",
+    });
+  }
+  if (selector === "list") {
+    emitResult(buildPlaybookList(), mode, formatPlaybookList);
+    return;
+  }
+  emitResult(getPlaybook(selector), mode, formatPlaybook);
+}
+
 async function cmdCapabilities(parsed: ParsedArgs): Promise<void> {
   const mode = commandOutput(parsed);
   emitResult(buildCommandManifest(installedCampfireVersion()), mode, formatCommandManifest);
@@ -2341,6 +2393,9 @@ function printHelp(command?: string): void {
   if (!isKnownCommand(command)) {
     throw new ValidationError(`Unknown command: ${command}`, { command });
   }
+  if (!commandDiscoverable(command)) {
+    throw new ValidationError(`Unknown command: ${command}`, { command });
+  }
   console.log(formatCommandUsage(command));
 }
 
@@ -2369,6 +2424,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   changes: (parsed, argv) => cmdChanges(parsed, argv),
   inspect: (parsed, argv) => cmdInspect(parsed, argv),
   capabilities: (parsed) => cmdCapabilities(parsed),
+  playbook: (parsed) => cmdPlaybook(parsed),
   bridge: (parsed) => cmdBridge(parsed),
   whoami: (_parsed, argv) => cmdWhoami(argv),
   list: (_parsed, argv) => cmdList(argv),
@@ -2424,6 +2480,10 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (!isKnownCommand(parsed.command)) {
+    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
+  }
+
+  if (!commandDiscoverable(parsed.command)) {
     throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
   }
 

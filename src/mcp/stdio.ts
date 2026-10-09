@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import type { ActorRef } from "../domain/types.js";
 import { campfireHttpCall, hostedIdentityError } from "../http/client.js";
+import { playbookEnabled } from "../playbooks/index.js";
 import { createRuntime } from "../runtime.js";
 import type { CampfireRuntime } from "../runtime.js";
 import {
@@ -99,6 +100,7 @@ export async function startStdioServer(
 ): Promise<RunningStdioServer> {
   const url = readCampfireUrl(env);
   const token = readCampfireToken(env, argv);
+  const withPlaybook = playbookEnabled(env, argv);
 
   if (url !== undefined) {
     if (token === undefined) {
@@ -110,6 +112,7 @@ export async function startStdioServer(
     if (startup.kind === "unavailable") {
       const server = createCampfireMcpServer({
         unavailable: { message: startup.down.message, details: startup.down.details },
+        playbookEnabled: withPlaybook,
       });
       const transport = new StdioServerTransport();
       let closed = false;
@@ -136,7 +139,7 @@ export async function startStdioServer(
         `[campfire] agent ${resolved.ctx.actor.actorId} is not ready for workspace writes; use register_agent_session`,
       );
     }
-    const server = createCampfireMcpServer({ remote: { url, token }, identity: resolved });
+    const server = createCampfireMcpServer({ remote: { url, token }, identity: resolved, playbookEnabled: withPlaybook });
     const transport = new StdioServerTransport();
 
     let closed = false;
@@ -179,7 +182,11 @@ export async function startStdioServer(
     );
   }
 
-  const server = createCampfireMcpServer({ service: runtime.service, identity: resolved });
+  const server = createCampfireMcpServer({
+    service: runtime.service,
+    identity: resolved,
+    playbookEnabled: withPlaybook,
+  });
   const transport = new StdioServerTransport();
 
   let closed = false;

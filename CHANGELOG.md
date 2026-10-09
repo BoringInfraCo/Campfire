@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.0 — 2026-10-08
+
+- Added one opt-in, versioned incident-investigation playbook. `CAMPFIRE_PLAYBOOK=1 campfire playbook` and MCP `get_playbook` expose the same read-only definition; default surfaces remain unchanged.
+- Ran a frozen synthetic six-arm pilot with two independent blind scorers. After source-audit resolution, all three treatment runs passed and all three matched pairs improved recording quality without lower continuation quality.
+- The pilot is GO under its preregistered rubric. It does not establish Gate B/C, real-user value, or a continuation gain; the v1.12 Viewer human trace remains open.
+
 ## 1.12.0 — 2026-10-07
 
 - Made the read-only Viewer distinguish accepted decisions that need review, show open tasks and cited references, and report completeness even when no rows are displayed.
