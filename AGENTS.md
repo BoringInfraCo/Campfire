@@ -189,7 +189,9 @@ the frozen rubric; the item-level source audit and resolved scores are in
 `docs/evidence/wow-001/scoring/`. The pilot verdict is **GO**: 3/3 treatment
 runs passed, 3/3 matched pairs improved recording without lower continuation,
 and treatment fetched the playbook 3/3 times. The owner separately authorized
-v1.13 release preparation. This synthetic pilot does not close VIS-001's open
+v1.13 publication. Public source, all four checksummed archives, Homebrew and
+Nix pins, and the production Worker are published; the versioned installer
+passed a clean install check. This synthetic pilot does not close VIS-001's open
 human evidence or establish Gate B or C. See `docs/SPRINT_WOW_001_RESULT.md`.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,

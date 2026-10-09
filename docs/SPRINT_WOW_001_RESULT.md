@@ -1,7 +1,7 @@
 # WOW-001 pilot result — GO on frozen synthetic pilot
 
 **Date:** October 8, 2026
-**Status:** Six preregistered arms and six second-agent handoffs executed;
+**Status:** v1.13.0 published and deployed. Six preregistered arms and six second-agent handoffs executed;
 two independent blind scorers completed all item scores. The audited pilot
 verdict is **GO** under the frozen rubric. This supports the bounded v1.13
 playbook release decision; it is not Gate B, Gate C, or a claim of ordinary
@@ -161,9 +161,9 @@ release authorization. The playbook remains disabled by default and versioned
 1.0.0. No second playbook, workflow execution, Viewer change, new domain
 object, or Gate B/C promotion is part of this release.
 
-The publication record, checksums, install-channel pins, deployment, and live
-verification will be added after those actions complete. Until then, pilot GO
-is the only finalized verdict here.
+Publication and production deployment completed on October 8, 2026. The pilot
+verdict remains **GO on frozen synthetic evidence**; release publication does
+not enlarge the gate claim.
 
 The v1.13.0 candidate passed `npm ci`, typecheck, build, Darwin ARM64
 packaging, and the Worker deployment dry run. The pre-pin test suite passed
@@ -196,4 +196,51 @@ fixture allowlist selected the private pilot packet and the export's forbidden
 content audit remain in force. Two pilot-runner tests that import non-exported
 private scripts are also excluded by exact path; the playbook CLI/MCP product
 tests remain in the public snapshot. The successful export and complete diff
-are verified as part of release promotion below.
+were verified during release promotion below.
+
+## 6. v1.13.0 publication and verification
+
+- Private canonical source and annotated `v1.13.0` tag:
+  `f2e5343250787658b6be6fda888bfac3a33dc049`. Private `main` was
+  fast-forwarded from the clean release worktree. The separate primary
+  checkout's unrelated uncommitted work was left untouched.
+- Public source snapshot: `BoringInfraCo/Campfire` commit
+  `e4b1cf89ffee0a14f25d3660d2c4c64cb493bd24`, also the immutable public
+  `v1.13.0` tag. The public release is
+  `https://github.com/BoringInfraCo/Campfire/releases/tag/v1.13.0`.
+  Its 264 manifest entries were audited against the staged export: the product
+  source, versioned installer, and playbook tests are present; sealed pilot
+  fixtures, scorer evidence, private runners, and credentials are absent.
+  The public operator page replaced three links to private-only sprint results
+  with the exported release context and changelog.
+- The public release workflow `37873806332` passed all four native-platform
+  jobs and attached four archives plus four `.sha256` files. Each downloaded
+  archive independently passed `shasum -a 256 -c` against its published file:
+
+  | Archive | SHA-256 |
+  | --- | --- |
+  | `campfire-darwin-arm64.tar.gz` | `256de98f724db036aa289189464475bb97e1297f9e42f8148656ab98b0b0c7a6` |
+  | `campfire-darwin-x64.tar.gz` | `729e13f9cf1e7b11fb8a49a14a66bb4dde8e0bb07f68a205008b34e3d498350d` |
+  | `campfire-linux-arm64.tar.gz` | `1e69cc07342b8d2ad11b8dee48fea740b667faadaa7a624e79bbd2bd00c992aa` |
+  | `campfire-linux-x64.tar.gz` | `1de5903c1c92adccda0eddc0bbef00388864d1d855e8c13ad607ce139c7c5a2b` |
+
+- Actual release digests were applied to private Homebrew/Nix pins in
+  `2d750fdd7203325dd3bf883f48d37b662c039253`. The post-tag public pin
+  addendum is `77b05a0ec477abaa1ef24b9cbf88bd4125b67255`; the public tag
+  was not moved. Its manifest names the private install-channel commit.
+  The public Homebrew tap formula was promoted in
+  `63ab3d9e5f491e327aeecdbb3e1e9a2b075e0c2b`.
+- The full private post-pin suite passed **909 tests across 76 files**. The
+  public pin test passed all four checks locally. Public CI run `37874249729`
+  and private CI run `37874201280` passed on the post-pin commits. The earlier
+  public snapshot CI failed only on the expected v1.12 pin assertion before
+  the v1.13 archives existed; no assertion was loosened.
+- `npm run deploy` from the private release worktree deployed Worker version
+  `dac7c595-dbe2-474f-8ffa-0a561fceb382` to
+  `boringinfra.company/campfire/*`. No migration was needed: the v1.12 to
+  v1.13 diff has no migration or Worker source change. A live **GET** of
+  `/campfire/v1.13.0/install.sh` and `/campfire/install.sh` matched the
+  tracked files byte for byte. The live versioned installer completed a clean
+  Darwin ARM64 install into a temporary prefix, verified archive SHA-256, and
+  the installed CLI returned the versioned playbook as JSON when explicitly
+  enabled. No real workspace write was part of that check.

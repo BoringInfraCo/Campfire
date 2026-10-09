@@ -1425,7 +1425,7 @@ Sprint COR-001 — Correct the Record   CONDITIONAL GO; published v1.11.0; produ
         ↓
 Sprint VIS-001 — Make Shared Understanding Visible   CONDITIONAL; bounded condition-3 Viewer slice published and deployed as v1.12.0 under founder override; condition 4 and human comprehension trace open; see docs/SPRINT_VIS_001_RESULT.md
         ↓
-v1.13 — Prove a Way of Working   one opt-in playbook and two delivery surfaces implemented; frozen synthetic pilot GO (3/3 treatment passes, 3/3 matched gains); release preparation in progress; Gate B/C unmeasured
+v1.13 — Prove a Way of Working   one opt-in playbook and two delivery surfaces published and deployed as v1.13.0; frozen synthetic pilot GO (3/3 treatment passes, 3/3 matched gains); Gate B/C unmeasured
         ↓
 Later — Generated workspace views   after structured state is trustworthy
 ```
@@ -1466,7 +1466,7 @@ v1.13 — PROVE A WAY OF WORKING
         opt-in CLI and MCP delivery surfaces implemented
         synthetic pilot GO; 3/3 treatment passes and 3/3 matched recording gains
         no measured continuation gain; Gate B/C unmeasured
-        release preparation in progress; see docs/SPRINT_WOW_001_RESULT.md
+        published and deployed as v1.13.0; see docs/SPRINT_WOW_001_RESULT.md
 
 Later — GENERATED WORKSPACE VIEWS
         derived from authorized structured state
