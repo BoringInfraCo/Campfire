@@ -2,8 +2,9 @@
   "schemaVersion": 1,
   "version": "1.13.0",
   "sourceCommit": "f2e5343250787658b6be6fda888bfac3a33dc049",
+  "installChannelsCommit": "2d750fdd7203325dd3bf883f48d37b662c039253",
   "sourceDate": "2026-10-08T16:39:23-04:00",
-  "exportedAt": "2026-10-08T00:00:00.000Z",
+  "exportedAt": "2026-10-09T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
     ".github/workflows/release-tarball.yml",
