@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026
+**Date:** October 3, 2026; sequence revised October 9, 2026 after published `v1.13.0`
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -951,16 +951,21 @@ Currentness is a separate fact. Highlights are not introduced before v1.11
 correction and currentness semantics exist, and the first form is a shared
 workspace highlight with provenance.
 
-The release that would do this work is named **Make Shared Understanding
-Visible**. It is directional. Section 21 states the evidence required before
-it becomes sprint scope.
+**Make Shared Understanding Visible** shipped as `v1.12.0` under a founder
+override. The published slice is a bounded read-only Viewer clarification of
+decisions, tasks, reasons, cited evidence, and truncated sections. Artifact
+previews and shared highlights stayed deferred. A human comprehension trace
+on that surface is still open. Section 21 records the override and the
+evidence still required.
 
-Generated workspace views come later still. They are derived from authorized
+Generated workspace views stay later. They are derived from authorized
 structured state, sandboxed, and non-canonical. They receive no Campfire
 credentials and no unrestricted writes. Arbitrary HTML is untrusted:
 agent-authored markup needs sandboxing, a content security policy, capability
 isolation, and no path to Campfire credentials. Campfire is a multi-principal
 authorization boundary, so a personal-agent rendering model does not transfer.
+Section 21 states the evidence required before that work becomes sprint scope.
+The published `v1.13.0` playbook does not supply that evidence.
 
 ---
 
@@ -1042,13 +1047,17 @@ Do not commit yet to:
 - a Channel object beside Workspace,
 - canonical presentation or hosted content inside Artifact,
 - a skills platform or workflow engine,
-- generated workspace views before structured state is trustworthy,
+- generated workspace views before the section 21 entry gate is met,
 - highlights that override correction and currentness,
 - treating MCP compatibility as identity, membership, or authorization.
 
-One incident-investigation playbook may be tested after currentness exists.
-That experiment is guidance for recording useful state. It is not permission
-to build a skills platform. Section 21 sequences it.
+One incident-investigation playbook was tested after currentness existed and
+published, opt-in, as `v1.13.0`. On three frozen synthetic incidents it
+improved recording and left continuation unchanged. Continuation was already
+at the rubric ceiling in both arms. That result is guidance for recording.
+It is not a skills platform, and it does not authorize a second playbook.
+Section 21 sequences what the result leaves open. The pilot does not meet
+the entry gate for generated workspace views.
 
 Some may eventually interact with Campfire.
 
@@ -1071,8 +1080,10 @@ Required before Phase 2.
 **Question:** Do humans/agents choose to reuse the workspace across multiple sessions?
 
 Required before investing heavily in collaboration UX. The v1.12 visual
-surface in section 21 is that kind of investment. It stays directional while
-Gate B is unmeasured.
+surface shipped under an explicit founder override while this gate was
+unmeasured. That override does not retire the gate. A generated workspace
+view is the same class of investment and stays behind the section 21 entry
+gate while Gate B is unmeasured.
 
 Sprint 004 showed repeat-session behavior in a deterministic trace. Field
 Trace 001 was cancelled by founder decision before a qualifying multi-day human
@@ -1425,12 +1436,14 @@ Sprint COR-001 — Correct the Record   CONDITIONAL GO; published v1.11.0; produ
         ↓
 Sprint VIS-001 — Make Shared Understanding Visible   CONDITIONAL; bounded condition-3 Viewer slice published and deployed as v1.12.0 under founder override; condition 4 and human comprehension trace open; see docs/SPRINT_VIS_001_RESULT.md
         ↓
-v1.13 — Prove a Way of Working   one opt-in playbook and two delivery surfaces published and deployed as v1.13.0; frozen synthetic pilot GO (3/3 treatment passes, 3/3 matched gains); Gate B/C unmeasured
+Sprint WOW-001 — Prove a Way of Working   GO on a frozen synthetic pilot; published and deployed as v1.13.0; recording gain on 3/3 matched pairs; continuation at ceiling in both arms; no second playbook; see docs/SPRINT_WOW_001_RESULT.md; Gate B/C unmeasured
         ↓
-Later — Generated workspace views   after structured state is trustworthy
+Next evidence — Viewer comprehension and which references are opened   not a release; open from v1.12; review the reference observation by October 14, 2026
+        ↓
+Later — Generated workspace views   not sprint scope until the entry gate below
 ```
 
-`v1.10.0` is published. The sequence adopted on October 3, 2026 is:
+`v1.10.0` is published. The sequence adopted on October 3, 2026, and revised on October 9, 2026 after `v1.13.0`, is:
 
 ```text
 v1.10 — KEEP SHARED UNDERSTANDING CURRENT
@@ -1458,20 +1471,40 @@ v1.12 — MAKE SHARED UNDERSTANDING VISIBLE
         see docs/SPRINT_VIS_001_RESULT.md
 
 v1.13 — PROVE A WAY OF WORKING
-        one incident-investigation playbook
-        measure recording quality and continuation quality
-        expand only with evidence
+        published and deployed as v1.13.0
+        one opt-in incident-investigation playbook, version 1.0.0
+        default off; CLI `campfire playbook` and MCP `get_playbook`
+        static guidance; no new domain object and no workflow execution
         contract: docs/Campfire-v1.13-WOW-001-Prove-a-Way-of-Working.md
         frozen pilot fixtures: fixtures/incidents/wow-001/
-        opt-in CLI and MCP delivery surfaces implemented
         synthetic pilot GO; 3/3 treatment passes and 3/3 matched recording gains
-        no measured continuation gain; Gate B/C unmeasured
-        published and deployed as v1.13.0; see docs/SPRINT_WOW_001_RESULT.md
+        continuation already at the rubric ceiling in both arms
+        no measured continuation gain
+        the GO does not authorize a second playbook
+        Gate B and Gate C unmeasured
+        see docs/SPRINT_WOW_001_RESULT.md
 
-Later — GENERATED WORKSPACE VIEWS
-        derived from authorized structured state
+NEXT EVIDENCE — before another surface
+        not a release and not a new projection
+        one human comprehension trace on the shipped v1.12 Viewer
+        which references a person tries to open
+        review the reference observation by October 14, 2026
+        a recorded absence is a result
+        if no opportunity occurs, the only build is a read-only Viewer
+        reference affordance that records the attempt
+        that affordance fetches nothing and previews nothing
+        previews, highlights, and generated views stay deferred
+        these observations are v1.12 evidence; they are not credited to v1.13
+
+v1.14 — GENERATED WORKSPACE VIEWS
+        directional only
+        not sprint scope until every entry condition below is recorded
+        one derived view of authorized workspace state
         sandboxed and non-canonical
-        no direct credentials or unrestricted writes
+        no Campfire credentials and no unrestricted writes
+        no second store and no new domain object
+        the workspace remains complete when the view is absent
+        see docs/ARCHITECTURE.md
 ```
 
 The original v1.12 entry contract required all of these before sprint scope:
@@ -1488,15 +1521,26 @@ sequence, not evidence that the entry gate passed. The remaining visual scope
 remains deferred; the v1.12.0 verdict is CONDITIONAL until a human trace
 tests comprehension on the shipped surface. See `docs/SPRINT_VIS_001_RESULT.md`.
 
+The sequence adopted on October 9, 2026, after published `v1.13.0`, keeps
+generated views behind this entry gate:
+
+- the human comprehension trace on the shipped v1.12 Viewer is recorded;
+- the reference-open observation is recorded, including a recorded absence on or after October 14, 2026;
+- that evidence says the defect is presentation of state the trace could already explain, rather than missing or incorrect workspace state;
+- the v1.13 pilot's recording gain is not that evidence, and the absence of a continuation gain stays visible;
+- Gate B may still be unmeasured. A generated view does not claim it.
+
+Until those are true, v1.14 is not sprint scope. A second playbook is a separate founder decision and is not part of this gate.
+
 The product risk is polishing a surface before teams repeatedly rely on the collaboration state. Leaving that state in structured form for another release is acceptable.
 
 These boundaries govern the sequence:
 
 - Workspace stays the only collection primitive.
 - Artifact stays identity, type, title, reference, metadata, and provenance. Presentation is a Viewer concern. See `docs/ARCHITECTURE.md` and `docs/PRODUCT_DEFINITION.md`.
-- A highlight is shared workspace salience with provenance. It does not make a superseded finding or a rejected decision current. Introduce highlights with or after v1.11.
+- A highlight is shared workspace salience with provenance. It does not make a superseded finding or a rejected decision current. Introduce highlights with or after v1.11. v1.12 and v1.13 did not introduce them.
 - Setup may disappear into the agent's normal workflow. Authorization stays visible. The promise is: if an agent supports MCP, it can work from the caller's authorized Campfire context. Enrollment and the session boundary stay explicit.
-- A playbook is guidance for how to record useful state. It is not workflow execution and not new domain machinery. The only candidate is `incident-investigation`. Call it a workspace playbook, not a harness skill.
+- A playbook is guidance for how to record useful state. It is not workflow execution and not new domain machinery. `incident-investigation` 1.0.0 is published opt-in. Further playbooks wait on a continuation gain, or on a founder decision that names what else would be measured. Call it a workspace playbook, not a harness skill.
 
 Television is an adjacent personal-agent product that organizes persistent interactive artifacts into Channels and pins those Channels. Its repository is [telepath-computer/television](https://github.com/telepath-computer/television), and its channel specification is [channels.md](https://github.com/telepath-computer/television/blob/main/specs/product/channels.md). That contrast is useful. It is not a roadmap to copy.
 

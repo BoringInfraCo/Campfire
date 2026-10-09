@@ -1,8 +1,8 @@
 # Campfire — Architecture
 
-**Status:** Revised after `v1.10.0`
+**Status:** Revised after `v1.13.0`
 **Version:** 0.2
-**Date:** October 3, 2026
+**Date:** October 3, 2026; projection boundary revised October 9, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -774,7 +774,18 @@ MCP handlers should remain thin.
 
 They should not contain Campfire's core collaboration semantics.
 
-That allows future interfaces:
+WOW-001 adds one opt-in read, `get_playbook`, and the matching CLI command
+`campfire playbook`. Both stay off unless the process is explicitly enabled.
+The read returns one static playbook definition. It carries no workspace
+data, performs no workspace authorization, and writes nothing. That exception
+exists because there is no workspace resource to authorize. It is not a
+pattern for skipping authorization on workspace reads. The playbook is not a
+domain object, not a participant, and not executed. `incident-investigation`
+1.0.0 is the only definition. Further playbooks wait on the evidence in
+`docs/SPRINT_WOW_001_RESULT.md`: a recording gain on three synthetic
+incidents, and no measured continuation gain.
+
+Thin handlers still allow other interfaces:
 
 ```text
 MCP
@@ -1060,7 +1071,7 @@ Updates that erase who made a prior decision or why it changed undermine one of 
 
 ### Interface becomes the source of truth
 
-A view, preview, highlight, or generated page is a projection of authorized workspace state. If that projection is required to know what the team believes, the workspace has stopped being canonical.
+A view, preview, highlight, or generated page is a projection of authorized workspace state. If that projection is required to know what the team believes, the workspace has stopped being canonical. A generated page is produced for one authorized read. It is not stored, it is not a Contribution, and the workspace is still complete when it is absent. `v1.13.0` does not add that page.
 
 A highlight means "keep this visible." It does not mean "this is still true." A superseded finding or a rejected decision stays out of current understanding while it remains highlighted. Highlights, when they exist, are shared workspace records with provenance. They are interpreted only after correction and currentness semantics exist.
 
@@ -1099,13 +1110,17 @@ MCP compatibility
         !=
 Identity, membership, or authorization
 
-Viewer projection
+Viewer projection, including a generated view
         !=
 Canonical workspace state
 
 Highlight
         !=
 Current truth
+
+Playbook text
+        !=
+Workflow execution or workspace state
 ```
 
 Future cloud/team architecture should assume:
@@ -1211,14 +1226,18 @@ Potential future capabilities include:
 - policy engines,
 - autonomous organization-owned agents.
 
-Later projection work, if the roadmap's evidence gate is met, stays inside the same boundary:
+Projection work that has shipped stays inside the same boundary:
 
-- visual orientation, catch-up, and drill-down read the workspace; they do not replace it;
+- v1.12.0 published a bounded read-only Viewer slice for decisions, tasks, reasons, cited evidence, and truncated sections. It reads the workspace and does not replace it. Previews and shared highlights were not part of that release.
+- one workspace playbook, `incident-investigation` 1.0.0, is opt-in static guidance for how an agent records an incident. It does not execute workflow, add a domain object, or authorize a second playbook. The frozen synthetic pilot improved recording and measured no continuation gain.
+
+Later projection work, if the roadmap's entry gate is met, stays inside the same boundary:
+
 - shared highlights record salience and provenance, and they follow currentness;
-- one workspace playbook may guide how an agent records an incident investigation; it does not execute workflow or add domain objects;
-- generated workspace views are derived, sandboxed, and non-canonical, with no Campfire credentials and no unrestricted writes.
+- safe artifact previews stay in the Viewer and follow the reference-open evidence; they do not store content on Artifact;
+- one generated workspace view is derived at read time from authorized workspace state for one actor. It is sandboxed and non-canonical. It holds no Campfire credential, makes no unrestricted write, and is not required to know what the team believes. Arbitrary HTML stays untrusted: the page needs sandboxing, a content security policy, capability isolation, and no path to Campfire credentials. A rendering model built for one personal agent does not transfer to Campfire's multiple principals.
 
-None is required for Sprint 001. The post-v1.10 sequence and its evidence gate are in `docs/ROADMAP.md`.
+The post-v1.13 entry gate is in `docs/ROADMAP.md`. None of the later items is sprint scope on the evidence recorded through `v1.13.0`.
 
 ---
 
