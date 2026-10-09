@@ -10,6 +10,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
+import type { WorkspaceContext } from "../service/service.js";
+import { GENERATED_VIEW_CSP, renderGeneratedWorkspaceView } from "./generated-workspace-view.js";
 
 export const DEFAULT_VIEWER_HOST = "127.0.0.1";
 export const DEFAULT_VIEWER_PORT = 9415;
@@ -173,6 +175,39 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
   async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = req.url ?? "/";
     const path = url.split("?")[0] ?? "/";
+    const generated = /^\/generated\/workspaces\/([A-Za-z0-9_-]{1,128})$/.exec(path);
+
+    if (generated !== null) {
+      res.setHeader("cache-control", "no-store");
+      res.setHeader("x-content-type-options", "nosniff");
+      if (req.method !== "GET") {
+        fail(res, 405, "ValidationError", "Method not allowed");
+        return;
+      }
+      const workspaceId = generated[1];
+      try {
+        const value = await options.call("get_workspace_context", { workspaceId });
+        if (!isRecord(value) || !isRecord(value.workspace) || value.workspace.id !== workspaceId) {
+          throw new Error("Invalid workspace context response");
+        }
+        const html = renderGeneratedWorkspaceView(value as unknown as WorkspaceContext);
+        res.writeHead(200, {
+          "content-type": "text/html; charset=utf-8",
+          "content-length": Buffer.byteLength(html),
+          "content-security-policy": GENERATED_VIEW_CSP,
+          "referrer-policy": "no-referrer",
+          "x-frame-options": "DENY",
+        });
+        res.end(html);
+      } catch (error) {
+        if (error instanceof CampfireError && (error.code === "ParticipantRequired" || error.code === "Unauthorized" || error.code === "WorkspaceNotFound")) {
+          fail(res, 404, "WorkspaceNotFound", "Workspace unavailable");
+          return;
+        }
+        fail(res, 500, "InternalError", "Unable to render workspace view");
+      }
+      return;
+    }
 
     if (req.method === "GET") {
       const route = STATIC_ROUTES[path];

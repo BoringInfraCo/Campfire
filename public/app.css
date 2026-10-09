@@ -508,3 +508,15 @@ main {
     max-height: 50vh;
   }
 }
+.generated-view-link {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.generated-view-link:hover,
+.generated-view-link:focus-visible {
+  text-decoration: underline;
+}
