@@ -1,0 +1,215 @@
+{
+  "_meta": {
+    "date": "2026-10-10",
+    "dataset": "campfire_telemetry",
+    "account": "1c1597c473c77c9ea49a53b4d62fdb2d",
+    "access": "Cloudflare MCP post_accounts_analytics_engine_sql (no CLOUDFLARE_API_TOKEN required)",
+    "writes_to_production": "none - all queries are SELECT",
+    "sql_convention": "Every sql field below is the exact string executed, with the version-floor predicate and any time window expanded inline. No placeholders.",
+    "blob_layout": {
+      "blob1": "event", "blob2": "schemaVersion", "blob3": "campfireVersion",
+      "blob4": "os", "blob5": "arch", "blob6": "installMethod",
+      "blob7": "surface", "blob8": "installationId",
+      "authority": "src/telemetry/contract.ts:363-385",
+      "correction": "There is NO harness column. An earlier audit entry read blob6 as 'harness' and reported a uniformity finding. That was a mislabeled column; the finding is VOID. blob6 is installMethod and is legitimately low-cardinality."
+    }
+  },
+
+  "floor_predicate": "(startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0')",
+  "floor_note": "TELEMETRY_MIN_REPORTING_VERSION = 1.9.1. Applied as a prefix predicate, NOT a lexical comparison, because 1.10.0 sorts before 1.9.1 as text.",
+
+  "reproduction": {
+    "window": "timestamp < toDateTime('2026-10-10 05:40:00')",
+    "active_distinct_ids": {
+      "sql": "SELECT count(DISTINCT blob8) AS n FROM campfire_telemetry WHERE blob1='active' AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0') AND timestamp < toDateTime('2026-10-10 05:40:00') FORMAT JSON",
+      "raw": { "data": [{ "n": "536" }] },
+      "verdict": "REPRODUCED exactly. Matches the figure in the assessment."
+    },
+    "total_rows": {
+      "sql": "SELECT count() AS n FROM campfire_telemetry WHERE timestamp < toDateTime('2026-10-10 05:40:00') FORMAT JSON",
+      "raw": { "data": [{ "n": "2096" }] },
+      "verdict": "REPRODUCED exactly. Raw row count, not installations."
+    },
+    "client_event_rows": {
+      "sql": "SELECT count() AS n FROM campfire_telemetry WHERE blob1 IN ('install_completed','activated','active','teammate_joined','contributed') AND timestamp < toDateTime('2026-10-10 05:40:00') FORMAT JSON",
+      "raw": { "data": [{ "n": "2072" }] },
+      "verdict": "2096 total rows = 2072 client-event rows + 24 install_requested rows."
+    },
+    "dataset_growth": {
+      "sql": "SELECT min(toDate(timestamp)) AS first_day, max(toDate(timestamp)) AS last_day, count() AS rows FROM campfire_telemetry FORMAT JSON",
+      "raw": { "data": [{ "first_day": "2026-10-03", "last_day": "2026-10-10", "rows": "2135" }] },
+      "note": "The dataset has only grown since the cutoff (2096 -> 2135), consistent with a real live query at the stated moment."
+    }
+  },
+
+  "sampling": {
+    "window": "timestamp < toDateTime('2026-10-10 05:40:00')",
+    "sql": "SELECT blob1 AS event, _sample_interval AS si, count() AS rows FROM campfire_telemetry WHERE timestamp < toDateTime('2026-10-10 05:40:00') GROUP BY event, si ORDER BY event, si FORMAT JSON",
+    "raw_rows": {
+      "active":             { "si1": 536, "si2": 4 },
+      "activated":          { "si1": 838, "si2": 14 },
+      "install_completed":  { "si1": 673, "si2": 2 },
+      "contributed":        { "si1": 4,   "si2": 0 },
+      "install_requested":  { "si1": 24,  "si2": 0 },
+      "teammate_joined":    { "si1": 1,   "si2": 0 }
+    },
+    "sampled_rows_detail_sql": "SELECT blob1 AS event, blob4 AS os, blob3 AS version, count() AS rows FROM campfire_telemetry WHERE timestamp < toDateTime('2026-10-10 05:40:00') AND _sample_interval > 1 GROUP BY event, os, version FORMAT JSON",
+    "sampled_rows_detail_raw": [
+      { "event": "active", "os": "linux", "version": "1.12.0", "rows": 2 },
+      { "event": "active", "os": "linux", "version": "1.13.0", "rows": 2 },
+      { "event": "activated", "os": "linux", "version": "1.15.0", "rows": 4 },
+      { "event": "activated", "os": "linux", "version": "1.13.0", "rows": 4 },
+      { "event": "activated", "os": "linux", "version": "1.14.0", "rows": 2 },
+      { "event": "activated", "os": "linux", "version": "1.12.0", "rows": 4 },
+      { "event": "install_completed", "os": "linux", "version": "1.2.0", "rows": 2 }
+    ],
+    "interpretation": "Sampling DID occur among active rows: 4 of 540 active rows carry _sample_interval = 2. This does NOT reveal how many distinct installation IDs were lost. Those rows may carry IDs that also appear in unsampled rows. Direction is downward; magnitude is UNKNOWN. The 536 is a LOWER BOUND, not a corrected figure."
+  },
+
+  "id_intersection_decisive": {
+    "purpose": "Test whether any single installation ID appears BOTH as a forged 1.2.0 install_completed AND as an above-floor activated/active event in the same window. This is the test that refutes the earlier mixed-version claim.",
+    "burst_window": "timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp <= toDateTime('2026-10-09 05:00:00')",
+    "sql": "SELECT count() AS ids_with_both FROM (\n  SELECT blob8\n  FROM campfire_telemetry\n  WHERE timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp <= toDateTime('2026-10-09 05:00:00')\n  GROUP BY blob8\n  HAVING sum(if(blob1='install_completed' AND blob3='1.2.0', 1, 0)) > 0\n     AND sum(if(blob1 IN ('activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0'), 1, 0)) > 0\n) FORMAT JSON",
+    "raw": { "data": [{ "ids_with_both": "0" }] },
+    "denominators_in_window": {
+      "forged_1_2_0_ids": 174,
+      "above_floor_activated_or_active_ids": 309
+    },
+    "window_mismatch_note": "This intersection used a CLOSED window ending exactly at 05:00:00, while the burst_shape_oct9 grouping below uses toStartOfHour(...) <= 05:00:00, which sweeps the entire 05:00-05:59 hour. The two therefore cover different spans and their denominators are not comparable: 174 forged IDs in the closed window vs 204 in the hour-bucketed window. An aligned intersection was re-run against the same span as the burst grouping; see id_intersection_aligned_window.",
+    "full_snapshot_window": "timestamp < toDateTime('2026-10-10 05:40:00')",
+    "sql_full": "SELECT count() AS ids_with_both FROM (\n  SELECT blob8\n  FROM campfire_telemetry\n  WHERE timestamp < toDateTime('2026-10-10 05:40:00')\n  GROUP BY blob8\n  HAVING sum(if(blob1='install_completed' AND blob3='1.2.0', 1, 0)) > 0\n     AND sum(if(blob1 IN ('activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0'), 1, 0)) > 0\n) FORMAT JSON",
+    "raw_full": { "data": [{ "ids_with_both": "0" }] },
+    "denominators_full_window": {
+      "forged_1_2_0_ids": 668,
+      "above_floor_activated_or_active_ids": 940
+    },
+    "verdict": "ZERO observed overlap in both windows. No RETAINED row shows any installation ID carrying both a forged 1.2.0 install_completed and an above-floor activated/active event."
+  },
+
+  "id_intersection_aligned_window": {
+    "purpose": "Re-run of the intersection against the SAME span as the burst_shape_oct9 grouping (toStartOfHour window), so denominators are directly comparable. The earlier intersection used a closed window ending at 05:00:00 and was not comparable.",
+    "window": "timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00')  (half-open; equivalent to toStartOfHour >= 02:00:00 AND toStartOfHour <= 05:00:00)",
+    "sql": "SELECT count() AS ids_with_both FROM (\n  SELECT blob8\n  FROM campfire_telemetry\n  WHERE timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00')\n  GROUP BY blob8\n  HAVING sum(if(blob1='install_completed' AND blob3='1.2.0', 1, 0)) > 0\n     AND sum(if(blob1 IN ('activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0'), 1, 0)) > 0\n) FORMAT JSON",
+    "raw": { "data": [{ "ids_with_both": "0" }] },
+    "denominators_in_window": {
+      "forged_1_2_0_ids": 204,
+      "above_floor_activated_or_active_ids": 331
+    },
+    "window_mismatch_confirmed_sql": "SELECT count(DISTINCT blob8) AS forged FROM campfire_telemetry WHERE blob1='install_completed' AND blob3='1.2.0' AND timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp <= toDateTime('2026-10-09 05:00:00') FORMAT JSON",
+    "window_mismatch_confirmed_raw": { "closed_window_ending_050000": 174, "hour_bucketed_through_055959": 204, "half_open_ending_060000": 204 },
+    "verdict": "ZERO observed overlap on the aligned window too. The refutation of the mixed-version claim does not depend on the window mismatch."
+  },
+
+  "withdrawn_claim": {
+    "claim": "Within the Oct 9 02:00-05:00 linux window, the same installation IDs appear as install_completed at 1.2.0 AND as activated/active at 1.12.0-1.13.0, so a single real installation self-declared two incompatible versions.",
+    "status": "WITHDRAWN - REFUTED BY DATA",
+    "why_it_was_wrong": "The supporting query grouped by (event, version) and counted DISTINCT blob8 within each group. That shows different versions present in the same window; it never tested whether the SAME ID appeared in both groups. The note asserting 'the same IDs' was an unsupported inference from a grouping artifact. Distinct installations legitimately use different versions at the same time.",
+    "remedy": "Replaced by the id_intersection_decisive query above, which groups by blob8 and uses conditional aggregation to test per-ID co-occurrence. Result: 0.",
+    "consequence": "The Linux traffic is NOT shown to be fabricated by version self-contradiction. It remains suspicious and unattributed."
+  },
+
+  "recurrence": {
+    "window": "ALL DATA, NO TIME FILTER (no cutoff applied)",
+    "window_correction": "An earlier version of this file labeled this query 'before_cutoff', but it contained no cutoff clause. Its totals are 549 IDs, NOT the snapshot's 536. Relabeled. It is not comparable to the 536 figure.",
+    "sql": "SELECT blob4 AS os, days, count() AS installs FROM (SELECT blob8, blob4, count(DISTINCT toDate(timestamp)) AS days FROM campfire_telemetry WHERE blob1='active' AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0') GROUP BY blob8, blob4) GROUP BY os, days ORDER BY os, days FORMAT JSON",
+    "raw": {
+      "darwin": { "1_day": 35, "5_days": 1 },
+      "linux":  { "1_day": 513, "5_days": 0 }
+    },
+    "interpretation": "Zero linux recurrence. The single returning installation is darwin, spanning 5 days. Non-recurrence alone does NOT prove automation: an ephemeral job and a one-time human trial both yield a single non-recurring ID. This justifies investigation, not a conclusion."
+  },
+
+  "forged_stream": {
+    "window": "ALL DATA, NO TIME FILTER",
+    "sql": "SELECT blob1 AS event, blob4 AS os, count(DISTINCT blob8) AS ids FROM campfire_telemetry WHERE blob3='1.2.0' GROUP BY event, os FORMAT JSON",
+    "raw": {
+      "install_completed_darwin": 280,
+      "install_completed_linux": 388
+    },
+    "total_forged_ids": 668,
+    "interpretation": "668 distinct IDs declare version 1.2.0, below the telemetry floor. A binary older than 1.9.1 contains no telemetry code and cannot emit a schema-v1 event by any route, so these rows are PROVABLY fabricated rather than merely unattributed. They emit install_completed ONLY and never a downstream event. This is the one traffic class established as fabricated on evidence rather than inference.",
+    "corroboration": "src/telemetry/contract.ts:243-245 independently records that production carried several hundred forged 1.2.0 install_completed rows per day under a distinct installation id each."
+  },
+
+  "os_split": {
+    "sql": "SELECT blob4 AS os, count(DISTINCT blob8) AS ids, count() AS rows FROM campfire_telemetry WHERE blob1 IN ('install_completed','activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0') GROUP BY os FORMAT JSON",
+    "raw": {
+      "linux":  { "ids": 900, "rows": 1332 },
+      "darwin": { "ids": 66,  "rows": 106 }
+    },
+    "surface_split_sql": "SELECT blob4 AS os, blob7 AS surface, count(DISTINCT blob8) AS ids FROM campfire_telemetry WHERE blob1='active' GROUP BY os, surface FORMAT JSON",
+    "surface_split_raw": {
+      "linux_cli": 419, "linux_mcp": 94, "darwin_cli": 35, "darwin_mcp": 1
+    },
+    "interpretation": "OS does NOT classify users. The ingestion route is anonymous and unauthenticated; a self-declared plausible version passes the floor. The floor excludes provably IMPOSSIBLE traffic (1.2.0), not UNVERIFIED traffic. This is a platform split of unauthenticated claims, not a user split."
+  },
+
+  "first_seen_by_version_os": {
+    "window": "timestamp < toDateTime('2026-10-10 05:40:00')",
+    "sql": "SELECT blob3 AS version, blob4 AS os, min(timestamp) AS first_event, count(DISTINCT blob8) AS ids FROM campfire_telemetry WHERE timestamp < toDateTime('2026-10-10 05:40:00') GROUP BY version, os ORDER BY version FORMAT JSON",
+    "raw": [
+      { "version": "1.9.3",  "os": "darwin", "first": "2026-10-03 17:04:45", "ids": 7 },
+      { "version": "1.9.3",  "os": "linux",  "first": "2026-10-03 17:06:51", "ids": 38 },
+      { "version": "1.10.0", "os": "darwin", "first": "2026-10-03 21:03:51", "ids": 4 },
+      { "version": "1.10.0", "os": "linux",  "first": "2026-10-03 21:33:01", "ids": 56 },
+      { "version": "1.11.0", "os": "darwin", "first": "2026-10-04 00:40:46", "ids": 15 },
+      { "version": "1.11.0", "os": "linux",  "first": "2026-10-04 01:06:44", "ids": 91 },
+      { "version": "1.12.0", "os": "darwin", "first": "2026-10-07 21:11:17", "ids": 14 },
+      { "version": "1.12.0", "os": "linux",  "first": "2026-10-07 21:47:39", "ids": 247 },
+      { "version": "1.13.0", "os": "darwin", "first": "2026-10-08 20:31:32", "ids": 8 },
+      { "version": "1.13.0", "os": "linux",  "first": "2026-10-08 20:44:17", "ids": 246 },
+      { "version": "1.14.0", "os": "darwin", "first": "2026-10-10 01:24:57", "ids": 20 },
+      { "version": "1.14.0", "os": "linux",  "first": "2026-10-10 01:26:55", "ids": 110 },
+      { "version": "1.15.0", "os": "darwin", "first": "2026-10-10 03:53:20", "ids": 2 },
+      { "version": "1.15.0", "os": "linux",  "first": "2026-10-10 04:40:35", "ids": 86 },
+      { "version": "1.2.0",  "os": "darwin", "first": "2026-10-03 17:04:28", "ids": 280 },
+      { "version": "1.2.0",  "os": "linux",  "first": "2026-10-03 17:07:00", "ids": 388 }
+    ],
+    "interpretation": "Each version's linux and darwin cohorts first appear within minutes of each other, and every version shows the same linux-majority shape. This is uniformity worth investigating. It is NOT evidence that any given ID is automated, and it does not survive the withdrawn claim's logic."
+  },
+
+  "burst_shape_oct9": {
+    "window": "blob4='linux' AND toStartOfHour(timestamp) >= toDateTime('2026-10-09 02:00:00') AND toStartOfHour(timestamp) <= toDateTime('2026-10-09 05:00:00')",
+    "sql": "SELECT blob1 AS event, blob3 AS version, count(DISTINCT blob8) AS ids FROM campfire_telemetry WHERE blob4='linux' AND toStartOfHour(timestamp) >= toDateTime('2026-10-09 02:00:00') AND toStartOfHour(timestamp) <= toDateTime('2026-10-09 05:00:00') GROUP BY event, version ORDER BY version FORMAT JSON",
+    "raw": [
+      { "event": "install_completed", "version": "1.2.0",  "ids": 180 },
+      { "event": "activated",        "version": "1.12.0", "ids": 134 },
+      { "event": "activated",        "version": "1.13.0", "ids": 166 },
+      { "event": "active",           "version": "1.12.0", "ids": 83 },
+      { "event": "active",           "version": "1.13.0", "ids": 96 }
+    ],
+    "interpretation": "Counts DISTINCT IDs WITHIN each (event, version) group. This does NOT show that the same ID appears in more than one group; see withdrawn_claim and id_intersection_decisive. What it does show is that traffic concentrates in short bursts and that distinct versions coexist in one window. Suspicious, not established."
+  },
+
+  "blob6_actual_reading": {
+    "sql": "SELECT blob1 AS event, blob6 AS install_method, count(DISTINCT blob8) AS ids FROM campfire_telemetry GROUP BY event, install_method FORMAT JSON",
+    "raw": {
+      "install_completed": { "curl": 670 },
+      "install_requested": { "curl": 1 },
+      "activated": { "none": 877 },
+      "active": { "none": 549 },
+      "contributed": { "none": 3 },
+      "teammate_joined": { "none": 1 }
+    },
+    "note": "Corrected reading. The earlier '1,635 installations / 2 distinct harness values' uniformity claim mislabeled this column and is VOID."
+  },
+
+  "conclusions": {
+    "supported": [
+      "536 observed distinct installation IDs with an 'active' event at the snapshot cutoff (2026-10-10 05:40 UTC), floor applied. LOWER BOUND: sampling occurred among active rows (4 of 540 at _sample_interval=2), so the true figure may be higher by an unknown amount.",
+      "2,096 total rows at the same cutoff (2,072 client-event + 24 install_requested). A row count, not an installation count.",
+      "668 installation IDs are PROVABLY fabricated: they declare version 1.2.0, below the telemetry release, so no such binary could emit these events.",
+      "Sampling is active in this dataset (max _sample_interval = 2). Distinct-ID counts cannot be sample-weighted and therefore undercount.",
+      "Recurrence is near zero (1 of 549 IDs returns, and it is darwin).",
+      "ZERO OBSERVED ID OVERLAP between the forged 1.2.0 stream and the plausible-version stream, on both the burst window and the full snapshot window, and on a window aligned to the burst grouping. Sampling is active in this dataset, so an event that would establish an overlap could itself be absent from retained rows. This refutes the earlier claim of OBSERVED same-ID traffic; it does NOT prove the underlying streams never overlap."
+    ],
+    "not_supported": [
+      "'35 real users' - OS does not classify users; the route is anonymous and unauthenticated.",
+      "Any claim that the plausible-version Linux traffic is fabricated - the mixed-version self-contradiction claim is REFUTED (zero observed ID overlap).",
+      "That the forged and plausible-version streams are proven disjoint as underlying populations. Only zero overlap in RETAINED rows is established; sampling was active, so an overlap-establishing event could be missing.",
+      "'0.2% retention' - the single returning ID is one darwin installation over 5 days. Not product retention.",
+      "'2.12M' - no counterpart anywhere in a dataset that has never held more than 2,135 rows."
+    ],
+    "investor_safe_statement": "Anonymous installation IDs, not people; transient environments can create multiple IDs. One traffic class (668 IDs declaring a pre-telemetry version) is provably fabricated and is now blocked server-side."
+  }
+}
