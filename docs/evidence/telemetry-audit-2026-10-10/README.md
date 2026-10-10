@@ -64,10 +64,14 @@ absent. This refutes the earlier *claim of observed same-ID traffic*; it does
 Two alignment errors were found and corrected while establishing this, and they
 are worth distinguishing because they are independent:
 
-| Error | Effect | Fix |
+| Error | Clean comparison | Fix |
 |---|---|---|
-| Time window: intersection ended `05:00:00`; burst grouping swept the whole `05:00–05:59` hour | 174 vs 180 forged IDs | Re-ran on the aligned half-open window |
-| Scope: intersection had **no OS filter**; burst grouping filters `blob4='linux'` | 204 (all OS) vs 180 (linux) | Re-ran OS-scoped |
+| Time window: intersection ended `05:00:00`; burst grouping swept the whole `05:00–05:59` hour | **174 vs 204** forged IDs, both at all-OS scope | Re-ran on the aligned half-open window |
+| Scope: intersection has **no OS filter**; burst grouping filters `blob4='linux'` | **204 vs 180** forged IDs, both in the aligned window | Re-ran OS-scoped |
+
+The two comparisons isolate one variable each. `174 vs 180` is not a clean
+contrast: those counts differ in **both** time window and OS scope at once, so
+the gap cannot be attributed to either alone.
 
 The 24-ID remainder is fully accounted for by scope: in the aligned window the
 204 forged IDs split **180 linux + 24 darwin**. The time-window fix aligned the
@@ -130,8 +134,11 @@ the reader to net them.
 ## Open items
 
 - `scripts/telemetry-queries.mjs` has no OS×time query; this audit ran it ad hoc
-  through the MCP endpoint. Adding it with tests would make the audit
-  reproducible through the repo's own tooling.
+  through the MCP endpoint. Worth adding only if this pattern will be monitored
+  repeatedly. It would make the audit reproducible through the repo's own
+  tooling, but it would **not** by itself determine whether those installation
+  IDs represent people — the available fields cannot separate a human from an
+  automated client.
 - Attribution of the plausible-version Linux traffic is unresolved. It is
   suspicious — burst arrival, near-zero recurrence, uniform cross-version
   spread — and unattributed.
