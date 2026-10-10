@@ -1493,7 +1493,7 @@ NEXT EVIDENCE — before another surface
         if no opportunity occurs, the only build is a read-only Viewer
         reference affordance that records the attempt
         that affordance fetches nothing and previews nothing
-        previews, highlights, and generated views stay deferred
+        previews and highlights stay deferred; the bounded generated view proceeds under the founder override below
         these observations are v1.12 evidence; they are not credited to v1.13
 
 v1.14 — GENERATED WORKSPACE VIEWS
@@ -1521,8 +1521,7 @@ sequence, not evidence that the entry gate passed. The remaining visual scope
 remains deferred; the v1.12.0 verdict is CONDITIONAL until a human trace
 tests comprehension on the shipped surface. See `docs/SPRINT_VIS_001_RESULT.md`.
 
-The sequence adopted on October 9, 2026, after published `v1.13.0`, keeps
-generated views behind this entry gate:
+The sequence originally adopted on October 9, 2026, after published `v1.13.0`, set this entry gate for generated views:
 
 - the human comprehension trace on the shipped v1.12 Viewer is recorded;
 - the reference-open observation is recorded, including a recorded absence on or after October 14, 2026;
