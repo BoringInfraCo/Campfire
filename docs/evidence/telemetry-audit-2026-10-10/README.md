@@ -61,10 +61,22 @@ this dataset, so an event that would establish an overlap could itself be
 absent. This refutes the earlier *claim of observed same-ID traffic*; it does
 **not** prove the underlying streams never overlap.
 
-The first intersection used a closed window ending at `05:00:00` while the burst
-grouping swept the whole `05:00–05:59` hour — so their denominators were not
-comparable (174 forged IDs vs 204). The intersection was re-run on the aligned
-span; the result is still 0.
+Two alignment errors were found and corrected while establishing this, and they
+are worth distinguishing because they are independent:
+
+| Error | Effect | Fix |
+|---|---|---|
+| Time window: intersection ended `05:00:00`; burst grouping swept the whole `05:00–05:59` hour | 174 vs 180 forged IDs | Re-ran on the aligned half-open window |
+| Scope: intersection had **no OS filter**; burst grouping filters `blob4='linux'` | 204 (all OS) vs 180 (linux) | Re-ran OS-scoped |
+
+The 24-ID remainder is fully accounted for by scope: in the aligned window the
+204 forged IDs split **180 linux + 24 darwin**. The time-window fix aligned the
+windows but did **not** make the denominators comparable — a second, separate
+correction was needed.
+
+The directly comparable query (`blob4='linux'`, aligned window) returns **0**,
+matching the burst table's 180-ID denominator exactly. Darwin-scoped also
+returns 0. The refutation holds at the scope the burst claim was made at.
 
 **4. Recurrence is near zero.** Of 549 IDs with an `active` event, exactly one
 returns, and it is darwin (5 days). Linux recurrence is zero. This justifies

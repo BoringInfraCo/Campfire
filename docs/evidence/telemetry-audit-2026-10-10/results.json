@@ -95,9 +95,32 @@
       "forged_1_2_0_ids": 204,
       "above_floor_activated_or_active_ids": 331
     },
+    "scope_note": "THIS QUERY HAS NO OS FILTER. It counts ALL operating systems. The burst_shape_oct9 grouping it is meant to align with DOES filter to blob4='linux' (180 forged IDs). The 24-ID difference between 204 and 180 is therefore a SCOPE difference, NOT a time-window difference: 24 of the 204 forged IDs in this window are darwin. The time-window alignment fixed a separate error; it did not make these denominators comparable. See id_intersection_os_scoped for the directly comparable query.",
+    "os_split_of_denominators_sql": "SELECT blob4 AS os, count(DISTINCT blob8) AS ids FROM campfire_telemetry WHERE blob1='install_completed' AND blob3='1.2.0' AND timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00') GROUP BY os FORMAT JSON",
+    "os_split_of_denominators_raw": {
+      "linux": 180,
+      "darwin": 24,
+      "note": "180 + 24 = 204. This fully accounts for the gap against the linux-only burst table."
+    },
     "window_mismatch_confirmed_sql": "SELECT count(DISTINCT blob8) AS forged FROM campfire_telemetry WHERE blob1='install_completed' AND blob3='1.2.0' AND timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp <= toDateTime('2026-10-09 05:00:00') FORMAT JSON",
     "window_mismatch_confirmed_raw": { "closed_window_ending_050000": 174, "hour_bucketed_through_055959": 204, "half_open_ending_060000": 204 },
-    "verdict": "ZERO observed overlap on the aligned window too. The refutation of the mixed-version claim does not depend on the window mismatch."
+    "verdict": "ZERO observed overlap on the aligned window too. The refutation of the mixed-version claim does not depend on the window mismatch. NOTE: this query spans all OS; its denominators are not comparable to the linux-only burst grouping."
+  },
+
+  "id_intersection_os_scoped": {
+    "purpose": "Directly comparable to burst_shape_oct9. That grouping filters to blob4='linux'; id_intersection_aligned_window does not. These queries add the OS filter so time window AND scope both match the burst table.",
+    "window": "timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00'), blob4 = 'linux'",
+    "sql_linux": "SELECT count() AS ids_with_both FROM (\n  SELECT blob8\n  FROM campfire_telemetry\n  WHERE blob4='linux' AND timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00')\n  GROUP BY blob8\n  HAVING sum(if(blob1='install_completed' AND blob3='1.2.0', 1, 0)) > 0\n     AND sum(if(blob1 IN ('activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0'), 1, 0)) > 0\n) FORMAT JSON",
+    "raw_linux": { "data": [{ "ids_with_both": "0" }] },
+    "sql_darwin": "SELECT count() AS ids_with_both FROM (\n  SELECT blob8\n  FROM campfire_telemetry\n  WHERE blob4='darwin' AND timestamp >= toDateTime('2026-10-09 02:00:00') AND timestamp < toDateTime('2026-10-09 06:00:00')\n  GROUP BY blob8\n  HAVING sum(if(blob1='install_completed' AND blob3='1.2.0', 1, 0)) > 0\n     AND sum(if(blob1 IN ('activated','active') AND NOT (startsWith(blob3,'0.') OR startsWith(blob3,'1.0.') OR startsWith(blob3,'1.1.') OR startsWith(blob3,'1.2.') OR startsWith(blob3,'1.3.') OR startsWith(blob3,'1.4.') OR startsWith(blob3,'1.5.') OR startsWith(blob3,'1.6.') OR startsWith(blob3,'1.7.') OR startsWith(blob3,'1.8.') OR blob3='1.9.0'), 1, 0)) > 0\n) FORMAT JSON",
+    "raw_darwin": { "data": [{ "ids_with_both": "0" }] },
+    "denominators": {
+      "linux_forged_1_2_0_ids": 180,
+      "linux_above_floor_activated_or_active_ids": 326,
+      "darwin_forged_1_2_0_ids": 24,
+      "darwin_above_floor_activated_or_active_ids": 5
+    },
+    "verdict": "ZERO observed overlap within linux, matching the 180 forged-ID denominator of the burst table exactly, and zero within darwin. The refutation holds at the scope the burst claim was made at."
   },
 
   "withdrawn_claim": {
@@ -201,7 +224,7 @@
       "668 installation IDs are PROVABLY fabricated: they declare version 1.2.0, below the telemetry release, so no such binary could emit these events.",
       "Sampling is active in this dataset (max _sample_interval = 2). Distinct-ID counts cannot be sample-weighted and therefore undercount.",
       "Recurrence is near zero (1 of 549 IDs returns, and it is darwin).",
-      "ZERO OBSERVED ID OVERLAP between the forged 1.2.0 stream and the plausible-version stream, on both the burst window and the full snapshot window, and on a window aligned to the burst grouping. Sampling is active in this dataset, so an event that would establish an overlap could itself be absent from retained rows. This refutes the earlier claim of OBSERVED same-ID traffic; it does NOT prove the underlying streams never overlap."
+      "ZERO OBSERVED ID OVERLAP between the forged 1.2.0 stream and the plausible-version stream, on the burst window, the full snapshot window, an all-OS window aligned to the burst grouping, and OS-scoped (linux and darwin separately) on the aligned window. Sampling is active in this dataset, so an event that would establish an overlap could itself be absent from retained rows. This refutes the earlier claim of OBSERVED same-ID traffic; it does NOT prove the underlying streams never overlap."
     ],
     "not_supported": [
       "'35 real users' - OS does not classify users; the route is anonymous and unauthenticated.",
