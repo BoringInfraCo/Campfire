@@ -2,7 +2,7 @@
 
 **Date:** October 9, 2026
 
-**Status:** Founder implementation override; local engineering candidate implemented. The entry gate remains open. No release or deployment verdict has been made.
+**Status:** Founder-directed continuation; the bounded engineering candidate is integrated with the v1.13 release source. The original evidence gate remains open. No publication or deployment has occurred.
 
 **Contract:** `docs/Campfire-v1.14-GWV-001-Generated-Workspace-Views.md`
 
@@ -19,6 +19,8 @@ The repository owner explicitly directed a founder override for GWV-001 and aske
 | Gate C ordinary multi-participant value | **Unmeasured.** |
 
 The owner waives the contract's §2 prohibition on sprint scope, §7 non-goal of implementation while the gate is open, §8 step 1's instruction to leave product code untouched, and §9's unmet-gate NO-GO criterion **for implementation of this bounded candidate only**. The override does not turn an unmet condition into evidence and does not authorize publication or production deployment. The October 7 VIS-001 overrides applied to v1.12 only; the v1.13 synthetic recording gain is not evidence for this gate.
+
+On October 9, the founder clarified that Campfire already has users, that they have personally tested it, and that it is working as planned. They directed the team to continue moving. This is a first-party product assessment and a decision to continue GWV-001 integration and release preparation despite the open evidence gate. No user count, trace protocol, reference-open attempt, or test of this generated page was supplied with that statement, so none is inferred here. The founder decision governs whether this bounded work proceeds; the rows above remain accurate descriptions of recorded evidence.
 
 ## 1. Frozen scope under the override
 
@@ -37,7 +39,7 @@ Two defects in the first candidate were fixed before this record:
 - The current-work line could be read as workspace totals. The in-progress and blocked numbers come from the bounded task page. The line now says they are among returned orientation items, and a truncated task or decision section says its count is not a workspace total.
 - `needsReview` was only the words "needs review". The page now includes `needsReviewFindingIds` from the same decision object.
 
-Checks run against this local `main` checkout with Node 22:
+Checks run against the original local `main` checkout with Node 22:
 
 - `npm run typecheck` — passed.
 - Focused generated-view integration checks — 4 passed, including nonparticipant and absent workspace denial, hostile markup as text, orientation completeness, a withdrawn finding kept out of current items, a review marker with its cited finding id, non-persistence, the exact `sandbox` directive, and the unchanged write refusal.
@@ -45,8 +47,8 @@ Checks run against this local `main` checkout with Node 22:
 - `npm run build` — passed on the earlier candidate and synced the Viewer static files to `public/`. This fix does not change those static files.
 - Browser load of a seeded workspace whose finding body contained a script and an image aimed at `/api/call`. Headless Chrome 153 requested the generated document as the main frame. The response CSP was the policy above. The dumped document had zero `<script` tags and showed the script as escaped text. The net log contained no `/api/call` URL. Chrome also preconnected to the server origin; that was a connection warmup, not a journal navigation and not a Campfire method call. Chrome's own component-update requests were unrelated. `--dump-dom` did not exit on its own and the process was stopped after the log was recorded.
 
-These are engineering checks, not a human comprehension trace or a proof of voluntary return. The local `main` checkout is still 27 commits behind `origin/main` and contains unrelated uncommitted telemetry and evidence work. The generated-view files have not yet been integrated and verified on the v1.13 release source.
+The three GWV-001 commits were then replayed without conflict onto the v1.13.0 release source (`origin/main` at `8e5d3dd`) in a detached integration checkout. On that source, `npm run typecheck` passed and `npm test -- --silent` passed with 952 tests across 80 files. These are engineering checks, not a human comprehension trace or proof of voluntary return. The original local `main` checkout has unrelated uncommitted telemetry and evidence work; its preservation and integration are tracked separately from this result.
 
 ## 3. Verdict and remaining evidence
 
-The original contract's §9 rubric remains **NO-GO / REFRAME** because §2 is unmet. The founder override permits this local implementation candidate; it does not change that rubric or authorize release. The human comprehension trace on the shipped v1.12 Viewer, the reference-open observation or a dated absence on or after October 14, the presentation-versus-state finding, and a human trace on the generated document remain outstanding. Gate B and Gate C remain unmeasured.
+**Founder continuation decision: PROCEED with the bounded GWV-001 engineering candidate and release preparation.** The original contract's evidence-only §9 rubric would still read **NO-GO / REFRAME** because §2 is unmet; it is retained as an evidence assessment, not a stop on founder-authorized work. The human comprehension trace on the shipped v1.12 Viewer, the reference-open observation or a dated absence on or after October 14, the presentation-versus-state finding, and a human trace on the generated document remain outstanding. Gate B and Gate C remain unmeasured. Publication and production deployment are separate promotion steps and have not been performed.

@@ -1440,7 +1440,7 @@ Sprint WOW-001 — Prove a Way of Working   GO on a frozen synthetic pilot; publ
         ↓
 Next evidence — Viewer comprehension and which references are opened   not a release; open from v1.12; review the reference observation by October 14, 2026
         ↓
-Later — Generated workspace views   not sprint scope until the entry gate below
+v1.14 — Generated workspace views   bounded engineering candidate under founder override; original evidence gate open; see docs/SPRINT_GWV_001_RESULT.md
 ```
 
 `v1.10.0` is published. The sequence adopted on October 3, 2026, and revised on October 9, 2026 after `v1.13.0`, is:
@@ -1497,8 +1497,8 @@ NEXT EVIDENCE — before another surface
         these observations are v1.12 evidence; they are not credited to v1.13
 
 v1.14 — GENERATED WORKSPACE VIEWS
-        directional only
-        not sprint scope until every entry condition below is recorded
+        bounded engineering candidate under October 9 founder override
+        entry evidence remains open; publication and deployment not recorded
         one derived view of authorized workspace state
         sandboxed and non-canonical
         no Campfire credentials and no unrestricted writes
@@ -1530,7 +1530,7 @@ generated views behind this entry gate:
 - the v1.13 pilot's recording gain is not that evidence, and the absence of a continuation gain stays visible;
 - Gate B may still be unmeasured. A generated view does not claim it.
 
-Until those are true, v1.14 is not sprint scope. A second playbook is a separate founder decision and is not part of this gate.
+On October 9, the founder explicitly overrode the entry sequence for the bounded GWV-001 candidate, then confirmed that Campfire has users, they have personally tested it, it is working as planned, and work should continue. The candidate is now sprint scope for engineering integration and release preparation under that decision. The listed observations remain unrecorded; this override does not claim Gate B or Gate C. See `docs/SPRINT_GWV_001_RESULT.md` for the decision, implementation, and checks. A second playbook is a separate founder decision and is not part of this scope.
 
 The product risk is polishing a surface before teams repeatedly rely on the collaboration state. Leaving that state in structured form for another release is acceptable.
 
