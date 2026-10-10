@@ -37,14 +37,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 ## Verification
 
-The private 1.14.0 candidate passed `npm ci`, type checking, the production build,
-Darwin ARM64 packaging, and a deployment dry run. The full suite's install-channel
-version assertion fails while Homebrew and Nix still point at the published v1.13.0
-archives. The other checks in that test pass. After the four 1.14.0 archives
-exist, pin their actual checksums and run the complete suite. Packaging
-smoke-tests the staged CLI, and each published archive must be verified against
-its SHA-256 checksum. The generated page has deterministic authorization,
-completeness, currentness, non-persistence, and hostile-content checks. No human
-comprehension trace or Gate B/C claim follows from it.
+The private 1.14.0 source passed type checking, the production build, and the
+full suite of 952 tests after the install-channel pin. The four published archives
+were checked against their SHA-256 files. Homebrew and Nix pin those archives. A
+clean Darwin ARM64 install from the live versioned installer reported package
+version 1.14.0 and wrote no workspace. The generated page has deterministic
+authorization, completeness, currentness, non-persistence, and hostile-content
+checks. No human comprehension trace or Gate B/C claim follows from it.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.
