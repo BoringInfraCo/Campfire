@@ -49,4 +49,12 @@ deployment, and the live installer check are separate promotion steps. No
 human comprehension trace, Gate B/C result, or production performance claim
 follows from this release.
 
+After publication, all four release archives passed their published SHA-256
+checksums. The Homebrew tap and public Nix flake were pinned to those exact
+assets. Public CI passed on the pin addendum. The production Worker deployed,
+both live installer URLs matched the committed v1.15.0 script, and a clean
+Darwin ARM64 install from the live script installed package version
+`1.15.0`. These checks do not add a production performance or Gate B/C
+claim.
+
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

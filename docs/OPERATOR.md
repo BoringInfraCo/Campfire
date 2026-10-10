@@ -2,7 +2,11 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.14.0 is published and deployed. It adds one sandboxed, read-only workspace page to the loopback Viewer.
+v1.15.0 is published and deployed. It hardens the Viewer Host boundary, bounds
+Worker request bodies, contains unexpected error details, limits delivery
+queue reads, and updates dependencies. No
+production performance or Gate B/C claim follows from this release. v1.14.0
+added one sandboxed, read-only workspace page to the loopback Viewer.
 It is rendered from the authorized orientation read, stored nowhere, and
 holds no credential. The GWV-001 evidence gate remains open. Publication does
 not establish Gate B or Gate C. See `SPRINT_GWV_001_RESULT.md`. v1.13.0
@@ -30,12 +34,12 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's v1.14.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.14.0 archives.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's v1.15.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.15.0 archives.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.14.0
+node scripts/sync-install-channels.mjs --version 1.15.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
@@ -44,8 +48,8 @@ Pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.14.0
-curl -fsSL https://boringinfra.company/campfire/v1.14.0/install.sh | sh -s -- --version 1.14.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.15.0
+curl -fsSL https://boringinfra.company/campfire/v1.15.0/install.sh | sh -s -- --version 1.15.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -57,7 +61,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.14.0`), not the word `latest`.
+the installed package metadata (for example `1.15.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
