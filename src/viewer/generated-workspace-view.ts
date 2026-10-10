@@ -52,7 +52,25 @@ function findingRow(item: Finding): string {
 }
 
 function decisionRow(item: Decision): string {
-  return row(item.summary, [item.status, ...(item.needsReview ? ["needs review"] : []), provenance(item)], item.rationale);
+  const cited = item.needsReviewFindingIds?.filter((id) => id.length > 0) ?? [];
+  const review = item.needsReview
+    ? cited.length > 0
+      ? `needs review ${cited.join(" ")}`
+      : "needs review"
+    : undefined;
+  return row(item.summary, [item.status, ...(review === undefined ? [] : [review]), provenance(item)], item.rationale);
+}
+
+function currentWorkNote(tasksTruncated: boolean, decisionsTruncated: boolean): string {
+  const parts = ["These counts cover the items returned in this orientation."];
+  if (tasksTruncated) {
+    parts.push("The task section is incomplete, so the in-progress and blocked counts are not workspace totals.");
+  }
+  if (decisionsTruncated) {
+    parts.push("The decision section is incomplete, so the accepted count is not a workspace total.");
+  }
+  parts.push("Check each section's completeness before treating it as the whole workspace.");
+  return parts.join(" ");
 }
 
 function artifactRow(item: Artifact): string {
@@ -95,7 +113,7 @@ strong{overflow-wrap:anywhere}.count{margin:.2rem 0}.note{font-size:.88rem;color
 <main>
 <section><h2>Goal</h2>${context.goal ? `<strong>${escapeHtml(context.goal.title)}</strong>${text(context.goal.description)}<p class="labels">${escapeHtml(context.goal.status)} · ${escapeHtml(provenance(context.goal))}</p>` : "<p>No goal returned.</p>"}</section>
 <section><h2>Suggested next action</h2><p>${escapeHtml(nextAction)}</p><p class="note">Orientation hint only. It is not permission to execute.</p></section>
-<section><h2>Current work</h2><p>${work.inProgressTasks.length} in progress · ${work.blockedTasks.length} blocked · ${work.acceptedDecisions.length} accepted decisions among returned items.</p><p class="note">The lists below show the bounded orientation. Check each section's completeness before treating it as the whole workspace.</p></section>
+<section><h2>Current work</h2><p>Among returned orientation items: ${work.inProgressTasks.length} in progress · ${work.blockedTasks.length} blocked · ${work.acceptedDecisions.length} accepted.</p><p class="note">${escapeHtml(currentWorkNote(slices.tasks.truncated, slices.decisions.truncated))}</p></section>
 ${section("Tasks", slices.tasks, slices.tasks.items.map(taskRow))}
 ${section("Blocked tasks", slices.blockers, slices.blockers.items.map(taskRow))}
 ${section("Decisions", slices.decisions, slices.decisions.items.map(decisionRow))}

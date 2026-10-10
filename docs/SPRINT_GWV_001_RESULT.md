@@ -30,15 +30,20 @@ This scope is a founder-chosen product hypothesis, **not** a finding that a huma
 
 ## 2. Implementation and checks
 
-The loopback Viewer serves `GET /generated/workspaces/<workspaceId>` by making one existing `get_workspace_context` call through its bound actor. An unauthorized or absent workspace returns a generic 404 before markup is rendered. The generated page escapes contributed text and has no script, active artifact link, external resource, credential, or subsequent Campfire call. A restrictive Content Security Policy includes `sandbox` without `allow-same-origin`, `script-src 'none'`, and `connect-src 'none'`. Responses are not cached. The existing journal links to the page for its selected workspace; its five-method read allowlist is unchanged. No store or domain file was changed.
+The loopback Viewer serves `GET /generated/workspaces/<workspaceId>` by making one existing `get_workspace_context` call through its bound actor. An unauthorized or absent workspace returns a generic 404 before markup is rendered. The generated page escapes contributed text and has no script, active artifact link, external resource, credential, or subsequent Campfire call. A decision the service marks `needsReview` shows that marker and the cited finding ids. Current-work counts are labeled as counts of returned orientation items. When the task or decision section is truncated, the page says those counts are not workspace totals. A restrictive Content Security Policy includes `sandbox` without `allow-same-origin`, `script-src 'none'`, and `connect-src 'none'`. Responses are not cached. The existing journal links to the page for its selected workspace; its five-method read allowlist is unchanged. No store or domain file was changed.
+
+Two defects in the first candidate were fixed before this record:
+
+- The current-work line could be read as workspace totals. The in-progress and blocked numbers come from the bounded task page. The line now says they are among returned orientation items, and a truncated task or decision section says its count is not a workspace total.
+- `needsReview` was only the words "needs review". The page now includes `needsReviewFindingIds` from the same decision object.
 
 Checks run against this local `main` checkout with Node 22:
 
 - `npm run typecheck` — passed.
-- Focused generated-view integration checks — 3 passed, including nonparticipant and absent workspace denial, hostile markup as text, orientation completeness, non-persistence, and the unchanged write refusal.
-- `npm test` — 911 passed across 76 files.
-- `npm run build` — passed and synced the Viewer static files to `public/`.
-- Browser preview of a seeded workspace with a `<script>` finding — rendered the script as text. DOM inspection found zero script, image, and link elements in the generated document. The temporary server observed one `get_workspace_context` call and no `/api/call` request from the generated page. The preview server and tab were closed after inspection.
+- Focused generated-view integration checks — 4 passed, including nonparticipant and absent workspace denial, hostile markup as text, orientation completeness, a withdrawn finding kept out of current items, a review marker with its cited finding id, non-persistence, the exact `sandbox` directive, and the unchanged write refusal.
+- `npm test` — 912 passed across 76 files.
+- `npm run build` — passed on the earlier candidate and synced the Viewer static files to `public/`. This fix does not change those static files.
+- Browser load of a seeded workspace whose finding body contained a script and an image aimed at `/api/call`. Headless Chrome 153 requested the generated document as the main frame. The response CSP was the policy above. The dumped document had zero `<script` tags and showed the script as escaped text. The net log contained no `/api/call` URL. Chrome also preconnected to the server origin; that was a connection warmup, not a journal navigation and not a Campfire method call. Chrome's own component-update requests were unrelated. `--dump-dom` did not exit on its own and the process was stopped after the log was recorded.
 
 These are engineering checks, not a human comprehension trace or a proof of voluntary return. The local `main` checkout is still 27 commits behind `origin/main` and contains unrelated uncommitted telemetry and evidence work. The generated-view files have not yet been integrated and verified on the v1.13 release source.
 

@@ -47,12 +47,21 @@ describe("GWV-001 generated workspace view", () => {
     expect(html).toContain(context.goal?.title);
     expect(html).toContain(`${context.slices.findings.returned} returned of ${context.slices.findings.total} total`);
     expect(html).toContain("incomplete; use the existing journal or CLI drill-down");
+    expect(html).toContain("Among returned orientation items:");
+    expect(html).toContain(
+      context.slices.tasks.truncated
+        ? "The task section is incomplete, so the in-progress and blocked counts are not workspace totals."
+        : "These counts cover the items returned in this orientation.",
+    );
     expect(html).toContain("&lt;img src=&quot;https://example.invalid/x&quot;");
     expect(html).not.toContain(hostile);
     expect(html).not.toContain("<script");
     expect(html).not.toContain("cft_fixture_");
-    expect(response.headers.get("content-security-policy")).toContain("sandbox");
-    expect(response.headers.get("content-security-policy")).toContain("connect-src 'none'");
+    const csp = response.headers.get("content-security-policy") ?? "";
+    const sandbox = csp.split(";").map((part) => part.trim()).find((part) => part === "sandbox" || part.startsWith("sandbox "));
+    expect(sandbox).toBe("sandbox");
+    expect(csp).toContain("script-src 'none'");
+    expect(csp).toContain("connect-src 'none'");
     expect(response.headers.get("cache-control")).toBe("no-store");
 
     const again = await fetch(`${viewer.url}/generated/workspaces/${workspaceId}`);
@@ -80,6 +89,40 @@ describe("GWV-001 generated workspace view", () => {
     } finally {
       await unaViewer.close();
     }
+  });
+
+  it("shows a review marker with its cited finding and keeps withdrawn findings out of current items", async () => {
+    if (!viewer) throw new Error("Viewer did not start");
+    const workspaceId = FIXTURE.workspaces.billing;
+    const finding = runtime.service.addFinding(ctx, {
+      workspaceId,
+      summary: "cache is stale",
+      detail: "first reading",
+    });
+    const decision = runtime.service.acceptDecision(
+      ctx,
+      runtime.service.addDecision(ctx, { workspaceId, summary: "flush the cache" }).id,
+    );
+    runtime.service.citeDecisionBasis(ctx, { decisionId: decision.id, findingId: finding.id });
+    runtime.service.withdrawFinding(ctx, { findingId: finding.id, reason: "cache was cold" });
+    const context = runtime.service.getWorkspaceContext(ctx, workspaceId);
+    const flagged = context.slices.decisions.items.find((item) => item.id === decision.id);
+    expect(flagged?.needsReview).toBe(true);
+    expect(flagged?.needsReviewFindingIds).toEqual([finding.id]);
+
+    const before = runtime.store.countObjects("contributions", workspaceId);
+    const response = await fetch(`${viewer.url}/generated/workspaces/${workspaceId}`);
+    const html = await response.text();
+    expect(response.status).toBe(200);
+    expect(html).toContain(`needs review ${finding.id}`);
+    expect(html).toContain(`${context.historicalCounts.findings} historical findings`);
+    expect(html).toContain("Open the existing journal or CLI drill-down to inspect those records.");
+    const findingsHtml = html.slice(html.indexOf("<h2>Current findings</h2>"), html.indexOf("<h2>Artifact references</h2>"));
+    expect(findingsHtml).not.toContain("cache is stale");
+    const decisionsHtml = html.slice(html.indexOf("<h2>Decisions</h2>"), html.indexOf("<h2>Current findings</h2>"));
+    expect(decisionsHtml).toContain("flush the cache");
+    expect(decisionsHtml).not.toContain("superseded ·");
+    expect(runtime.store.countObjects("contributions", workspaceId)).toBe(before);
   });
 
   it("keeps the journal's read-method allowlist and exposes a link only for a selected workspace", async () => {
