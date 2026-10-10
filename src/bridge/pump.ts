@@ -9,14 +9,20 @@ import type { DomainEventRecord, WebhookDeliveryRecord } from "../domain/events.
 import { bridgeAllows, type WebhookBridgeConfig } from "./config.js";
 import { destinationFingerprint } from "./fingerprint.js";
 import { postSignedWebhook } from "./post.js";
-import { leaseBefore, nextRetry, sanitizeDeliveryError } from "./retry.js";
+import { leaseBefore, nextRetry, normalizeDeliveryLimit, sanitizeDeliveryError, WEBHOOK_DELIVERY_BATCH } from "./retry.js";
 
 export interface DeliveryPumpStore {
+  /**
+   * `limit` is the sweep's batch size (PSA-001 / P1). The store must apply it in
+   * SQL; a store that returns every due row and lets the caller trim defeats the
+   * bound that motivated it.
+   */
   listDueWebhookDeliveries(input: {
     bridgeId: string;
     now: string;
     leaseBefore: string;
     configFingerprint: string;
+    limit: number;
   }): Promise<WebhookDeliveryRecord[]>;
   getDomainEvent(id: string): Promise<DomainEventRecord | undefined>;
   claimWebhookDelivery(
@@ -52,14 +58,17 @@ export async function pumpWebhookDeliveries(options: {
 
   const bridge = options.bridge;
   const fingerprint = destinationFingerprint(bridge);
-  const limit = options.limit ?? 20;
+  const limit = normalizeDeliveryLimit(options.limit ?? WEBHOOK_DELIVERY_BATCH);
   const newClaimToken = options.newClaimToken ?? (() => globalThis.crypto.randomUUID());
   const listedAt = options.now();
+  // The read is bounded by the same batch the claim loop applies (PSA-001 / P1).
+  // Same oldest-first ORDER BY, so a larger backlog drains in order across sweeps.
   const due = await options.store.listDueWebhookDeliveries({
     bridgeId: bridge.id,
     now: listedAt,
     leaseBefore: leaseBefore(listedAt),
     configFingerprint: fingerprint,
+    limit,
   });
 
   const counts = { delivered: 0, retried: 0, exhausted: 0, skipped: 0 };

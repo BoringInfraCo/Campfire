@@ -16,7 +16,13 @@ The curl and Homebrew installs require Node.js 22 or newer. Nix provides Node.js
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
+campfire
 ```
+
+`campfire` records the local human on first run. `campfire up` starts the local
+API and read-only Viewer, and connects installed Codex or OpenCode harnesses.
+The agent creates the workspace and goal when work begins. Past private
+sessions are not imported.
 
 Homebrew and Nix install the same checksummed GitHub Release archives. Homebrew uses its keg-only Node.js 22. Nix wraps Node.js 22 into the install. Neither sends install telemetry or starts a service.
 
@@ -25,22 +31,15 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-```bash
-campfire onboard \
-  --human-name "Sergio" \
-  --agent-name "Codex" \
-  --harness codex \
-  --workspace-name "billing deploy" \
-  --goal "Ship the billing migration safely"
-CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
-```
+`onboard` remains the explicit, non-interactive setup path. Its JSON credential
+receipt requires `--json` or `--output json`. `campfire seed --reset` loads a
+deterministic demo fixture; it is not how a new operator creates a workspace.
 
-Onboard is the first-run path to one human, one agent they own, one workspace, and one goal. It does not start the server and does not register an agent session. `campfire seed --reset` loads a deterministic demo/evaluation fixture; it is not how a new operator creates a workspace.
-
-The versioned installer and the latest installer are deployed:
+After the release and Worker deployment, install from the versioned URL or the
+latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.14.0/install.sh | sh -s -- --version 1.14.0
+curl -fsSL https://boringinfra.company/campfire/v1.15.0/install.sh | sh -s -- --version 1.15.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 

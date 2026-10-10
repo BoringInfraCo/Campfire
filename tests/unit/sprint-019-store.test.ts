@@ -141,6 +141,7 @@ describe("sprint 019 store", () => {
         now: LATER,
         leaseBefore: "2026-01-01T00:00:00.000Z",
         configFingerprint: "fp",
+        limit: 100,
       }).map((row) => row.id),
     ).toEqual(["dlv_stale", "dlv_due"]);
     expect(store.countWebhookDeliveries()).toEqual({
@@ -163,6 +164,7 @@ describe("sprint 019 store", () => {
         now: LATER,
         leaseBefore: NOW,
         configFingerprint: "new-fp",
+        limit: 100,
       }),
     ).toEqual([]);
     expect(
@@ -182,6 +184,7 @@ describe("sprint 019 store", () => {
           now: LATER,
           leaseBefore: NOW,
           configFingerprint: "old-fp",
+          limit: 100,
         })
         .map((row) => row.id),
     ).toEqual(["dlv_1"]);

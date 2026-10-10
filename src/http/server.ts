@@ -19,7 +19,7 @@ import type { ActorContext } from "../service/authorization.js";
 import { bridgeFromEnv } from "../service/outbox.js";
 import type { CampfireRuntime } from "../runtime.js";
 import type { CampfireStore } from "../store/store.js";
-import { dispatchCampfireMethod, isCampfireHttpMethod } from "./dispatch.js";
+import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod } from "./dispatch.js";
 
 export const DEFAULT_HTTP_HOST = "127.0.0.1";
 export const DEFAULT_HTTP_PORT = 9414;
@@ -87,8 +87,24 @@ function logAccess(entry: {
   actorId?: string;
   actorType?: string;
   error?: string;
+  route?: string;
+  kind?: "exception" | "non_exception";
 }): void {
   console.error(JSON.stringify(entry));
+}
+
+/**
+ * PSA-001 (S3): an unexpected exception can carry a local file path, a token
+ * fragment, or workspace content. Keep the route and failure kind on stderr;
+ * arbitrary exception text must not become a credential log.
+ */
+function logInternalError(route: string, error: unknown): void {
+  logAccess({
+    allow: false,
+    error: "InternalError",
+    route,
+    kind: error instanceof Error ? "exception" : "non_exception",
+  });
 }
 
 function bearerToken(req: IncomingMessage): string | undefined {
@@ -200,8 +216,9 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
   const server = createServer((req, res) => {
     void handleRequest(req, res).catch((error: unknown) => {
       if (res.writableEnded) return;
-      const message = error instanceof Error ? error.message : String(error);
-      fail(res, 500, "InternalError", message, {});
+      const route = (req.url ?? "/").split("?")[0] ?? "/";
+      logInternalError(route, error);
+      fail(res, 500, "InternalError", "The request could not be completed", {});
     });
   });
 
@@ -222,10 +239,12 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
         try { input = JSON.parse(raw); } catch { throw new CampfireError("ValidationError", "Request body must be JSON"); }
         const result = service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
         writeJson(res, 200, { ok: true, result });
-        void deliverPending();
       } catch (error) {
         if (error instanceof CampfireError) fail(res, statusFor(error.code, false), error.code, error.message, {}, error.details);
-        else fail(res, 500, "InternalError", "Enrollment could not be completed; retry the saved request", {});
+        else {
+          logInternalError("/v1/enrollment/redeem", error);
+          fail(res, 500, "InternalError", "Enrollment could not be completed; retry the saved request", {});
+        }
       }
       return;
     }
@@ -311,7 +330,7 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
       });
       writeJson(res, 200, { ok: true, result });
       // The mutation transaction has already committed. Delivery is outside it.
-      void deliverPending();
+      if (isDeliveryEligibleMethod(method)) void deliverPending();
     } catch (error) {
       if (error instanceof CampfireError) {
         fail(

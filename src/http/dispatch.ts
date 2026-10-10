@@ -61,6 +61,22 @@ export const CAMPFIRE_HTTP_METHODS = [
 
 export type CampfireHttpMethod = (typeof CAMPFIRE_HTTP_METHODS)[number];
 
+// Only these methods can write a Sprint 019 domain event and enqueue a webhook.
+// Keep this list aligned with writeOutbox calls in the sync and async services.
+const DELIVERY_ELIGIBLE_METHODS: ReadonlySet<CampfireHttpMethod> = new Set([
+  "update_workspace",
+  "update_goal",
+  "add_finding",
+  "add_decision",
+  "accept_decision",
+  "update_task",
+  "add_artifact",
+]);
+
+export function isDeliveryEligibleMethod(method: CampfireHttpMethod): boolean {
+  return DELIVERY_ELIGIBLE_METHODS.has(method);
+}
+
 const WORKSPACE_STATUSES = ["active", "completed", "archived"] as const;
 const GOAL_STATUSES = ["active", "completed", "abandoned"] as const;
 const TASK_STATUSES = ["open", "in_progress", "blocked", "completed"] as const;

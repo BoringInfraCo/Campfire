@@ -5,16 +5,17 @@ Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.
 v1.14.0 is published and deployed. It adds one sandboxed, read-only workspace page to the loopback Viewer.
 It is rendered from the authorized orientation read, stored nowhere, and
 holds no credential. The GWV-001 evidence gate remains open. Publication does
-not establish Gate B or Gate C. See `../RELEASE_CONTEXT.md` and `../CHANGELOG.md`. v1.13.0
+not establish Gate B or Gate C. See `SPRINT_GWV_001_RESULT.md`. v1.13.0
 remains the opt-in incident-investigation playbook, with a GO verdict on a
-frozen synthetic pilot. v1.12.0 was
+frozen synthetic pilot recorded in `SPRINT_WOW_001_RESULT.md`. v1.12.0 was
 published with a CONDITIONAL Viewer verdict; its human trace remains
-outstanding.
+outstanding. See `SPRINT_VIS_001_RESULT.md`.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches
-the v1.9.2 script. The independent two-human acceptance trace remains pending.
+the v1.9.2 script. The independent two-human acceptance trace remains pending;
+see `SPRINT_020_RESULT.md` for that verdict.
 
 Install the CLI on an operator or teammate machine (curl path):
 
@@ -29,7 +30,7 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses this mirror's v1.14.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.14.0 archives.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's v1.14.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.14.0 archives.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 

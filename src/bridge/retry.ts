@@ -11,6 +11,30 @@ export const WEBHOOK_TIMEOUT_MS = 10_000;
 export const WEBHOOK_CLAIM_LEASE_MS = 30_000;
 export const WEBHOOK_ERROR_MAX_CHARS = 200;
 
+/**
+ * Rows one delivery sweep may select (PSA-001 / P1).
+ *
+ * Delivery work is now proportional to one batch: a sweep reads at most this
+ * many due rows, claims at most this many, and the rest of a backlog waits for
+ * the next scheduled sweep. Previously the read was unbounded and only the claim
+ * loop was capped, so a backlog cost a full table read per eligible request.
+ */
+export const WEBHOOK_DELIVERY_BATCH = 20;
+
+/**
+ * Normalize a caller-supplied batch size to a positive integer.
+ *
+ * The value reaches `LIMIT` in SQL, so it is coerced rather than trusted: a
+ * non-integer, negative, or absent value must not become an unbounded read, and
+ * `LIMIT -1` in SQLite means "no limit" — the exact behavior this sprint removes.
+ */
+export function normalizeDeliveryLimit(limit: number | undefined): number {
+  if (limit === undefined || !Number.isFinite(limit)) return WEBHOOK_DELIVERY_BATCH;
+  const whole = Math.floor(limit);
+  if (whole < 1) return WEBHOOK_DELIVERY_BATCH;
+  return whole;
+}
+
 const TOKEN_PATTERN = /cft_[A-Za-z0-9]+/g;
 const USERINFO_PATTERN = /\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@]+(?::[^\s/@]*)?@/gi;
 const URL_ORIGIN_PATTERN = /\b([a-z][a-z0-9+.-]*:\/\/[^\s/?#]+)[^\s]*/gi;

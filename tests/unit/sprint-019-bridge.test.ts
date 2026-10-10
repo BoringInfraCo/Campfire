@@ -20,6 +20,7 @@ import {
   nextRetry,
   sanitizeDeliveryError,
   WEBHOOK_CLAIM_LEASE_MS,
+  WEBHOOK_DELIVERY_BATCH,
   WEBHOOK_MAX_ATTEMPTS,
 } from "../../src/bridge/retry.js";
 
@@ -440,7 +441,7 @@ describe("delivery pump", () => {
     const row = deliveryRow({ eventId: event.id });
     const posted: string[] = [];
     const marked: Array<{ id: string; claimToken: string; deliveredAt: string }> = [];
-    let listed: { bridgeId: string; now: string; leaseBefore: string; configFingerprint: string } | undefined;
+    let listed: { bridgeId: string; now: string; leaseBefore: string; configFingerprint: string; limit: number } | undefined;
     const store: DeliveryPumpStore = {
       listDueWebhookDeliveries: async (input) => {
         listed = input;
@@ -483,6 +484,9 @@ describe("delivery pump", () => {
       now: NOW,
       leaseBefore: new Date(Date.parse(NOW) - WEBHOOK_CLAIM_LEASE_MS).toISOString(),
       configFingerprint: destinationFingerprint(bridgeConfig()),
+      // PSA-001 / P1: the sweep's batch size reaches the store, so the read is
+      // bounded in SQL rather than trimmed after every due row is fetched.
+      limit: WEBHOOK_DELIVERY_BATCH,
     });
   });
 

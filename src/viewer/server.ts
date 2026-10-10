@@ -87,13 +87,70 @@ export function isViewerReadMethod(value: string): value is ViewerReadMethod {
 
 /** Loopback-only by default. Anything else requires --allow-remote. */
 export function isLoopbackHost(host: string): boolean {
-  const normalized = host.trim().toLowerCase().replace(/^\[(.*)\]$/, "$1");
+  const normalized = normalizeHostname(host);
   return (
     normalized === "127.0.0.1" ||
     normalized === "::1" ||
     normalized === "::ffff:127.0.0.1" ||
     normalized === "localhost"
   );
+}
+
+/** Strip brackets and case so `LOCALHOST`, `[::1]`, and `::1` compare equal. */
+function normalizeHostname(value: string): string {
+  return value.trim().toLowerCase().replace(/^\[(.*)\]$/, "$1");
+}
+
+/**
+ * Split a `Host` header into its hostname and optional port.
+ *
+ * IPv6 literals arrive bracketed (`[::1]:9415`), so the port separator can only
+ * be trusted after the closing bracket. Returns `undefined` for anything that
+ * is not a syntactically plausible authority, which the caller must reject:
+ * a malformed Host is not evidence of a permitted origin.
+ */
+function parseHostHeader(value: string): { hostname: string; port?: string } | undefined {
+  const raw = value.trim();
+  if (raw.length === 0) return undefined;
+  if (raw.startsWith("[")) {
+    const close = raw.indexOf("]");
+    if (close === -1) return undefined;
+    const hostname = raw.slice(0, close + 1);
+    const rest = raw.slice(close + 1);
+    if (rest.length === 0) return { hostname };
+    if (!rest.startsWith(":")) return undefined;
+    return { hostname, port: rest.slice(1) };
+  }
+  const colon = raw.indexOf(":");
+  // More than one colon without brackets is a bare IPv6 literal, which is not a
+  // legal Host header value.
+  if (colon === -1) return { hostname: raw };
+  if (raw.indexOf(":", colon + 1) !== -1) return undefined;
+  return { hostname: raw.slice(0, colon), port: raw.slice(colon + 1) };
+}
+
+/**
+ * Whether a request's `Host` names this listener.
+ *
+ * PSA-001 (S1): the Viewer serves actor-bound data to whatever reaches the
+ * socket, so a browser whose DNS has been pointed at loopback (DNS rebinding)
+ * would otherwise receive that data under an attacker-chosen origin name. The
+ * listening address is the only authority the process has, so the check is
+ * against that address, its port, and the loopback spellings a browser uses to
+ * reach it. A missing port is rejected: an omitted port means 80/443, and this
+ * listener is neither.
+ */
+export function isAllowedViewerHost(
+  headerHost: string | undefined,
+  expected: { boundHost: string; port: number },
+): boolean {
+  if (headerHost === undefined) return false;
+  const parsed = parseHostHeader(headerHost);
+  if (parsed === undefined) return false;
+  if (parsed.port !== String(expected.port)) return false;
+  const hostname = normalizeHostname(parsed.hostname);
+  // The address actually bound, plus the names that resolve to loopback.
+  return hostname === normalizeHostname(expected.boundHost) || isLoopbackHost(hostname);
 }
 
 export function assertViewerHost(host: string, allowRemote?: boolean): void {
@@ -145,6 +202,25 @@ function fail(res: ServerResponse, status: number, code: string, message: string
   writeJson(res, status, { ok: false, error: code, message });
 }
 
+/**
+ * PSA-001 (S3): an unexpected exception may carry a local path, a token
+ * fragment, or workspace content in its message. The operator gets a stable
+ * route and failure kind on stderr without logging arbitrary exception text.
+ */
+function logInternalError(context: { route: string }, error: unknown): void {
+  const route = context.route.startsWith("/generated/workspaces/")
+    ? "/generated/workspaces/:id"
+    : context.route;
+  console.error(
+    JSON.stringify({
+      allow: false,
+      error: "InternalError",
+      route,
+      kind: error instanceof Error ? "exception" : "non_exception",
+    }),
+  );
+}
+
 async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
   let size = 0;
@@ -162,17 +238,35 @@ async function readBody(req: IncomingMessage): Promise<string> {
 export async function startCampfireViewer(options: ViewerServerOptions): Promise<RunningViewer> {
   const host = options.host ?? DEFAULT_VIEWER_HOST;
   const requestedPort = options.port ?? DEFAULT_VIEWER_PORT;
-  assertViewerHost(host, options.allowRemote);
+  const allowRemote = options.allowRemote === true;
+  assertViewerHost(host, allowRemote);
+
+  // Set once the socket is listening. A request cannot arrive before then, so
+  // the Host check below always reads the resolved port, never the requested one
+  // (`--port 0` picks a free port that the caller must be told about).
+  let listeningPort = requestedPort;
 
   const server = createServer((req, res) => {
     void handleRequest(req, res).catch((error: unknown) => {
       if (res.writableEnded) return;
-      const message = error instanceof Error ? error.message : String(error);
-      fail(res, 500, "InternalError", message);
+      logInternalError({ route: (req.url ?? "/").split("?")[0] ?? "/" }, error);
+      fail(res, 500, "InternalError", "The viewer could not complete this request");
     });
   });
 
   async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // PSA-001 (S1): before any route runs, including the static shell and the
+    // generated page. A rejected Host gets no actor-bound Viewer data at all.
+    // A loopback bind always needs this guard, even if --allow-remote was
+    // supplied. Only an actual non-loopback bind lacks a knowable Host name.
+    if (isLoopbackHost(host)) {
+      const hostHeader = typeof req.headers.host === "string" ? req.headers.host : undefined;
+      if (!isAllowedViewerHost(hostHeader, { boundHost: host, port: listeningPort })) {
+        fail(res, 403, "Unauthorized", "Request Host is not the viewer's listening address");
+        return;
+      }
+    }
+
     const url = req.url ?? "/";
     const path = url.split("?")[0] ?? "/";
     const generated = /^\/generated\/workspaces\/([A-Za-z0-9_-]{1,128})$/.exec(path);
@@ -204,6 +298,7 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
           fail(res, 404, "WorkspaceNotFound", "Workspace unavailable");
           return;
         }
+        logInternalError({ route: path }, error);
         fail(res, 500, "InternalError", "Unable to render workspace view");
       }
       return;
@@ -314,6 +409,7 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
 
   const address = server.address();
   const port = typeof address === "object" && address !== null ? address.port : requestedPort;
+  listeningPort = port;
   let closed = false;
 
   return {

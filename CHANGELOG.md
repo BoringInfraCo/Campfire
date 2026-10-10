@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.15.0 — 2026-10-10
+
+- Validate `Host` on the loopback Viewer before serving actor-bound pages and API responses, including when `--allow-remote` is supplied with a loopback bind.
+- Bound Worker request bodies to 1 MiB while streaming, and return fixed responses for unexpected HTTP, Viewer, and Worker errors without logging arbitrary exception text.
+- Limit webhook due-delivery reads to one configured batch in SQLite and D1. Immediate delivery sweeps now follow only writes that can enqueue an event; scheduled retries remain.
+- Update the MCP SDK and Wrangler dependency graph to versions with no advisories reported by the release-candidate npm audits.
+- The delivery benchmark measured local SQLite rows read, not production latency or D1 cost. This release does not establish Gate B or Gate C.
+
 ## 1.14.0 — 2026-10-09
 
 - Added one derived workspace page to the loopback Viewer. It renders the authorized orientation read for one actor and one workspace, escapes contributed text, and applies a sandbox content security policy with no path back to Campfire.
