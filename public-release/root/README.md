@@ -49,6 +49,10 @@ Until that production deploy, the current installer can select the GitHub Releas
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version {{VERSION}}
 ```
 
+### Generated workspace view
+
+`campfire view` links to one derived page for the selected workspace. The loopback server renders it from the authorized orientation read. The page is not stored, holds no credential, and is sandboxed so contributed text cannot call Campfire. The human comprehension trace and the reference-open observation remain open. This page does not establish Gate B or Gate C.
+
 ### Experimental incident playbook
 
 The v1.13 playbook is disabled by default. To inspect its versioned,

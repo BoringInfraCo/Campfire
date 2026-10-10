@@ -4,13 +4,15 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
-**v1.13.0 is published and deployed** with one opt-in, read-only
-incident-investigation playbook through the CLI and MCP. In the frozen
-synthetic WOW-001 pilot, all three treatment runs passed and all three
-matched pairs improved recording quality without lower continuation quality.
-The pilot does not establish ordinary team value or Gate B/C; see
-`docs/SPRINT_WOW_001_RESULT.md`. The v1.12 Viewer usability verdict is still
-CONDITIONAL; see `docs/SPRINT_VIS_001_RESULT.md`.
+**v1.14.0** adds one sandboxed, read-only workspace page to the loopback
+Viewer. The server renders it from the authorized orientation read for one
+actor and one workspace. It is stored nowhere and holds no credential. The
+GWV-001 evidence gate remains open, and this release does not establish Gate
+B or Gate C; see `docs/SPRINT_GWV_001_RESULT.md`. v1.13.0 remains the opt-in
+incident-investigation playbook, published from a frozen synthetic pilot that
+does not establish ordinary team value; see `docs/SPRINT_WOW_001_RESULT.md`.
+The v1.12 Viewer usability verdict is still CONDITIONAL; see
+`docs/SPRINT_VIS_001_RESULT.md`.
 
 - **Share work state** — goals, tasks, findings, decisions, and artifacts with provenance
 - **Continue anywhere** — pick up work in a fresh session on any supported harness

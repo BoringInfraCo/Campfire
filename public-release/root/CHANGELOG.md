@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.14.0 — 2026-10-09
+
+- Added one derived workspace page to the loopback Viewer. It renders the authorized orientation read for one actor and one workspace, escapes contributed text, and applies a sandbox content security policy with no path back to Campfire.
+- The page is produced for that read. It is stored nowhere, creates no Contribution, and leaves the workspace complete when it is absent.
+- Published under a founder override. The human comprehension trace, the reference-open observation, and the presentation-defect finding remain open. This is not Gate B or Gate C.
+
 ## 1.13.0 — 2026-10-08
 
 - Added one opt-in, versioned incident-investigation playbook. `CAMPFIRE_PLAYBOOK=1 campfire playbook` and MCP `get_playbook` expose the same read-only definition; default surfaces remain unchanged.

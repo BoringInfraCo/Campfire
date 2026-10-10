@@ -2,7 +2,11 @@
 
 **Date:** October 9, 2026
 
-**Status:** Founder-directed continuation; the bounded engineering candidate is integrated with the v1.13 release source. The original evidence gate remains open. No publication or deployment has occurred.
+**Status:** Founder-directed continuation. The bounded candidate is integrated with the v1.13 release source. On October 9, 2026 the owner separately authorized publication and production deployment. The original evidence gate remains open. Verification of the tag, public snapshot, archives, and Worker follows those steps.
+
+## 4. Release candidate checks
+
+On October 9, 2026 the private candidate was set to package version 1.14.0. `npm run typecheck` passed. `npm run pack:tarball` built the Darwin ARM64 archive and tracked `public/campfire/v1.14.0/install.sh`. `npm run deploy:dry-run` passed. `npm test` passed 951 tests. The one failure is the expected install-channel assertion: the formula and flake still name the published v1.13.0 archives, because the v1.14.0 checksums do not exist yet. That assertion is not loosened. The three other install-channel checks passed.
 
 **Contract:** `docs/Campfire-v1.14-GWV-001-Generated-Workspace-Views.md`
 
@@ -18,7 +22,9 @@ The repository owner explicitly directed a founder override for GWV-001 and aske
 | Gate B voluntary repeat use | **Unmeasured.** For this one bounded candidate, the requested override uses the roadmap §21 reading: Gate B may remain unmeasured and the view does not claim it. This is an explicit implementation exception to §15's sentence that would otherwise keep the view behind the gate while Gate B is unmeasured. It does not revise either roadmap sentence. |
 | Gate C ordinary multi-participant value | **Unmeasured.** |
 
-The owner waives the contract's §2 prohibition on sprint scope, §7 non-goal of implementation while the gate is open, §8 step 1's instruction to leave product code untouched, and §9's unmet-gate NO-GO criterion **for implementation of this bounded candidate only**. The override does not turn an unmet condition into evidence and does not authorize publication or production deployment. The October 7 VIS-001 overrides applied to v1.12 only; the v1.13 synthetic recording gain is not evidence for this gate.
+The owner waives the contract's §2 prohibition on sprint scope, §7 non-goal of implementation while the gate is open, §8 step 1's instruction to leave product code untouched, and §9's unmet-gate NO-GO criterion **for implementation of this bounded candidate only**. The override does not turn an unmet condition into evidence. The October 7 VIS-001 overrides applied to v1.12 only; the v1.13 synthetic recording gain is not evidence for this gate.
+
+Later the same day, the owner directed that this bounded candidate be committed, pushed, and deployed to production. That instruction is the release authorization. It does not change the evidence rows above, and it does not make the release a GO, Gate B, or Gate C result. The contract's own rubric remains NO-GO / REFRAME. The shipped page is the bounded engineering candidate.
 
 On October 9, the founder clarified that Campfire already has users, that they have personally tested it, and that it is working as planned. They directed the team to continue moving. This is a first-party product assessment and a decision to continue GWV-001 integration and release preparation despite the open evidence gate. No user count, trace protocol, reference-open attempt, or test of this generated page was supplied with that statement, so none is inferred here. The founder decision governs whether this bounded work proceeds; the rows above remain accurate descriptions of recorded evidence.
 

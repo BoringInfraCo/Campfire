@@ -1497,8 +1497,10 @@ NEXT EVIDENCE — before another surface
         these observations are v1.12 evidence; they are not credited to v1.13
 
 v1.14 — GENERATED WORKSPACE VIEWS
-        bounded engineering candidate under October 9 founder override
-        entry evidence remains open; publication and deployment not recorded
+        bounded candidate under October 9 founder override
+        founder authorized publication and production deployment the same day
+        entry evidence remains open; Gate B and Gate C unmeasured
+        publication record follows verification in docs/SPRINT_GWV_001_RESULT.md
         one derived view of authorized workspace state
         sandboxed and non-canonical
         no Campfire credentials and no unrestricted writes
