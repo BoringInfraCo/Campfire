@@ -1497,10 +1497,10 @@ NEXT EVIDENCE — before another surface
         these observations are v1.12 evidence; they are not credited to v1.13
 
 v1.14 — GENERATED WORKSPACE VIEWS
-        bounded candidate under October 9 founder override
-        founder authorized publication and production deployment the same day
+        published and deployed as v1.14.0 under the October 9 founder override
         entry evidence remains open; Gate B and Gate C unmeasured
-        publication record follows verification in docs/SPRINT_GWV_001_RESULT.md
+        not a GO, Gate B, or Gate C result
+        publication record: docs/SPRINT_GWV_001_RESULT.md
         one derived view of authorized workspace state
         sandboxed and non-canonical
         no Campfire credentials and no unrestricted writes
@@ -1531,7 +1531,7 @@ The sequence originally adopted on October 9, 2026, after published `v1.13.0`, s
 - the v1.13 pilot's recording gain is not that evidence, and the absence of a continuation gain stays visible;
 - Gate B may still be unmeasured. A generated view does not claim it.
 
-On October 9, the founder explicitly overrode the entry sequence for the bounded GWV-001 candidate, then confirmed that Campfire has users, they have personally tested it, it is working as planned, and work should continue. The candidate is now sprint scope for engineering integration and release preparation under that decision. The listed observations remain unrecorded; this override does not claim Gate B or Gate C. See `docs/SPRINT_GWV_001_RESULT.md` for the decision, implementation, and checks. A second playbook is a separate founder decision and is not part of this scope.
+On October 9, the founder explicitly overrode the entry sequence for the bounded GWV-001 candidate, then confirmed that Campfire has users, they have personally tested it, it is working as planned, and work should continue. The candidate is published and deployed as v1.14.0 under that decision. The listed observations remain unrecorded; this override does not claim Gate B or Gate C. See `docs/SPRINT_GWV_001_RESULT.md` for the decision, implementation, and checks. A second playbook is a separate founder decision and is not part of this scope.
 
 The product risk is polishing a surface before teams repeatedly rely on the collaboration state. Leaving that state in structured form for another release is acceptable.
 

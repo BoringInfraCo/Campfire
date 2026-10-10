@@ -194,6 +194,14 @@ Nix pins, and the production Worker are published; the versioned installer
 passed a clean install check. This synthetic pilot does not close VIS-001's open
 human evidence or establish Gate B or C. See `docs/SPRINT_WOW_001_RESULT.md`.
 
+Sprint GWV-001 — Generated Workspace Views is published and deployed as
+`v1.14.0` under the October 9, 2026 founder override. The page is one
+sandboxed, read-only derivation of one authorized orientation read. It is
+stored nowhere and holds no credential. The evidence gate remains open.
+The human comprehension trace, the reference-open observation, and the
+presentation-defect finding are unrecorded. This release is not a GO,
+Gate B, or Gate C result. See `docs/SPRINT_GWV_001_RESULT.md`.
+
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.
 

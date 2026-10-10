@@ -2,11 +2,11 @@
 
 **Date:** October 9, 2026
 
-**Status:** Founder-directed continuation. The bounded candidate is integrated with the v1.13 release source. On October 9, 2026 the owner separately authorized publication and production deployment. The original evidence gate remains open. Verification of the tag, public snapshot, archives, and Worker follows those steps.
+**Status:** Published and deployed as v1.14.0 on October 9, 2026, under the founder override. The original evidence gate remains open. This is not a GO, Gate B, or Gate C result. The publication record is in section 5.
 
 ## 4. Release candidate checks
 
-On October 9, 2026 the private candidate was set to package version 1.14.0. `npm run typecheck` passed. `npm run pack:tarball` built the Darwin ARM64 archive and tracked `public/campfire/v1.14.0/install.sh`. `npm run deploy:dry-run` passed. `npm test` passed 951 tests. The one failure is the expected install-channel assertion: the formula and flake still name the published v1.13.0 archives, because the v1.14.0 checksums do not exist yet. That assertion is not loosened. The three other install-channel checks passed.
+On October 9, 2026 the private candidate was set to package version 1.14.0. `npm run typecheck` passed. `npm run pack:tarball` built the Darwin ARM64 archive and tracked `public/campfire/v1.14.0/install.sh`. `npm run deploy:dry-run` passed. `npm test` passed 951 tests. The one failure is the expected install-channel assertion: the formula and flake still name the published v1.13.0 archives, because the v1.14.0 checksums did not exist yet. That assertion was not loosened. The three other install-channel checks passed. The install-channel commit in section 5 resolved that failure. The post-pin suite passed 952 tests across 80 files.
 
 **Contract:** `docs/Campfire-v1.14-GWV-001-Generated-Workspace-Views.md`
 
@@ -34,7 +34,7 @@ The candidate is one static-behavior HTML page rendered at read time from one au
 
 The page uses escaped text and a restrictive browser policy. It cannot run script, fetch a reference, call `/api/call`, or inherit the journal origin's ambient authority. There is no new Viewer read method, MCP tool, write, schema change, webhook, telemetry event, playbook, preview, or highlight.
 
-This scope is a founder-chosen product hypothesis, **not** a finding that a human needs this page. If the missing human trace later shows a state defect or a different presentation need, reframe before release.
+This scope is a founder-chosen product hypothesis, **not** a finding that a human needs this page. If the missing human trace later shows a state defect or a different presentation need, reframe before any further surface.
 
 ## 2. Implementation and checks
 
@@ -57,4 +57,45 @@ The three GWV-001 commits were then replayed without conflict onto the v1.13.0 r
 
 ## 3. Verdict and remaining evidence
 
-**Founder continuation decision: PROCEED with the bounded GWV-001 engineering candidate and release preparation.** The original contract's evidence-only §9 rubric would still read **NO-GO / REFRAME** because §2 is unmet; it is retained as an evidence assessment, not a stop on founder-authorized work. The human comprehension trace on the shipped v1.12 Viewer, the reference-open observation or a dated absence on or after October 14, the presentation-versus-state finding, and a human trace on the generated document remain outstanding. Gate B and Gate C remain unmeasured. Publication and production deployment are separate promotion steps and have not been performed.
+**Founder continuation decision: PROCEED with the bounded GWV-001 engineering candidate.** The original contract's evidence-only §9 rubric still reads **NO-GO / REFRAME** because §2 is unmet; it is retained as an evidence assessment. The human comprehension trace on the shipped v1.12 Viewer, the reference-open observation or a dated absence on or after October 14, the presentation-versus-state finding, and a human trace on the generated document remain outstanding. Gate B and Gate C remain unmeasured. Publication and production deployment were performed under the separate owner authorization in section 0. They do not close this evidence assessment.
+
+## 5. v1.14.0 publication and verification
+
+- Private canonical source and annotated `v1.14.0` tag:
+  `1274c0b9283de0f5648bbc99430c9d4dd480ab09`. The tag was not moved.
+- Public source snapshot: `BoringInfraCo/Campfire` commit
+  `49abdef9e89d8e6aa87215287f8d9479612b10ad`, also the immutable public
+  `v1.14.0` tag. The public release is
+  `https://github.com/BoringInfraCo/Campfire/releases/tag/v1.14.0`.
+- The public release workflow `38013198597` passed all four native-platform
+  jobs and attached four archives plus four `.sha256` files. Each downloaded
+  archive independently passed `shasum -a 256 -c` against its published file:
+
+  | Archive | SHA-256 |
+  | --- | --- |
+  | `campfire-darwin-arm64.tar.gz` | `1915b09ae47ea908791707d879540cae5ba39855c0dae19ae8a79ad6852d1c53` |
+  | `campfire-darwin-x64.tar.gz` | `bd3d3fff9fbf2f9db22a6811862c02fb9609f73b7ad9018e42a101e797104278` |
+  | `campfire-linux-arm64.tar.gz` | `e4b804863fa62e2e75f0428c10a620da16db8d771c59265f3a0a18500800647b` |
+  | `campfire-linux-x64.tar.gz` | `fadf79adaac4c0b3a9de71cc097a8a54ba1e805521bdf95fd84b32c498f2e4ac` |
+
+- Actual release digests were applied to private Homebrew and Nix pins in
+  `908369bb5d3c0e544ce67ebaf92a5a5ac4a6c06c`. The post-tag public pin
+  addendum is `12757c7f847aaf3a0d868efdb2f9809f2100b0b8`; the public tag
+  was not moved. Its manifest names the private install-channel commit.
+  The public Homebrew tap formula was promoted in
+  `ff4122d8a131e9907491190732a5c83477f374b9`.
+- The full private post-pin suite passed **952 tests across 80 files**.
+  Private CI `38013620100` and public CI `38013650032` passed on the
+  post-pin commits. The earlier public snapshot CI `38013191395` failed
+  only on the expected v1.13 pin assertion before the v1.14 archives were
+  pinned: 1 failed and 908 passed. No assertion was loosened.
+- `npm run deploy` from the private release tree deployed Worker version
+  `9bd1b548-cc1f-43e2-814d-e61751668f6d` to
+  `boringinfra.company/campfire/*`. No migration was applied. A live **GET**
+  of `/campfire/v1.14.0/install.sh` and `/campfire/install.sh` matched the
+  tracked files byte for byte. The live v1.13.0 installer was unchanged.
+  The live versioned installer completed a clean Darwin ARM64 install into
+  a temporary prefix, verified archive SHA-256
+  `1915b09ae47ea908791707d879540cae5ba39855c0dae19ae8a79ad6852d1c53`, and
+  the installed package metadata and `campfire capabilities` both reported
+  `1.14.0`. Telemetry was disabled for that check. No workspace was written.

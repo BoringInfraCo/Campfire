@@ -4,7 +4,7 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
-**v1.14.0** adds one sandboxed, read-only workspace page to the loopback
+**v1.14.0 is published and deployed.** It adds one sandboxed, read-only workspace page to the loopback
 Viewer. The server renders it from the authorized orientation read for one
 actor and one workspace. It is stored nowhere and holds no credential. The
 GWV-001 evidence gate remains open, and this release does not establish Gate

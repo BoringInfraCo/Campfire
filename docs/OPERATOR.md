@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.14.0 adds one sandboxed, read-only workspace page to the loopback Viewer.
+v1.14.0 is published and deployed. It adds one sandboxed, read-only workspace page to the loopback Viewer.
 It is rendered from the authorized orientation read, stored nowhere, and
 holds no credential. The GWV-001 evidence gate remains open. Publication does
 not establish Gate B or Gate C. See `SPRINT_GWV_001_RESULT.md`. v1.13.0
@@ -30,7 +30,7 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's pin addendum. The package stays unpublished on the npm registry. Until the v1.14.0 archives exist, the formula and flake still name the published v1.13.0 archives.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's v1.14.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.14.0 archives.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
