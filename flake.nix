@@ -8,7 +8,7 @@
       # Pins the published release archives. Update with
       # `node scripts/sync-install-channels.mjs` after the four checksums exist.
       # This flake does not compile better-sqlite3 and does not send telemetry.
-      version = "1.13.0";
+      version = "1.14.0";
       systems = [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems f;
       campfireFor = system:
@@ -17,19 +17,19 @@
           archives = {
             aarch64-darwin = {
               name = "campfire-darwin-arm64.tar.gz";
-              hash = "sha256-JW3pj3JNsDaqKJGJRkR1u5fhKX+eQvgUhlarmLCwx6Y="; # campfire-darwin-arm64.tar.gz
+              hash = "sha256-GRWwmuR+qQh5FwfYeVQMrlujmFXA2uGa6Kea1oUtHFM="; # campfire-darwin-arm64.tar.gz
             };
             x86_64-darwin = {
               name = "campfire-darwin-x64.tar.gz";
-              hash = "sha256-cp4T+c8eexH7ikmhSma7Td6OC7B/aKIFAIs049SYNQ0="; # campfire-darwin-x64.tar.gz
+              hash = "sha256-vT0//5+/L52yKmgRhiwC+5YJ9zt62QGOQqEB55cQQng="; # campfire-darwin-x64.tar.gz
             };
             aarch64-linux = {
               name = "campfire-linux-arm64.tar.gz";
-              hash = "sha256-HmnMBzQrjSrRG43uSP6nQLZn+q2qemJOebvSvQDJkqo="; # campfire-linux-arm64.tar.gz
+              hash = "sha256-5LgEhj+mLi518EKMEKYg2hbbjXccWSZfOgoYUAgAZHs="; # campfire-linux-arm64.tar.gz
             };
             x86_64-linux = {
               name = "campfire-linux-x64.tar.gz";
-              hash = "sha256-HeWQPBySrczaDt3Au+8AOIhk0dhV6ME61gfOE5x8Wis="; # campfire-linux-x64.tar.gz
+              hash = "sha256-+t95rarEwLOp3nHMCXqKVLoegFUhvflf2EsyxJjy5Kw="; # campfire-linux-x64.tar.gz
             };
           };
           archive = archives.${system};
