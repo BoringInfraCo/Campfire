@@ -166,14 +166,26 @@ constant there; it is only meaningful under backlog.
 - No new workspace object, authorization rule, Viewer method, generated-page
   capability, caching layer, or schema rewrite.
 
-## 7. Subsequent v1.15.0 source preparation
+## 7. v1.15.0 release promotion
 
 After this engineering result, the package and lockfile were set to `1.15.0`
 and `npm run pack:tarball` created the tracked
 `public/campfire/v1.15.0/install.sh`. A pinned local Darwin ARM64 install from
 the generated archive verified its checksum and installed package version.
-This is source preparation only: no `v1.15.0` tag, public release, install-channel
-checksum pin, or production deployment has been made. Homebrew and Nix remain
-on their published `v1.14.0` archives until all four v1.15.0 release checksums
-exist. The install-channel version assertion therefore fails in this
-intermediate source state and must pass before release promotion.
+The source preparation was committed to private main at `c6a1d26` and tagged
+`v1.15.0`. The audited public source snapshot was published at `bbcfc62` with
+the same public tag. Its release workflow built four native archives and four
+checksum files; all four downloaded archives passed `shasum -a 256 -c`.
+
+After the checksums existed, private `dcefa57` pinned Homebrew and Nix to
+those assets. The audited public addendum is `9bf5fee`; the separate Homebrew
+tap formula is `1d91cb4`. The production Worker was deployed from private
+main with version ID `38af7dbf-25eb-41d3-8ef7-fca2575ecaf7`.
+Public CI passed on the pin addendum.
+
+The live `https://boringinfra.company/campfire/v1.15.0/install.sh` and
+`/campfire/install.sh` matched the committed script byte for byte. A clean
+install into a temporary prefix from the live script verified the Darwin ARM64
+archive checksum, installed package metadata version `1.15.0`, and ran the CLI
+help. The install-channel unit tests, typecheck, build, and deployment dry run
+passed after pinning. No Gate B/C or production performance claim is added.
