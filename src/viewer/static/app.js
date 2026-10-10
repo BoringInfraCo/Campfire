@@ -12,6 +12,7 @@ const els = {
   whoami: document.getElementById("whoami"),
   error: document.getElementById("error"),
   workspace: document.getElementById("workspace"),
+  generatedViewLink: document.getElementById("generated-view-link"),
   mast: document.getElementById("mast"),
   people: document.getElementById("people"),
   goal: document.getElementById("goal"),
@@ -512,6 +513,10 @@ function renderHeader() {
   }
   const value = state.workspaceId || "";
   if (els.workspace.value !== value) els.workspace.value = value;
+  if (els.generatedViewLink) {
+    els.generatedViewLink.hidden = !value;
+    if (value) els.generatedViewLink.href = `/generated/workspaces/${encodeURIComponent(value)}`;
+  }
 }
 
 function renderMast() {

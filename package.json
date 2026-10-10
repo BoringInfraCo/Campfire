@@ -1,6 +1,6 @@
 {
   "name": "campfire",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "private": true,
   "description": "The shared workspace where people and their agents work together.",
   "type": "module",
@@ -31,6 +31,7 @@
     "view": "tsx src/cli/index.ts view",
     "acceptance": "tsx scripts/run-acceptance.ts",
     "acceptance:002": "tsx scripts/run-acceptance-002.ts",
+    "evidence:manifest": "node scripts/evidence-manifest.mjs",
     "deploy": "node scripts/wrangler-deploy.mjs deploy",
     "deploy:dry-run": "node scripts/wrangler-deploy.mjs deploy --dry-run",
     "dev:worker": "wrangler dev",

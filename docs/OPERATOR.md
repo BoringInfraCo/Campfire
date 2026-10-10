@@ -2,17 +2,20 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.13.0 is published and deployed: one opt-in read-only
-incident-investigation playbook with a GO verdict on a frozen synthetic pilot.
-Publication and production deployment are separate steps. The pilot result
-and its limits are summarized in `../RELEASE_CONTEXT.md` and `../CHANGELOG.md`.
-v1.12.0 was published and deployed with a CONDITIONAL Viewer verdict; its
-human trace remains outstanding.
+v1.14.0 adds one sandboxed, read-only workspace page to the loopback Viewer.
+It is rendered from the authorized orientation read, stored nowhere, and
+holds no credential. The GWV-001 evidence gate remains open. Publication does
+not establish Gate B or Gate C. See `SPRINT_GWV_001_RESULT.md`. v1.13.0
+remains the opt-in incident-investigation playbook, with a GO verdict on a
+frozen synthetic pilot recorded in `SPRINT_WOW_001_RESULT.md`. v1.12.0 was
+published with a CONDITIONAL Viewer verdict; its human trace remains
+outstanding. See `SPRINT_VIS_001_RESULT.md`.
 The v1.9.3 telemetry patch keeps telemetry schema version 1
 and writes one Analytics Engine index, the event name. The seven dimensions
 and the installation id are blobs. v1.9.2 sent seven indexes, so those writes
 were rejected and stored nothing. The versioned installer in this tag matches
-the v1.9.2 script. The independent two-human acceptance trace remains pending.
+the v1.9.2 script. The independent two-human acceptance trace remains pending;
+see `SPRINT_020_RESULT.md` for that verdict.
 
 Install the CLI on an operator or teammate machine (curl path):
 
@@ -27,12 +30,12 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses this mirror's v1.13.0 pin addendum. The package stays unpublished on the npm registry.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's pin addendum. The package stays unpublished on the npm registry. Until the v1.14.0 archives exist, the formula and flake still name the published v1.13.0 archives.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.13.0
+node scripts/sync-install-channels.mjs --version 1.14.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
@@ -41,8 +44,8 @@ Pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.13.0
-curl -fsSL https://boringinfra.company/campfire/v1.13.0/install.sh | sh -s -- --version 1.13.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.14.0
+curl -fsSL https://boringinfra.company/campfire/v1.14.0/install.sh | sh -s -- --version 1.14.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
@@ -54,7 +57,7 @@ it to Workers before its URL is live. The release workflow builds
 platform tarballs (`campfire-{os}-{arch}.tar.gz` plus `.sha256`) from `dist/`
 and attaches them to GitHub Releases. The installer verifies the SHA-256
 digest before unpacking. A `latest` install reports the version stored in
-the installed package metadata (for example `1.13.0`), not the word `latest`.
+the installed package metadata (for example `1.14.0`), not the word `latest`.
 A pinned `--version` refuses the archive before replacing an existing install
 when package metadata differs. A GitHub Release upload alone does not deploy
 the versioned installer URL.
@@ -324,6 +327,37 @@ retried. `recorded: false` means the Worker did not accept a write;
 confirmed durable storage. A misnamed binding can create a different dataset,
 so verify the deployed
 binding name and query `campfire_telemetry` after the first controlled event.
+
+### Ingestion rate limit
+
+`POST /campfire/v1/telemetry` carries no bearer by design, so it is open to
+anyone who learns the URL. The Worker applies a per-source budget through a
+Workers Rate Limiting binding:
+
+```toml
+[[ratelimits]]
+name = "TELEMETRY_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 120, period = 60 }
+```
+
+`namespace_id` is any stable integer you choose; it is a label, not a remote
+resource to create. Two properties matter when tuning it:
+
+- **The key is an opaque hash of Cloudflare's `CF-Connecting-IP`.** The address
+  is used only as a rate-limit key. It is never stored, never logged, and never
+  written to a data point, and `ip` remains a prohibited payload field.
+- **The limiter fails open.** No binding, no address header, or a binding that
+  throws all mean "not limited". A measurement path must never become a new way
+  for a Campfire operation to fail, and a limiter that errors must not be able
+  to silence telemetry for everyone.
+
+Keep the limit generous. `install_completed` and `activated` are each claimed
+once per installation, and `active` at most once per UTC day, so an honest
+installation sends a handful of events across its whole life. CI runners and
+corporate NAT put many
+real installations behind one address; a tight limit would drop honest traffic
+to punish a flood.
 
 Client-side controls are operator/environment configuration:
 

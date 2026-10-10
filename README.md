@@ -37,17 +37,21 @@ CAMPFIRE_DB=<absolute path printed by onboard> campfire serve
 
 Onboard is the first-run path to one human, one agent they own, one workspace, and one goal. It does not start the server and does not register an agent session. `campfire seed --reset` loads a deterministic demo/evaluation fixture; it is not how a new operator creates a workspace.
 
-For a version-pinned v1.13.0 install:
+For a version-pinned install after this version is deployed:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.13.0/install.sh | sh -s -- --version 1.13.0
+curl -fsSL https://boringinfra.company/campfire/v1.14.0/install.sh | sh -s -- --version 1.14.0
 ```
 
-The latest installer also accepts an explicit version:
+Until that production deploy, the current installer can select the GitHub Release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.13.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.14.0
 ```
+
+### Generated workspace view
+
+`campfire view` links to one derived page for the selected workspace. The loopback server renders it from the authorized orientation read. The page is not stored, holds no credential, and is sandboxed so contributed text cannot call Campfire. The human comprehension trace and the reference-open observation remain open. This page does not establish Gate B or Gate C.
 
 ### Experimental incident playbook
 

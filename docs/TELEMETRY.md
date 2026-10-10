@@ -125,6 +125,42 @@ it succeeded.
 The receiving endpoint also never reads an address, host, or token header. It
 does not need one.
 
+One exception to "the endpoint never reads an address," and it is not a
+collected field: to apply a per-source request budget, the ingestion route
+hashes Cloudflare's own `CF-Connecting-IP` into an opaque key used only for
+rate limiting. The address itself is not stored, logged, or written to a data
+point, and it never appears in a payload. Without a limiter the route would be
+open to anyone who learns the URL, and unbounded.
+
+## What the endpoint refuses
+
+The ingestion route drops two kinds of payload before writing anything.
+
+**A version that predates telemetry.** Telemetry shipped in v1.9.1 — the client
+library, the event contract, and the ingestion route were all added in that
+release. A binary whose version reads below v1.9.1 contains no telemetry code
+and cannot emit a schema-v1 event by any route, so such a payload is provably
+fabricated rather than merely unusual. The endpoint drops it and answers
+`recorded: false`, which is the same answer it gives when no dataset is bound:
+an error would teach a prober which field gave it away, and a client that saw a
+failure might retry.
+
+This was added after production accumulated several hundred `install_completed`
+rows per day, each under a distinct installation id, all declaring version 1.2.0,
+with no downstream event and no relationship to any real usage.
+
+The check is deliberately narrow. A version that does not parse — `unknown`, a
+build string, a local checkout — is allowed through. The client resolves its
+version by reading `package.json` and falls back to `unknown` when that read
+fails, so an unparseable value is an honest possibility. Absence of proof is not
+proof of forgery: the filter drops what is impossible and declines to guess
+about what merely looks unusual.
+
+**An over-budget source.** See the rate limit in
+[docs/OPERATOR.md](OPERATOR.md#ingestion-rate-limit). A refused request answers
+`429`, which the client treats as a lost measurement and ignores — it never
+affects the Campfire operation that produced the event.
+
 ---
 
 ## Why it exists
@@ -259,6 +295,20 @@ not because it is meant to be run by anyone else. It never runs without an
 explicit `--confirm`, prints every command before it runs it, reads its
 credential from the environment, and refuses to report a window that begins
 before the first installer request was ever measured.
+
+Founder counts omit client events whose declared Campfire version is below
+v1.9.1. Telemetry did not exist before that release, so a row declaring an
+older version cannot have been emitted by a Campfire binary. Those rows stay
+in the dataset. The script lists them as `excluded_below_reporting_floor`
+instead of folding them into successful installations. Installer requests are
+unchanged: the Worker writes those with version `unknown`, and `unknown` does
+not parse as a version below the floor.
+
+The comparison is numeric in effect. A lexical `blob3 < '1.9.1'` would treat
+`1.10.0` as older than `1.9.1` and drop every later install. Unparseable
+versions (`unknown`, `latest`) stay in the counts. The ingestion route applies
+the same floor before writing; this query filter is what keeps the rows
+already stored from being read as installations.
 
 One caveat is worth stating plainly: Cloudflare Analytics Engine samples
 adaptively, so a large dataset reports estimates rather than exact totals. The

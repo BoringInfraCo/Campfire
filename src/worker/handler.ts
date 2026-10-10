@@ -41,6 +41,7 @@ import {
   recordInstallRequested,
   TELEMETRY_PATH,
   type AnalyticsEngineDataset,
+  type RateLimiterBinding,
 } from "./telemetry.js";
 import type { IdSource } from "../domain/ids.js";
 
@@ -207,6 +208,8 @@ export interface SyncWorkerHandlerOptions {
   assetsFetch?: AssetsFetch;
   /** Optional Analytics Engine dataset. Absent means telemetry is not provisioned. */
   telemetryDataset?: AnalyticsEngineDataset;
+  /** Optional per-source budget for the anonymous ingestion route. */
+  telemetryRateLimiter?: RateLimiterBinding;
 }
 
 export interface D1WorkerHandlerOptions {
@@ -216,6 +219,8 @@ export interface D1WorkerHandlerOptions {
   clock?: () => string;
   webhookEnv?: Record<string, string | undefined>;
   telemetryDataset?: AnalyticsEngineDataset;
+  /** Optional per-source budget for the anonymous ingestion route. */
+  telemetryRateLimiter?: RateLimiterBinding;
 }
 
 /** Re-point an installer request at `path`, preserving the original request when it already matches. */
@@ -279,7 +284,7 @@ async function handleInstallRequest(
  * `dispatchCampfireMethod` directly (local SQLite path, Vitest).
  */
 export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request: Request) => Promise<Response> {
-  const { service, assetsFetch, telemetryDataset } = options;
+  const { service, assetsFetch, telemetryDataset, telemetryRateLimiter } = options;
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -291,7 +296,7 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       // answers 405 from the adapter rather than falling through to the 404 the
       // GET branch produces for unknown paths. A 404 here would hide that the
       // route exists and that it requires POST.
-      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset }, request);
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset, rateLimiter: telemetryRateLimiter }, request);
 
       if (request.method === "GET") {
         const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
@@ -333,6 +338,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
   });
   const assetsFetch = options.assetsFetch;
   const telemetryDataset = options.telemetryDataset;
+  const telemetryRateLimiter = options.telemetryRateLimiter;
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -347,7 +353,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
       // Matched ahead of the method split so a non-POST to the ingestion route
       // answers 405 rather than the 404 the GET branch produces (see the sync
       // handler above).
-      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset }, request);
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset, rateLimiter: telemetryRateLimiter }, request);
 
       if (request.method === "GET") {
         const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);

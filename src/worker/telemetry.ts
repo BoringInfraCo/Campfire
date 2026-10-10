@@ -18,6 +18,7 @@
  */
 import {
   buildTelemetryEvent,
+  isTelemetryVersionBelowFloor,
   parseTelemetryEventV1,
   TELEMETRY_MAX_PAYLOAD_BYTES,
   telemetryDataPoint,
@@ -40,8 +41,21 @@ export interface AnalyticsEngineDataset {
  */
 export const TELEMETRY_PATH = "/v1/telemetry";
 
+/**
+ * Optional Workers Rate Limiting binding (`[[ratelimits]]`). Structural type
+ * only, for the same reason as the dataset binding: this is the whole surface
+ * the adapter uses, so the Worker stays free of `@cloudflare/workers-types`.
+ *
+ * Absent binding means no limiting, which keeps local `wrangler dev` and any
+ * deployment that has not added the binding working exactly as before.
+ */
+export interface RateLimiterBinding {
+  limit(input: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface TelemetryIngestOptions {
   dataset?: AnalyticsEngineDataset;
+  rateLimiter?: RateLimiterBinding;
 }
 
 /** Same envelope as `handler.ts`; duplicated rather than imported to avoid an adapter cycle. */
@@ -95,6 +109,69 @@ async function readBoundedJson(request: Request): Promise<
 }
 
 /**
+ * Per-source request budget for the anonymous ingestion route.
+ *
+ * This route carries no credential by design, so it is open to anyone who
+ * learns the URL. The budget exists to bound the damage from a flood, not to
+ * identify anyone: the key is an opaque hash of Cloudflare's own
+ * `CF-Connecting-IP` header, used only as a rate-limit key and never stored,
+ * logged, or written to a data point.
+ *
+ * It is deliberately generous. A legitimate installation sends a handful of
+ * events across its whole life — `install_completed` and `activated` are each
+ * claimed once per installation, and `active` at most once per UTC day. CI
+ * and corporate NAT can put many
+ * real installations behind one address, so a tight limit would silently drop
+ * honest traffic to punish a flood. Failing open when the binding errors keeps
+ * telemetry a measurement rather than a new way for Campfire to fail.
+ */
+export const TELEMETRY_RATE_LIMIT_PER_MINUTE = 120;
+
+/** Any nonempty address; the value itself is hashed below and never retained. */
+function clientAddress(request: Request): string | undefined {
+  const header = request.headers.get("CF-Connecting-IP")?.trim();
+  return header === undefined || header.length === 0 ? undefined : header;
+}
+
+/**
+ * FNV-1a, so the rate-limit key is a short opaque token rather than a network
+ * address sitting inside a binding. It is not a security primitive and is not
+ * used as one: the only requirement is that the same source maps to the same
+ * key and different sources usually do not collide.
+ */
+function opaqueKey(value: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `t${hash.toString(16)}`;
+}
+
+/**
+ * Consume one unit of the caller's budget.
+ *
+ * Fails open in every ambiguous case — no binding, no address header, or a
+ * binding that throws. A measurement path must never become a new way for a
+ * Campfire operation to fail, and a limiter that errors must not be able to
+ * silence telemetry for everyone.
+ */
+async function isRateLimited(
+  rateLimiter: RateLimiterBinding | undefined,
+  request: Request,
+): Promise<boolean> {
+  if (rateLimiter === undefined) return false;
+  const address = clientAddress(request);
+  if (address === undefined) return false;
+  try {
+    const verdict = await rateLimiter.limit({ key: opaqueKey(address) });
+    return !verdict.success;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Accept one schema-v1 event.
  *
  * An undocumented field is a rejection rather than a silent drop: ignoring it
@@ -117,6 +194,15 @@ export async function handleTelemetryEvent(
     return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
   }
 
+  // Bounded before the body is read, so a flood costs a header check rather
+  // than a buffered parse per request. The caller is told honestly that it was
+  // throttled: the client posts fire-and-forget and surfaces a 429 as
+  // `HTTP 429` without affecting the Campfire operation that triggered it.
+  const throttled = await isRateLimited(options.rateLimiter, request);
+  if (throttled) {
+    return fail(429, "RateLimited", "Telemetry ingestion is rate limited for this source");
+  }
+
   const body = await readBoundedJson(request);
   if (!body.ok) return body.response;
 
@@ -125,6 +211,14 @@ export async function handleTelemetryEvent(
     return parsed.reason === "unknown_field"
       ? fail(400, "ValidationError", "Telemetry payload contains an undocumented field")
       : fail(400, "ValidationError", "Telemetry payload does not match schema version 1");
+  }
+
+  // A version below the release that introduced telemetry cannot emit an event
+  // by any code path, so the payload is fabricated. It is dropped silently —
+  // reported as `recorded: false` rather than an error — because a rejection
+  // here would teach a prober exactly which field gave it away.
+  if (isTelemetryVersionBelowFloor(parsed.event.campfireVersion)) {
+    return json(200, { ok: true, result: { recorded: false } });
   }
 
   if (options.dataset === undefined) {

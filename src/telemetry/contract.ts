@@ -75,6 +75,53 @@ const OS_MAX_CHARS = 16;
 const ARCH_MAX_CHARS = 16;
 const VERSION_MAX_CHARS = 32;
 
+/**
+ * The first release that contained any telemetry code at all (v1.9.1,
+ * published 2026-10-03). Telemetry shipped whole-clique in that release: the
+ * client library, the event contract, and this ingestion route were all added
+ * together, so a binary whose `package.json` reads below this version has no
+ * telemetry code in it and is therefore incapable of emitting a schema-v1 event
+ * by any route.
+ *
+ * That makes a sub-floor `campfireVersion` a *provable* forgery rather than a
+ * suspicious-looking one, and it is checkable on the server for free: no state,
+ * no per-client bookkeeping, nothing to evade by rotating source addresses. It
+ * was added after the v1.2.0 stream showed up in production — several hundred
+ * `install_completed` rows per day, each under a distinct installation id,
+ * carrying no downstream event, that bore no relationship to any real usage.
+ *
+ * The floor is deliberately *not* a general version validator. It rejects only
+ * what is provably impossible, so it can never discard a legitimate event from
+ * a build newer than the contract itself.
+ */
+export const TELEMETRY_MIN_REPORTING_VERSION = "1.9.1";
+
+const SEMVER_TRIPLE = /^(\d+)\.(\d+)\.(\d+)/;
+
+/**
+ * True only for a version that parses as semver *and* sorts strictly below
+ * `TELEMETRY_MIN_REPORTING_VERSION`.
+ *
+ * A value that does not parse (`unknown`, a build string, a local checkout
+ * version) returns false and is allowed through. Absence of proof is not proof
+ * of forgery: this filter drops what is impossible, and declines to guess about
+ * what merely looks unusual. Compare the triple numerically rather than
+ * lexically so `1.10.0` correctly sorts above `1.9.1`.
+ */
+export function isTelemetryVersionBelowFloor(campfireVersion: string): boolean {
+  const parsed = SEMVER_TRIPLE.exec(campfireVersion.trim());
+  const floor = SEMVER_TRIPLE.exec(TELEMETRY_MIN_REPORTING_VERSION);
+  if (parsed === null || floor === null) return false;
+  const observed = [parsed[1], parsed[2], parsed[3]].map(Number);
+  const minimum = [floor[1], floor[2], floor[3]].map(Number);
+  for (let index = 0; index < 3; index += 1) {
+    const seen = observed[index] ?? 0;
+    const least = minimum[index] ?? 0;
+    if (seen !== least) return seen < least;
+  }
+  return false;
+}
+
 export interface TelemetryEventV1 {
   schemaVersion: typeof TELEMETRY_SCHEMA_VERSION;
   event: TelemetryEventName;
