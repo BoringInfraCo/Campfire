@@ -161,6 +161,19 @@ constant there; it is only meaningful under backlog.
 - No browser exploit proof against a deployed user. The audit's own limit stands:
   the S1 tests prove server behavior under an attacker-chosen `Host`, not a
   complete DNS-rebinding chain in a real browser.
-- No release, deployment, or version bump. `package.json` remains `1.14.0`.
+- At this engineering verdict, no release, deployment, or version bump had
+  occurred; `package.json` was still `1.14.0`.
 - No new workspace object, authorization rule, Viewer method, generated-page
   capability, caching layer, or schema rewrite.
+
+## 7. Subsequent v1.15.0 source preparation
+
+After this engineering result, the package and lockfile were set to `1.15.0`
+and `npm run pack:tarball` created the tracked
+`public/campfire/v1.15.0/install.sh`. A pinned local Darwin ARM64 install from
+the generated archive verified its checksum and installed package version.
+This is source preparation only: no `v1.15.0` tag, public release, install-channel
+checksum pin, or production deployment has been made. Homebrew and Nix remain
+on their published `v1.14.0` archives until all four v1.15.0 release checksums
+exist. The install-channel version assertion therefore fails in this
+intermediate source state and must pass before release promotion.
