@@ -297,11 +297,15 @@ describe("D1Store", () => {
       now: NOW,
       leaseBefore: "2025-12-31T00:00:00.000Z",
       configFingerprint: "new-fp",
+      limit: 20,
     });
-    // The fake serves canned rows; assert the query itself binds the fingerprint.
+    // The fake serves canned rows; assert the query itself binds the fingerprint
+    // and the batch bound. PSA-001 / P1: the cap is a SQL LIMIT, not a post-read
+    // slice, so an unbounded backlog is never read in full.
     expect(due).toHaveLength(1);
     expect(listed.seen[0]?.query).toMatch(/config_fingerprint = \?/);
-    expect(listed.seen[0]?.params).toEqual(["bridge_1", "new-fp", NOW, "2025-12-31T00:00:00.000Z"]);
+    expect(listed.seen[0]?.query).toMatch(/ORDER BY created_at, rowid\s+LIMIT \?/);
+    expect(listed.seen[0]?.params).toEqual(["bridge_1", "new-fp", NOW, "2025-12-31T00:00:00.000Z", 20]);
 
     const rejected = fakeDb({ firstRow: pending, runResult: { success: true, meta: { changes: 1 } } });
     const mismatch = createD1Store(rejected.db);

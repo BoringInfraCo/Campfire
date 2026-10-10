@@ -9,6 +9,7 @@
  * Layering (AGENTS.md invariant 7): domain/service depend on the store
  * boundary, never on D1 details. No new domain entities.
  */
+import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import type {
   ActorType,
   ActorToken,
@@ -1302,6 +1303,9 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
 
     async listDueWebhookDeliveries(input) {
+      // Bounded in SQL (PSA-001 / P1). On D1 the win is not just local latency:
+      // rows read from D1 are rows billed, so an unbounded sweep over a backlog
+      // charged for every due row on every eligible request.
       return (await all<WebhookDeliveryRow>(
         `SELECT * FROM webhook_deliveries
          WHERE bridge_id = ?
@@ -1310,8 +1314,10 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
              (status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?))
              OR (status = 'delivering' AND claimed_at IS NOT NULL AND claimed_at <= ?)
            )
-         ORDER BY created_at, rowid`,
-        input.bridgeId, input.configFingerprint, input.now, input.leaseBefore)).map(mapWebhookDelivery);
+         ORDER BY created_at, rowid
+         LIMIT ?`,
+        input.bridgeId, input.configFingerprint, input.now, input.leaseBefore,
+        normalizeDeliveryLimit(input.limit))).map(mapWebhookDelivery);
     },
 
     async claimWebhookDelivery(id, input) {

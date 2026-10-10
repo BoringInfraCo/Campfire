@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import { Conflict } from "../domain/errors.js";
 import { applyMigrations } from "./migrations.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
@@ -1383,6 +1384,10 @@ function createSqliteStore(db: Database.Database): CampfireStore {
     },
 
     listDueWebhookDeliveries(input) {
+      // LIMIT in the statement, not a slice after the read (PSA-001 / P1): a
+      // 10k-row backlog must not be read and mapped in full for a 20-row batch.
+      // ORDER BY is unchanged, so the bound keeps taking the oldest due rows and
+      // a backlog still drains oldest-first across successive sweeps.
       const rows = db
         .prepare(
           `SELECT * FROM webhook_deliveries
@@ -1392,9 +1397,16 @@ function createSqliteStore(db: Database.Database): CampfireStore {
                (status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?))
                OR (status = 'delivering' AND claimed_at IS NOT NULL AND claimed_at <= ?)
              )
-           ORDER BY created_at, rowid`,
+           ORDER BY created_at, rowid
+           LIMIT ?`,
         )
-        .all(input.bridgeId, input.configFingerprint, input.now, input.leaseBefore) as WebhookDeliveryRow[];
+        .all(
+          input.bridgeId,
+          input.configFingerprint,
+          input.now,
+          input.leaseBefore,
+          normalizeDeliveryLimit(input.limit),
+        ) as WebhookDeliveryRow[];
       return rows.map(mapWebhookDelivery);
     },
 

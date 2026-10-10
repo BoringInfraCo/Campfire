@@ -32,7 +32,7 @@ import {
 } from "../bridge/config.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
-import { dispatchCampfireMethod, isCampfireHttpMethod } from "../http/dispatch.js";
+import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod } from "../http/dispatch.js";
 import { dispatchCampfireMethodAsync } from "./async-dispatch.js";
 import { createAsyncCampfireService, type AsyncCampfireService } from "./async-service.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
@@ -158,6 +158,63 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Read at most `MAX_BODY_BYTES` from the request stream, cancelling as soon as
+ * the cap is crossed.
+ *
+ * PSA-001 (S2): `Content-Length` is attacker-controlled and routinely absent on
+ * a chunked request, so a declared length can never be the enforcement point.
+ * Counting bytes as they arrive means an oversized body is abandoned mid-flight
+ * rather than buffered and decoded in full — the distinction that matters on a
+ * Worker, where buffering more than the per-request limit is a failure, not a
+ * slow path. The count is on bytes, not characters, so multibyte content cannot
+ * slip past by encoding narrow.
+ */
+async function readBoundedBody(
+  request: Request,
+): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; reason: "too_large" | "unreadable" }> {
+  const reader = request.body?.getReader();
+  if (reader === undefined) {
+    return { ok: true, bytes: new Uint8Array(0) };
+  }
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  while (true) {
+    let item: { done?: boolean; value?: Uint8Array };
+    try {
+      item = await reader.read();
+    } catch {
+      return { ok: false, reason: "unreadable" };
+    }
+    if (item.done === true || item.value === undefined) break;
+    length += item.value.byteLength;
+    if (length > MAX_BODY_BYTES) {
+      // Stop pulling. `cancel` propagates to the client connection.
+      await reader.cancel().catch(() => undefined);
+      return { ok: false, reason: "too_large" };
+    }
+    chunks.push(item.value);
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, bytes };
+}
+
+/**
+ * PSA-001 (S3): a body read that fails is an internal condition, not a
+ * statement about the caller's JSON. Keep a stable failure type and stage in
+ * the operator channel; arbitrary exception text can itself contain secrets.
+ */
+function logInternalError(context: { route: string; stage: string }, error: unknown): void {
+  console.error(
+    JSON.stringify({ allow: false, error: "InternalError", route: context.route, stage: context.stage, kind: error instanceof Error ? "exception" : "non_exception" }),
+  );
+}
+
 async function readJsonBody(request: Request): Promise<
   | { ok: true; method: unknown; params: unknown }
   | { ok: false; response: Response }
@@ -166,18 +223,22 @@ async function readJsonBody(request: Request): Promise<
   if (contentLength !== null && Number(contentLength) > MAX_BODY_BYTES) {
     return { ok: false, response: fail(400, "ValidationError", "Request body too large") };
   }
+  const body = await readBoundedBody(request);
+  if (!body.ok) {
+    if (body.reason === "too_large") {
+      return { ok: false, response: fail(400, "ValidationError", "Request body too large") };
+    }
+    return { ok: false, response: fail(400, "ValidationError", "Request body could not be read") };
+  }
   let raw: string;
   try {
-    raw = await request.text();
+    raw = new TextDecoder("utf-8", { fatal: false }).decode(body.bytes);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, response: fail(400, "ValidationError", message) };
-  }
-  if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
-    return { ok: false, response: fail(400, "ValidationError", "Request body too large") };
+    logInternalError({ route: "/v1/call", stage: "decode_body" }, error);
+    return { ok: false, response: fail(400, "ValidationError", "Request body must be UTF-8 JSON") };
   }
   try {
-    const parsed = raw.length === 0 ? {} : (JSON.parse(raw) as { method?: unknown; params?: unknown });
+    const parsed = raw.trim().length === 0 ? {} : (JSON.parse(raw) as { method?: unknown; params?: unknown });
     return { ok: true, method: parsed.method, params: parsed.params };
   } catch {
     return { ok: false, response: fail(400, "ValidationError", "Request body must be JSON") };
@@ -221,6 +282,15 @@ export interface D1WorkerHandlerOptions {
   telemetryDataset?: AnalyticsEngineDataset;
   /** Optional per-source budget for the anonymous ingestion route. */
   telemetryRateLimiter?: RateLimiterBinding;
+  /**
+   * Called once a mutation that can enqueue a delivery has committed
+   * (PSA-001 / P1). The Worker entrypoint uses it to schedule a delivery sweep
+   * after writes only — reads, the installer, and telemetry cannot enqueue a
+   * delivery, so sweeping after them only cost a D1 query. Fires after the
+   * transaction commits and before the response is returned; a throw from the
+   * callback must not change the caller's response, so it is swallowed.
+   */
+  onWriteCommitted?: () => void;
 }
 
 /** Re-point an installer request at `path`, preserving the original request when it already matches. */
@@ -242,8 +312,10 @@ async function fetchInstallerAsset(
   try {
     return await assetsFetch(assetRequest(request, path));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return fail(502, "ValidationError", `Asset fetch failed: ${message}`);
+    // The asset binding's error text describes Worker runtime internals, not the
+    // caller's request. Same PSA-001 (S3) rule as the 500s.
+    logInternalError({ route: path, stage: "assets_fetch" }, error);
+    return fail(502, "ValidationError", "Installer asset is temporarily unavailable");
   }
 }
 
@@ -322,8 +394,8 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       }
       return fail(404, "ValidationError", `Not found: ${path}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return fail(500, "InternalError", message);
+      logInternalError({ route: apiPath(new URL(request.url).pathname), stage: "dispatch" }, error);
+      return fail(500, "InternalError", "The request could not be completed");
     }
   };
 }
@@ -339,6 +411,14 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
   const assetsFetch = options.assetsFetch;
   const telemetryDataset = options.telemetryDataset;
   const telemetryRateLimiter = options.telemetryRateLimiter;
+  const notifyWrite = (): void => {
+    try {
+      options.onWriteCommitted?.();
+    } catch {
+      // Delivery scheduling is an operational side effect; it must never be
+      // able to change the outcome of a committed Campfire write.
+    }
+  };
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -372,15 +452,15 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
 
       if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
       if (path === "/v1/call") {
-        return await handleAsyncCall(service, request);
+        return await handleAsyncCall(service, request, notifyWrite);
       }
       if (path === "/api/call") {
         return await handleAsyncViewerPost(service, request);
       }
       return fail(404, "ValidationError", `Not found: ${path}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return fail(500, "InternalError", message);
+      logInternalError({ route: apiPath(new URL(request.url).pathname), stage: "dispatch" }, error);
+      return fail(500, "InternalError", "The request could not be completed");
     }
   };
 }
@@ -454,7 +534,11 @@ async function handleSyncCall(service: CampfireService, request: Request): Promi
   }
 }
 
-async function handleAsyncCall(service: AsyncCampfireService, request: Request): Promise<Response> {
+async function handleAsyncCall(
+  service: AsyncCampfireService,
+  request: Request,
+  onWriteCommitted?: () => void,
+): Promise<Response> {
   const resolved = await resolveAsyncActor(service, bearerToken(request));
   if (resolved instanceof Response) return resolved;
 
@@ -477,6 +561,9 @@ async function handleAsyncCall(service: AsyncCampfireService, request: Request):
 
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
+    // A successful read (including /v1/call reads) cannot enqueue a delivery.
+    // The closed event vocabulary determines which writes may have done so.
+    if (isDeliveryEligibleMethod(method)) onWriteCommitted?.();
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) {
@@ -634,28 +721,26 @@ async function handleAsyncBridgeReport(
   return json(200, { ok: true, result: report });
 }
 
-async function handleEnrollmentRedeem(service: CampfireService | AsyncCampfireService, request: Request): Promise<Response> {
+async function handleEnrollmentRedeem(
+  service: CampfireService | AsyncCampfireService,
+  request: Request,
+): Promise<Response> {
   const secret = bearerToken(request);
   if (secret === undefined) return fail(401, "Unauthorized", "Missing invitation capability");
   try {
-    const reader = request.body?.getReader();
-    const chunks: Uint8Array[] = []; let length = 0;
-    if (reader !== undefined) {
-      while (true) {
-        const item = await reader.read(); if (item.done) break;
-        length += item.value.byteLength;
-        if (length > MAX_BODY_BYTES) { await reader.cancel(); return fail(400, "ValidationError", "Request body too large"); }
-        chunks.push(item.value);
-      }
+    const body = await readBoundedBody(request);
+    if (!body.ok) {
+      return fail(400, "ValidationError", body.reason === "too_large" ? "Request body too large" : "Request body could not be read");
     }
-    const bytes = new Uint8Array(length); let offset = 0;
-    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
     let input: unknown;
-    try { input = JSON.parse(new TextDecoder().decode(bytes)); } catch { return fail(400, "ValidationError", "Request body must be JSON"); }
+    try { input = JSON.parse(new TextDecoder().decode(body.bytes)); } catch { return fail(400, "ValidationError", "Request body must be JSON"); }
     const result = await service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
+    // Enrollment records participants and contributions, not domain events.
+    // It cannot enqueue a webhook delivery.
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) return fail(statusFor(error.code, false), error.code, error.message, error.details);
+    logInternalError({ route: "/v1/enrollment/redeem", stage: "redeem" }, error);
     return fail(500, "InternalError", "Enrollment could not be completed; retry the saved request");
   }
 }

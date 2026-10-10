@@ -208,11 +208,21 @@ export interface CampfireStore {
   listWebhookDeliveries(): WebhookDeliveryRecord[];
   countWebhookDeliveries(): WebhookDeliveryCounts;
 
+  /**
+   * Due deliveries for one bridge, oldest first.
+   *
+   * `limit` bounds how many rows the query returns (PSA-001 / P1). It is part of
+   * the read rather than a post-read slice: a backlog must not be read and
+   * mapped in full only for the caller to drop the tail. Callers that page
+   * through a backlog must pass their per-sweep batch size, not a page of a
+   * larger read.
+   */
   listDueWebhookDeliveries(input: {
     bridgeId: string;
     now: string;
     leaseBefore: string;
     configFingerprint: string;
+    limit: number;
   }): WebhookDeliveryRecord[];
 
   claimWebhookDelivery(
