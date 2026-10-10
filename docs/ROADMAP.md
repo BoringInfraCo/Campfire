@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9, 2026 after published `v1.13.0`
+**Date:** October 3, 2026; sequence revised October 9, 2026 after published `v1.14.0`
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1047,7 +1047,7 @@ Do not commit yet to:
 - a Channel object beside Workspace,
 - canonical presentation or hosted content inside Artifact,
 - a skills platform or workflow engine,
-- generated workspace views before the section 21 entry gate is met,
+- broader generated workspace views without evidence beyond the bounded v1.14 founder override,
 - highlights that override correction and currentness,
 - treating MCP compatibility as identity, membership, or authorization.
 
@@ -1082,8 +1082,9 @@ Required before Phase 2.
 Required before investing heavily in collaboration UX. The v1.12 visual
 surface shipped under an explicit founder override while this gate was
 unmeasured. That override does not retire the gate. A generated workspace
-view is the same class of investment and stays behind the section 21 entry
-gate while Gate B is unmeasured.
+view is the same class of investment. The bounded v1.14 page shipped under a
+separate founder override while Gate B remained unmeasured; that exception does
+not retire the gate for broader collaboration UX.
 
 Sprint 004 showed repeat-session behavior in a deterministic trace. Field
 Trace 001 was cancelled by founder decision before a qualifying multi-day human
@@ -1440,10 +1441,12 @@ Sprint WOW-001 — Prove a Way of Working   GO on a frozen synthetic pilot; publ
         ↓
 Next evidence — Viewer comprehension and which references are opened   not a release; open from v1.12; review the reference observation by October 14, 2026
         ↓
-v1.14 — Generated workspace views   bounded engineering candidate under founder override; original evidence gate open; see docs/SPRINT_GWV_001_RESULT.md
+v1.14 — Generated workspace views   published and deployed under founder override; original evidence gate open; see docs/SPRINT_GWV_001_RESULT.md
+        ↓
+v1.15 — Performance and security hardening   proposed from the October 9 audit; no new product surface; see docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
 ```
 
-`v1.10.0` is published. The sequence adopted on October 3, 2026, and revised on October 9, 2026 after `v1.13.0`, is:
+The sequence adopted on October 3, 2026, and revised on October 9, 2026 after `v1.14.0`, is:
 
 ```text
 v1.10 — KEEP SHARED UNDERSTANDING CURRENT
@@ -1507,6 +1510,17 @@ v1.14 — GENERATED WORKSPACE VIEWS
         no second store and no new domain object
         the workspace remains complete when the view is absent
         see docs/ARCHITECTURE.md
+
+v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
+        proposed from the October 9 performance and security audit
+        guard the local Viewer request Host boundary
+        enforce the Worker call-body limit while streaming
+        keep unexpected internal errors out of client responses
+        bound webhook delivery reads and request-time work
+        remediate and triage production dependency advisories
+        no new collaboration surface or Gate B/C claim
+        audit: docs/SPRINT_PSA_001_AUDIT.md
+        contract: docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
 ```
 
 The original v1.12 entry contract required all of these before sprint scope:
