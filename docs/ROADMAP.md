@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9, 2026 after published `v1.14.0`
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0` and extended October 10 with proposed v1.16
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1443,10 +1443,12 @@ Next evidence — Viewer comprehension and which references are opened   not a r
         ↓
 v1.14 — Generated workspace views   published and deployed under founder override; original evidence gate open; see docs/SPRINT_GWV_001_RESULT.md
         ↓
-v1.15 — Performance and security hardening   proposed from the October 9 audit; no new product surface; see docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
+v1.15 — Performance and security hardening   published and deployed as v1.15.0; no new product surface; see docs/SPRINT_PSA_001_RESULT.md
+        ↓
+v1.16 — Recall and portable handoff   proposed one-workspace Gate E experiment; one authorized Recall path and bounded offline packet; see docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
 ```
 
-The sequence adopted on October 3, 2026, and revised on October 9, 2026 after `v1.14.0`, is:
+The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the proposed v1.16 sprint is:
 
 ```text
 v1.10 — KEEP SHARED UNDERSTANDING CURRENT
@@ -1512,7 +1514,7 @@ v1.14 — GENERATED WORKSPACE VIEWS
         see docs/ARCHITECTURE.md
 
 v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
-        proposed from the October 9 performance and security audit
+        published and deployed as v1.15.0 from the October 9 audit
         guard the local Viewer request Host boundary
         enforce the Worker call-body limit while streaming
         keep unexpected internal errors out of client responses
@@ -1521,6 +1523,13 @@ v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
         no new collaboration surface or Gate B/C claim
         audit: docs/SPRINT_PSA_001_AUDIT.md
         contract: docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
+
+v1.16 — RECALL AND PORTABLE HANDOFF
+        proposed bounded Gate E experiment, not an established gate result
+        one authorized workspace search with currentness and provenance
+        one explicit offline JSON packet for a named authorized participant
+        no cross-workspace index, transcripts, embeddings, or packet import
+        contract: docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
 ```
 
 The original v1.12 entry contract required all of these before sprint scope:
