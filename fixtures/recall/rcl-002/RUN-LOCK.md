@@ -7,7 +7,7 @@ Scored runs have not started. This file freezes the harnesses, models, budgets, 
 | Item | Value |
 | --- | --- |
 | Control source | `bb3bb61d716f52bb36e5f1c6e6514ece71abc555` (`recall_workspace` is absent) |
-| Treatment source | `UNSET`. Before the first scored run, set this to the commit that adds `HANDOFF_RATIONALE_MAX_BYTES` and this directory. Do not score against `b6fc55865244ef4fc82db2d46c42b633f4017ab0`; that packet omitted decision rationale. |
+| Treatment source | `da6030ab73ab764bbd8478274c12565e8c227ba6` (`fix(recall): hold v1.16 and preregister RCL-002`). That commit adds `HANDOFF_RATIONALE_MAX_BYTES`. Do not score against `b6fc55865244ef4fc82db2d46c42b633f4017ab0`; that packet omitted decision rationale. |
 | Package | `1.15.0` |
 | Matched harness | Codex `0.150.1` at `/Users/sergio/.local/bin/codex` |
 | Matched model | `gpt-5.6-sol` |
@@ -41,7 +41,7 @@ The packet is produced by `campfire handoff-packet` from a copy of the seed data
 
 ## Isolation
 
-Follow `isolation.md`. The runner refuses to start while the treatment commit is `UNSET`, while `src/` or `package.json` disagrees with that commit, or while the installed harness versions disagree with this file.
+Follow `isolation.md`. The runner refuses to start while `src/` or `package.json` disagrees with the treatment commit, or while the installed harness versions disagree with this file. This lock edit is not part of that treatment tree.
 
 ## After the first scored run
 
