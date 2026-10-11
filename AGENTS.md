@@ -204,10 +204,11 @@ Gate B, or Gate C result. See `docs/SPRINT_GWV_001_RESULT.md`.
 
 Sprint RCL-001 — Recall and Portable Handoff is an implemented candidate for
 v1.16. It adds one authorized recall read and one CLI-written offline packet.
-The scored pilot has not been run. This is not a GO. Gate B, Gate C, and Gate E
-are unmeasured. Do not add embeddings, Viewer writes, packet import, or
-per-command telemetry. See `docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md`
-and `docs/SPRINT_RCL_001_RESULT.md`.
+The October 11 scored pilot verdict is NO-GO. The package stays `1.15.0`.
+Gate B, Gate C, and Gate E are unmeasured. Do not add embeddings, Viewer writes,
+packet import, or per-command telemetry. See
+`docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md` and
+`docs/SPRINT_RCL_001_RESULT.md`.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
