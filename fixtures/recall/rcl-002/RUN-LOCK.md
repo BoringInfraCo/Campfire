@@ -29,7 +29,7 @@ An empty answer is an invalid attempt. The runner keeps that directory with an `
 
 The future seed opens a new sqlite file outside the repository and runs the real service with a caller-chosen id source. It pins every id in `ground-truth.md`. Seeded agents use harness `fixture` and no model. `hum_rcl002_reader` is the viewer recipient and authors nothing in the key.
 
-The seed must reproduce the page facts in `docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md` section 5. S1 and S2 each have eleven accepted decisions and one proposal. The decisive accepted decision has a strictly earlier `updated_at` than the ten newer ones. Equal timestamps are not sufficient, because a tie sorts by id ascending. S3 has nine accepted decisions and one proposal, and its decision slice is complete. Later contributions push the S1 and S2 decisive ids out of the first orientation `recentChanges` slice and provenance summaries.
+The seed must reproduce the page facts in `docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md` section 5. S1 and S2 each have eleven accepted decisions and one proposal. The older accepted decision has a strictly earlier `updated_at` than the ten newer ones. Equal timestamps are not sufficient, because a tie sorts by id ascending. S2 does not link its two checkout decisions with `replacesDecisionId`, a predecessor, or a successor. S3 has nine accepted decisions and one proposal, and its decision slice is complete. Later contributions push the older S1 and S2 ids out of the first orientation `recentChanges` slice and provenance summaries.
 
 Replacing an existing seed requires `--force`. The seed writes no file inside the repository.
 
@@ -42,6 +42,13 @@ The packet is produced by `campfire handoff-packet` from a copy of the seed data
 ## Isolation
 
 Follow `isolation.md`. The runner refuses to start while `src/` or `package.json` disagrees with the treatment commit, or while the installed harness versions disagree with this file. This lock edit is not part of that treatment tree.
+
+## Preregistration corrections — October 11, 2026
+
+No scored arm has started.
+
+- The S2 answer key was amended the same day it was preregistered. Both checkout decisions stay accepted. The next action is to surface the conflict and seek an explicit retire or an accepted replacement. The harness, model, budget, and arm-order rows above are unchanged.
+- Recipient profiles now deny checkout writes for the lowercased path as well as the original path. The unscored diagnostic was rerun after that edit.
 
 ## After the first scored run
 

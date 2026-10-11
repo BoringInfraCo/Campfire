@@ -47,7 +47,10 @@ function sandboxProfile(workDir: string, profilePath: string): void {
   ];
   const lines = ["(version 1)", "(allow default)"];
   for (const path of denies) lines.push(`(deny file-read* (subpath ${JSON.stringify(path)}))`);
-  lines.push(`(deny file-write* (subpath ${JSON.stringify(REPO_ROOT)}))`);
+  // Seatbelt matches the spelling it is given. Deny both checkout spellings.
+  for (const root of new Set([REPO_ROOT, REPO_ROOT.toLowerCase()])) {
+    lines.push(`(deny file-write* (subpath ${JSON.stringify(root)}))`);
+  }
   lines.push(`(allow file-read* (subpath ${JSON.stringify(workDir)}))`);
   mkdirSync(dirname(profilePath), { recursive: true, mode: 0o700 });
   writeFileSync(profilePath, `${lines.join("\n")}\n`, { mode: 0o600 });
@@ -116,15 +119,33 @@ function seedPacket(workDir: string, nonce: string): void {
   }
 }
 
+function assertWriteDenied(profile: string, workDir: string, root: string): void {
+  const probe = join(root, ".rcl002-write-probe");
+  const result = spawnSync("sandbox-exec", ["-f", profile, "/bin/sh", "-c", 'printf probe > "$1"', "sh", probe], {
+    cwd: workDir,
+    encoding: "utf8",
+  });
+  const created = existsSync(probe);
+  if (created) rmSync(probe, { force: true });
+  if (result.status === 0 || created) fail("sandbox allowed a checkout write");
+}
+
 function assertSandboxDeniesRepo(profile: string, packetPath: string): void {
+  const workDir = dirname(packetPath);
   const denied = spawnSync("sandbox-exec", ["-f", profile, "/bin/cat", join(REPO_ROOT, "src/domain/recall.ts")], {
+    cwd: workDir,
     encoding: "utf8",
   });
   if (denied.status === 0 || denied.stdout.includes("HANDOFF_RATIONALE_MAX_BYTES")) {
     fail("sandbox allowed a read of the checkout");
   }
-  const allowed = spawnSync("sandbox-exec", ["-f", profile, "/bin/cat", packetPath], { encoding: "utf8" });
+  for (const root of new Set([REPO_ROOT, REPO_ROOT.toLowerCase()])) assertWriteDenied(profile, workDir, root);
+  const allowed = spawnSync("sandbox-exec", ["-f", profile, "/bin/cat", packetPath], {
+    cwd: workDir,
+    encoding: "utf8",
+  });
   if (allowed.status !== 0) fail("sandbox blocked the packet");
+  process.stdout.write("SANDBOX_WRITE_DENY_OK\n");
 }
 
 function runRecipient(workDir: string, profile: string, eventsPath: string): Promise<{ code: number | null }> {

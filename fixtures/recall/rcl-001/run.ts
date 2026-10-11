@@ -241,7 +241,11 @@ function sandboxProfile(runDir: string, arm: Arm = "control"): string {
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/config.toml"))}))`);
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/memories_1.sqlite"))}))`);
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/session_index.jsonl"))}))`);
-  if (arm === "recipient") lines.push(`(deny file-write* (subpath ${JSON.stringify(REPO_ROOT)}))`);
+  // Seatbelt matches the spelling it is given. Deny both checkout spellings.
+  if (arm === "recipient") {
+    const writeRoots = new Set([REPO_ROOT, REPO_ROOT.toLowerCase()]);
+    for (const root of writeRoots) lines.push(`(deny file-write* (subpath ${JSON.stringify(root)}))`);
+  }
   const profile = join(runDir, "private", "sandbox.sb");
   mkdirSync(dirname(profile), { recursive: true, mode: 0o700 });
   writeFileSync(profile, `${lines.join("\n")}\n`, { mode: 0o600 });

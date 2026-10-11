@@ -6,7 +6,7 @@ Freeze date: October 11, 2026. Scored runs have not started. A repository read b
 
 Each arm runs under `sandbox-exec`. The profile denies reads of `fixtures/`, `docs/`, `evidence/`, the seed directory, other arms' run directories, the operator Campfire profile, and the user Codex memories, sessions, skills, and rules.
 
-Recipient profiles also deny file reads and file writes of the Campfire checkout and of that path lowercased. OpenCode follows `PWD`. The runner sets `PWD` to the arm directory and deletes `OLDPWD` before launch. Matched Codex arms still read the checkout so they can launch the local MCP server. Recipient profiles do not.
+Recipient profiles deny file reads and file writes of the Campfire checkout for both the original path and the lowercased path. The first write rule covered only the original spelling. That gap was closed on October 11, 2026, before any scored arm. OpenCode follows `PWD`. The runner sets `PWD` to the arm directory and deletes `OLDPWD` before launch. Matched Codex arms still read the checkout so they can launch the local MCP server. Recipient profiles do not.
 
 The RCL-001 free model returned `FreeTierError` 403 from `opencode run` on October 11, 2026: the free tier can only be used from within OpenCode. Isolating `~/.local/share/opencode` then made `opencode-go/glm-5.2` return `provider.no-route`. The RCL-002 recipient profile leaves provider auth and that data directory readable so the locked model can start. It still denies the checkout and the RCL-001 pilot runs and seed, so this pilot cannot read the scored RCL-001 packets or answers.
 
@@ -18,7 +18,7 @@ Control MCP is `src/mcp/stdio.ts` from `bb3bb61d716f52bb36e5f1c6e6514ece71abc555
 
 On October 11, 2026, `npx tsx fixtures/recall/rcl-002/diagnose.ts` printed `DIAGNOSE_OK`. The recipient made one tool call, a completed read of `packet.json` in its work directory. The answer was the decision rationale and nothing else. The event log contained no checkout path and no Campfire tool call. The model was `opencode-go/glm-5.2#max`. The packet had one decision. Output stays under `~/.campfire-pilot/rcl-002/diagnose` and is not committed.
 
-That diagnostic does not score RCL-001 or RCL-002. It does not authorize a scored run. The RCL-001 lock stays on `opencode/space-bunny-free#xhigh`.
+The same command was rerun on October 11, 2026, after the lowercase write deny and after the diagnostic script closes the database if setup fails. The rerun printed `SANDBOX_WRITE_DENY_OK` and `DIAGNOSE_OK`. The recipient again made one read of `packet.json` and replied with the decision rationale. The event log showed no checkout read and no Campfire tool call. That rerun is unscored. It does not score RCL-001 or RCL-002, and it does not authorize a scored run. The RCL-001 lock stays on `opencode/space-bunny-free#xhigh`.
 
 ## Failed arms
 

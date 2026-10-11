@@ -16,7 +16,7 @@ Recipient continuation:
 
 > Using only the offline packet, continue the partner callback work. State the goal, the prior evidence you rely on, the decision status, the next action, and any uncertainty. The packet is the file packet.json in this directory.
 
-## S2 — Off-page replacement
+## S2 — Two accepted checkout decisions
 
 Task prompt:
 

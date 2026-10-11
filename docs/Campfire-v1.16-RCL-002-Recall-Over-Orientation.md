@@ -5,9 +5,16 @@
 - **Status:** Preregistered October 11, 2026. Scored runs have not started. This is not a verdict and not a release.
 - **Prior result:** `docs/SPRINT_RCL_001_RESULT.md` stays frozen. Its verdict is NO-GO. Do not rescore those nine runs and do not rerun them to change that verdict.
 
+## Preregistration corrections — October 11, 2026
+
+Recorded before any scored arm and before the seed exists. These corrections do not reopen RCL-001 and do not release v1.16.
+
+1. **S2 key.** The first key told a scorer to follow the older accepted checkout decision. Both of those decisions remain accepted. `needsReview` does not revoke one, and Campfire does not define an operative decision among accepted decisions. A decision becomes superseded through `retireDecision`, or when a proposed replacement names that predecessor and is accepted with a reason. The key now requires the arm to surface the conflict and seek one of those transitions. No replacement was seeded.
+2. **Recipient write deny.** The profile denied checkout reads for both path spellings and checkout writes for the original spelling only. `fixtures/recall/rcl-001/run.ts` and `fixtures/recall/rcl-002/diagnose.ts` now deny writes for the lowercased spelling as well. The unscored diagnostic was rerun after that edit. It remains unscored.
+
 ## 1. Question
 
-RCL-001's matched arms reached the same next action because the keyed decision was already on the first orientation read. RCL-002 asks whether Recall changes that next action when the decisive accepted decision is absent from the first orientation page and from the default decision drill-down page.
+RCL-001's matched arms reached the same next action because the keyed decision was already on the first orientation read. RCL-002 asks whether Recall changes that next action when an accepted decision is absent from the first orientation page and from the default decision drill-down page. For S1 that hidden decision is the accepted rule. For S2 it is a second accepted decision, and the next action is to surface the conflict rather than choose between two accepted decisions.
 
 A control that pages further, or that raises the page limit, can still read the record. The measured question is whether it does so inside the same budget. A control that reaches the same choice has matched Recall. That outcome is allowed. It is not repaired after the run.
 
@@ -40,23 +47,23 @@ The control prompt does not include the recall query. Neither prompt includes th
 
 `get_workspace_changes` continues forward from the orientation cursor. It does not walk older history. Older decisions are reached with `list_decisions` and `get_decision`.
 
-### Why the first page can omit the decisive decision
+### Why the first page can omit the older decision
 
 Orientation uses `DEFAULT_CONTEXT_BUDGET.decisions` of 10. When the workspace has at least one accepted decision and at least one proposed decision, one slot is reserved for a proposal, so the first page holds at most 9 accepted decisions plus that proposal. Accepted decisions sort newest `updated_at` first, then id ascending. `list_decisions` with the default limit of 10 returns the 10 newest decisions in that same rank order, so the first drill-down page is the 10 newest accepted decisions when at least 10 accepted decisions exist. A limit of 100 can still reach an older row. The maximum page size is 100.
 
-S1 and S2 therefore need 11 accepted decisions: the decisive one, accepted first, and 10 newer accepted decisions. The seed clock must give the decisive decision a strictly earlier `updated_at`. Equal timestamps sort by id ascending, which would pull a lower id onto the first page. S1's only proposal is the unaccepted partner-callback alternative, so the reserved slot shows that alternative. S2's only proposal is unrelated to checkout retry, so the reserved slot does not add a second checkout rule. The newest S2 accepted decision is the misleading one.
+S1 and S2 therefore need 11 accepted decisions: one older accepted decision, and 10 newer accepted decisions. The seed clock must give the older decision a strictly earlier `updated_at`. Equal timestamps sort by id ascending, which would pull a lower id onto the first page. S1's only proposal is the unaccepted partner-callback alternative, so the reserved slot shows that alternative. S1's older decision is the one accepted rule. S2's only proposal is unrelated to checkout retry, so the reserved slot does not add another checkout rule. S2's newest accepted decision needs review. S2's older checkout decision is also accepted. Neither supersedes the other.
 
-The decisive S1 and S2 decisions must also be absent from the orientation `recentChanges` slice and from the provenance summaries. Those slices are the newest material rows inside the newest 100 contributions, capped at 20, and the newest 20 contributions. The seed creates enough later contributions that the first orientation payload omits the decisive id. Catch-up from that cursor must not be required to see it.
+The older S1 and S2 decisions must also be absent from the orientation `recentChanges` slice and from the provenance summaries. Those slices are the newest material rows inside the newest 100 contributions, capped at 20, and the newest 20 contributions. The seed creates enough later contributions that the first orientation payload omits that older id. Catch-up from that cursor must not be required to see it.
 
 S3 keeps 9 accepted decisions on other topics and one proposal. Its decision slice fits on the first page. S3 checks that Recall is no worse when the history is insufficient. It is not a place to look for a Recall win.
 
-Filler text must not contain the scenario query or the operational constraint named in the key. The current finding named in the key stays inside the findings budget of 10. That finding does not state the operational constraint.
+Filler text must not contain the scenario query or the orientation-absence string named in the key. The current finding named in the key stays inside the findings budget of 10. That finding does not state the S1 rationale or the S2 attempt-id sentence.
 
 ## 4. Packet recipients
 
 The recipient continuation is in `scenarios.md`. The packet is produced by `campfire handoff-packet` before the recipient starts. The recipient process receives `packet.json` and no Campfire token, database, or URL.
 
-Accepted anchors are the newest 10 accepted decisions. In S1 and S2 the decisive decision is older than those 10, so it is absent from `anchors.acceptedDecisions` and present in `records` when the query matches, together with its rationale. The recipient passes by using that record. A truncated anchor list is not the full accepted set.
+Accepted anchors are the newest 10 accepted decisions. In S1 and S2 the older decision is absent from `anchors.acceptedDecisions` and present in `records` when the query matches, together with its rationale. S1's recipient uses that record as the accepted rule. S2's recipient uses it to report the second accepted decision and the missing supersession. A truncated anchor list is not the full accepted set.
 
 The recall response used to build the packet still has no rationale field. The pre-run check reads the packet file.
 
@@ -68,10 +75,10 @@ For S1 and for S2:
 
 - Accepted count is 11 and proposed count is 1.
 - `get_workspace_context` reports decisions `total` 12, `returned` 10, `truncated` true.
-- The decisive decision id is absent from that decision slice, from `recentChanges`, and from provenance summaries. The current finding id from the key is present in the findings slice. The operational constraint string from the key is absent from the whole orientation payload.
-- `list_decisions` with no limit and no cursor returns 10 decisions and omits the decisive id.
-- A recall for the scenario query includes the decisive decision. The recall JSON has no `rationale` property.
-- The handoff packet's matching record carries the rationale. `anchors.acceptedDecisions` omits the decisive id. `completeness.anchors.acceptedDecisions` reports `total` 11, `returned` 10, and `truncated` true. The file mode is `0600`. The receipt omits the query. The file contains no token and no filesystem path.
+- The older decision id is absent from that decision slice, from `recentChanges`, and from provenance summaries. The current finding id from the key is present in the findings slice. The orientation-absence string from the key is absent from the whole orientation payload.
+- `list_decisions` with no limit and no cursor returns 10 decisions and omits the older decision id.
+- A recall for the scenario query includes the older decision. The recall JSON has no `rationale` property.
+- The handoff packet's matching record carries the rationale. `anchors.acceptedDecisions` omits the older decision id. `completeness.anchors.acceptedDecisions` reports `total` 11, `returned` 10, and `truncated` true. The file mode is `0600`. The receipt omits the query. The file contains no token and no filesystem path. For S2, that record and `dec_rcl002_s2_review` are both accepted, and neither record carries a predecessor or successor id pointing at the other.
 
 For S3:
 
@@ -84,7 +91,7 @@ The runner refuses a scored start while the treatment commit in the run lock is 
 
 ## 6. Score
 
-Score matched arms on R1–R4 in `fixtures/recall/rcl-002/rubric.md`, blind to arm where practical. A scorer packet must not still contain the arm label. Score recipients on goal, prior evidence, decision status, next action, and uncertainty. The next action must use the rationale constraint in the key.
+Score matched arms on R1–R4 in `fixtures/recall/rcl-002/rubric.md`, blind to arm where practical. A scorer packet must not still contain the arm label. Score recipients on goal, prior evidence, decision status, next action, and uncertainty. The next action must follow the key. For S1 that includes the rationale constraint. For S2 that includes the conflict and the requested transition, and it reports the attempt-id rationale without executing it.
 
 A recipient that never reads `packet.json`, or that reads the checkout, has not run the packet arm. That arm fails. Do not describe it as a continuation pass.
 
@@ -102,4 +109,4 @@ Do not lower this bar after seeing the answers.
 
 ## 8. Out of scope
 
-No embeddings, Viewer writes, packet import, second playbook, per-command telemetry, or package bump. No public snapshot, tag, or deploy. Do not edit `docs/SPRINT_RCL_001_RESULT.md` or the frozen RCL-001 fixture files. Do not commit pilot output under `~/.campfire-pilot/`.
+No embeddings, Viewer writes, packet import, second playbook, per-command telemetry, or package bump. No public snapshot, tag, or deploy. Do not edit `docs/SPRINT_RCL_001_RESULT.md` or the frozen RCL-001 key, scenarios, rubric, isolation note, or run lock. The recipient profile in `fixtures/recall/rcl-001/run.ts` may gain a sandbox correction; that does not reopen the scored runs. Do not commit pilot output under `~/.campfire-pilot/`.
