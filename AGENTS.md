@@ -210,6 +210,13 @@ packet import, or per-command telemetry. See
 `docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md` and
 `docs/SPRINT_RCL_001_RESULT.md`.
 
+Sprint RCL-002 — Recall over Orientation is preregistered and unscored.
+v1.16 stays held. The October 11 NO-GO stands; do not rescore or rerun
+RCL-001. The packet now carries a bounded decision rationale, and a future
+recipient sandbox denies the checkout. See
+`docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md`. Package stays
+`1.15.0`.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new

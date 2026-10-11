@@ -1269,6 +1269,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         issuer: { actorId: ctx.actor.actorId, actorType: ctx.actor.actorType },
         recipient: { actorId: input.recipient.actorId, actorType: input.recipient.actorType },
         anchors: projection.anchors,
+        decisionRationales: projection.decisionRationales,
       });
     },
 

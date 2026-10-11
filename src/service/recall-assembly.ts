@@ -13,6 +13,7 @@ import {
   RECALL_SCHEMA_VERSION,
   RECALL_TIERS,
   boundRecallText,
+  boundedDecisionRationale,
   capIdList,
   capRecallResponse,
   cursorForHit,
@@ -290,6 +291,7 @@ export function handoffAnchorFromDecision(
   decisionWorkspace: ReadonlyMap<string, string>,
 ): HandoffRecord {
   const text = boundRecallText(decision.summary, RECALL_GOAL_TEXT_MAX_BYTES);
+  const rationale = boundedDecisionRationale(decision.rationale);
   const basis = capIdList(
     (decision.citations ?? []).map((citation) => citation.findingId).filter((id) => findingWorkspace.get(id) === workspaceId),
   );
@@ -310,6 +312,7 @@ export function handoffAnchorFromDecision(
     text: text.text ?? "",
     textTruncated: text.truncated,
     provenance: provenanceOf(decision),
+    ...rationale,
     ...(predecessorId === undefined ? {} : { predecessorId }),
     ...(successorId === undefined ? {} : { successorId }),
     ...(basis.ids.length === 0 ? {} : { basisFindingIds: basis.ids }),

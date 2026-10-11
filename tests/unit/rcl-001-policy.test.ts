@@ -8,6 +8,7 @@ import Database from "better-sqlite3";
 import { ValidationError } from "../../src/domain/errors.js";
 import {
   HANDOFF_PACKET_MAX_BYTES,
+  HANDOFF_RATIONALE_MAX_BYTES,
   RECALL_RESPONSE_MAX_BYTES,
   RECALL_TIERS,
   capRecallResponse,
@@ -430,6 +431,49 @@ describe("recall and handoff byte caps", () => {
       records: [record("too_big", "x".repeat(HANDOFF_PACKET_MAX_BYTES + 1))],
     };
     expect(() => serializeHandoffPacket(oversized)).toThrow(ValidationError);
+  });
+
+  it("keeps a bounded decision rationale that the query excerpt does not contain", () => {
+    const rationale = "Accept the previous secret for twenty-four hours during rotation.";
+    const recall = recallShell({
+      current: section([hit("dec_kept", "Authenticate partner callbacks with an HMAC of the raw body.", "decision")]),
+    });
+    const rationales = new Map<string, string>([
+      ["dec_kept", rationale],
+      ["find_ignored", rationale],
+    ]);
+    const packet = projectHandoffPacket({
+      recall,
+      issuer: { actorId: "hum_1", actorType: "human" },
+      recipient: { actorId: "hum_2", actorType: "human" },
+      anchors: anchors([]),
+      decisionRationales: rationales,
+    });
+    expect(packet.records).toHaveLength(1);
+    expect(packet.records[0]?.text).not.toContain("twenty-four");
+    expect(packet.records[0]?.rationale).toBe(rationale);
+    expect(packet.records[0]?.rationaleTruncated).toBeUndefined();
+
+    const long = "R".repeat(HANDOFF_RATIONALE_MAX_BYTES + 40);
+    const truncated = projectHandoffPacket({
+      recall,
+      issuer: { actorId: "hum_1", actorType: "human" },
+      recipient: { actorId: "hum_2", actorType: "human" },
+      anchors: anchors([]),
+      decisionRationales: new Map([["dec_kept", long]]),
+    });
+    expect(truncated.records[0]?.rationale).toBe("R".repeat(HANDOFF_RATIONALE_MAX_BYTES));
+    expect(truncated.records[0]?.rationaleTruncated).toBe(true);
+    expect(Buffer.byteLength(truncated.records[0]?.rationale ?? "", "utf8")).toBeLessThanOrEqual(HANDOFF_RATIONALE_MAX_BYTES);
+
+    const finding = projectHandoffPacket({
+      recall: recallShell({ current: section([hit("find_1", "a timing sample")]) }),
+      issuer: { actorId: "hum_1", actorType: "human" },
+      recipient: { actorId: "hum_2", actorType: "human" },
+      anchors: anchors([]),
+      decisionRationales: new Map([["find_1", rationale]]),
+    });
+    expect(finding.records[0]?.rationale).toBeUndefined();
   });
 
   it("drops artifacts, then historical, then current to fit 48 KiB", () => {

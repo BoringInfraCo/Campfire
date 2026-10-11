@@ -146,7 +146,11 @@ function seedRecall() {
   service.citeDecisionBasis(ctxHuman1, { decisionId: proposed.id, findingId: evidence.id });
   const accepted = service.acceptDecision(
     ctxHuman1,
-    service.addDecision(ctxHuman1, { workspaceId, summary: "partner callback extra accepted" }).id,
+    service.addDecision(ctxHuman1, {
+      workspaceId,
+      summary: "partner callback extra accepted",
+      rationale: "Accept the previous secret for twenty-four hours during rotation.",
+    }).id,
   );
   service.citeDecisionBasis(ctxHuman1, { decisionId: accepted.id, findingId: evidence.id });
   const retired = service.acceptDecision(
@@ -480,6 +484,13 @@ describe("recall lifecycle", () => {
     expect(packet.anchors.acceptedDecisions.map((row) => row.id)).toEqual([seeded.accepted.id]);
     expect(packet.anchors.acceptedDecisions[0]?.needsReview).toBe(true);
     expect(packet.anchors.acceptedDecisions[0]?.basisFindingIds).toEqual([seeded.evidence.id]);
+    expect(packet.anchors.acceptedDecisions[0]?.rationale).toBe(
+      "Accept the previous secret for twenty-four hours during rotation.",
+    );
+    const acceptedRecord = packet.records.find((row) => row.id === seeded.accepted.id);
+    expect(acceptedRecord?.rationale).toBe("Accept the previous secret for twenty-four hours during rotation.");
+    expect(acceptedRecord?.text).not.toContain("twenty-four");
+    expect(recall.current.items.find((item) => item.id === seeded.accepted.id)).not.toHaveProperty("rationale");
     expect(packed).not.toContain(SECRET_URI);
     expect(packed).not.toContain(SECRET_META);
     expect(packed).not.toContain(SECRET_NOTE);

@@ -34,6 +34,8 @@ export const RECALL_NAME_MAX_BYTES = 256;
 export const RECALL_RESPONSE_MAX_BYTES = 48 * 1024;
 export const HANDOFF_PACKET_MAX_BYTES = 64 * 1024;
 export const HANDOFF_ANCHOR_LIMIT = 10;
+/** Decision rationale is separate from the query excerpt. The summary can match while the operational constraint sits only in the rationale. */
+export const HANDOFF_RATIONALE_MAX_BYTES = 1024;
 export const RECALL_RELATIONSHIP_LIMIT = 20;
 /** Matches the SQL `replace('  ', ' ')` pass count. Runs longer than 2^16 spaces stay partially collapsed on both sides. */
 export const RECALL_SPACE_COLLAPSE_PASSES = 16;
@@ -141,6 +143,9 @@ export interface HandoffRecord {
   relationshipIdsTruncated?: true;
   needsReview?: true;
   needsReviewFindingIds?: string[];
+  /** Set for a decision that has a rationale. Bounded, and separate from the query excerpt. */
+  rationale?: string;
+  rationaleTruncated?: true;
 }
 
 export interface HandoffCount {
@@ -551,8 +556,10 @@ export function projectHandoffPacket(input: {
   issuer: HandoffActor;
   recipient: HandoffActor;
   anchors: HandoffAnchorPages;
+  /** Full decision rationale by id. The packet bounds it; the recall response does not gain this field. */
+  decisionRationales?: ReadonlyMap<string, string>;
 }): CampfireHandoffPacket {
-  const recallRecords = packetRecords(input.recall);
+  const recallRecords = packetRecords(input.recall, input.decisionRationales);
   const header = basePacket(input, [], {
     openTasks: [],
     blockedTasks: [],
@@ -610,7 +617,16 @@ export function projectHandoffPacket(input: {
   return packet;
 }
 
-function packetRecords(recall: WorkspaceRecall): HandoffRecord[] {
+export function boundedDecisionRationale(value: string | undefined): Pick<HandoffRecord, "rationale" | "rationaleTruncated"> {
+  const bounded = boundRecallText(value, HANDOFF_RATIONALE_MAX_BYTES);
+  if (bounded.text === undefined) return {};
+  return {
+    rationale: bounded.text,
+    ...(bounded.truncated ? { rationaleTruncated: true as const } : {}),
+  };
+}
+
+function packetRecords(recall: WorkspaceRecall, rationales: ReadonlyMap<string, string> | undefined): HandoffRecord[] {
   const map = (section: RecallSectionName, hit: RecallHit): HandoffRecord => ({
     section,
     kind: hit.kind,
@@ -619,6 +635,7 @@ function packetRecords(recall: WorkspaceRecall): HandoffRecord[] {
     text: hit.excerpt,
     textTruncated: hit.excerptTruncated,
     provenance: hit.provenance,
+    ...(hit.kind === "decision" ? boundedDecisionRationale(rationales?.get(hit.id)) : {}),
     ...(hit.predecessorId === undefined ? {} : { predecessorId: hit.predecessorId }),
     ...(hit.successorId === undefined ? {} : { successorId: hit.successorId }),
     ...(hit.evidenceArtifactIds === undefined ? {} : { evidenceArtifactIds: hit.evidenceArtifactIds }),

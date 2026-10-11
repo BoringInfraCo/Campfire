@@ -209,7 +209,7 @@ function promptFor(arm: Arm, text: ScenarioText): string {
   return `${text.continuation}\n\n${RECIPIENT_ADDENDUM}`;
 }
 
-function sandboxProfile(runDir: string): string {
+function sandboxProfile(runDir: string, arm: Arm = "control"): string {
   const denies = [
     join(REPO_ROOT, "fixtures"),
     join(REPO_ROOT, "docs"),
@@ -229,6 +229,11 @@ function sandboxProfile(runDir: string): string {
     const dir = join(RUNS_DIR, `${scenario}-${arm}`);
     if (dir !== runDir) denies.push(dir);
   }
+  // Recipients stay outside the checkout. Matched arms still launch the MCP server from it.
+  if (arm === "recipient") {
+    denies.push(REPO_ROOT);
+    if (REPO_ROOT.toLowerCase() !== REPO_ROOT) denies.push(REPO_ROOT.toLowerCase());
+  }
   const lines = ["(version 1)", "(allow default)"];
   for (const path of denies) {
     lines.push(`(deny file-read* (subpath ${JSON.stringify(path)}))`);
@@ -236,6 +241,7 @@ function sandboxProfile(runDir: string): string {
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/config.toml"))}))`);
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/memories_1.sqlite"))}))`);
   lines.push(`(deny file-read* (literal ${JSON.stringify(join(homedir(), ".codex/session_index.jsonl"))}))`);
+  if (arm === "recipient") lines.push(`(deny file-write* (subpath ${JSON.stringify(REPO_ROOT)}))`);
   const profile = join(runDir, "private", "sandbox.sb");
   mkdirSync(dirname(profile), { recursive: true, mode: 0o700 });
   writeFileSync(profile, `${lines.join("\n")}\n`, { mode: 0o600 });
@@ -330,6 +336,7 @@ function baseEnv(isolatedHome: string, opencodeData: string, codexHome: string):
     delete env[key];
   }
   env.HOME = isolatedHome;
+  delete env.OLDPWD;
   env.CODEX_HOME = codexHome;
   env.XDG_CONFIG_HOME = join(isolatedHome, ".config");
   env.XDG_DATA_HOME = dirname(opencodeData);
@@ -351,6 +358,8 @@ function launchFor(input: {
   opencodeData: string;
 }): HarnessLaunch {
   const env = baseEnv(input.isolatedHome, input.opencodeData, input.codexHome);
+  // OpenCode follows PWD. The parent shell's PWD is the checkout, so set it to the arm directory.
+  env.PWD = input.workDir;
   if (input.arm === "recipient") {
     writeOpencodeConfig(input.workDir);
     return {
@@ -539,7 +548,7 @@ async function executeArm(scenario: Scenario, arm: Arm, text: ScenarioText, repl
   const opencodeData = join(privateDir, "opencode-data");
   mkdirSync(isolatedHome, { recursive: true, mode: 0o700 });
   copyAuth(codexHome, opencodeData);
-  const profile = sandboxProfile(runDir);
+  const profile = sandboxProfile(runDir, arm);
   const eventsPath = join(runDir, "events.jsonl");
   const answerPath = join(runDir, "answer.txt");
   const token = arm === "recipient" ? undefined : readFileSync(join(privateDir, "token"), "utf8").trim();

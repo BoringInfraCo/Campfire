@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, and updated October 11 with the RCL-001 pilot verdict NO-GO (Gate E open; not published)
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 with the RCL-001 pilot verdict NO-GO (Gate E open; not published), and held the same day with RCL-002 preregistered and unscored
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1445,7 +1445,7 @@ v1.14 — Generated workspace views   published and deployed under founder overr
         ↓
 v1.15 — Performance and security hardening   published and deployed as v1.15.0; no new product surface; see docs/SPRINT_PSA_001_RESULT.md
         ↓
-v1.16 — Recall and portable handoff   implemented candidate; pilot NO-GO on October 11; Gate E open; no publication; one authorized Recall path and bounded offline packet; see docs/SPRINT_RCL_001_RESULT.md
+v1.16 — Recall and portable handoff   held; pilot NO-GO on October 11; Gate E open; no publication; RCL-002 preregistered and unscored; see docs/SPRINT_RCL_001_RESULT.md and docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1525,11 +1525,14 @@ v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
         contract: docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
 
 v1.16 — RECALL AND PORTABLE HANDOFF
-        implemented candidate; pilot NO-GO on October 11; Gate E open; no publication
+        held; pilot NO-GO on October 11; Gate E open; no publication
         one authorized workspace search with currentness and provenance
         one explicit offline JSON packet for a named authorized participant
+        packet decision rationale bounded to 1024 bytes after the NO-GO; recall response stays an excerpt
+        RCL-002 preregistered and unscored; it does not rescore RCL-001
         no cross-workspace index, transcripts, embeddings, or packet import
         contract: docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
+        next measurement: docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md
 ```
 
 The original v1.12 entry contract required all of these before sprint scope:

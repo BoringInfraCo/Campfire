@@ -41,6 +41,8 @@ export interface RecallReadInput {
 export interface RecallProjection {
   recall: WorkspaceRecall;
   anchors?: HandoffAnchorPages;
+  /** Decision id to stored rationale. Used only when fitting a handoff packet. */
+  decisionRationales: ReadonlyMap<string, string>;
 }
 
 interface RecallOps {
@@ -73,6 +75,18 @@ interface AsyncRecallOps {
   pageDecisions(workspaceId: string, query: { limit: number; statuses: Array<"proposed" | "accepted"> }): Promise<ObjectPage<Decision>>;
 }
 
+function decisionRationaleMap(current: RecallPage, historical: RecallPage): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const page of [current, historical]) {
+    for (const item of page.items) {
+      if (item.kind === "decision" && item.secondaryText !== undefined && item.secondaryText.length > 0) {
+        map.set(item.id, item.secondaryText);
+      }
+    }
+  }
+  return map;
+}
+
 function present<T>(rows: readonly (T | undefined)[]): T[] {
   return rows.filter((row): row is T => row !== undefined);
 }
@@ -99,6 +113,7 @@ function finish(input: RecallReadInput, workspace: Workspace, sourcePosition: nu
     staleFindingIds: pages.staleFindingIds,
   });
   return {
+    decisionRationales: decisionRationaleMap(pages.current, pages.historical),
     recall: assembleRecall({
       workspace: { id: workspace.id, name: workspace.name },
       generatedAt: input.generatedAt,
