@@ -22,6 +22,8 @@ export const CAMPFIRE_HTTP_METHODS = [
   "get_workspace",
   "get_workspace_context",
   "get_workspace_changes",
+  "recall_workspace",
+  "project_handoff_packet",
   "list_decisions",
   "list_findings",
   "list_tasks",
@@ -110,6 +112,17 @@ function str(params: Record<string, unknown>, field: string): string {
   const value = params[field];
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new ValidationError(`Missing required ${field}`, { field });
+  }
+  return value;
+}
+
+/** Recall query text is not trimmed. An empty string still reaches the service. */
+function rawString(params: Record<string, unknown>, field: string): string {
+  const value = params[field];
+  if (typeof value !== "string") {
+    throw new ValidationError(value === undefined ? `Missing required ${field}` : `${field} must be a string`, {
+      field,
+    });
   }
   return value;
 }
@@ -274,6 +287,23 @@ function optionalMetadata(params: Record<string, unknown>): Record<string, unkno
   return value;
 }
 
+function recallReadInput(params: Record<string, unknown>): {
+  workspaceId: string;
+  query: string;
+  limit?: number;
+  cursor?: string;
+} {
+  const input: { workspaceId: string; query: string; limit?: number; cursor?: string } = {
+    workspaceId: str(params, "workspaceId"),
+    query: rawString(params, "query"),
+  };
+  const limit = optionalInt(params, "limit");
+  if (limit !== undefined) input.limit = limit;
+  const cursor = optionalStr(params, "cursor");
+  if (cursor !== undefined) input.cursor = cursor;
+  return input;
+}
+
 /** Dispatch a short-name method. `ctx.actor` is the authenticated principal. */
 export function dispatchCampfireMethod(
   service: CampfireService,
@@ -322,6 +352,16 @@ export function dispatchCampfireMethod(
       if (limit !== undefined) input.limit = limit;
       return service.getWorkspaceChanges(ctx, input);
     }
+    case "recall_workspace":
+      return service.recallWorkspace(ctx, recallReadInput(params));
+    case "project_handoff_packet":
+      return service.projectHandoffPacket(ctx, {
+        ...recallReadInput(params),
+        recipient: {
+          actorId: str(params, "recipientActorId"),
+          actorType: requireEnum(str(params, "recipientActorType"), ACTOR_TYPES, "recipientActorType"),
+        },
+      });
     case "list_decisions":
       return service.listDecisionsPage(ctx, objectListInput(params));
     case "list_findings": {

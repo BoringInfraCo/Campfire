@@ -21,6 +21,8 @@ export const CLI_COMMAND_NAMES = [
   "decisions",
   "context",
   "catch-up",
+  "recall",
+  "handoff-packet",
   "findings",
   "tasks",
   "artifacts",
@@ -286,6 +288,31 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     { ...READ, workspaceScoped: true, related: ["context", "changes"], notes: [
       "Requires the opaque cursor from context or a previous catch-up.",
       "The result is bounded. A later cursor continues the same stream.",
+    ] },
+  ),
+  recall: spec(
+    "recall",
+    "workspace",
+    "Return a bounded read of one workspace.",
+    "campfire recall <workspaceId> --query <text> [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, credentials: false, related: ["context", "catch-up", "handoff-packet"], notes: [
+      "Authorize before search. The default limit is 20 and the maximum is 50.",
+      "Sections report total, returned, truncated, and nextCursor.",
+      "Historical text stays historical. There are no embeddings.",
+      "Does not write a contribution.",
+    ] },
+  ),
+  "handoff-packet": spec(
+    "handoff-packet",
+    "workspace",
+    "Write a private offline copy of one bounded workspace read.",
+    "campfire handoff-packet <workspaceId> --query <text> --recipient-type human|agent --recipient <actorId> --out <file> [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, credentials: false, related: ["recall"], notes: [
+      "Writes one new private file mode 0600. Refuses overwrite and symlinks.",
+      "Stdout is a token-free receipt, never the packet.",
+      "The file is a sensitive offline copy, not a credential, not a live guarantee, and not permission to execute.",
+      "The recipient must already be a participant and still needs their own credential.",
+      "Campfire does not send the file.",
     ] },
   ),
   findings: spec(

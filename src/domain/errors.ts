@@ -20,7 +20,8 @@ export type CampfireErrorCode =
   | "FindingNotFound"
   | "DecisionNotFound"
   | "CrossWorkspaceReference"
-  | "Conflict";
+  | "Conflict"
+  | "RecallRestart";
 
 export class CampfireError extends Error {
   readonly code: CampfireErrorCode;
@@ -127,5 +128,18 @@ export class CrossWorkspaceReference extends CampfireError {
 export class Conflict extends CampfireError {
   constructor(message: string, details?: Record<string, unknown>) {
     super("Conflict", message, details);
+  }
+}
+
+/**
+ * The recall cursor named a source position that is no longer the workspace tip.
+ * Callers restart from the beginning. The error carries no query, excerpt, or count.
+ */
+export class RecallRestart extends CampfireError {
+  constructor(workspaceId: string) {
+    super("RecallRestart", "The workspace changed after this recall cursor was issued. Start recall again without a cursor.", {
+      workspaceId,
+      field: "cursor",
+    });
   }
 }

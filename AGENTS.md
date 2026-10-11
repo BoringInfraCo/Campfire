@@ -202,18 +202,17 @@ The human comprehension trace, the reference-open observation, and the
 presentation-defect finding are unrecorded. This release is not a GO,
 Gate B, or Gate C result. See `docs/SPRINT_GWV_001_RESULT.md`.
 
+Sprint RCL-001 — Recall and Portable Handoff is an implemented candidate for
+v1.16. It adds one authorized recall read and one CLI-written offline packet.
+The scored pilot has not been run. This is not a GO. Gate B, Gate C, and Gate E
+are unmeasured. Do not add embeddings, Viewer writes, packet import, or
+per-command telemetry. See `docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md`
+and `docs/SPRINT_RCL_001_RESULT.md`.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new
 collaboration surface. See `docs/SPRINT_PSA_001_RESULT.md`.
-
-Sprint RCL-001 — Recall and Portable Handoff is the proposed v1.16 contract at
-`docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md`. The owner asked to
-scope both in one sprint. It is a one-workspace, read-only Gate E experiment:
-authorized topic retrieval and a bounded offline JSON packet for a named,
-authorized recipient. It is not implemented, released, or evidence that Gate E
-has passed. Cross-workspace memory, packet import, transcripts, embeddings,
-and orchestration remain out of scope.
 
 The Viewer is a read-only team journal. Do not add writes, Constraint/Instruction,
 Electron, or a second store unless a new sprint doc requires it.

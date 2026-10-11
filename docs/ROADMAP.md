@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0` and extended October 10 with proposed v1.16
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0` and extended October 10 with an implemented v1.16 candidate (Gate E open; pilot not scored; not published)
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1445,10 +1445,10 @@ v1.14 — Generated workspace views   published and deployed under founder overr
         ↓
 v1.15 — Performance and security hardening   published and deployed as v1.15.0; no new product surface; see docs/SPRINT_PSA_001_RESULT.md
         ↓
-v1.16 — Recall and portable handoff   proposed one-workspace Gate E experiment; one authorized Recall path and bounded offline packet; see docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
+v1.16 — Recall and portable handoff   implemented candidate; Gate E open; pilot not scored; no publication; one authorized Recall path and bounded offline packet; see docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
 ```
 
-The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the proposed v1.16 sprint is:
+The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
 
 ```text
 v1.10 — KEEP SHARED UNDERSTANDING CURRENT
@@ -1525,7 +1525,7 @@ v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
         contract: docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
 
 v1.16 — RECALL AND PORTABLE HANDOFF
-        proposed bounded Gate E experiment, not an established gate result
+        implemented candidate; Gate E open; pilot not scored; no publication
         one authorized workspace search with currentness and provenance
         one explicit offline JSON packet for a named authorized participant
         no cross-workspace index, transcripts, embeddings, or packet import

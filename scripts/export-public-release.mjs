@@ -46,9 +46,9 @@ const EXACT_SOURCE_PATHS = new Set([
 ]);
 
 const SOURCE_PREFIXES = ["fixtures/", "migrations/", "public/", "src/", "tests/"];
-// The WOW-001 pilot packet contains sealed scoring keys and private evidence.
-// It is preserved in the canonical repository, not distributed as product source.
-const PRIVATE_SOURCE_PREFIXES = ["fixtures/incidents/wow-001/"];
+// WOW-001 and RCL-001 pilot packets contain sealed scoring keys.
+// They are preserved in the canonical repository, not distributed as product source.
+const PRIVATE_SOURCE_PREFIXES = ["fixtures/incidents/wow-001/", "fixtures/recall/rcl-001/"];
 const PRIVATE_SOURCE_PATHS = new Set([
   "tests/unit/wow-001-isolation.test.ts",
   "tests/unit/wow-001-preparation.test.ts",

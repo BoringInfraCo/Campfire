@@ -15,6 +15,7 @@ export const CAMPFIRE_TOOL_NAMES = [
   "update_workspace",
   "get_workspace",
   "get_workspace_context",
+  "recall_workspace",
   "get_activity",
   "join_workspace",
   "invite_workspace",
@@ -37,6 +38,7 @@ const READ_TOOLS: ReadonlySet<CampfireToolName> = new Set<CampfireToolName>([
   "list_workspaces",
   "get_workspace",
   "get_workspace_context",
+  "recall_workspace",
   "get_activity",
 ]);
 

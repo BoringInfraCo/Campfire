@@ -309,6 +309,21 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   );
 
   server.registerTool(
+    "recall_workspace",
+    {
+      description:
+        "Bounded read of one authorized workspace. Returns current, historical, and artifact sections with lifecycle and provenance. Does not write a handoff file, a contribution, or search another workspace.",
+      inputSchema: {
+        workspaceId: z.string(),
+        query: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("recall_workspace", () => invoke("recall_workspace", args)),
+  );
+
+  server.registerTool(
     "list_decisions",
     {
       description:

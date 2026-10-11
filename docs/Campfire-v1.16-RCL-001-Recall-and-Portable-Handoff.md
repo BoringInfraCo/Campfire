@@ -2,7 +2,7 @@
 
 - **Sprint ID:** RCL-001
 - **Target release:** v1.16.0
-- **Status:** Proposed contract, October 10, 2026; implementation has not started.
+- **Status:** Implemented candidate, October 10, 2026. The scored pilot has not been run. This is not a release.
 - **Theme:** Find relevant prior work in one workspace and carry a bounded copy to another authorized participant.
 - **Depends on:** CTX-001 orientation and catch-up; COR-001 currentness and citations; CLI-001 JSON output; PSA-001 read-boundary hardening.
 
