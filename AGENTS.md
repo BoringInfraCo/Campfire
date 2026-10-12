@@ -210,12 +210,14 @@ packet import, or per-command telemetry. See
 `docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md` and
 `docs/SPRINT_RCL_001_RESULT.md`.
 
-Sprint RCL-002 — Recall over Orientation is preregistered and unscored.
-v1.16 stays held. The October 11 NO-GO stands; do not rescore or rerun
-RCL-001. The packet now carries a bounded decision rationale, and a future
-recipient sandbox denies the checkout. See
-`docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md`. Package stays
-`1.15.0`.
+Sprint RCL-002 — Recall over Orientation completed its October 11 synthetic
+pilot with a NO-GO / REFRAME verdict. v1.16 stays held; package stays
+`1.15.0`. The RCL-001 NO-GO and its runs are unchanged. S1 matched answers
+chose the same next action, S2 treatment chose one rule despite two accepted
+conflicting decisions, and the S2 offline recipient missed the required
+decision transition. Gate B, Gate C, and Gate E remain unmeasured. See
+`docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md`,
+`docs/SPRINT_RCL_002_RESULT.md`, and `docs/evidence/rcl-002/`.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

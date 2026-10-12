@@ -1,0 +1,256 @@
+{
+  "schema": "rcl-002-execution-summary/1",
+  "source": "private scored runs, derived after completion",
+  "order": [
+    {
+      "scenario": "S1",
+      "arm": "control",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 8,
+      "elapsedMs": 103112,
+      "answerBytes": 555,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.get_workspace_context"
+      ],
+      "otherTools": [
+        "get_workspace_changes",
+        "get_task",
+        "get_decision",
+        "get_finding",
+        "list_decisions",
+        "get_finding"
+      ],
+      "startedAt": "2026-10-12T00:12:58.816Z",
+      "finishedAt": "2026-10-12T00:14:41.928Z",
+      "answerSha256": "c3c229b213bd368fa527ff9db5d34a92cfb90b4aacb763c6c0cf4596c203dc1c",
+      "eventLogSha256": "eb90d2d6e638ab21cad4b2bd03e87cf38d71d45236b17a907d0cdccb0381a1aa",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S1",
+      "arm": "treatment",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 7,
+      "elapsedMs": 40604,
+      "answerBytes": 582,
+      "recallCalls": 1,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.get_workspace_context",
+        "campfire.recall_workspace"
+      ],
+      "otherTools": [
+        "get_decision",
+        "get_finding",
+        "get_decision",
+        "get_task"
+      ],
+      "startedAt": "2026-10-12T00:14:41.935Z",
+      "finishedAt": "2026-10-12T00:15:22.539Z",
+      "answerSha256": "599928889f224ddb2df34a5a93ce8d8fdb1a6584c1acbac743d8bcbda392bc6d",
+      "eventLogSha256": "0bd0e229de0aa0c2c01c007d99ef80721e4d4e3fbd19da8359abc4578942fab3",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S1",
+      "arm": "recipient",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 8,
+      "elapsedMs": 117134,
+      "answerBytes": 4283,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [],
+      "otherTools": [
+        "read",
+        "glob",
+        "read",
+        "read",
+        "grep",
+        "grep",
+        "execute",
+        "execute"
+      ],
+      "startedAt": "2026-10-12T00:15:22.912Z",
+      "finishedAt": "2026-10-12T00:17:20.046Z",
+      "answerSha256": "f9e8848641f4ad147fc68c2745ff17e075c98971eb239e76e0f069d1e9e77889",
+      "eventLogSha256": "d165b9a6562c57a1078dc1272e88812114fec7afc683182f234667f21c257508",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false,
+      "packetReadObserved": true,
+      "checkoutPathAttemptObserved": false,
+      "campfireMcpCallObserved": false
+    },
+    {
+      "scenario": "S2",
+      "arm": "treatment",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 7,
+      "elapsedMs": 34992,
+      "answerBytes": 476,
+      "recallCalls": 1,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.recall_workspace",
+        "campfire.get_workspace_context"
+      ],
+      "otherTools": [
+        "get_decision",
+        "get_finding",
+        "get_task",
+        "get_decision"
+      ],
+      "startedAt": "2026-10-12T00:17:20.052Z",
+      "finishedAt": "2026-10-12T00:17:55.044Z",
+      "answerSha256": "e384e305fa01b89e80f125f4ca3535c5b114192afc1dd1b17d79469ee85958a5",
+      "eventLogSha256": "6a7dd49a5bdfb500abb2ccc7419f17e39b70cf8581eb04c54a1657b2d8edf2e9",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S2",
+      "arm": "control",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 7,
+      "elapsedMs": 37692,
+      "answerBytes": 498,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.get_workspace_context"
+      ],
+      "otherTools": [
+        "get_workspace_changes",
+        "get_decision",
+        "get_task",
+        "get_finding",
+        "get_finding"
+      ],
+      "startedAt": "2026-10-12T00:17:55.050Z",
+      "finishedAt": "2026-10-12T00:18:32.742Z",
+      "answerSha256": "efc16869447b5f8779a571c6285d655aa6f273dcc2f0c6ffc9d0fbdb6087336a",
+      "eventLogSha256": "1569c049d7b2b9e9ef1ce8a60bd6db37cb7d4d7ddaabe87daab3c3286e997c33",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S2",
+      "arm": "recipient",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 4,
+      "elapsedMs": 183061,
+      "answerBytes": 3798,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [],
+      "otherTools": [
+        "read",
+        "glob",
+        "execute",
+        "read"
+      ],
+      "startedAt": "2026-10-12T00:18:33.104Z",
+      "finishedAt": "2026-10-12T00:21:36.165Z",
+      "answerSha256": "460794e2412f59ebdff63eebac7fd2990642050690f9d292b75bf50451fab41b",
+      "eventLogSha256": "ad1f76cb60dff0b75a519d28d5847c924b89890e52007459975c64b91e5a5b89",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false,
+      "packetReadObserved": true,
+      "checkoutPathAttemptObserved": false,
+      "campfireMcpCallObserved": false
+    },
+    {
+      "scenario": "S3",
+      "arm": "control",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 6,
+      "elapsedMs": 80031,
+      "answerBytes": 459,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.get_workspace_context"
+      ],
+      "otherTools": [
+        "get_workspace_changes",
+        "get_decision",
+        "get_task",
+        "get_finding"
+      ],
+      "startedAt": "2026-10-12T00:21:36.171Z",
+      "finishedAt": "2026-10-12T00:22:56.202Z",
+      "answerSha256": "111d860f71fad1304a027786018d410beb5e24bf60f6762132b457d689d2b4af",
+      "eventLogSha256": "5f34f822105cdd37c3f8503515991b45e2a46a56b85a074b5e77000e083e2250",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S3",
+      "arm": "treatment",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 3,
+      "elapsedMs": 23088,
+      "answerBytes": 468,
+      "recallCalls": 1,
+      "invalidForScoring": [],
+      "campfireTools": [
+        "campfire.list_workspaces",
+        "campfire.get_workspace_context",
+        "campfire.recall_workspace"
+      ],
+      "otherTools": [],
+      "startedAt": "2026-10-12T00:22:56.209Z",
+      "finishedAt": "2026-10-12T00:23:19.297Z",
+      "answerSha256": "3c7a871b3bb55c4600326e021d082aba822871d6189fb47252e15537a5c87602",
+      "eventLogSha256": "4db98f2bbbf6abe8ec423d2f19bd04c46ae01971b3e5584e8ad97f54b42e7680",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false
+    },
+    {
+      "scenario": "S3",
+      "arm": "recipient",
+      "stopReason": "completed",
+      "exitCode": 0,
+      "toolCalls": 6,
+      "elapsedMs": 138124,
+      "answerBytes": 2868,
+      "recallCalls": 0,
+      "invalidForScoring": [],
+      "campfireTools": [],
+      "otherTools": [
+        "read",
+        "glob",
+        "execute",
+        "read",
+        "grep",
+        "execute"
+      ],
+      "startedAt": "2026-10-12T00:23:19.673Z",
+      "finishedAt": "2026-10-12T00:25:37.797Z",
+      "answerSha256": "f3a8b5d4e1c66eadfd09c109cd76d7172334332d31adb902cfa01b842acdaad4",
+      "eventLogSha256": "f035b85864d83e16eaad6e5120124c648bd1bbb11bc73d5818f3034bed4a539f",
+      "getWorkspaceCalled": false,
+      "campfireWriteCalled": false,
+      "packetReadObserved": true,
+      "checkoutPathAttemptObserved": false,
+      "campfireMcpCallObserved": false
+    }
+  ]
+}
