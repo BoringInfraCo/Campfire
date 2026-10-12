@@ -7,7 +7,7 @@ Scored runs have not started. This file freezes the harnesses, models, budgets, 
 | Item | Value |
 | --- | --- |
 | Control source | `bb3bb61d716f52bb36e5f1c6e6514ece71abc555` (`recall_workspace` is absent) |
-| Treatment source | `PLACEHOLDER_NOT_YET_COMMITTED_0000000000000000` |
+| Treatment source | `2a1f63137291c4cb43f283c09ae376bd92732314` |
 | Package | `1.15.0` |
 | Matched harness | Codex `0.150.1` at `/Users/sergio/.local/bin/codex` |
 | Matched model | `gpt-5.6-sol` |
@@ -19,11 +19,11 @@ Scored runs have not started. This file freezes the harnesses, models, budgets, 
 | Matched budget | 20 minutes or 40 tool calls, whichever comes first |
 | Recipient budget | 10 minutes or 20 tool calls, whichever comes first |
 
-### The treatment source hash is a placeholder
+### Dated treatment-source amendment — October 11, 2026
 
-`PLACEHOLDER_NOT_YET_COMMITTED_0000000000000000` is not a commit. The decision-set implementation is not committed yet, so there is no hash to freeze. The runner refuses to start while this string is in place, before it checks the product tree, the seed, the sandbox, or the models.
+Codex recorded the committed RCL-003 candidate as `2a1f63137291c4cb43f283c09ae376bd92732314` before any scored arm. The prior placeholder was not a commit. The implementation commit includes the October 11 pre-run audit corrections described in the contract. The control commit, harness versions, models, budgets, arm order, pilot root, scenarios, answer key, and rubric remain as preregistered.
 
-The real hash is recorded here by a **dated amendment** after the implementation is committed and before the first scored arm runs. The amendment names the commit, the date, and the person recording it, and it changes nothing else in this table: not the control commit, not the harness versions, not the models, not the budgets, not the arm order, not the pilot root, not the scenarios, not the key, not the rubric. If the implementation commit changes after that amendment, the amendment is void and the pilot restarts from preflight with a new dated amendment. Editing this table silently to match a later tree is a locked violation, not an amendment.
+If the implementation commit changes after this amendment, this lock is void and the pilot restarts from preflight with a new dated amendment. Editing the table silently to match a later tree is a locked violation, not an amendment.
 
 ## Why these harnesses and models
 

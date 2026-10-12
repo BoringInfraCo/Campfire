@@ -40,7 +40,7 @@ const OLD_PILOT_ROOTS = [
  * implementation is committed. The runner refuses to start while the
  * placeholder is in place.
  */
-const IMPLEMENTATION_COMMIT = "PLACEHOLDER_NOT_YET_COMMITTED_0000000000000000";
+const IMPLEMENTATION_COMMIT = "2a1f63137291c4cb43f283c09ae376bd92732314";
 const CONTROL_COMMIT = "bb3bb61d716f52bb36e5f1c6e6514ece71abc555";
 const CODEX_BIN = "/Users/sergio/.local/bin/codex";
 const OPENCODE_BIN = "/Users/sergio/.opencode/bin/opencode";
