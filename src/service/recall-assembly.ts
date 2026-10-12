@@ -298,6 +298,7 @@ export function assembleDecisionSet(loaded: LoadedRecall): RecallDecisionSet {
     ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
     recordedTransitions,
     ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+    ...(verdict.linkedNextStep === undefined ? {} : { linkedNextStep: verdict.linkedNextStep }),
   };
 }
 

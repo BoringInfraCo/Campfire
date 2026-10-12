@@ -236,6 +236,7 @@ describe("campfire handoff-packet", () => {
         state: string;
         operativeDecisionId?: string;
         beforeActing?: string;
+        linkedNextStep?: string;
         members: Array<{ section: string; id: string; text: string; lifecycle: string }>;
         recordedTransitions: unknown[];
       };
@@ -252,7 +253,12 @@ describe("campfire handoff-packet", () => {
     );
     expect(packet.decisionSet?.recordedTransitions).toEqual([]);
     expect(packet.decisionSet?.members.map((row) => row.id).sort()).toEqual([decisionId, secondDecisionId].sort());
-    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
+    // Both members are accepted, so both are live. The grouped set does not
+    // replace them with a flat `"decision-set"` section; it keeps the split the
+    // same packet already carries in `records`, so a superseded member would
+    // read `historical` here too.
+    expect(packet.decisionSet?.members.map((row) => row.section)).toEqual(["current", "current"]);
+    expect(packet.decisionSet?.linkedNextStep).toBeUndefined();
     expect(statSync(out).mode & 0o777).toBe(0o600);
     expect(out.startsWith(tmpdir()) || out.startsWith("/private/tmp") || out.startsWith("/var/")).toBe(true);
     expect(stderr()).not.toContain(QUERY);

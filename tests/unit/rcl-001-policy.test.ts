@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { ValidationError } from "../../src/domain/errors.js";
 import {
+  DECISION_SET_LINKED_NEXT_STEP,
   DECISION_SET_UNRESOLVED_NEXT_STEP,
   HANDOFF_PACKET_MAX_BYTES,
   HANDOFF_RATIONALE_MAX_BYTES,
@@ -136,6 +137,7 @@ function decisionSet(
     ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
     recordedTransitions: transitions,
     ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+    ...(verdict.linkedNextStep === undefined ? {} : { linkedNextStep: verdict.linkedNextStep }),
   };
 }
 
@@ -667,7 +669,15 @@ describe("rcl-3 decision set derivation", () => {
       recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }],
       truncated: false,
     });
-    expect(linked).toEqual({ state: "linked-accepted-decisions", operativeDecisionId: "dec_new" });
+    expect(linked).toEqual({
+      state: "linked-accepted-decisions",
+      operativeDecisionId: "dec_new",
+      // The recorded transition is what tells a reader the predecessor's own
+      // text is historical, so the packet must carry the sentence with it. The
+      // RCL-003 S2 offline recipient never saw this prose and promoted the
+      // superseded rationale into a live release condition.
+      linkedNextStep: DECISION_SET_LINKED_NEXT_STEP,
+    });
 
     // A link whose superseding end is not accepted does not resolve the old
     // accepted member or make that member a linked survivor.
@@ -799,7 +809,7 @@ describe("rcl-3 decision set derivation", () => {
     expect(recordedDecisionTransitions([member("dec_lonely", "accepted")])).toEqual([]);
   });
 
-  it("maps a set member to a decision-set handoff record", () => {
+  it("maps a set member to a current or historical handoff record, never a flattened one", () => {
     const set = decisionSet(
       [
         member("dec_a", "accepted", {
@@ -807,18 +817,28 @@ describe("rcl-3 decision set derivation", () => {
           rationale: "rotate within the window",
           predecessorId: "dec_old",
           successorId: "dec_newer",
+          basisFindingIds: ["find_2"],
           needsReview: true,
           needsReviewFindingIds: ["find_1"],
           relationshipIdsTruncated: true,
         }),
-        member("dec_b", "superseded", { summaryTruncated: true }),
+        // A superseded member still has a stored rationale, and it is exactly
+        // the text the RCL-003 S2 recipient promoted into a live condition.
+        member("dec_b", "superseded", {
+          summaryTruncated: true,
+          rationale: "keep the job disabled until two clean runs",
+          rationaleTruncated: true,
+        }),
       ],
       { recordedTransitions: [{ supersededDecisionId: "dec_a", supersedingDecisionId: "dec_b" }] },
     );
     const rows = handoffDecisionSetMembers(set);
     expect(rows).toHaveLength(2);
+    // A live member keeps `current` and its rationale: the operative rule's own
+    // text is authoritative. `basisFindingIds` is carried so a member that
+    // names its basis keeps it, as it does on the live projection and on records.
     expect(rows[0]).toEqual({
-      section: "decision-set",
+      section: "current",
       kind: "decision",
       id: "dec_a",
       lifecycle: "accepted",
@@ -828,21 +848,59 @@ describe("rcl-3 decision set derivation", () => {
       rationale: "rotate within the window",
       predecessorId: "dec_old",
       successorId: "dec_newer",
+      basisFindingIds: ["find_2"],
       needsReview: true,
       needsReviewFindingIds: ["find_1"],
       relationshipIdsTruncated: true,
     });
-    // No rationale, no ids: absent keys stay absent rather than becoming null.
+    // A superseded member is historical, and its rationale is not emitted under
+    // `rationale` at all: `rationale` is the field an offline reader acts on, so
+    // dropping the trap is stronger than labelling it. It carries
+    // `historicalExplanation` naming the decision instead.
     expect(rows[1]).toEqual({
-      section: "decision-set",
+      section: "historical",
       kind: "decision",
       id: "dec_b",
       lifecycle: "superseded",
       text: "partner callback dec_b",
       textTruncated: true,
       provenance: { createdBy: ACTOR, createdAt: NOW },
+      historicalExplanation:
+        "Decision dec_b is superseded. Its summary describes the former rule; its rationale is not a current condition.",
     });
-    expect(rows.every((row) => row.section === "decision-set")).toBe(true);
+    expect(rows[1]).not.toHaveProperty("rationale");
+    expect(rows[1]).not.toHaveProperty("rationaleTruncated");
+    expect(rows[1]?.historicalExplanation).toContain("dec_b");
+    // The grouping must not erase the split the same packet already carries in
+    // `records`, so a set member is never reported as its own flat section.
+    expect(rows.map((row) => row.section)).toEqual(["current", "historical"]);
+  });
+
+  it("never presents a superseded decision's rationale as a live condition in the decision set", () => {
+    const clause = "keep the 02:00 job disabled until two on-request releases have run with no operator escalation";
+    const set = decisionSet(
+      [
+        member("dec_predecessor", "superseded", { rationale: clause }),
+        member("dec_successor", "accepted", {
+          rationale: "Adopt the replacement rule for partner callbacks.",
+          predecessorId: "dec_predecessor",
+        }),
+      ],
+      { recordedTransitions: [{ supersededDecisionId: "dec_predecessor", supersedingDecisionId: "dec_successor" }] },
+    );
+    const rows = handoffDecisionSetMembers(set);
+    // The RCL-003 S2 failure, asserted directly: for a set holding a superseded
+    // and an accepted decision, no superseded member carries a `rationale`.
+    for (const row of rows.filter((entry) => entry.lifecycle === "superseded")) {
+      expect(row).not.toHaveProperty("rationale");
+      expect(row).not.toHaveProperty("rationaleTruncated");
+    }
+    // The precondition clause is unreachable anywhere inside the set projection.
+    expect(JSON.stringify(rows)).not.toContain(clause);
+    // It is still reachable on the accepted replacement, as its own rationale.
+    expect(rows.find((row) => row.id === "dec_successor")?.rationale).toBe(
+      "Adopt the replacement rule for partner callbacks.",
+    );
   });
 
   it("carries an unresolved set into the packet with the frozen beforeActing string", () => {
@@ -854,7 +912,11 @@ describe("rcl-3 decision set derivation", () => {
     expect(packet.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
     expect(packet.decisionSet?.operativeDecisionId).toBeUndefined();
     expect(packet.decisionSet?.members.map((row) => row.id)).toEqual(["dec_a", "dec_b"]);
-    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
+    // Both members are accepted, so both are live. The set does not merge them
+    // into one flat section, and an unresolved set never carries the linked
+    // sentence: there is no recorded transition to follow.
+    expect(packet.decisionSet?.members.map((row) => row.section)).toEqual(["current", "current"]);
+    expect(packet.decisionSet?.linkedNextStep).toBeUndefined();
     expect(packet.authority).toBe(
       "This offline copy is not a Campfire credential, not a live current-state guarantee, and not permission to execute a decision.",
     );
@@ -867,6 +929,9 @@ describe("rcl-3 decision set derivation", () => {
     expect(resolved.decisionSet?.state).toBe("linked-accepted-decisions");
     expect(resolved.decisionSet?.operativeDecisionId).toBe("dec_new");
     expect(resolved.decisionSet?.beforeActing).toBeUndefined();
+    // The recorded transition replaces the ask-for-a-transition sentence with
+    // the follow-the-operative-decision one.
+    expect(resolved.decisionSet?.linkedNextStep).toBe(DECISION_SET_LINKED_NEXT_STEP);
 
     const single = projectHandoffPacket(
       packetInput(recallShell({ decisionSet: decisionSet([member("dec_only", "accepted")]) })),
@@ -874,6 +939,65 @@ describe("rcl-3 decision set derivation", () => {
     expect(single.decisionSet?.state).toBe("single-accepted-decision");
     expect(single.decisionSet?.operativeDecisionId).toBe("dec_only");
     expect(single.decisionSet?.beforeActing).toBeUndefined();
+    expect(single.decisionSet?.linkedNextStep).toBeUndefined();
+  });
+
+  it("carries linkedNextStep exactly when the set is linked-accepted-decisions", () => {
+    const cases: Array<{ label: string; set: RecallDecisionSet; linked: boolean }> = [
+      { label: "single-accepted-decision", set: decisionSet([member("dec_a", "accepted")]), linked: false },
+      {
+        label: "unresolved-accepted-decisions",
+        set: decisionSet([member("dec_a", "accepted"), member("dec_b", "accepted")]),
+        linked: false,
+      },
+      {
+        label: "truncated",
+        set: decisionSet([member("dec_a", "accepted")], { total: 3 }),
+        linked: false,
+      },
+      {
+        label: "no-accepted-decision",
+        set: decisionSet([member("dec_p", "proposed"), member("dec_s", "superseded")]),
+        linked: false,
+      },
+      {
+        label: "linked-accepted-decisions",
+        set: decisionSet(
+          [
+            member("dec_old", "superseded", { successorId: "dec_new" }),
+            member("dec_new", "accepted", { predecessorId: "dec_old" }),
+          ],
+          { recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }] },
+        ),
+        linked: true,
+      },
+    ];
+    for (const { label, set, linked } of cases) {
+      expect(set.state, label).toBe(label);
+      const verdict = deriveDecisionSetState({
+        members: set.members,
+        recordedTransitions: set.recordedTransitions,
+        truncated: set.truncated,
+      });
+      // The frozen sentence is present exactly for the linked state, on the
+      // verdict, on the assembled set, and in the offline packet. It must not
+      // leak into any other state, where it would either ask for a transition
+      // that is already recorded or claim a link that does not exist.
+      if (linked) {
+        expect(verdict.linkedNextStep, label).toBe(DECISION_SET_LINKED_NEXT_STEP);
+        expect(set.linkedNextStep, label).toBe(DECISION_SET_LINKED_NEXT_STEP);
+      } else {
+        expect(verdict, label).not.toHaveProperty("linkedNextStep");
+        expect(set, label).not.toHaveProperty("linkedNextStep");
+      }
+      const packet = projectHandoffPacket(packetInput(recallShell({ decisionSet: set })));
+      expect(packet.decisionSet?.state, label).toBe(label);
+      if (linked) {
+        expect(packet.decisionSet?.linkedNextStep, label).toBe(DECISION_SET_LINKED_NEXT_STEP);
+      } else {
+        expect(packet.decisionSet, label).not.toHaveProperty("linkedNextStep");
+      }
+    }
   });
 
   it("fits the decision set before anchors and reports what it dropped", () => {

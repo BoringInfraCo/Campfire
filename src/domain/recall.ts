@@ -55,6 +55,17 @@ export const RECALL_RELATIONSHIP_LIMIT = 20;
  */
 export const DECISION_SET_UNRESOLVED_NEXT_STEP =
   "Campfire has not selected an operative decision. Do not execute either rule. Seek a recorded retirement of one accepted decision, or an accepted replacement that names its predecessor and is accepted with a reason." as const;
+
+/**
+ * The companion sentence for a set that already has a recorded transition.
+ *
+ * MCP instructions already told matched arms to follow the recorded successor.
+ * The scored offline packet lacked that guidance, and its recipient promoted a
+ * superseded rationale into a live condition. A recorded transition makes the
+ * predecessor's own text historical, so the packet now says so explicitly.
+ */
+export const DECISION_SET_LINKED_NEXT_STEP =
+  "A recorded transition already selects the operative decision in this set. Follow operativeDecisionId. Do not ask for another transition, and do not apply any condition that appears only in a superseded decision's summary or rationale." as const;
 /** Matches the SQL `replace('  ', ' ')` pass count. Runs longer than 2^16 spaces stay partially collapsed on both sides. */
 export const RECALL_SPACE_COLLAPSE_PASSES = 16;
 
@@ -148,6 +159,8 @@ export interface RecallDecisionSet {
   recordedTransitions: RecallDecisionTransition[];
   /** Present when `state` is `unresolved-accepted-decisions` or `truncated`. */
   beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
+  /** Present when `state` is `linked-accepted-decisions`. */
+  linkedNextStep?: typeof DECISION_SET_LINKED_NEXT_STEP;
 }
 
 export interface RecallSection {
@@ -223,6 +236,12 @@ export interface HandoffRecord {
   /** Set for a decision that has a rationale. Bounded, and separate from the query excerpt. */
   rationale?: string;
   rationaleTruncated?: true;
+  /**
+   * Set only on a superseded decision-set member. States that the member's own
+   * summary and rationale are historical explanation, not a current condition.
+   * A superseded member never carries `rationale`; see `handoffDecisionSetMembers`.
+   */
+  historicalExplanation?: string;
 }
 
 export interface HandoffCount {
@@ -232,9 +251,8 @@ export interface HandoffCount {
 }
 
 /**
- * The decision set carried offline. `members` uses `HandoffRecord` with
- * `section: "decision-set"`, so a recipient reads one record shape throughout
- * the file. `text` is the bounded decision summary.
+ * The decision set carried offline. `members` uses `HandoffRecord` with its
+ * current/historical section intact. `text` is the bounded decision summary.
  */
 export interface HandoffDecisionSet {
   members: HandoffRecord[];
@@ -245,6 +263,7 @@ export interface HandoffDecisionSet {
   operativeDecisionId?: string;
   recordedTransitions: RecallDecisionTransition[];
   beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
+  linkedNextStep?: typeof DECISION_SET_LINKED_NEXT_STEP;
 }
 
 export interface CampfireHandoffPacket {
@@ -567,6 +586,7 @@ export interface DecisionSetVerdict {
   state: RecallDecisionSetState;
   operativeDecisionId?: string;
   beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
+  linkedNextStep?: typeof DECISION_SET_LINKED_NEXT_STEP;
 }
 
 /**
@@ -607,6 +627,7 @@ export function deriveDecisionSetState(input: {
   return {
     state: linkedToSurvivor ? "linked-accepted-decisions" : "single-accepted-decision",
     operativeDecisionId,
+    ...(linkedToSurvivor ? { linkedNextStep: DECISION_SET_LINKED_NEXT_STEP } : {}),
   };
 }
 
@@ -626,7 +647,7 @@ export function recordedDecisionTransitions(
   const add = (from: string, to: string): void => {
     if (from === to) return;
     if (!ids.has(from) || !ids.has(to)) return;
-    found.set(`${from} ${to}`, { supersededDecisionId: from, supersedingDecisionId: to });
+    found.set(JSON.stringify([from, to]), { supersededDecisionId: from, supersedingDecisionId: to });
   };
   for (const member of members) {
     // predecessor -> this member is the recorded supersession direction.
@@ -746,6 +767,7 @@ function renderRecall(
     recordedTransitions,
     ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
     ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+    ...(verdict.linkedNextStep === undefined ? {} : { linkedNextStep: verdict.linkedNextStep }),
   };
   return { ...base, decisionSet: set };
 }
@@ -858,6 +880,7 @@ function fitDecisionSet(
       recordedTransitions,
       ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
       ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+      ...(verdict.linkedNextStep === undefined ? {} : { linkedNextStep: verdict.linkedNextStep }),
     };
   };
   const kept: HandoffRecord[] = [];
@@ -884,28 +907,58 @@ function fitDecisionSet(
       state: verdict.state,
       recordedTransitions: [],
       ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+      ...(verdict.linkedNextStep === undefined ? {} : { linkedNextStep: verdict.linkedNextStep }),
     };
   }
   return withMembers(kept);
 }
 
+/**
+ * Project decision-set members for the offline packet.
+ *
+ * Two rules learned from the RCL-003 S2 recipient, which lifted a superseded
+ * decision's rationale into a live release condition:
+ *
+ * 1. `section` is not flattened to `"decision-set"`. A superseded member keeps
+ *    `"historical"` and the live members keep `"current"`. The grouped view is
+ *    the addition; it must not erase the current/historical split that COR-001
+ *    already established and that this same packet carries in `records`.
+ * 2. A superseded member's rationale is not emitted under `rationale`. Its
+ *    summary and rationale are historical explanation, and a `rationale` field
+ *    is the field an offline reader acts on. Dropping it removes the trap
+ *    rather than labelling it.
+ *
+ * `basisFindingIds` is carried here; the live projection emits it and a member
+ * that loses its basis cannot be checked against the evidence behind it.
+ */
 export function handoffDecisionSetMembers(set: RecallDecisionSet): HandoffRecord[] {
-  return set.members.map((member) => ({
-    section: "decision-set" as const,
-    kind: "decision" as const,
-    id: member.id,
-    lifecycle: member.lifecycle,
-    text: member.summary,
-    textTruncated: member.summaryTruncated,
-    provenance: member.provenance,
-    ...(member.rationale === undefined ? {} : { rationale: member.rationale }),
-    ...(member.rationaleTruncated === undefined ? {} : { rationaleTruncated: member.rationaleTruncated }),
-    ...(member.predecessorId === undefined ? {} : { predecessorId: member.predecessorId }),
-    ...(member.successorId === undefined ? {} : { successorId: member.successorId }),
-    ...(member.needsReview === undefined ? {} : { needsReview: member.needsReview }),
-    ...(member.needsReviewFindingIds === undefined ? {} : { needsReviewFindingIds: member.needsReviewFindingIds }),
-    ...(member.relationshipIdsTruncated === undefined ? {} : { relationshipIdsTruncated: member.relationshipIdsTruncated }),
-  }));
+  return set.members.map((member) => {
+    const superseded = member.lifecycle === "superseded";
+    const historical = boundRecallText(
+      superseded
+        ? `Decision ${member.id} is superseded. Its summary describes the former rule; its rationale is not a current condition.`
+        : undefined,
+      RECALL_GOAL_TEXT_MAX_BYTES,
+    );
+    return {
+      section: superseded ? ("historical" as const) : ("current" as const),
+      kind: "decision" as const,
+      id: member.id,
+      lifecycle: member.lifecycle,
+      text: member.summary,
+      textTruncated: member.summaryTruncated,
+      provenance: member.provenance,
+      ...(member.rationale === undefined || superseded ? {} : { rationale: member.rationale }),
+      ...(member.rationaleTruncated === undefined || superseded ? {} : { rationaleTruncated: member.rationaleTruncated }),
+      ...(member.predecessorId === undefined ? {} : { predecessorId: member.predecessorId }),
+      ...(member.successorId === undefined ? {} : { successorId: member.successorId }),
+      ...(member.basisFindingIds === undefined ? {} : { basisFindingIds: member.basisFindingIds }),
+      ...(member.needsReview === undefined ? {} : { needsReview: member.needsReview }),
+      ...(member.needsReviewFindingIds === undefined ? {} : { needsReviewFindingIds: member.needsReviewFindingIds }),
+      ...(member.relationshipIdsTruncated === undefined ? {} : { relationshipIdsTruncated: member.relationshipIdsTruncated }),
+      ...(historical.text === undefined ? {} : { historicalExplanation: historical.text }),
+    };
+  });
 }
 
 export function boundedDecisionRationale(value: string | undefined): Pick<HandoffRecord, "rationale" | "rationaleTruncated"> {

@@ -237,6 +237,13 @@ paginated. RCL-001 and RCL-002 stay frozen; their fixtures and results are not
 edited or rescored. Gate B, Gate C, and Gate E remain unmeasured.
 RCL-003 recorded zero qualified treatment wins and an S2 offline recipient
 that promoted a superseded rationale into a live condition; v1.16 stays held.
+The scored packet had a projection defect, corrected after the verdict: a
+decision-set member no longer flattens its `section` to `decision-set`, a
+superseded member no longer carries `rationale`, and `linkedNextStep` guidance
+now reaches the offline packet. A new recipient observation has not tested the
+behavioral effect. See §0 of the contract. The citation difference
+between arms is **confounded** — the treatment build alone carried a "cite the
+record ids" session instruction — so citation is not a recorded Recall benefit.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

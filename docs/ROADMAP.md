@@ -1528,9 +1528,10 @@ v1.16 — RECALL AND PORTABLE HANDOFF
         held; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME; Gate E open; no publication
         one authorized workspace search with currentness and provenance
         one explicit offline JSON packet for a named authorized participant
-        packet decision rationale bounded to 1024 bytes after the NO-GO; recall response stays an excerpt
+        bounded decision rationale appears in the live recall response and offline packet; RCL-003 added query-matched decision sets
         RCL-002 scored nine locked arms and did not meet the synthetic pass bar; it does not rescore RCL-001
-        RCL-003 scored nine new locked arms; source citation improved, but no qualified next-action win was measured and one offline recipient promoted a superseded rationale
+        RCL-003 scored nine new locked arms; no qualified next-action win was measured, citation was confounded by treatment-only guidance, and one offline recipient promoted a superseded rationale
+        post-verdict packet projection was corrected; recipient behavior remains unmeasured on that correction; prioritize an ordinary-work Gate E observation before another synthetic next-action pilot
         no cross-workspace index, transcripts, embeddings, or packet import
         contract: docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
         second measurement: docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md; result: docs/SPRINT_RCL_002_RESULT.md

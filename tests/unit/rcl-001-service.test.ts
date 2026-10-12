@@ -15,6 +15,7 @@ import {
   WorkspaceNotFound,
 } from "../../src/domain/errors.js";
 import {
+  DECISION_SET_LINKED_NEXT_STEP,
   RECALL_DECISION_SET_LIMIT,
   RECALL_RESPONSE_MAX_BYTES,
   encodeRecallCursor,
@@ -825,10 +826,73 @@ describe("recall lifecycle", () => {
       expect.arrayContaining([original.id, replacement.id]),
     );
     // This case must not degenerate into "always ask for a review".
-    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
+    expect(packet.decisionSet?.beforeActing).toBeUndefined();
+    expect(packet.decisionSet?.linkedNextStep).toBe(DECISION_SET_LINKED_NEXT_STEP);
     expect(packet.decisionSet?.members.find((row) => row.id === replacement.id)?.rationale).toBe(
       "Adopt the replacement rule for partner callbacks.",
     );
+    expect(packet.decisionSet?.members.find((row) => row.id === replacement.id)?.section).toBe("current");
+    // The predecessor is historical in the grouped set too, and its stored
+    // rationale is not emitted under `rationale` there.
+    const supersededRow = packet.decisionSet?.members.find((row) => row.id === original.id);
+    expect(supersededRow?.section).toBe("historical");
+    expect(supersededRow).not.toHaveProperty("rationale");
+    expect(supersededRow?.historicalExplanation).toContain(original.id);
+  });
+
+  it("never promotes a superseded decision's rationale into a live condition in the packet", () => {
+    // The RCL-003 S2 failure, reproduced through the real service path. The
+    // predecessor's rationale holds a precondition clause that the accepted
+    // replacement never mentions. The recipient read both rationales from the
+    // same field and applied the clause as a current release condition.
+    const clause =
+      "Keep the 02:00 job disabled until two on-request releases have run with no operator escalation.";
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Promotion" });
+    service.inviteToWorkspace(ctxHuman1, { workspaceId: workspace.id, actor: HUMAN3, role: "viewer" });
+    service.joinWorkspace(ctxHuman3, { workspaceId: workspace.id });
+    const predecessor = service.acceptDecision(
+      ctxHuman1,
+      service.addDecision(ctxHuman1, {
+        workspaceId: workspace.id,
+        summary: "partner callback window rule",
+        rationale: clause,
+      }).id,
+    );
+    const replacement = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "partner callback window rule replacement",
+      rationale: "Adopt the replacement rule for partner callbacks.",
+      replacesDecisionId: predecessor.id,
+    });
+    service.acceptDecision(ctxHuman1, replacement.id, { reason: "recorded replacement" });
+
+    const packet = service.projectHandoffPacket(ctxHuman1, {
+      workspaceId: workspace.id,
+      query: QUERY,
+      recipient: HUMAN3,
+    });
+    expect(packet.decisionSet?.state).toBe("linked-accepted-decisions");
+    expect(packet.decisionSet?.operativeDecisionId).toBe(replacement.id);
+    expect(packet.decisionSet?.linkedNextStep).toBe(DECISION_SET_LINKED_NEXT_STEP);
+
+    const setMembers = packet.decisionSet?.members ?? [];
+    expect(setMembers.map((row) => row.id).sort()).toEqual([predecessor.id, replacement.id].sort());
+    // No superseded member carries a `rationale`, so the clause has no path
+    // into the grouped view under the field a reader acts on.
+    for (const row of setMembers.filter((entry) => entry.lifecycle === "superseded")) {
+      expect(row).not.toHaveProperty("rationale");
+      expect(row).not.toHaveProperty("rationaleTruncated");
+      expect(row.section).toBe("historical");
+      expect(row.historicalExplanation).toContain(row.id);
+    }
+    // The clause is not reachable anywhere inside `decisionSet`: not in a field,
+    // not in the summary, not in the explanation.
+    expect(JSON.stringify(packet.decisionSet)).not.toContain("two on-request releases");
+    // `records` still carries it, correctly labelled `historical`: the flat
+    // section split is the durable record and is not what this projection drops.
+    expect(JSON.stringify(packet.records)).toContain("two on-request releases");
+    const flatPredecessor = packet.records.find((row) => row.id === predecessor.id);
+    expect(flatPredecessor?.section).toBe("historical");
   });
 });
 

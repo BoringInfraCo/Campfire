@@ -5,6 +5,23 @@
 - **Status:** Preregistered October 11, 2026. This contract authorizes an implementation candidate and a new pilot. It is not a verdict and not a release.
 - **Depends on:** RCL-001 and RCL-002 (the recall read, `rcl-1` ordering, and the CLI-written handoff packet); COR-001 decision lifecycle; CTX-001 orientation.
 - **Frozen history:** `docs/SPRINT_RCL_001_RESULT.md` and `docs/SPRINT_RCL_002_RESULT.md` are NO-GO / REFRAME and stay frozen. Their nine runs each are not rescored, not rerun, and not edited. The RCL-001 and RCL-002 fixture trees are not edited.
+- **Verdict:** NO-GO / REFRAME. See `docs/SPRINT_RCL_003_RESULT.md`. v1.16 stays held.
+
+## 0. Post-verdict amendment — October 12, 2026
+
+Recorded after the scored pilot and after `docs/SPRINT_RCL_003_RESULT.md`. It does not change the verdict, does not reopen RCL-001 or RCL-002, and does not release v1.16.
+
+The §4.3 rule that every decision-set member is emitted with `section: "decision-set"` is **withdrawn**. It was a projection defect. The S2 offline recipient read the packet, correctly identified the operative decision from `state`, `operativeDecisionId`, and `recordedTransitions`, and then still lifted a condition that existed only in the superseded predecessor's rationale, writing that the 02:00 job must stay disabled "per both rationales". Grouping the decisions into one array replaced the named `"historical"`/`"current"` signal the same packet already carried in `records[]` with a bare `lifecycle` enum, and the superseded rationale was then presented twice, once in each array.
+
+The corrected rules, in force in the tree:
+
+1. A superseded decision-set member is emitted with `section: "historical"`; proposed and accepted members are emitted with `section: "current"`. The grouped view is an addition and must not erase the current/historical split.
+2. A superseded member does not carry `rationale` or `rationaleTruncated`. It carries `historicalExplanation`, stating that the recorded text explains why the rule was replaced and is not a current condition.
+3. A superseded member retains its bounded summary for identification, marked `historical`; its rationale appears only in `records[]` under `section: "historical"`.
+4. `linkedNextStep` is emitted whenever `state` is `linked-accepted-decisions`. It makes the MCP session's linked-decision guidance explicit in the offline packet: follow the recorded successor in the query-matched set, do not request a transition already recorded, and do not apply a condition found only in a superseded decision's summary or rationale.
+5. `basisFindingIds` is carried into packet decision-set members. `assembleDecisionSet` emitted it and `handoffDecisionSetMembers` dropped it, with no test covering the loss.
+
+These are implementation corrections against the intent of §4.3 and §4.1. They are not a new sprint and carry no new pilot. A fresh recipient observation has not tested whether the corrected packet changes behavior. Ordinary-work Gate E is the recommended next measurement; another synthetic next-action pilot needs a separately justified question because every control reached the keyed next action within budget.
 
 ## 1. Sprint question
 
