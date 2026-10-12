@@ -219,6 +219,21 @@ decision transition. Gate B, Gate C, and Gate E remain unmeasured. See
 `docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md`,
 `docs/SPRINT_RCL_002_RESULT.md`, and `docs/evidence/rcl-002/`.
 
+Sprint RCL-003 — Decision safety and source use is a local `1.15.0` candidate
+whose contract is `docs/Campfire-v1.16-RCL-003-Decision-Safety-and-Source-Use.md`.
+It adds one deterministic `decisionSet` to the recall response and the handoff
+packet: every decision the query matches, grouped, with its ids, `needsReview`
+state, recorded replacement links, and a derived `state`. Campfire never infers
+an operative decision. An unresolved set carries a frozen `beforeActing`
+instruction to seek a recorded retirement or an accepted replacement with a
+reason before executing either rule; a recorded replacement yields
+`linked-accepted-decisions` and does **not** ask for a transition. Decision hits
+now carry a bounded `rationale`, reversing the RCL-002 excerpt-only position.
+`RECALL_SCHEMA_VERSION` and `HANDOFF_PACKET_SCHEMA_VERSION` are `2`;
+`RECALL_ORDERING_VERSION` stays `rcl-1` because the set is neither ranked nor
+paginated. RCL-001 and RCL-002 stay frozen; their fixtures and results are not
+edited or rescored. Gate B, Gate C, and Gate E remain unmeasured.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new

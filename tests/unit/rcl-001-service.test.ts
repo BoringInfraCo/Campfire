@@ -14,7 +14,13 @@ import {
   ValidationError,
   WorkspaceNotFound,
 } from "../../src/domain/errors.js";
-import { RECALL_RESPONSE_MAX_BYTES, encodeRecallCursor, jsonByteLength, type RecallCursor } from "../../src/domain/recall.js";
+import {
+  RECALL_DECISION_SET_LIMIT,
+  RECALL_RESPONSE_MAX_BYTES,
+  encodeRecallCursor,
+  jsonByteLength,
+  type RecallCursor,
+} from "../../src/domain/recall.js";
 import type { ActorRef } from "../../src/domain/types.js";
 import { campfireHttpCall } from "../../src/http/client.js";
 import { isDeliveryEligibleMethod } from "../../src/http/dispatch.js";
@@ -24,7 +30,12 @@ import { createCampfireService } from "../../src/service/campfire-service.js";
 import { projectRecallAsync } from "../../src/service/recall-read.js";
 import type { ActorContext } from "../../src/service/authorization.js";
 import type { CampfireService } from "../../src/service/service.js";
-import { recallGoalSql, recallSectionSql } from "../../src/store/recall-queries.js";
+import {
+  countRecallDecisionSetSql,
+  recallDecisionSetSql,
+  recallGoalSql,
+  recallSectionSql,
+} from "../../src/store/recall-queries.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 import type { CampfireStore } from "../../src/store/store.js";
 import { createAsyncCampfireService } from "../../src/worker/async-service.js";
@@ -35,6 +46,8 @@ import { sqliteD1 } from "../helpers/sqlite-d1.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const QUERY = "partner callback";
+/** The authorization test's query, also used to seed a decision it must not read. */
+const sentinelQuery = "query-sentinel-do-not-log";
 const SECRET_URI = "secret-uri-only-do-not-match";
 const SECRET_META = "secret-meta-only";
 const SECRET_NOTE = "secret-note-only";
@@ -202,6 +215,16 @@ function seedRecall() {
     title: "foreign log",
     uriOrPath: "foreign-uri-do-not-copy",
   });
+  // A real decision in the other workspace. `dec_link` below names it as its
+  // predecessor, so the recall read must drop that id after a point lookup
+  // confirms the workspace — exactly as it drops `find_link`'s predecessor.
+  const foreignDecision = service.acceptDecision(
+    ctxHuman2,
+    service.addDecision(ctxHuman2, {
+      workspaceId: other.id,
+      summary: "partner callback extra foreign decision",
+    }).id,
+  );
   store.createFinding({
     id: "find_link",
     workspaceId,
@@ -229,6 +252,30 @@ function seedRecall() {
     createdBy: HUMAN1,
     createdAt: NOW,
   });
+  // A second accepted decision on the same question. Neither names the other,
+  // so the decision set is genuinely unresolved rather than single.
+  const acceptedSecond = service.acceptDecision(
+    ctxHuman1,
+    service.addDecision(ctxHuman1, {
+      workspaceId,
+      summary: "partner callback extra second accepted",
+      rationale: "Rotate the partner secret on a fixed cadence.",
+    }).id,
+  );
+  service.citeDecisionBasis(ctxHuman1, { decisionId: acceptedSecond.id, findingId: evidence.id });
+  // Same technique as `find_link`: a same-workspace decision whose predecessor
+  // points into another workspace, so the cross-workspace id must be dropped
+  // from the set member exactly as it is from a section hit.
+  store.createDecision({
+    id: "dec_link",
+    workspaceId,
+    summary: "partner callback extra decision link",
+    status: "proposed",
+    updatedAt: "2026-06-02T00:00:00.000Z",
+    predecessorId: foreignDecision.id,
+    createdBy: HUMAN1,
+    createdAt: "2026-06-01T00:00:00.000Z",
+  });
 
   return {
     workspace,
@@ -241,6 +288,7 @@ function seedRecall() {
     evidence,
     proposed,
     accepted,
+    acceptedSecond,
     retired,
     oldLead,
     corrected,
@@ -249,6 +297,7 @@ function seedRecall() {
     sessionFinding,
     foreignFinding,
     foreignArtifact,
+    foreignDecision,
   };
 }
 
@@ -267,8 +316,19 @@ describe("recall authorization", () => {
     observed.createHuman({ id: "hum_2", teamId: "team_1", displayName: "Grace", createdAt: NOW });
     const workspace = observedService.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Visible" });
     observedService.createTask(ctxHuman1, { workspaceId: workspace.id, title: "visible excerpt" });
-    const sentinel = "query-sentinel-do-not-log";
+    // An accepted decision that matches the sentinel, so an authorized read
+    // would return a decision set. Denials must reach no `norm_primary` SQL,
+    // and the decision-set query is built from the same expression.
+    observedService.acceptDecision(
+      ctxHuman1,
+      observedService.addDecision(ctxHuman1, {
+        workspaceId: workspace.id,
+        summary: `${sentinelQuery} rule`,
+      }).id,
+    );
+    const sentinel = sentinelQuery;
 
+    queries.length = 0;
     const missing = withStderr(() => {
       observedService.recallWorkspace(ctxHuman1, { workspaceId: "ws_missing", query: sentinel });
     });
@@ -276,13 +336,23 @@ describe("recall authorization", () => {
     expect(JSON.stringify(missing.error)).not.toContain(sentinel);
     expect(missing.log).not.toContain(sentinel);
     expect(missing.log).toContain("workspace:read");
+    expect(queries.some((sql) => sql.includes("norm_primary"))).toBe(false);
 
+    queries.length = 0;
     const outsider = withStderr(() => {
       observedService.recallWorkspace(ctxHuman2, { workspaceId: workspace.id, query: sentinel });
     });
     expect(outsider.error).toBeInstanceOf(ParticipantRequired);
     expect(outsider.log).not.toContain(sentinel);
     expect(outsider.log).not.toContain("visible excerpt");
+    expect(queries.some((sql) => sql.includes("norm_primary"))).toBe(false);
+
+    // Sanity: the same read by a participant does run the set query, so the
+    // assertions above prove ordering rather than a missing query.
+    queries.length = 0;
+    const allowed = observedService.recallWorkspace(ctxHuman1, { workspaceId: workspace.id, query: sentinel });
+    expect(allowed.decisionSet?.members.map((row) => row.id)).toHaveLength(1);
+    expect(queries.some((sql) => sql.includes("norm_primary"))).toBe(true);
 
     queries.length = 0;
     const forged = withStderr(() => {
@@ -479,18 +549,30 @@ describe("recall lifecycle", () => {
     expect(packet.anchors.openTasks.map((row) => row.id).sort()).toEqual([seeded.taskOld.id, seeded.taskNew.id].sort());
     expect(packet.anchors.openTasks.every((row) => row.lifecycle === "open")).toBe(true);
     expect(packet.anchors.blockedTasks.map((row) => row.id)).toEqual([seeded.blocked.id]);
-    expect(packet.anchors.proposedDecisions.map((row) => row.id)).toEqual([seeded.proposed.id]);
-    expect(packet.anchors.proposedDecisions[0]?.needsReview).toBe(true);
-    expect(packet.anchors.acceptedDecisions.map((row) => row.id)).toEqual([seeded.accepted.id]);
-    expect(packet.anchors.acceptedDecisions[0]?.needsReview).toBe(true);
-    expect(packet.anchors.acceptedDecisions[0]?.basisFindingIds).toEqual([seeded.evidence.id]);
-    expect(packet.anchors.acceptedDecisions[0]?.rationale).toBe(
-      "Accept the previous secret for twenty-four hours during rotation.",
+    expect(packet.anchors.proposedDecisions.map((row) => row.id)).toEqual(
+      expect.arrayContaining([seeded.proposed.id, "dec_link"]),
     );
+    expect(packet.anchors.acceptedDecisions.map((row) => row.id)).toEqual(
+      expect.arrayContaining([seeded.accepted.id, seeded.acceptedSecond.id]),
+    );
+    expect(packet.anchors.acceptedDecisions.find((row) => row.id === seeded.accepted.id)?.needsReview).toBe(true);
+    expect(packet.anchors.acceptedDecisions.find((row) => row.id === seeded.accepted.id)?.basisFindingIds).toEqual([
+      seeded.evidence.id,
+    ]);
+    expect(
+      packet.anchors.acceptedDecisions.find((row) => row.id === seeded.accepted.id)?.rationale,
+    ).toBe("Accept the previous secret for twenty-four hours during rotation.");
     const acceptedRecord = packet.records.find((row) => row.id === seeded.accepted.id);
     expect(acceptedRecord?.rationale).toBe("Accept the previous secret for twenty-four hours during rotation.");
     expect(acceptedRecord?.text).not.toContain("twenty-four");
-    expect(recall.current.items.find((item) => item.id === seeded.accepted.id)).not.toHaveProperty("rationale");
+    // RCL-003 §3.1 reverses the RCL-002 §2 position: the live recall response
+    // itself now carries the bounded rationale on a decision hit, so a reader
+    // can state the constraint and cite the hit id in one breath. Non-decision
+    // kinds never gain it.
+    const acceptedRecallHit = recall.current.items.find((item) => item.id === seeded.accepted.id);
+    expect(acceptedRecallHit?.rationale).toBe("Accept the previous secret for twenty-four hours during rotation.");
+    expect(acceptedRecallHit?.rationaleTruncated).toBeUndefined();
+    expect(recall.current.items.find((item) => item.id === seeded.corrected.id)).not.toHaveProperty("rationale");
     expect(packed).not.toContain(SECRET_URI);
     expect(packed).not.toContain(SECRET_META);
     expect(packed).not.toContain(SECRET_NOTE);
@@ -555,6 +637,199 @@ describe("recall lifecycle", () => {
     expect(JSON.stringify(restarted.error)).not.toContain(QUERY);
     expect(restarted.log).not.toContain(QUERY);
   });
+
+  it("keeps the decision set identical across limit, cursor, and every section", () => {
+    const seeded = seedRecall();
+    const full = service.recallWorkspace(ctxHuman1, { workspaceId: seeded.workspace.id, query: QUERY });
+    const set = full.decisionSet;
+    expect(set?.state).toBe("unresolved-accepted-decisions");
+    const memberIds = (set?.members ?? []).map((row) => row.id);
+    expect(memberIds.length).toBeGreaterThan(1);
+
+    // A different page limit must not change the set at all.
+    const one = service.recallWorkspace(ctxHuman1, { workspaceId: seeded.workspace.id, query: QUERY, limit: 1 });
+    expect(one.current.items).toHaveLength(1);
+    expect(one.decisionSet?.members.map((row) => row.id)).toEqual(memberIds);
+    expect(one.decisionSet?.total).toBe(set?.total);
+    expect(one.decisionSet?.state).toBe(set?.state);
+    expect(one.decisionSet?.operativeDecisionId).toBeUndefined();
+
+    // Paging through every section with limit 1 never changes it either.
+    const seen: string[][] = [];
+    let next = one.current.nextCursor;
+    let guard = 0;
+    while (next !== undefined && guard < 60) {
+      guard += 1;
+      const page = service.recallWorkspace(ctxHuman1, {
+        workspaceId: seeded.workspace.id,
+        query: QUERY,
+        limit: 1,
+        cursor: next,
+      });
+      expect(page.decisionSet?.members.map((row) => row.id)).toEqual(memberIds);
+      expect(page.decisionSet?.total).toBe(set?.total);
+      expect(page.decisionSet?.state).toBe(set?.state);
+      seen.push(page.decisionSet?.members.map((row) => row.id) ?? []);
+      next = page.current.nextCursor;
+    }
+    expect(seen.length).toBeGreaterThan(0);
+    for (const snapshot of seen) expect(snapshot).toEqual(memberIds);
+
+    // Walk the historical and artifacts sections the same way. A cursor carries
+    // the section it belongs to, so only that section advances.
+    for (const section of ["historical", "artifacts"] as const) {
+      let sectionCursor: string | undefined = one[section].nextCursor;
+      let steps = 0;
+      while (sectionCursor !== undefined && steps < 60) {
+        steps += 1;
+        const page = service.recallWorkspace(ctxHuman1, {
+          workspaceId: seeded.workspace.id,
+          query: QUERY,
+          limit: 1,
+          cursor: sectionCursor,
+        });
+        expect(page.decisionSet?.members.map((row) => row.id)).toEqual(memberIds);
+        expect(page.decisionSet?.total).toBe(set?.total);
+        expect(page.decisionSet?.state).toBe(set?.state);
+        sectionCursor = page[section].nextCursor;
+      }
+      // Only a section with more than one match has a cursor to walk.
+      if (one[section].truncated) expect(steps).toBeGreaterThan(0);
+      else expect(steps).toBe(0);
+    }
+  });
+
+  it("groups every matching decision with its lifecycle, links, and citations", () => {
+    const seeded = seedRecall();
+    const recall = service.recallWorkspace(ctxHuman1, { workspaceId: seeded.workspace.id, query: QUERY });
+    const set = recall.decisionSet;
+    expect(set).toBeDefined();
+    expect(set?.members.map((row) => row.id)).toEqual(
+      expect.arrayContaining([seeded.proposed.id, seeded.accepted.id, seeded.acceptedSecond.id, seeded.retired.id]),
+    );
+    expect(set?.returned).toBe(set?.members.length);
+    expect(set?.truncated).toBe(false);
+
+    const accepted = set?.members.find((row) => row.id === seeded.accepted.id);
+    expect(accepted?.lifecycle).toBe("accepted");
+    expect(accepted?.summary).toBe("partner callback extra accepted");
+    expect(accepted?.summaryTruncated).toBe(false);
+    expect(accepted?.rationale).toBe("Accept the previous secret for twenty-four hours during rotation.");
+    expect(accepted?.basisFindingIds).toEqual([seeded.evidence.id]);
+    // The cited finding was withdrawn, so this accepted decision needs review.
+    expect(accepted?.needsReview).toBe(true);
+    expect(accepted?.needsReviewFindingIds).toEqual([seeded.evidence.id]);
+    expect(accepted?.provenance.createdBy).toEqual(HUMAN1);
+
+    // A superseded decision is a member with its exact stored lifecycle, and it
+    // never carries needsReview.
+    const superseded = set?.members.find((row) => row.id === seeded.retired.id);
+    expect(superseded?.lifecycle).toBe("superseded");
+    expect(superseded?.needsReview).toBeUndefined();
+    expect(superseded?.needsReviewFindingIds).toBeUndefined();
+
+    // A cross-workspace relationship id is dropped from a member exactly as it
+    // is dropped from a section hit.
+    const linked = set?.members.find((row) => row.id === "dec_link");
+    expect(linked?.lifecycle).toBe("proposed");
+    expect(linked?.predecessorId).toBeUndefined();
+    expect(linked?.successorId).toBeUndefined();
+    expect(set?.members.find((row) => row.id === seeded.accepted.id)?.basisFindingIds).not.toContain(
+      seeded.foreignFinding.id,
+    );
+    expect(JSON.stringify(recall.decisionSet)).not.toContain(seeded.foreignDecision.id);
+
+    // Two accepted decisions and no recorded transition between them.
+    expect(set?.state).toBe("unresolved-accepted-decisions");
+    expect(set?.operativeDecisionId).toBeUndefined();
+    expect(set?.recordedTransitions).toEqual([]);
+    expect(set?.beforeActing).toBe(
+      "Campfire has not selected an operative decision. Do not execute either rule. Seek a recorded retirement of one accepted decision, or an accepted replacement that names its predecessor and is accepted with a reason.",
+    );
+  });
+
+  it("keeps artifact uri, metadata, notes, and reasons out of the decision set", () => {
+    const seeded = seedRecall();
+    const recall = service.recallWorkspace(ctxHuman1, { workspaceId: seeded.workspace.id, query: QUERY });
+    const packedSet = JSON.stringify(recall.decisionSet);
+    for (const secret of [SECRET_URI, SECRET_META, SECRET_NOTE, SECRET_REASON]) {
+      expect(packedSet).not.toContain(secret);
+    }
+    // A query for a secret matches nothing, so the set is empty and safe.
+    for (const secret of [SECRET_URI, SECRET_META, SECRET_NOTE, SECRET_REASON]) {
+      const missed = service.recallWorkspace(ctxHuman1, { workspaceId: seeded.workspace.id, query: secret });
+      expect(missed.decisionSet?.members).toEqual([]);
+      expect(missed.decisionSet?.state).toBe("no-accepted-decision");
+      expect(missed.decisionSet?.operativeDecisionId).toBeUndefined();
+      expect(missed.decisionSet?.beforeActing).toBeUndefined();
+      expect(JSON.stringify(missed.decisionSet)).not.toContain(secret);
+    }
+  });
+
+  it("resolves the set from a real accepted replacement and names the survivor", () => {
+    // One accepted decision to start, so the replacement resolves the set rather
+    // than leaving a second accepted decision to argue with.
+    const workspace = service.createWorkspace(ctxHuman1, { teamId: "team_1", name: "Replacement" });
+    service.inviteToWorkspace(ctxHuman1, { workspaceId: workspace.id, actor: HUMAN3, role: "viewer" });
+    service.joinWorkspace(ctxHuman3, { workspaceId: workspace.id });
+    const original = service.acceptDecision(
+      ctxHuman1,
+      service.addDecision(ctxHuman1, {
+        workspaceId: workspace.id,
+        summary: "partner callback original rule",
+        rationale: "Use the original rule.",
+      }).id,
+    );
+
+    const before = service.recallWorkspace(ctxHuman1, { workspaceId: workspace.id, query: QUERY });
+    expect(before.decisionSet?.state).toBe("single-accepted-decision");
+    expect(before.decisionSet?.operativeDecisionId).toBe(original.id);
+    expect(before.decisionSet?.beforeActing).toBeUndefined();
+
+    // The real path: propose with a predecessor, then accept it with a reason.
+    const replacement = service.addDecision(ctxHuman1, {
+      workspaceId: workspace.id,
+      summary: "partner callback replacement rule",
+      rationale: "Adopt the replacement rule for partner callbacks.",
+      replacesDecisionId: original.id,
+    });
+    service.acceptDecision(ctxHuman1, replacement.id, { reason: "recorded replacement" });
+
+    const after = service.recallWorkspace(ctxHuman1, { workspaceId: workspace.id, query: QUERY });
+    const set = after.decisionSet;
+    expect(set?.state).toBe("linked-accepted-decisions");
+    expect(set?.recordedTransitions).toEqual([
+      { supersededDecisionId: original.id, supersedingDecisionId: replacement.id },
+    ]);
+    expect(set?.members.map((row) => row.id)).toEqual(expect.arrayContaining([original.id, replacement.id]));
+    expect(set?.operativeDecisionId).toBe(replacement.id);
+    // The recorded replacement resolves the set, so no instruction is emitted.
+    expect(set?.beforeActing).toBeUndefined();
+    expect(set?.members.find((row) => row.id === original.id)?.lifecycle).toBe("superseded");
+    expect(set?.members.find((row) => row.id === original.id)?.successorId).toBe(replacement.id);
+    expect(set?.members.find((row) => row.id === replacement.id)?.predecessorId).toBe(original.id);
+
+    // The packet carries the same resolution so an offline recipient can follow it.
+    const packet = service.projectHandoffPacket(ctxHuman1, {
+      workspaceId: workspace.id,
+      query: QUERY,
+      recipient: HUMAN3,
+    });
+    expect(packet.decisionSet?.state).toBe("linked-accepted-decisions");
+    expect(packet.decisionSet?.operativeDecisionId).toBe(replacement.id);
+    expect(packet.decisionSet?.recordedTransitions).toEqual([
+      { supersededDecisionId: original.id, supersedingDecisionId: replacement.id },
+    ]);
+    expect(packet.decisionSet?.beforeActing).toBeUndefined();
+    expect(packet.decisionSet?.members.map((row) => row.id)).toEqual(
+      expect.arrayContaining([original.id, replacement.id]),
+    );
+    // This case must not degenerate into "always ask for a review".
+    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
+    expect(packet.decisionSet?.members.find((row) => row.id === replacement.id)?.rationale).toBe(
+      "Adopt the replacement rule for partner callbacks.",
+    );
+  });
 });
 
 describe("recall bounds and parity", () => {
@@ -585,6 +860,56 @@ describe("recall bounds and parity", () => {
       expect((await remote.recallGoal("ws_1", "callback"))?.matched).toBe(true);
       expect(sqlite.recallSection("ws_1", "artifacts", { normalizedQuery: SECRET_URI, limit: 10 }).items).toEqual([]);
       expect((await remote.recallSection("ws_1", "artifacts", { normalizedQuery: SECRET_URI, limit: 10 })).items).toEqual([]);
+    } finally {
+      sqlite.close();
+      adapter.database.close();
+    }
+  });
+
+  it("returns the same decision set rows in the same order on SQLite and D1", async () => {
+    const sqlite = openInMemoryStore();
+    const adapter = sqliteD1();
+    try {
+      await migrateD1(adapter.binding);
+      const remote = createD1Store(adapter.binding);
+      await seedRank(sqlite);
+      await seedRank(remote);
+
+      const left = sqlite.recallDecisionSet("ws_1", { normalizedQuery: "callback", limit: RECALL_DECISION_SET_LIMIT });
+      const right = await remote.recallDecisionSet("ws_1", { normalizedQuery: "callback", limit: RECALL_DECISION_SET_LIMIT });
+      expect(right.total).toBe(left.total);
+      expect(right.hasMore).toBe(left.hasMore);
+      expect(right.members.map((row) => [row.id, row.tier, row.lifecycle])).toEqual(
+        left.members.map((row) => [row.id, row.tier, row.lifecycle]),
+      );
+      expect(right.members.map((row) => row.id)).toEqual(left.members.map((row) => row.id));
+      // Both ends of the recorded replacement are inside the set on both
+      // engines, in rcl-1 order: same tier, so the newer decision ranks first.
+      expect(left.members.map((row) => row.id)).toEqual(["dec_new", "dec_old"]);
+      expect(left.members.map((row) => row.lifecycle)).toEqual(["accepted", "superseded"]);
+      expect(left.members.find((row) => row.id === "dec_old")?.successorId).toBe("dec_new");
+      expect(left.members.find((row) => row.id === "dec_new")?.predecessorId).toBe("dec_old");
+      expect(right.members.find((row) => row.id === "dec_old")?.successorId).toBe("dec_new");
+      expect(right.members.find((row) => row.id === "dec_new")?.predecessorId).toBe("dec_old");
+      // The set never selects artifact columns.
+      const setSql = recallDecisionSetSql("ws_1", { normalizedQuery: "callback", limit: 10 }).sql;
+      expect(setSql).toContain("norm_primary");
+      expect(setSql).toContain("LIMIT");
+      expect(setSql).toContain("workspace_id");
+      expect(setSql).not.toContain("uri_or_path");
+      expect(setSql).not.toContain("metadata");
+      expect(setSql).not.toContain("payload");
+      expect(setSql).not.toContain("LIKE");
+      expect(countRecallDecisionSetSql("ws_1", "callback").sql).not.toContain("uri_or_path");
+
+      // A cut set reports the same total on both engines.
+      const cappedLeft = sqlite.recallDecisionSet("ws_1", { normalizedQuery: "callback", limit: 1 });
+      const cappedRight = await remote.recallDecisionSet("ws_1", { normalizedQuery: "callback", limit: 1 });
+      expect(cappedRight.total).toBe(cappedLeft.total);
+      expect(cappedRight.hasMore).toBe(cappedLeft.hasMore);
+      expect(cappedRight.members.map((row) => row.id)).toEqual(cappedLeft.members.map((row) => row.id));
+      expect(cappedLeft.hasMore).toBe(true);
+      expect(cappedLeft.total).toBe(2);
     } finally {
       sqlite.close();
       adapter.database.close();
@@ -765,6 +1090,23 @@ describe("recall bounds and parity", () => {
                 recency: NOW,
                 primaryText: "do not return this mixed row",
                 lifecycle: "open",
+                createdByActorId: "hum_1",
+                createdByActorType: "human",
+                createdAt: NOW,
+              },
+            ],
+            total: 1,
+            hasMore: false,
+          }),
+          // A set member that matches the query, so a read that did not throw
+          // would leak the mixed row through the set instead of the sections.
+          recallDecisionSet: async () => ({
+            members: [
+              {
+                id: "dec_secret_row",
+                tier: 2,
+                summary: `partner callback ${QUERY}`,
+                lifecycle: "accepted",
                 createdByActorId: "hum_1",
                 createdByActorType: "human",
                 createdAt: NOW,
@@ -973,6 +1315,38 @@ async function seedRank(target: CampfireStore | AsyncCampfireStore): Promise<voi
     uriOrPath: SECRET_URI,
     createdBy: HUMAN1,
     createdAt: NOW,
+  });
+  // A recorded replacement, so the decision set has both a superseded and an
+  // accepted member and both ends of a transition inside the set. The link is
+  // written through the real transition claim, exactly as COR-001 does.
+  await target.createDecision({
+    id: "dec_old",
+    workspaceId: "ws_1",
+    summary: "callback old rule",
+    rationale: "the superseded reason",
+    status: "accepted",
+    createdBy: HUMAN1,
+    createdAt: "2026-01-03T00:00:00.000Z",
+    updatedAt: "2026-01-03T00:00:00.000Z",
+  });
+  await target.createDecision({
+    id: "dec_new",
+    workspaceId: "ws_1",
+    summary: "callback new rule",
+    rationale: "the accepted reason",
+    status: "accepted",
+    predecessorId: "dec_old",
+    createdBy: HUMAN1,
+    createdAt: "2026-01-04T00:00:00.000Z",
+    updatedAt: "2026-01-04T00:00:00.000Z",
+  });
+  await target.claimDecisionTransition({
+    decisionId: "dec_old",
+    successorId: "dec_new",
+    kind: "superseded",
+    reason: "recorded replacement",
+    actor: HUMAN1,
+    createdAt: "2026-01-04T00:00:00.000Z",
   });
 }
 

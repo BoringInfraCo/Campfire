@@ -312,7 +312,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "recall_workspace",
     {
       description:
-        "Bounded read of one authorized workspace. Returns current, historical, and artifact sections with lifecycle and provenance. Does not write a handoff file, a contribution, or search another workspace.",
+        "Bounded read of one authorized workspace. Returns current, historical, and artifact sections with lifecycle and provenance, plus a decisionSet grouping every decision this query matches. The set describes query matches only, not every decision in the workspace. Read decisionSet.state before acting: when it is unresolved-accepted-decisions or truncated, Campfire has not selected an operative decision and beforeActing says what must happen first. Cite the ids you rely on. Does not write a handoff file, a contribution, or search another workspace.",
       inputSchema: {
         workspaceId: z.string(),
         query: z.string(),

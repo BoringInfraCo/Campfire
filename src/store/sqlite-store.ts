@@ -81,9 +81,12 @@ import {
   type ObjectPage,
 } from "./context-queries.js";
 import {
+  countRecallDecisionSetSql,
   countRecallSectionSql,
+  mapRecallDecisionMemberRow,
   mapRecallGoalRow,
   mapRecallHitRow,
+  recallDecisionSetSql,
   recallGoalSql,
   recallSectionSql,
 } from "./recall-queries.js";
@@ -1180,6 +1183,15 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       const statement = recallGoalSql(workspaceId, normalizedQuery);
       const row = db.prepare(statement.sql).get(...statement.params) as Parameters<typeof mapRecallGoalRow>[0] | undefined;
       return row === undefined ? undefined : mapRecallGoalRow(row);
+    },
+
+    recallDecisionSet(workspaceId, query) {
+      const listed = recallDecisionSetSql(workspaceId, query);
+      const counted = countRecallDecisionSetSql(workspaceId, query.normalizedQuery);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Parameters<typeof mapRecallDecisionMemberRow>[0][];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { members: page.items.map(mapRecallDecisionMemberRow), total, hasMore: page.hasMore };
     },
 
     pageContributions(workspaceId, query) {

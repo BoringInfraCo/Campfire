@@ -68,6 +68,37 @@ interface RecallHitRow {
   created_at: string;
 }
 
+function branch(
+  kind: RecallCandidate["kind"],
+  table: string,
+  where: string,
+  recency: string,
+  primary: string,
+  secondary: string,
+  lifecycle: string,
+  predecessor = "NULL",
+  successor = "NULL",
+) {
+  return { kind, table, where, recency, primary, secondary, lifecycle, predecessor, successor };
+}
+
+/**
+ * The two decision branches, declared once.
+ *
+ * The decision set is the union of exactly these two branches, so "every
+ * decision this query matches" cannot drift from "every decision a section hit
+ * can return". Declaring them once is what keeps that true on both engines.
+ */
+const DECISION_CURRENT = branch(
+  "decision", "decisions", "status IN ('proposed', 'accepted')",
+  "updated_at", "summary", "rationale", "status", "predecessor_id", "successor_id",
+);
+const DECISION_HISTORICAL = branch(
+  "decision", "decisions", "status = 'superseded'",
+  "updated_at", "summary", "rationale", "status", "predecessor_id", "successor_id",
+);
+const DECISION_BRANCHES = [DECISION_CURRENT, DECISION_HISTORICAL] as const;
+
 const SECTIONS: Record<
   RecallSectionName,
   Array<{
@@ -85,31 +116,17 @@ const SECTIONS: Record<
   current: [
     branch("task", "tasks", "status IN ('open', 'in_progress', 'blocked')", "updated_at", "title", "description", "status"),
     branch("finding", "findings", "currentness = 'current'", "created_at", "summary", "detail", "currentness", "predecessor_id", "successor_id"),
-    branch("decision", "decisions", "status IN ('proposed', 'accepted')", "updated_at", "summary", "rationale", "status", "predecessor_id", "successor_id"),
+    DECISION_CURRENT,
   ],
   historical: [
     branch("task", "tasks", "status = 'completed'", "updated_at", "title", "description", "status"),
     branch("finding", "findings", "currentness IN ('superseded', 'withdrawn')", "created_at", "summary", "detail", "currentness", "predecessor_id", "successor_id"),
-    branch("decision", "decisions", "status = 'superseded'", "updated_at", "summary", "rationale", "status", "predecessor_id", "successor_id"),
+    DECISION_HISTORICAL,
   ],
   artifacts: [
     branch("artifact", "artifacts", "1 = 1", "created_at", "title", "type", "type"),
   ],
 };
-
-function branch(
-  kind: RecallCandidate["kind"],
-  table: string,
-  where: string,
-  recency: string,
-  primary: string,
-  secondary: string,
-  lifecycle: string,
-  predecessor = "NULL",
-  successor = "NULL",
-) {
-  return { kind, table, where, recency, primary, secondary, lifecycle, predecessor, successor };
-}
 
 function asciiLowerSql(expression: string): string {
   let sql = expression;
@@ -155,8 +172,10 @@ function assertQuery(normalizedQuery: string): string {
   return normalizedQuery;
 }
 
-function unionSql(section: RecallSectionName): { sql: string; params: string[] } {
-  const parts = SECTIONS[section].map((entry) => {
+type RecallBranch = (typeof SECTIONS)[RecallSectionName][number];
+
+function unionSqlForBranches(branches: readonly RecallBranch[]): { sql: string } {
+  const parts = branches.map((entry) => {
     const predecessor = entry.predecessor === "NULL" ? "NULL" : entry.predecessor;
     const successor = entry.successor === "NULL" ? "NULL" : entry.successor;
     return `SELECT
@@ -177,12 +196,16 @@ function unionSql(section: RecallSectionName): { sql: string; params: string[] }
     FROM ${entry.table}
     WHERE workspace_id = ? AND ${entry.where}`;
   });
-  return { sql: parts.join("\nUNION ALL\n"), params: [] };
+  return { sql: parts.join("\nUNION ALL\n") };
 }
 
-function rankedSql(workspaceId: string, section: RecallSectionName, normalizedQuery: string): { sql: string; params: unknown[] } {
-  const union = unionSql(section);
-  const params: unknown[] = SECTIONS[section].map(() => workspaceId);
+function rankedSql(
+  branches: readonly RecallBranch[],
+  workspaceId: string,
+  normalizedQuery: string,
+): { sql: string; params: unknown[] } {
+  const union = unionSqlForBranches(branches);
+  const params: unknown[] = branches.map(() => workspaceId);
   for (let index = 0; index < 6; index += 1) params.push(normalizedQuery);
   return {
     sql: `WITH normalized AS (
@@ -208,7 +231,7 @@ export function recallSectionSql(
   if (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > 50) {
     throw new ValidationError("limit must be an integer from 1 to 50", { field: "limit", limit: query.limit });
   }
-  const ranked = rankedSql(workspaceId, section, normalized);
+  const ranked = rankedSql(SECTIONS[section], workspaceId, normalized);
   const params = [...ranked.params];
   const where = ["ranked.tier IS NOT NULL"];
   if (query.after !== undefined) {
@@ -236,13 +259,109 @@ export function countRecallSectionSql(
   normalizedQuery: string,
 ): SqlStatement {
   assertSection(section);
-  const ranked = rankedSql(workspaceId, section, assertQuery(normalizedQuery));
+  const ranked = rankedSql(SECTIONS[section], workspaceId, assertQuery(normalizedQuery));
   return {
     sql: `SELECT COUNT(*) AS count FROM (
       ${ranked.sql}
     ) AS ranked
     WHERE ranked.tier IS NOT NULL`,
     params: ranked.params,
+  };
+}
+
+export interface RecallDecisionSetQuery {
+  normalizedQuery: string;
+  limit: number;
+}
+
+export interface RecallDecisionMember {
+  id: string;
+  tier: number;
+  summary: string;
+  rationale?: string;
+  lifecycle: string;
+  predecessorId?: string;
+  successorId?: string;
+  createdByActorId: string;
+  createdByActorType: ActorType;
+  agentSessionId?: string;
+  createdAt: string;
+}
+
+export interface RecallDecisionSetPage {
+  members: RecallDecisionMember[];
+  total: number;
+  hasMore: boolean;
+}
+
+/**
+ * Every decision the same normalized query matches, current and historical, in
+ * rcl-1 order. Independent of the section `limit` and `cursor`: paging a
+ * section never changes the set, which is the point of the set.
+ */
+export function recallDecisionSetSql(workspaceId: string, query: RecallDecisionSetQuery): SqlStatement {
+  const normalized = assertQuery(query.normalizedQuery);
+  if (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > 50) {
+    throw new ValidationError("limit must be an integer from 1 to 50", { field: "limit", limit: query.limit });
+  }
+  const ranked = rankedSql(DECISION_BRANCHES, workspaceId, normalized);
+  return {
+    sql: `SELECT id, tier, primary_text, secondary_text, lifecycle,
+      predecessor_id, successor_id, created_by_actor_id, created_by_actor_type,
+      agent_session_id, created_at
+    FROM (
+      ${ranked.sql}
+    ) AS ranked
+    WHERE ranked.tier IS NOT NULL
+    ORDER BY ranked.tier ASC, ranked.recency DESC, ranked.id ASC
+    LIMIT ?`,
+    params: [...ranked.params, query.limit + 1],
+  };
+}
+
+export function countRecallDecisionSetSql(workspaceId: string, normalizedQuery: string): SqlStatement {
+  const ranked = rankedSql(DECISION_BRANCHES, workspaceId, assertQuery(normalizedQuery));
+  return {
+    sql: `SELECT COUNT(*) AS count FROM (
+      ${ranked.sql}
+    ) AS ranked
+    WHERE ranked.tier IS NOT NULL`,
+    params: ranked.params,
+  };
+}
+
+export function mapRecallDecisionMemberRow(row: {
+  id: string;
+  tier: number | bigint | string;
+  primary_text: string;
+  secondary_text: string | null;
+  lifecycle: string;
+  predecessor_id: string | null;
+  successor_id: string | null;
+  created_by_actor_id: string;
+  created_by_actor_type: string;
+  agent_session_id: string | null;
+  created_at: string;
+}): RecallDecisionMember {
+  const actorType = row.created_by_actor_type === "human" || row.created_by_actor_type === "agent"
+    ? row.created_by_actor_type
+    : undefined;
+  if (actorType === undefined) {
+    throw new ValidationError("Recall decision row has an unknown actor type", { field: "actorType" });
+  }
+  const rationale = row.secondary_text ?? undefined;
+  return {
+    id: row.id,
+    tier: Number(row.tier),
+    summary: row.primary_text,
+    ...(rationale === undefined || rationale.length === 0 ? {} : { rationale }),
+    lifecycle: row.lifecycle,
+    ...(row.predecessor_id ? { predecessorId: row.predecessor_id } : {}),
+    ...(row.successor_id ? { successorId: row.successor_id } : {}),
+    createdByActorId: row.created_by_actor_id,
+    createdByActorType: actorType,
+    ...(row.agent_session_id ? { agentSessionId: row.agent_session_id } : {}),
+    createdAt: row.created_at,
   };
 }
 

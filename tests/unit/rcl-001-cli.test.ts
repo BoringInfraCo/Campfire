@@ -19,6 +19,8 @@ const UNRELATED = FIXTURE.workspaces.unrelated;
 let dir: string;
 let dbPath: string;
 let findingId: string;
+let decisionId: string;
+let secondDecisionId: string;
 let logs: string[];
 let errors: string[];
 let writes: string[];
@@ -57,15 +59,27 @@ beforeEach(() => {
   const clock = () => new Date((seeded += 1000)).toISOString();
   seedFixture(store, { clock });
   const service = createCampfireService({ store, clock });
-  const finding = service.addFinding(
-    { actor: { actorId: FIXTURE.humans.sergio, actorType: "human" } },
-    {
-      workspaceId: BILLING,
-      summary: `${QUERY} during callback review`,
-      detail: "kept in the excerpt",
-    },
-  );
+  const sergio = { actor: { actorId: FIXTURE.humans.sergio, actorType: "human" as const } };
+  const finding = service.addFinding(sergio, {
+    workspaceId: BILLING,
+    summary: `${QUERY} during callback review`,
+    detail: "kept in the excerpt",
+  });
   findingId = finding.id;
+  // Two accepted decisions that both match the query and neither names the
+  // other, so the set is genuinely unresolved and the CLI has a conflict to print.
+  const first = service.addDecision(sergio, {
+    workspaceId: BILLING,
+    summary: `${QUERY} rule alpha`,
+    rationale: "Keep the alpha rule.",
+  });
+  decisionId = service.acceptDecision(sergio, first.id).id;
+  const second = service.addDecision(sergio, {
+    workspaceId: BILLING,
+    summary: `${QUERY} rule beta`,
+    rationale: "Keep the beta rule.",
+  });
+  secondDecisionId = service.acceptDecision(sergio, second.id).id;
   service.close();
 
   logs = [];
@@ -109,8 +123,14 @@ describe("campfire recall", () => {
 
     const left = JSON.parse(fromJson) as WorkspaceRecall;
     const right = JSON.parse(fromOutput) as WorkspaceRecall;
-    expect(left.schemaVersion).toBe(1);
+    // RCL-003 §3.2: schema 2 so a consumer can tell "no decision set" from
+    // "built before the decision set existed". The ordering version stays rcl-1.
+    expect(left.schemaVersion).toBe(2);
     expect(left.orderingVersion).toBe("rcl-1");
+    expect(left.decisionSet?.state).toBe("unresolved-accepted-decisions");
+    expect(left.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(left.decisionSet?.beforeActing).toBeDefined();
+    expect(left.decisionSet?.members.map((row) => row.id).sort()).toEqual([decisionId, secondDecisionId].sort());
     const { generatedAt: leftAt, ...leftRest } = left;
     const { generatedAt: rightAt, ...rightRest } = right;
     expect(leftAt).toEqual(expect.any(String));
@@ -129,6 +149,34 @@ describe("campfire recall", () => {
     expect(text).toContain("current");
     expect(text).toContain(QUERY);
     expect(stderr()).not.toContain(QUERY);
+  });
+
+  it("prints the decision state, member ids, and beforeActing in human output", async () => {
+    await cli(["recall", BILLING, "--query", QUERY, "--output", "human"]);
+    const text = stdout();
+    expect(text).toContain("decisions");
+    expect(text).toContain("unresolved-accepted-decisions");
+    expect(text).toContain(decisionId);
+    expect(text).toContain(secondDecisionId);
+    // No operative decision is named, and the frozen instruction is present.
+    expect(text).not.toContain("operativeDecision");
+    expect(text).toContain("Campfire has not selected an operative decision. Do not execute either rule.");
+    expect(stderr()).not.toContain(QUERY);
+  });
+
+  it("omits beforeActing when exactly one accepted decision matches", async () => {
+    await cli(["recall", BILLING, "--query", `${QUERY} rule alpha`]);
+    const parsed = JSON.parse(stdout()) as WorkspaceRecall;
+    expect(parsed.decisionSet?.state).toBe("single-accepted-decision");
+    expect(parsed.decisionSet?.operativeDecisionId).toBe(decisionId);
+    expect(parsed.decisionSet?.beforeActing).toBeUndefined();
+
+    logs = [];
+    await cli(["recall", BILLING, "--query", `${QUERY} rule alpha`, "--output", "human"]);
+    const text = stdout();
+    expect(text).toContain("single-accepted-decision");
+    expect(text).toContain(`operativeDecision ${decisionId}`);
+    expect(text).not.toContain("Campfire has not selected an operative decision");
   });
 });
 
@@ -159,6 +207,7 @@ describe("campfire handoff-packet", () => {
       kind: string;
       query?: unknown;
       records?: unknown;
+      decisionSet?: unknown;
       offlineCopy: boolean;
       sensitiveOfflineCopy: boolean;
       fullHistoryIncluded: boolean;
@@ -169,7 +218,12 @@ describe("campfire handoff-packet", () => {
     expect(receipt.fullHistoryIncluded).toBe(false);
     expect(receipt.query).toBeUndefined();
     expect(receipt.records).toBeUndefined();
+    // RCL-003: the packet gains a decision set, and the receipt still carries no
+    // query, records, or decision text. It reports counts and nothing else.
+    expect(receipt.decisionSet).toBeUndefined();
     expect(JSON.stringify(receipt)).not.toContain(QUERY);
+    expect(JSON.stringify(receipt)).not.toContain(decisionId);
+    expect(JSON.stringify(receipt)).not.toContain(secondDecisionId);
     expect(stdout()).not.toContain("CampfireHandoffPacket");
 
     const packet = JSON.parse(readFileSync(out, "utf8")) as {
@@ -178,12 +232,27 @@ describe("campfire handoff-packet", () => {
       sensitiveOfflineCopy: boolean;
       fullHistoryIncluded: boolean;
       query: { text: string };
+      decisionSet?: {
+        state: string;
+        operativeDecisionId?: string;
+        beforeActing?: string;
+        members: Array<{ section: string; id: string; text: string; lifecycle: string }>;
+        recordedTransitions: unknown[];
+      };
     };
     expect(packet.kind).toBe("CampfireHandoffPacket");
     expect(packet.offlineCopy).toBe(true);
     expect(packet.sensitiveOfflineCopy).toBe(true);
     expect(packet.fullHistoryIncluded).toBe(false);
     expect(packet.query.text).toBe(QUERY);
+    expect(packet.decisionSet?.state).toBe("unresolved-accepted-decisions");
+    expect(packet.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(packet.decisionSet?.beforeActing).toBe(
+      "Campfire has not selected an operative decision. Do not execute either rule. Seek a recorded retirement of one accepted decision, or an accepted replacement that names its predecessor and is accepted with a reason.",
+    );
+    expect(packet.decisionSet?.recordedTransitions).toEqual([]);
+    expect(packet.decisionSet?.members.map((row) => row.id).sort()).toEqual([decisionId, secondDecisionId].sort());
+    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
     expect(statSync(out).mode & 0o777).toBe(0o600);
     expect(out.startsWith(tmpdir()) || out.startsWith("/private/tmp") || out.startsWith("/var/")).toBe(true);
     expect(stderr()).not.toContain(QUERY);

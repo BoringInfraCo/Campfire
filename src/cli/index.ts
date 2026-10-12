@@ -1462,6 +1462,18 @@ function formatRecall(recall: WorkspaceRecall): string {
       lines.push(`nextCursor ${section.nextCursor}`);
     }
   }
+  // A reader must see the decision set before acting on any one decision in it.
+  const set = recall.decisionSet;
+  if (set !== undefined) {
+    lines.push("decisions");
+    lines.push("  scope query matches only");
+    lines.push(`  ${joinFields("state", set.state, `returned ${set.returned}`, `total ${set.total}`)}`);
+    if (set.operativeDecisionId !== undefined) lines.push(`  operativeDecision ${set.operativeDecisionId}`);
+    for (const member of set.members) {
+      lines.push(`    ${joinFields(member.id, member.lifecycle, member.summary, member.needsReview === true ? "needsReview" : undefined)}`);
+    }
+    if (set.beforeActing !== undefined) lines.push(`  ${set.beforeActing}`);
+  }
   return lines.join("\n");
 }
 

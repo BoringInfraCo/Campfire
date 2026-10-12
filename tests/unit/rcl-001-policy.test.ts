@@ -7,22 +7,31 @@ import { afterEach, describe, expect, it } from "vitest";
 import Database from "better-sqlite3";
 import { ValidationError } from "../../src/domain/errors.js";
 import {
+  DECISION_SET_UNRESOLVED_NEXT_STEP,
   HANDOFF_PACKET_MAX_BYTES,
   HANDOFF_RATIONALE_MAX_BYTES,
+  RECALL_DECISION_SET_LIMIT,
   RECALL_RESPONSE_MAX_BYTES,
+  RECALL_SCHEMA_VERSION,
   RECALL_TIERS,
   capRecallResponse,
+  deriveDecisionSetState,
   emptyRecallSection,
+  handoffDecisionSetMembers,
   jsonByteLength,
   matchTier,
   normalizeRecallText,
   prepareRecallQuery,
   projectHandoffPacket,
   recallLimit,
+  recordedDecisionTransitions,
   serializeHandoffPacket,
   type CampfireHandoffPacket,
   type HandoffAnchorPages,
   type HandoffRecord,
+  type RecallDecisionSet,
+  type RecallDecisionSetMember,
+  type RecallDecisionTransition,
   type RecallHit,
   type RecallSection,
   type WorkspaceRecall,
@@ -52,7 +61,7 @@ function sqlNorm(value: string): string {
 
 function recallShell(overrides: Partial<WorkspaceRecall> = {}): WorkspaceRecall {
   return {
-    schemaVersion: 1,
+    schemaVersion: RECALL_SCHEMA_VERSION,
     orderingVersion: "rcl-1",
     ordering: { tiers: RECALL_TIERS, recency: "descending", id: "ascending" },
     query: { text: "callback", normalized: "callback" },
@@ -88,6 +97,46 @@ function hit(id: string, excerpt: string, kind: RecallHit["kind"] = "finding"): 
 
 function section(items: RecallHit[], total = items.length): RecallSection {
   return { items, total, returned: items.length, truncated: items.length < total };
+}
+
+function member(
+  id: string,
+  lifecycle: string,
+  overrides: Partial<RecallDecisionSetMember> = {},
+): RecallDecisionSetMember {
+  return {
+    id,
+    lifecycle,
+    summary: `partner callback ${id}`,
+    summaryTruncated: false,
+    provenance: { createdBy: ACTOR, createdAt: NOW },
+    ...overrides,
+  };
+}
+
+/**
+ * Build a decision set the way the assembly does: transitions from the members,
+ * state from the recorded transitions only. `total` past the returned members is
+ * how a test says the set was cut at the limit.
+ */
+function decisionSet(
+  members: RecallDecisionSetMember[],
+  options: { total?: number; recordedTransitions?: RecallDecisionTransition[] } = {},
+): RecallDecisionSet {
+  const total = options.total ?? members.length;
+  const truncated = members.length < total;
+  const transitions = options.recordedTransitions ?? recordedDecisionTransitions(members);
+  const verdict = deriveDecisionSetState({ members, recordedTransitions: transitions, truncated });
+  return {
+    members,
+    total,
+    returned: members.length,
+    truncated,
+    state: verdict.state,
+    ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
+    recordedTransitions: transitions,
+    ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+  };
 }
 
 function record(id: string, text: string, sectionName: HandoffRecord["section"] = "current"): HandoffRecord {
@@ -516,5 +565,396 @@ describe("recall and handoff byte caps", () => {
     expect(capped.historical.nextCursor).toBe("cursor:historical:historical_0");
     expect(capped.current.items.map((item) => item.id)).toEqual(["current_kept"]);
     expect(capped.current.returned).toBe(capped.current.items.length);
+  });
+
+  it("drops decision-set members last and re-derives a cut set as truncated", () => {
+    const set = decisionSet([member("dec_kept", "accepted"), member("dec_dropped", "accepted")], {
+      total: RECALL_DECISION_SET_LIMIT,
+    });
+    // Cut at the limit, but two accepted members still survive, so the cut
+    // cannot be reported as `truncated` and the set is still unresolved.
+    expect(set.state).toBe("unresolved-accepted-decisions");
+    expect(set.operativeDecisionId).toBeUndefined();
+    const recall = recallShell({
+      current: section([hit("current_kept", "c".repeat(1_000))]),
+      historical: section([
+        hit("historical_0", "h".repeat(30_000)),
+        hit("historical_1", "h".repeat(30_000)),
+      ]),
+      artifacts: section([
+        hit("artifact_0", "a".repeat(30_000), "artifact"),
+        hit("artifact_1", "a".repeat(30_000), "artifact"),
+      ]),
+      decisionSet: set,
+    });
+    const capped = capRecallResponse(recall, (name, item) => `cursor:${name}:${item.id}`);
+    expect(jsonByteLength(capped)).toBeLessThanOrEqual(RECALL_RESPONSE_MAX_BYTES);
+    // Sections go first. Both members survive because they are small and the set
+    // is only touched once every section item is already gone.
+    expect(capped.artifacts.items).toEqual([]);
+    expect(capped.decisionSet?.members.map((row) => row.id)).toEqual(["dec_kept", "dec_dropped"]);
+    expect(capped.decisionSet?.total).toBe(RECALL_DECISION_SET_LIMIT);
+    expect(capped.decisionSet?.state).toBe("unresolved-accepted-decisions");
+    expect(capped.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(capped.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+  });
+
+  it("re-derives a resolved set to truncated and loses its operative decision when members are dropped", () => {
+    const resolved = decisionSet(
+      [member("dec_old", "superseded"), member("dec_new", "accepted", { predecessorId: "dec_old" })],
+      { recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }] },
+    );
+    expect(resolved.state).toBe("linked-accepted-decisions");
+    expect(resolved.operativeDecisionId).toBe("dec_new");
+    expect(resolved.beforeActing).toBeUndefined();
+
+    // Big enough that only one member can survive the 48 KiB cap.
+    const recall = recallShell({
+      decisionSet: {
+        ...resolved,
+        members: [
+          member("dec_big_0", "accepted", { summary: "s".repeat(30_000), summaryTruncated: true }),
+          member("dec_big_1", "accepted", { summary: "s".repeat(30_000), summaryTruncated: true }),
+        ],
+        total: 2,
+        truncated: false,
+      },
+    });
+    const capped = capRecallResponse(recall, () => "cursor");
+    expect(jsonByteLength(capped)).toBeLessThanOrEqual(RECALL_RESPONSE_MAX_BYTES);
+    expect(capped.decisionSet?.members).toHaveLength(1);
+    expect(capped.decisionSet?.returned).toBe(1);
+    expect(capped.decisionSet?.truncated).toBe(true);
+    // One surviving accepted member after a cut is not a resolved set.
+    expect(capped.decisionSet?.state).toBe("truncated");
+    expect(capped.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(capped.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(capped.completeness.responseTruncated).toBe(true);
+  });
+
+  it("removes recorded transitions whose endpoints were dropped by the response cap", () => {
+    const old = member("dec_old", "superseded", { summary: "o".repeat(30_000), successorId: "dec_new" });
+    const next = member("dec_new", "accepted", { summary: "n".repeat(30_000), predecessorId: "dec_old" });
+    const capped = capRecallResponse(recallShell({ decisionSet: decisionSet([old, next]) }), () => "cursor");
+    expect(capped.decisionSet?.members.map((row) => row.id)).toEqual(["dec_old"]);
+    expect(capped.decisionSet?.recordedTransitions).toEqual([]);
+    expect(capped.decisionSet?.state).toBe("truncated");
+  });
+});
+
+describe("rcl-3 decision set derivation", () => {
+  it("names no accepted member as no-accepted-decision", () => {
+    const verdict = deriveDecisionSetState({
+      members: [member("dec_p", "proposed"), member("dec_s", "superseded")],
+      recordedTransitions: [],
+      truncated: false,
+    });
+    expect(verdict).toEqual({ state: "no-accepted-decision" });
+  });
+
+  it("names the only accepted member when no transition is recorded", () => {
+    const verdict = deriveDecisionSetState({
+      members: [member("dec_p", "proposed"), member("dec_a", "accepted")],
+      recordedTransitions: [],
+      truncated: false,
+    });
+    expect(verdict).toEqual({ state: "single-accepted-decision", operativeDecisionId: "dec_a" });
+  });
+
+  it("resolves two accepted members only when the successor is itself accepted", () => {
+    const linked = deriveDecisionSetState({
+      members: [member("dec_old", "accepted", { successorId: "dec_new" }), member("dec_new", "accepted", { predecessorId: "dec_old" })],
+      recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }],
+      truncated: false,
+    });
+    expect(linked).toEqual({ state: "linked-accepted-decisions", operativeDecisionId: "dec_new" });
+
+    // A link whose superseding end is not accepted does not resolve the old
+    // accepted member or make that member a linked survivor.
+    const unlinked = deriveDecisionSetState({
+      members: [
+        member("dec_old", "accepted", { successorId: "dec_new" }),
+        member("dec_new", "superseded", { predecessorId: "dec_old" }),
+      ],
+      recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }],
+      truncated: false,
+    });
+    expect(unlinked).toEqual({ state: "single-accepted-decision", operativeDecisionId: "dec_old" });
+  });
+
+  it("does not label an unrelated accepted member as the survivor of a historical link", () => {
+    const verdict = deriveDecisionSetState({
+      members: [
+        member("dec_historical_old", "superseded"),
+        member("dec_historical_new", "superseded"),
+        member("dec_current", "accepted"),
+      ],
+      recordedTransitions: [
+        { supersededDecisionId: "dec_historical_old", supersedingDecisionId: "dec_historical_new" },
+      ],
+      truncated: false,
+    });
+    expect(verdict).toEqual({ state: "single-accepted-decision", operativeDecisionId: "dec_current" });
+  });
+
+  it("refuses to resolve two accepted members with no recorded transition", () => {
+    const verdict = deriveDecisionSetState({
+      members: [member("dec_a", "accepted"), member("dec_b", "accepted")],
+      recordedTransitions: [],
+      truncated: false,
+    });
+    expect(verdict.state).toBe("unresolved-accepted-decisions");
+    expect(verdict).not.toHaveProperty("operativeDecisionId");
+    expect(verdict.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+  });
+
+  it("keeps three accepted members unresolved when only one transition is recorded", () => {
+    const verdict = deriveDecisionSetState({
+      members: [
+        member("dec_a", "accepted", { successorId: "dec_b" }),
+        member("dec_b", "accepted", { predecessorId: "dec_a" }),
+        member("dec_c", "accepted"),
+      ],
+      recordedTransitions: [{ supersededDecisionId: "dec_a", supersedingDecisionId: "dec_b" }],
+      truncated: false,
+    });
+    // dec_b survives the recorded transition, dec_c never took part in one.
+    expect(verdict.state).toBe("unresolved-accepted-decisions");
+    expect(verdict).not.toHaveProperty("operativeDecisionId");
+    expect(verdict.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+  });
+
+  it("treats truncation as unresolved safety, never as a resolved set", () => {
+    for (const members of [
+      [member("dec_a", "accepted"), member("dec_p", "proposed")],
+      [member("dec_a", "accepted")],
+    ]) {
+      const verdict = deriveDecisionSetState({ members, recordedTransitions: [], truncated: true });
+      expect(verdict.state).toBe("truncated");
+      expect(verdict).not.toHaveProperty("operativeDecisionId");
+      expect(verdict.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    }
+    // Two survivors after a cut is still an unresolved conflict, not truncation.
+    const both = deriveDecisionSetState({
+      members: [member("dec_a", "accepted"), member("dec_b", "accepted")],
+      recordedTransitions: [],
+      truncated: true,
+    });
+    expect(both.state).toBe("unresolved-accepted-decisions");
+    expect(both).not.toHaveProperty("operativeDecisionId");
+    expect(both.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+  });
+
+  it("derives the same state from reversed membership order and a needsReview difference", () => {
+    const forward = [
+      member("dec_a", "accepted", { needsReview: true, needsReviewFindingIds: ["find_1"] }),
+      member("dec_b", "accepted"),
+    ];
+    const reversed = [
+      member("dec_b", "accepted"),
+      member("dec_a", "accepted", { needsReview: true, needsReviewFindingIds: ["find_1"] }),
+    ];
+    const left = deriveDecisionSetState({ members: forward, recordedTransitions: [], truncated: false });
+    const right = deriveDecisionSetState({ members: reversed, recordedTransitions: [], truncated: false });
+    expect(left).toEqual(right);
+    expect(left.state).toBe("unresolved-accepted-decisions");
+    expect(left).not.toHaveProperty("operativeDecisionId");
+
+    // A newer member that needs review does not displace the older one.
+    const withNewer = [
+      member("dec_a", "accepted", { provenance: { createdBy: ACTOR, createdAt: "2026-01-01T00:00:00.000Z" } }),
+      member("dec_b", "accepted", {
+        needsReview: true,
+        needsReviewFindingIds: ["find_1"],
+        provenance: { createdBy: ACTOR, createdAt: "2026-09-01T00:00:00.000Z" },
+      }),
+    ];
+    expect(deriveDecisionSetState({ members: withNewer, recordedTransitions: [], truncated: false })).toEqual(left);
+  });
+
+  it("records a transition only when both ends are members", () => {
+    const inside = recordedDecisionTransitions([
+      member("dec_old", "superseded", { successorId: "dec_new" }),
+      member("dec_new", "accepted", { predecessorId: "dec_old" }),
+    ]);
+    expect(inside).toEqual([{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }]);
+
+    // Both directions of the same recorded link collapse to one pair.
+    const bothDirections = recordedDecisionTransitions([
+      member("dec_old", "superseded", { successorId: "dec_new" }),
+      member("dec_new", "accepted", { predecessorId: "dec_old" }),
+      member("dec_newer", "superseded", { successorId: "dec_new" }),
+    ]);
+    expect(bothDirections).toHaveLength(2);
+
+    expect(
+      recordedDecisionTransitions([
+        member("dec_old", "superseded", { successorId: "dec_outside" }),
+        member("dec_new", "accepted", { predecessorId: "dec_outside" }),
+      ]),
+    ).toEqual([]);
+    expect(
+      recordedDecisionTransitions([member("dec_self", "accepted", { predecessorId: "dec_self", successorId: "dec_self" })]),
+    ).toEqual([]);
+    expect(recordedDecisionTransitions([member("dec_lonely", "accepted")])).toEqual([]);
+  });
+
+  it("maps a set member to a decision-set handoff record", () => {
+    const set = decisionSet(
+      [
+        member("dec_a", "accepted", {
+          summary: "accept the partner callback rule",
+          rationale: "rotate within the window",
+          predecessorId: "dec_old",
+          successorId: "dec_newer",
+          needsReview: true,
+          needsReviewFindingIds: ["find_1"],
+          relationshipIdsTruncated: true,
+        }),
+        member("dec_b", "superseded", { summaryTruncated: true }),
+      ],
+      { recordedTransitions: [{ supersededDecisionId: "dec_a", supersedingDecisionId: "dec_b" }] },
+    );
+    const rows = handoffDecisionSetMembers(set);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toEqual({
+      section: "decision-set",
+      kind: "decision",
+      id: "dec_a",
+      lifecycle: "accepted",
+      text: "accept the partner callback rule",
+      textTruncated: false,
+      provenance: { createdBy: ACTOR, createdAt: NOW },
+      rationale: "rotate within the window",
+      predecessorId: "dec_old",
+      successorId: "dec_newer",
+      needsReview: true,
+      needsReviewFindingIds: ["find_1"],
+      relationshipIdsTruncated: true,
+    });
+    // No rationale, no ids: absent keys stay absent rather than becoming null.
+    expect(rows[1]).toEqual({
+      section: "decision-set",
+      kind: "decision",
+      id: "dec_b",
+      lifecycle: "superseded",
+      text: "partner callback dec_b",
+      textTruncated: true,
+      provenance: { createdBy: ACTOR, createdAt: NOW },
+    });
+    expect(rows.every((row) => row.section === "decision-set")).toBe(true);
+  });
+
+  it("carries an unresolved set into the packet with the frozen beforeActing string", () => {
+    const unresolved = decisionSet([member("dec_a", "accepted"), member("dec_b", "accepted")]);
+    expect(unresolved.state).toBe("unresolved-accepted-decisions");
+    const packet = projectHandoffPacket(packetInput(recallShell({ decisionSet: unresolved })));
+    expect(packet.schemaVersion).toBe(2);
+    expect(packet.decisionSet?.state).toBe("unresolved-accepted-decisions");
+    expect(packet.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(packet.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(packet.decisionSet?.members.map((row) => row.id)).toEqual(["dec_a", "dec_b"]);
+    expect(packet.decisionSet?.members.every((row) => row.section === "decision-set")).toBe(true);
+    expect(packet.authority).toBe(
+      "This offline copy is not a Campfire credential, not a live current-state guarantee, and not permission to execute a decision.",
+    );
+
+    const linked = decisionSet(
+      [member("dec_old", "superseded", { successorId: "dec_new" }), member("dec_new", "accepted", { predecessorId: "dec_old" })],
+      { recordedTransitions: [{ supersededDecisionId: "dec_old", supersedingDecisionId: "dec_new" }] },
+    );
+    const resolved = projectHandoffPacket(packetInput(recallShell({ decisionSet: linked })));
+    expect(resolved.decisionSet?.state).toBe("linked-accepted-decisions");
+    expect(resolved.decisionSet?.operativeDecisionId).toBe("dec_new");
+    expect(resolved.decisionSet?.beforeActing).toBeUndefined();
+
+    const single = projectHandoffPacket(
+      packetInput(recallShell({ decisionSet: decisionSet([member("dec_only", "accepted")]) })),
+    );
+    expect(single.decisionSet?.state).toBe("single-accepted-decision");
+    expect(single.decisionSet?.operativeDecisionId).toBe("dec_only");
+    expect(single.decisionSet?.beforeActing).toBeUndefined();
+  });
+
+  it("fits the decision set before anchors and reports what it dropped", () => {
+    const bigMember = (id: string, size: number): RecallDecisionSetMember =>
+      member(id, "accepted", { summary: `${id} ${"s".repeat(size)}`, summaryTruncated: true });
+
+    // The set fits but the set plus one anchor does not. The anchor is what the
+    // cap takes: a conflict must not be the first thing dropped.
+    const fits = decisionSet([bigMember("dec_a", 30_000), bigMember("dec_b", 30_000)]);
+    expect(fits.state).toBe("unresolved-accepted-decisions");
+    const openTasks = [record("anchor_drop", `A${"a".repeat(4_000)}`, "anchor")];
+    const packet = projectHandoffPacket(packetInput(recallShell({ decisionSet: fits }), anchors(openTasks)));
+    const serialized = JSON.stringify(packet);
+    expect(Buffer.byteLength(serialized, "utf8")).toBeLessThanOrEqual(HANDOFF_PACKET_MAX_BYTES);
+    expect(packet.decisionSet?.members.map((row) => row.id)).toEqual(["dec_a", "dec_b"]);
+    expect(packet.decisionSet?.state).toBe("unresolved-accepted-decisions");
+    expect(packet.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(packet.anchors.openTasks).toEqual([]);
+    expect(packet.omissions).toEqual(["anchors.openTasks: 1 not included"]);
+
+    // The set itself cannot fit, so a member is dropped and the kept subset is
+    // re-derived rather than keeping the two-member verdict.
+    const oversizedSet = decisionSet([bigMember("dec_a", 32_000), bigMember("dec_b", 32_000)]);
+    const cut = projectHandoffPacket(packetInput(recallShell({ decisionSet: oversizedSet })));
+    expect(Buffer.byteLength(JSON.stringify(cut), "utf8")).toBeLessThanOrEqual(HANDOFF_PACKET_MAX_BYTES);
+    expect(cut.decisionSet?.members.map((row) => row.id)).toEqual(["dec_a"]);
+    expect(cut.decisionSet?.total).toBe(2);
+    expect(cut.decisionSet?.returned).toBe(1);
+    expect(cut.decisionSet?.truncated).toBe(true);
+    expect(cut.decisionSet?.state).toBe("truncated");
+    expect(cut.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(cut.decisionSet?.operativeDecisionId).toBeUndefined();
+    expect(cut.omissions).toEqual(["decisionSet: 1 not included"]);
+  });
+
+  it("removes recorded transitions whose endpoints were dropped by the packet cap", () => {
+    const old = member("dec_old", "superseded", { summary: "o".repeat(33_000), successorId: "dec_new" });
+    const next = member("dec_new", "accepted", { summary: "n".repeat(33_000), predecessorId: "dec_old" });
+    const packet = projectHandoffPacket(packetInput(recallShell({ decisionSet: decisionSet([old, next]) })));
+    expect(packet.decisionSet?.members.map((row) => row.id)).toEqual(["dec_old"]);
+    expect(packet.decisionSet?.recordedTransitions).toEqual([]);
+    expect(packet.decisionSet?.state).toBe("truncated");
+  });
+
+  // §4.1: truncation is never reported as safety, and §8 makes a truncated set
+  // that reports itself safe a NO-GO. When every member is dropped the set has
+  // zero accepted survivors, and the cap has hidden whatever came past the
+  // limit, so the state must be `truncated` with `beforeActing` present.
+  //
+  // These currently FAIL against src/domain/recall.ts: `deriveDecisionSetState`
+  // A byte cap can drop every member. The set must then report `truncated`,
+  // never `no-accepted-decision`: an empty set is indistinguishable from a
+  // workspace with no accepted decision, and claiming that would report safety
+  // the cap destroyed. Reachable from both the 48 KiB and 64 KiB fits.
+  it("reports a fully dropped recall set as truncated, never as no-accepted-decision", () => {
+    const recall = recallShell({
+      decisionSet: {
+        ...decisionSet([member("dec_only", "accepted")]),
+        members: [member("dec_only", "accepted", { summary: "s".repeat(60_000) })],
+        total: 1,
+        truncated: false,
+      },
+    });
+    const capped = capRecallResponse(recall, () => "cursor");
+    expect(capped.decisionSet?.members).toEqual([]);
+    expect(capped.decisionSet?.truncated).toBe(true);
+    expect(capped.decisionSet?.state).toBe("truncated");
+    expect(capped.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(capped.decisionSet?.operativeDecisionId).toBeUndefined();
+  });
+
+  it("reports a fully dropped packet set as truncated, never as no-accepted-decision", () => {
+    const oversized = decisionSet([
+      member("dec_huge", "accepted", { summary: "h".repeat(HANDOFF_PACKET_MAX_BYTES) }),
+    ]);
+    const packet = projectHandoffPacket(packetInput(recallShell({ decisionSet: oversized })));
+    expect(packet.decisionSet?.members).toEqual([]);
+    expect(packet.decisionSet?.total).toBe(1);
+    expect(packet.decisionSet?.truncated).toBe(true);
+    expect(packet.decisionSet?.state).toBe("truncated");
+    expect(packet.decisionSet?.beforeActing).toBe(DECISION_SET_UNRESOLVED_NEXT_STEP);
+    expect(packet.omissions).toContain("decisionSet: 1 not included");
   });
 });

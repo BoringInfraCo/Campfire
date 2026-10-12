@@ -17,20 +17,30 @@ import {
   capIdList,
   capRecallResponse,
   cursorForHit,
+  deriveDecisionSetState,
   finishRecallSection,
   matchedFieldName,
   matchingExcerpt,
   recallSourceCursor,
+  recordedDecisionTransitions,
   type CampfireHandoffPacket,
   type HandoffAnchorPages,
   type HandoffRecord,
   type RecallCursor,
+  type RecallDecisionSet,
+  type RecallDecisionSetMember,
   type RecallHit,
   type RecallSection,
   type RecallSectionName,
   type WorkspaceRecall,
 } from "../domain/recall.js";
-import type { RecallCandidate, RecallGoalRow, RecallPage, RecallPageQuery } from "../store/recall-queries.js";
+import type {
+  RecallCandidate,
+  RecallDecisionSetPage,
+  RecallGoalRow,
+  RecallPage,
+  RecallPageQuery,
+} from "../store/recall-queries.js";
 import { attachCitations } from "./correction-read.js";
 import type { DecisionCitation } from "../domain/types.js";
 
@@ -54,6 +64,9 @@ export interface LoadedRecall {
   current: RecallPage;
   historical: RecallPage;
   artifacts: RecallPage;
+  decisionSet: RecallDecisionSetPage;
+  /** Decision id to its cited finding ids that are no longer current. */
+  staleByDecision: ReadonlyMap<string, readonly string[]>;
   links: RecallLinkIndex;
 }
 
@@ -70,7 +83,10 @@ export function recallSectionRequest(
   return request;
 }
 
-export function recallLookupIds(candidates: readonly RecallCandidate[]): {
+export function recallLookupIds(
+  candidates: readonly RecallCandidate[],
+  decisionSetMembers: readonly { id: string; predecessorId?: string; successorId?: string }[] = [],
+): {
   pageFindingIds: string[];
   pageDecisionIds: string[];
   findingIds: string[];
@@ -92,6 +108,15 @@ export function recallLookupIds(candidates: readonly RecallCandidate[]): {
       if (candidate.predecessorId !== undefined) decisionIds.add(candidate.predecessorId);
       if (candidate.successorId !== undefined) decisionIds.add(candidate.successorId);
     }
+  }
+  // Set members need their own citations and stale findings even when they did
+  // not earn a page slot, and their links need the same workspace confirmation
+  // the hits get. One extra hop either way; nothing expands transitively.
+  for (const member of decisionSetMembers) {
+    if (!pageDecisionIds.includes(member.id)) pageDecisionIds.push(member.id);
+    decisionIds.add(member.id);
+    if (member.predecessorId !== undefined) decisionIds.add(member.predecessorId);
+    if (member.successorId !== undefined) decisionIds.add(member.successorId);
   }
   return {
     pageFindingIds,
@@ -174,6 +199,11 @@ function hitFromCandidate(candidate: RecallCandidate, normalizedQuery: string, l
     : [];
   const review = capIdList(reviewIds);
   const relationshipIdsTruncated = evidence.truncated || basis.truncated || review.truncated;
+  // For a decision the rcl-1 secondary field is the rationale column, so the
+  // full stored rationale is already on the row whether or not the tier matched
+  // it. Carrying it lets a caller state the operational constraint and cite this
+  // hit's id in the same breath.
+  const rationale = candidate.kind === "decision" ? boundedDecisionRationale(candidate.secondaryText) : {};
   return {
     kind: candidate.kind,
     id: candidate.id,
@@ -182,6 +212,7 @@ function hitFromCandidate(candidate: RecallCandidate, normalizedQuery: string, l
     excerpt: excerpt.excerpt,
     excerptTruncated: excerpt.truncated,
     lifecycle: candidate.lifecycle,
+    ...rationale,
     provenance: {
       createdBy: { actorId: candidate.createdByActorId, actorType: candidate.createdByActorType },
       ...(candidate.agentSessionId === undefined ? {} : { agentSessionId: candidate.agentSessionId }),
@@ -210,6 +241,66 @@ function sectionFromPage(
   return finishRecallSection(hits, total, next);
 }
 
+/**
+ * Group every decision the query matches so two accepted decisions that
+ * conflict are visible together instead of one hit at a time.
+ *
+ * Nothing here decides which decision governs. `deriveDecisionSetState` reads
+ * recorded transitions only, and cross-workspace ids are dropped after a point
+ * lookup confirmed the workspace.
+ */
+export function assembleDecisionSet(loaded: LoadedRecall): RecallDecisionSet {
+  const page = loaded.decisionSet;
+  const links = loaded.links;
+  const members: RecallDecisionSetMember[] = page.members.map((row) => {
+    const summary = boundRecallText(row.summary, RECALL_GOAL_TEXT_MAX_BYTES);
+    const basis = capIdList(
+      sameWorkspaceIds(links.citationsByDecision.get(row.id) ?? [], loaded.workspace.id, links.findingWorkspace),
+    );
+    // Same rule as the section hits: a superseded decision does not carry the
+    // flag, and the cited finding must actually be non-current.
+    const review = row.lifecycle === "superseded"
+      ? { ids: [] as string[], truncated: false }
+      : capIdList(
+        (loaded.staleByDecision.get(row.id) ?? [])
+          .filter((id) => links.findingWorkspace.get(id) === loaded.workspace.id)
+          .filter((id) => links.findingCurrentness.get(id) !== "current"),
+      );
+    const predecessorId = confirmed(row.predecessorId, loaded.workspace.id, links.decisionWorkspace);
+    const successorId = confirmed(row.successorId, loaded.workspace.id, links.decisionWorkspace);
+    return {
+      id: row.id,
+      lifecycle: row.lifecycle,
+      summary: summary.text ?? "",
+      summaryTruncated: summary.truncated,
+      ...boundedDecisionRationale(row.rationale),
+      provenance: {
+        createdBy: { actorId: row.createdByActorId, actorType: row.createdByActorType },
+        ...(row.agentSessionId === undefined ? {} : { agentSessionId: row.agentSessionId }),
+        createdAt: row.createdAt,
+      },
+      ...(predecessorId === undefined ? {} : { predecessorId }),
+      ...(successorId === undefined ? {} : { successorId }),
+      ...(basis.ids.length === 0 ? {} : { basisFindingIds: basis.ids }),
+      ...(review.ids.length === 0 ? {} : { needsReview: true as const, needsReviewFindingIds: review.ids }),
+      ...(basis.truncated || review.truncated ? { relationshipIdsTruncated: true as const } : {}),
+    };
+  });
+  const truncated = members.length < page.total;
+  const recordedTransitions = recordedDecisionTransitions(members);
+  const verdict = deriveDecisionSetState({ members, recordedTransitions, truncated });
+  return {
+    members,
+    total: page.total,
+    returned: members.length,
+    truncated,
+    state: verdict.state,
+    ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
+    recordedTransitions,
+    ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+  };
+}
+
 export function assembleRecall(loaded: LoadedRecall): WorkspaceRecall {
   const name = boundRecallText(loaded.workspace.name, RECALL_NAME_MAX_BYTES);
   const recency = new Map<string, string>();
@@ -234,6 +325,7 @@ export function assembleRecall(loaded: LoadedRecall): WorkspaceRecall {
     current: sectionFromPage("current", loaded.current, loaded),
     historical: sectionFromPage("historical", loaded.historical, loaded),
     artifacts: sectionFromPage("artifacts", loaded.artifacts, loaded),
+    decisionSet: assembleDecisionSet(loaded),
     completeness: {
       fullHistoryIncluded: false,
       responseTruncated: false,

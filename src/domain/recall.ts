@@ -1,9 +1,16 @@
 /**
- * RCL-001 recall and handoff projection.
+ * Recall and handoff projection.
  *
  * This module is the frozen selection and packet rule. CLI, MCP, local HTTP,
  * and the Worker call it. They do not grow a second ranker. SQLite and D1
  * execute the same normalization in `src/store/recall-queries.ts`.
+ *
+ * RCL-003 adds `decisionSet` (schema version 2). The set groups every decision
+ * the same query matches so a caller can see that two accepted decisions
+ * conflict, and it is derived from recorded transitions only. Campfire never
+ * infers an operative decision from position, recency, authorship, or
+ * `needsReview`. Ordering is untouched: `rcl-1` still ranks the section hits,
+ * and the set is neither ranked nor paginated.
  *
  * Ordering version `rcl-1`:
  * 1. tier ascending — exact primary, exact secondary, prefix primary,
@@ -22,9 +29,9 @@ import { contributionCursor, encodeContextCursor } from "./context-policy.js";
 import { RecallRestart, ValidationError } from "./errors.js";
 import type { ActorRef, ActorType, GoalStatus } from "./types.js";
 
-export const RECALL_SCHEMA_VERSION = 1 as const;
+export const RECALL_SCHEMA_VERSION = 2 as const;
 export const RECALL_ORDERING_VERSION = "rcl-1" as const;
-export const HANDOFF_PACKET_SCHEMA_VERSION = 1 as const;
+export const HANDOFF_PACKET_SCHEMA_VERSION = 2 as const;
 export const RECALL_DEFAULT_LIMIT = 20;
 export const RECALL_MAX_LIMIT = 50;
 export const RECALL_QUERY_MAX_CHARS = 200;
@@ -36,7 +43,18 @@ export const HANDOFF_PACKET_MAX_BYTES = 64 * 1024;
 export const HANDOFF_ANCHOR_LIMIT = 10;
 /** Decision rationale is separate from the query excerpt. The summary can match while the operational constraint sits only in the rationale. */
 export const HANDOFF_RATIONALE_MAX_BYTES = 1024;
+/** Decision-set members. Independent of `limit` and `cursor`: paging the sections never changes the set. */
+export const RECALL_DECISION_SET_LIMIT = 10;
 export const RECALL_RELATIONSHIP_LIMIT = 20;
+
+/**
+ * The only sentence Campfire produces about an unresolved decision set. It is
+ * frozen here so it is written by the same rule on SQLite and D1, and so it is
+ * never model-generated. It states the boundary and the two recorded ways out;
+ * it does not choose a rule.
+ */
+export const DECISION_SET_UNRESOLVED_NEXT_STEP =
+  "Campfire has not selected an operative decision. Do not execute either rule. Seek a recorded retirement of one accepted decision, or an accepted replacement that names its predecessor and is accepted with a reason." as const;
 /** Matches the SQL `replace('  ', ' ')` pass count. Runs longer than 2^16 spaces stay partially collapsed on both sides. */
 export const RECALL_SPACE_COLLAPSE_PASSES = 16;
 
@@ -71,6 +89,13 @@ export interface RecallHit {
   /** Exact stored lifecycle. Tasks and decisions use status. Findings use currentness. Artifacts use type. */
   lifecycle: string;
   provenance: RecallProvenance;
+  /**
+   * Bounded stored decision rationale. Decision hits only, and separate from
+   * the excerpt: a summary can match while the operational constraint sits only
+   * in the rationale. Added in schema version 2.
+   */
+  rationale?: string;
+  rationaleTruncated?: true;
   predecessorId?: string;
   successorId?: string;
   evidenceArtifactIds?: string[];
@@ -78,6 +103,51 @@ export interface RecallHit {
   relationshipIdsTruncated?: true;
   needsReview?: true;
   needsReviewFindingIds?: string[];
+}
+
+/** A recorded supersession whose two ends are both members of the returned set. */
+export interface RecallDecisionTransition {
+  supersededDecisionId: string;
+  supersedingDecisionId: string;
+}
+
+export type RecallDecisionSetState =
+  | "no-accepted-decision"
+  | "single-accepted-decision"
+  | "linked-accepted-decisions"
+  | "unresolved-accepted-decisions"
+  | "truncated";
+
+export interface RecallDecisionSetMember {
+  id: string;
+  /** Exact stored decision status. */
+  lifecycle: string;
+  /** Bounded decision summary. Separate from the query excerpt. */
+  summary: string;
+  summaryTruncated: boolean;
+  /** Bounded stored rationale when the decision has one. */
+  rationale?: string;
+  rationaleTruncated?: true;
+  provenance: RecallProvenance;
+  predecessorId?: string;
+  successorId?: string;
+  basisFindingIds?: string[];
+  needsReview?: true;
+  needsReviewFindingIds?: string[];
+  relationshipIdsTruncated?: true;
+}
+
+export interface RecallDecisionSet {
+  members: RecallDecisionSetMember[];
+  total: number;
+  returned: number;
+  truncated: boolean;
+  state: RecallDecisionSetState;
+  /** Sole accepted survivor among query-matched members only; not a workspace-wide decision claim. */
+  operativeDecisionId?: string;
+  recordedTransitions: RecallDecisionTransition[];
+  /** Present when `state` is `unresolved-accepted-decisions` or `truncated`. */
+  beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
 }
 
 export interface RecallSection {
@@ -115,6 +185,13 @@ export interface WorkspaceRecall {
   current: RecallSection;
   historical: RecallSection;
   artifacts: RecallSection;
+  /**
+   * Every decision this query matches, grouped. Independent of `limit` and
+   * `cursor`. Added in schema version 2. Absent only when the caller asked for
+   * a workspace with no matching decision, in which case `members` is empty
+   * and `state` is `no-accepted-decision`.
+   */
+  decisionSet?: RecallDecisionSet;
   completeness: {
     fullHistoryIncluded: false;
     responseTruncated: boolean;
@@ -129,7 +206,7 @@ export interface HandoffActor {
 }
 
 export interface HandoffRecord {
-  section: RecallSectionName | "anchor";
+  section: RecallSectionName | "anchor" | "decision-set";
   kind: RecallKind | "task" | "decision";
   id: string;
   lifecycle: string;
@@ -154,6 +231,22 @@ export interface HandoffCount {
   truncated: boolean;
 }
 
+/**
+ * The decision set carried offline. `members` uses `HandoffRecord` with
+ * `section: "decision-set"`, so a recipient reads one record shape throughout
+ * the file. `text` is the bounded decision summary.
+ */
+export interface HandoffDecisionSet {
+  members: HandoffRecord[];
+  total: number;
+  returned: number;
+  truncated: boolean;
+  state: RecallDecisionSetState;
+  operativeDecisionId?: string;
+  recordedTransitions: RecallDecisionTransition[];
+  beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
+}
+
 export interface CampfireHandoffPacket {
   schemaVersion: typeof HANDOFF_PACKET_SCHEMA_VERSION;
   kind: "CampfireHandoffPacket";
@@ -171,6 +264,8 @@ export interface CampfireHandoffPacket {
   recipient: HandoffActor;
   goal?: RecallGoal;
   records: HandoffRecord[];
+  /** Added in schema version 2. Omitted when the byte fit drops every member. */
+  decisionSet?: HandoffDecisionSet;
   anchors: {
     openTasks: HandoffRecord[];
     blockedTasks: HandoffRecord[];
@@ -468,6 +563,90 @@ export function capIdList(ids: readonly string[]): { ids: string[]; truncated: b
   return { ids: ids.slice(0, RECALL_RELATIONSHIP_LIMIT), truncated: true };
 }
 
+export interface DecisionSetVerdict {
+  state: RecallDecisionSetState;
+  operativeDecisionId?: string;
+  beforeActing?: typeof DECISION_SET_UNRESOLVED_NEXT_STEP;
+}
+
+/**
+ * Decide whether a decision set is safe to act on, from recorded transitions only.
+ *
+ * A member is removed from `surviving` only when a transition inside the set
+ * names it as `supersededDecisionId` and the superseding member is itself
+ * accepted. Nothing else promotes or demotes a decision: not recency, not
+ * position, not `needsReview`, not authorship. When two accepted decisions
+ * survive, this reports the conflict and refuses to name one.
+ */
+export function deriveDecisionSetState(input: {
+  members: readonly { id: string; lifecycle: string }[];
+  recordedTransitions: readonly RecallDecisionTransition[];
+  truncated: boolean;
+}): DecisionSetVerdict {
+  const memberIds = new Set(input.members.map((member) => member.id));
+  const accepted = input.members.filter((member) => member.lifecycle === "accepted").map((member) => member.id);
+  const superseded = new Set<string>();
+  for (const transition of input.recordedTransitions) {
+    const inside = memberIds.has(transition.supersededDecisionId) && memberIds.has(transition.supersedingDecisionId);
+    if (inside && accepted.includes(transition.supersedingDecisionId)) superseded.add(transition.supersededDecisionId);
+  }
+  const surviving = accepted.filter((id) => !superseded.has(id));
+  // Truncation is checked before the empty case, not after. A byte cap can drop
+  // every member, and an empty set is then indistinguishable from a workspace
+  // with no accepted decision. Reporting `no-accepted-decision` there would
+  // claim safety that the cap destroyed.
+  if (input.truncated && surviving.length <= 1) return { state: "truncated", beforeActing: DECISION_SET_UNRESOLVED_NEXT_STEP };
+  if (accepted.length === 0) return { state: "no-accepted-decision" };
+  if (surviving.length !== 1) return { state: "unresolved-accepted-decisions", beforeActing: DECISION_SET_UNRESOLVED_NEXT_STEP };
+  const operativeDecisionId = surviving[0]!;
+  const linkedToSurvivor = input.recordedTransitions.some(
+    (transition) =>
+      memberIds.has(transition.supersededDecisionId) &&
+      transition.supersedingDecisionId === operativeDecisionId,
+  );
+  return {
+    state: linkedToSurvivor ? "linked-accepted-decisions" : "single-accepted-decision",
+    operativeDecisionId,
+  };
+}
+
+/**
+ * Recorded supersessions whose two ends are both in the returned set.
+ *
+ * The link is split across two rows by COR-001: the predecessor carries
+ * `successorId`, the successor carries `predecessorId`. A pair is therefore
+ * accepted from either direction, and a row that names a decision outside the
+ * set does not resolve it — the caller cannot see that decision here.
+ */
+export function recordedDecisionTransitions(
+  members: readonly { id: string; predecessorId?: string; successorId?: string }[],
+): RecallDecisionTransition[] {
+  const ids = new Set(members.map((member) => member.id));
+  const found = new Map<string, RecallDecisionTransition>();
+  const add = (from: string, to: string): void => {
+    if (from === to) return;
+    if (!ids.has(from) || !ids.has(to)) return;
+    found.set(`${from} ${to}`, { supersededDecisionId: from, supersedingDecisionId: to });
+  };
+  for (const member of members) {
+    // predecessor -> this member is the recorded supersession direction.
+    if (member.predecessorId !== undefined) add(member.predecessorId, member.id);
+    // this member -> successor is the same transition seen from the other row.
+    if (member.successorId !== undefined) add(member.id, member.successorId);
+  }
+  return [...found.values()];
+}
+
+function transitionsWithinMembers(
+  transitions: readonly RecallDecisionTransition[],
+  members: readonly { id: string }[],
+): RecallDecisionTransition[] {
+  const ids = new Set(members.map((member) => member.id));
+  return transitions.filter(
+    (transition) => ids.has(transition.supersededDecisionId) && ids.has(transition.supersedingDecisionId),
+  );
+}
+
 export function jsonByteLength(value: unknown): number {
   return Buffer.byteLength(JSON.stringify(value), "utf8");
 }
@@ -479,9 +658,10 @@ export function capRecallResponse(
   let current = [...recall.current.items];
   let historical = [...recall.historical.items];
   let artifacts = [...recall.artifacts.items];
-  const dropped = { current: false, historical: false, artifacts: false };
+  let decisionMembers = recall.decisionSet === undefined ? undefined : [...recall.decisionSet.members];
+  const dropped = { current: false, historical: false, artifacts: false, decisionSet: false };
   const render = (): WorkspaceRecall =>
-    renderRecall(recall, current, historical, artifacts, dropped, cursorFor);
+    renderRecall(recall, current, historical, artifacts, decisionMembers, dropped, cursorFor);
   let fitted = render();
   while (jsonByteLength(fitted) > RECALL_RESPONSE_MAX_BYTES) {
     if (artifacts.length > 0) {
@@ -493,6 +673,11 @@ export function capRecallResponse(
     } else if (current.length > 0) {
       current = current.slice(0, -1);
       dropped.current = true;
+    } else if (decisionMembers !== undefined && decisionMembers.length > 0) {
+      // Set members drop last. Dropping one marks the set truncated, which
+      // re-derives its state, so a cut set never keeps an operative decision.
+      decisionMembers = decisionMembers.slice(0, -1);
+      dropped.decisionSet = true;
     } else {
       break;
     }
@@ -506,7 +691,8 @@ function renderRecall(
   current: RecallHit[],
   historical: RecallHit[],
   artifacts: RecallHit[],
-  dropped: { current: boolean; historical: boolean; artifacts: boolean },
+  decisionMembers: RecallDecisionSetMember[] | undefined,
+  dropped: { current: boolean; historical: boolean; artifacts: boolean; decisionSet: boolean },
   cursorFor: (section: RecallSectionName, hit: RecallHit) => string,
 ): WorkspaceRecall {
   const section = (
@@ -533,14 +719,35 @@ function renderRecall(
     }
     return page;
   };
-  const responseTruncated = dropped.current || dropped.historical || dropped.artifacts;
-  return {
+  const responseTruncated = dropped.current || dropped.historical || dropped.artifacts || dropped.decisionSet;
+  const base: WorkspaceRecall = {
     ...recall,
     current: section("current", current, recall.current, dropped.current),
     historical: section("historical", historical, recall.historical, dropped.historical),
     artifacts: section("artifacts", artifacts, recall.artifacts, dropped.artifacts),
     completeness: { ...recall.completeness, responseTruncated },
   };
+  if (recall.decisionSet === undefined || decisionMembers === undefined) return base;
+  const truncated = recall.decisionSet.truncated || dropped.decisionSet;
+  const recordedTransitions = transitionsWithinMembers(recall.decisionSet.recordedTransitions, decisionMembers);
+  const verdict = deriveDecisionSetState({
+    members: decisionMembers,
+    recordedTransitions,
+    truncated,
+  });
+  // Rebuilt rather than spread: a dropped member must clear `operativeDecisionId`
+  // and `beforeActing` instead of leaving the pre-drop values behind.
+  const set: RecallDecisionSet = {
+    members: decisionMembers,
+    total: recall.decisionSet.total,
+    returned: decisionMembers.length,
+    truncated,
+    state: verdict.state,
+    recordedTransitions,
+    ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
+    ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+  };
+  return { ...base, decisionSet: set };
 }
 
 export interface HandoffAnchorPages {
@@ -556,11 +763,15 @@ export function projectHandoffPacket(input: {
   issuer: HandoffActor;
   recipient: HandoffActor;
   anchors: HandoffAnchorPages;
-  /** Full decision rationale by id. The packet bounds it; the recall response does not gain this field. */
+  /**
+   * Full decision rationale by id, for records that matched but whose rationale
+   * did not fit inside the response cap. Decision hits and set members already
+   * carry a bounded rationale from the recall response.
+   */
   decisionRationales?: ReadonlyMap<string, string>;
 }): CampfireHandoffPacket {
   const recallRecords = packetRecords(input.recall, input.decisionRationales);
-  const header = basePacket(input, [], {
+  const header = basePacket(input, undefined, [], {
     openTasks: [],
     blockedTasks: [],
     proposedDecisions: [],
@@ -569,6 +780,11 @@ export function projectHandoffPacket(input: {
   if (jsonByteLength(header) > HANDOFF_PACKET_MAX_BYTES) {
     throw new ValidationError("Handoff packet header exceeds 64 KiB", { field: "packet" });
   }
+  const omissions: string[] = [];
+  // The decision set is fitted first. A conflict must not be the first thing
+  // dropped under the cap, because a packet that silently loses it would let a
+  // recipient act on a rule with nothing saying a second rule is accepted.
+  const decisionSet = fitDecisionSet(input, omissions);
   const anchorOrder: Array<keyof HandoffAnchorPages & keyof CampfireHandoffPacket["anchors"]> = [
     "openTasks",
     "blockedTasks",
@@ -581,13 +797,12 @@ export function projectHandoffPacket(input: {
     proposedDecisions: [],
     acceptedDecisions: [],
   };
-  const omissions: string[] = [];
   for (const key of anchorOrder) {
     const source = input.anchors[key];
     const kept: HandoffRecord[] = [];
     for (const record of source) {
       const next = { ...keptAnchors, [key]: [...kept, record] };
-      if (jsonByteLength(basePacket(input, [], next, omissions)) > HANDOFF_PACKET_MAX_BYTES) break;
+      if (jsonByteLength(basePacket(input, decisionSet, [], next, omissions)) > HANDOFF_PACKET_MAX_BYTES) break;
       kept.push(record);
     }
     keptAnchors[key] = kept;
@@ -596,16 +811,16 @@ export function projectHandoffPacket(input: {
   }
   const keptRecords: HandoffRecord[] = [];
   for (const record of recallRecords) {
-    const candidate = basePacket(input, [...keptRecords, record], keptAnchors, omissions);
+    const candidate = basePacket(input, decisionSet, [...keptRecords, record], keptAnchors, omissions);
     if (jsonByteLength(candidate) > HANDOFF_PACKET_MAX_BYTES) break;
     keptRecords.push(record);
   }
   const recordsOmitted = recallRecords.length - keptRecords.length;
   if (recordsOmitted > 0) omissions.push(`records: ${recordsOmitted} not included`);
-  let packet = basePacket(input, keptRecords, keptAnchors, omissions);
+  let packet = basePacket(input, decisionSet, keptRecords, keptAnchors, omissions);
   while (jsonByteLength(packet) > HANDOFF_PACKET_MAX_BYTES && keptRecords.length > 0) {
     keptRecords.pop();
-    const without = basePacket(input, keptRecords, keptAnchors, [
+    const without = basePacket(input, decisionSet, keptRecords, keptAnchors, [
       ...omissions.filter((line) => !line.startsWith("records:")),
       `records: ${recallRecords.length - keptRecords.length} not included`,
     ]);
@@ -615,6 +830,82 @@ export function projectHandoffPacket(input: {
     throw new ValidationError("Handoff packet header exceeds 64 KiB", { field: "packet" });
   }
   return packet;
+}
+
+function fitDecisionSet(
+  input: { recall: WorkspaceRecall; issuer: HandoffActor; recipient: HandoffActor; anchors: HandoffAnchorPages },
+  omissions: string[],
+): HandoffDecisionSet | undefined {
+  const set = input.recall.decisionSet;
+  if (set === undefined) return undefined;
+  const source = handoffDecisionSetMembers(set);
+  const emptyAnchors = { openTasks: [], blockedTasks: [], proposedDecisions: [], acceptedDecisions: [] };
+  const withMembers = (members: HandoffRecord[]): HandoffDecisionSet => {
+    // Re-derived after every fit so a kept subset never keeps a state or an
+    // operative decision id that its own members no longer support.
+    const recordedTransitions = transitionsWithinMembers(set.recordedTransitions, members);
+    const verdict = deriveDecisionSetState({
+      members,
+      recordedTransitions,
+      truncated: set.truncated || members.length < set.total,
+    });
+    return {
+      members,
+      total: set.total,
+      returned: members.length,
+      truncated: set.truncated || members.length < set.total,
+      state: verdict.state,
+      recordedTransitions,
+      ...(verdict.operativeDecisionId === undefined ? {} : { operativeDecisionId: verdict.operativeDecisionId }),
+      ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+    };
+  };
+  const kept: HandoffRecord[] = [];
+  for (const record of source) {
+    const candidate = basePacket(input, withMembers([...kept, record]), [], emptyAnchors, omissions);
+    if (jsonByteLength(candidate) > HANDOFF_PACKET_MAX_BYTES) break;
+    kept.push(record);
+  }
+  const omitted = source.length - kept.length;
+  if (omitted > 0) omissions.push(`decisionSet: ${omitted} not included`);
+  if (kept.length === 0) {
+    // Every member was dropped. The set itself is reported as truncated with no
+    // members so the recipient sees that a decision set existed and is unread.
+    const verdict = deriveDecisionSetState({
+      members: [],
+      recordedTransitions: [],
+      truncated: true,
+    });
+    return {
+      members: [],
+      total: set.total,
+      returned: 0,
+      truncated: true,
+      state: verdict.state,
+      recordedTransitions: [],
+      ...(verdict.beforeActing === undefined ? {} : { beforeActing: verdict.beforeActing }),
+    };
+  }
+  return withMembers(kept);
+}
+
+export function handoffDecisionSetMembers(set: RecallDecisionSet): HandoffRecord[] {
+  return set.members.map((member) => ({
+    section: "decision-set" as const,
+    kind: "decision" as const,
+    id: member.id,
+    lifecycle: member.lifecycle,
+    text: member.summary,
+    textTruncated: member.summaryTruncated,
+    provenance: member.provenance,
+    ...(member.rationale === undefined ? {} : { rationale: member.rationale }),
+    ...(member.rationaleTruncated === undefined ? {} : { rationaleTruncated: member.rationaleTruncated }),
+    ...(member.predecessorId === undefined ? {} : { predecessorId: member.predecessorId }),
+    ...(member.successorId === undefined ? {} : { successorId: member.successorId }),
+    ...(member.needsReview === undefined ? {} : { needsReview: member.needsReview }),
+    ...(member.needsReviewFindingIds === undefined ? {} : { needsReviewFindingIds: member.needsReviewFindingIds }),
+    ...(member.relationshipIdsTruncated === undefined ? {} : { relationshipIdsTruncated: member.relationshipIdsTruncated }),
+  }));
 }
 
 export function boundedDecisionRationale(value: string | undefined): Pick<HandoffRecord, "rationale" | "rationaleTruncated"> {
@@ -635,7 +926,7 @@ function packetRecords(recall: WorkspaceRecall, rationales: ReadonlyMap<string, 
     text: hit.excerpt,
     textTruncated: hit.excerptTruncated,
     provenance: hit.provenance,
-    ...(hit.kind === "decision" ? boundedDecisionRationale(rationales?.get(hit.id)) : {}),
+    ...(hit.kind === "decision" ? boundedDecisionRationale(hit.rationale ?? rationales?.get(hit.id)) : {}),
     ...(hit.predecessorId === undefined ? {} : { predecessorId: hit.predecessorId }),
     ...(hit.successorId === undefined ? {} : { successorId: hit.successorId }),
     ...(hit.evidenceArtifactIds === undefined ? {} : { evidenceArtifactIds: hit.evidenceArtifactIds }),
@@ -657,6 +948,7 @@ function countOf(section: RecallSection): HandoffCount {
 
 function basePacket(
   input: { recall: WorkspaceRecall; issuer: HandoffActor; recipient: HandoffActor; anchors: HandoffAnchorPages },
+  decisionSet: HandoffDecisionSet | undefined,
   records: HandoffRecord[],
   anchors: CampfireHandoffPacket["anchors"],
   omissions: string[],
@@ -684,6 +976,7 @@ function basePacket(
     recipient: input.recipient,
     ...(input.recall.goal === undefined ? {} : { goal: input.recall.goal }),
     records,
+    ...(decisionSet === undefined ? {} : { decisionSet }),
     anchors,
     completeness: {
       fullHistoryIncluded: false,
