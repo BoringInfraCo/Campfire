@@ -1,6 +1,6 @@
 # RCL-002 run lock — October 11, 2026
 
-Scored runs have not started. This file freezes the harnesses, models, budgets, and arm order before any scored run. It does not record a score. The seed and the runner are not in this preregistration. Write them only after this lock is reviewed, and run the contract's pre-run check before the first scored arm.
+Scored runs have not started. This file freezes the harnesses, models, budgets, and arm order before any scored run. It does not record a score. The seed and runner were written after the original lock. The contract's pre-run check passed before the first scored arm.
 
 ## Frozen settings
 
@@ -49,6 +49,9 @@ No scored arm has started.
 
 - The S2 answer key was amended the same day it was preregistered. Both checkout decisions stay accepted. The next action is to surface the conflict and seek an explicit retire or an accepted replacement. The harness, model, budget, and arm-order rows above are unchanged.
 - Recipient profiles now deny checkout writes for the lowercased path as well as the original path. The unscored diagnostic was rerun after that edit.
+- The preflight exposed two additional read paths before scoring: a matched agent could use `git show` on the checkout's `.git` directory to read the committed answer key, and an OpenCode recipient with the host data directory visible could read earlier sessions. The runner now denies `.git` for both checkout spellings and denies the host OpenCode config, data, and state directories for every arm. The recipient receives an isolated OpenCode data directory with only routing and authentication material. Its SQLite database is created afresh from the host schema; only allowlisted routing and authentication rows are inserted, and all history tables are asserted empty. No full host database is copied into that directory.
+- The runner uses the bundled Node `24.19.0`, because host Node `20.11.1` is below the package's `>=22` requirement and failed loading the native SQLite module. This changes neither harness nor model. The October 11 unscored preflight passed the S1–S3 seed assertions, packet mode and content checks, direct and Git answer-key denials, prior-pilot and checkout denials, and READY probes from the locked Codex and OpenCode models. The scored arms had not started when this amendment was recorded.
+- The final pre-score review also closed reads of earlier preflight packets, model probes, diagnostic output, other and invalid arm directories, and host Codex history. Sensitive paths are denied under their original and lowercase spellings. Control cannot read treatment `src` or `dist`; treatment cannot read control source; recipient cannot read either checkout. All arms are denied writes to the checkout, seed, other arms, prior pilot, and host harness state. A fresh full preflight on the final runner printed `PREFLIGHT_SEED S1/S2/S3 OK`, `PREFLIGHT_SANDBOX control/treatment/recipient OK`, `PROBE_MODEL control/recipient ... READY`, and `PREFLIGHT_OK`. `npm run typecheck` and `git diff --check` passed. There were zero scored run directories at that freeze point.
 
 ## After the first scored run
 
