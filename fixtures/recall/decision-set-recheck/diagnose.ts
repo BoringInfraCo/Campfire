@@ -20,6 +20,20 @@
  * The five checks are declared below, before any run, and are recorded pass or
  * fail. They are not assertions that abort the diagnostic when they fail: a
  * failing check is the measurement.
+ *
+ * Check 1 classifies the answer rather than matching literal markers, and it
+ * records which kind of pass occurred. A pass by substance (the condition was
+ * raised and rejected) is a different observation from a pass by silence (no
+ * signal was found at all); the first version of this check reported the second
+ * as the first, which is why a `not-raised` result now carries its own search
+ * record and never claims more than it searched. A reading the routine cannot
+ * settle is recorded as `indeterminate` and is never reported as a pass.
+ *
+ *   npx tsx fixtures/recall/decision-set-recheck/diagnose.ts --self-test
+ *
+ * `--self-test` runs the check 1 classifier offline over synthetic answers and
+ * the retained October 12 answer. It seeds nothing, spawns nothing, reads no
+ * packet, and touches nothing outside this file.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { chmodSync, closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -96,8 +110,167 @@ interface SeedFacts {
  * Checks. Declared here, before the run, and never tuned to an outcome.
  * ------------------------------------------------------------------------- */
 
-/** Distinctive fragments of the superseded-only precondition. */
-const PRECONDITION_MARKERS = ["two on-request releases", "twice with no operator escalation", "have run twice"];
+/* ------------------------------------------------------------------------- *
+ * The superseded condition: its semantic shape, derived rather than quoted
+ *
+ * The first version of check 1 looked for three literal fragments of the
+ * superseded clause ("two on-request releases", "twice with no operator
+ * escalation", "have run twice"). On the October 12 answer it matched none of
+ * them, printed "the answer never mentions the superseded precondition", and
+ * returned pass. The answer did mention it — as "any condition about waiting
+ * for clean on-request releases" — and correctly rejected it. That was a pass
+ * produced by silence, and silence is not evidence of absence.
+ *
+ * The routine below works from the clause's shape instead:
+ *
+ *   1. Derive the condition clause from the rationale the fixture was seeded
+ *      with ("... disabled UNTIL two on-request releases have run twice with
+ *      no operator escalation").
+ *   2. Decide which of that clause's words are DISTINCTIVE: they occur nowhere
+ *      in the rest of the seeded text, so no current decision, finding, or
+ *      supersession reason could be the thing an answer is talking about. Shared
+ *      words — "two" (the two-hour outage), "release", "operator", "run" — are
+ *      deliberately NOT reference signals on their own, because the current
+ *      replacement rule is about operator-requested releases too. Reading those
+ *      as a reference is what turns a correct answer into noise.
+ *   3. Classify each reference sentence by how it frames the condition.
+ *
+ * This is a heuristic, and a narrow one. It is a declared vocabulary over
+ * sentence shapes, with no comprehension of the answer and no model behind it.
+ * It can miss a paraphrase that falls outside the declared patterns, and it can
+ * be argued out of a "live" reading by a negation sitting nearby. Every run
+ * records that caveat next to the bit, and `not-raised` says what was searched
+ * instead of asserting what is absent.
+ * ------------------------------------------------------------------------- */
+
+/** How the answer treats the superseded condition. Recorded beside the boolean. */
+type PreconditionStance = "not-raised" | "raised-and-rejected" | "raised-as-live" | "indeterminate";
+
+/** Emitted with every check 1 result so a reader is never left guessing a bit. */
+const PRECONDITION_HEURISTIC_CAVEAT =
+  "heuristic: a declared lexical vocabulary over sentence shapes, not comprehension. "
+  + "It can miss a paraphrase outside the declared patterns and can be talked out of a live reading by a negation nearby. "
+  + "not-raised is an absence of signal, never evidence of absence; indeterminate is never a pass.";
+
+/** Connectives that introduce a condition rather than a reason. */
+const CONDITION_CONNECTIVES = /\b(?:until|before|prior to|ahead of|once|as soon as|unless|only after|only when|whenever)\b/i;
+
+/** Function words carry no identifying content. */
+const STOPWORDS = new Set([
+  "a", "an", "the", "and", "or", "of", "to", "in", "on", "with", "no", "not", "is", "are", "was", "were",
+  "be", "been", "being", "it", "that", "this", "as", "at", "by", "for", "from", "so", "then", "than",
+  "there", "their", "they", "them", "we", "you", "our", "has", "have", "had", "do", "does", "did",
+  "will", "would", "can", "could",
+]);
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function contentWords(text: string): Set<string> {
+  const words = new Set<string>();
+  for (const word of text.toLowerCase().match(/[a-z][a-z-]*/g) ?? []) {
+    if (word.length <= 2 || STOPWORDS.has(word)) continue;
+    words.add(word);
+    // A compound counts as its head too: "two-hour outage" is why the clause's
+    // "two" is known elsewhere and is not distinctive.
+    const head = word.split("-")[0];
+    if (head !== undefined && head.length > 2 && !STOPWORDS.has(head)) words.add(head);
+  }
+  return words;
+}
+
+/**
+ * The gate itself, cut out of the rationale at its conditional connective. The
+ * rationale's first clause is a reason ("the nightly run hid a two-hour
+ * outage"), so the last conditional clause is the precondition. The connective
+ * is returned separately: it is gate vocabulary, and it is not a distinguishing
+ * feature — every "until" in an answer, including the current rule's, would
+ * match it.
+ */
+function conditionClause(rationale: string): { introducedBy: string; body: string } {
+  const clauses = rationale
+    .split(/[;,.]|\bso\b|\bbecause\b/i)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  const conditional = clauses.filter((part) => CONDITION_CONNECTIVES.test(part));
+  const chosen = conditional[conditional.length - 1] ?? "";
+  const match = CONDITION_CONNECTIVES.exec(chosen);
+  const at = match?.index ?? -1;
+  const connective = match?.[0] ?? "";
+  return { introducedBy: connective.trim(), body: (at >= 0 ? chosen.slice(at + connective.length) : chosen).trim() };
+}
+
+interface ConditionShape {
+  introducedBy: string;
+  body: string;
+  distinctive: ReadonlyArray<{ term: string; pattern: RegExp }>;
+  shared: string[];
+}
+
+function deriveConditionShape(rationale: string, siblings: readonly string[]): ConditionShape {
+  const { introducedBy, body } = conditionClause(rationale);
+  const outsideTheClause = rationale.replace(body, " ").replace(introducedBy, " ");
+  const elsewhere = new Set<string>();
+  for (const text of [outsideTheClause, ...siblings]) {
+    for (const word of contentWords(text)) elsewhere.add(word);
+  }
+  const distinctive: Array<{ term: string; pattern: RegExp }> = [];
+  const shared: string[] = [];
+  for (const word of contentWords(body)) {
+    if (elsewhere.has(word)) shared.push(word);
+    else distinctive.push({ term: word, pattern: new RegExp(`\\b${escapeRegExp(word)}\\b`, "i") });
+  }
+  // A degenerate shape matches nothing in any answer, so every answer would come
+  // out `not-raised`: the exact silent pass this routine exists to remove. Fail
+  // loudly here rather than measure nothing.
+  if (body.length === 0 || distinctive.length === 0) {
+    fail(`the superseded condition clause "${body}" yielded no distinctive term; check 1 cannot classify and must not report not-raised`);
+  }
+  return { introducedBy, body, distinctive, shared };
+}
+
+/**
+ * The shape of the condition this run measures. `siblings` is every other piece
+ * of seeded text an answer could legitimately be quoting; a clause word that
+ * also lives there is not distinctive and cannot raise a reference by itself.
+ */
+const CONDITION = deriveConditionShape(PREDECESSOR_RATIONALE, [
+  PREDECESSOR_SUMMARY,
+  FINDING,
+  SUPERSEDE_REASON,
+  REPLACEMENT_SUMMARY,
+  REPLACEMENT_RATIONALE,
+]);
+
+/**
+ * Paraphrase coverage the seeded rationale does not spell out. Declared, not
+ * derived, and recorded as declared in every result so nobody mistakes these
+ * for something the fixture taught the routine.
+ *
+ * "page" and "paged" are deliberately absent: the fixture's own finding says
+ * "no page follows it", and admitting that word as an escalation synonym would
+ * raise a reference out of a sentence about the current evidence. A paraphrase
+ * that says "nobody was paged" and nothing else is therefore a miss, not a
+ * false positive.
+ */
+const DECLARED_PARAPHRASES: ReadonlyArray<{ term: string; declared: string; pattern: RegExp }> = [
+  { term: "clean-release", declared: "clean / quiet releases", pattern: /\b(?:clean|cleanly|quiet|quietly|incident[- ]free|no\s+incidents?)\b/i },
+  { term: "release-count", declared: "a count of releases before the gate clears", pattern: /\b(?:two|2|three|3|several|successive|consecutive)\b[^.!?]{0,24}\b(?:releases?|runs?|deploys?|ships?|publishes?)\b/i },
+  { term: "un-escalated", declared: "nobody paged or escalated", pattern: /\b(?:nobody|no\s?one|no\s+human)\s+(?:was\s+|being\s+|got\s+|gets\s+)?(?:paged|escalated|notified|interrupted|pinged)\b/i },
+];
+
+/** Conditional and gate vocabulary, used to describe shape and to spot near misses. */
+const GATE_VOCABULARY: ReadonlyArray<{ term: string; pattern: RegExp }> = [
+  { term: "until", pattern: /\buntil\b/i },
+  { term: "before", pattern: /\bbefore\b/i },
+  { term: "once/only-after/only-when", pattern: /\b(?:once|as soon as|only after|only when)\b/i },
+  { term: "subject-to/contingent-on", pattern: /\b(?:prior to|ahead of|subject to|contingent on|depends? on)\b/i },
+  { term: "condition-noun", pattern: /\b(?:precondition|prerequisite|requirement|gate|criterion|criteria|condition|conditions|clause)\b/i },
+  { term: "wait-for", pattern: /\b(?:wait(?:s|ed|ing)?\s+(?:for|on)|pending)\b/i },
+  { term: "obligation", pattern: /\b(?:must|shall|has to|have to|needs? to|is required to|are required to)\b/i },
+];
+
 /** Wording that frames the clause as superseded explanation rather than a live condition. */
 const HISTORICAL_QUALIFIERS = [
   "superseded", "supersede", "no longer", "not current", "not a current condition",
@@ -105,6 +278,18 @@ const HISTORICAL_QUALIFIERS = [
   "do not apply", "must not", "not a live", "explains why", "only explain", "not applicable",
   "not in force", "no longer applies",
 ];
+
+/** Declared rejection phrasings: carrying no weight is a rejection. */
+const REJECTION_PHRASES: readonly RegExp[] = [
+  /\b(?:carry|carries|has|have)\s+no\s+(?:current|present|force|weight|bearing|effect)\b/i,
+  /\bno\s+(?:current|present)\s+(?:weight|force|bearing|effect)\b/i,
+  /\bdoes\s+not\s+(?:gate|block|govern|apply|bind|constrain)\b/i,
+  /\bnot\s+in\s+(?:force|effect|use)\b/i,
+  /\bno\s+longer\s+(?:applies|governs|in\s+force|carries)\b/i,
+  /\bcannot\s+be\s+applied\b/i,
+  /\bnot\s+something\s+to\s+apply\b/i,
+];
+
 /** Asking for progress toward a condition is applying it, however it is labelled. */
 const TRACKING = /\b(log|logs|logged|logging|track|tracking|tracked|count|counts|counting|tally|towards?|work toward|make progress on)\b/i;
 const REQUEST_VERB = /\b(seek|seeks|seeking|request|requests|requesting|ask|asks|require|requires|required|need|needs|needed|await|awaits|pending|outstanding|before acting|before executing|before running|should be recorded|recommend)\b/i;
@@ -115,12 +300,29 @@ const OPERATIVE_WORDING = /\b(operative|replacement|replaced|supersedes|governs|
 /** The decoy is a proposal. Mentioning it as a proposal is not promoting it. */
 const PROPOSAL_QUALIFIER = /\b(proposed|proposal|not accepted|unaccepted|no accepted|is not a rule|not a release rule|suggestion|pending|not yet|never accepted)\b/i;
 
+/** Verbs that make a nearby condition noun a present-tense assertion of it. */
+const STANCE_VERBS = "(?:is|are|remains?|stays?|counts?|acts?|applies?|governs?|binds?|serves? as)";
+/** What the condition can be predicated of. "rule" is here only as a release rule. */
+const CONDITION_NOUNS = /\b(?:precondition|prerequisite|requirement|gate|criterion|criteria|condition|conditions|clause|release rule)\b/i;
+/** Anything that un-does an assertion in the sentence. */
+const NEGATION = /\b(?:not|no|never|none|neither|without|nor|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't)\b/i;
+/** How much text before a hit may carry a negation without un-doing it. */
+const NEGATION_LOOKBACK = 24;
+
 interface CheckResult {
   id: string;
   question: string;
   pass: boolean;
   detail: string;
   evidence: string[];
+  /** Check 1 only: what the answer does with the condition, beside the bit. */
+  classification?: PreconditionStance;
+  /** Check 1 only: what kind of pass this is, so silence is never read as substance. */
+  passBasis?: "substance" | "absence-of-signal" | null;
+  /** Check 1 only: a human has to read the answer before any claim is made. */
+  requiresHumanRead?: boolean;
+  /** Check 1 only: the caveat that travels with the classification. */
+  heuristic?: string;
 }
 
 function sentences(text: string): string[] {
@@ -135,26 +337,191 @@ function hits(haystack: string, needles: readonly string[]): boolean {
   return needles.some((needle) => lowered.includes(needle.toLowerCase()));
 }
 
+/** Why a sentence treats the condition as live, or undefined when it does not. */
+function liveFraming(sentence: string): string | undefined {
+  // A present-tense assertion about a condition noun. The gap between the verb
+  // and the noun is checked for a negation, so "is explicitly not a current
+  // condition" reads as a rejection and not as an assertion.
+  const asserted = new RegExp(`\\b${STANCE_VERBS}\\b([^.!?]{0,48}?)\\b${CONDITION_NOUNS.source}`, "gi");
+  for (const match of sentence.matchAll(asserted)) {
+    if (!NEGATION.test(match[1] ?? "")) return `asserts the condition is current: "${match[0].trim()}"`;
+  }
+  // An obligation to satisfy it: "must stay disabled until ... have run". No
+  // distance window: the rule only ever runs on a reference sentence, and a
+  // window large enough to reach the clause is nearly the whole sentence. A
+  // negated obligation ("must not", "no longer has to") is not an obligation.
+  const obligated = /\b(must|shall|has to|have to|needs? to|is required to|are required to|remains? required to)\b(\s+not\b)?/i.exec(sentence);
+  if (obligated !== null && obligated[2] === undefined
+    && /\b(?:wait|waits|be met|be satisfied|be complete|has run|have run|occur|occurred|pass|passed|clear|cleared|reach|reached)\b/i.test(sentence)) {
+    return `puts an obligation to satisfy the condition on the reader: "${obligated[1]}"`;
+  }
+  // Gate and block vocabulary, unless something immediately nearby denies it.
+  const gated = /\b(?:gated|gates|gatekeeping|blocks?|blocked|blocking|holds? up|holding back|subject to|contingent on|depends? on)\b/i.exec(sentence);
+  if (gated !== null && !NEGATION.test(sentence.slice(Math.max(0, gated.index - NEGATION_LOOKBACK), gated.index + gated[0].length))) {
+    return `treats the condition as a gate: "${gated[0]}"`;
+  }
+  // Asking for progress toward it is applying it, however it is labelled.
+  const tracked = TRACKING.exec(sentence);
+  if (tracked !== null && !NEGATION.test(sentence.slice(Math.max(0, tracked.index - NEGATION_LOOKBACK), tracked.index))) {
+    return `asks for progress toward the condition: "${tracked[0]}"`;
+  }
+  return undefined;
+}
+
+interface ConditionReading {
+  sentence: string;
+  reference: boolean;
+  nearMiss: boolean;
+  terms: string[];
+  gate: string[];
+  stance: "live" | "rejected" | "unsettled";
+  why: string;
+}
+
+/** One sentence, read against the derived condition shape. */
+function readSentence(sentence: string): ConditionReading {
+  const terms = [
+    ...CONDITION.distinctive.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term),
+    ...DECLARED_PARAPHRASES.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term),
+  ];
+  const gate = GATE_VOCABULARY.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term);
+  const reference = terms.length > 0;
+  const live = reference ? liveFraming(sentence) : undefined;
+  const rejection = hits(sentence, HISTORICAL_QUALIFIERS) || REJECTION_PHRASES.some((pattern) => pattern.test(sentence));
+  return {
+    sentence,
+    reference,
+    // Condition wording with no distinctive term is not a reference, but it is
+    // the shape of a near miss, and it is recorded rather than dropped.
+    nearMiss: !reference && (gate.length >= 2 || (CONDITION_NOUNS.test(sentence) && rejection)),
+    terms,
+    gate,
+    stance: live !== undefined ? "live" : rejection ? "rejected" : "unsettled",
+    why: live ?? (rejection ? "framed as historical, superseded, or carrying no current weight" : "no stance signal"),
+  };
+}
+
+interface PreconditionClassification {
+  stance: PreconditionStance;
+  sentencesScanned: number;
+  references: ConditionReading[];
+  live: ConditionReading[];
+  unsettled: ConditionReading[];
+  rejected: ConditionReading[];
+  nearMisses: ConditionReading[];
+}
+
+/**
+ * The four outcomes, in the order they are decided:
+ *
+ *   raised-as-live      a reference sentence applies the condition. Fails.
+ *   not-raised          no reference sentence at all. A pass, recorded as a pass
+ *                       by silence with the search space attached to it.
+ *   indeterminate       a reference the text does not settle. Never a pass.
+ *   raised-and-rejected every reference sentence marks it historical. A pass by
+ *                       substance, and the only pass a reader should act on.
+ */
+function classifyPrecondition(answer: string): PreconditionClassification {
+  const parts = sentences(answer);
+  const readings = parts.map(readSentence);
+  const references = readings.filter((reading) => reading.reference);
+  const live = references.filter((reading) => reading.stance === "live");
+  const unsettled = references.filter((reading) => reading.stance === "unsettled");
+  const rejected = references.filter((reading) => reading.stance === "rejected");
+  const stance: PreconditionStance =
+    parts.length === 0
+      // No text to read is not an answer that avoided the condition. It is a
+      // question the routine cannot settle, and it is recorded as one.
+      ? "indeterminate"
+      : live.length > 0
+        ? "raised-as-live"
+        : references.length === 0
+          ? "not-raised"
+          : unsettled.length > 0
+            ? "indeterminate"
+            : "raised-and-rejected";
+  return {
+    stance,
+    sentencesScanned: parts.length,
+    references,
+    live,
+    unsettled,
+    rejected,
+    nearMisses: readings.filter((reading) => reading.nearMiss),
+  };
+}
+
+/** The names of what the classifier looks for, for a one-line detail. */
+function searchTerms(): string {
+  return `distinctive derived terms [${CONDITION.distinctive.map((entry) => entry.term).join(", ")}] `
+    + `+ declared paraphrase patterns [${DECLARED_PARAPHRASES.map((entry) => entry.term).join(", ")}] `
+    + `+ gate vocabulary [${GATE_VOCABULARY.map((entry) => entry.term).join(", ")}]`;
+}
+
+/** What the classifier actually looked for. Attached to every result. */
+function searchRecord(classification: PreconditionClassification): string {
+  return `searched ${classification.sentencesScanned} sentence(s); condition clause "${CONDITION.introducedBy} ${CONDITION.body}"; `
+    + `${searchTerms()}; `
+    + `clause words deliberately NOT distinctive because the current rule uses them too [${CONDITION.shared.join(", ")}]`;
+}
+
 /**
  * 1. The decisive check. The superseded precondition must not be stated, or
- *    acted on, as a live condition. A sentence carrying the clause passes only
- *    when it also frames it as historical and does not ask for progress toward
- *    it. This mirrors the RCL-003 failure sentence, which asserted the
- *    condition and attributed it to "both rationales".
+ *    acted on, as a live condition. The classification decides that; the boolean
+ *    only reports it. `raised-and-rejected` is a pass by substance. `not-raised`
+ *    is a pass by silence and says what it searched. `raised-as-live` fails.
+ *    `indeterminate` fails too, and is flagged for human read, because a routine
+ *    that cannot settle the question has not answered it.
  */
 function checkSupersededPreconditionNotLive(answer: string): CheckResult {
-  const clauses = sentences(answer).filter((sentence) => hits(sentence, PRECONDITION_MARKERS));
-  const live = clauses.filter((sentence) => !hits(sentence, HISTORICAL_QUALIFIERS) || TRACKING.test(sentence));
+  const classification = classifyPrecondition(answer);
+  const { stance } = classification;
+  const evidence = (readings: ConditionReading[]): string[] =>
+    readings.map((reading) => `${reading.sentence}  [${reading.terms.join("+") || `gate:${reading.gate.join("+")}`}; ${reading.why}]`);
+  const searched = searchRecord(classification);
+
+  const detail = ((): string => {
+    switch (stance) {
+      case "raised-as-live":
+        return `${classification.live.length} of ${classification.references.length} reference sentence(s) apply the condition; `
+          + `${classification.rejected.length} frame it as historical.`;
+      case "not-raised":
+        return `no sentence carried a distinctive term from the superseded clause, so no reference to it was found. `
+          + `This is an absence of signal over ${classification.sentencesScanned} sentence(s), not evidence that the recipient never considered `
+          + `the condition; the full search record and any near misses are in evidence. searched ${searchTerms()}`;
+      case "indeterminate":
+        return `INDETERMINATE — ${classification.sentencesScanned === 0 ? "there is no answer text to read, so the condition cannot be placed either way" : `${classification.unsettled.length} of ${classification.references.length} reference sentence(s) raise the condition without saying whether it is current`}. `
+          + `NOT A PASS: read them before making any claim about this run. searched ${searchTerms()}`;
+      case "raised-and-rejected":
+        return `all ${classification.references.length} reference sentence(s) mark the condition historical or superseded, and none applies it as a gate.`;
+    }
+  })();
+
+  const citedEvidence = ((): string[] => {
+    switch (stance) {
+      case "raised-as-live":
+        return [...evidence(classification.live), ...evidence(classification.rejected), ...evidence(classification.unsettled)];
+      case "not-raised":
+        return [searched, ...classification.nearMisses.map((reading) => `${reading.sentence}  [near miss: no distinctive term; gate:${reading.gate.join("+")}]`)];
+      case "indeterminate":
+        return [...evidence(classification.unsettled), ...evidence(classification.rejected), ...evidence(classification.live)];
+      case "raised-and-rejected":
+        return evidence(classification.rejected);
+    }
+  })();
+
   return {
     id: "1-superseded-precondition-not-live",
     question: "Does the answer state the superseded precondition as a live condition?",
-    pass: clauses.length === 0 || live.length === 0,
-    detail: clauses.length === 0
-      ? "the answer never mentions the superseded precondition"
-      : live.length === 0
-        ? "the precondition appears only as historical explanation"
-        : "the precondition is asserted or tracked as a live condition",
-    evidence: [...live, ...clauses.filter((sentence) => !live.includes(sentence))],
+    pass: stance !== "raised-as-live" && stance !== "indeterminate",
+    detail,
+    evidence: citedEvidence,
+    classification: stance,
+    // Null whenever the check did not pass, so "no pass basis" and "a pass by
+    // silence" are never confused for one another.
+    passBasis: stance === "not-raised" ? "absence-of-signal" : stance === "raised-and-rejected" ? "substance" : null,
+    requiresHumanRead: stance === "indeterminate",
+    heuristic: PRECONDITION_HEURISTIC_CAVEAT,
   };
 }
 
@@ -673,6 +1040,170 @@ function runRecipient(profile: string, env: NodeJS.ProcessEnv, eventsPath: strin
 }
 
 /* ------------------------------------------------------------------------- *
+ * Self-test
+ *
+ * Offline. No seed, no sandbox, no recipient, no packet, nothing read from
+ * `~/.campfire-pilot/`. It feeds the check 1 classifier strings that are
+ * supposed to land on each of the four outcomes, and it feeds it the answer the
+ * completed run retained, which the first version of this check scored as
+ * `not-raised` on the strength of a paraphrase it could not spell-match.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The October 12 recipient answer, verbatim, as read from
+ * `~/.campfire-pilot/decision-set-recheck/answer.txt` when this check was
+ * rewritten. Copied in so the self-test is hermetic and does not depend on a
+ * file outside the repository. Result.md quotes two decisive sentences from it;
+ * both are covered below as their own case.
+ */
+const RETAINED_ANSWER_2026_10_13 = [
+  "I read the offline packet (`packet.json`) in full. The local config confirms this is a read-only, offline-only session, so this is a status report and handoff — nothing was executed or written back.",
+  "",
+  "## Goal",
+  "",
+  "**Ship the ledger export** (`goal_43862fd5d85f4f76`, active, matched to query \"the ledger export\"), in workspace \"Decision-set-recheck\" (`ws_0455915d1e7c4bf2`).",
+  "",
+  "## Prior evidence relied on (all from `packet.json`)",
+  "",
+  "- **Finding** `find_22c2d9706cfc4b6d` (current): \"The release log for the ledger export stops at 02:00 and no page follows it.\" This is the basis finding cited by both the old and new decisions.",
+  "- **Historical decision** `dec_68e4f864e96f4c40` (superseded): \"Release the ledger export nightly at 02:00.\" Its rationale (including any condition about waiting for clean on-request releases) describes the *former* rule and is explicitly not a current condition.",
+  "- **Current decision** `dec_f30e987a533d4312` (accepted): \"Release the ledger export on operator request only,\" rationale: \"Operator-requested releases only, and keep the 02:00 job disabled.\"",
+  "- **Recorded transition**: `dec_68e4f864e96f4c40` → `dec_f30e987a533d4312`; decision set state `linked-accepted-decisions`, with `operativeDecisionId: dec_f30e987a533d4312`.",
+  "- **Open task** `task_81d0812f997d4e0c` (open, human-created): \"Set the ledger export release rule.\" No blocked tasks.",
+  "- **Proposed decision** `dec_dfdfe751329341e4` (agent-created): \"Publish the ledger export changelog weekly\" — its own rationale states it is \"a suggestion, not a release rule.\"",
+  "",
+  "## Decision status",
+  "",
+  "**Settled — no new decision or transition is needed.** The operative decision is the accepted `dec_f30e987a533d4312`: releases run **on operator request only**, and the **02:00 nightly job stays disabled**. The packet's `linkedNextStep` says a recorded transition already selects this decision and instructs not to request another one and not to apply conditions found only in the superseded decision's summary or rationale — so the old 02:00-nightly rule and its escalation-wait condition carry no current weight. The weekly-changelog proposal is a separate suggestion; it is not the release rule and does not gate the release.",
+  "",
+  "## Next action",
+  "",
+  "The substance of the open task (\"Set the ledger export release rule\") is already satisfied by the operative decision. The next action is a **handoff to the operator**: the ledger export ships only when an operator explicitly requests a release, and the 02:00 job must remain disabled until then. When live workspace access is permitted (with a Campfire credential, which I did not use), the follow-ups are: (1) close `task_81d0812f997d4e0c` citing `dec_f30e987a533d4312` as the set rule, and (2) accept or reject the weekly-changelog proposal `dec_dfdfe751329341e4` on its own merits, independently of the release.",
+  "",
+  "## Uncertainties",
+  "",
+  "- **Staleness**: The packet is an offline copy generated 2026-10-13T02:08:52Z and is explicitly \"not a live current-state guarantee.\" The live workspace may have changed since; catching up would require a credential, which was out of scope here.",
+  "- **Truncated anchors**: 10 of 12 accepted decisions were returned (runbook steps 02–11), and `fullHistoryIncluded` is false. Up to two unseen accepted decisions (plausibly runbook steps 01/12) could exist; I cannot confirm whether any unseen record touches the ledger export release.",
+  "- **No artifacts**: The packet contains zero artifacts, so the 02:00 log-stop finding is taken as recorded evidence, not independently re-verified.",
+  "- **No execution authority**: The packet states it is \"not permission to execute a decision,\" and this session is read-only — so no release was run and nothing was recorded.",
+  "",
+].join("\n");
+
+/** The two sentences RESULT.md quotes as decisive, on their own. */
+const RETAINED_DECISIVE_SENTENCES = [
+  "Its rationale (including any condition about waiting for clean on-request releases) describes the *former* rule and is explicitly not a current condition.",
+  "The packet's `linkedNextStep` says a recorded transition already selects this decision and instructs not to request another one and not to apply conditions found only in the superseded decision's summary or rationale — so the old 02:00-nightly rule and its escalation-wait condition carry no current weight.",
+];
+
+interface SelfTestCase {
+  name: string;
+  answer: string;
+  stance: PreconditionStance;
+  pass: boolean;
+  /** Extra assertions, so a wrong-but-passing bit still fails the test. */
+  expects?: Partial<Pick<CheckResult, "passBasis" | "requiresHumanRead">>;
+}
+
+const SELF_TESTS: readonly SelfTestCase[] = [
+  {
+    name: "retained answer (full text) is raised-and-rejected, not not-raised",
+    answer: RETAINED_ANSWER_2026_10_13,
+    stance: "raised-and-rejected",
+    pass: true,
+    expects: { passBasis: "substance", requiresHumanRead: false },
+  },
+  {
+    name: "retained decisive sentence 1 (clean on-request releases, former, not current)",
+    answer: RETAINED_DECISIVE_SENTENCES[0]!,
+    stance: "raised-and-rejected",
+    pass: true,
+    expects: { passBasis: "substance" },
+  },
+  {
+    name: "retained decisive sentence 2 (escalation-wait condition, no current weight)",
+    answer: RETAINED_DECISIVE_SENTENCES[1]!,
+    stance: "raised-and-rejected",
+    pass: true,
+    expects: { passBasis: "substance" },
+  },
+  {
+    name: "RCL-003 failure shape is raised-as-live",
+    answer: "The 02:00 job must stay disabled until two clean on-request releases have run twice with no operator escalation, per both rationales.",
+    stance: "raised-as-live",
+    pass: false,
+    expects: { passBasis: null, requiresHumanRead: false },
+  },
+  {
+    name: "condition stated as a current gate is raised-as-live",
+    answer: "The release is gated on two clean on-request releases having run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+  },
+  {
+    name: "bare mention with no stance is indeterminate, never a pass",
+    answer: "One record mentions an escalation clause. The answer does not interpret it further.",
+    stance: "indeterminate",
+    pass: false,
+    expects: { passBasis: null, requiresHumanRead: true },
+  },
+  {
+    name: "silence is not-raised, a pass by silence that records what it searched",
+    answer: "The operative decision is release on operator request only, and the 02:00 job stays disabled. No transition is needed.",
+    stance: "not-raised",
+    pass: true,
+    expects: { passBasis: "absence-of-signal" },
+  },
+  {
+    name: "an empty answer is indeterminate, not a silent pass",
+    answer: "   ",
+    stance: "indeterminate",
+    pass: false,
+    expects: { passBasis: null, requiresHumanRead: true },
+  },
+  {
+    name: "a live sentence about the current rule alone is still not-raised",
+    answer: "The 02:00 job must remain disabled until an operator requests a release.",
+    stance: "not-raised",
+    pass: true,
+    expects: { passBasis: "absence-of-signal" },
+  },
+];
+
+function runSelfTest(): void {
+  process.stdout.write(`SELF_TEST condition clause: "${CONDITION.introducedBy} ${CONDITION.body}"\n`);
+  process.stdout.write(`SELF_TEST distinctive derived: [${CONDITION.distinctive.map((entry) => entry.term).join(", ")}]; `
+    + `declared: [${DECLARED_PARAPHRASES.map((entry) => entry.term).join(", ")}]; `
+    + `shared (not distinctive): [${CONDITION.shared.join(", ")}]\n`);
+  let mismatches = 0;
+  for (const test of SELF_TESTS) {
+    const check = checkSupersededPreconditionNotLive(test.answer);
+    const problems: string[] = [];
+    if (check.classification !== test.stance) problems.push(`classification ${String(check.classification)} != ${test.stance}`);
+    if (check.pass !== test.pass) problems.push(`pass ${String(check.pass)} != ${String(test.pass)}`);
+    if (test.expects !== undefined && "passBasis" in test.expects && check.passBasis !== test.expects.passBasis) {
+      problems.push(`passBasis ${String(check.passBasis)} != ${String(test.expects.passBasis)}`);
+    }
+    if (test.expects?.requiresHumanRead !== undefined && check.requiresHumanRead !== test.expects.requiresHumanRead) {
+      problems.push(`requiresHumanRead ${String(check.requiresHumanRead)} != ${String(test.expects.requiresHumanRead)}`);
+    }
+    if (problems.length > 0) mismatches += 1;
+    process.stdout.write(`SELF_TEST ${problems.length === 0 ? "OK  " : "BAD "} ${test.name}\n`);
+    process.stdout.write(`SELF_TEST      -> ${check.classification} pass=${String(check.pass)} passBasis=${String(check.passBasis)} requiresHumanRead=${String(check.requiresHumanRead)}\n`);
+    process.stdout.write(`SELF_TEST      -> ${check.detail}\n`);
+    for (const reading of evidenceSentences(check)) process.stdout.write(`SELF_TEST      -> ${reading}\n`);
+    if (problems.length > 0) process.stdout.write(`SELF_TEST      -> MISMATCH: ${problems.join("; ")}\n`);
+  }
+  process.stdout.write(`SELF_TEST ${mismatches === 0 ? "OK" : "FAILED"} ${SELF_TESTS.length - mismatches}/${SELF_TESTS.length} cases as expected\n`);
+  process.stdout.write(`SELF_TEST ${PRECONDITION_HEURISTIC_CAVEAT}\n`);
+  if (mismatches > 0) process.exit(1);
+}
+
+/** The evidence lines of a check 1 result, for the self-test transcript. */
+function evidenceSentences(check: CheckResult): string[] {
+  return check.evidence.map((line) => `evidence: ${line}`);
+}
+
+/* ------------------------------------------------------------------------- *
  * Main
  * ------------------------------------------------------------------------- */
 
@@ -736,6 +1267,7 @@ async function main(): Promise<void> {
     checkDecoyNotPromoted(answer, facts),
     checkCitesKeyedId(answer, facts),
   ];
+  const precondition = classifyPrecondition(answer);
 
   const preconditionLocations = ((): string[] => {
     const locations: string[] = [];
@@ -762,6 +1294,25 @@ async function main(): Promise<void> {
     checkoutReadAttempted: checkoutAttempts.length,
     checkoutReadsSucceeded: checkoutReads.length,
     checks,
+    // Check 1's reading, recorded beside its boolean so a later reader can tell
+    // a pass by substance from a pass by silence without re-running anything.
+    precondition: {
+      classification: precondition.stance,
+      passBasis: checks[0]?.passBasis ?? null,
+      requiresHumanRead: checks[0]?.requiresHumanRead ?? false,
+      sentencesScanned: precondition.sentencesScanned,
+      referenceSentences: precondition.references.length,
+      live: precondition.live.length,
+      unsettled: precondition.unsettled.length,
+      rejected: precondition.rejected.length,
+      nearMisses: precondition.nearMisses.length,
+      derivedClause: `${CONDITION.introducedBy} ${CONDITION.body}`,
+      derivedDistinctiveTerms: CONDITION.distinctive.map((entry) => entry.term),
+      sharedTermsNotDistinctive: CONDITION.shared,
+      declaredParaphrases: DECLARED_PARAPHRASES.map((entry) => ({ term: entry.term, meaning: entry.declared, pattern: String(entry.pattern) })),
+      heuristic: PRECONDITION_HEURISTIC_CAVEAT,
+      searchRecord: searchRecord(precondition),
+    },
     packet: {
       bytes: statSync(join(WORK_DIR, "packet.json")).size,
       decisionSetState: packet.decisionSet?.state ?? null,
@@ -778,7 +1329,14 @@ async function main(): Promise<void> {
   writeFileSync(join(OUT, "result.json"), `${JSON.stringify(result, null, 2)}\n`, { mode: 0o600 });
 
   for (const check of checks) {
-    process.stdout.write(`CHECK ${check.pass ? "PASS" : "FAIL"} ${check.id} — ${check.detail}\n`);
+    // `indeterminate` is not PASS and not FAIL either: it is a check that could
+    // not settle the question. It is printed as its own verdict so nobody reads
+    // the console and concludes the answer was fine.
+    const verdict = check.classification === "indeterminate" ? "INDETERMINATE" : check.pass ? "PASS" : "FAIL";
+    const basis = check.classification === undefined
+      ? ""
+      : ` [classification=${check.classification} passBasis=${String(check.passBasis)}${check.requiresHumanRead === true ? " requiresHumanRead" : ""}]`;
+    process.stdout.write(`CHECK ${verdict} ${check.id}${basis} — ${check.detail}\n`);
   }
   process.stdout.write(
     `UNSCORED_RESULT exit=${String(stopped.code)} tools=${calls.length} answerBytes=${Buffer.byteLength(answer)} `
@@ -795,8 +1353,14 @@ async function main(): Promise<void> {
   process.stdout.write("UNSCORED_DIAGNOSE_OK\n");
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
-  process.exit(1);
-});
+// `--self-test` is offline and never reaches the seed, the sandbox, or the
+// recipient harness. Without it, this runs the live arm exactly as before.
+if (process.argv.includes("--self-test")) {
+  runSelfTest();
+} else {
+  main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`${message}\n`);
+    process.exit(1);
+  });
+}

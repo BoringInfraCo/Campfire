@@ -9,6 +9,11 @@
 - **Frozen history:** `docs/SPRINT_RCL_001_RESULT.md`, `docs/SPRINT_RCL_002_RESULT.md`,
   and `docs/SPRINT_RCL_003_RESULT.md` are NO-GO / REFRAME and stay frozen. Nothing
   in this protocol edits or rescores them.
+- **Pre-observation clarification, October 12:** With zero cases opened, §1 and
+  §6 now separate case verdicts from §4.4 item labels and separate a Basis 2
+  reconstruction's later write from the plan-time decision to use it. The
+  `gate-e-1` protocol version remains because no observation used the earlier
+  wording.
 
 Gate E asks one question: **does prior completed work materially improve new work?**
 This document defines what an observation of that is, what it must contain, and what
@@ -55,6 +60,20 @@ Only claim **N** can close Gate E. RCL-001 §5 defines the Gate E bar in claim-N
 terms. Claims P and H can be observed today at low cost and are honest statements
 about what the product delivers. They are recorded as such and they **do not** close
 Gate E, are not scored toward it, and must never be presented as though they do.
+
+**Verdict vocabulary.** An admissible case has one §6 verdict label:
+`supports` when its claim is demonstrated, `weak` when its retained evidence is
+checkable but inconclusive, or `null` when the case shows no material reuse or
+change. An inadmissible or withdrawn case has no verdict label; its disposition
+and reason remain in the log. The words `reported` and `none` in §4.4 label
+individual weaker statements: `reported` is an unverified account, and `none`
+is an agreeing or otherwise absent effect. They are not case verdict labels.
+An agreeing Basis 2 reconstruction therefore gives a claim-N case a `null`
+verdict and may give that reconstruction item the label `none`.
+Claim shape is fixed when the case opens. A withdrawn case keeps that shape in
+the log, with disposition `withdrawn` and no verdict label. A P or H case may
+retain a normal-work plan as context, but it records `N/A` for the claim-N
+counterfactual field and cannot be relabelled N after its outcome is known.
 
 This split is not a lowering of the bar. It is a refusal to let a claim the data can
 support stand in for a claim it cannot.
@@ -113,9 +132,10 @@ An observation qualifies when **all** of the following hold.
 - Anything inside a seeded fixture. `fixtures/**` and `docs/evidence/rcl-00*/**` are
   test material by construction, not ordinary work.
 - The repository owner's own dogfooding on Campfire. It is real work and may be
-  recorded as an observation, but it is one participant working on the product's own
-  repository in a session that knows about the measurement. It is labeled as such and
-  it is not ordinary multi-participant work.
+  retained with an inadmissible disposition and any account marked `reported`,
+  but it is one participant working on the product's own repository in a
+  session that knows about the measurement. It does not
+  qualify as ordinary multi-participant evidence.
 - A pilot run, a replay, a resumed session, or any case whose outcome was already
   known to the recorder when the case was opened.
 
@@ -301,7 +321,8 @@ required to invent an avoided investigation or a typed relation it cannot have.
 | Build | Campfire package version and git commit |
 | **[plan-time]** Pre-action position | append position, or the `sourceCursor` / `sourcePosition` reported by the read used |
 | **[plan-time]** Task | the prompt or task, verbatim; for P/N confirm that it named neither Recall, nor `recall_workspace`, nor "prior work"; for H record the ordinary handoff request |
-| **[plan-time, N only]** Counterfactual | the basis used (§4.2), the verbatim counterfactual text, and its timestamp |
+| **[plan-time, N only]** Counterfactual basis plan | Basis 1's pre-retrieval normal-work plan, if available, or the decision to use a blinded Basis 2 reconstruction; timestamp the choice before the outcome |
+| Counterfactual evidence (N only) | Basis 1's verbatim plan and later resolution, or Basis 2's independent reconstruction committed after the action but before comparison; include timestamps (§4.2) |
 | Reused sources | each source id with kind, and the surface it was reached through — orientation, catch-up, object read, `recall_workspace`, `decisionSet`, packet file — or `unknown` |
 | Materialized record (P/N) | kind and id of the new record; the `decision_citations` or `finding_evidence` rows; the note text verbatim |
 | Resulting work (H) | dated recipient-authored work product or action, its location or id, and the packet source ids and bounded content needed to verify correspondence |
@@ -309,12 +330,12 @@ required to invent an avoided investigation or a typed relation it cannot have.
 | Investigation avoided | the named item, why it was deferred, and how that was settled |
 | Outcome | what happened afterwards, dated |
 | Attribution notes | contamination, dropped reads, replacements, withdrawals, standing session instructions in effect |
-| Verdict | claim shape P / H / N, basis or bases used, and the label `supports` / `weak` / `null` |
+| Verdict | claim shape P / H / N, basis or bases used, case disposition, and for an admissible case the label `supports` / `weak` / `null`; §4.4 item labels are separate |
 
 A missing required **[plan-time]** field makes the observation inadmissible under
 this protocol. A missing counterfactual basis makes a claim-N observation
-inadmissible; it may be recorded as `reported` instead. P and H do not require
-a counterfactual.
+inadmissible; a testimonial account may be retained as a `reported` item, with
+no case verdict. P and H do not require a counterfactual.
 
 ## 7. Admissibility rules
 
@@ -346,7 +367,7 @@ protocol. Even admissible P and H observations do not close Gate E.
    install-route counts, and session counts are never Gate E evidence. There is no
    reuse telemetry event and none is authorized to be added.
 7. **No subjective substitution.** "It felt faster", "it saved me", and "the agent
-   seemed sharper" are not a material change. They may be recorded as `reported` and
+   seemed sharper" are not a material change. They may be retained as `reported` items and
    they count toward nothing.
 8. **No post-hoc counterfactual.** Basis 1 must be dated before the outcome; Basis 2
    must be written before comparison and by someone who did not see the observed
@@ -361,9 +382,10 @@ protocol. Even admissible P and H observations do not close Gate E.
 12. **Agent cases are agent cases.** An agent's reuse is evidence about that harness,
     model, and date. It says nothing about human participants unless a human case is
     separately recorded.
-13. **Retained evidence.** The source ids, the materialized record, and the plan-time
-    entries must be readable by a reviewer with no access to the observer's memory. If
-    they are not retained, the observation is downgraded to `reported`.
+13. **Retained evidence.** The source ids, the materialized record or H work product,
+    and the plan-time entries must be readable by a reviewer with no access to the
+    observer's memory. If they are not retained, the case is inadmissible; a
+    testimonial account may remain as a `reported` item.
 14. **Nulls are recorded at the same rigour.** A case that produced no material
     difference is a result, not a discard.
 
@@ -377,9 +399,9 @@ to be the common one.
 - **Partial evidence does not close Gate E.** A claim-P observation plus a claim-H
   observation is two honest facts about provenance and handoff. It is not a Gate E pass
   and must not be reported as partial credit against the gate.
-- **An unresolved reconstruction is a result.** If a Basis 2 reconstruction supports the
-  same next action, that is the expected finding given three consecutive NO-GO pilots,
-  and it is recorded as `none`.
+- **An agreeing reconstruction is a result.** If a Basis 2 reconstruction supports the
+  same next action, that is the expected finding given three consecutive NO-GO pilots.
+  The case verdict is `null`; the reconstruction item may be labeled `none`.
 - **An expected null.** The honest prediction of this protocol, read alongside
   RCL-001/002/003, is that most ordinary-work cases will materialize as claim P or H and
   fail to produce an admissible claim-N counterfactual. Recording that expectation
@@ -402,9 +424,11 @@ to be the common one.
   to check the plan-time entries and the P/N materialized record, or the H work product
   and its correspondence to sanitized packet fields, from what is committed.
 - For H, retain a sanitized account of the packet fields used and a checkable
-  reference to the recipient's resulting work. A packet alone, or a model answer
-  without resulting work, is insufficient. Keep private packet bytes outside
-  the repository.
+  reference to the recipient's resulting work. Include the bounded, sanitized
+  source excerpts needed to verify any substantive correspondence; ids and
+  text lengths alone cannot show what the recipient used. A packet alone, or a
+  model answer without resulting work, is insufficient. Keep private packet
+  bytes outside the repository.
 - The record is **never retrofitted into a sprint result**. A sprint result may cite an
   observation by id and may state that it exists. It may not absorb it, summarize it as
   its own evidence, or be edited after the fact to include it. `docs/SPRINT_RCL_001_RESULT.md`,
