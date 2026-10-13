@@ -94,6 +94,10 @@ Terms are the product's. Nothing here introduces a new object.
 - **Pre-action position** — the workspace append position, or the `sourceCursor` /
   `sourcePosition` reported by the read the participant used, captured before the next
   action was taken.
+
+  *Amendment 1, October 13, 2026: for claim H, this position comes from the packet's
+  own read at issue. See §12. The wording above stands as written and is unchanged
+  for P and N.*
 - **Surface** — the way the prior work was reached: an orientation page from
   `get_workspace_context`, a catch-up page from `get_workspace_changes`, an object read,
   a `recall_workspace` hit or `decisionSet` member, or a handoff packet file written by
@@ -234,6 +238,9 @@ These are admissible to **record** and inadmissible to **count**:
 | A reconstruction agrees with the observed action | `none` | no, and recorded as a null |
 | Reuse is materialized and checkable | `P` | no |
 | Packet contents determined a recipient's action | `H` | no |
+
+*Amendment 2, October 13, 2026: `P` and `H` in this table are claim shapes,
+not §4.4 item labels. The item labels are `reported` and `none`; see §12.*
 
 The RCL-003 citation split is exactly the third row: a real behavioural difference
 between arms whose cause cannot be separated from a treatment-only instruction. It is
@@ -491,6 +498,387 @@ future decision that has not been made.
 - It does **not** authorize embedding, cross-workspace retrieval, an organization-wide
   memory index, packet import, or per-command telemetry. `SKILL.md` places Gate E as the
   gate for that investment, not as the authorization for it.
+
+## 12. Amendments
+
+An amendment is appended, dated, and names the section it amends. The amended
+wording stays on the page; the amendment states the change and what it means for
+an operator. This section is pre-observation: no case has been opened and no
+observation has been recorded under any earlier wording, so the protocol version
+stays `gate-e-1` and no section body is rewritten.
+
+### Amendment 1 — October 13, 2026 — whose read supplies the pre-action position for claim H
+
+**The ambiguity.** §2 defines the pre-action position as "the workspace append
+position, or the `sourceCursor` / `sourcePosition` reported by the read the
+participant used, captured before the next action was taken." Claim H (§1) has
+two participants: the sender who makes the packet, and the offline recipient who
+acts from it. §2 says "the participant" in the singular and does not say whose
+read supplies the position for H. Two readings have looked compliant:
+
+1. **The sender's earlier orientation cursor.** During their own ordinary work
+   the sender did a `get_workspace_context` or catch-up read; that read's cursor
+   is recorded before the packet is issued.
+2. **The packet's own read.** At issue, `campfire handoff-packet` performs one
+   authorized service read of the sender's workspace. The packet's `sourceCursor`
+   and `sourcePosition` are that read's, and the packet-evidence record generated
+   at issue carries them.
+
+**Resolution.** For claim H, the pre-action position is the packet's own read,
+captured and dated at issue. The operator records the read and the `sourceCursor`
+/ `sourcePosition` it reports, as carried in the packet-evidence record. A
+sender's earlier orientation cursor is not the H pre-action position and is not
+recorded in that field.
+
+This is resolved here, not left to the owner, because the requirement decides it:
+§7.13 and §9 require a reviewer with no access to the private directory to be
+able to check the plan-time entries from what is committed, and only the packet's
+read is carried by a committed artifact generated from the packet — the
+packet-evidence record taken at issue. The two readings are not equal under that
+test.
+
+**Reasoning.** Three reasons, strongest first.
+
+1. **It is the read the observed action rests on.** For H, the next action (§6)
+   is the recipient's work product or action (§3.1.4), and the recipient reaches
+   the prior work through the packet file — the surface §2 names — not through a
+   workspace read of their own. The packet's read is the workspace read that
+   produced that file, so it is the read behind the action the case observes.
+   This holds under either reading of "the participant": the recipient's route
+   to the prior work is the packet, and the sender's read that populates the
+   packet is the packet command's read, made on the sender's query and
+   credential. A sender's earlier orientation read belongs to the sender's other
+   work; the packet is not drawn from it, and its cursor does not bound the
+   packet's contents.
+2. **It is the read the committed material carries.** §6 makes the position a
+   `[PLAN-TIME]` field, and §7.13 and §9 require the plan-time entries to be
+   checkable from what is committed. The packet-evidence record, generated at
+   issue and pasted into the observation, carries `packet.sourcePosition` and
+   `packet.sourceCursor` decoded to position, phase, tip, and whether it matches
+   the position. A sender's earlier cursor exists only as the recorder's
+   transcription — an orientation read writes no record of itself, as §10.3
+   records for the recall read — and nothing else in the committed record
+   corroborates it; the packet-evidence record carries a different position.
+   That is the shape §7.13 refuses.
+3. **It keeps §2's own boundary coherent.** §2 defines prior completed work as
+   created before the pre-action position. The packet's read is
+   snapshot-consistent with its `sourcePosition` — the read is refused if the
+   position moves during it — and the packet draws only from state at or below
+   that position. Every source it carries is inside that boundary. An earlier
+   orientation cursor can predate records the packet nevertheless carries, so
+   some of the reuse's own sources would sit after the recorded position, and the
+   position and the reused work would disagree about the same records.
+
+**What this changes for an operator.**
+
+- The `[plan-time]` Pre-action position (§6, `TEMPLATE.md` §5) is filled from
+  the packet's own read, dated at the issue time. One shape, not both: the read
+  is named (`campfire handoff-packet`) and its reported `sourceCursor` /
+  `sourcePosition` are recorded. It is not the append position measured at any
+  other moment, and not a reconstruction written afterwards.
+- A sender's earlier orientation cursor is not recorded as the pre-action
+  position. `HANDOFF-RUNBOOK.md` Step 2 offered it as an alternative; the same
+  runbook's Step 1 item 6 and Step 4 already fill §5 from the issuing read, and
+  Step 2 now carries a dated note pointing here.
+- P and N are unchanged. For those claims there is one participant whose action
+  is observed, and "the read the participant used" stays as written.
+
+**Limits.** This amendment answers one question and changes nothing else. It does
+not make the H plan-time record independently verifiable: the packet bytes stay
+private, and the packet-evidence record remains the recorder's attested capture
+of the packet fields. It does not change the definition, a field, an admissibility
+rule, or the protocol version. It answers the open question recorded in
+`HANDOFF-RUNBOOK.md` §9 item 2.
+
+### Amendment 2 — October 13, 2026 — case verdict labels and §4.4 item labels are separate fields
+
+**The ambiguity.** §6 gives an admissible case one verdict label from `supports`,
+`weak`, or `null`, and its Verdict row says "§4.4 item labels are separate". §1
+says the words `reported` and `none` in §4.4 "label individual weaker statements"
+and "are not case verdict labels", and §8 says an agreeing Basis 2 reconstruction
+gives the case the verdict `null` and may give the reconstruction item the label
+`none`. The statements do not fix the field-level mapping. §4.4's table carries
+four tokens in its Label column — `reported`, `none`, `P`, `H` — and nothing in
+§1 or §6 says what the last two are doing there or whether they are item labels.
+Nothing states whether the `none` item is recorded when the agreeing
+reconstruction that produced the `null` verdict exists, or whether the item
+field may sit at `n/a` in that case. `TEMPLATE.md` §15 carries two separate
+fields, so an operator can fill one and leave the other telling a different
+story about the same reconstruction without breaking a stated rule.
+
+**Resolution.** They are two separate axes with disjoint vocabularies, recorded
+in separate fields, and both are recorded when both apply.
+
+- The **case verdict** (§6; `TEMPLATE.md` §15 "Verdict label") is one value for
+  an admissible case: `supports`, `weak`, or `null`. Nothing else goes in that
+  field. An inadmissible or withdrawn case has no verdict label and carries
+  `N/A` with its disposition.
+- The **§4.4 item label** (`TEMPLATE.md` §15 "§4.4 label for weaker items", and
+  its items table) is `reported` or `none`, one per retained weaker item; `n/a`
+  when the case retained none. `null`, `weak`, `supports`, `P`, and `H` are not
+  item labels.
+- The `P` and `H` rows of §4.4's table are not item rows. They state whole-case
+  facts and name the claim shape the fact belongs to. Claim shape is the §6
+  field fixed at open (§1); it is recorded there and never in the item field.
+- An **agreeing Basis 2 reconstruction** is recorded in both fields because it
+  is two facts. The case verdict is `null` — the case shows no material reuse or
+  change — and the reconstruction item is recorded in the §4.4 field with the
+  label `none`. `none` is a result, not a failure: §4.4 records it as "no, and
+  recorded as a null", and §8 calls the agreeing reconstruction the expected
+  finding. The item field stays at `n/a` only when no weaker item was retained,
+  never when a reconstruction agreed, and `none` never substitutes for the
+  `null` verdict, or the reverse.
+
+**Reasoning.**
+
+1. **The protocol already assigns the fields; this amendment states the
+   mapping.** §6's Verdict row describes a case-level field and says item labels
+   are separate; §1 calls `reported` and `none` item labels and not verdict
+   labels; `TEMPLATE.md` implements exactly two fields. Nothing here introduces
+   a vocabulary or a field the apparatus does not already carry.
+2. **The two labels answer different questions, so neither can stand for the
+   other.** The verdict answers whether the case's claim is demonstrated. An
+   item label says what a retained weaker item is. A `null` verdict and a `none`
+   item stand side by side because they describe the case and the reconstruction
+   separately.
+3. **`none` is a result and belongs in the results field.** §8 makes the
+   agreeing reconstruction the expected finding given three consecutive NO-GO
+   pilots; §4.4 counts it as "no, and recorded as a null". Filing `none` as the
+   verdict would replace the case-level result; omitting it would lose the
+   item-level one, against §7.14's rule that nulls are recorded at the same
+   rigour.
+4. **The `P` and `H` rows cannot be item labels.** Claim shape is already a
+   required §6 field fixed at open, and the template's item menu excludes them.
+   Reading them as item labels would give one fact two label slots and would
+   invite the case-label / item-label substitution the pre-observation
+   clarification removed.
+
+**What this changes for an operator.**
+
+- Fill both fields. Verdict: `supports` / `weak` / `null`, or `N/A` for a case
+  with no verdict. Items: `reported` and/or `none`, one row per item; `n/a` only
+  when no weaker item was retained.
+- If the case's evidence includes an agreeing reconstruction, the verdict field
+  reads `null` and the item field and items table carry `none`. Both are
+  written. Do not write `none` as the verdict, and do not leave the item field
+  at `n/a` for that case.
+- `P` and `H` are written in the claim-shape slot. They are not item labels and
+  never appear in the item field.
+- `TEMPLATE.md` §15's two fields are the fields this amendment reads. No field
+  is added, and the log's verdict column keeps the same vocabulary.
+
+**Limits.** Vocabulary and field mapping only. This amendment changes no
+admissibility rule, no §4.2 basis rule, and nothing about what counts toward
+Gate E; `none` remains a recorded, non-counting result. It does not decide how a
+case records a Basis 1 result and a Basis 2 result that disagree — each item is
+labeled on its own record, and §1's and §8's verdict rules are unchanged. It
+adds no label, no field, and no protocol version change.
+
+### Amendment 3 — October 13, 2026 — owner-dogfooding scope: not resolved; the repository owner decides
+
+**This item is not resolved here.** §3.2's fifth bullet has two readable scopes,
+and the text does not select between them. The repository owner must decide.
+What follows records the question, the two scopes, and what each changes. No
+case is opened under an assumed scope.
+
+**The ambiguity.** §3.2's fifth bullet reads, in full: "The repository owner's
+own dogfooding on Campfire. It is real work and may be retained with an
+inadmissible disposition and any account marked `reported`, but it is one
+participant working on the product's own repository in a session that knows
+about the measurement. It does not qualify as ordinary multi-participant
+evidence."
+
+Two scopes are readable from that text, and they do not select the same cases.
+
+1. **Broad — the owner using Campfire at all.** The bullet's subject is "the
+   repository owner's own dogfooding on Campfire": the owner's use of the
+   product, on whichever side of a case the owner stands. Under this reading an
+   owner→non-owner handoff on ordinary, non-Campfire work is inadmissible,
+   because the owner's part in it — issuing or receiving the packet — is the
+   owner using the product in a session that knows about the measurement.
+2. **Narrow — the owner working on the product's own repository, alone.** The
+   bullet's description is its scope: "one participant working on the product's
+   own repository in a session that knows about the measurement." Under this
+   reading an owner→non-owner handoff on ordinary, non-Campfire work is not
+   covered by the bullet: the handoff has two participants by construction (a
+   sender and a separate recipient), and the work is not the product's own
+   repository work.
+
+The bullet's two sentences do not have the same extension. The label can cover
+any owner use; the description names a one-participant, measurement-aware loop
+on the product itself. Neither is stated to govern the other, and no other
+section supplies the missing scope: §3.1.1 requires ordinary work, §3.1.2
+requires the sender's voluntary packet and the recipient's ordinary handoff, and
+§7.2 governs prompting. None of them says whether the repository owner may be
+one of a handoff's two participants.
+
+The companion documents sit on different sides. `TEMPLATE.md`'s opening check
+renders the line as "Not owner dogfooding on Campfire's own repository" — the
+owner, the product, and the product's repository, without the bullet's "one
+participant" or measurement clause. The runbook applies the broad reading
+operationally: precondition 11 tests the sender, §7.1 item 5 tests the case, and
+§8.1's table tests the recipient. Three renderings, different scopes.
+
+**Resolution — none. Left to the repository owner.** The text does not decide
+it, so it is not resolved here. It is also not a clerical question: the choice
+sets an evidence policy — who may supply Gate E's evidence — and it has a
+material consequence either way.
+
+- **Broad** keeps the product's builder out of the evidence base. It costs the
+  easiest honest H handoffs, because the owner is the participant most available
+  to run one. Owner-involved work is retained only as inadmissible material,
+  with any account marked `reported`, and counts toward nothing.
+- **Narrow** admits owner-involved handoffs where the recipient is a separate
+  participant and the work is not the product's own repository work, if the
+  other §3.1 conditions hold. It accepts that the packet's construction is the
+  builder's, made in a session that knows about the measurement, and that the
+  observation must disclose this in §14 rather than argue it away. It does not
+  make such a case stronger than one with no owner involved.
+
+The owner should state the decision, its date, and its scope — which side or
+sides of a handoff and which claim shapes it covers — and record it under §12,
+as a dated note or a further amendment. Until it exists, no owner-involved case
+is opened.
+
+**Reasoning — why this is left to the owner.**
+
+1. **The bullet's label and description disagree, and no requirement selects
+   between them.** Amendment 1 was resolved here because §7.13 and §9 made only
+   one reading checkable from what is committed. Both readings here retain
+   evidence and satisfy §7.13 equally. No section prefers either, so quoting the
+   bullet cannot produce an answer the bullet does not contain.
+2. **A recorder cannot be left to choose.** Under an undecided bullet, a
+   recorder who wants a case in reads the narrow scope; one who wants it out
+   reads the broad scope; §7.1's enumeration discipline cannot see a scope
+   chosen at reading time. The honest move is to put the choice where the
+   protocol puts evidence policy — with the repository owner.
+3. **For H the bullet states no scope at all.** The bullet describes "one
+   participant"; an H case has a sender and a separate recipient. The bullet's
+   description does not fit that shape, so extending it to either end of a
+   handoff is a policy choice, not a reading. P and N cases can match the
+   description; the owner's decision should say what it means for them too.
+
+**What this changes for an operator.**
+
+- Until the owner decides, do not open an owner-involved observation under
+  either scope. The opening check's owner line cannot be answered honestly
+  without the rule. If such a candidate appears, enumerate it (§7.1) and note
+  that the scope is undecided; the enumeration starts the count and pre-judges
+  nothing.
+- Do not open a case under one reading and record its disposition under the
+  other.
+- After the decision: a candidate enumerated while the question was open may be
+  opened under the decided scope if it still meets §3.1; until the decision
+  exists, it stays unopened. Cases opened after the decision follow it.
+- When the decision is recorded, the template's opening-check line and the
+  runbook's precondition 11, §7.1 item 5, and §8.1 row will need pointed notes
+  to match it. This amendment stays on the page as the record of the open
+  question either way.
+
+**Limits.** This amendment decides nothing. It does not change §3.2 or any
+other section body, does not make owner dogfooding admissible or inadmissible,
+does not alter the template or the runbook, and does not lower or raise any
+other bar. It does not say an owner→non-owner handoff would qualify under the
+narrow reading; each §3.1 condition would still have to hold. It records an open
+question that the text does not answer, with both answers and their
+consequences, for the owner to decide.
+
+### Amendment 4 — October 13, 2026 — restatement versus correspondence for claim H work products
+
+**The ambiguity.** §3.2 disqualifies "Reuse that only restates prior Campfire
+text into new Campfire text." §3.1.4 requires claim H to leave "a dated,
+recipient-authored work product or action that can be checked against the
+packet's source ids and relevant contents." §5 says H's resulting work "is
+checked against the packet and does not imply an in-product citation." For H the
+work product will often be a commit, a pull request, or an external artifact,
+and it will often carry the packet's content — a decision's rule, a constraint,
+a value, sometimes verbatim. The protocol does not say whether that carrying is
+a legitimate correspondence (the match §5 asks for) or a disqualifying
+restatement. Two readings have looked compliant:
+
+1. **Any carried packet text is restatement.** The work product's substantive
+   content came from prior Campfire text, so the reuse only restated it.
+2. **Restatement requires its own shape: prior Campfire text moved into new
+   Campfire text with nothing else.** A commit, a PR, or an external artifact
+   is not Campfire text, and a work product that enacts the packet's decision is
+   a dependent action, not a restatement.
+
+**Resolution.** The second reading is the one the document supports. Carrying
+packet content through a dependent action is legitimate H work; copying it in
+place of one is the disqualifying shape.
+
+- The §3.2 bullet is scoped by its own words: "into new **Campfire** text", and
+  by "only". A commit, a pull request, or an external artifact is not Campfire
+  text, and a case whose reuse also produced a dependent action is not "only"
+  restating. The bullet does not reach those outputs. §3.1.3, §3.1.4, and §5
+  govern them.
+- For H, the work product is a match when the recipient's action depends on the
+  packet's records and can be checked against them: §3.1.3's test — the code,
+  configuration, or external change would be incoherent, wrong, or unsupportable
+  without the packet content — and §3.1.4's dated, recipient-authored, checkable
+  product. Implementing the packet's decision is exactly the action §1's H
+  claim and §5's check are written for.
+- **Carrying packet content verbatim into a commit does not convert the match
+  into a restatement.** The correspondence test is dependency, not originality
+  of wording: if replacing the packet field would leave the work product wrong
+  or unsupportable, the field is in scope and the correspondence can be a match
+  even where the recipient used the field's exact words. If the same work
+  product could have been produced from the sender's handoff prose alone, it
+  fails §3.1.3 and §5.4 whether or not words were copied.
+- **Copying with no dependent action is restatement and nothing else.** A
+  recipient who moves packet text into a new document and takes no action that
+  turns on it has produced no action §3.1.3 can measure and no §3.1.4 work
+  product; the reuse only restated prior text. Recorded `inadmissible`, not
+  `weak`. The runbook's §8.1 already records the packet-summary case this way.
+
+**Reasoning.** Three reasons, strongest first.
+
+1. **It is what H is for.** §1 defines H as an offline recipient acting from a
+   packet so that "their resulting work matches packet contents." An offline
+   recipient acting will typically act in a commit, a PR, or an external
+   artifact — the shapes the runbook names — and the work will carry the
+   packet's content by necessity. If carrying the content disqualified the
+   case, H could be evidenced only by work that avoided the packet's words,
+   which is the opposite of the correspondence §5 asks a reviewer to check.
+2. **The bullet's text cannot reach non-Campfire outputs.** "New Campfire text"
+   is explicit, and §5's "does not imply an in-product citation" confirms that
+   H's work product sits outside the product. The disqualifier targets the
+   closed loop where Campfire text is recycled into more Campfire text with no
+   dependent action — text movement, not handoff use.
+3. **The line that survives is already in the protocol.** §3.1.3 is the real
+   dependency test, and `TEMPLATE.md`'s opening check says in its own words that
+   it "is the condition that separates reuse from a restatement." A copy with
+   no dependent action fails it; an enactment passes it. This amendment commits
+   the protocol to that line rather than to a medium test or a wording test.
+
+**What this changes for an operator.**
+
+- Do not mark an H case inadmissible merely because the recipient's commit, PR,
+  or external artifact uses the packet's wording, including verbatim wording.
+  Apply the §3.2 restatement check as written: "new Campfire text." The
+  runbook's §7.1 item 3 already asks the question in those terms.
+- Apply the dependency check: name the packet field(s) the worked artifact
+  could not be right without, and retain their bounded, sanitized excerpts in
+  §10 of the observation (§9). If nothing substantive in the work product turns
+  on the packet's records, the case is `inadmissible` — restatement, whatever
+  the medium.
+- The comparison stays manual (the runbook's §5). A verbatim carry is the
+  cheapest correspondence to check, not the easiest to fake: the reviewer checks
+  the field the work depends on against the excerpt and asks what would have
+  changed if the field were different.
+- Keep §3.1.4's authorship requirement: the commit, PR, or artifact must be the
+  recipient's work product. A change the sender wrote is not the recipient's
+  action.
+- P and N are unchanged. The §3.2 bullet continues to disqualify Campfire-text
+  reuse that produces only new Campfire text.
+
+**Limits.** This amendment reads the existing lines; it does not lower §3.1.3 or
+§3.1.4. A document that copies packet text and nothing else remains inadmissible.
+It does not decide how much dependence is enough for a given work product, how
+much paraphrase is allowed, or which external artifact is checkable; those stay
+with §5's manual comparison. It does not alter §5.4's sender-prose mismatch or
+the rule that the packet, not the handoff message, must carry the substance. It
+adds no field, no rule, and no protocol version change.
 
 ---
 

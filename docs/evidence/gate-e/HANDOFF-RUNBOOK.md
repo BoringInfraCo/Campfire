@@ -128,8 +128,9 @@ the outcome is known does not satisfy §7.1.
      that it named neither Recall, nor `recall_workspace`, nor "prior work"
    - §7 Counterfactual basis plan — `N/A` with a reason. H does not require a
      counterfactual (§6). It is not a gap.
-6. §5 Pre-action position is filled at **Step 3**, from the read that issues the
-   packet, and dated at that moment. Do not leave it blank and do not backfill it.
+6. §5 Pre-action position is filled from the packet's own read at issue — the
+   read the Step 3 command performs, as carried in the Step 4 packet-evidence
+   record — dated to that moment. Do not leave it blank, and do not backfill it.
 7. **Commit the opened file.** `TEMPLATE.md` requires every `[PLAN-TIME]` field
    to be filled, dated, and committed **before the outcome is known**.
 8. Append the row to **Every case ever opened** in `LOG.md` and a dated entry
@@ -142,19 +143,26 @@ one is inadmissible under §6, and §6 says so without an exception.
 
 ### Step 2 — The sender reads, before the next action
 
-The sender is doing ordinary work. Capture the **pre-action position** from the
-read they used: the workspace append position, or the `sourceCursor` /
-`sourcePosition` that read reported, **captured before the next action is taken**
-(§2). One of the two, not both, and never a reconstruction written afterwards.
+The sender is doing ordinary work, and **nothing from this read is held or
+forwarded**. For claim H the pre-action position is **the packet's own read at
+issue**, not the sender's read (`docs/GATE_E_PROTOCOL.md` §12, amendment 1).
+So there is no cursor to hold here. Fill §5 of the observation at Step 4, from
+the packet's own `sourceCursor` / `sourcePosition` as carried in the
+packet-evidence record, dated to the issue time. Do not record the sender's
+earlier orientation cursor as the pre-action position.
 
-If the sender already holds an orientation cursor from work they were doing
-anyway, record that cursor pair and note that it is theirs. If they do not, the
-position will come from the packet's own read at Step 3; record which of the two
-you are recording, and why. See §9.1 — the protocol does not say whose read
-supplies an H pre-action position, and this is the honest handling of that gap.
+If the sender happens to hold an orientation cursor from that work, it is
+**context only**: it is not the H pre-action position, it does not bound the
+packet's contents, and it is not passed to the command. Nothing about it goes
+into §5.
 
-Hold the cursor. It is passed to the packet command as `--cursor`, and it is
-what ties the packet to a position rather than to a moment.
+> **Amended October 13, 2026 — `docs/GATE_E_PROTOCOL.md` §12, amendment 1.**
+> This step previously recorded the sender's earlier orientation cursor as the
+> pre-action position and had the operator pass it to `--cursor`. Both were
+> wrong: the orientation cursor is `cf1.`-prefixed and `--cursor` rejects it as
+> malformed, and the packet's `sourceCursor` / `sourcePosition` always come from
+> the packet's own read. The question this runbook used to record as open at §9
+> item 2 is answered by the amendment.
 
 ### Step 3 — Issue the packet
 
@@ -164,9 +172,20 @@ campfire handoff-packet <workspaceId> \
   --recipient-type human|agent \
   --recipient <actorId> \
   --out <file> \
-  [--cursor <the cursor held from Step 2>] \
   [--output auto|human|json]
 ```
+
+**Do not pass `--cursor` unless you already hold a recall cursor from a
+`campfire recall` call in this same session — and for an ordinary handoff,
+omit it.** `--cursor` accepts exactly one thing: an `rcl1.` recall-paging
+cursor (the kind `campfire recall` returns for a truncated section), for this
+workspace and this query. The sender's orientation cursor is `cf1.`-prefixed,
+and passing it fails immediately with **"Cursor is malformed"**. Even a valid
+recall cursor does not tie the packet to an earlier position: the packet's own
+`sourceCursor` / `sourcePosition` still come from the packet command's own read,
+and a passed cursor must match the current append position or the command fails
+with a restart error. The flag changes nothing an ordinary handoff needs, so the
+runbook's path omits it.
 
 What this does, in terms that matter here:
 
@@ -353,8 +372,8 @@ carries structure, not meaning.
 | --- | --- | --- |
 | 0 | Enumeration row, dated. | §7.1 is about order. A row written after the outcome is known is not an enumeration. |
 | 1 | Opening check, claim shape `H`, `[PLAN-TIME]` fields, open timestamp. | §6: a missing required `[PLAN-TIME]` field makes the observation inadmissible. Not "weaker" — inadmissible. |
-| 2 | Pre-action position, from the sender's own read, before the next action. | §2 defines it as captured **before the next action was taken**. `TEMPLATE.md` §5: one of the two, not both, and **not a reconstruction written afterward**. |
-| 3 | Receipt verbatim, issue timestamp, byte count, query text, `workspace:read` basis per read, and the cursor. | The receipt is the only product-side trace that a packet was issued; §10.3 records that the read writes no Contribution. |
+| 2 | Nothing. The sender's read supplies no H field; no cursor is held or forwarded. | For H the pre-action position is the packet's own read at issue (§12 Amendment 1), recorded at Step 4 — not the sender's read, and **not a reconstruction written afterward**. |
+| 3 | Receipt verbatim, issue timestamp, byte count, query text, `workspace:read` basis per read. The packet's own `sourceCursor` / `sourcePosition` are captured at Step 4. | The receipt is the only product-side trace that a packet was issued; §10.3 records that the read writes no Contribution. |
 | 4 | The full evidence record, the generation timestamp, the packet's identifying fields, the exit code. | The record carries **no timestamp and no filename** by design. A reviewer cannot tell when it was made or from which file. Only the recorder can say, and only if it is written down now. |
 | 5 | Handoff message verbatim, transport, delivery time, recipient identity, standing-instruction status per participant. | §7.2 requires prompt text retained verbatim. A paraphrase is not the text. |
 | 6 | Work product: what, author, location or id, date, ordering against `generatedAt`. | An undated artifact cannot satisfy §3.1.4. "I saw it on Tuesday" is not a date. |
@@ -752,15 +771,16 @@ made.
    but carries no query, no records, and no decision text. So "a packet was
    issued for this workspace at this time" is evidenced by the observation and
    the private file, and by nothing in the product.
-2. **The pre-action position is evidenced by the packet, not by the
-   observation.** §2 defines the pre-action position as "the `sourceCursor` /
-   `sourcePosition` reported by the read the participant used". For H there are
-   two participants and §2 does not say whose read supplies it. The packet's own
-   read is captured at issue and is legitimately before the recipient's action,
-   so this runbook records that and names it as the issuer's read. An operator
-   reading §2 strictly could reasonably record the sender's earlier orientation
-   cursor instead. Both are defensible; **the protocol should say which**, and
-   today it does not.
+2. **The H pre-action position is answered, and what remains is product-side.**
+   §2 defines the pre-action position as "the `sourceCursor` / `sourcePosition`
+   reported by the read the participant used", and for H
+   `docs/GATE_E_PROTOCOL.md` §12 Amendment 1 resolves whose read that is: the
+   packet's own read at issue, filled from the packet-evidence record at Step 4
+   and dated to the issue time. A sender's earlier orientation cursor is not the
+   H pre-action position and is not passed to the command. What is missing is
+   product-side: the position is checkable only through the recorder's attested
+   capture of the packet-evidence record, because the packet bytes stay private
+   and the read writes no Contribution (§10.3).
 3. **The evidence record carries no timestamp and no filename.** That is the
    price of determinism, and it means the recorder's own dated capture note is
    the only evidence of when the record was made and from which file. §10.6:

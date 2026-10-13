@@ -394,6 +394,15 @@ action — `none`, and recorded as a null.
 | --- | --- | --- |
 | `<item>` | `reported` / `none` | no |
 
+> **Amended October 13, 2026 — see `docs/GATE_E_PROTOCOL.md` §12, amendment 2.**
+> The verdict label and the §4.4 item label are separate, typed fields, not one
+> menu. The verdict is `supports` / `weak` / `null` (or `N/A` with no verdict);
+> this item field carries `reported` and/or `none`, or `n/a` when no weaker item
+> was retained. An agreeing reconstruction gives the case the verdict `null` and
+> the reconstruction item the label `none` — record both, in these fields. The
+> `P` and `H` rows of protocol §4.4's table name claim shapes; record them in
+> the claim-shape slot, not in the item field.
+
 **What this observation does not establish.** Written here, not left to the
 sprint result:
 
