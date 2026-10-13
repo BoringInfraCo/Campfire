@@ -30,6 +30,10 @@
  *   - `deriveDecisionSetState` — the packet's own `state`, `operativeDecisionId`,
  *     `beforeActing`, and `linkedNextStep` are re-derived and compared. The
  *     packet is never trusted about its own decision safety.
+ *   - `recordedDecisionTransitions` — the transition list the verdict is derived
+ *     from is rebuilt from the members' own `predecessorId` / `successorId`.
+ *     A packet whose `recordedTransitions` disagrees with its own members is
+ *     refused, so "re-derived" cannot mean "the packet agreed with itself".
  *   - `decodeContextCursor` + `assertCursorWorkspace` — the pre-action cursor
  *     is decoded and its workspace checked against the packet's.
  *   - `boundRecallText` with the `RECALL_*_MAX_*` constants — every copied text
@@ -43,7 +47,8 @@
  * writer never puts those in a packet, but this helper reads packets written by
  * other means, so it checks rather than assumes.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { assertCursorWorkspace, decodeContextCursor } from "../../src/domain/context-policy.js";
 import { ValidationError } from "../../src/domain/errors.js";
 import { ID_PREFIXES } from "../../src/domain/ids.js";
@@ -58,13 +63,21 @@ import {
   boundRecallText,
   capIdList,
   deriveDecisionSetState,
+  recordedDecisionTransitions,
   serializeHandoffPacket,
   type CampfireHandoffPacket,
   type HandoffCount,
   type RecallDecisionSetState,
   type RecallDecisionTransition,
 } from "../../src/domain/recall.js";
-import type { ActorType, GoalStatus } from "../../src/domain/types.js";
+import type {
+  ActorType,
+  ArtifactType,
+  DecisionStatus,
+  FindingCurrentness,
+  GoalStatus,
+  TaskStatus,
+} from "../../src/domain/types.js";
 
 /** The protocol version this record is written against. `docs/GATE_E_PROTOCOL.md` §0. */
 const PROTOCOL_VERSION = "gate-e-1";
@@ -99,23 +112,78 @@ interface Refusal {
   where: string;
 }
 
-/** `cft_` raw tokens and `cfe_` enrollment secrets, per `generateRawToken`. */
-const CREDENTIAL_SHAPE = /\bcf[te]_[A-Za-z0-9]+/;
+/**
+ * `cft_` raw tokens and `cfe_` enrollment secrets, per `generateRawToken`.
+ *
+ * The anchor is "not preceded by an alphanumeric", not `\b`. `_` is a word
+ * character, so a `\b` anchor silently misses every credential that appears
+ * after an id prefix — `agent_cft_ZZZ999`, `dec_cft_ABCD1234`,
+ * `ses_cft_QQQWWW111` — and those are exactly the fields the record copies
+ * verbatim into the committed record.
+ */
+const CREDENTIAL_SHAPE = /(?<![A-Za-z0-9])cf[te]_[A-Za-z0-9_-]+/;
+
+/**
+ * Path-like look-alikes are normalized before any path rule runs.
+ *
+ * Every path pattern below is ASCII. A string spelled with a fullwidth slash
+ * or a fullwidth full stop is the same path, and is copied into the record
+ * verbatim, so the detectors must see the ASCII form to have a chance at it.
+ */
+const PATH_LOOKALIKES: ReadonlyArray<readonly [string, string]> = [
+  ["／", "/"], // FULLWIDTH SOLIDUS
+  ["＼", "\\"], // FULLWIDTH REVERSE SOLIDUS
+  ["∕", "/"], // DIVISION SLASH
+  ["⁄", "/"], // FRACTION SLASH
+  ["⧵", "/"], // REVERSE SOLIDUS OPERATOR
+  ["．", "."], // FULLWIDTH FULL STOP
+  ["～", "~"], // FULLWIDTH TILDE
+  ["：", ":"], // FULLWIDTH COLON
+];
+
+function normalizePathLookalikes(value: string): string {
+  return value.replace(/[／＼∕⁄⧵．～：]/gu, (char) =>
+    PATH_LOOKALIKES.find(([from]) => from === char)?.[1] ?? char,
+  );
+}
+
+/**
+ * Any `scheme:` prefix. Schemes are not enumerable, so the rule classifies the
+ * *shape* rather than the scheme: a scheme token, a colon, and a slash-ish
+ * continuation anywhere in the same run with no whitespace. `file:/…`,
+ * `sqlite:/var/lib/x.db`, `postgres:///db`, and `path:/private/var/db` all
+ * reach the record otherwise, because `uri-authority` needs `://` and the
+ * delimiter-anchored path rules exclude `:` as a preceding character.
+ *
+ * The left anchor excludes alphanumerics, `.`, `-`, and `+` so this cannot fire
+ * on an ISO timestamp (`…T15:00:22Z`), a domain prose line, or the id-shaped
+ * `agent_…:…` shapes. The right anchor requires a `/`, `\`, or `~`, so ordinary
+ * `label: prose` text is not treated as a URI.
+ */
+const OPAQUE_SCHEME_SHAPE = /(?<![A-Za-z0-9.+-])[a-zA-Z][a-zA-Z0-9+.-]{1,31}:(?=[^\s]*[/\\~])/;
 
 const PATH_RULES: ReadonlyArray<{ rule: string; why: string; pattern: RegExp }> = [
   { rule: "uri-authority", why: "a URI with an authority", pattern: /\b[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s]*/ },
   { rule: "uri-opaque", why: "a URI without an authority", pattern: /\b(?:mailto|tel|data|javascript|vscode|obsidian):[^\s]*/i },
-  { rule: "windows-drive-path", why: "a Windows drive path", pattern: /\b[A-Za-z]:[\\/]/ },
+  { rule: "uri-opaque-scheme", why: "a URI scheme with an opaque path", pattern: OPAQUE_SCHEME_SHAPE },
+  // A drive letter can follow any delimiter, so the anchor is "not preceded by
+  // an alphanumeric" rather than `\b`: `\b` does not fire inside `xC:\`.
+  { rule: "windows-drive-path", why: "a Windows drive path", pattern: /(?<![A-Za-z0-9])[A-Za-z]:[\\/]/ },
   // `\\` at the start is the UNC lead-in; the rest of the run is enough to fire.
   { rule: "unc-path", why: "a UNC network path", pattern: /\\\\[^\s]+/ },
-  { rule: "home-path", why: "a home directory reference", pattern: /(?:^|[\s("'\[=,;])~(?:[\\/]|$)/ },
+  // `~user/…` as well as `~/…`: a named home is a home.
+  { rule: "home-path", why: "a home directory reference", pattern: /(?:^|[\s("'\[=,;])~(?:[A-Za-z0-9._-]+[\\/]|[\\/]|$)/ },
+  { rule: "root-reference", why: "a bare home directory reference", pattern: /(?:^|[\s("'\[=,;])~(?:$|\s)/ },
   // The separator is a whitespace or an opening delimiter, never `:` or `/`:
   // those belong to a URI, which the first rule above already reports.
   { rule: "absolute-path", why: "an absolute filesystem path", pattern: /(?:^|[\s("'\[=,;])\/[^\s"'<>|*?]+/ },
   { rule: "root-path", why: "the filesystem root path", pattern: /(?:^|[\s("'\[=,;])\/(?:$|[\s)"'\],;])/ },
   { rule: "relative-path", why: "a relative filesystem path", pattern: /(?:^|[\s("'\[=,;])\.{1,2}(?:\/[^\s"'<>|*?]+)+/ },
+  // The tool's own truncation marker is `[truncated at N bytes]`, never a bare
+  // `N/M` fraction, so it cannot match this rule. It must not: a packet whose
+  // own bounded field was cut is legitimate, and refusing it names the tool's
+  // rendering as the leaked path.
   { rule: "relative-segment-path", why: "a slash-separated relative path", pattern: /(?:^|[\s("'\[=,;])(?:[A-Za-z0-9._-]+\/)+[A-Za-z0-9._-]+(?=$|[\s)"'\],;])/ },
-  { rule: "root-reference", why: "a bare home directory reference", pattern: /(?:^|[\s("'\[=,;])~(?:$|\s)/ },
 ];
 
 /** Every string value and field name, with a path that never quotes untrusted keys. */
@@ -157,7 +225,7 @@ function pathRefusals(strings: ReadonlyArray<{ path: string; value: string }>): 
   for (const { pattern, rule, why } of PATH_RULES) {
     for (const entry of strings) {
       pattern.lastIndex = 0;
-      if (pattern.test(entry.value)) {
+      if (pattern.test(normalizePathLookalikes(entry.value))) {
         found.push({ rule, why, where: entry.path });
         break;
       }
@@ -166,12 +234,18 @@ function pathRefusals(strings: ReadonlyArray<{ path: string; value: string }>): 
   return found;
 }
 
-/** Any workspace id in the content must be the packet's own workspace id. */
+/**
+ * Any workspace id in the content must be the packet's own workspace id.
+ *
+ * Anchored on "not preceded by an alphanumeric" rather than `\b`, for the same
+ * reason `CREDENTIAL_SHAPE` is: `\b` does not fire between `x` and `ws_`, so
+ * `hum_other_ws_zzz` would pass.
+ */
 function foreignWorkspaceRefusals(
   strings: ReadonlyArray<{ path: string; value: string }>,
   ownWorkspaceId: string,
 ): Refusal[] {
-  const pattern = new RegExp(`\\b${ID_PREFIXES.workspace}_[A-Za-z0-9][A-Za-z0-9_-]*`, "g");
+  const pattern = new RegExp(`(?<![A-Za-z0-9])${ID_PREFIXES.workspace}_[A-Za-z0-9][A-Za-z0-9_-]*`, "g");
   const found: Refusal[] = [];
   for (const entry of strings) {
     pattern.lastIndex = 0;
@@ -339,6 +413,56 @@ const RECORD_SECTIONS = [...RECALL_SECTIONS, "anchor", "decision-set"] as const;
 
 const RECORD_KINDS = ["task", "finding", "decision", "artifact"] as const;
 
+/**
+ * The closed `lifecycle` vocabulary, per kind.
+ *
+ * `HandoffRecord.lifecycle` is a single string column carrying four different
+ * domain unions — task status, finding currentness, decision status, artifact
+ * type — and `deriveDecisionSetState` decides the packet's entire decision-safety
+ * verdict on `lifecycle === "accepted"` alone. Read as a free string, relabelling
+ * an accepted decision as anything else changes the derived safety state while
+ * staying internally consistent, and the superseded-projection guard, keyed on
+ * the literal `"superseded"`, never fires. So it is validated here, kind-aware.
+ *
+ * The `satisfies` and `Exhaustive` checks below are compile-time: they fail the
+ * typecheck if `src/domain/types.ts` gains a member that is not listed here, so
+ * this cannot drift into a second, looser vocabulary than the domain's.
+ */
+export const DECISION_STATUSES = ["proposed", "accepted", "superseded"] as const satisfies readonly DecisionStatus[];
+export const FINDING_CURRENTNESSES = ["current", "superseded", "withdrawn"] as const satisfies readonly FindingCurrentness[];
+export const TASK_STATUSES = ["open", "in_progress", "blocked", "completed"] as const satisfies readonly TaskStatus[];
+export const ARTIFACT_TYPES = [
+  "file",
+  "pull_request",
+  "commit",
+  "log",
+  "trace",
+  "document",
+  "deployment",
+  "screenshot",
+  "report",
+  "other",
+] as const satisfies readonly ArtifactType[];
+
+/** Both directions: every listed value is in the union, and every union value is listed. */
+type Exhaustive<Union, Listed extends readonly Union[]> = Listed[number] extends Union
+  ? Union extends Listed[number]
+    ? true
+    : { listedVocabularyIsMissingADomainMember: Union }
+  : { listedVocabularyHasAMemberTheDomainDoesNot: Listed[number] };
+
+/**
+ * A type error here is a build failure, not a runtime one: `true` only
+ * typechecks when the four lists above are exactly the four domain unions.
+ * Deliberately unreferenced at runtime — it exists to be typechecked.
+ */
+const LIFECYCLE_VOCABULARY_IS_COMPLETE: {
+  decision: Exhaustive<DecisionStatus, typeof DECISION_STATUSES>;
+  finding: Exhaustive<FindingCurrentness, typeof FINDING_CURRENTNESSES>;
+  task: Exhaustive<TaskStatus, typeof TASK_STATUSES>;
+  artifact: Exhaustive<ArtifactType, typeof ARTIFACT_TYPES>;
+} = { decision: true, finding: true, task: true, artifact: true };
+
 const DECISION_SET_STATES: readonly RecallDecisionSetState[] = [
   "no-accepted-decision",
   "single-accepted-decision",
@@ -355,8 +479,11 @@ const DECISION_SET_STATES: readonly RecallDecisionSetState[] = [
 interface EvidenceText {
   text: string;
   truncated: boolean;
+  /** Bytes of UTF-8 actually kept. */
   bytes: number;
-  maxBytes: number;
+  /** The bound that was applied, in the unit the domain applies it. */
+  limit: number;
+  unit: "bytes" | "characters";
 }
 
 interface EvidenceActor {
@@ -410,8 +537,29 @@ interface EvidenceDecisionSet {
     beforeActing: "unresolved" | "absent";
     linkedNextStep: "linked" | "absent";
   };
-  /** Re-derived from the packet's own members and transitions. Never copied. */
-  reDerived: { state: RecallDecisionSetState; operativeDecisionId: string | null };
+  /**
+   * Whether the packet's declared `recordedTransitions` were corroborated by
+   * the members' own `predecessorId` / `successorId` before the verdict was
+   * derived. A record is only emitted when this is true, so a reader of the
+   * JSON alone can see that the transition list was not taken on trust.
+   */
+  reconciliation: {
+    transitionsFromMemberRelations: boolean;
+    declaredTransitionCount: number;
+    derivedTransitionCount: number;
+  };
+  /**
+   * Re-derived from the members' own relations. Never copied.
+   *
+   * This is an internal-consistency check on one packet, not a Campfire read
+   * and not evidence about any decision outside these members.
+   */
+  reDerived: {
+    state: RecallDecisionSetState;
+    operativeDecisionId: string | null;
+    /** A closed enum, not prose: prose in this record can trip the path rules. */
+    derivedFrom: "members-own-relation-ids";
+  };
   members: EvidenceRecord[];
 }
 
@@ -490,7 +638,23 @@ export interface GateEPacketEvidence {
 function boundedText(value: string | undefined, maxBytes: number): EvidenceText {
   const bounded = boundRecallText(value, maxBytes);
   const text = bounded.text ?? "";
-  return { text, truncated: bounded.truncated, bytes: Buffer.byteLength(text, "utf8"), maxBytes };
+  return { text, truncated: bounded.truncated, bytes: Buffer.byteLength(text, "utf8"), limit: maxBytes, unit: "bytes" };
+}
+
+/**
+ * A field the domain bounds in **characters**, not bytes.
+ *
+ * `prepareRecallQuery` bounds `query.text` at `RECALL_QUERY_MAX_CHARS`
+ * characters and stores it unchanged, so a 200-character Japanese, Arabic, or
+ * emoji query is legal at the writer and the recipient sees all of it. Re-bound
+ * in bytes at the same numeric limit, the record would silently cut the query
+ * at a point the recipient never saw and would understate what they had. The
+ * unit is carried in the record so a reviewer can tell which bound applied.
+ */
+function boundedChars(value: string, maxChars: number): EvidenceText {
+  const truncated = value.length > maxChars;
+  const text = truncated ? value.slice(0, maxChars) : value;
+  return { text, truncated, bytes: Buffer.byteLength(text, "utf8"), limit: maxChars, unit: "characters" };
 }
 
 function byteLength(value: string): number {
@@ -533,6 +697,26 @@ function optionalBooleanAt(value: unknown, path: string): boolean {
   return value === undefined ? false : booleanAt(value, path);
 }
 
+/**
+ * `lifecycle` against the vocabulary its `kind` implies.
+ *
+ * Keyed on `kind` because `HandoffRecord.lifecycle` carries four different
+ * unions. Validating before the projection guard is what makes the guard's
+ * `=== "superseded"` literal mean what it says: after this, no other string can
+ * reach it.
+ */
+function lifecycleAt(value: unknown, kind: string, path: string): string {
+  const allowed =
+    kind === "decision"
+      ? DECISION_STATUSES
+      : kind === "finding"
+        ? FINDING_CURRENTNESSES
+        : kind === "task"
+          ? TASK_STATUSES
+          : ARTIFACT_TYPES;
+  return oneOf(value, allowed, path);
+}
+
 function recordAt(value: unknown, path: string): EvidenceRecord {
   const record = objectAt(value, path);
   assertKnownKeys(record, RECORD_KEYS, path);
@@ -542,11 +726,12 @@ function recordAt(value: unknown, path: string): EvidenceRecord {
   const evidence = idListAt(record.evidenceArtifactIds, `${path}.evidenceArtifactIds`);
   const predecessorId = optionalStringAt(record.predecessorId, `${path}.predecessorId`);
   const successorId = optionalStringAt(record.successorId, `${path}.successorId`);
+  const kind = oneOf(record.kind, RECORD_KINDS, `${path}.kind`);
   return {
     id: stringAt(record.id, `${path}.id`),
-    kind: oneOf(record.kind, RECORD_KINDS, `${path}.kind`),
+    kind,
     section: oneOf(record.section, RECORD_SECTIONS, `${path}.section`),
-    lifecycle: stringAt(record.lifecycle, `${path}.lifecycle`),
+    lifecycle: lifecycleAt(record.lifecycle, kind, `${path}.lifecycle`),
     text: {
       bytes: byteLength(text),
       truncated: booleanAt(record.textTruncated, `${path}.textTruncated`),
@@ -600,6 +785,16 @@ function transitionsAt(value: unknown, path: string): RecallDecisionTransition[]
 }
 
 /**
+ * Order-independent identity for one transition, for comparing the packet's
+ * declared list against the one rebuilt from the members. JSON encoding, not
+ * concatenation: a validated id is any non-empty string and may itself contain
+ * a separator, so a joined key could collide.
+ */
+function transitionKey(transition: RecallDecisionTransition): string {
+  return JSON.stringify([transition.supersededDecisionId, transition.supersedingDecisionId]);
+}
+
+/**
  * Read the decision set and re-derive its safety.
  *
  * The stated `state`, `operativeDecisionId`, `beforeActing`, and
@@ -607,6 +802,13 @@ function transitionsAt(value: unknown, path: string): RecallDecisionTransition[]
  * packet's own members and transitions. A packet that under- or over-claims
  * here is rejected rather than recorded: an H record repeating an
  * unauthenticated safety claim would be worse than no record at all.
+ *
+ * The transition list is not taken from the packet. It is rebuilt from the
+ * members' own `predecessorId` / `successorId` with `recordedDecisionTransitions`
+ * and the packet's declared list has to equal it. Deriving from the declared
+ * list alone would let the packet certify its own claim: an invented transition
+ * turns an unresolved two-accepted-decision conflict into a single operative
+ * decision with no member carrying any link at all.
  */
 function decisionSetAt(value: unknown, path: string): EvidenceDecisionSet {
   const set = objectAt(value, path);
@@ -621,12 +823,43 @@ function decisionSetAt(value: unknown, path: string): EvidenceDecisionSet {
   const state = oneOf(required(set.state, `${path}.state`), DECISION_SET_STATES, `${path}.state`);
   const operativeDecisionId = optionalStringAt(set.operativeDecisionId, `${path}.operativeDecisionId`);
   const transitionPath = `${path}.recordedTransitions`;
-  const recordedTransitions = transitionsAt(required(set.recordedTransitions, transitionPath), transitionPath);
+  const declaredTransitions = transitionsAt(required(set.recordedTransitions, transitionPath), transitionPath);
   if (returned !== members.length) {
     invalid(`${path}.returned is ${returned} but the set carries ${members.length} members`, path);
   }
   if (returned > total) {
     invalid(`${path}.returned is ${returned} and cannot exceed total ${total}`, path);
+  }
+  // The transition list the verdict is derived from: rebuilt from the members'
+  // own relation ids, in the domain's own order.
+  const recordedTransitions = recordedDecisionTransitions(
+    members.map((member) => ({
+      id: member.id,
+      ...(member.relations.predecessorId === undefined ? {} : { predecessorId: member.relations.predecessorId }),
+      ...(member.relations.successorId === undefined ? {} : { successorId: member.relations.successorId }),
+    })),
+  );
+  // Two directions, both refused: a declared transition the members do not
+  // support (fabricated), and a member relation the packet dropped (removed).
+  // Either one changes the derived state, so either one changes the verdict.
+  for (const transition of declaredTransitions) {
+    const endsAreMembers =
+      members.some((member) => member.id === transition.supersededDecisionId) &&
+      members.some((member) => member.id === transition.supersedingDecisionId);
+    if (!endsAreMembers) {
+      invalid(
+        `${transitionPath} declares a transition whose two ends are not both members of this set`,
+        transitionPath,
+      );
+    }
+  }
+  const declared = declaredTransitions.map(transitionKey).sort();
+  const derived = recordedTransitions.map(transitionKey).sort();
+  if (declared.join("\n") !== derived.join("\n")) {
+    invalid(
+      `${transitionPath} does not match the supersessions the members' own predecessorId/successorId relations record`,
+      transitionPath,
+    );
   }
   // The same truncation rule `projectHandoffPacket` applies when it fits a set.
   const verdict = deriveDecisionSetState({
@@ -672,7 +905,16 @@ function decisionSetAt(value: unknown, path: string): EvidenceDecisionSet {
       beforeActing: set.beforeActing === undefined ? "absent" : "unresolved",
       linkedNextStep: set.linkedNextStep === undefined ? "absent" : "linked",
     },
-    reDerived: { state: verdict.state, operativeDecisionId: derivedOperative },
+    reconciliation: {
+      transitionsFromMemberRelations: true,
+      declaredTransitionCount: declaredTransitions.length,
+      derivedTransitionCount: recordedTransitions.length,
+    },
+    reDerived: {
+      state: verdict.state,
+      operativeDecisionId: derivedOperative,
+      derivedFrom: "members-own-relation-ids",
+    },
     members,
   };
 }
@@ -835,7 +1077,7 @@ export function buildPacketEvidence(parsed: unknown, packetBytes: number): Built
         name: boundedText(stringAt(workspace.name, "packet.workspace.name"), RECALL_NAME_MAX_BYTES),
         nameTruncated: booleanAt(workspace.nameTruncated, "packet.workspace.nameTruncated"),
       },
-      query: boundedText(stringAt(query.text, "packet.query.text"), RECALL_QUERY_MAX_CHARS),
+      query: boundedChars(stringAt(query.text, "packet.query.text"), RECALL_QUERY_MAX_CHARS),
       generatedAt: stringAt(packet.generatedAt, "packet.generatedAt"),
       sourcePosition,
       sourceCursor: {
@@ -900,8 +1142,21 @@ function joinFields(...parts: Array<string | undefined>): string {
   return parts.filter((part): part is string => part !== undefined && part.length > 0).join("  ");
 }
 
+/**
+ * A bounded field, marked with the bound that was applied.
+ *
+ * The marker is `[truncated at N bytes]` or `[truncated at N characters]`, never
+ * `[truncated N/M bytes]`. A bare `N/M` fraction is exactly the shape
+ * `relative-segment-path` matches, so the tool's own rendering used to refuse a
+ * well-formed packet that had a legitimately truncated field — naming its own
+ * output as the leaked path and giving the operator nothing to act on. The
+ * unit is the domain's, not assumed: `query.text` is bounded in characters by
+ * `prepareRecallQuery`, everything else in bytes.
+ */
 function markedText(text: EvidenceText): string {
-  return text.truncated ? `${text.text} [truncated ${text.bytes}/${text.maxBytes} bytes]` : text.text;
+  if (!text.truncated) return text.text;
+  const bound = text.unit === "bytes" ? `${text.limit} bytes` : `${text.limit} characters`;
+  return `${text.text} [truncated at ${bound}]`;
 }
 
 function renderRecordLine(record: EvidenceRecord): string {
@@ -960,6 +1215,17 @@ export function renderHuman(record: GateEPacketEvidence): string {
         "re-derived and matched",
       ),
     );
+    // "re-derived and matched" above is a consistency check on one packet. The
+    // line below says what it was derived from, so the words cannot be read as
+    // an independent verification of the packet's decision safety.
+    lines.push(
+      labeled(
+        "Reconciled",
+        `transitions from the members' own relation ids: ${set.reconciliation.transitionsFromMemberRelations ? "yes" : "no"}`,
+        `declared ${set.reconciliation.declaredTransitionCount}, derived ${set.reconciliation.derivedTransitionCount}`,
+      ),
+    );
+    lines.push(labeled("Derived", `from ${set.reDerived.derivedFrom}`, "internal consistency only, not a Campfire read"));
     for (const transition of set.recordedTransitions) {
       lines.push(labeled("Supersedes", `${transition.supersededDecisionId} -> ${transition.supersedingDecisionId}`));
     }
@@ -1149,21 +1415,46 @@ function main(argv: readonly string[]): number {
   return 0;
 }
 
-let exitCode: number;
-try {
-  exitCode = main(process.argv.slice(2));
-} catch (error) {
-  if (error instanceof Halt) {
-    exitCode = error.code;
-  } else {
-    // Imported validators and malformed fields may embed packet content in
-    // their messages. Keep only a checked field path, never their prose.
-    const field = error instanceof ValidationError ? error.details?.field : undefined;
-    const safeField = typeof field === "string" && /^packet(?:\.[A-Za-z][A-Za-z0-9]*|\[\d+\])*$/.test(field)
-      ? field
-      : undefined;
-    process.stderr.write(`INVALID — packet validation failed${safeField === undefined ? "" : ` at ${safeField}`}\n`);
-    exitCode = 1;
+/**
+ * True only when this file is the process entrypoint.
+ *
+ * `buildPacketEvidence`, `renderHuman`, and the four lifecycle vocabularies are
+ * exported so a test can exercise them directly, but this module runs its CLI at
+ * load. Without this guard, importing it from a test runner feeds that runner's
+ * argv to `main`, which reads a file named after an argument the runner does not
+ * own and sets its exit code — a test must never do that to the tree it runs in.
+ *
+ * Same shape and same real-path comparison as `src/cli/index.ts`, `src/mcp/stdio.ts`,
+ * and `scripts/wow-001/pilot.ts`: argv[1] is verbatim, so a symlink or a `..`
+ * segment must not silently no-op the entrypoint.
+ */
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (entry === undefined) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
+  } catch {
+    return false;
   }
 }
-process.exitCode = exitCode;
+
+if (isMainModule()) {
+  let exitCode: number;
+  try {
+    exitCode = main(process.argv.slice(2));
+  } catch (error) {
+    if (error instanceof Halt) {
+      exitCode = error.code;
+    } else {
+      // Imported validators and malformed fields may embed packet content in
+      // their messages. Keep only a checked field path, never their prose.
+      const field = error instanceof ValidationError ? error.details?.field : undefined;
+      const safeField = typeof field === "string" && /^packet(?:\.[A-Za-z][A-Za-z0-9]*|\[\d+\])*$/.test(field)
+        ? field
+        : undefined;
+      process.stderr.write(`INVALID — packet validation failed${safeField === undefined ? "" : ` at ${safeField}`}\n`);
+      exitCode = 1;
+    }
+  }
+  process.exitCode = exitCode;
+}

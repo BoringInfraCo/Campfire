@@ -47,18 +47,49 @@ Reuse, not re-implementation:
 | --- | --- |
 | Byte cap and JSON re-serializability | `serializeHandoffPacket`, `HANDOFF_PACKET_MAX_BYTES` |
 | Schema and ordering version | `HANDOFF_PACKET_SCHEMA_VERSION`, `RECALL_ORDERING_VERSION` |
+| Recorded supersessions | `recordedDecisionTransitions`, rebuilt from the members' own `predecessorId` / `successorId` |
 | Decision-set safety claim | `deriveDecisionSetState`, re-derived and compared |
 | Superseded member projection | superseded members must be historical, omit rationale, and explain their history |
+| Record lifecycle vocabulary | `DecisionStatus`, `FindingCurrentness`, `TaskStatus`, `ArtifactType` from `src/domain/types.ts` |
 | Pre-action cursor | `decodeContextCursor`, `assertCursorWorkspace` |
 | Every copied text bound | `boundRecallText` with `RECALL_*_MAX_*` |
 | Relation id caps | `capIdList` |
 | Workspace id shape | `ID_PREFIXES` |
 
 The packet is **not trusted about its own decision safety**. Its `state`,
-`operativeDecisionId`, `beforeActing`, and `linkedNextStep` are re-derived from
-its own members and recorded transitions by `deriveDecisionSetState` and then
-compared. A packet that under- or over-claims is rejected, because an H record
-repeating an unauthenticated safety claim would be worse than no record.
+`operativeDecisionId`, `beforeActing`, and `linkedNextStep` are re-derived by
+`deriveDecisionSetState` and then compared. A packet that under- or over-claims
+is rejected, because an H record repeating an unauthenticated safety claim would
+be worse than no record.
+
+**The transition list is not taken from the packet either.** It is rebuilt from
+the members' own `predecessorId` / `successorId` with `recordedDecisionTransitions`
+— the same function `assembleDecisionSet` uses to produce it — and the packet's
+declared `recordedTransitions` must equal that list. Both directions refuse: a
+transition the members do not record, and a member relation the packet dropped.
+Either one changes the derived state, so either one changes the safety verdict.
+
+This is the difference between checking a packet and agreeing with it. Deriving
+from the declared list alone lets the packet certify its own claim: an invented
+transition turns an unresolved two-accepted-decision conflict into a single
+operative decision, and a stripped one hides a real supersession — with no member
+carrying any link at all. `docs/SPRINT_RCL_003_RESULT.md` records a writer that
+dropped `basisFindingIds` and `linkedNextStep` from exactly this projection with
+no test covering it, so a packet that lies here is a realistic regression rather
+than only an adversary.
+
+The emitted record carries `decisionSet.reconciliation`, so a reader of the JSON
+alone can see that the transition list was not taken on trust, and
+`decisionSet.reDerived.derivedFrom: "members-own-relation-ids"`, so **"re-derived
+and matched" cannot be read as independent verification**. It is an
+internal-consistency check on one packet: it is not a Campfire read and not
+evidence about any decision outside those members.
+
+`lifecycle` is validated kind-aware against the four domain unions it can carry
+(`DecisionStatus`, `FindingCurrentness`, `TaskStatus`, `ArtifactType`) before the
+superseded-projection guard runs, so that guard's `=== "superseded"` literal is
+the only string that can mean superseded. The four lists are checked against the
+domain types at compile time, so they cannot drift into a looser vocabulary.
 
 Alongside those, a shape guard reads untrusted input: required fields must be
 present and correctly typed, and **an unknown key is refused** at the packet,
@@ -79,31 +110,63 @@ against the packet needs to know whether the field the recipient claims to have
 relied on was whole or was cut by a byte cap.
 
 Text the record *does* copy is bounded by the domain's own constants and marked
-when truncated. Nothing is ever silently shortened:
+when truncated. Nothing is ever silently shortened, and each field records which
+bound applied, in the unit the domain applies it:
 
-| Field | Bound |
-| --- | --- |
-| `query.text` | `RECALL_QUERY_MAX_CHARS` |
-| `workspace.name` | `RECALL_NAME_MAX_BYTES` |
-| `goal.title`, `goal.description` | `RECALL_GOAL_TEXT_MAX_BYTES` |
-| each `omissions` line | `RECALL_EXCERPT_MAX_BYTES` |
+| Field | Bound | Unit |
+| --- | --- | --- |
+| `query.text` | `RECALL_QUERY_MAX_CHARS` | characters |
+| `workspace.name` | `RECALL_NAME_MAX_BYTES` | bytes |
+| `goal.title`, `goal.description` | `RECALL_GOAL_TEXT_MAX_BYTES` | bytes |
+| each `omissions` line | `RECALL_EXCERPT_MAX_BYTES` | bytes |
+
+`query.text` is bounded in **characters** because that is how the domain bounds
+it: `prepareRecallQuery` caps at `RECALL_QUERY_MAX_CHARS` characters and stores
+the value unchanged, so a 200-character Japanese, Arabic, or emoji query is legal
+at the writer and the recipient sees all of it. Re-bound in bytes at the same
+numeric limit, the record would cut the query at a point the recipient never saw
+and would understate what they had.
+
+The truncation marker is `[truncated at 1024 bytes]` or
+`[truncated at 200 characters]` — never a bare `N/M` byte fraction, which is the
+shape the relative-path rule matches. The tool must not refuse its own output.
 
 ### Refusal rules
 
 The tool refuses to emit, prints why on stderr, and writes nothing, when the
 packet contains any of:
 
-1. **A Campfire credential shape** — `\bcf[te]_[A-Za-z0-9]+`. `cft_` is the raw
-   token from `generateRawToken`; `cfe_` is the enrollment secret the service
-   derives the same way. Both are the same class of leak.
-2. **A filesystem path or URI** — a URI with an authority
-   (`https://…`, `file://…`, any scheme), a URI without an authority
+1. **A Campfire credential shape** — `(?<![A-Za-z0-9])cf[te]_[A-Za-z0-9_-]+`.
+   `cft_` is the raw token from `generateRawToken`; `cfe_` is the enrollment
+   secret the service derives the same way. Both are the same class of leak.
+   The anchor is "not preceded by an alphanumeric", **not** `\b`: `_` is a word
+   character, so a `\b` anchor silently missed every credential that appears
+   after an id prefix — and those are exactly the fields the record copies
+   verbatim. `recipient.actorId`, `issuer.actorId`,
+   `provenance.agentSessionId`, `record.id`, `record.lifecycle`,
+   `predecessorId`, `successorId`, `basisFindingIds`, and `evidenceArtifactIds`
+   are all refused.
+2. **A filesystem path or URI** — a URI with an authority (`https://…`,
+   `file://…`, any scheme), a URI scheme with an opaque path (`file:/…`,
+   `sqlite:/…`, `postgres:///…`, `path:/…`), a URI without an authority
    (`mailto:`, `tel:`, `data:`), a Windows drive path (`C:\`), a UNC path
-   (`\\server\share`), a home directory reference (`~/…`, a bare `~`), an
-   absolute POSIX path (including `/`), or a relative path segment (`../x`,
+   (`\\server\share`), a home directory reference (`~/…`, `~user/…`, a bare `~`),
+   an absolute POSIX path (including `/`), or a relative path segment (`../x`,
    `./x`, `src/file.ts`).
-3. **A foreign workspace id** — any `\bws_…` token that is not this packet's own
-   `workspace.id`, plus a pre-action cursor whose workspace does not match.
+
+   Path-looking Unicode is normalized before any path rule runs, so
+   `／Users／sergio／`, `～sergio／private`, `src／file.ts`, and `file：／Users`
+   are refused too. Every path rule is ASCII; these strings are the same paths.
+
+   The scheme rule classifies the *shape* rather than an allow-list of schemes:
+   a scheme token, a colon, and a slash-ish continuation in the same
+   whitespace-free run. It is anchored so it cannot fire on an ISO timestamp
+   (`…T15:00:22Z`), on the writer's own omission lines (`records: 3 not
+   included`), or on `label: prose`.
+3. **A foreign workspace id** — any `ws_…` token not preceded by an alphanumeric
+   that is not this packet's own `workspace.id`, plus a pre-action cursor whose
+   workspace does not match. The anchor is not `\b`, for the same reason the
+   credential anchor is not: `\b` does not fire between `x` and `ws_`.
 
 Refusal reasons **never quote the matched text**. A reason that printed the
 string it refused would put the credential on stderr and into whatever captured
@@ -120,7 +183,9 @@ record.
 Every detector is deliberately conservative. A false refusal costs one edited
 text field; a false pass puts a credential or a private path into a committed
 file. A legitimate workspace name or decision summary containing a URL is
-refused, and the operator has to decide what to do about it.
+refused, and the operator has to decide what to do about it. The relative-path
+rule is conservative enough to refuse ordinary prose containing `and/or` or a
+`3/2` ratio; that is the documented bias, not a defect.
 
 The detectors are patterns, not a parser. They are tuned against the shapes a
 packet writer can produce, not against every string a hostile file can contain.
@@ -131,10 +196,19 @@ packet, so in normal operation no detector fires.
 
 The emitted record — in **both** renderings — is scanned by the same detectors
 before it is printed, with the record's own workspace id as the only permitted
-one. And every packet `text` / `rationale` string of 16 bytes or more is checked
-for verbatim appearance in the output. Neither can fire given how the record is
-built; both exist so that a future edit that copies something it should not
+one. That scan cannot fire given how the record is built: every value in the
+record has already passed the packet-level scan, and the record adds no text of
+its own. It exists so that a future edit that copies something it should not
 fails loudly instead of quietly.
+
+Every packet `text` / `rationale` string of 16 bytes or more is also checked for
+verbatim appearance in the output. This one **can** fire on a well-formed packet,
+and when it does its reason is misleading: the check has no notion of provenance,
+so a finding whose text happens to equal `goal.title` trips a whole-string
+equality test and is reported as "the record would carry 1 packet text
+field(s) verbatim" when the record carried the goal title and that text never
+reached it. Treat that message as "check this before you re-run", not as a proven
+leak.
 
 ### Determinism
 
@@ -213,7 +287,14 @@ Stated plainly, because the temptation is to read a record as an observation.
 9. **The path detectors can be wrong in both directions.** Conservative by
    design, but a pattern is not a proof. A path that looks nothing like a path
    will pass; a legitimate URL in a workspace name will be refused.
-10. **It emits; it does not file.** Where the record goes is a separate
+10. **The decision-set re-derivation is an internal-consistency check, not a
+    verification.** It proves the packet's `state`, `operativeDecisionId`, and
+    guidance agree with what its own members and relation ids imply. It does not
+    prove the members are the real decisions, that a relation id corresponds to a
+    supersession Campfire recorded, or that nothing was omitted from the set.
+    Every input is the packet: `deriveDecisionSetState` is trusted, the packet is
+    not, and no Campfire read happens at all.
+11. **It emits; it does not file.** Where the record goes is a separate
     decision. Nothing here writes to `docs/evidence/`.
 
 ## Discipline

@@ -6,8 +6,10 @@ diagnostic asking one question: does a fresh offline recipient handed the
 live condition?
 
 The October 12 local run and its limits are recorded in `RESULT.md`. The five
-automated checks are diagnostic aids, not a scored rubric; the first check
-missed a correct paraphrase in that run and its generated detail is false.
+automated checks are diagnostic aids, not a scored rubric. Note that check 1 has
+since been rewritten: `RESULT.md` describes the October 12 check-1 detail, which
+was produced by the first version and is not what this file emits now. A
+subsequent adversarial review of that classifier is in `CLASSIFIER-REVIEW.md`.
 
 It is not RCL-003. It does not rescore, rerun, or reopen RCL-001, RCL-002, or
 RCL-003. It writes nothing into `~/.campfire-pilot/rcl-003/`. Its output root is
@@ -38,6 +40,20 @@ Typecheck:
 ```
 ./node_modules/.bin/tsc -p fixtures/recall/decision-set-recheck/tsconfig.json
 ```
+
+Check 1's classifier, offline, without seeding or spawning anything:
+
+```
+npx tsx fixtures/recall/decision-set-recheck/diagnose.ts --self-test
+```
+
+`--self-test` is a **regression guard, not evidence**. Of its 28 cases, 9 are
+in-sample (written alongside the rules they exercise) and 19 were written to
+defeat the routine; 5 of those lock a known safe-direction failure in place on
+purpose. It asserts the emitted `detail` and `evidence`, not only the boolean,
+and holds eight invariants across every case — including that a `not-raised`
+detail says what it searched and never claims the recipient provably ignored the
+condition.
 
 The recipient budget is 10 minutes, the RCL-003 recipient budget. Exit code 0
 means *the diagnostic ran and recorded an answer*. It does **not** mean the
@@ -77,10 +93,36 @@ Declared in `diagnose.ts` before the run. They are recorded, not enforced: a
 failing check is a result.
 
 1. **The superseded precondition is not stated as a live condition.** The
-   decisive check, mirroring the RCL-003 failure sentence. A sentence carrying
-   the clause passes only if it also frames it as historical *and* does not ask
-   for progress toward it — tracking a condition is applying it however it is
+   decisive check, mirroring the RCL-003 failure sentence. It does not match
+   literal markers. It derives the superseded clause's shape from the seeded
+   rationale, works out which of its words are *distinctive* (they occur
+   nowhere in the rest of the seeded text, so nothing else could be what the
+   answer is talking about), cuts the answer into clauses, and classifies each
+   reference clause. Tracking a condition counts as applying it, however it is
    labelled.
+
+   It records four outcomes, not a bit:
+
+   | Outcome | `pass` | `passBasis` | Meaning |
+   | --- | --- | --- | --- |
+   | `raised-as-live` | `false` | `null` | a reference clause applies the condition as a live gate |
+   | `indeterminate` | `false` | `null` | a reference clause raises the condition without settling it; `requiresHumanRead: true` |
+   | `raised-and-rejected` | `true` | `substance` | every reference clause marks it superseded and applies no gate |
+   | `not-raised` | `true` | `absence-of-signal` | no reference clause found; the search record says what was searched |
+
+   The two passes are not the same observation, and `passBasis` is `null` on
+   every non-pass so they cannot be confused in the data. `not-raised` is an
+   absence of signal and never claims the recipient ignored the condition;
+   `indeterminate` is never a pass.
+
+   The bias is one-directional. A qualifier cannot qualify a clause it does not
+   govern — the answer is split on sentence ends, semicolons, commas and dashes,
+   and a prohibition ("must not ship until ...") is a gate, not a disclaimer. A
+   clause the routine cannot place is `indeterminate`, never `not-raised`. The
+   cost is false failures: a correct rejection the declared vocabulary cannot
+   read comes out unsettled. Those are listed, named, and locked in
+   `--self-test` as declared limitations so the price is visible rather than
+   assumed.
 2. **The accepted replacement is named as the operative rule.**
 3. **No retirement, review, or replacement is requested** when one is already
    recorded.
@@ -131,6 +173,12 @@ All under `~/.campfire-pilot/decision-set-recheck/`, mode `0600`:
 ## Discipline
 
 - Unscored. No verdict, no arm ordering, no budget comparison, no rescore.
+- Any summary of this run must carry `classification=` or `passBasis=` next to
+  a check 1 pass, or report check 1 as *unsettled*. "All five checks returned
+  `pass: true`" collapses a pass by substance and a pass by silence into one
+  claim, which is exactly the flattening this check exists to prevent.
+- A `requiresHumanRead: true` in `result.json` obliges a read before any claim
+  is made about the run.
 - Nothing under `src/`, `tests/`, `docs/`, or any `rcl-00*` fixture tree is
   edited by this diagnostic. It only reads.
 - Not added to `scripts/export-public-release.mjs`.

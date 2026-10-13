@@ -31,6 +31,15 @@ the disqualifier named.
   "prior work", and no re-prompt after a quiet moment; for H, the packet is
   part of an ordinary handoff and the desired answer was not supplied**
   (§3.1.2, §7.2): <yes / no — claim-specific reason>
+- **A real dependency — the later action is incoherent, wrong, or unsupportable
+  without the content of the named prior records** (§3.1.3). "Would have been
+  nice to have", "confirmed what I already believed", and "I read it while I was
+  there" do not qualify. This is the condition that separates reuse from a
+  restatement, and a `supports` verdict has no test without it — so answer it
+  before the outcome and do not answer it after you have seen how the comparison
+  came out. A `no` here ends the case, the same as a `yes` on a disqualifier
+  line below:
+  <yes / no — what would be incoherent, wrong, or unsupportable without them>
 - **Not owner dogfooding on Campfire's own repository** (§3.2). If it is, label it
   here and below — it may be recorded, it is not ordinary multi-participant work:
   <yes / no — one line why>
@@ -345,18 +354,35 @@ observation does not establish, in the observation's own words, so the limit
 travels with the record (§7.11, §8).
 
 ```text
-Claim shape:                     P / H / N
-Counterfactual basis used:       Basis 1 / Basis 2 / Basis 1 + Basis 2 / none required (P or H)
-Case disposition:                admissible / inadmissible — <reason> / withdrawn — <reason>
-Verdict label:                   supports / weak / null / N/A (inadmissible or withdrawn)
-§4.4 label for weaker items:    reported / none / n/a
-Counts toward Gate E:            yes (one case only) / no
+Claim shape:                     <P / H / N>
+Counterfactual basis used:       <Basis 1 / Basis 2 / Basis 1 + Basis 2 / none required (P or H)>
+Case disposition:                <inadmissible — <reason> / withdrawn — <reason> / admissible — <why admissible>>
+Verdict label:                   <null / weak / supports / N/A (inadmissible or withdrawn)>
+§4.4 label for weaker items:    <none / n/a / reported>
+Counts toward Gate E:            no — <claim P/H does not close Gate E (§1, §8)>
+                                 or, claim N only: <no — <reason §8> / yes (one case only) — claim N, admissible>
+Label follows from:              <the field(s) in this file that establish it>
 Closed at:                       <ISO-8601 UTC>
 ```
 
+**Read these slots as shapes, not as values.** The permitted values are in angle
+brackets, so a slot left unedited reads `not recorded` under the rule at the top
+of this file rather than as a verdict. In each menu the **conservative value is
+first** and the passing value is last and carries an extra clause, so a
+half-filled §15 — `Closed: open`, nothing else written — reads as a null, not as
+a pass. Nothing in this section is filled in optimistically by filling in a menu.
+
 An admissible P or H observation is `no` at the Gate E column and says why: only
 claim N closes Gate E, and P and H are not scored toward it (§1, §8). A P plus an
-H is two honest facts, not partial credit.
+H is two honest facts, not partial credit. For a P or H case the Gate E line is
+therefore a statement, not a menu: `no — claim P/H does not close Gate E`. Only a
+claim-N observation may reach the passing option, and reaching it requires
+writing the claim shape and an admissible disposition in the same slot.
+
+`Label follows from` names the field(s) that establish the label. A `supports`
+label with no such field is a claim the file does not carry: `supports` means
+"when its claim is demonstrated" (§1), and §3.1.3's real-dependency answer is
+what demonstrates it.
 
 **§4.4 items recorded in this case.** Each row is admissible to record and
 inadmissible to count. "Recall helped", "it felt faster", "the agent was more

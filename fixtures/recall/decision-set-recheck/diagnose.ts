@@ -33,7 +33,9 @@
  *
  * `--self-test` runs the check 1 classifier offline over synthetic answers and
  * the retained October 12 answer. It seeds nothing, spawns nothing, reads no
- * packet, and touches nothing outside this file.
+ * packet, and touches nothing outside this file. It is a regression guard, not
+ * evidence: 9 of its 28 cases are in-sample and 19 were written to defeat the
+ * routine, 5 of which lock a known safe-direction failure in place on purpose.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { chmodSync, closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -133,23 +135,42 @@ interface SeedFacts {
  *      deliberately NOT reference signals on their own, because the current
  *      replacement rule is about operator-requested releases too. Reading those
  *      as a reference is what turns a correct answer into noise.
- *   3. Classify each reference sentence by how it frames the condition.
+ *   3. Cut the answer into clauses — the smallest unit one qualifier may
+ *      govern — and classify each reference clause by how it frames the
+ *      condition.
  *
- * This is a heuristic, and a narrow one. It is a declared vocabulary over
- * sentence shapes, with no comprehension of the answer and no model behind it.
- * It can miss a paraphrase that falls outside the declared patterns, and it can
- * be argued out of a "live" reading by a negation sitting nearby. Every run
- * records that caveat next to the bit, and `not-raised` says what was searched
- * instead of asserting what is absent.
+ * This is a heuristic, and a narrow one. It is a declared vocabulary over clause
+ * shapes, with no comprehension of the answer and no model behind it. It can
+ * miss a paraphrase that falls outside the declared patterns, and a sentence
+ * that both denies and applies the condition in one breath is reported
+ * unsettled rather than resolved. Every run records that caveat next to the
+ * bit, and `not-raised` says what was searched instead of asserting what is
+ * absent.
+ *
+ * The bias is one-directional on purpose. A live gate is never allowed to pass
+ * because a marker near it looked like a disclaimer, and a clause the routine
+ * cannot place is `indeterminate`, which is not a pass. The price is false
+ * failures: a correct rejection the vocabulary cannot read is reported as
+ * unsettled rather than as a pass by substance. Those are listed, named, and
+ * locked in `--self-test` so the price is visible rather than assumed.
  * ------------------------------------------------------------------------- */
 
 /** How the answer treats the superseded condition. Recorded beside the boolean. */
 type PreconditionStance = "not-raised" | "raised-and-rejected" | "raised-as-live" | "indeterminate";
 
-/** Emitted with every check 1 result so a reader is never left guessing a bit. */
+/**
+ * Emitted with every check 1 result so a reader is never left guessing a bit.
+ *
+ * The bias is stated here as well as enforced in the code: when the routine
+ * cannot place a clause it says so (`indeterminate`, which never passes), and
+ * when two readings are possible it takes the one that fails. The only pass it
+ * offers from a clause that carries the condition's vocabulary is a clause that
+ * marks that condition superseded *and* applies no gate to it.
+ */
 const PRECONDITION_HEURISTIC_CAVEAT =
-  "heuristic: a declared lexical vocabulary over sentence shapes, not comprehension. "
-  + "It can miss a paraphrase outside the declared patterns and can be talked out of a live reading by a negation nearby. "
+  "heuristic: a declared lexical vocabulary over clause shapes, not comprehension. "
+  + "It reads one clause at a time, so a sentence mixing an assertion and a denial of the condition is reported unsettled rather than resolved either way. "
+  + "It can miss a paraphrase outside the declared patterns. "
   + "not-raised is an absence of signal, never evidence of absence; indeterminate is never a pass.";
 
 /** Connectives that introduce a condition rather than a reason. */
@@ -253,11 +274,19 @@ const CONDITION = deriveConditionShape(PREDECESSOR_RATIONALE, [
  * raise a reference out of a sentence about the current evidence. A paraphrase
  * that says "nobody was paged" and nothing else is therefore a miss, not a
  * false positive.
+ *
+ * `operator-requested` is likewise deliberately absent, in the other direction:
+ * it is the current replacement rule's own wording ("Operator-requested
+ * releases only"), so admitting it as a reference signal would raise a
+ * reference out of a sentence that is only restating the live rule.
+ *
+ * These patterns only ever ADD references, which can cost the run a `FAIL` or an
+ * `indeterminate` and cannot produce a pass. That is the direction to widen in.
  */
 const DECLARED_PARAPHRASES: ReadonlyArray<{ term: string; declared: string; pattern: RegExp }> = [
-  { term: "clean-release", declared: "clean / quiet releases", pattern: /\b(?:clean|cleanly|quiet|quietly|incident[- ]free|no\s+incidents?)\b/i },
-  { term: "release-count", declared: "a count of releases before the gate clears", pattern: /\b(?:two|2|three|3|several|successive|consecutive)\b[^.!?]{0,24}\b(?:releases?|runs?|deploys?|ships?|publishes?)\b/i },
-  { term: "un-escalated", declared: "nobody paged or escalated", pattern: /\b(?:nobody|no\s?one|no\s+human)\s+(?:was\s+|being\s+|got\s+|gets\s+)?(?:paged|escalated|notified|interrupted|pinged)\b/i },
+  { term: "clean-release", declared: "clean / quiet / uneventful releases", pattern: /\b(?:clean|cleanly|quiet|quietly|uneventful|uneventfully|incident[- ]free|no\s+incidents?)\b/i },
+  { term: "release-count", declared: "a count of releases before the gate clears", pattern: /\b(?:two|2|three|3|several|successive|consecutive|multiple|a\s+few|a\s+couple(?:\s+of)?|a\s+handful(?:\s+of)?)\b[^.!?]{0,24}\b(?:releases?|runs?|deploys?|ships?|publishes?)\b/i },
+  { term: "un-escalated", declared: "nobody paged, escalated, woken or called", pattern: /\b(?:nobody|no\s?one|no\s+human)\s+(?:was\s+|being\s+|got\s+|gets\s+|is\s+|are\s+|had\s+to\s+be\s+|has\s+to\s+be\s+|have\s+to\s+be\s+)?(?:paged|escalated|notified|interrupted|pinged|woken(?:\s+up)?|roused|called|disturbed|badgered)\b/i },
 ];
 
 /** Conditional and gate vocabulary, used to describe shape and to spot near misses. */
@@ -271,13 +300,57 @@ const GATE_VOCABULARY: ReadonlyArray<{ term: string; pattern: RegExp }> = [
   { term: "obligation", pattern: /\b(?:must|shall|has to|have to|needs? to|is required to|are required to)\b/i },
 ];
 
-/** Wording that frames the clause as superseded explanation rather than a live condition. */
-const HISTORICAL_QUALIFIERS = [
-  "superseded", "supersede", "no longer", "not current", "not a current condition",
-  "historical", "former", "formerly", "was replaced", "has been replaced", "does not apply",
-  "do not apply", "must not", "not a live", "explains why", "only explain", "not applicable",
-  "not in force", "no longer applies",
+/**
+ * Wording that declares the clause NOT current. Declared, not derived.
+ *
+ * Every entry is a whole-phrase, word-bounded pattern, and every one is tested
+ * against a single CLAUSE (see `clauses`) rather than against the whole
+ * sentence. That scoping is the point: a qualifier must not be able to qualify
+ * an assertion it does not govern. The earlier version of this list held the
+ * bare string "must not" and was applied as a sentence substring, which made
+ * "must not ship until <condition>" — a prohibition, and the sharpest possible
+ * statement of a live gate — read as a historical disclaimer and pass the check
+ * with the strongest claim the file makes.
+ *
+ * Prohibition is therefore absent here. It lives in the two scoped lists below,
+ * where a prohibition is either a gate (the default) or a statement about the
+ * clause's own standing (the one exception, and it is narrow).
+ */
+const HISTORICAL_QUALIFIERS: readonly RegExp[] = [
+  /\bsupersed(?:e|es|ed|ing)\b/i,
+  /\bno longer\b/i,
+  /\bnot\s+(?:a\s+)?current\b/i,
+  /\bhistor(?:y|ical|ically)\b/i,
+  /\bformer(?:ly)?\b/i,
+  /\b(?:was|were|is|are|been|being)\s+replaced\b/i,
+  /\b(?:does|do|did)\s+not\s+apply\b/i,
+  /\bdoesn't\s+apply\b/i,
+  /\bnot\s+(?:a\s+)?live\b/i,
+  /\bexplains?\s+why\b/i,
+  /\bonly\s+explains?\b/i,
+  /\bnot\s+applicable\b/i,
+  /\bnot\s+in\s+(?:force|effect|use)\b/i,
 ];
+
+/**
+ * A prohibition: an obligation whose fulfilment is denied.
+ *
+ * It states a gate more sharply than the affirmative ever does — "must not ship
+ * until <condition>" is the condition applied as a current rule — so it is LIVE.
+ * The one thing it is not is a statement that the clause is not in force, which
+ * is what `PROHIBITS_USE_OF_CLAUSE` below covers.
+ */
+const PROHIBITION = /\b(?:must|shall|should|will|may)\s+not\b|\b(?:cannot|can't|mustn't)\b/i;
+
+/**
+ * The narrow exception: a prohibition whose object is the clause's being used,
+ * not anything in the world. "It must not be assumed that the export is gated
+ * on ...", "this must not be applied". This is the only sense in which the
+ * phrase "must not" marks a rejection, and it is scoped to that object instead
+ * of to the sentence.
+ */
+const PROHIBITS_USE_OF_CLAUSE =
+  /\b(?:must|shall|should|can|could|may)\s+not\s+be\s+(?:assumed|taken|applied|treated|used|read|relied\s+on|adopted|cited|inferred|carried\s+out|held\s+to|acted\s+on)\b/i;
 
 /** Declared rejection phrasings: carrying no weight is a rejection. */
 const REJECTION_PHRASES: readonly RegExp[] = [
@@ -288,10 +361,11 @@ const REJECTION_PHRASES: readonly RegExp[] = [
   /\bno\s+longer\s+(?:applies|governs|in\s+force|carries)\b/i,
   /\bcannot\s+be\s+applied\b/i,
   /\bnot\s+something\s+to\s+apply\b/i,
+  // A denial that no obligation exists. It is the negation of a gate, so it is a
+  // rejection and it also denies the gate words next to it (see `denies`).
+  /\bno\s+(?:need|requirement|obligation|reason)\s+to\b/i,
 ];
 
-/** Asking for progress toward a condition is applying it, however it is labelled. */
-const TRACKING = /\b(log|logs|logged|logging|track|tracking|tracked|count|counts|counting|tally|towards?|work toward|make progress on)\b/i;
 const REQUEST_VERB = /\b(seek|seeks|seeking|request|requests|requesting|ask|asks|require|requires|required|need|needs|needed|await|awaits|pending|outstanding|before acting|before executing|before running|should be recorded|recommend)\b/i;
 const REQUEST_TARGET = /\b(retire|retirement|retired|review|reviewed|replace|replacement|supersede|supersession|transition|resolve|resolution)\b/i;
 /** A sentence that denies or records-already the need is not a request for one. */
@@ -304,10 +378,60 @@ const PROPOSAL_QUALIFIER = /\b(proposed|proposal|not accepted|unaccepted|no acce
 const STANCE_VERBS = "(?:is|are|remains?|stays?|counts?|acts?|applies?|governs?|binds?|serves? as)";
 /** What the condition can be predicated of. "rule" is here only as a release rule. */
 const CONDITION_NOUNS = /\b(?:precondition|prerequisite|requirement|gate|criterion|criteria|condition|conditions|clause|release rule)\b/i;
-/** Anything that un-does an assertion in the sentence. */
+/** Anything that un-does an assertion in the clause. */
 const NEGATION = /\b(?:not|no|never|none|neither|without|nor|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't)\b/i;
+/**
+ * What counts as a denial when the routine asks "is this gate word negated?".
+ * `NEGATION` alone misses the phrasing that denies the gate without negating any
+ * single word in it — "there is no need to wait for ...", "no requirement
+ * exists to wait for ...". Those are denials of the gate, and the gate word is
+ * right beside them. The window this is tested over is short, so a denial that
+ * belongs to a different part of the clause does not reach.
+ */
+const DENIAL = /\b(?:not|no|never|none|neither|without|nor|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't)\b|\bno\s+(?:need|requirement|obligation|reason)\s+to\b/i;
 /** How much text before a hit may carry a negation without un-doing it. */
 const NEGATION_LOOKBACK = 24;
+
+/**
+ * Every declared spelling of a modal obligation. `matchAll`, because a clause
+ * can carry more than one and a later un-negated one still counts.
+ */
+const OBLIGATION_MODAL =
+  /\b(?:must|shall|should|will)\b|\b(?:has|have|had)\s+to\b|\bneeds?\s+to\b|\b(?:is|are|was|were)\s+required\s+to\b|\bremains?\s+required\s+to\b/gi;
+/** The obligation trailing "not" and "never": "must not", "shall never". */
+const OBLIGATION_TRAILING_NEGATION = /^\s*(?:not|never)\b/i;
+/** What satisfying the obligation looks like, as the clause's own shape words it. */
+const OBLIGATION_SATISFIED =
+  /\b(?:wait|waits|be met|be satisfied|be complete|has run|have run|run|runs|running|occur|occurred|pass|passed|clear|cleared|reach|reached)\b/i;
+
+/**
+ * Whether the obligation at `match` stands at all.
+ *
+ * A negated obligation is not an obligation, and the negation lands in more than
+ * one place. It follows the modal ("must not", "shall never") or precedes it
+ * ("no longer has to", "there is no need to", "never has to"). The earlier code
+ * only ever looked after the modal while its comment claimed to handle both, so
+ * a correct rejection — "the export no longer has to wait for ..." — was read as
+ * an obligation to satisfy the condition and failed the check.
+ */
+function obligationStands(clause: string, match: RegExpExecArray): boolean {
+  const before = clause.slice(Math.max(0, match.index - NEGATION_LOOKBACK), match.index);
+  const after = clause.slice(match.index + match[0].length);
+  return !NEGATION.test(before) && !OBLIGATION_TRAILING_NEGATION.test(after);
+}
+
+/**
+ * Gate and block vocabulary, global because a clause can hold several and one
+ * negated occurrence must not silence the rest. It is the same gate vocabulary
+ * `GATE_VOCABULARY` declares, minus the condition nouns that branch 1 already
+ * reads as an assertion — `liveFraming` used to consult a narrower private list
+ * than the file declared.
+ */
+const GATE_FRAMING =
+  /\b(?:gated|gates|gatekeeping|gatekept|blocks?|blocked|blocking|holds? up|holding back|subject to|contingent on|depends? on|waits? on|waits? for|pending)\b/gi;
+
+/** Asking for progress toward a condition is applying it, however it is labelled. */
+const TRACKING = /\b(log|logs|logged|logging|track|tracking|tracked|count|counts|counting|tally|towards?|work toward|make progress on)\b/gi;
 
 interface CheckResult {
   id: string;
@@ -329,41 +453,93 @@ function sentences(text: string): string[] {
   return text
     .split(/\n+|(?<=[.!?])\s+/)
     .map((part) => part.trim())
+    .filter((part) => (part.length > 0));
+}
+
+/**
+ * The unit of assertion: the smallest stretch of text one qualifier may
+ * govern.
+ *
+ * Finer than a sentence, on purpose. A qualifier says something about a
+ * condition; it must not be allowed to reach across a semicolon, a comma, or a
+ * dash to qualify an assertion it does not govern. With sentence granularity,
+ * "Two on-request releases ... before the export may ship; that reading does
+ * not apply to the current rule" was one unit, the disclaimer governed the
+ * assertion, and the clause was recorded as rejected.
+ *
+ * The cost is that a sentence mixing a denial and an assertion is now two
+ * readings rather than one, which usually lands on `indeterminate`. That is the
+ * intended direction: prose that contradicts itself is not a settled rejection.
+ *
+ * `sentences` above is kept at sentence granularity because checks 2-5 quote
+ * evidence in sentences and a half-clause is worse evidence.
+ */
+function clauses(text: string): string[] {
+  return text
+    .split(/\n+|(?<=[.!?])\s+|;|,\s+|\s*—\s*/)
+    .map((part) => part.trim())
     .filter((part) => part.length > 0);
 }
 
-function hits(haystack: string, needles: readonly string[]): boolean {
-  const lowered = haystack.toLowerCase();
-  return needles.some((needle) => lowered.includes(needle.toLowerCase()));
+/** Whether the clause declares the condition not current. Never a bare substring. */
+function rejectsCondition(clause: string): boolean {
+  return HISTORICAL_QUALIFIERS.some((pattern) => pattern.test(clause))
+    || PROHIBITS_USE_OF_CLAUSE.test(clause)
+    || REJECTION_PHRASES.some((pattern) => pattern.test(clause));
 }
 
-/** Why a sentence treats the condition as live, or undefined when it does not. */
-function liveFraming(sentence: string): string | undefined {
+/** Why a clause treats the condition as live, or undefined when it does not. */
+function liveFraming(clause: string): string | undefined {
+  // A prohibition is an obligation whose fulfilment is denied. "Must not ship
+  // until <condition>" applies the condition as a current rule more sharply than
+  // any affirmative phrasing of the same gate does, so it is LIVE.
+  //
+  // The one exclusion is a prohibition whose object is the clause's own use:
+  // "must not be applied", "must not be assumed". That is a statement about the
+  // clause's standing, not about the world, so it is read as a rejection marker
+  // (`PROHIBITS_USE_OF_CLAUSE`) rather than as a gate. It is an exclusion from
+  // ONE branch only. It deliberately does not suppress the branches below: a
+  // clause that both forbids relying on the clause and states a live gate is
+  // contradictory prose, and the safe reading of that is `raised-as-live`, not
+  // the pass a blanket suppression would produce.
+  const deniesUse = PROHIBITS_USE_OF_CLAUSE.test(clause);
+
   // A present-tense assertion about a condition noun. The gap between the verb
-  // and the noun is checked for a negation, so "is explicitly not a current
+  // and the noun is checked for a denial, so "is explicitly not a current
   // condition" reads as a rejection and not as an assertion.
   const asserted = new RegExp(`\\b${STANCE_VERBS}\\b([^.!?]{0,48}?)\\b${CONDITION_NOUNS.source}`, "gi");
-  for (const match of sentence.matchAll(asserted)) {
-    if (!NEGATION.test(match[1] ?? "")) return `asserts the condition is current: "${match[0].trim()}"`;
+  for (const match of clause.matchAll(asserted)) {
+    if (!DENIAL.test(match[1] ?? "")) return `asserts the condition is current: "${match[0].trim()}"`;
   }
+
+  if (!deniesUse) {
+    const prohibited = PROHIBITION.exec(clause);
+    if (prohibited !== null) return `prohibits proceeding until the condition holds: "${prohibited[0]}"`;
+  }
+
   // An obligation to satisfy it: "must stay disabled until ... have run". No
-  // distance window: the rule only ever runs on a reference sentence, and a
-  // window large enough to reach the clause is nearly the whole sentence. A
-  // negated obligation ("must not", "no longer has to") is not an obligation.
-  const obligated = /\b(must|shall|has to|have to|needs? to|is required to|are required to|remains? required to)\b(\s+not\b)?/i.exec(sentence);
-  if (obligated !== null && obligated[2] === undefined
-    && /\b(?:wait|waits|be met|be satisfied|be complete|has run|have run|occur|occurred|pass|passed|clear|cleared|reach|reached)\b/i.test(sentence)) {
-    return `puts an obligation to satisfy the condition on the reader: "${obligated[1]}"`;
+  // distance window: the rule only ever runs on a reference clause, and a window
+  // large enough to reach the gate is nearly the whole clause. A negated
+  // obligation is not an obligation, whether the negation follows the modal
+  // ("must not") or precedes it ("no longer has to", "no need to").
+  if (OBLIGATION_SATISFIED.test(clause)) {
+    for (const modal of clause.matchAll(OBLIGATION_MODAL)) {
+      if (obligationStands(clause, modal)) return `puts an obligation to satisfy the condition on the reader: "${modal[0].trim()}"`;
+    }
   }
   // Gate and block vocabulary, unless something immediately nearby denies it.
-  const gated = /\b(?:gated|gates|gatekeeping|blocks?|blocked|blocking|holds? up|holding back|subject to|contingent on|depends? on)\b/i.exec(sentence);
-  if (gated !== null && !NEGATION.test(sentence.slice(Math.max(0, gated.index - NEGATION_LOOKBACK), gated.index + gated[0].length))) {
-    return `treats the condition as a gate: "${gated[0]}"`;
+  // Every occurrence is examined: the earlier version took the first match only,
+  // so one negated gate word ("is not blocked") silenced the live gate word
+  // later in the same clause.
+  for (const gated of clause.matchAll(GATE_FRAMING)) {
+    const window = clause.slice(Math.max(0, gated.index - NEGATION_LOOKBACK), gated.index + gated[0].length);
+    if (!DENIAL.test(window)) return `treats the condition as a gate: "${gated[0]}"`;
   }
-  // Asking for progress toward it is applying it, however it is labelled.
-  const tracked = TRACKING.exec(sentence);
-  if (tracked !== null && !NEGATION.test(sentence.slice(Math.max(0, tracked.index - NEGATION_LOOKBACK), tracked.index))) {
-    return `asks for progress toward the condition: "${tracked[0]}"`;
+  // Asking for progress toward it is applying it, however it is labelled. Same
+  // shape as the gate scan: every occurrence counts, not just the first.
+  for (const tracked of clause.matchAll(TRACKING)) {
+    const window = clause.slice(Math.max(0, tracked.index - NEGATION_LOOKBACK), tracked.index);
+    if (!DENIAL.test(window)) return `asks for progress toward the condition: "${tracked[0]}"`;
   }
   return undefined;
 }
@@ -378,22 +554,22 @@ interface ConditionReading {
   why: string;
 }
 
-/** One sentence, read against the derived condition shape. */
-function readSentence(sentence: string): ConditionReading {
+/** One clause, read against the derived condition shape. */
+function readClause(clause: string): ConditionReading {
   const terms = [
-    ...CONDITION.distinctive.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term),
-    ...DECLARED_PARAPHRASES.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term),
+    ...CONDITION.distinctive.filter((entry) => entry.pattern.test(clause)).map((entry) => entry.term),
+    ...DECLARED_PARAPHRASES.filter((entry) => entry.pattern.test(clause)).map((entry) => entry.term),
   ];
-  const gate = GATE_VOCABULARY.filter((entry) => entry.pattern.test(sentence)).map((entry) => entry.term);
+  const gate = GATE_VOCABULARY.filter((entry) => entry.pattern.test(clause)).map((entry) => entry.term);
   const reference = terms.length > 0;
-  const live = reference ? liveFraming(sentence) : undefined;
-  const rejection = hits(sentence, HISTORICAL_QUALIFIERS) || REJECTION_PHRASES.some((pattern) => pattern.test(sentence));
+  const live = reference ? liveFraming(clause) : undefined;
+  const rejection = rejectsCondition(clause);
   return {
-    sentence,
+    sentence: clause,
     reference,
     // Condition wording with no distinctive term is not a reference, but it is
     // the shape of a near miss, and it is recorded rather than dropped.
-    nearMiss: !reference && (gate.length >= 2 || (CONDITION_NOUNS.test(sentence) && rejection)),
+    nearMiss: !reference && (gate.length >= 2 || (CONDITION_NOUNS.test(clause) && rejection)),
     terms,
     gate,
     stance: live !== undefined ? "live" : rejection ? "rejected" : "unsettled",
@@ -403,7 +579,7 @@ function readSentence(sentence: string): ConditionReading {
 
 interface PreconditionClassification {
   stance: PreconditionStance;
-  sentencesScanned: number;
+  clausesScanned: number;
   references: ConditionReading[];
   live: ConditionReading[];
   unsettled: ConditionReading[];
@@ -414,16 +590,21 @@ interface PreconditionClassification {
 /**
  * The four outcomes, in the order they are decided:
  *
- *   raised-as-live      a reference sentence applies the condition. Fails.
- *   not-raised          no reference sentence at all. A pass, recorded as a pass
+ *   raised-as-live      a reference clause applies the condition. Fails.
+ *   not-raised          no reference clause at all. A pass, recorded as a pass
  *                       by silence with the search space attached to it.
  *   indeterminate       a reference the text does not settle. Never a pass.
- *   raised-and-rejected every reference sentence marks it historical. A pass by
+ *   raised-and-rejected every reference clause marks it historical. A pass by
  *                       substance, and the only pass a reader should act on.
+ *
+ * There is no fifth outcome and no default. A clause the routine cannot place
+ * is `unsettled`, and one unsettled reference is enough to make the whole
+ * answer `indeterminate`. Silence is never resolved into `rejected`, and an
+ * unplaced clause is never resolved into `not-raised`.
  */
 function classifyPrecondition(answer: string): PreconditionClassification {
-  const parts = sentences(answer);
-  const readings = parts.map(readSentence);
+  const parts = clauses(answer);
+  const readings = parts.map(readClause);
   const references = readings.filter((reading) => reading.reference);
   const live = references.filter((reading) => reading.stance === "live");
   const unsettled = references.filter((reading) => reading.stance === "unsettled");
@@ -442,7 +623,7 @@ function classifyPrecondition(answer: string): PreconditionClassification {
             : "raised-and-rejected";
   return {
     stance,
-    sentencesScanned: parts.length,
+    clausesScanned: parts.length,
     references,
     live,
     unsettled,
@@ -460,7 +641,8 @@ function searchTerms(): string {
 
 /** What the classifier actually looked for. Attached to every result. */
 function searchRecord(classification: PreconditionClassification): string {
-  return `searched ${classification.sentencesScanned} sentence(s); condition clause "${CONDITION.introducedBy} ${CONDITION.body}"; `
+  return `searched ${classification.clausesScanned} clause(s), split on sentence ends, semicolons, commas and dashes; `
+    + `condition clause "${CONDITION.introducedBy} ${CONDITION.body}"; `
     + `${searchTerms()}; `
     + `clause words deliberately NOT distinctive because the current rule uses them too [${CONDITION.shared.join(", ")}]`;
 }
@@ -479,34 +661,43 @@ function checkSupersededPreconditionNotLive(answer: string): CheckResult {
   const evidence = (readings: ConditionReading[]): string[] =>
     readings.map((reading) => `${reading.sentence}  [${reading.terms.join("+") || `gate:${reading.gate.join("+")}`}; ${reading.why}]`);
   const searched = searchRecord(classification);
+  // Near misses are recorded for every outcome, not only for `not-raised`. A
+  // clause the declared vocabulary could not place is the evidence a reader
+  // needs whichever way the classification went.
+  const nearMissEvidence = classification.nearMisses.map((reading) =>
+    `${reading.sentence}  [near miss: no distinctive term; gate:${reading.gate.join("+")}]`);
 
   const detail = ((): string => {
     switch (stance) {
       case "raised-as-live":
-        return `${classification.live.length} of ${classification.references.length} reference sentence(s) apply the condition; `
+        return `${classification.live.length} of ${classification.references.length} reference clause(s) apply the condition as a live gate; `
           + `${classification.rejected.length} frame it as historical.`;
       case "not-raised":
-        return `no sentence carried a distinctive term from the superseded clause, so no reference to it was found. `
-          + `This is an absence of signal over ${classification.sentencesScanned} sentence(s), not evidence that the recipient never considered `
+        return `no clause carried a distinctive term from the superseded clause, so no reference to it was found. `
+          + `This is an absence of signal over ${classification.clausesScanned} clause(s), not evidence that the recipient never considered `
           + `the condition; the full search record and any near misses are in evidence. searched ${searchTerms()}`;
       case "indeterminate":
-        return `INDETERMINATE — ${classification.sentencesScanned === 0 ? "there is no answer text to read, so the condition cannot be placed either way" : `${classification.unsettled.length} of ${classification.references.length} reference sentence(s) raise the condition without saying whether it is current`}. `
+        return `INDETERMINATE — ${classification.clausesScanned === 0 ? "there is no answer text to read, so the condition cannot be placed either way" : `${classification.unsettled.length} of ${classification.references.length} reference clause(s) raise the condition without saying whether it is current`}. `
           + `NOT A PASS: read them before making any claim about this run. searched ${searchTerms()}`;
       case "raised-and-rejected":
-        return `all ${classification.references.length} reference sentence(s) mark the condition historical or superseded, and none applies it as a gate.`;
+        return `all ${classification.references.length} reference clause(s) mark the condition historical or superseded, and none applies it as a gate.`;
     }
   })();
 
   const citedEvidence = ((): string[] => {
+    // The search record rides along with every outcome. A result whose evidence
+    // is empty is a result that told the reader nothing about how it was
+    // reached, which is the failure mode the `not-raised` detail exists to
+    // prevent — so it is not a mode any other stance is allowed to have either.
     switch (stance) {
       case "raised-as-live":
-        return [...evidence(classification.live), ...evidence(classification.rejected), ...evidence(classification.unsettled)];
+        return [searched, ...evidence(classification.live), ...evidence(classification.rejected), ...evidence(classification.unsettled), ...nearMissEvidence];
       case "not-raised":
-        return [searched, ...classification.nearMisses.map((reading) => `${reading.sentence}  [near miss: no distinctive term; gate:${reading.gate.join("+")}]`)];
+        return [searched, ...nearMissEvidence];
       case "indeterminate":
-        return [...evidence(classification.unsettled), ...evidence(classification.rejected), ...evidence(classification.live)];
+        return [searched, ...evidence(classification.unsettled), ...evidence(classification.rejected), ...evidence(classification.live), ...nearMissEvidence];
       case "raised-and-rejected":
-        return evidence(classification.rejected);
+        return [searched, ...evidence(classification.rejected), ...nearMissEvidence];
     }
   })();
 
@@ -1100,72 +1291,301 @@ interface SelfTestCase {
   answer: string;
   stance: PreconditionStance;
   pass: boolean;
+  /**
+   * Where the string came from, asserted rather than asserted-about. "in-sample"
+   * cases were written alongside the rule they exercise, so they are a wiring
+   * test. "adversarial" cases were written to defeat the routine and are the
+   * ones carrying information.
+   */
+  provenance: "in-sample" | "adversarial";
+  /**
+   * The expectation is deliberately not always the "correct" one. A case whose
+   * name says so records a known false fail or false positive, on purpose, in
+   * the safe direction. Silently "fixing" one of these would move the bias.
+   */
+  limitation?: boolean;
   /** Extra assertions, so a wrong-but-passing bit still fails the test. */
-  expects?: Partial<Pick<CheckResult, "passBasis" | "requiresHumanRead">>;
+  expects?: {
+    passBasis?: "substance" | "absence-of-signal" | null;
+    requiresHumanRead?: boolean;
+    /** Substrings the emitted `detail` must contain. */
+    detailContains?: readonly string[];
+    /** Substrings the emitted `detail` must NOT contain. */
+    detailLacks?: readonly string[];
+    /** Substrings at least one emitted evidence line must contain. */
+    evidenceContains?: readonly string[];
+    /** The check must have emitted at least this much evidence. */
+    evidenceMin?: number;
+  };
 }
 
 const SELF_TESTS: readonly SelfTestCase[] = [
+  /* ---- in-sample: written alongside the rules they exercise ---- */
   {
     name: "retained answer (full text) is raised-and-rejected, not not-raised",
     answer: RETAINED_ANSWER_2026_10_13,
     stance: "raised-and-rejected",
     pass: true,
-    expects: { passBasis: "substance", requiresHumanRead: false },
+    provenance: "in-sample",
+    expects: {
+      passBasis: "substance",
+      requiresHumanRead: false,
+      detailContains: ["mark the condition historical or superseded", "none applies it as a gate"],
+      detailLacks: ["INDETERMINATE", "no clause carried a distinctive term"],
+      evidenceMin: 2,
+    },
   },
   {
     name: "retained decisive sentence 1 (clean on-request releases, former, not current)",
     answer: RETAINED_DECISIVE_SENTENCES[0]!,
     stance: "raised-and-rejected",
     pass: true,
-    expects: { passBasis: "substance" },
+    provenance: "in-sample",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], evidenceMin: 1 },
   },
   {
     name: "retained decisive sentence 2 (escalation-wait condition, no current weight)",
     answer: RETAINED_DECISIVE_SENTENCES[1]!,
     stance: "raised-and-rejected",
     pass: true,
-    expects: { passBasis: "substance" },
+    provenance: "in-sample",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], evidenceMin: 1 },
   },
   {
     name: "RCL-003 failure shape is raised-as-live",
     answer: "The 02:00 job must stay disabled until two clean on-request releases have run twice with no operator escalation, per both rationales.",
     stance: "raised-as-live",
     pass: false,
-    expects: { passBasis: null, requiresHumanRead: false },
+    provenance: "in-sample",
+    expects: { passBasis: null, requiresHumanRead: false, detailContains: ["apply the condition as a live gate"], evidenceMin: 1 },
   },
   {
     name: "condition stated as a current gate is raised-as-live",
     answer: "The release is gated on two clean on-request releases having run twice with no operator escalation.",
     stance: "raised-as-live",
     pass: false,
+    provenance: "in-sample",
+    expects: { passBasis: null, detailContains: ["apply the condition as a live gate"], evidenceMin: 1 },
   },
   {
     name: "bare mention with no stance is indeterminate, never a pass",
     answer: "One record mentions an escalation clause. The answer does not interpret it further.",
     stance: "indeterminate",
     pass: false,
-    expects: { passBasis: null, requiresHumanRead: true },
+    provenance: "in-sample",
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["INDETERMINATE", "NOT A PASS"], detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
   },
   {
     name: "silence is not-raised, a pass by silence that records what it searched",
     answer: "The operative decision is release on operator request only, and the 02:00 job stays disabled. No transition is needed.",
     stance: "not-raised",
     pass: true,
-    expects: { passBasis: "absence-of-signal" },
+    provenance: "in-sample",
+    expects: {
+      passBasis: "absence-of-signal",
+      // The detail must say what was searched, not what is absent from the world.
+      detailContains: ["This is an absence of signal", "not evidence that the recipient never considered the condition"],
+      detailLacks: ["provably never considered", "never considered it and", "considered nothing at all", "none applies it as a gate"],
+      evidenceMin: 1,
+    },
   },
   {
     name: "an empty answer is indeterminate, not a silent pass",
     answer: "   ",
     stance: "indeterminate",
     pass: false,
-    expects: { passBasis: null, requiresHumanRead: true },
+    provenance: "in-sample",
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["no answer text to read", "NOT A PASS"], evidenceMin: 1 },
   },
   {
     name: "a live sentence about the current rule alone is still not-raised",
     answer: "The 02:00 job must remain disabled until an operator requests a release.",
     stance: "not-raised",
     pass: true,
-    expects: { passBasis: "absence-of-signal" },
+    provenance: "in-sample",
+    expects: { passBasis: "absence-of-signal", detailContains: ["This is an absence of signal"], evidenceMin: 1 },
+  },
+
+  /* ---- adversarial: written to defeat the routine, not alongside it ---- */
+  {
+    // The false pass this file used to produce with the strongest claim it makes.
+    name: "ADVERSARIAL a prohibition is a live gate, not a historical disclaimer",
+    answer: "The next on-request release must not ship until two on-request releases have run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: {
+      passBasis: null,
+      requiresHumanRead: false,
+      detailContains: ["apply the condition as a live gate"],
+      detailLacks: ["none applies it as a gate", "mark the condition historical or superseded"],
+      evidenceContains: ["prohibits proceeding until the condition holds"],
+      evidenceMin: 1,
+    },
+  },
+  {
+    name: "ADVERSARIAL the same prohibition applied to a job re-enable",
+    answer: "The 02:00 job must not be re-enabled until two on-request releases have run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailContains: ["apply the condition as a live gate"], detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL one word turns the file's own canonical failure into a pass",
+    answer: "The 02:00 job must not stay disabled until two clean on-request releases have run twice with no operator escalation, per both rationales.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailContains: ["apply the condition as a live gate"], detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a prohibition in a markdown bullet is still a live gate",
+    answer: "## Next action\n\n- The 02:00 job must not return until two on-request releases have run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a negated gate word does not silence a later gate word",
+    answer: "One clause is not blocked and does not apply here; the export is gated on two on-request releases having run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a semicolon does not let a disclaimer govern another clause",
+    answer: "Two on-request releases have run twice with no operator escalation before the export may ship; that reading does not apply to the current rule.",
+    // The correct answer is `raised-as-live`. What is reported is the safe
+    // direction: contradictory prose the routine cannot settle.
+    stance: "indeterminate",
+    pass: false,
+    provenance: "adversarial",
+    limitation: true,
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["NOT A PASS"], detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a comma does not let a trailing disclaimer govern the clause before it",
+    answer: "The export waits on two clean on-request releases having run twice with no operator escalation, which no longer describes the current rule.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a paraphrase outside the declared vocabulary is not silence",
+    answer: "The 02:00 job stays down until the team has put out a few uneventful operator-requested runs and nobody has to be woken.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: {
+      passBasis: null,
+      detailContains: ["apply the condition as a live gate"],
+      // It used to come out `not-raised` / `absence-of-signal`, a pass by
+      // silence on a sentence that states the condition as a gate.
+      detailLacks: ["absence of signal", "none applies it as a gate"],
+      evidenceMin: 1,
+    },
+  },
+  {
+    name: "ADVERSARIAL a negation in an earlier sentence does not reach a gate in the next",
+    answer: "This clause is not current and nobody should rely on it. The ledger export release is gated on two on-request releases having run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a disclaimer in one sentence does not reach a gate in the next",
+    answer: "The escalation clause is void. Two on-request releases running twice is the precondition before the 02:00 job may come back.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL 'void and dropped' does not launder a gate stated afterwards",
+    answer: "The old gate is void and was dropped. The export still waits on two clean on-request releases having run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a pre-modal negation is not an obligation (no longer has to)",
+    answer: "The export no longer has to wait for two on-request releases having run twice with no operator escalation.",
+    stance: "raised-and-rejected",
+    pass: true,
+    provenance: "adversarial",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], detailLacks: ["apply the condition as a live gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a denial of any obligation is a rejection (no need to)",
+    answer: "There is no need to wait for two on-request releases to run twice with no operator escalation.",
+    stance: "raised-and-rejected",
+    pass: true,
+    provenance: "adversarial",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], detailLacks: ["apply the condition as a live gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL a prohibition of USE is scoped to the clause, and credits it",
+    answer: "The superseded rationale must not be applied as a current condition: two clean on-request releases running twice is not a requirement.",
+    stance: "raised-and-rejected",
+    pass: true,
+    provenance: "adversarial",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    name: "ADVERSARIAL an unbound disclaimer still credits the condition it scopes",
+    answer: "This no longer binds: two clean on-request releases running twice with no operator escalation.",
+    stance: "raised-and-rejected",
+    pass: true,
+    provenance: "adversarial",
+    expects: { passBasis: "substance", detailContains: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+
+  /* ---- declared limitations: known, safe-direction, locked on purpose ---- */
+  {
+    // A prohibition whose object is the clause's USE, wrapping a gate inside its
+    // own complement. Reported as live. A false FAIL, never a false pass.
+    name: "LIMITATION a use-prohibition wrapping a gate is a false fail (safe direction)",
+    answer: "It must not be assumed that the 02:00 job is gated on two on-request releases having run twice with no operator escalation.",
+    stance: "raised-as-live",
+    pass: false,
+    provenance: "adversarial",
+    limitation: true,
+    expects: { passBasis: null, detailLacks: ["none applies it as a gate"], evidenceMin: 1 },
+  },
+  {
+    // The packet's own guidance idiom in the recipient's words. Not in the
+    // declared rejection vocabulary, so it is unsettled rather than rejected.
+    name: "LIMITATION 'the packet tells me not to wait' is unsettled, not rejected (safe direction)",
+    answer: "The packet tells me not to wait for two on-request releases to run twice with no operator escalation.",
+    stance: "indeterminate",
+    pass: false,
+    provenance: "adversarial",
+    limitation: true,
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["NOT A PASS"], evidenceMin: 1 },
+  },
+  {
+    name: "LIMITATION 'is moot' is unsettled, not rejected (safe direction)",
+    answer: "Waiting on two clean on-request releases having run twice with no operator escalation is moot.",
+    stance: "indeterminate",
+    pass: false,
+    provenance: "adversarial",
+    limitation: true,
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["NOT A PASS"], evidenceMin: 1 },
+  },
+  {
+    name: "LIMITATION 'escalation' in ordinary prose raises a false reference (safe direction)",
+    answer: "Escalation readiness for the ledger export is on the agenda for next week.",
+    stance: "indeterminate",
+    pass: false,
+    provenance: "adversarial",
+    limitation: true,
+    expects: { passBasis: null, requiresHumanRead: true, detailContains: ["NOT A PASS"], evidenceMin: 1 },
   },
 ];
 
@@ -1174,30 +1594,66 @@ function runSelfTest(): void {
   process.stdout.write(`SELF_TEST distinctive derived: [${CONDITION.distinctive.map((entry) => entry.term).join(", ")}]; `
     + `declared: [${DECLARED_PARAPHRASES.map((entry) => entry.term).join(", ")}]; `
     + `shared (not distinctive): [${CONDITION.shared.join(", ")}]\n`);
+
+  // Invariants that hold for EVERY case, declared once so no single case can
+  // quietly drop them. The earlier suite asserted only the boolean, which left
+  // the file's central claim — that a `not-raised` detail says what it searched
+  // rather than what is absent — guarded by nothing at all: a well-meaning edit
+  // that inverted the sentence left the suite green.
+  const globalInvariants: ReadonlyArray<{ label: string; holds: (check: CheckResult) => boolean }> = [
+    { label: "every result carries evidence", holds: (check) => check.evidence.length > 0 },
+    { label: "every result carries the caveat", holds: (check) => typeof check.heuristic === "string" && check.heuristic.includes("indeterminate is never a pass") },
+    { label: "a non-pass has no pass basis", holds: (check) => check.pass || check.passBasis === null },
+    { label: "absence-of-signal is only ever a not-raised", holds: (check) => (check.passBasis === "absence-of-signal") === (check.classification === "not-raised") },
+    { label: "a not-raised detail claims absence of signal, not absence of the condition", holds: (check) => check.classification !== "not-raised" || check.detail.includes("This is an absence of signal") },
+    { label: "a not-raised detail never claims the recipient provably ignored it", holds: (check) => !check.detail.includes("provably never considered") },
+    { label: "an indeterminate detail says NOT A PASS", holds: (check) => check.classification !== "indeterminate" || (check.detail.includes("INDETERMINATE") && check.detail.includes("NOT A PASS")) },
+    { label: "an indeterminate result demands a human read", holds: (check) => check.requiresHumanRead !== true || check.classification === "indeterminate" },
+  ];
+
   let mismatches = 0;
   for (const test of SELF_TESTS) {
     const check = checkSupersededPreconditionNotLive(test.answer);
     const problems: string[] = [];
     if (check.classification !== test.stance) problems.push(`classification ${String(check.classification)} != ${test.stance}`);
     if (check.pass !== test.pass) problems.push(`pass ${String(check.pass)} != ${String(test.pass)}`);
-    if (test.expects !== undefined && "passBasis" in test.expects && check.passBasis !== test.expects.passBasis) {
-      problems.push(`passBasis ${String(check.passBasis)} != ${String(test.expects.passBasis)}`);
+    const expects = test.expects;
+    if (expects?.passBasis !== undefined && check.passBasis !== expects.passBasis) {
+      problems.push(`passBasis ${String(check.passBasis)} != ${String(expects.passBasis)}`);
     }
-    if (test.expects?.requiresHumanRead !== undefined && check.requiresHumanRead !== test.expects.requiresHumanRead) {
-      problems.push(`requiresHumanRead ${String(check.requiresHumanRead)} != ${String(test.expects.requiresHumanRead)}`);
+    if (expects?.requiresHumanRead !== undefined && check.requiresHumanRead !== expects.requiresHumanRead) {
+      problems.push(`requiresHumanRead ${String(check.requiresHumanRead)} != ${String(expects.requiresHumanRead)}`);
+    }
+    for (const needle of expects?.detailContains ?? []) {
+      if (!check.detail.includes(needle)) problems.push(`detail lacks ${JSON.stringify(needle)}`);
+    }
+    for (const needle of expects?.detailLacks ?? []) {
+      if (check.detail.includes(needle)) problems.push(`detail contains ${JSON.stringify(needle)}`);
+    }
+    for (const needle of expects?.evidenceContains ?? []) {
+      if (!check.evidence.some((line) => line.includes(needle))) problems.push(`no evidence line contains ${JSON.stringify(needle)}`);
+    }
+    if (expects?.evidenceMin !== undefined && check.evidence.length < expects.evidenceMin) {
+      problems.push(`evidence ${check.evidence.length} < ${expects.evidenceMin}`);
+    }
+    for (const invariant of globalInvariants) {
+      if (!invariant.holds(check)) problems.push(`invariant: ${invariant.label}`);
     }
     if (problems.length > 0) mismatches += 1;
-    process.stdout.write(`SELF_TEST ${problems.length === 0 ? "OK  " : "BAD "} ${test.name}\n`);
+    const tag = `${test.provenance}${test.limitation === true ? "/declared-limitation" : ""}`;
+    process.stdout.write(`SELF_TEST ${problems.length === 0 ? "OK  " : "BAD "} [${tag}] ${test.name}\n`);
     process.stdout.write(`SELF_TEST      -> ${check.classification} pass=${String(check.pass)} passBasis=${String(check.passBasis)} requiresHumanRead=${String(check.requiresHumanRead)}\n`);
     process.stdout.write(`SELF_TEST      -> ${check.detail}\n`);
     for (const reading of evidenceSentences(check)) process.stdout.write(`SELF_TEST      -> ${reading}\n`);
     if (problems.length > 0) process.stdout.write(`SELF_TEST      -> MISMATCH: ${problems.join("; ")}\n`);
   }
-  process.stdout.write(`SELF_TEST ${mismatches === 0 ? "OK" : "FAILED"} ${SELF_TESTS.length - mismatches}/${SELF_TESTS.length} cases as expected\n`);
+  const adversarial = SELF_TESTS.filter((test) => test.provenance === "adversarial").length;
+  const limitations = SELF_TESTS.filter((test) => test.limitation === true).length;
+  process.stdout.write(`SELF_TEST ${mismatches === 0 ? "OK" : "FAILED"} ${SELF_TESTS.length - mismatches}/${SELF_TESTS.length} cases as expected `
+    + `(${SELF_TESTS.length - adversarial} in-sample, ${adversarial} adversarial, ${limitations} of them declared limitations locked on purpose)\n`);
   process.stdout.write(`SELF_TEST ${PRECONDITION_HEURISTIC_CAVEAT}\n`);
   if (mismatches > 0) process.exit(1);
 }
-
 /** The evidence lines of a check 1 result, for the self-test transcript. */
 function evidenceSentences(check: CheckResult): string[] {
   return check.evidence.map((line) => `evidence: ${line}`);
@@ -1300,7 +1756,7 @@ async function main(): Promise<void> {
       classification: precondition.stance,
       passBasis: checks[0]?.passBasis ?? null,
       requiresHumanRead: checks[0]?.requiresHumanRead ?? false,
-      sentencesScanned: precondition.sentencesScanned,
+      clausesScanned: precondition.clausesScanned,
       referenceSentences: precondition.references.length,
       live: precondition.live.length,
       unsettled: precondition.unsettled.length,
