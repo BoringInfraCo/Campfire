@@ -1531,7 +1531,7 @@ v1.16 — RECALL AND PORTABLE HANDOFF
         bounded decision rationale appears in the live recall response and offline packet; RCL-003 added query-matched decision sets
         RCL-002 scored nine locked arms and did not meet the synthetic pass bar; it does not rescore RCL-001
         RCL-003 scored nine new locked arms; no qualified next-action win was measured, citation was confounded by treatment-only guidance, and one offline recipient promoted a superseded rationale
-        post-verdict packet projection was corrected; recipient behavior remains unmeasured on that correction; prioritize an ordinary-work Gate E observation before another synthetic next-action pilot
+        post-verdict packet projection was corrected; one unscored recipient recheck used the corrected packet without promoting the historical rationale, but is not a matched before/after result; prioritize an ordinary-work Gate E observation before another synthetic next-action pilot
         no cross-workspace index, transcripts, embeddings, or packet import
         contract: docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
         second measurement: docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md; result: docs/SPRINT_RCL_002_RESULT.md

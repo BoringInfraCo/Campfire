@@ -240,8 +240,11 @@ that promoted a superseded rationale into a live condition; v1.16 stays held.
 The scored packet had a projection defect, corrected after the verdict: a
 decision-set member no longer flattens its `section` to `decision-set`, a
 superseded member no longer carries `rationale`, and `linkedNextStep` guidance
-now reaches the offline packet. A new recipient observation has not tested the
-behavioral effect. See §0 of the contract. The citation difference
+now reaches the offline packet. One unscored recipient recheck used the
+corrected packet without promoting the historical rationale; it is not a
+matched before/after run and does not change the verdict. See
+`fixtures/recall/decision-set-recheck/RESULT.md` and §0 of the contract. The
+citation difference
 between arms is **confounded** — the treatment build alone carried a "cite the
 record ids" session instruction — so citation is not a recorded Recall benefit.
 
