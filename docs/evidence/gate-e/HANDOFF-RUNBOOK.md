@@ -22,6 +22,11 @@ admissible counterfactual basis (§1, §8). An H case is an honest fact about
 portable handoff. A claim-P case plus a claim-H case is two honest facts and not
 partial credit (§8).
 
+**Owner participation:** §12 Amendment 5 permits the repository owner as sender
+or recipient in a genuine H handoff on ordinary non-Campfire work, with a
+different human principal on the other side and full plan-time disclosure.
+Owner status alone is not a disqualifier.
+
 **Read this top to bottom before starting.** An operator who has not read the
 protocol should be able to follow this file alone. An operator who has read the
 protocol will notice that this file cites it on every claim and adds nothing to
@@ -59,7 +64,7 @@ the case is opened. Read that column before you tick anything.
 | 8 | Nothing in the chain touches `fixtures/**` or `docs/evidence/rcl-00*/**`, and no RCL scenario, key, rubric, or frozen packet is involved. | §3.2, §7.5 | **Disqualifying.** Seeded and pilot material is test material by construction. |
 | 9 | This is not a **pilot run, a replay, a resumed session**, or a rerun of anything in RCL-001/002/003. | §3.2 | **Disqualifying.** |
 | 10 | The recipient has ordinary work of their **own** that this handoff lands in, and that work continues after the packet is delivered. | §3.1.1, §3.1.4 | **Disqualifying.** With nothing to do, there is no outcome to depend on the packet. |
-| 11 | The sender is **not** the repository owner dogfooding on Campfire. | §3.2 | **Disqualifying**, but explicitly retainable: record it as `inadmissible`, mark any account `reported` (§4.4), and keep the row. Do not delete it. |
+| 11 | If the repository owner is **either** sender or recipient, the work is ordinary, pre-existing, and outside Campfire's own repository; the other side has a different human principal; the owner's role and measurement knowledge will be disclosed. Owner involvement alone is not a failure. | §3.2; §12 Amendment 5 | **Disqualifying** if the owner-involved work is Campfire repository work, staged for measurement, or one principal acting on both sides. Retain the case and reason. Other §3.1 and §7 checks still apply. |
 
 ### 1.3 Both sides are voluntary and unsupplied
 
@@ -69,7 +74,7 @@ the case is opened. Read that column before you tick anything.
 | 13 | The sender is **not re-prompted** after a quiet moment, and is not told that a packet would help. | §3.1.2, §7.2 | **Disqualifying.** See §8.1 of this runbook: the protocol's explicit re-prompt clause is written for P and N, and §3.1.2's H clause is the requirement that applies. A re-prompt that produced the packet breaks it. |
 | 14 | The recipient receives the packet **as part of an ordinary handoff** and nothing else. | §3.1.2, §7.2 | **Disqualifying.** Giving the recipient the packet is inherent to H; **giving them the desired answer is not**. |
 | 15 | The handoff message carries **no answer**. No finding, no conclusion, no decision, no next action is restated in prose next to the packet file. | §3.1.3, §3.2 (restatement), §7.2 | **Disqualifying, or at minimum fatal to the claim.** If the sender's message contains the substance the recipient reproduces, the work cannot be shown to depend on the packet's records. See §5.4. |
-| 16 | The recipient is a **genuinely separate participant** in a separate session, not the sender resuming their own work. | §3.2 (second bullet), §3.2 (owner clause: "ordinary multi-participant evidence") | **Disqualifying.** A single actor on both ends is not portable handoff. |
+| 16 | The recipient is a **genuinely separate participant** in a separate session, with a different human principal from the sender, not the sender resuming their own work through another agent. | §3.2 (second bullet); §12 Amendment 5 | **Disqualifying.** One principal on both ends is not a genuine owner-involved handoff. |
 | 17 | The recipient does **not** reuse their own prior work in the same session with no intervening separate session boundary. | §3.2 (second bullet) | **Disqualifying.** |
 
 ### 1.4 The evidence can be retained
@@ -561,7 +566,8 @@ Opening check, in the abbreviated form the template asks for:
 Ordinary work, real, outcome outside the measurement (§3.1.1):  yes — one line
 Voluntary: sender chose the packet in ordinary work; recipient got the packet
   and the handoff request, no answer supplied (§3.1.2, §7.2):     yes — one line
-Not owner dogfooding (§3.2):                                        yes — one line
+Owner role (§12 Amendment 5):                                      none
+Sender and recipient have different human principals:             yes — one line
 Not a fixture, pilot, replay, resumed session, or measurement workspace
   (§3.2, §7.5):                                                     yes — one line
 Outcome not already known to the recorder at open (§3.2):          yes — one line
@@ -653,7 +659,7 @@ still gets its row (§7.1, §7.9, §7.14).
 | 2 | Did the reuse come from the participant's **own prior work in the same session**, with no intervening separate session boundary? | §3.2 (second bullet) | `inadmissible — §3.2: same-session reuse` |
 | 3 | Does the work product **only restate** prior Campfire text into new Campfire text? | §3.2 (third bullet) | `inadmissible — §3.2: restatement only` |
 | 4 | Is anything in the chain **inside a seeded fixture**, `fixtures/**`, or `docs/evidence/rcl-00*/**`? | §3.2 (fourth bullet), §7.5 | `inadmissible — §3.2, §7.5: fixture material` |
-| 5 | Is this the **repository owner's own dogfooding on Campfire**? | §3.2 (fifth bullet) | Retain. `inadmissible — §3.2: owner dogfooding`; mark any account `reported` (§4.4); keep the row. Do not delete. |
+| 5 | If the repository owner is sender or recipient, is this one principal acting on both sides, Campfire repository work, work staged for measurement, or an undisclosed owner role? Owner participation alone is permitted for genuine H handoffs on ordinary non-Campfire work. | §3.2 (fifth bullet); §12 Amendment 5 | Retain. `inadmissible` with the actual failing clause; mark any account `reported` (§4.4). Do not delete. |
 | 6 | Is this a **pilot run, a replay, a resumed session**, or a case whose **outcome was already known to the recorder** when it was opened? | §3.2 (sixth bullet) | `inadmissible — §3.2` |
 | 7 | Does §3.1.3 fail — would the work product have been coherent, correct, and supportable **without** the packet's records? | §3.1.3 | `inadmissible — §3.1.3: no real dependency` |
 | 8 | Does §3.1.4 fail — is there a **dated, recipient-authored work product** that can be checked against the packet? No answer, no chat reply, no undated artifact. | §3.1.4, §5.4 | `inadmissible — §3.1.4, §5.4: no resulting work` |
@@ -706,7 +712,7 @@ one, in the same log, with the same fields, dated and attributed the same way
 | The recipient's work product is **undated**. | §3.1.4 requires a dated work product. | No date, no case. Record it as `not recorded` at close, with a reason — `TEMPLATE.md` is explicit that a slot left at `not recorded` is a result, not a gap to quietly drop. |
 | The recipient's work product predates the packet. | Not this handoff's work product. | Record the dates and the discrepancy in §14. Do not attach it to the case. |
 | The sender made the packet **because the recorder was waiting**. | §3.1.2's H clause is broken. | `inadmissible`. Record it plainly. The recorder's own conduct is attribution notes (§6, §14). |
-| The recipient turned out to be the repository owner dogfooding on Campfire. | §3.2, fifth bullet. | Retain. `inadmissible`; mark any account `reported` (§4.4); keep the row. §3.2 says explicitly that this material may be retained. |
+| The recipient is the repository owner. | §12 Amendment 5 permits either owner role in a genuine H handoff on ordinary non-Campfire work. | Check for different human principals, the recipient's own work, and plan-time disclosure of the owner's role and measurement knowledge. Owner status alone is not a failure. If the owner role was discovered only after opening, record the missing plan-time field as inadmissible under §6; do not backfill it. |
 | The workspace turns out to be one created for the measurement. | §7.5. | `inadmissible`. Record it. Do not re-open under a fresh id with the same workspace (§7.9). |
 | The recorder realises mid-run that they already knew how it would end. | §3.2, sixth bullet. | Stop. Record the case as opened on a known outcome. Do not continue and do not re-open. |
 | Evidence cannot be retained — excerpts lost, packet deleted, artifact unreachable. | §7.13. | `inadmissible`. A testimonial account may remain as a `reported` item with no case verdict (§6). |

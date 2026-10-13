@@ -140,6 +140,10 @@ An observation qualifies when **all** of the following hold.
   but it is one participant working on the product's own repository in a
   session that knows about the measurement. It does not
   qualify as ordinary multi-participant evidence.
+
+  *Amendment 5, October 13, 2026: for claim H, the owner may be either side of
+  a genuine handoff on ordinary non-Campfire work. Solo work on Campfire's own
+  repository remains inadmissible. See §12 for the exact scope and safeguards.*
 - A pilot run, a replay, a resumed session, or any case whose outcome was already
   known to the recorder when the case was opened.
 
@@ -676,6 +680,10 @@ adds no label, no field, and no protocol version change.
 
 ### Amendment 3 — October 13, 2026 — owner-dogfooding scope: not resolved; the repository owner decides
 
+*Historical status: Amendment 5 below records the owner's subsequent ruling for
+claim H. This section remains as the dated record of the earlier open question;
+its instruction to hold owner-involved H cases no longer applies.*
+
 **This item is not resolved here.** §3.2's fifth bullet has two readable scopes,
 and the text does not select between them. The repository owner must decide.
 What follows records the question, the two scopes, and what each changes. No
@@ -879,6 +887,58 @@ much paraphrase is allowed, or which external artifact is checkable; those stay
 with §5's manual comparison. It does not alter §5.4's sender-prose mismatch or
 the rule that the packet, not the handoff message, must carry the substance. It
 adds no field, no rule, and no protocol version change.
+
+### Amendment 5 — October 13, 2026 — owner participation in genuine claim-H handoffs
+
+**Owner ruling.** The repository owner chose the narrow scope for claim H:
+"Allow owner in genuine handoffs." The choice was made before any Gate E case
+was opened. It resolves Amendment 3 for H, including cases where the owner is
+the sender and cases where the owner is the recipient.
+
+**Rule.** Owner participation alone does not disqualify a claim-H case when all
+of the following are true:
+
+1. The sender and recipient are genuinely separate participants in separate
+   sessions, with **different human principals**. An agent may act on either
+   side, but the owner's own agent is not an independent second participant.
+   The recipient has ordinary work of their own after delivery.
+2. The work is ordinary, pre-existing work **outside Campfire's own repository**.
+   It was not created, seeded, or selected for the measurement.
+3. The sender makes the packet voluntarily during that work; the recipient
+   receives it through an ordinary handoff, without being supplied the desired
+   answer. The recorder did not prompt or re-prompt either side into reuse.
+4. The owner is identified as sender or recipient in the plan-time opening
+   check. §14 discloses the owner's product knowledge, any knowledge of this
+   measurement, and any resulting contamination. The case retains the evidence
+   §6, §7, and §9 require, including the recipient-authored work product.
+
+Every other §3.1, §3.2, and §7 condition still applies. This ruling makes such a
+case **eligible to be assessed**, not automatically admissible or supporting.
+The owner and the other participant are not treated as independent scorers, and
+an owner-involved case is never described as evidence from people generally.
+
+**Still excluded.** The owner's solo dogfooding on Campfire's own repository is
+the §3.2 case and remains inadmissible. A handoff about developing Campfire's
+own repository is outside this ruling, even if another participant is present.
+A sender and recipient who are the same actor or share one human principal, a
+scripted recipient, prompted packet use, or work created for measurement fail
+the existing rules regardless of owner involvement. Such candidates and opened
+cases are retained under §7.1 and §8 with their actual disposition; they are not
+silently dropped.
+
+**Scope.** This ruling covers claim H only and both owner roles. It does not
+decide owner participation in claim P or N. An owner-involved P or N candidate
+must not be opened under an assumed extension of this H ruling; the owner would
+need a separate dated decision for those shapes. Claims P and H still do not
+close Gate E, and this amendment records no observation.
+
+**Operator effect.** `HANDOFF-RUNBOOK.md` precondition 11 and its post-handoff
+checks now test the conditions above rather than treating either owner role as
+an automatic failure. `TEMPLATE.md` records the owner's role and the basis for
+calling the work ordinary and outside Campfire's repository. The dated ruling
+is the policy; Amendment 3 remains visible as the history of how the ambiguity
+was found. Protocol version `gate-e-1` remains: there were zero cases opened
+under the earlier wording.
 
 ---
 

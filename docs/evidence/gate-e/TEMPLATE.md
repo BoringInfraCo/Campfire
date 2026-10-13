@@ -40,9 +40,15 @@ the disqualifier named.
   came out. A `no` here ends the case, the same as a `yes` on a disqualifier
   line below:
   <yes / no — what would be incoherent, wrong, or unsupportable without them>
-- **Not owner dogfooding on Campfire's own repository** (§3.2). If it is, label it
-  here and below — it may be recorded, it is not ordinary multi-participant work:
-  <yes / no — one line why>
+- **Owner involvement for claim H** (§3.2; §12 Amendment 5). The owner may be
+  either side of a genuine handoff on ordinary, pre-existing non-Campfire work;
+  owner status alone does not disqualify it. Record this before opening:
+  sender <actor id and type, human principal>; recipient <actor id and type,
+  human principal>; owner role <none / sender / recipient>; work and repository
+  <one line>; genuinely separate sessions, different human principals, and
+  recipient's own work <yes / no — one line why>.
+  Solo owner work or work on Campfire's own repository is inadmissible. For P or
+  N, Amendment 5 supplies no owner-participation ruling.
 - **Not a fixture, `fixtures/**`, `docs/evidence/rcl-00*/**`, a pilot run, a
   replay, a resumed session, or a workspace created for the measurement**
   (§3.2, §7.5): <yes / no>
@@ -339,6 +345,10 @@ standing session instructions in effect.
   every Campfire session and is **not** voluntary behaviour (§7.2, §10.8). If it
   was in effect, citation cannot be read as evidence of voluntary reuse — the
   RCL-003 citation split was confounded by exactly this.
+- **Owner participation, if claim H:** <none / sender / recipient>; disclose the
+  owner's product knowledge, whether they knew this measurement was under way,
+  and any contamination it created (§12 Amendment 5). A plan-time owner role
+  omitted from the opening check cannot be backfilled here.
 - **Contamination:** <what leaked in, or `none`>
 - **Dropped reads:** <reads that failed or were denied, with the error, or `none`>
 - **Replacements:** <records superseded, retired, or corrected during the
