@@ -12,8 +12,8 @@
 
 One place where ordinary-work observations of historical reuse are written down
 in the shape §6 defines, so that a reviewer with no access to anyone's memory can
-check them. It holds the log, the template, and — currently nothing else — the
-observation files.
+check them. It holds the log, the template, the handoff runbook, review records,
+and — when a case is opened — observation files.
 
 `docs/GATE_E_PROTOCOL.md` is the authority. If this directory and the protocol
 ever disagree, the protocol wins and this directory is wrong.
@@ -24,6 +24,10 @@ ever disagree, the protocol wins and this directory is wrong.
 | --- | --- |
 | `LOG.md` | Every case ever opened, with its verdict, including the cases that did not qualify. Currently zero rows. Carries the §8 pre-registered expectation. |
 | `TEMPLATE.md` | The skeleton for `gate-e-observation-<YYYY-MM-DD>-<id>.md`, with every §6 field and its expected shape. A template is not an observation. |
+| `HANDOFF-RUNBOOK.md` | The capture sequence and comparison rules for a real claim-H handoff. |
+| `READINESS-AUDIT.md` | Dated audit against `0e0693d`; findings are a snapshot, not an observation. |
+| `REHEARSAL.md` | Dated simulated run against `0e0693d`; its defects motivated later repairs and it is not an observation. |
+| `RED-TEAM-REVIEW.md` | Adversarial review of the packet-evidence helper and observation apparatus. |
 
 ## What lives here
 
@@ -76,15 +80,21 @@ cannot, the case is inadmissible; an account may remain as a `reported` item (§
    relabelled later (§1).
 4. **Create the file** `gate-e-observation-<YYYY-MM-DD>-<id>.md` from
    `TEMPLATE.md`.
-5. **Fill every `[PLAN-TIME]` field and date it, now, while the outcome is
-   unknown.** For claim N, record the normal-work Basis 1 plan if it already
-   exists, or commit the choice to use a blinded Basis 2 reconstruction. The
-   reconstruction itself is written later, before comparison. For P and N, the prompt must
-   be verbatim and must name neither Recall, nor `recall_workspace`, nor "prior
-   work" (§6, §7.2).
+5. **Fill and date the `[PLAN-TIME]` fields available at open.** For claim H,
+   the packet issue, its own read position, and the ordinary handoff request
+   are captured when they happen, before the outcome is known; follow
+   `HANDOFF-RUNBOOK.md` Steps 3–5 and commit the completed issue record before
+   transport. Do not substitute an earlier orientation cursor or reconstruct a
+   field afterwards. For claim N, record a normal-work Basis 1 plan if it
+   already exists, or commit the choice to use a blinded Basis 2 reconstruction.
+   The reconstruction itself is written later, before comparison. For P and N,
+   the prompt must be verbatim and must name neither Recall, nor
+   `recall_workspace`, nor "prior work" (§6, §7.2).
 6. **Append the log row** in `LOG.md` and open the case in the table.
-7. **Do nothing else until the outcome is known.** No prompt naming Recall, no
-   re-prompting after a quiet moment, no control arm (§7.2, §7.3).
+7. **Let ordinary work proceed.** For H, the sender may issue the packet
+   voluntarily and the recipient may work from it; record each plan-time event
+   when it happens. Do not prompt reuse, re-prompt after a quiet moment, or add
+   a control arm (§7.2, §7.3).
 8. **At close**, fill the closing fields, state the verdict and its label, and
    write what the observation does not establish (§7.11).
 9. **Append corrections, never edits.** A wrong statement is fixed by a dated
@@ -147,16 +157,57 @@ Before any case was opened, the protocol clarified the scaffold's initial
 ambiguities. A withdrawn case keeps its fixed claim shape and has no verdict
 label. P and H may retain a normal-work plan as context but record `N/A` for
 the claim-N counterfactual. Procedural failures under §6 or §7 make a case
-inadmissible even if its subject looked promising under §3. Owner dogfooding
-may be retained as an inadmissible case with a `reported` item; it does not
-qualify as ordinary multi-participant
-evidence. Case verdict labels and §4.4 item labels are separate (§1).
+inadmissible even if its subject looked promising under §3. Case verdict
+labels and §4.4 item labels are separate (§1).
+
+**Owner participation in claim H.** `docs/GATE_E_PROTOCOL.md` §12
+**Amendment 5** (October 13, 2026) is the operative rule; it resolves the
+question Amendment 3 left to the owner ("the repository owner must decide …
+no case is opened under an assumed scope"). Owner participation alone does
+not disqualify a claim-H case when all four of the following are true:
+
+1. The sender and recipient are genuinely separate participants in separate
+   sessions, with **different human principals**. An agent may act on either
+   side, but the owner's own agent is not an independent second participant.
+   The recipient has ordinary work of their own after delivery.
+2. The work is ordinary, pre-existing work **outside Campfire's own
+   repository**. It was not created, seeded, or selected for the measurement.
+3. The sender makes the packet voluntarily during that work; the recipient
+   receives it through an ordinary handoff, without being supplied the desired
+   answer. The recorder did not prompt or re-prompt either side into reuse.
+4. The owner is identified as sender or recipient in the plan-time opening
+   check. §14 discloses the owner's product knowledge, any knowledge of this
+   measurement, and any resulting contamination. The evidence §6, §7, and §9
+   require is retained, including the recipient-authored work product.
+
+The ruling makes such a case **eligible to be assessed**, not automatically
+admissible or supporting. Every other §3.1, §3.2, and §7 condition still
+applies; the owner and the other participant are not independent scorers, and
+the case is never described as evidence from people generally. It covers
+claim H only and both owner roles — owner participation in claim P or N is
+not decided by it, must not be opened under an assumed extension, and would
+need a separate dated decision.
+
+Owner work that does **not** meet the four conditions — the owner's solo
+dogfooding on Campfire's own repository, a handoff about developing
+Campfire's own repository even with another participant present, one actor or
+one human principal on both sides, a scripted recipient, prompted packet use,
+or work created for measurement — remains inadmissible under §3.2 and the
+existing rules. It may be retained as an inadmissible case with a `reported`
+item and counts toward nothing.
 
 ## Corrections
 
 Append a dated note here. Do not edit an existing statement silently (§9).
 
-- None.
+- **October 13, 2026 — owner participation in claim H rewritten to §12
+  Amendment 5.** This paragraph previously stated, as current: "Owner
+  dogfooding may be retained as an inadmissible case with a `reported` item;
+  it does not qualify as ordinary multi-participant evidence." That sentence
+  read §3.2's fifth bullet with the broad scope, which Amendment 5 resolved
+  against for claim H. The statement now records Amendment 5's rule and its
+  four conditions as the operative rule, and keeps the retained-as-`reported`
+  treatment for owner work that does not meet those conditions.
 
 ## Status
 

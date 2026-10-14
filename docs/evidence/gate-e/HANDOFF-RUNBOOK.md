@@ -66,7 +66,7 @@ the case is opened. Read that column before you tick anything.
 | 10 | The recipient has ordinary work of their **own** that this handoff lands in, and that work continues after the packet is delivered. | §3.1.1, §3.1.4 | **Disqualifying.** With nothing to do, there is no outcome to depend on the packet. |
 | 11 | If the repository owner is **either** sender or recipient, the work is ordinary, pre-existing, and outside Campfire's own repository; the other side has a different human principal; the owner's role and measurement knowledge will be disclosed. Owner involvement alone is not a failure. | §3.2; §12 Amendment 5 | **Disqualifying** if the owner-involved work is Campfire repository work, staged for measurement, or one principal acting on both sides. Retain the case and reason. Other §3.1 and §7 checks still apply. |
 
-### 1.3 Both sides are voluntary and unsupplied
+### 1.3 Both sides are voluntary, unsupplied, and authorized
 
 | # | Precondition | Clause | If wrong after opening |
 | --- | --- | --- | --- |
@@ -75,17 +75,19 @@ the case is opened. Read that column before you tick anything.
 | 14 | The recipient receives the packet **as part of an ordinary handoff** and nothing else. | §3.1.2, §7.2 | **Disqualifying.** Giving the recipient the packet is inherent to H; **giving them the desired answer is not**. |
 | 15 | The handoff message carries **no answer**. No finding, no conclusion, no decision, no next action is restated in prose next to the packet file. | §3.1.3, §3.2 (restatement), §7.2 | **Disqualifying, or at minimum fatal to the claim.** If the sender's message contains the substance the recipient reproduces, the work cannot be shown to depend on the packet's records. See §5.4. |
 | 16 | The recipient is a **genuinely separate participant** in a separate session, with a different human principal from the sender, not the sender resuming their own work through another agent. | §3.2 (second bullet); §12 Amendment 5 | **Disqualifying.** One principal on both ends is not a genuine owner-involved handoff. |
-| 17 | The recipient does **not** reuse their own prior work in the same session with no intervening separate session boundary. | §3.2 (second bullet) | **Disqualifying.** |
+| 17 | The recipient is **already enrolled in the sender's workspace** as a participant with `workspace:read`. The Step 3 command authorizes the recipient before it projects anything; a recipient who is not a participant fails there and no packet is written. | §2 (`workspace:read`-gated); Step 3 command | **Disqualifying.** Without the recipient's `workspace:read` there is no packet and no H case. Who enrolls them, and when, is ordinary workspace administration, not part of this observation. |
+| 18 | The Step 3 command will be run as the **sender's own identity** — `--actor` / `--type` (or `CAMPFIRE_ACTOR_ID` / `CAMPFIRE_ACTOR_TYPE`) set to the sender, not left to the CLI's built-in default. The receipt does not name the issuer, so a wrong identity surfaces only when §2 is written, and re-issuing to correct it is a re-run (§7.9). | Step 3 command; §7.9 | **Disqualifying** to the H claim if the packet's issuer is not the sender. The packet cannot be re-issued to correct it. |
+| 19 | The recipient does **not** reuse their own prior work in the same session with no intervening separate session boundary. | §3.2 (second bullet) | **Disqualifying.** |
 
 ### 1.4 The evidence can be retained
 
 | # | Precondition | Clause | If wrong after opening |
 | --- | --- | --- | --- |
-| 18 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence, readable by a reviewer with **no access to the recorder's memory**. | §7.13, §9 | **Disqualifying** at close. If it cannot be retained, the case is inadmissible and a testimonial account may remain as a `reported` item. |
-| 19 | The private packet bytes will **stay out of the repository**. There is somewhere outside the tree to keep them. | §9 | **Disqualifying** if committed. A committed packet is a §9 violation, not a formatting preference. |
-| 20 | A recorder is present, and will write the handoff request and any prompt text **verbatim**. | §6, §7.2 | **Weakening, then disqualifying.** Verbatim prompt text is required. A paraphrase is not the retained text §7.13 asks for. |
-| 21 | The Campfire package version and git commit the participants ran against will be recorded. | §6 (Build) | **Weakening.** A missing `[plan-time]` field is inadmissible (§6); Build is not marked `[plan-time]`, but a missing required field is a gap in the record and is recorded as one. |
-| 22 | Everyone involved understands the outcome will not close Gate E, whatever it is. | §1, §8 | Not a defect. Stated so nobody edits the write-up afterwards to make it sound like more. |
+| 20 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence, readable by a reviewer with **no access to the recorder's memory**. | §7.13, §9 | **Disqualifying** at close. If it cannot be retained, the case is inadmissible and a testimonial account may remain as a `reported` item. |
+| 21 | The private packet bytes will **stay out of the repository**. There is somewhere outside the tree to keep them. | §9 | **Disqualifying** if committed. A committed packet is a §9 violation, not a formatting preference. |
+| 22 | A recorder is present, and will write the handoff request and any prompt text **verbatim**. | §6, §7.2 | **Weakening, then disqualifying.** Verbatim prompt text is required. A paraphrase is not the retained text §7.13 asks for. |
+| 23 | The Campfire package version and git commit the participants ran against will be recorded. | §6 (Build) | **Weakening.** A missing `[plan-time]` field is inadmissible (§6); Build is not marked `[plan-time]`, but a missing required field is a gap in the record and is recorded as one. |
+| 24 | Everyone involved understands the outcome will not close Gate E, whatever it is. | §1, §8 | Not a defect. Stated so nobody edits the write-up afterwards to make it sound like more. |
 
 ### 1.5 If any line fails
 
@@ -119,32 +121,54 @@ the outcome is known does not satisfy §7.1.
 1. Assign the id `gate-e-<YYYYMMDD>-<nnn>`. The date is the **open** date (§9).
 2. Create `docs/evidence/gate-e/gate-e-observation-<YYYY-MM-DD>-gate-e-<YYYYMMDD>-<nnn>.md`
    from `TEMPLATE.md`. The file name is fixed by §9 and is not negotiable.
-3. Run the **Opening check** at the top of `TEMPLATE.md` against §1 above. Tick
-   every line, write the one-line reason, and date it. A `yes` on a
-   disqualifier line ends the case here: the row still goes in `LOG.md`.
+3. Run the **Opening check** at the top of `TEMPLATE.md` against §1 above. The
+   check prints one numbered line per §1 precondition, in §1's numbering: tick
+   each line in §1's tables, write the same answer and the one-line reason on
+   the matching line of the check, and date the check. §1 governs if the two
+   ever drift. A `yes` on a disqualifier line ends the case here: the row still
+   goes in `LOG.md`.
 4. Fix the claim shape as `H`.
 5. Fill and date every `[PLAN-TIME]` field that can be filled now:
    - §1 Observation id — id, protocol version, recorder, `Opened`, `Closed: open`
-   - §2 Participant — the sender's full identity now; the recipient's when known
+   - §2 Participant — two blocks for H: the sender's (the packet issuer's) full
+     identity now, and the recipient's as soon as it is known. Both identities,
+     roles, and the Amendment 5 safeguards are recorded in the opening check
+     before opening; §2 carries the full environment fields.
    - §3 Workspace — sender's workspace id and name; note the crossed boundary (§5.3)
    - §4 Build — package version and the git commit the participants ran against,
      **not** the commit that adds the observation file
-   - §6 Task — the ordinary handoff request, **verbatim**, plus the confirmation
-     that it named neither Recall, nor `recall_workspace`, nor "prior work"
+   - §6 Task — the ordinary handoff request, **verbatim**, recorded when the
+     handoff request is made (Step 5). For H, confirm in the same slot that the
+     request supplied no answer and that the sender was not prompted or
+     re-prompted (preconditions 12–15); the named-Recall confirmation is a P/N
+     check, written `n/a` for H. The sender's `--query` is not this field — it is
+     recorded at Step 3 and carried by the evidence record in §4a.
    - §7 Counterfactual basis plan — `N/A` with a reason. H does not require a
      counterfactual (§6). It is not a gap.
 6. §5 Pre-action position is filled from the packet's own read at issue — the
    read the Step 3 command performs, as carried in the Step 4 packet-evidence
-   record — dated to that moment. Do not leave it blank, and do not backfill it.
+   record, pasted into §4a of the observation — dated to that moment. Do not
+   leave it blank, and do not backfill it.
 7. **Commit the opened file.** `TEMPLATE.md` requires every `[PLAN-TIME]` field
    to be filled, dated, and committed **before the outcome is known**.
 8. Append the row to **Every case ever opened** in `LOG.md` and a dated entry
    under **Appended entries**. `Closed` is `—` while the case is open.
-9. Do nothing else until the outcome is known. No prompt naming Recall, no
-   re-prompting, no control arm (§7.2), no second look for a better case (§7.1).
+9. Let ordinary work proceed to Steps 2–5, recording each event when it occurs.
+   Do not prompt or re-prompt reuse, add a control arm (§7.2), or look for a
+   better case after seeing this one's result (§7.1).
 
-**If you cannot fill a `[PLAN-TIME]` field at open, stop.** A case opened without
-one is inadmissible under §6, and §6 says so without an exception.
+**Open establishes the case; issue completes the pre-action position. Neither
+may be backfilled after the outcome.** At open, record the enumeration, the
+qualification, and every `[PLAN-TIME]` field the material supports then —
+including the pre-action position only as far as it is available. A field that
+cannot exist until the handoff happens is completed then, dated to that
+moment: §5 comes from the packet's own read at issue (item 6 above; §12
+Amendment 1), and §6's Task is recorded when the handoff request is made
+(Step 5). The operative test under §6 is that the entry is **captured before
+the outcome is known**, not that every field is known at open. An entry
+written for the first time after the outcome, or reconstructed afterwards
+from memory, is invalid: a case with one is inadmissible under §6, and §6 says
+so without an exception.
 
 ### Step 2 — The sender reads, before the next action
 
@@ -173,12 +197,29 @@ into §5.
 
 ```text
 campfire handoff-packet <workspaceId> \
+  --actor <the sender's actor id> \
+  --type <human|agent> \
   --query <the sender's own query text> \
   --recipient-type human|agent \
   --recipient <actorId> \
   --out <file> \
   [--output auto|human|json]
 ```
+
+**Run it as the sender, explicitly.** `--actor` / `--type` are the acting
+identity; `CAMPFIRE_ACTOR_ID` / `CAMPFIRE_ACTOR_TYPE` set the same values. When
+neither is supplied the CLI resolves a built-in default (`hum_sergio`, type
+`human`), so on a prepared machine a literal run can issue the packet as someone
+other than the sender. The packet carries the actual issuer and the receipt does
+not, so a wrong identity is invisible until §2 is written — and the H claim
+rests on who issued the packet. Pass the sender's own actor id and type, and
+record what you ran (precondition 18; a wrong identity cannot be fixed by
+re-issuing, §7.9).
+
+**Both sides must already be participants.** The command authorizes the issuer
+against `workspace:read` and then the recipient, before it projects anything
+(precondition 17; §2). A recipient who is not enrolled in the sender's
+workspace fails here and no packet is written.
 
 **Do not pass `--cursor` unless you already hold a recall cursor from a
 `campfire recall` call in this same session — and for an ordinary handoff,
@@ -206,11 +247,16 @@ What this does, in terms that matter here:
 **Capture now:**
 
 - The receipt verbatim. Keep the path out of anything committed.
+- The **acting identity** you ran with (`--actor` / `--type`, or the environment
+  variables). The receipt does not carry the issuer; §2 must match this, and the
+  packet's `issuer` is what a reviewer will check.
 - The **issue timestamp**, to the second.
 - The byte count from the receipt. It must equal the packet file's byte length.
   Cross-check it against `receipt.packetBytes` in the evidence record at Step 4.
 - The sender's query text, verbatim. The packet echoes it in `query.text`; this
-  is the sender's ordinary intent, recorded as such.
+  is the sender's ordinary intent, recorded as such. It is **not** §6's Task —
+  for H that is the handoff request (Step 5). Record the query in §4a of the
+  observation.
 - The `workspace:read` basis for the read behind the packet, one line per read
   (§6). The packet does not carry the authorization basis; only the operator
   does.
@@ -271,9 +317,41 @@ was whole or was cut by a byte cap. The bounded text it does copy is
 `query.text`, `workspace.name`, `goal.title`, `goal.description`, and each
 `omissions` line, each marked when truncated.
 
-**Fill §5 Pre-action position now**, from this read's `sourcePosition` /
+**Paste the record into §4a of the observation** as a fenced block, then **fill
+§5 Pre-action position now**, from this read's `sourcePosition` /
 `sourceCursor` as carried in the record, dated to the issue time, and note in §3
 that the position is the issuer's read and that the boundary was crossed.
+
+**Pre-transport content check — required, before the commit and before
+transport.** A sender's ordinary wording can match nothing: recall matching is
+whole-phrase substring matching, so a natural query can produce a valid, exit-0
+packet carrying **zero records**, and neither the receipt nor the file's shape
+says it is empty. Confirm from the evidence record that the packet carries the
+handoff:
+
+- `records` is **not empty** — the record lists them, and the human rendering
+  prints `Records (n)`.
+- The ids the handoff is about are present: in `records[].id`, or, for a
+  decision, in `decisionSet.members[].id` (the set is independent of paging) or
+  as `decisionSet.operativeDecisionId`. Name the expected ids — or the records
+  the handoff is about — before reading the check's result; this is the
+  sender's ordinary knowledge of the work, not a list fitted to whatever the
+  packet happened to carry.
+- Read the counts too: each recall section's `returned` / `total` /
+  `truncated` under `completeness.recall`, each anchor's count, the decision
+  set's `returned` / `total` / `truncated`, and `omissions`. `returned: 0` in
+  every section is the empty packet however good the receipt looks.
+- Record the check's result in §4a: `pass` with the record count and the
+  expected ids, or `fail` with what the record carried instead.
+
+If the check fails, **do not transport the packet**, and **do not re-issue
+it**: re-issuing is a re-run (§7.9), and a corrected packet is not the packet
+this case issued (the Step 3 trap stands). Record the counts and the ids the
+record did carry in §4a. If the case was opened, close it with no resulting
+work — the checklist's §3.1.4 line (runbook §7.1 item 8) governs the
+disposition, because the handoff never reached the recipient — and append the
+row (Step 10). A failed check is a recorded result (§7.14, §8), not a gap and
+not a plumbing detail to fix quietly.
 
 **Commit the observation file again** before transporting the packet. The
 plan-time record is now complete and dated, and the outcome is still unknown.
@@ -289,8 +367,11 @@ conversation).
 **Capture now:**
 
 - The handoff message or request **verbatim**, and the transport, and the
-  delivery time. This is §6's `[plan-time]` Task for H. If the handoff was
-  spoken, write down what was said, verbatim, at the time.
+  delivery time. This — the ordinary handoff request delivered with the packet
+  — is §6's `[plan-time]` Task for H. The sender's Step 3 `--query` is a
+  different string: it is the packet's matching key, not the task, and it is
+  recorded in §4a. If the handoff was spoken, write down what was said,
+  verbatim, at the time.
 - The recipient's identity: actor id, actor type, harness, harness version,
   model, reasoning setting, `agentSessionId`, and human principal if the
   recipient is an agent (§6, §7.12).
@@ -341,7 +422,8 @@ carries structure, not meaning.
 
 ### Step 8 — Run the post-handoff disqualification checklist
 
-§6 of this runbook. **Before** any write-up.
+§7 of this runbook, and record its results in §14a of `TEMPLATE.md`. **Before**
+any write-up.
 
 ### Step 9 — Write the observation
 
@@ -378,12 +460,12 @@ carries structure, not meaning.
 | 0 | Enumeration row, dated. | §7.1 is about order. A row written after the outcome is known is not an enumeration. |
 | 1 | Opening check, claim shape `H`, `[PLAN-TIME]` fields, open timestamp. | §6: a missing required `[PLAN-TIME]` field makes the observation inadmissible. Not "weaker" — inadmissible. |
 | 2 | Nothing. The sender's read supplies no H field; no cursor is held or forwarded. | For H the pre-action position is the packet's own read at issue (§12 Amendment 1), recorded at Step 4 — not the sender's read, and **not a reconstruction written afterward**. |
-| 3 | Receipt verbatim, issue timestamp, byte count, query text, `workspace:read` basis per read. The packet's own `sourceCursor` / `sourcePosition` are captured at Step 4. | The receipt is the only product-side trace that a packet was issued; §10.3 records that the read writes no Contribution. |
-| 4 | The full evidence record, the generation timestamp, the packet's identifying fields, the exit code. | The record carries **no timestamp and no filename** by design. A reviewer cannot tell when it was made or from which file. Only the recorder can say, and only if it is written down now. |
+| 3 | Receipt verbatim, acting identity, issue timestamp, byte count, query text, `workspace:read` basis per read. The packet's own `sourceCursor` / `sourcePosition` are captured at Step 4. | The receipt is the only product-side trace that a packet was issued; §10.3 records that the read writes no Contribution, and the receipt does not name the issuer. |
+| 4 | The full evidence record in §4a, the generation timestamp, the packet's identifying fields, the exit code, and the result of the pre-transport content check. | The record carries **no timestamp and no filename** by design. A reviewer cannot tell when it was made or from which file. Only the recorder can say, and only if it is written down now. An empty packet looks exactly like a full one to every mechanical check; the content check is the one that does not. |
 | 5 | Handoff message verbatim, transport, delivery time, recipient identity, standing-instruction status per participant. | §7.2 requires prompt text retained verbatim. A paraphrase is not the text. |
 | 6 | Work product: what, author, location or id, date, ordering against `generatedAt`. | An undated artifact cannot satisfy §3.1.4. "I saw it on Tuesday" is not a date. |
-| 7 | The comparison: selected fields, retained sanitized excerpts, per-field verdicts. | §9: **ids and text lengths alone cannot show what the recipient used.** Once the packet is gone, the excerpts are unrecoverable. |
-| 8 | Disqualification checklist results. | — |
+| 7 | The comparison: selected fields, retained sanitized excerpts, per-field verdicts — written into §10a of the observation. | §9: **ids and text lengths alone cannot show what the recipient used.** Once the packet is gone, the excerpts are unrecoverable. |
+| 8 | Disqualification checklist results, into §14a of the observation. | — |
 | 9 | Retained-evidence check, verdict, and what the case does not establish. | §7.13: unretained evidence makes the case inadmissible. |
 
 **The trap, stated once.** Almost everything above is cheap to capture at the
@@ -431,10 +513,17 @@ chosen to look good. Cover:
    scope. That test is §3.1.3's real-dependency test, applied to H.
 2. **Every field carrying safety structure**, whether or not the work mentions
    it: the decision set's `state`, `operativeDecisionId`, `beforeActing`, and
-   `linkedNextStep`; each member's `section` and `lifecycle`; whether a
-   `rationale` is present; whether a `historicalExplanation` is present;
-   `needsReview`. RCL-003's scored S2 recipient failed on exactly this shape of
-   field: it applied a superseded decision's rationale as a live condition.
+   `linkedNextStep`; each `decisionSet.members[]` member's `section` and
+   `lifecycle`; whether that member carries a `rationale` and whether it carries
+   a `historicalExplanation`; `needsReview`. A decision reached twice arrives in
+   **two projections, and they are not interchangeable.** In
+   `decisionSet.members[]`, a superseded decision is `section: historical`,
+   `lifecycle: superseded`, **carries no `rationale`**, and carries a
+   `historicalExplanation`. In `records[]`, the same decision's historical text
+   — including its `rationale` — is carried as history. Check each projection's
+   own fields; do not ask one projection to supply what the other carries. The
+   mismatch to catch is unchanged: RCL-003's scored S2 recipient applied a
+   superseded decision's rationale as a live condition.
 3. **Every field the work product contradicts or appears to ignore** where the
    ignoring matters.
 4. **Every field the recipient named** — ids in particular. §6's Reused sources.
@@ -443,13 +532,15 @@ A packet field the work product simply does not bear on is **not** in scope, and
 its absence from the work is **not** a mismatch. Say so once in the observation
 rather than listing every untouched field.
 
-Write the selection down with the reason for each field. A reviewer must be able
-to see why these fields were compared.
+Write the selection down with the reason for each field — §10a of `TEMPLATE.md`
+carries the selection table and the verdicts. A reviewer must be able to see why
+these fields were compared.
 
 ### 5.2 Retain the bounded, sanitized excerpts
 
 For every field in scope whose content the work depends on, copy the **bounded,
-sanitized excerpt** the work actually depends on into §10 of the observation.
+sanitized excerpt** the work actually depends on into §10 of the observation;
+the selection and the per-field verdicts go in §10a.
 
 - §9: "ids and text lengths alone cannot show what the recipient used." The
   helper copies no record text; **this copy is the operator's job**.
@@ -473,8 +564,11 @@ summary of the work product.
 - **Structural fields** — id, kind, section, lifecycle, rationale presence,
   `historicalExplanation` presence, `needsReview`, decision-set `state`,
   `operativeDecisionId`, guidance presence, recorded transitions. Exact
-  agreement. For the guidance fields, agreement with the guidance the set's own
-  members derive.
+  agreement, **per projection** where the packet carries a decision twice: a
+  `decisionSet.members[]` entry's rationale presence is its own fact (absent
+  when the member is superseded), and the `records[]` entry's is the other
+  (present when the historical text carries it; §5.1 rule 2). For the guidance
+  fields, agreement with the guidance the set's own members derive.
 - **Content fields** — the retained excerpt's content appears in, or determines,
   the corresponding part of the work product. The recipient may legitimately
   paraphrase or reformat; string identity is not the test. The test is whether
@@ -489,9 +583,12 @@ summary of the work product.
 The work product states, implies, or does something the packet's field does not
 support, or contradicts it. Concretely:
 
-- A superseded decision's rationale applied as a live condition, where the packet
-  marks that member `section: historical`, `lifecycle: superseded`, with no
-  rationale and a `historicalExplanation`.
+- A superseded decision's rationale applied as a live condition. The packet's
+  `decisionSet.members[]` entry for that decision is `section: historical`,
+  `lifecycle: superseded`, carries no `rationale`, and carries a
+  `historicalExplanation`; the same decision's `records[]` entry carries its
+  historical text and `rationale` only as history. Treating that rationale as a
+  current condition is the mismatch — the RCL-003 S2 failure.
 - A proposed decision treated as operative, where `state` says otherwise.
 - A transition requested that the packet's `linkedNextStep` says is not needed,
   or a transition **not** requested that `beforeActing` requires.
@@ -595,7 +692,8 @@ selection, shown as a table an operator can hand to a reviewer:
 | dec_<example-a> section + lifecycle    | safety structure (§5.1 rule 2)                        | match   |
 | decisionSet.operativeDecisionId        | safety structure; names which rule governs             | match   |
 | decisionSet.linkedNextStep             | safety structure; governs whether a transition is asked | match |
-| dec_<example-b> — no rationale present | safety structure; the superseded member carries none   | match   |
+| dec_<example-b> `decisionSet.members[]` — no rationale present | safety structure; the superseded member carries none | match |
+| dec_<example-b> `records[]` — rationale present as history | the other projection; history, not a live condition | match |
 | omissions[0]                           | the work names a record the packet says it omitted    | mismatch|
 ```
 
