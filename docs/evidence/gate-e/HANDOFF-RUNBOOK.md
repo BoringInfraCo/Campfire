@@ -83,7 +83,7 @@ the case is opened. Read that column before you tick anything.
 
 | # | Precondition | Clause | If wrong after opening |
 | --- | --- | --- | --- |
-| 20 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence, readable by a reviewer with **no access to the recorder's memory**. | §7.13, §9 | **Disqualifying** at close. If it cannot be retained, the case is inadmissible and a testimonial account may remain as a `reported` item. |
+| 20 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence **on both sides** — the packet fields and the work-product parts that depend on them — readable by a reviewer with **no access to the recorder's memory**. The plan names the work-product reference's access condition and the recipient's bounded dependent excerpts (Step 6, §5.6); it identifies who will request consent for excerpts at close. For Grade A, the reviewer's own access is named and verified. | §7.13, §9 | **Disqualifying** at close. If it cannot be retained — including a private artifact with no recipient excerpts — the case is inadmissible and a testimonial account may remain as a `reported` item. |
 | 21 | The private packet bytes will **stay out of the repository**. There is somewhere outside the tree to keep them. | §9 | **Disqualifying** if committed. A committed packet is a §9 violation, not a formatting preference. |
 | 22 | A recorder is present, and will write the handoff request and any prompt text **verbatim**. | §6, §7.2 | **Weakening, then disqualifying.** Verbatim prompt text is required. A paraphrase is not the retained text §7.13 asks for. |
 | 23 | The Campfire package version and git commit the participants ran against will be recorded. | §6 (Build) | **Weakening.** A missing `[plan-time]` field is inadmissible (§6); Build is not marked `[plan-time]`, but a missing required field is a gap in the record and is recorded as one. |
@@ -407,19 +407,72 @@ be checked against the packet's source ids and relevant contents. A packet, or a
 recipient's answer, alone is not resulting work (§5.4).
 
 Qualifying shapes, in the owner's terms: a commit, a pull request, or a durable
-Campfire record. A chat reply, a plan, a summary, or a spoken answer is **not**
-resulting work.
+Campfire record — each subject to Amendment 4's dependent-action test: a copy
+with no dependent action is restatement and nothing else (§3.2, §5.4). A chat
+reply, a plan, a summary, or a spoken answer is **not** resulting work.
+
+**The work product must be checkable from what is committed.** §9 requires "a
+checkable reference to the recipient's resulting work", and §7.13 requires a
+reviewer with no access to the recorder's memory to be able to check it. A
+reference the reviewer cannot reach — a sha in a private repository, an internal
+tracker, a customer system — identifies the work; it does not make it
+checkable. When the work product is not reviewer-reachable, the recipient
+supplies the missing half: a bounded, sanitized excerpt of the part of the work
+product that depends on the packet, and an attestation. §5.6 defines the
+retention grades and what each lets a reviewer check.
+
+**The recipient's contract — what they supply, what they may decline.**
+
+- **Supply:** the work-product reference and its access condition; bounded
+  work-product excerpts for every field the work depends on or contradicts
+  (one excerpt may serve several fields), and the attestation below. A safety
+  field recorded `not borne on` needs a reason, not a fabricated dependent
+  excerpt. The excerpts are the
+  recipient's material and are committed only with the recipient's consent,
+  which §10 records.
+- **May decline:** exposing the artifact itself; any content outside the
+  dependent parts; private hostnames, URLs, and account names; and any further
+  redaction inside an excerpt. A redaction that removes the dependent substance
+  makes that field `unresolved` (§5.3), not `match`.
+- **May decline the case.** A recipient who will not supply excerpts for a
+  private artifact is not pressured. The case closes under §7.13 as
+  `inadmissible`, with that reason recorded; a testimonial account may remain as
+  a `reported` item. The handoff itself is ordinary work and is unaffected.
+- **Timing and framing.** The request is made **after** the work product
+  exists, as ordinary record-keeping: it does not name the packet's desired
+  answer, does not ask the recipient to use the packet, and does not compare
+  anything. Anything said to or around the recipient that could have changed
+  their work is recorded verbatim in §14 as contamination (§7.2).
 
 **Capture now:**
 
 - What it was, in one line.
 - Author: the recipient's actor id and actor type. If it is an agent's output,
   the human principal too (§6).
-- Location or id a reviewer can check: a commit sha, a PR number or URL, or a
-  Campfire record id with its `created_at`.
-- The date, in ISO-8601.
+- The reference: a commit sha, a PR number or URL, a Campfire record id with its
+  `created_at`, or another durable identifier.
+- The reference's **access condition**: `reachable` — a reviewer can fetch it
+  through their own access, named here, without the recorder's private material
+  and without the recipient's credentials (a public URL, or "any member of
+  <team/org> through <system>"); or `not reachable` — the reviewer cannot fetch
+  it. When in doubt, grade down.
+- The **retention grade** — A, B, or C (§5.6).
+- The **work-product excerpts**: bounded and sanitized for each field the work
+  depends on or contradicts, including when the reference is reachable; each
+  is marked as an excerpt (§5.2). A `not borne on` safety field has a recorded
+  reason instead (§5.3).
+- The recipient's **attestation**, verbatim: that the excerpt is from the
+  recipient's work product, that the work product was produced after the packet
+  was issued, and that the recipient authored it. Mark it `[attested]`. It is a
+  §4.4 `reported` item; it is never a verdict basis on its own.
+- The date, in ISO-8601: for a commit, its commit date; for a record, its
+  `created_at`; for an action, the date the recipient attests, marked
+  `[attested]`.
 - The date it was produced, **relative to** the packet's `generatedAt`. Work
   dated before the packet was issued is not this handoff's work product.
+- Nothing captured late. If a reference, access condition, excerpt, or
+  attestation is reconstructed from memory after the fact, write `not recorded`
+  with the reason instead. Memory is not retained material (§7.13).
 
 If the recipient is working inside Campfire and writes a record that would
 normally carry a citation to the sender's ids: §5.3 says citations and evidence
@@ -443,13 +496,18 @@ any write-up.
 
 1. Fill the closing fields of `TEMPLATE.md` from what was captured: §8 reused
    sources with their surface (`packet file`), §10 resulting work with the
-   sanitized packet fields and the bounded, sanitized excerpts the work depends
-   on, §11 next action taken **verbatim**, §12 `N/A` with a reason (P and H
-   record `N/A` here, §6), §13 outcome dated, §14 attribution notes including
-   the standing-instruction line, §15 verdict.
+   work-product reference and its access condition, the retention grade, the
+   recipient's attestation, the sanitized packet fields, and the bounded,
+   sanitized excerpts **on both sides** (Step 6, §5.2), §10a the per-field
+   comparison with each field's own verdict and any `unresolved` fields named,
+   §11 next action taken **verbatim**, §12 `N/A` with a reason (P and H record
+   `N/A` here, §6), §13 outcome dated, §14 attribution notes including the
+   standing-instruction line, §15 verdict with the ceiling §5.6 sets.
 2. Run the **§7.13 retained-evidence check** at the bottom of `TEMPLATE.md`. If a
-   reviewer without your memory cannot check it from what is committed, the
-   disposition is `inadmissible`.
+   reviewer without your memory cannot check it from what is committed — for an
+   H case, including the work-product side — the disposition is `inadmissible`.
+   A Grade B case is checkable at the excerpt level and records the attested
+   layer; a Grade C case has no checkable work-product material at all.
 3. Write **What this observation does not establish**, in the observation's own
    words (§7.11, §8). Do not leave it to the sprint result.
 4. Correct anything wrong by appending a dated correction inside the observation,
@@ -477,8 +535,8 @@ any write-up.
 | 3 | Receipt verbatim, acting identity, issue timestamp, byte count, query text, `workspace:read` basis per read. The packet's own `sourceCursor` / `sourcePosition` are captured at Step 4. | The receipt is the only product-side trace that a packet was issued; §10.3 records that the read writes no Contribution, and the receipt does not name the issuer. |
 | 4 | The full evidence record in §4a, the generation timestamp, the packet's identifying fields, the exit code, and the result of the pre-transport content check. | The record carries **no timestamp and no filename** by design. A reviewer cannot tell when it was made or from which file. Only the recorder can say, and only if it is written down now. An empty packet looks exactly like a full one to every mechanical check; the content check is the one that does not. |
 | 5 | Handoff message verbatim, transport, delivery time, recipient identity, standing-instruction status per participant. | §7.2 requires prompt text retained verbatim. A paraphrase is not the text. |
-| 6 | Work product: what, author, location or id, date, ordering against `generatedAt`. | An undated artifact cannot satisfy §3.1.4. "I saw it on Tuesday" is not a date. |
-| 7 | The comparison: selected fields, retained sanitized excerpts, per-field verdicts — written into §10a of the observation. | §9: **ids and text lengths alone cannot show what the recipient used.** Once the packet is gone, the excerpts are unrecoverable. |
+| 6 | Work product: what, author, the reference and its access condition, retention grade, dependent work-product excerpts, the recipient's attestation, date, ordering against `generatedAt`. | An undated artifact cannot satisfy §3.1.4. "I saw it on Tuesday" is not a date. A private reference alone is not checkable, and the excerpts cannot be reconstructed later. |
+| 7 | The comparison: selected fields, retained sanitized excerpts **on both sides**, per-field verdicts — written into §10a of the observation. | §9: **ids and text lengths alone cannot show what the recipient used.** Once the packet is gone, the excerpts are unrecoverable, and one side alone cannot show correspondence. |
 | 8 | Disqualification checklist results, into §14a of the observation. | — |
 | 9 | Retained-evidence check, verdict, and what the case does not establish. | §7.13: unretained evidence makes the case inadmissible. |
 
@@ -565,40 +623,75 @@ Write the selection down with the reason for each field — §10a of `TEMPLATE.m
 carries the selection table and the verdicts. A reviewer must be able to see why
 these fields were compared.
 
-### 5.2 Retain the bounded, sanitized excerpts
+**Both sides for a dependency or contradiction.** When a verdict turns on what
+the work did with a field, retain both the packet-side excerpt (§5.2) and the
+dependent or contradicting part of the work product (Step 6). If either side is
+missing, record `unresolved` in §10a (§5.3), capping the case at `weak` (§5.5,
+§5.6). A safety field that is genuinely `not borne on` requires its own
+reasoned verdict, but no invented work-product excerpt.
 
-For every field in scope whose content the work depends on, copy the **bounded,
-sanitized excerpt** the work actually depends on into §10 of the observation;
-the selection and the per-field verdicts go in §10a.
+### 5.2 Retain the bounded, sanitized excerpts — both sides
 
-- §9: "ids and text lengths alone cannot show what the recipient used." The
-  helper copies no record text; **this copy is the operator's job**.
-- Copy only what the correspondence needs. A field the work does not depend on is
-  covered by the structural record and needs no excerpt.
-- Sanitize: no `cft_` or `cfe_` credential shape, no URI, no filesystem path,
-  no home directory reference, no workspace id other than the packet's own. Those
-  are the same shapes the helper refuses, and a refusal reason never quotes the
-  text — so if the helper refused a field, **that is the field not to copy.**
-- Respect the packet's own bounds and its `truncated` flags. If a record's `text`
-  was cut by a byte cap, the recipient only ever saw the visible part. A match
-  cannot rest on bytes they never received. The helper keeps `text.bytes` and
-  `text.truncated` precisely so this is checkable.
-- Packet bytes themselves stay outside the repository (§9).
+Correspondence has two sides. For every field in scope whose content the work
+depends on, the committed record carries **both**:
+
+- the **packet-side excerpt** — the field's own content, copied from the packet
+  by the operator; the helper copies no record text, so this copy is the
+  operator's job (§9: "ids and text lengths alone cannot show what the recipient
+  used"); and
+- the **work-product-side excerpt** — the part of the recipient's work that
+  depends on that field, supplied by the recipient at Step 6.
+
+The selection and the per-field verdicts go in §10a.
+
+- **Bound.** Each excerpt is at most 1024 bytes — the packet's largest text
+  bound (`RECALL_GOAL_TEXT_MAX_BYTES`). Where the dependent part is larger,
+  retain the smallest contiguous window that carries it and mark where the
+  window starts and ends.
+- **Mark every excerpt as an excerpt.** `[excerpt — not the whole field]`, plus
+  `[truncated at 1024 bytes]` where the bound applied. A truncated excerpt is
+  never read as the whole: a `match` may rest only on bytes inside the excerpt.
+  If the dependent bytes fall outside it, the field is `unresolved` (§5.3).
+- **Sanitize both sides:** no `cft_` or `cfe_` credential shape, no token, no
+  URI (a public reference URL is recorded as the reference in §10, not copied
+  into an excerpt), no filesystem path, no home directory reference, no
+  workspace id other than the packet's own, and no private packet bytes. These
+  are the shapes the helper refuses; a refusal reason never quotes the text — so
+  if the helper refused a field, **that is the field not to copy.**
+- **Redact by marking, not by deleting.** A required redaction is written
+  inline as `[redacted: <class>]` and noted once. A redaction that removes the
+  dependent substance makes the field `unresolved`, not `match`.
+- **Respect the packet's own bounds and its `truncated` flags.** If a record's
+  `text` was cut by a byte cap, the recipient only ever saw the visible part. A
+  match cannot rest on bytes they never received. The helper keeps `text.bytes`
+  and `text.truncated` precisely so this is checkable.
+- **Consent.** Work-product excerpts are the recipient's material and are
+  committed only with the recipient's consent, recorded in §10. The recipient
+  may redact; §5.6 says what that costs the case.
+- Packet bytes themselves stay outside the repository (§9), and so does the
+  private work product. Only the excerpts are committed.
 
 ### 5.3 What counts as a match
 
 Write the verdict for each field, using the packet field's own content, not a
 summary of the work product.
 
-**Every in-scope field gets one of three verdicts: `match`, `mismatch`, or
-`not borne on`.** `match` and `mismatch` are the bullets below and §5.4.
-`not borne on` is the recorded verdict for a rule 2 safety-structure field the
-work neither depends on nor contradicts — a check that was performed and
-recorded, not an exclusion, not a match, and not a mismatch: it does not by
+**Every in-scope field gets one of four verdicts: `match`, `mismatch`,
+`not borne on`, or `unresolved`.** `match` and `mismatch` are the bullets below
+and §5.4. `not borne on` is the recorded verdict for a rule 2 safety-structure
+field the work neither depends on nor contradicts — a check that was performed
+and recorded, not an exclusion, not a match, and not a mismatch: it does not by
 itself fail the case. Record it with a one-line reason in §10a, and never reach
 it from absence of mention alone: if the work's behaviour depends on the field
-or runs contrary to it, the verdict is `match` or `mismatch` as the field's own
-content decides, whether or not the work names the field.
+or runs contrary to it, compare both retained sides for `match` or `mismatch`
+whether or not the work names the field. If the retained sides cannot decide,
+record `unresolved`, never `not borne on`. `unresolved` is the
+recorded state for a field whose correspondence cannot be resolved from the
+committed material: a missing work-product excerpt, a redaction or truncation
+that removed the dependent bytes, or two sides that do not decide the question.
+Record it with a one-line reason and what would have settled it. It is not a
+match and not a mismatch, and any `unresolved` in-scope field caps the case at
+`weak` (§5.5, §5.6).
 
 - **Structural fields** — id, kind, section, lifecycle, rationale presence,
   `historicalExplanation` presence, `needsReview`, decision-set `state`,
@@ -668,6 +761,68 @@ This is the common case and the protocol expects it (§8).
    recorded as `inadmissible` with that reason, not as a weak success.
 5. If the correspondence cannot be resolved either way, it is `weak`, and the
    observation says what would have settled it.
+6. **The verdict rests only on checkable material.** The retention grade sets
+   the ceiling (§5.6): Grade A can reach `supports`; Grade B caps at `weak`;
+   Grade C has no verdict label. A `match` recorded against a work-product
+   excerpt is a match of the excerpt, not of the artifact behind it; the
+   observation says which.
+
+### 5.6 Retention grades — what the committed record can and cannot establish
+
+*Added October 13, 2026. This section implements `docs/GATE_E_PROTOCOL.md`
+§12 Amendment 6 for claim-H work: what the committed record must carry, and
+what a reviewer can check from it. It adds no case-verdict label.*
+
+The packet side of every H case is already an attested capture: the packet bytes
+stay private, and the packet-evidence record is the recorder's capture of them
+(this runbook's §9 item 2; `docs/GATE_E_PROTOCOL.md` §12, amendment 1, limits).
+The retention plan makes the **work-product side** explicit and grades what the
+committed material supports.
+
+| Grade | Retained | The reviewer can check | The reviewer cannot check |
+| --- | --- | --- | --- |
+| **A — artifact checkable** | A reference the reviewer can fetch through their own access, plus both sides' excerpts | The artifact's existence and content at check time; the correspondence; structure; dates; the comparison itself | Authorship beyond the medium's own metadata; that the recipient acted from the packet; that the packet capture matches the private bytes |
+| **B — excerpt-only** | A reference the reviewer cannot fetch, plus the recipient's bounded excerpts and attestation | The correspondence on the committed excerpts; structure; dates; dependency on the excerpts | That the artifact exists as described, that the excerpts are faithful to it, that it was not edited afterwards, or that the recipient authored it — all **attested** |
+| **C — nothing retained** | No reachable reference and no work-product excerpts | Nothing about the work product | Everything |
+
+**Reachable means reachable by the reviewer.** The reviewer fetches it through
+their own access — a public URL, or verified access named precisely in §10
+(reviewer role, system, and access path). A reference that needs the recipient's
+credentials, or an account the reviewer may not hold, is Grade B however
+concrete the identifier looks. A private-repo sha is not a checkable reference
+by itself. When in doubt, grade down.
+
+**Verdict ceiling.** The case verdict rests only on checkable material. Grade A:
+per §5.5, up to `supports`. Grade B: at most `weak` — the retained evidence is
+checkable but inconclusive about the full H claim, because "the recipient's
+resulting work" is attested, not checkable. Grade C: no verdict label; §7.13
+governs the disposition, and a testimonial account may remain as a `reported`
+item. A per-field `match` at Grade B is a match of the retained excerpt; the
+observation says so and does not let the excerpt imply the artifact behind it.
+
+**The attested layer, stated once.** These links are attested, not checkable,
+and are marked `[attested]` wherever they are recorded; an attested element is a
+§4.4 `reported` item and is never a verdict basis on its own:
+
+1. the private packet bytes match the packet-evidence record (§9 item 2; §12
+   amendment 1, limits);
+2. the packet was issued at the recorded time by the recorded issuer (the
+   receipt is private and the product writes no record of it; this runbook's §9
+   item 1);
+3. at Grade B, the work-product excerpts are faithful to the artifact, the
+   artifact exists as described, and the recipient authored it (the recipient's
+   attestation).
+
+From what is committed, a reviewer checks correspondence, structure, recorded
+dates, and internal consistency. At Grade B the recipient's production date,
+the artifact's existence, its immutability, and authorship remain attested; the
+observation states this in its own words and never records them as checkable.
+
+**Ceiling chosen before observation.** Amendment 6 adopts the conservative
+reading: Grade B caps at `weak` because its artifact chain is attested. A
+future `supports` verdict based only on an excerpt would require a dated
+protocol change before the case opens. It cannot be granted while scoring an
+existing case.
 
 ---
 
@@ -734,6 +889,12 @@ template requires (invented values):
 ```
 
 ### 6.2 Shape of the comparison — ILLUSTRATION ONLY
+
+> **Note, October 13, 2026.** This illustration predates the retention grades
+> (§5.6) and does not print §10's reference, access-condition, retention-grade,
+> consent, attestation, or ordering fields. It is **not** a complete §10. Step 6
+> and `TEMPLATE.md` §10 are; a case run from this illustration alone would
+> under-fill the record.
 
 Packet source ids, in the shape the evidence record supplies them and §8 of the
 template records them. Invented:
@@ -839,7 +1000,7 @@ before writing the verdict.
 | 16 | Is the observation being written **into a sprint result** as that sprint's evidence? | §7.10, §9 | Stop. A sprint result may cite an id and state that it exists. It may not absorb it. |
 | 17 | Does the write-up imply a **rate, a direction, or a mechanism** — "typically", "consistently", "clearly"? | §7.11, §4.1 | Rewrite the sentence. One case establishes existence and nothing more. |
 | 18 | Is an **agent's** reuse being written as a statement about people in general? | §7.12 | Rewrite as a statement about that harness, model, and date. |
-| 19 | Can a reviewer with **no access to the recorder's memory** check the source ids, the plan-time entries, and the H work product with its sanitized correspondence — from what is committed? | §7.13 | `inadmissible — §7.13: evidence not retained`. A testimonial account may remain as a `reported` item. |
+| 19 | Can a reviewer with **no access to the recorder's memory** check the source ids, the plan-time entries, and the H work product with its sanitized correspondence **on both sides** — from what is committed? For a work product the reviewer cannot reach, this requires the recipient's bounded excerpts for every in-scope field and the access condition (Step 6, §5.6). Are attested elements marked `[attested]` rather than recorded as checkable? | §7.13, §9 | `inadmissible — §7.13: evidence not retained` when the work-product side is missing. A Grade B case is admissible and caps at `weak` (§5.6); a Grade C case is inadmissible, and a testimonial account may remain as a `reported` item. |
 | 20 | Was a case that produced **no material difference** dropped instead of recorded? | §7.14, §8 | Record it. A null is a result. |
 
 ### 7.3 Recording the result either way
@@ -865,6 +1026,8 @@ one, in the same log, with the same fields, dated and attributed the same way
 | The recipient never opened the packet. | No reuse at all. The helper still emits a perfectly valid record — that is one of its documented limits. | Run §7. With no resulting work, disposition `inadmissible — §3.1.4, §5.4`, case verdict `N/A`; `null` is a verdict for an admissible case, not a disposition. Record that the packet was delivered and unopened. Do not re-issue for this workspace or either participant (§7.9). |
 | The recipient opened it and asked the sender a question instead of working. | Ordinary. The handoff is two-way. | Record the exchange verbatim. If the sender's answer supplied the substance, §3.1.3 and §5.4 apply — see §5.4, mismatch row 4. |
 | The recipient produced a **summary of the packet** and nothing else. | §3.2, restatement bullet. | `inadmissible`. A summary of the packet is not resulting work (§5.4). |
+| The recipient will not expose the artifact and declines to supply excerpts. | Their call; not pressure. A private artifact with no excerpts has no checkable work-product side. | Grade C. `inadmissible — §7.13: evidence not retained`; a testimonial account may remain as a `reported` item. Record the decline and its date. Do not re-run for this workspace or either participant (§7.9). |
+| The recipient supplies excerpts for some in-scope fields only, or redacts a dependent part. | Those fields are `unresolved`, not `match`; the others are checked on their own. | Record each field's own verdict; the case caps at `weak` (§5.5, §5.6). Say what would have settled each unresolved field. |
 | The recipient's work reflects the packet only partly. | Expected (§8). | `weak` if the evidence is retained and checkable; `inadmissible` under §3.1.3 if nothing substantive depended on the packet. Record per §5.5. |
 | The recipient's work **contradicts** a safety field. | A real result. RCL-003's S2 scored exactly this failure. | Record the mismatch verbatim, dated, with the retained excerpt on both sides. Do not repair it and do not re-ask. |
 | The recipient's work product is **undated**. | §3.1.4 requires a dated work product. | No date, no case. Record it as `not recorded` at close, with a reason — `TEMPLATE.md` is explicit that a slot left at `not recorded` is a result, not a gap to quietly drop. |
@@ -873,7 +1036,7 @@ one, in the same log, with the same fields, dated and attributed the same way
 | The recipient is the repository owner. | §12 Amendment 5 permits either owner role in a genuine H handoff on ordinary non-Campfire work. | Check for different human principals, the recipient's own work, and plan-time disclosure of the owner's role and measurement knowledge. Owner status alone is not a failure. If the owner role was discovered only after opening, record the missing plan-time field as inadmissible under §6; do not backfill it. |
 | The workspace turns out to be one created for the measurement. | §7.5. | `inadmissible`. Record it. Do not re-open under a fresh id with the same workspace (§7.9). |
 | The recorder realises mid-run that they already knew how it would end. | §3.2, sixth bullet. | Stop. Record the case as opened on a known outcome. Do not continue and do not re-open. |
-| Evidence cannot be retained — excerpts lost, packet deleted, artifact unreachable. | §7.13. | `inadmissible`. A testimonial account may remain as a `reported` item with no case verdict (§6). |
+| Evidence cannot be retained — excerpts lost on either side, packet deleted, or an artifact unreachable with no recipient excerpts. | §7.13. | `inadmissible`. A testimonial account may remain as a `reported` item with no case verdict (§6). |
 
 ### 8.2 The helper exits 1 — invalid packet or unreadable file
 
@@ -959,6 +1122,13 @@ made.
    carries `text.bytes` and `text.truncated` so a reviewer can see whether a
    relied-on field was cut. Nothing stops a claim from resting on the cut part.
    §5.2 requires the operator to check it; the product cannot.
+6. **The work-product side has no producer.** The helper produces the sanitized
+   packet account; the work-product reference, access condition, excerpts, and
+   attestation are operator- and recipient-supplied by hand, and nothing
+   verifies that an excerpt is faithful to a private artifact or that a
+   reference resolves. §5.6 states the limits this leaves; reviewer access is
+   not a product concept and is recorded as an access condition rather than
+   enforced.
 
 ---
 

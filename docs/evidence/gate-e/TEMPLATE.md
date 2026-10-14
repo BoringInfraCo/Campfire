@@ -15,6 +15,13 @@ request is made — but never after the outcome and never reconstructed
 afterwards; a case whose plan-time record is written late is inadmissible under
 §6.
 
+**`[attested]` marks a statement that is not checkable from this file** — a
+participant's or the recorder's account of something the committed material
+cannot show (a private packet capture, a private artifact's existence, an
+author's identity). An attested element is a §4.4 `reported` item and is never a
+verdict basis on its own. `HANDOFF-RUNBOOK.md` §5.6 states the attested layer
+and the retention grades.
+
 Unfilled slots read `not recorded`. A slot left at `not recorded` at close is a
 result and is recorded as one — with a reason — rather than quietly dropped.
 
@@ -63,7 +70,7 @@ as a `yes` on a disqualifier row below:
 | 17 | The recipient is already enrolled in the sender's workspace as a participant with `workspace:read`; the Step 3 command refuses a non-participant. | <yes / no — one line why; `n/a` for P/N> |
 | 18 | The Step 3 command will be run as the sender's own identity — `--actor` / `--type` set to the sender, not left to the CLI's built-in default. | <yes / no — one line why; `n/a` for P/N> |
 | 19 | The recipient does not reuse their own prior work in the same session with no intervening separate session boundary. | <yes / no — one line why; `n/a` for P/N> |
-| 20 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence. | <yes / no — one line why> |
+| 20 | There is a plan to retain what §7.13 requires: source ids, the plan-time entries, and the H work product with its sanitized correspondence **on both sides**. The plan names the work-product reference's access condition and, where the reference is not reviewer-reachable, the recipient's bounded work-product excerpts and attestation (runbook Step 6, §5.6). | <yes / no — one line why, naming the expected grade A/B/C and who will ask the recipient at close> |
 | 21 | The private packet bytes will stay out of the repository; there is somewhere outside the tree to keep them. | <yes / no — one line why> |
 | 22 | A recorder is present and will write the handoff request and any prompt text **verbatim**. | <yes / no — one line why> |
 | 23 | The Campfire package version and the git commit the participants ran against will be recorded. | <yes / no — one line why> |
@@ -359,27 +366,45 @@ note.
 
 ### 10. Resulting work — H
 
-**Shape.** A dated recipient-authored work product or action, its location or id,
-and the packet source ids and bounded content needed to verify correspondence.
-`N/A` with a reason for P and N.
+**Shape.** A dated recipient-authored work product or action, a reference a
+reviewer can check, the reference's access condition, the retention grade, the
+recipient's attestation, and the packet source ids and bounded content needed to
+verify correspondence — **on both sides**: the packet field and the part of the
+work product that depends on it. `N/A` with a reason for P and N.
 
 A packet, or a model answer without resulting work, is not sufficient (§5.4). Keep
 the packet bytes outside the repository; retain a sanitized account of the fields
-used and a checkable reference to the recipient's work (§9). The packet-evidence
-helper records structure and text lengths, not the source text. Copy only the
-bounded, sanitized excerpts that the recipient's work actually depends on;
-without them, semantic correspondence is unverified.
+used and a checkable reference to the recipient's work (§9). A reference the
+reviewer cannot reach is identification, not checkability: when the work product
+is private, the recipient supplies the bounded, sanitized work-product excerpts
+and the attestation (runbook Step 6, §5.6). The packet-evidence helper records
+structure and text lengths, not the source text. Copy only the bounded,
+sanitized excerpts that the recipient's work actually depends on; without them,
+semantic correspondence is unverified. Each excerpt is marked as an excerpt and
+bounded (runbook §5.2); a `match` may rest only on bytes inside the excerpt. For
+the date: a commit uses its commit date, a record its `created_at`, and an
+action the date the recipient attests, marked `[attested]`.
 
 ```text
 Work product or action:   <what it was>
-Author:                   <recipient actor id and actor type>
-Location or id:           <reference a reviewer can check>
+Author:                   <recipient actor id and actor type; for an agent, the human principal>
+Location or id:           <the reference — commit sha, PR number or URL, record id with created_at, or another durable identifier>
+Reference access:         reachable — <by whom, through what> / not reachable — <why>
+Retention grade:          <A — artifact checkable / B — excerpt-only / C — nothing retained>  (runbook §5.6)
 Date:                     <ISO-8601>
+Ordering vs packet:       produced after packet.generatedAt <generatedAt>: yes / no / unknown — <dates>
+Recipient attestation:    [attested] <verbatim, or `not recorded` with a reason> — attested by <recipient actor id> at <ISO-8601>
+Consent to commit the excerpts: <yes / no> — obtained at <ISO-8601>; if no, the excerpts are not committed and the case closes under §7.13
 Packet source ids:        <ids>
-Sanitized packet fields used, bounded:
+Sanitized packet fields used, bounded (for each field the work depends on or contradicts, §10a):
 
-> <the field content needed to verify correspondence, sanitized>
+> <packet-side excerpt — `[excerpt — not the whole field]`, bound/truncation marker>
 
+Work-product excerpts, bounded and sanitized (one per dependent or contradicted field, or one excerpt keyed to several fields; the part the packet determines):
+
+> <work-product excerpt — `[excerpt — not the whole field]`, bound/truncation marker>
+
+Attested, not checkable from this file: <the artifact chain and any other attested element — one line; runbook §5.6>
 Correspondence verified:  yes / no / unresolved — the per-field record is §10a
 ```
 
@@ -398,15 +423,26 @@ own fields — a superseded `decisionSet.members[]` entry carries no `rationale`
 and a `historicalExplanation`, while its `records[]` entry carries the rationale
 as history (runbook §5.1 rule 2).
 
+**Both sides for a dependency or contradiction.** When a verdict turns on the
+work's use of a field, §10 carries both the packet-side excerpt and the
+dependent or contradicting work-product part. If either side is missing,
+redacted, or truncated past the decisive content, record `unresolved` with a
+one-line reason and what would have settled it — never `match`. A safety field
+that is genuinely `not borne on` needs its own reason, with no invented
+work-product excerpt. Any `unresolved` in-scope field caps the case at `weak`
+(runbook §5.5, §5.6).
+
 ```text
 | Field (packet)     | Why in scope (runbook §5.1)                        | Verdict (runbook §5.3 / §5.4) |
 | --- | --- | --- |
-| <field path>       | <the work depends on it / safety structure / the work contradicts or ignores it / named by the recipient> | `match` / `mismatch` / `not borne on` — <one-line reason> |
+| <field path>       | <the work depends on it / safety structure / the work contradicts or ignores it / named by the recipient> | `match` / `mismatch` / `not borne on` / `unresolved` — <one-line reason> |
 
 Fields considered and excluded:  <non-safety fields only, one-line reason each> / none
-Partial correspondence:          <which in-scope fields matched, which did not, and which were recorded `not borne on`; §5.5 forbids averaging>
+Work-product side per dependency or contradiction: <§10 work-product excerpt / unresolved — <fields> — <what would settle each>>
+Partial correspondence:          <which in-scope fields matched, which did not, which were recorded `not borne on`, and which are `unresolved`; §5.5 forbids averaging>
+Attested elements in this comparison: <each attested claim, one line> / none
 Overall read:                    <the work product against the packet, in the observation's own words>
-Sanitized excerpts retained in:  §10 (bounded; ids and lengths alone cannot show what was used)
+Sanitized excerpts retained in:  §10 (bounded, both sides; ids and lengths alone cannot show what was used)
 ```
 
 ### 11. Next action taken
@@ -517,7 +553,10 @@ writing the claim shape and an admissible disposition in the same slot.
 `Label follows from` names the field(s) that establish the label. A `supports`
 label with no such field is a claim the file does not carry: `supports` means
 "when its claim is demonstrated" (§1), and §3.1.3's real-dependency answer is
-what demonstrates it.
+what demonstrates it. For an H case the retention grade caps the label: Grade A
+may reach `supports`; Grade B caps at `weak`; Grade C has no label (runbook
+§5.6). A `match` at Grade B is a match of the retained excerpt, not of the
+artifact behind it.
 
 **§4.4 items recorded in this case.** Each row is admissible to record and
 inadmissible to count. "Recall helped", "it felt faster", "the agent was more
@@ -553,13 +592,21 @@ sprint result:
 memory can read the source ids, the materialized record, and the plan-time
 entries from what is committed here. If they cannot, the observation is
 moved to an inadmissible disposition; a testimonial account may remain as a
-`reported` item:
+`reported` item. For an H case, "checkable" means the work-product side is
+retained too: the reference and its access condition, and the bounded
+work-product excerpts for every in-scope field (runbook §5.6). A Grade B case
+is checkable at the excerpt level and states the attested layer; a Grade C case
+has no checkable work-product material and is inadmissible.
 
 - Source ids readable from this file: yes / no
 - P/N materialized record resolves on read-back: yes / no / n/a
-- H work product and its sanitized correspondence: yes / no / n/a
+- H work product reference and access condition: yes / no / n/a
+- H work-product excerpts retained for every in-scope field: yes / no — <unresolved fields and what would settle them> / n/a
+- H correspondence checkable from committed material: yes / no / n/a
+- H retention grade (runbook §5.6): <A / B / C> / n/a
+- Attested elements marked `[attested]` and kept out of the verdict basis: yes / no / n/a
 - Plan-time entries dated before the outcome: yes / no
-- No raw transcript, credential, or packet bytes committed here: yes / no
+- No raw transcript, credential, path, foreign workspace id, or packet bytes committed here: yes / no
 
 ---
 

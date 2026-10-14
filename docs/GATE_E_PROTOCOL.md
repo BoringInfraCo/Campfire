@@ -336,7 +336,7 @@ required to invent an avoided investigation or a typed relation it cannot have.
 | Counterfactual evidence (N only) | Basis 1's verbatim plan and later resolution, or Basis 2's independent reconstruction committed after the action but before comparison; include timestamps (§4.2) |
 | Reused sources | each source id with kind, and the surface it was reached through — orientation, catch-up, object read, `recall_workspace`, `decisionSet`, packet file — or `unknown` |
 | Materialized record (P/N) | kind and id of the new record; the `decision_citations` or `finding_evidence` rows; the note text verbatim |
-| Resulting work (H) | dated recipient-authored work product or action, its location or id, and the packet source ids and bounded content needed to verify correspondence |
+| Resulting work (H) | dated recipient-authored work product or action; its reference and reviewer access condition; bounded, sanitized excerpts of both the packet fields and the dependent or contradicting work-product parts; source ids; recipient consent and any attestation; the retention grade and its verdict ceiling (§12 Amendment 6) |
 | Next action taken | verbatim, as written in the record or in the plan |
 | Investigation avoided | the named item, why it was deferred, and how that was settled |
 | Outcome | what happened afterwards, dated |
@@ -434,12 +434,18 @@ to be the common one.
   the RCL evidence trees. A reviewer without the private directory must still be able
   to check the plan-time entries and the P/N materialized record, or the H work product
   and its correspondence to sanitized packet fields, from what is committed.
-- For H, retain a sanitized account of the packet fields used and a checkable
-  reference to the recipient's resulting work. Include the bounded, sanitized
-  source excerpts needed to verify any substantive correspondence; ids and
-  text lengths alone cannot show what the recipient used. A packet alone, or a
-  model answer without resulting work, is insufficient. Keep private packet
-  bytes outside the repository.
+- For H, retain a sanitized account of the packet fields used, the dependent
+  or contradicting parts of the recipient's resulting work, and its reference
+  with a stated reviewer access condition. Include bounded excerpts on both
+  sides of every substantive correspondence; ids and text lengths alone cannot
+  show what the recipient used. A safety field recorded `not borne on` needs a
+  reasoned verdict, not an invented excerpt. A reviewer-reachable artifact may
+  be public or accessible through the reviewer's own named and verified
+  organization access. An excerpt-only private artifact caps the case at
+  `weak`; no reachable artifact and no work-product excerpts makes it
+  inadmissible (§12 Amendment 6). A packet alone, or a model answer without
+  resulting work, is insufficient. Keep private packet bytes outside the
+  repository.
 - The record is **never retrofitted into a sprint result**. A sprint result may cite an
   observation by id and may state that it exists. It may not absorb it, summarize it as
   its own evidence, or be edited after the fact to include it. `docs/SPRINT_RCL_001_RESULT.md`,
@@ -939,6 +945,43 @@ calling the work ordinary and outside Campfire's repository. The dated ruling
 is the policy; Amendment 3 remains visible as the history of how the ambiguity
 was found. Protocol version `gate-e-1` remains: there were zero cases opened
 under the earlier wording.
+
+### Amendment 6 — October 13, 2026 — retained evidence for private H work
+
+This amendment fixes the work-product side of §7.13 before any case is opened.
+It does not turn a private reference or a recipient's statement into verified
+authorship. The runbook §5.6 and the observation template carry the full
+capture instructions.
+
+- **Grade A:** The recipient's artifact is reachable by the reviewer through
+  the reviewer's own access, named and verified at review time. Public access
+  is sufficient; organization access is sufficient only when its reviewer
+  role, system, and access path are recorded. Retain bounded excerpts on both
+  sides of each substantive correspondence. A case may reach `supports` under
+  the existing §1 and §5 tests.
+- **Grade B:** The artifact is not reviewer-reachable, but the recipient
+  consents to retain bounded, sanitized excerpts of the dependent work, with
+  a reference and an explicit attestation of origin, authorship, and timing.
+  A reviewer can check correspondence to those excerpts, while the link to
+  the private artifact remains attested. The case may be admissible but its
+  verdict cannot exceed `weak`; a per-field match applies to the excerpt only.
+- **Grade C:** Neither a reviewer-reachable artifact nor dependent work-product
+  excerpts can be retained. The case is inadmissible under §7.13, with no
+  case-verdict label. A testimonial account may remain as a `reported` item.
+
+The recipient may decline access, excerpts, or consent without pressure; the
+ordinary handoff continues. A redaction that removes the decisive work content
+is `unresolved`, never a match. Safety fields remain in scope even when the
+work does not bear on them: record `not borne on` with a reason, and do not
+invent a dependent excerpt. An inaccessible reference alone is not Grade A.
+Grade B does not prove the private artifact existed as described, was unchanged
+after excerpting, or was authored by the recipient. No grade establishes that
+the packet caused the recipient's action. These limits belong in each case's
+own "does not establish" section.
+
+This is a pre-observation clarification of what §7.13 can support. It preserves
+the claim-H shape and the `supports` / `weak` / `null` vocabulary. It does not
+alter RCL pilot verdicts or close Gate E.
 
 ---
 
