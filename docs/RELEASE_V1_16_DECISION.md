@@ -2,7 +2,7 @@
 
 **Date:** October 13, 2026
 
-**Status:** Local release candidate; no public promotion is recorded here.
+**Status:** Published and deployed as v1.16.0 (October 13, 2026).
 **Package target:** `1.16.0`
 
 ## Founder direction and scope
@@ -57,17 +57,16 @@ to act or proof that it contains every relevant record.
 
 ## Promotion record
 
-Fill this section as each external step completes; absence means it has not
-occurred.
+All promotion steps completed October 13, 2026.
 
 | Step | Evidence |
 | --- | --- |
-| Private source and annotated tag | Pending. |
+| Private source and annotated tag | Pushed. Private tag `v1.16.0` on commit `da09f48`. |
 | Typecheck, full tests, build, package, deployment dry run | Node 24: typecheck passed; build and Darwin ARM64 packaging passed; Worker dry run passed. A local install from the archive verified its SHA-256 and reported `1.16.0`. Full suite: 1,053 passed, one expected install-channel assertion failed because Homebrew and Nix still pin published v1.15 archives. Do not loosen it; rerun after v1.16 archives exist and the pins are updated. Local archive SHA-256: `f95c0bd74bbc6a35919c19d025fac3d6aaea0172b24bf7f1be6c95b462cc6163`. |
-| Audited public source snapshot and diff | The first export refused `tests/unit/gate-e-packet-evidence.test.ts` because its private adversarial fixture contains a macOS user path. The exact private test was excluded; no audit check was bypassed. The next export passed: 281 manifest files, compared against the fetched public v1.15 branch as 9 added, 25 changed, 0 removed. Private Gate E files, frozen pilot fixtures, and `AGENTS.md` were absent. The exact final tag must be exported and audited again before public promotion. |
-| Public GitHub Release and four checked archives | Pending. |
-| Homebrew / Nix pins and installer verification | Pending. |
-| Production Worker deployment and live verification | Pending. |
+| Audited public source snapshot and diff | The first export refused `tests/unit/gate-e-packet-evidence.test.ts` because its private adversarial fixture contains a macOS user path. The exact private test was excluded; no audit check was bypassed. The next export passed: 281 manifest files, compared against the fetched public v1.15 branch as 9 added, 25 changed, 0 removed. Private Gate E files, frozen pilot fixtures, and `AGENTS.md` were absent. The exact final tag was exported and audited again after the private tag push: identical to the candidate, no diff. |
+| Public GitHub Release and four checked archives | Published. Public tag `v1.16.0` on commit `7000100`. Release workflow passed on all four platforms (Darwin ARM64, Darwin x64, Linux ARM64, Linux x64). Four archives and four checksum files attached. |
+| Homebrew / Nix pins and installer verification | Pins updated to published v1.16 digests. All 1,054 private tests pass with real archive pins. Public post-tag addendum changes only checksum pins and manifest; v1.16 source tag unchanged. Live versioned installer matches tracked file byte for byte. Clean installs from both pinned URL and default latest URL completed with checksum verification; installed CLI exposes `recall` and `handoff-packet`. |
+| Production Worker deployment and live verification | Deployed. Cloudflare Worker version `17f0bd8f-5ef1-487c-9338-51f547dc2144`. No schema or migration changes between v1.15 and v1.16. |
 
 The release decision is about **shipping a bounded experimental surface with
 its limits visible**. It is not a GO verdict, Gate E result, or permission to
