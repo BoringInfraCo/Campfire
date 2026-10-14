@@ -59,6 +59,9 @@ const PRIVATE_SOURCE_PREFIXES = [
 const PRIVATE_SOURCE_PATHS = new Set([
   "tests/unit/wow-001-isolation.test.ts",
   "tests/unit/wow-001-preparation.test.ts",
+  // Gate E evidence tooling is private; its adversarial path fixtures are not
+  // product tests and must not enter the public release snapshot.
+  "tests/unit/gate-e-packet-evidence.test.ts",
 ]);
 // A published release may gain install channels after its immutable source tag.
 // Only these packaging files may come from a later private commit.

@@ -64,7 +64,7 @@ occurred.
 | --- | --- |
 | Private source and annotated tag | Pending. |
 | Typecheck, full tests, build, package, deployment dry run | Node 24: typecheck passed; build and Darwin ARM64 packaging passed; Worker dry run passed. A local install from the archive verified its SHA-256 and reported `1.16.0`. Full suite: 1,053 passed, one expected install-channel assertion failed because Homebrew and Nix still pin published v1.15 archives. Do not loosen it; rerun after v1.16 archives exist and the pins are updated. Local archive SHA-256: `f95c0bd74bbc6a35919c19d025fac3d6aaea0172b24bf7f1be6c95b462cc6163`. |
-| Audited public source snapshot and diff | Pending. |
+| Audited public source snapshot and diff | First export attempt refused `tests/unit/gate-e-packet-evidence.test.ts` because its private adversarial fixture contains a macOS user path. The exact private test is now excluded by the exporter; a fresh export and full diff audit are pending. No forbidden-content check was bypassed. |
 | Public GitHub Release and four checked archives | Pending. |
 | Homebrew / Nix pins and installer verification | Pending. |
 | Production Worker deployment and live verification | Pending. |
