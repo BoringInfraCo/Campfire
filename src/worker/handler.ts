@@ -122,6 +122,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     case "FindingNotFound":
     case "DecisionNotFound":
       return 404;
+    case "RecallRestart":
+      return 409;
     default:
       return 400;
   }

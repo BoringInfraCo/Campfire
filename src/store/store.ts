@@ -41,6 +41,14 @@ import type {
 } from "../domain/types.js";
 import type { EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
 import type { ContributionPageQuery, ContributionWindow, ObjectPage, ObjectPageQuery } from "./context-queries.js";
+import type { RecallSectionName } from "../domain/recall.js";
+import type {
+  RecallDecisionSetPage,
+  RecallDecisionSetQuery,
+  RecallGoalRow,
+  RecallPage,
+  RecallPageQuery,
+} from "./recall-queries.js";
 
 export interface WorkspacePatch {
   name?: string;
@@ -264,6 +272,19 @@ export interface CampfireStore {
     query: ObjectPageQuery & { currentness?: FindingCurrentness | "all" },
   ): ObjectPage<Finding>;
   pageArtifacts(workspaceId: string, query: ObjectPageQuery): ObjectPage<Artifact>;
+  /**
+   * One rcl-1 page. `limit` is 1–50. The implementation fetches one extra row
+   * and does not load the rest of the match set into application memory.
+   */
+  recallSection(workspaceId: string, section: RecallSectionName, query: RecallPageQuery): RecallPage;
+  /** The workspace goal, with whether its title or description matched. Absent when the workspace has no goal. */
+  recallGoal(workspaceId: string, normalizedQuery: string): RecallGoalRow | undefined;
+  /**
+   * Every decision the same normalized query matches, current and historical, in
+   * rcl-1 order. Independent of the section `limit` and `cursor`, so paging a
+   * section never changes this page.
+   */
+  recallDecisionSet(workspaceId: string, query: RecallDecisionSetQuery): RecallDecisionSetPage;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
   /** Newest `limit` contributions in the workspace, chronological. `total` is the workspace count. */
   listRecentContributionWindow(workspaceId: string, limit: number): ObjectPage<Contribution>;

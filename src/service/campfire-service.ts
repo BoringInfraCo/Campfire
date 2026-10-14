@@ -52,6 +52,8 @@ import {
   type CurrentWork,
   type GetActivityInput,
   type GetWorkspaceChangesInput,
+  type ProjectHandoffPacketInput,
+  type RecallWorkspaceInput,
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
   type ListWorkspaceObjectsInput,
@@ -107,6 +109,13 @@ import {
   ValidationError,
   WorkspaceNotFound,
 } from "../domain/errors.js";
+import {
+  decodeRecallCursor,
+  prepareRecallQuery,
+  projectHandoffPacket as fitHandoffPacket,
+  recallLimit,
+} from "../domain/recall.js";
+import { projectRecall } from "./recall-read.js";
 import { normalizeArtifactUri } from "../domain/artifacts.js";
 import { assertTaskTransition, assertWorkspaceTransition } from "../domain/lifecycle.js";
 import { assertFindingCurrentness } from "../store/context-queries.js";
@@ -576,6 +585,25 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     const workspace = store.getWorkspace(workspaceId);
     if (workspace === undefined) throw new WorkspaceNotFound(workspaceId);
     return workspace;
+  }
+
+  function assertRecipient(recipient: ProjectHandoffPacketInput["recipient"]): void {
+    if (recipient === undefined || typeof recipient !== "object") {
+      throw new ValidationError("recipient is required", { field: "recipient" });
+    }
+    if (recipient.actorType !== "human" && recipient.actorType !== "agent") {
+      throw new ValidationError("recipient type must be human or agent", { field: "recipient" });
+    }
+    if (typeof recipient.actorId !== "string" || recipient.actorId.length === 0) {
+      throw new ValidationError("recipient is required", { field: "recipient" });
+    }
+  }
+
+  function recallInput(input: RecallWorkspaceInput, includeAnchors: boolean) {
+    const prepared = prepareRecallQuery(input.query);
+    const limit = recallLimit(input.limit);
+    const cursor = input.cursor === undefined ? undefined : decodeRecallCursor(input.cursor, input.workspaceId, prepared.normalized);
+    return { prepared, limit, cursor, includeAnchors };
   }
 
   function pageContributionQuery(
@@ -1199,6 +1227,50 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         generatedAt: clock(),
         ordering: "material-then-chronological",
       };
+    },
+
+    recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput) {
+      requireReadableWorkspace(ctx, input.workspaceId);
+      const prepared = recallInput(input, false);
+      return store.transaction(() =>
+        projectRecall(store, {
+          workspaceId: input.workspaceId,
+          queryText: prepared.prepared.text,
+          normalizedQuery: prepared.prepared.normalized,
+          limit: prepared.limit,
+          ...(prepared.cursor === undefined ? {} : { cursor: prepared.cursor }),
+          generatedAt: clock(),
+          includeAnchors: false,
+        }),
+      ).recall;
+    },
+
+    projectHandoffPacket(ctx: ActorContext, input: ProjectHandoffPacketInput) {
+      assertRecipient(input.recipient);
+      requireReadableWorkspace(ctx, input.workspaceId);
+      authorizer.assertAllowed({ actor: input.recipient }, "workspace:read", input.workspaceId);
+      const prepared = recallInput(input, true);
+      const projection = store.transaction(() =>
+        projectRecall(store, {
+          workspaceId: input.workspaceId,
+          queryText: prepared.prepared.text,
+          normalizedQuery: prepared.prepared.normalized,
+          limit: prepared.limit,
+          ...(prepared.cursor === undefined ? {} : { cursor: prepared.cursor }),
+          generatedAt: clock(),
+          includeAnchors: true,
+        }),
+      );
+      if (projection.anchors === undefined) {
+        throw new ValidationError("Handoff anchors were not loaded", { field: "packet" });
+      }
+      return fitHandoffPacket({
+        recall: projection.recall,
+        issuer: { actorId: ctx.actor.actorId, actorType: ctx.actor.actorType },
+        recipient: { actorId: input.recipient.actorId, actorType: input.recipient.actorType },
+        anchors: projection.anchors,
+        decisionRationales: projection.decisionRationales,
+      });
     },
 
     listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Decision> {

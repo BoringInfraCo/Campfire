@@ -16,4 +16,7 @@ export const SESSION_INSTRUCTIONS = [
   "To inspect Campfire from a shell instead of MCP, run campfire capabilities --output json or campfire status --output json.",
   "get_workspace_context is a bounded orientation, truncated slices are signaled, and list_decisions, list_findings, list_tasks, list_artifacts, get_decision, get_finding, get_task, get_artifact, and get_workspace_changes are how to drill down or catch up.",
   "correct_finding, withdraw_finding, cite_finding_evidence, remove_finding_evidence, cite_decision_basis, remove_decision_basis, and retire_decision record a new correction or an explicit transition and do not edit the old assertion. list_findings currentness is current, superseded, withdrawn, or all. add_decision replacesDecisionId and accept_decision reason do not edit the old assertion.",
+  "recall_workspace is a bounded read of one workspace, and a handoff packet is a local CLI file that grants no authority.",
+  "recall_workspace returns decisionSet for query-matched decisions only; operativeDecisionId is not a workspace-wide decision claim. Read decisionSet.state before acting on any decision it lists. When state is unresolved-accepted-decisions or truncated, Campfire has not selected an operative decision: do not execute either rule, and follow decisionSet.beforeActing. When state is linked-accepted-decisions, follow the recorded successor within that set and do not ask for a transition that is already recorded.",
+  "When you state a next action from Campfire state, cite the record ids you relied on.",
 ].join(" ");

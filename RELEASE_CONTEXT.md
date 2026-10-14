@@ -1,6 +1,6 @@
-# Campfire 1.15.0 release context
+# Campfire 1.16.0 release context
 
-This public source snapshot was exported on 2026-10-10 from private canonical source commit `c6a1d26810cd8f2abe3ba11b0865ad792941a41b` (dated 2026-10-10T00:39:29-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-14 from private canonical source commit `da09f486a1929c9a8714335c1d87b11b205ae2b6` (dated 2026-10-13T22:08:30-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -31,30 +31,25 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - The loopback Viewer validates request `Host` before any route serves actor-bound data, including when the operator supplies `--allow-remote` while still bound to loopback.
 - The Worker stops reading a request body once it crosses 1 MiB. Unexpected adapter failures return fixed client responses and log stable diagnostics without arbitrary exception text or workspace identifiers.
 - Webhook due-delivery selection is bounded in SQLite and D1, and immediate sweeps follow only successful methods capable of enqueuing a delivery. Scheduled retries remain. A local SQLite benchmark reduced rows read for a 10,000-row backlog to 20; it does not measure production performance.
+- Experimental Recall searches one authorized workspace and returns bounded source records with currentness, provenance, and a query-matched decision set. It does not select a workspace-wide operative decision. A named authorized recipient can receive a private local handoff packet with bounded context; the packet is not a credential or an instruction to act.
+- The three frozen synthetic Recall pilots were NO-GO. A post-verdict packet projection repair has deterministic checks and one unscored recipient recheck. This release is a founder override for real-user testing, not a GO result or a demonstration of improved next actions. Gate E, B, and C remain unmeasured.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.15.0.
+- The versioned installer source for v1.16.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source export, the private 1.15.0 candidate passed type checking,
-packaging, a Worker deployment dry run, and a local Darwin ARM64 install from
-its generated archive. The full suite had 980 passing tests and one expected
-install-channel assertion awaiting the four v1.15.0 release checksums;
-that assertion was not loosened. Archive verification, channel pins, production
-deployment, and the live installer check are separate promotion steps. No
-human comprehension trace, Gate B/C result, or production performance claim
-follows from this release.
-
-After publication, all four release archives passed their published SHA-256
-checksums. The Homebrew tap and public Nix flake were pinned to those exact
-assets. Public CI passed on the pin addendum. The production Worker deployed,
-both live installer URLs matched the committed v1.15.0 script, and a clean
-Darwin ARM64 install from the live script installed package version
-`1.15.0`. These checks do not add a production performance or Gate B/C
-claim.
+At source preparation, the private 1.16.0 candidate passed type checking,
+build, local Darwin ARM64 packaging and install from that archive, and a Worker
+deployment dry run. The full
+suite had 1,053 passing tests and one expected install-channel assertion
+awaiting the four v1.16.0 release checksums; that assertion was not
+loosened. The public export audit, archive verification, channel pins,
+production deployment, and live installer check are separate promotion steps
+and are recorded only when performed. This source snapshot does not establish
+an RCL pilot GO, Gate E/B/C, or a production performance claim.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

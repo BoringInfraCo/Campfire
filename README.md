@@ -39,7 +39,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.15.0/install.sh | sh -s -- --version 1.15.0
+curl -fsSL https://boringinfra.company/campfire/v1.16.0/install.sh | sh -s -- --version 1.16.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
@@ -60,6 +60,25 @@ CAMPFIRE_PLAYBOOK=1 campfire playbook incident-investigation --output json
 tool for that MCP session. Reading it does not change a workspace or run a
 workflow. The synthetic pilot and its limits are summarized in
 `CHANGELOG.md`.
+
+### Experimental Recall and handoff packet
+
+v1.16 adds bounded search of one authorized workspace and a local packet for
+one named authorized recipient. The commands are explicit:
+
+```bash
+campfire recall <workspaceId> --query "authentication" --output json
+campfire handoff-packet <workspaceId> --query "authentication" \
+  --recipient-type human --recipient <actorId> --out ./handoff.json
+```
+
+MCP exposes the read-only `recall_workspace` tool. The packet command writes a
+private local JSON file; Campfire does not send it or make it an authority to
+act. Check decision lifecycle, recorded replacements, and completeness before
+using a recalled rule. A query-matched decision set does not select an
+operative decision for the whole workspace. This feature is published for
+real-user testing under a founder override: three frozen synthetic pilots
+remain NO-GO, and ordinary-work value is unmeasured. See `CHANGELOG.md`.
 
 ## Build and verify
 

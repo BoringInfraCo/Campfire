@@ -96,6 +96,16 @@ import {
   takeLimitPlusOne,
   type ObjectPage,
 } from "../store/context-queries.js";
+import {
+  countRecallDecisionSetSql,
+  countRecallSectionSql,
+  mapRecallDecisionMemberRow,
+  mapRecallGoalRow,
+  mapRecallHitRow,
+  recallDecisionSetSql,
+  recallGoalSql,
+  recallSectionSql,
+} from "../store/recall-queries.js";
 
 /** Async mirror of `CampfireStore`: identical shape, Promise returns. */
 export type AsyncCampfireStore = Omit<
@@ -1132,6 +1142,30 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       const rows = await all<ArtifactRow & RankedRow>(listed.sql, ...listed.params);
       const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
       return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    async recallSection(workspaceId, section, query) {
+      const listed = recallSectionSql(workspaceId, section, query);
+      const counted = countRecallSectionSql(workspaceId, section, query.normalizedQuery);
+      const rows = await all<Parameters<typeof mapRecallHitRow>[0]>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapRecallHitRow), total, hasMore: page.hasMore };
+    },
+
+    async recallGoal(workspaceId, normalizedQuery) {
+      const statement = recallGoalSql(workspaceId, normalizedQuery);
+      const row = await first<Parameters<typeof mapRecallGoalRow>[0]>(statement.sql, ...statement.params);
+      return row === undefined ? undefined : mapRecallGoalRow(row);
+    },
+
+    async recallDecisionSet(workspaceId, query) {
+      const listed = recallDecisionSetSql(workspaceId, query);
+      const counted = countRecallDecisionSetSql(workspaceId, query.normalizedQuery);
+      const rows = await all<Parameters<typeof mapRecallDecisionMemberRow>[0]>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { members: page.items.map(mapRecallDecisionMemberRow), total, hasMore: page.hasMore };
     },
 
     async pageContributions(workspaceId, query) {

@@ -80,6 +80,16 @@ import {
   takeLimitPlusOne,
   type ObjectPage,
 } from "./context-queries.js";
+import {
+  countRecallDecisionSetSql,
+  countRecallSectionSql,
+  mapRecallDecisionMemberRow,
+  mapRecallGoalRow,
+  mapRecallHitRow,
+  recallDecisionSetSql,
+  recallGoalSql,
+  recallSectionSql,
+} from "./recall-queries.js";
 
 interface OrganizationRow {
   id: string;
@@ -1158,6 +1168,30 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       const rows = db.prepare(listed.sql).all(...listed.params) as Array<ArtifactRow & RankedRow>;
       const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
       return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    recallSection(workspaceId, section, query) {
+      const listed = recallSectionSql(workspaceId, section, query);
+      const counted = countRecallSectionSql(workspaceId, section, query.normalizedQuery);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Parameters<typeof mapRecallHitRow>[0][];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapRecallHitRow), total, hasMore: page.hasMore };
+    },
+
+    recallGoal(workspaceId, normalizedQuery) {
+      const statement = recallGoalSql(workspaceId, normalizedQuery);
+      const row = db.prepare(statement.sql).get(...statement.params) as Parameters<typeof mapRecallGoalRow>[0] | undefined;
+      return row === undefined ? undefined : mapRecallGoalRow(row);
+    },
+
+    recallDecisionSet(workspaceId, query) {
+      const listed = recallDecisionSetSql(workspaceId, query);
+      const counted = countRecallDecisionSetSql(workspaceId, query.normalizedQuery);
+      const rows = db.prepare(listed.sql).all(...listed.params) as Parameters<typeof mapRecallDecisionMemberRow>[0][];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { members: page.items.map(mapRecallDecisionMemberRow), total, hasMore: page.hasMore };
     },
 
     pageContributions(workspaceId, query) {

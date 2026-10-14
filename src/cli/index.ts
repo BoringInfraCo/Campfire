@@ -86,6 +86,8 @@ import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
+import { handoffReceipt, type CampfireHandoffPacket, type WorkspaceRecall } from "../domain/recall.js";
+import { assertHandoffDestination, writeHandoffFile } from "./handoff-file.js";
 import {
   ActorNotFound,
   ArtifactNotFound,
@@ -1440,6 +1442,88 @@ async function cmdCatchUp(parsed: ParsedArgs, argv: string[]): Promise<void> {
   });
 }
 
+function formatRecall(recall: WorkspaceRecall): string {
+  const lines: string[] = [];
+  if (recall.goal !== undefined) {
+    lines.push(labeled("Goal", recall.goal.id, `matched=${recall.goal.matched}`));
+  }
+  for (const name of ["current", "historical", "artifacts"] as const) {
+    const section = recall[name];
+    lines.push(name);
+    for (const hit of section.items) {
+      lines.push(
+        `  ${joinFields(hit.kind, hit.id, hit.lifecycle, hit.excerpt, hit.needsReview === true ? "needsReview" : undefined)}`,
+      );
+    }
+    if (section.truncated) {
+      lines.push(joinFields(`returned ${section.returned}`, `total ${section.total}`));
+    }
+    if (section.nextCursor !== undefined) {
+      lines.push(`nextCursor ${section.nextCursor}`);
+    }
+  }
+  // A reader must see the decision set before acting on any one decision in it.
+  const set = recall.decisionSet;
+  if (set !== undefined) {
+    lines.push("decisions");
+    lines.push("  scope query matches only");
+    lines.push(`  ${joinFields("state", set.state, `returned ${set.returned}`, `total ${set.total}`)}`);
+    if (set.operativeDecisionId !== undefined) lines.push(`  operativeDecision ${set.operativeDecisionId}`);
+    for (const member of set.members) {
+      lines.push(`    ${joinFields(member.id, member.lifecycle, member.summary, member.needsReview === true ? "needsReview" : undefined)}`);
+    }
+    if (set.beforeActing !== undefined) lines.push(`  ${set.beforeActing}`);
+  }
+  return lines.join("\n");
+}
+
+async function cmdRecall(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const workspaceId = requirePositional(parsed, "workspaceId");
+  const query = requireFlag(parsed.flags, "query");
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  await withBackend(argv, async (backend) => {
+    const params: Record<string, unknown> = { workspaceId, query };
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    const recall = (await backend.call("recall_workspace", params)) as WorkspaceRecall;
+    emitResult(recall, mode, formatRecall);
+  });
+}
+
+function formatHandoffReceipt(receipt: ReturnType<typeof handoffReceipt>): string {
+  return [
+    labeled("Kind", receipt.kind),
+    "sensitive offline copy",
+    labeled("Workspace", receipt.workspaceId),
+    labeled("Recipient", receipt.recipient.actorType, receipt.recipient.actorId),
+    labeled("Bytes", String(receipt.bytes)),
+    labeled("Omissions", String(receipt.omissions)),
+    labeled("Path", receipt.path),
+  ].join("\n");
+}
+
+async function cmdHandoffPacket(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const workspaceId = requirePositional(parsed, "workspaceId");
+  const query = requireFlag(parsed.flags, "query");
+  const recipientActorId = requireFlag(parsed.flags, "recipient");
+  const recipientActorType = requireEnum(requireFlag(parsed.flags, "recipient-type"), ACTOR_TYPES, "recipient-type");
+  const out = requireFlag(parsed.flags, "out");
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  assertHandoffDestination(out);
+  await withBackend(argv, async (backend) => {
+    const params: Record<string, unknown> = { workspaceId, query, recipientActorId, recipientActorType };
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    const packet = (await backend.call("project_handoff_packet", params)) as CampfireHandoffPacket;
+    const written = writeHandoffFile(out, packet);
+    emitResult(handoffReceipt(packet, written.bytes, written.path), mode, formatHandoffReceipt);
+  });
+}
+
 function formatObjectPage<T>(page: WorkspaceObjectPage<T>, line: (item: T) => string): string {
   const lines = [labeled("Workspace", page.workspaceId), ...page.items.map((item) => `  ${line(item)}`)];
   if (page.truncated) lines.push(`Showing ${page.returned} of ${page.total}`);
@@ -2418,6 +2502,8 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   decisions: (parsed, argv) => cmdDecisions(parsed, argv),
   context: (parsed, argv) => cmdContext(parsed, argv),
   "catch-up": (parsed, argv) => cmdCatchUp(parsed, argv),
+  recall: (parsed, argv) => cmdRecall(parsed, argv),
+  "handoff-packet": (parsed, argv) => cmdHandoffPacket(parsed, argv),
   findings: (parsed, argv) => cmdFindings(parsed, argv),
   tasks: (parsed, argv) => cmdTasks(parsed, argv),
   artifacts: (parsed, argv) => cmdArtifacts(parsed, argv),

@@ -7,6 +7,7 @@
 import type { ActorContext } from "./authorization.js";
 import type { EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
+import type { CampfireHandoffPacket, WorkspaceRecall } from "../domain/recall.js";
 import type {
   ActorRef,
   Agent,
@@ -389,6 +390,17 @@ export interface GetWorkspaceChangesInput {
   limit?: number;
 }
 
+export interface RecallWorkspaceInput {
+  workspaceId: string;
+  query: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ProjectHandoffPacketInput extends RecallWorkspaceInput {
+  recipient: ActorRef;
+}
+
 export interface WorkspaceCatchUp {
   schemaVersion: 1;
   workspaceId: string;
@@ -440,6 +452,13 @@ export interface CampfireService {
     options?: { since?: string; budget?: Partial<ContextBudget> },
   ): WorkspaceContext;
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): WorkspaceCatchUp;
+  /** Authorized read. Does not write a contribution or a handoff file. */
+  recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): WorkspaceRecall;
+  /**
+   * Authorized projection of one recall plus orientation anchors.
+   * The caller writes the private file. This method does not.
+   */
+  projectHandoffPacket(ctx: ActorContext, input: ProjectHandoffPacketInput): CampfireHandoffPacket;
   listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Decision>;
   getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Decision;
   listFindingsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): WorkspaceObjectPage<Finding>;
