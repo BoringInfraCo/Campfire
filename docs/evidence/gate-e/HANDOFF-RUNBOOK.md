@@ -51,7 +51,7 @@ the case is opened. Read that column before you tick anything.
 | --- | --- | --- | --- |
 | 1 | The candidate handoff is appended to the §7.1 enumeration register in `LOG.md`, dated, **before** anyone examines it for qualification. | §7.1 | **Disqualifying.** A case examined before it was enumerated, or opened because its outcome looked good, is inadmissible. Not repairable by a write-up. |
 | 2 | The recorder does **not** know the outcome yet. | §3.2 (last bullet), §7.1 | **Disqualifying.** A case opened when its outcome was already known to the recorder is inadmissible. |
-| 3 | This is the **first** attempt with this workspace and these participants. No case is being re-run. | §7.9 | **Disqualifying.** A second attempt is not a retry; it is a different case, and it must be enumerated on its own. A withdrawn case keeps its row. |
+| 3 | Neither this workspace nor either participant has appeared in a prior Gate E attempt. No case is being re-run. | §7.9 | **Disqualifying.** Enumerate a later candidate on its own (§7.1), but changing the recipient does not make reuse of the workspace or sender admissible. A withdrawn case keeps its row. |
 | 4 | The claim shape is fixed as **H** now, before the packet is issued, and will not be relabelled later. | §1 | **Disqualifying** to relabel. An H case cannot become an N case after its outcome is known, even if a counterfactual turns up. |
 | 5 | The observation will not be written into a sprint result as that sprint's evidence. | §7.10, §9 | **Disqualifying.** RCL-001/002/003 stay frozen. |
 
@@ -340,7 +340,10 @@ handoff:
 - Read the counts too: each recall section's `returned` / `total` /
   `truncated` under `completeness.recall`, each anchor's count, the decision
   set's `returned` / `total` / `truncated`, and `omissions`. `returned: 0` in
-  every section is the empty packet however good the receipt looks.
+  every section is the empty packet however good the receipt looks. A
+  zero-member decision set is reported as `truncated: true` even though nothing
+  was cut: with `total: 0` and `returned: 0` that flag is the empty match, not
+  unread safety state, and the first bullet still decides.
 - Record the check's result in §4a: `pass` with the record count and the
   expected ids, or `fail` with what the record carried instead.
 
@@ -352,6 +355,17 @@ work — the checklist's §3.1.4 line (runbook §7.1 item 8) governs the
 disposition, because the handoff never reached the recipient — and append the
 row (Step 10). A failed check is a recorded result (§7.14, §8), not a gap and
 not a plumbing detail to fix quietly.
+
+**The failure spends the attempt for this workspace and these participants.**
+§7.9 does not permit a workspace, a participant, or a case to be re-run as a
+second attempt, and precondition 3 requires that neither the workspace nor
+either participant has appeared in a prior attempt. After a failed
+pre-transport check the same workspace and participants cannot support another
+Gate E case: a later candidate is enumerated on its own (§7.1) and must not
+re-use either. If a second handoff with the same workspace or participants is
+attempted anyway, it is not a fresh case: enumerate it (§7.1) and record it
+under §7.9 as inadmissible. Ordinary work in the workspace continues — what
+the failure spends is the Gate E attempt, not the workspace.
 
 **Commit the observation file again** before transporting the packet. The
 plan-time record is now complete and dated, and the outcome is still unknown.
@@ -528,9 +542,24 @@ chosen to look good. Cover:
    ignoring matters.
 4. **Every field the recipient named** — ids in particular. §6's Reused sources.
 
-A packet field the work product simply does not bear on is **not** in scope, and
-its absence from the work is **not** a mismatch. Say so once in the observation
-rather than listing every untouched field.
+A **non-safety** packet field the work product simply does not bear on is **not**
+in scope, and its absence from the work is **not** a mismatch. Name it once in
+§10a's exclusion list rather than listing every untouched field.
+
+A field in rule 2's safety-structure list is different: it is **always in scope
+and always gets its own recorded verdict**, and it is never excluded. When the
+work neither depends on nor contradicts such a field, the verdict is **`not
+borne on`** with a one-line reason, written in §10a beside the other verdicts.
+That is a check, not a pass: ask each field's own question against the work —
+does the work act on a decision in the set, and if so, in the way `state`,
+`operativeDecisionId`, `beforeActing`, and `linkedNextStep` say? Does it treat a
+superseded member's rationale as a live condition, or a proposed decision as
+operative? — and record `not borne on` only when the work does none of those
+things and does not turn on the field's content at all. **"The work does not
+mention it" is not the test.** A work product can contradict a safety field it
+never names, and that is a `mismatch` (§5.4) however the work phrases it;
+`not borne on` never becomes the verdict by default. Silent exclusion is how the
+RCL-003 failure is missed, so no safety field is left unrecorded.
 
 Write the selection down with the reason for each field — §10a of `TEMPLATE.md`
 carries the selection table and the verdicts. A reviewer must be able to see why
@@ -560,6 +589,16 @@ the selection and the per-field verdicts go in §10a.
 
 Write the verdict for each field, using the packet field's own content, not a
 summary of the work product.
+
+**Every in-scope field gets one of three verdicts: `match`, `mismatch`, or
+`not borne on`.** `match` and `mismatch` are the bullets below and §5.4.
+`not borne on` is the recorded verdict for a rule 2 safety-structure field the
+work neither depends on nor contradicts — a check that was performed and
+recorded, not an exclusion, not a match, and not a mismatch: it does not by
+itself fail the case. Record it with a one-line reason in §10a, and never reach
+it from absence of mention alone: if the work's behaviour depends on the field
+or runs contrary to it, the verdict is `match` or `mismatch` as the field's own
+content decides, whether or not the work names the field.
 
 - **Structural fields** — id, kind, section, lifecycle, rationale presence,
   `historicalExplanation` presence, `needsReview`, decision-set `state`,
@@ -598,6 +637,13 @@ support, or contradicts it. Concretely:
   produced it, it does not qualify. Record the message verbatim in §14 and say
   which it was.
 - A claim that a record said something the retained excerpt does not say.
+
+A safety-structure field can be mismatched without being named by the work: the
+test is what the work does, not what it says about the packet. A work product
+that applies a superseded rationale as a live condition has mismatched the
+superseded member's `rationale` and `historicalExplanation` projection even
+though it never mentions the decision, and `not borne on` is not available to
+it.
 
 A mismatch is a **result**. It is recorded, dated, and attributed. It is not
 re-read until it reads differently, and it is not explained away as a
@@ -657,20 +703,34 @@ Claim shape:       H          (fixed at open, §1)
 Counterfactual:    N/A — claim H does not require one (§6)
 ```
 
-Opening check, in the abbreviated form the template asks for:
+Opening check, one numbered line per §1 precondition, in §1's numbering, as the
+template requires (invented values):
 
 ```text
-Ordinary work, real, outcome outside the measurement (§3.1.1):  yes — one line
-Voluntary: sender chose the packet in ordinary work; recipient got the packet
-  and the handoff request, no answer supplied (§3.1.2, §7.2):     yes — one line
-Owner role (§12 Amendment 5):                                      none
-Sender and recipient have different human principals:             yes — one line
-Not a fixture, pilot, replay, resumed session, or measurement workspace
-  (§3.2, §7.5):                                                     yes — one line
-Outcome not already known to the recorder at open (§3.2):          yes — one line
-First attempt (§7.9):                                               yes — one line
-Claim shape fixed now (§1):                                         H
-Not to be written into a sprint result (§7.10, §9):                acknowledged
+ 1. Enumerated before examination, dated (§7.1):                      yes — one line
+ 2. Outcome not known to the recorder (§3.2):                         yes — one line
+ 3. No prior attempt using workspace or either participant (§7.9):     yes — one line
+ 4. Claim shape fixed as H now (§1):                                  H
+ 5. Not to be written into a sprint result (§7.10, §9):               acknowledged
+ 6. Ordinary work, outcome outside the measurement (§3.1.1):          yes — one line
+ 7. Workspace pre-existing, not created for the measurement (§7.5):   yes — one line
+ 8. No fixture or RCL material in the chain (§3.2, §7.5):             yes — one line
+ 9. Not a pilot, replay, resumed session, or rerun (§3.2):            yes — one line
+10. Recipient's own ordinary work continues after delivery (§3.1.1):  yes — one line
+11. Owner role (§12 Amendment 5):                                     none
+12. Sender's packet voluntary in ordinary work (§3.1.2, H clause):    yes — one line
+13. No re-prompt after a quiet moment (§3.1.2, §7.2):                yes — one line
+14. Recipient got an ordinary handoff, no answer supplied (§3.1.2):   yes — one line
+15. Handoff message carries no answer (§3.1.3, §3.2, §7.2):          yes — one line
+16. Separate recipient, different human principal (§3.2; Am. 5):      yes — one line
+17. Recipient enrolled with workspace:read (§2; Step 3 command):      yes — one line
+18. Step 3 run as the sender's own identity (§7.9):                   yes — one line
+19. No same-session reuse by the recipient (§3.2):                    yes — one line
+20. Retention plan for §7.13 evidence (§7.13, §9):                    yes — one line
+21. Packet bytes stay outside the repository (§9):                     yes — one line
+22. Recorder present, prompt text verbatim (§6, §7.2):                yes — one line
+23. Package version and git commit recorded (§6, Build):              yes — one line
+24. Everyone knows the outcome will not close Gate E (§1, §8):        acknowledged
 ```
 
 ### 6.2 Shape of the comparison — ILLUSTRATION ONLY
@@ -802,7 +862,7 @@ one, in the same log, with the same fields, dated and attributed the same way
 
 | Failure | What it means | What to do |
 | --- | --- | --- |
-| The recipient never opened the packet. | No reuse at all. The helper still emits a perfectly valid record — that is one of its documented limits. | Run §7. Disposition `inadmissible` or `null` as the clauses require. Record that the packet was delivered and unopened. Do not re-issue it to the same recipient (§7.9). |
+| The recipient never opened the packet. | No reuse at all. The helper still emits a perfectly valid record — that is one of its documented limits. | Run §7. With no resulting work, disposition `inadmissible — §3.1.4, §5.4`, case verdict `N/A`; `null` is a verdict for an admissible case, not a disposition. Record that the packet was delivered and unopened. Do not re-issue for this workspace or either participant (§7.9). |
 | The recipient opened it and asked the sender a question instead of working. | Ordinary. The handoff is two-way. | Record the exchange verbatim. If the sender's answer supplied the substance, §3.1.3 and §5.4 apply — see §5.4, mismatch row 4. |
 | The recipient produced a **summary of the packet** and nothing else. | §3.2, restatement bullet. | `inadmissible`. A summary of the packet is not resulting work (§5.4). |
 | The recipient's work reflects the packet only partly. | Expected (§8). | `weak` if the evidence is retained and checkable; `inadmissible` under §3.1.3 if nothing substantive depended on the packet. Record per §5.5. |
@@ -858,8 +918,9 @@ file. When in doubt, refuse and record the refusal.
 
 The packet is a local file. Campfire does not send it. If it never reaches the
 recipient, there is no reuse, the record still emits, and the case is recorded
-as it stands. Do not re-issue to the same recipient (§7.9). A different
-recipient is a different case and needs its own enumeration row (§7.1).
+as it stands. Do not re-issue for this workspace or either participant (§7.9).
+A later candidate still gets its own enumeration row (§7.1), but a different
+recipient alone does not make a same-workspace or same-sender attempt admissible.
 
 ---
 

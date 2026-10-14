@@ -390,18 +390,21 @@ generated: the fields selected with the reason each is in scope, each field's ow
 verdict, and the fields considered and excluded. §7.13's reviewer reads this
 section to see what the recipient's work was checked against and why. `N/A` for
 P and N. Do not average the verdicts; record each in-scope field's own (§5.5).
-Where a decision is carried in both projections, check each projection's own
-fields — a superseded `decisionSet.members[]` entry carries no `rationale` and a
-`historicalExplanation`, while its `records[]` entry carries the rationale as
-history (runbook §5.1 rule 2).
+Every rule 2 safety-structure field is recorded here with its own verdict —
+`not borne on` with a reason where the work neither depends on nor contradicts
+it — and is never moved to the exclusion list, which is for non-safety fields
+only. Where a decision is carried in both projections, check each projection's
+own fields — a superseded `decisionSet.members[]` entry carries no `rationale`
+and a `historicalExplanation`, while its `records[]` entry carries the rationale
+as history (runbook §5.1 rule 2).
 
 ```text
 | Field (packet)     | Why in scope (runbook §5.1)                        | Verdict (runbook §5.3 / §5.4) |
 | --- | --- | --- |
-| <field path>       | <the work depends on it / safety structure / the work contradicts or ignores it / named by the recipient> | `match` / `mismatch` |
+| <field path>       | <the work depends on it / safety structure / the work contradicts or ignores it / named by the recipient> | `match` / `mismatch` / `not borne on` — <one-line reason> |
 
-Fields considered and excluded:  <list with a one-line reason each> / none
-Partial correspondence:          <which in-scope fields matched and which did not; §5.5 forbids averaging>
+Fields considered and excluded:  <non-safety fields only, one-line reason each> / none
+Partial correspondence:          <which in-scope fields matched, which did not, and which were recorded `not borne on`; §5.5 forbids averaging>
 Overall read:                    <the work product against the packet, in the observation's own words>
 Sanitized excerpts retained in:  §10 (bounded; ids and lengths alone cannot show what was used)
 ```
