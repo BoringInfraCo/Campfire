@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME (Gate E open; not published)
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published)
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1445,7 +1445,7 @@ v1.14 — Generated workspace views   published and deployed under founder overr
         ↓
 v1.15 — Performance and security hardening   published and deployed as v1.15.0; no new product surface; see docs/SPRINT_PSA_001_RESULT.md
         ↓
-v1.16 — Recall and portable handoff   held; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME; Gate E open; no publication; see docs/SPRINT_RCL_001_RESULT.md, docs/SPRINT_RCL_002_RESULT.md, and docs/SPRINT_RCL_003_RESULT.md
+v1.16 — Recall and portable handoff   local release candidate under October 13 founder release direction; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME remain; Gate E open; no publication recorded yet; see docs/RELEASE_V1_16_DECISION.md
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1525,7 +1525,9 @@ v1.15 — BOUND WORK AND PROTECT READ BOUNDARIES
         contract: docs/Campfire-v1.15-PSA-001-Performance-and-Security-Hardening.md
 
 v1.16 — RECALL AND PORTABLE HANDOFF
-        held; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME; Gate E open; no publication
+        local v1.16.0 release candidate under founder release-scope override
+        no publication or deployment recorded yet; see docs/RELEASE_V1_16_DECISION.md
+        RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME remain; Gate E open
         one authorized workspace search with currentness and provenance
         one explicit offline JSON packet for a named authorized participant
         bounded decision rationale appears in the live recall response and offline packet; RCL-003 added query-matched decision sets

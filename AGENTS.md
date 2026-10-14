@@ -248,6 +248,13 @@ citation difference
 between arms is **confounded** — the treatment build alone carried a "cite the
 record ids" session instruction — so citation is not a recorded Recall benefit.
 
+On October 13, the founder directed preparation of a bounded public v1.16.0
+release so existing users can test Recall and portable handoff in ordinary
+work. `docs/RELEASE_V1_16_DECISION.md` records that release-scope override.
+It does not change any RCL-001/002/003 verdict or close Gate E. The source is
+being prepared as an experimental release candidate; publication and
+production deployment remain separate promotion steps until recorded there.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new

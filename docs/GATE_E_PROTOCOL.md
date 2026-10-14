@@ -3,8 +3,10 @@
 - **Status:** Protocol only. No observation has been recorded under it. Gate E is
   **unmeasured**.
 - **Date:** October 12, 2026.
-- **Package:** `1.15.0`. v1.16 stays held. This document changes nothing in the
-  product.
+- **Package at protocol creation:** `1.15.0`; v1.16 was held. On October 13
+  the founder directed v1.16 public release preparation under a separate
+  release-scope override (`docs/RELEASE_V1_16_DECISION.md`). Gate E remains
+  unmeasured. This protocol changes nothing in the product.
 - **Applies to:** `docs/GATE_E_PROTOCOL.md`, version `gate-e-1`.
 - **Frozen history:** `docs/SPRINT_RCL_001_RESULT.md`, `docs/SPRINT_RCL_002_RESULT.md`,
   and `docs/SPRINT_RCL_003_RESULT.md` are NO-GO / REFRAME and stay frozen. Nothing
@@ -42,8 +44,9 @@ decision set, so citation is not recorded as a Recall benefit.
 
 The current evidence supports treating Recall as a **provenance and portable-handoff
 product bet**, not as a demonstrated improvement in choosing the next action.
-The owner has not made a new release decision on that basis. This protocol is
-written so the bet can be tested honestly and cannot manufacture a pass.
+The founder's later release-scope override is recorded separately. This
+protocol is written so the bet can be tested honestly and cannot manufacture
+a pass.
 
 ## 1. Claim shapes
 
@@ -494,7 +497,9 @@ future decision that has not been made.
   unmeasured. The honest position of this product today is provenance and portable
   handoff, not a demonstrated improvement in choosing the next action.
 - It does **not** authorize a release, a tag, a public snapshot, a push, or a
-  deployment. v1.16 stays held and the package stays `1.15.0`.
+  deployment. At this protocol's creation v1.16 was held at `1.15.0`; the
+  October 13 release-scope direction is a separate decision recorded in
+  `docs/RELEASE_V1_16_DECISION.md` and does not change this protocol's gates.
 - It does **not** reopen, edit, or rescore RCL-001, RCL-002, or RCL-003. Their results,
   fixtures, and runs stay frozen.
 - It does **not** replace a scored pilot. If a claim about next-action quality is ever

@@ -2,6 +2,13 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
+v1.16.0 adds experimental, workspace-scoped Recall and a private, explicit
+handoff packet. It is a founder-directed release for real-user testing; the
+three frozen synthetic pilots remain NO-GO, and Gate E remains unmeasured.
+Check decision lifecycle and recorded transitions before acting from either
+surface. The v1.16 release archives, channel pins, and deployment are separate
+promotion steps and are verified after source export.
+
 v1.15.0 is published and deployed. It hardens the Viewer Host boundary, bounds
 Worker request bodies, contains unexpected error details, limits delivery
 queue reads, and updates dependencies. No
@@ -34,22 +41,22 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The Nix command uses the public mirror's v1.15.0 pin addendum. The package stays unpublished on the npm registry. The formula and flake pin the published v1.15.0 archives.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The package stays unpublished on the npm registry. The formula and flake pin published archives. During v1.16 source promotion they remain on v1.15.0 until all four new archives exist; check the pin files for the currently installed version.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.15.0
+node scripts/sync-install-channels.mjs --version 1.16.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
 
-Pinned / explicit variants (`--help` for all flags; env equivalents
+After v1.16 assets are published, pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.15.0
-curl -fsSL https://boringinfra.company/campfire/v1.15.0/install.sh | sh -s -- --version 1.15.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.16.0
+curl -fsSL https://boringinfra.company/campfire/v1.16.0/install.sh | sh -s -- --version 1.16.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 

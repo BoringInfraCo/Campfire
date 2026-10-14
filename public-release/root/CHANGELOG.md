@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.16.0 — 2026-10-13
+
+- Added experimental, authorized one-workspace Recall through CLI, MCP, and HTTP. Results are bounded, identify source records and currentness, and report truncation. A query-matched decision set shows recorded links and unresolved conflicts without inferring a workspace-wide operative decision.
+- Added an explicit local handoff-packet writer for one named authorized recipient. The private JSON packet carries bounded context and provenance, writes no Campfire contribution, and is not a credential or an automatic instruction to act.
+- Corrected the post-pilot packet projection so superseded decisions remain historical in the decision set, their rationale is not presented there as live, and linked-next-step guidance reaches the offline recipient.
+- Published under a founder release-scope override for real-user testing. RCL-001, RCL-002, and RCL-003 remain **NO-GO** on their frozen synthetic rubrics; the correction has deterministic checks and one unscored recipient recheck, not a new scored pass. Gate E, B, and C remain unmeasured. Do not treat a recalled or packet decision as authority to execute without checking its lifecycle and recorded transitions.
+
 ## 1.15.0 — 2026-10-10
 
 - Validate `Host` on the loopback Viewer before serving actor-bound pages and API responses, including when `--allow-remote` is supplied with a loopback bind.

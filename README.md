@@ -4,6 +4,14 @@
 
 Campfire is a secure, harness-independent collaboration layer for teams working with AI agents. It stores structured work state — goals, tasks, findings, decisions, artifacts — not chat transcripts, so a second human-agent pair can continue from authorized team state.
 
+**v1.16.0 is a local release candidate.** It adds experimental, one-workspace
+Recall and a portable handoff packet. The three frozen synthetic pilots remain
+NO-GO; a post-verdict packet repair has deterministic checks and one unscored
+recipient recheck. Gate E remains unmeasured. The founder has directed public
+release preparation so users can test the surface in ordinary work; no public
+promotion or production deployment is recorded yet. See
+`docs/RELEASE_V1_16_DECISION.md`.
+
 **v1.15.0 is published and deployed.** It bounds Viewer Host requests and
 Worker request bodies, contains unexpected error details, limits delivery
 queue reads, and updates vulnerable dependencies. See
