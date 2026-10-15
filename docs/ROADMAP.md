@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`)
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`); October 15 v1.18 work-continuity contract drafted; October 15 WCO-001 baseline recorded and a labeled single-operator rehearsal run (eligible two-human case NOT OBSERVED), Amendment 1's bounded guidance/schema repair implemented with D1–D6 passing, recorded as CONDITIONAL GO — engineering candidate with no release decision
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1460,6 +1460,8 @@ v1.15 — Performance and security hardening   published and deployed as v1.15.0
 v1.16 — Recall and portable handoff   published and deployed as v1.16.0 under October 13 founder release direction; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME remain; Gate E open; see docs/RELEASE_V1_16_DECISION.md
         ↓
 v1.17 — Shared Work Home   published and deployed as v1.17.0 under the October 14 founder release-scope override; D1–D7 deterministic checks pass; controlled human traces and observations still open; see docs/RELEASE_V1_17_DECISION.md
+        ↓
+v1.18 — Continue the Work   WCO-001: baseline and labeled rehearsal recorded (eligible human case not observed); Amendment 1 bounded guidance/schema repair implemented, D1–D6 pass; CONDITIONAL GO — engineering candidate; no release decision
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1681,6 +1683,8 @@ decision as an override, not as a GO or gate satisfaction. v1.16 publication
 did not change the RCL-001/002/003 NO-GO / REFRAME verdicts or close Gate E.
 
 ### Direction after v1.17
+
+The proposed v1.18 work-continuity sprint is `docs/Campfire-v1.18-WCO-001-Continue-the-Work.md`. It begins with the shipped v1.17 behavior on a real task, then permits only a dated, evidence-backed amendment for the smallest repair. A successful existing path may produce an observation without a v1.18 feature or version bump. The contract does not close Gate B/C/E or the open v1.17 human observations by declaration. Its recorded status is CONDITIONAL GO — engineering candidate: the eligible two-human case is NOT OBSERVED, the witnessed gap comes from a labeled rehearsal, and the bounded Amendment 1 repair passes D1–D6 without claiming human continuation; see `docs/SPRINT_WCO_001_RESULT.md`.
 
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |

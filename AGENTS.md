@@ -272,13 +272,27 @@ decision boundary, bounded completeness per slice, and inert artifact
 references. The D1–D7 deterministic checks pass on the recorded candidate.
 The two-human controlled comprehension trace, the overdue shipped-v1.16
 Viewer trace, the reference-open observation, and an ordinary-work
-continuation are not yet scored, so the candidate is unscored and is not
-published. Keep the Viewer actor-bound and loopback by default; do not infer
+continuation are not yet scored, so the sprint candidate remains unscored even
+though v1.17.0 was published under the recorded founder release-scope override.
+Keep the Viewer actor-bound and loopback by default; do not infer
 agent presence or expose private sessions. The contract is not a release
-decision. Founder direction (October 14, 2026): run the two controlled traces
-first; publication with open observations requires a separate, recorded
-founder override, never a GO; any release ships the read-only Viewer home,
-not a hosted shared-login service.
+decision. The October 14 pre-release direction recommended two controlled
+traces first and required a separate, recorded founder override for publication
+with open observations. That override was subsequently recorded and exercised;
+it never converted the sprint verdict to GO. The released surface is the
+read-only Viewer home, not a hosted shared-login service.
+
+Sprint WCO-001 — Continue the Work has its v1.18 contract at
+`docs/Campfire-v1.18-WCO-001-Continue-the-Work.md` and its result at
+`docs/SPRINT_WCO_001_RESULT.md`. The eligible two-human/two-harness case is
+**NOT OBSERVED**; the witnessed gap is a labeled single-operator rehearsal
+(`docs/evidence/wco-001/REHEARSAL.md`, zero C1–C7 observations). Contract
+Amendment 1 scopes a bounded guidance/schema repair, implemented and passing
+D1–D6 on the recorded candidate. The recorded verdict is **CONDITIONAL GO —
+engineering candidate**: it does not claim human continuation and moves no
+gate. No v1.18 release artifact or release decision exists. Gate B, Gate C,
+Gate E, VIS-001 condition 4, and the open v1.17/SWH-001 human observations
+remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

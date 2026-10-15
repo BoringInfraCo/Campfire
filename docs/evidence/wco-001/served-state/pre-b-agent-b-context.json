@@ -1,0 +1,983 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-15T22:38:32.503Z",
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzg6MjkuNjE4WiIsImlkIjoiY29uXzY5YTM0ODI5NTYzNDQ1MDMiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQyMjozODoyOS42MThaIiwib3JpZ2luSWQiOiJjb25fNjlhMzQ4Mjk1NjM0NDUwMyIsInBvc2l0aW9uIjoxOCwib3JpZ2luUG9zaXRpb24iOjE4LCJ0aXAiOjB9",
+  "completeness": {
+    "fullHistoryIncluded": false,
+    "drillDownAvailable": true
+  },
+  "slices": {
+    "decisions": {
+      "items": [
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:53.071Z",
+          "id": "dec_c38aa3216b294aec",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "summary": "WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+          "rationale": "The working tree carries uncommitted documentation changes, so the baseline must name the exact shipped tree and derive values from committed refs.",
+          "status": "accepted",
+          "approvedBy": {
+            "actorId": "hum_5750c8e7706b4da9",
+            "actorType": "human"
+          },
+          "updatedAt": "2026-10-15T22:38:29.618Z",
+          "citations": [
+            {
+              "id": "cit_1da33f80136944a8",
+              "workspaceId": "ws_a74b590d1b2e4c54",
+              "decisionId": "dec_c38aa3216b294aec",
+              "findingId": "find_ce839e059deb4f38",
+              "note": "Tag commit, per-file viewer-asset hashes, and the release archive checksum were verified read-only against committed refs.",
+              "createdBy": {
+                "actorId": "agt_4b4c704997344406",
+                "actorType": "agent"
+              },
+              "agentSessionId": "ses_62ce579f43614afe",
+              "createdAt": "2026-10-15T22:37:58.719Z"
+            }
+          ]
+        }
+      ],
+      "total": 1,
+      "returned": 1,
+      "truncated": false
+    },
+    "findings": {
+      "items": [
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:40.907Z",
+          "id": "find_ce839e059deb4f38",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "summary": "Baseline facts for the shipped v1.17.0 tree are verified: the tag resolves to commit 2b98c752531116654871d285142a55a7441ab665, the viewer assets index.html, app.js, and app.css hash identically under src/viewer/static and public at the tag, the local release archive matches its .sha256 file, and the archive lists its viewer assets under lib/campfire/dist/src/viewer/static/.",
+          "detail": "Verified read-only on 2026-10-15 with git, shasum, and tar; no repo files were modified.\n\nTag commit:\n  git rev-parse v1.17.0^{} -> 2b98c752531116654871d285142a55a7441ab665\n\nViewer asset sha256 at the tag (each value identical for src/viewer/static/<file> and public/<file> via git show | shasum -a 256):\n  index.html: 74120d2f33dd4e0e8b3c3421fb8d32a45c313c3e38b2ce1120b1552b37fec5dd\n  app.js:     1ab9c42a70e9377772d446e70f74e78bdd2c28e4095114b789c95071808da632\n  app.css:    d543d210fa1e9b4b0782c26e2894a2601533274b840f1269a92f1255757c607b\n\nRelease archive (local file):\n  release/campfire-darwin-arm64.tar.gz sha256 = f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151\n  release/campfire-darwin-arm64.tar.gz.sha256 records the same value for campfire-darwin-arm64.tar.gz.\n\nArchive listing includes (tar -tzf):\n  lib/campfire/dist/src/viewer/static/index.html\n  lib/campfire/dist/src/viewer/static/app.js\n  lib/campfire/dist/src/viewer/static/app.css\n  (also lib/campfire/dist/src/viewer/static/campfire-mark.svg)\n\nThe archive-vs-tag comparison for the three files above has not been performed.",
+          "confidence": 1,
+          "currentness": "current"
+        }
+      ],
+      "total": 1,
+      "returned": 1,
+      "truncated": false
+    },
+    "tasks": {
+      "items": [
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:30.493Z",
+          "id": "task_c95fe1ec031e4ecc",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "title": "Confirm the v1.17.0 release archive matches the committed tag tree",
+          "description": "Blocked: the tag-side facts for v1.17.0 are recorded in a finding in this workspace, but the archive-vs-tag comparison has not been performed yet. Pending step: extract release/campfire-darwin-arm64.tar.gz and compare the sha256 of lib/campfire/dist/src/viewer/static/index.html, lib/campfire/dist/src/viewer/static/app.js, and lib/campfire/dist/src/viewer/static/app.css inside the archive against the tag values recorded in the finding. The comparison is available to any workspace participant; whoever performs it should record the result as a new finding and update this task truthfully.",
+          "status": "blocked",
+          "assignee": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "updatedAt": "2026-10-15T22:37:58.717Z"
+        }
+      ],
+      "total": 1,
+      "returned": 1,
+      "truncated": false
+    },
+    "blockers": {
+      "items": [
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:30.493Z",
+          "id": "task_c95fe1ec031e4ecc",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "title": "Confirm the v1.17.0 release archive matches the committed tag tree",
+          "description": "Blocked: the tag-side facts for v1.17.0 are recorded in a finding in this workspace, but the archive-vs-tag comparison has not been performed yet. Pending step: extract release/campfire-darwin-arm64.tar.gz and compare the sha256 of lib/campfire/dist/src/viewer/static/index.html, lib/campfire/dist/src/viewer/static/app.js, and lib/campfire/dist/src/viewer/static/app.css inside the archive against the tag values recorded in the finding. The comparison is available to any workspace participant; whoever performs it should record the result as a new finding and update this task truthfully.",
+          "status": "blocked",
+          "assignee": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "updatedAt": "2026-10-15T22:37:58.717Z"
+        }
+      ],
+      "total": 1,
+      "returned": 1,
+      "truncated": false
+    },
+    "artifacts": {
+      "items": [
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:48.432Z",
+          "id": "art_956c63213a61404e",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "type": "file",
+          "title": "v1.17.0 release archive checksum file (campfire-darwin-arm64.tar.gz.sha256)",
+          "uriOrPath": "release/campfire-darwin-arm64.tar.gz.sha256",
+          "metadata": {
+            "sha256": "f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151",
+            "target": "campfire-darwin-arm64.tar.gz"
+          }
+        },
+        {
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:48.431Z",
+          "id": "art_83a5123e2a764d02",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "type": "file",
+          "title": "v1.17.0 release archive (campfire-darwin-arm64.tar.gz)",
+          "uriOrPath": "release/campfire-darwin-arm64.tar.gz",
+          "metadata": {
+            "sha256": "f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151",
+            "sizeBytes": 20104638
+          }
+        }
+      ],
+      "total": 2,
+      "returned": 2,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MTEuNjIxWiIsImlkIjoiY29uXzJjZjhlMjYzNjUwMzRkNTAiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6Mywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "occurredAt": "2026-10-15T22:35:11.621Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "goal",
+          "objectId": "goal_850d58a03c6040d1",
+          "changeType": "create",
+          "summary": "create goal goal_850d58a03c6040d1: Produce a trustworthy WCO-001 baseline for the shipped v1.17.0 tree",
+          "materiality": "high"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NDAuOTA3WiIsImlkIjoiY29uXzI2NjMyYjgzMjUyNDRjYzgiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MTIsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "occurredAt": "2026-10-15T22:37:40.907Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "finding",
+          "objectId": "find_ce839e059deb4f38",
+          "changeType": "create",
+          "summary": "create finding find_ce839e059deb4f38: Baseline facts for the shipped v1.17.0 tree are verified: the tag resolves to commit 2b98c752531116654871d285142a55a7441ab665, the viewer assets index.html, app.js, and app.css hash identically under src/viewer/static and public at the tag, the local release archive matches its .sha256 file, and the archive lists its viewer assets under lib/campfire/dist/src/viewer/static/.",
+          "materiality": "high"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NDguNDMxWiIsImlkIjoiY29uXzk2MjdmYTBmOTAwNDRmYmYiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MTMsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "occurredAt": "2026-10-15T22:37:48.431Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "artifact",
+          "objectId": "art_83a5123e2a764d02",
+          "changeType": "create",
+          "summary": "create artifact art_83a5123e2a764d02: v1.17.0 release archive (campfire-darwin-arm64.tar.gz)",
+          "materiality": "high"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NDguNDMyWiIsImlkIjoiY29uX2UzNjcyNTdjYTc5NjRlNmUiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MTQsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "occurredAt": "2026-10-15T22:37:48.432Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "artifact",
+          "objectId": "art_956c63213a61404e",
+          "changeType": "create",
+          "summary": "create artifact art_956c63213a61404e: v1.17.0 release archive checksum file (campfire-darwin-arm64.tar.gz.sha256)",
+          "materiality": "high"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NTguNzE3WiIsImlkIjoiY29uXzlhN2YwYTM3ZDNlZDQyMjMiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MTYsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "occurredAt": "2026-10-15T22:37:58.717Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "task",
+          "objectId": "task_c95fe1ec031e4ecc",
+          "changeType": "update:blocked",
+          "summary": "update:blocked task task_c95fe1ec031e4ecc",
+          "materiality": "high"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzg6MjkuNjE4WiIsImlkIjoiY29uXzY5YTM0ODI5NTYzNDQ1MDMiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MTgsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "occurredAt": "2026-10-15T22:38:29.618Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "decision",
+          "objectId": "dec_c38aa3216b294aec",
+          "changeType": "update:accepted",
+          "summary": "update:accepted decision dec_c38aa3216b294aec: The baseline must name the exact shipped tree; deriving values from committed refs keeps the check reproducible.",
+          "materiality": "high",
+          "reason": "The baseline must name the exact shipped tree; deriving values from committed refs keeps the check reproducible."
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MTEuNjIwWiIsImlkIjoiY29uXzE1NmI4NTJmNzYyMDQ1Y2EiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:11.620Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "workspace",
+          "objectId": "ws_a74b590d1b2e4c54",
+          "changeType": "create",
+          "summary": "create workspace ws_a74b590d1b2e4c54",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MTEuNjIwWiIsImlkIjoiY29uX2EzMGI3MDcxMjMwNTQxMzIiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:11.620Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "participant",
+          "objectId": "hum_5750c8e7706b4da9",
+          "changeType": "join",
+          "summary": "join participant hum_5750c8e7706b4da9",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MTEuNjIxWiIsImlkIjoiY29uXzQ3OTRjYjQzMzMzYjRkMDEiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:11.621Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "invite",
+          "objectId": "inv_0ab0c45757e746fc",
+          "changeType": "create",
+          "summary": "create invite inv_0ab0c45757e746fc",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MTEuNjIyWiIsImlkIjoiY29uXzVmMDRjMDVjY2EzMDRmMmEiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:11.622Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "participant",
+          "objectId": "agt_4b4c704997344406",
+          "changeType": "join",
+          "summary": "join participant agt_4b4c704997344406",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MjQuMTk3WiIsImlkIjoiY29uX2VhMzIzMTgxMjQ5MTRlMTQiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:24.197Z",
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human",
+          "objectType": "enrollment_invitation",
+          "objectId": "ein_inv_74dc173aa585446d",
+          "changeType": "create",
+          "summary": "create enrollment_invitation ein_inv_74dc173aa585446d",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MjkuMjAyWiIsImlkIjoiY29uXzc1YTkyZTZlN2JlNjQxY2EiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:29.202Z",
+          "actorId": "hum_e7530a05741546f6",
+          "actorType": "human",
+          "objectType": "enrollment_invitation",
+          "objectId": "ein_inv_74dc173aa585446d",
+          "changeType": "update",
+          "summary": "update enrollment_invitation ein_inv_74dc173aa585446d",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MjkuMjAyWiIsImlkIjoiY29uX2ViM2QxYzMwMmIwYTQ3ZmMiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:29.202Z",
+          "actorId": "hum_e7530a05741546f6",
+          "actorType": "human",
+          "objectType": "participant",
+          "objectId": "hum_e7530a05741546f6",
+          "changeType": "join",
+          "summary": "join participant hum_e7530a05741546f6",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6MzU6MjkuMjAyWiIsImlkIjoiY29uXzlhMDBlMzMwZGUyYzRjYWUiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "occurredAt": "2026-10-15T22:35:29.202Z",
+          "actorId": "hum_e7530a05741546f6",
+          "actorType": "human",
+          "objectType": "participant",
+          "objectId": "agt_1c870ea7f26a4188",
+          "changeType": "join",
+          "summary": "join participant agt_1c870ea7f26a4188",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6MjEuNDU4WiIsImlkIjoiY29uX2ZhYzAwZWVkYmY5ODRlYzAiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxMCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "occurredAt": "2026-10-15T22:37:21.458Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "agent_session",
+          "objectId": "ses_62ce579f43614afe",
+          "changeType": "register_session",
+          "summary": "register_session agent_session ses_62ce579f43614afe",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6MzAuNDkzWiIsImlkIjoiY29uX2Y1MWI4YWRmYzI0NjQzMDEiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxMSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "occurredAt": "2026-10-15T22:37:30.493Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "task",
+          "objectId": "task_c95fe1ec031e4ecc",
+          "changeType": "create",
+          "summary": "create task task_c95fe1ec031e4ecc: Confirm the v1.17.0 release archive matches the committed tag tree",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NTMuMDcxWiIsImlkIjoiY29uXzdiZDk3Y2Y5NmQ4NTRmZmYiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxNSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "occurredAt": "2026-10-15T22:37:53.071Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "decision",
+          "objectId": "dec_c38aa3216b294aec",
+          "changeType": "create:proposed",
+          "summary": "create:proposed decision dec_c38aa3216b294aec: WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+          "materiality": "normal"
+        },
+        {
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hNzRiNTkwZDFiMmU0YzU0Iiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMjI6Mzc6NTguNzE5WiIsImlkIjoiY29uXzRmMTg0NmYxZDBhNzQ5M2EiLCJwaGFzZSI6Im5vcm1hbCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "occurredAt": "2026-10-15T22:37:58.719Z",
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent",
+          "objectType": "decision",
+          "objectId": "dec_c38aa3216b294aec",
+          "changeType": "update",
+          "summary": "update decision dec_c38aa3216b294aec: cites find_ce839e059deb4f38",
+          "materiality": "normal"
+        }
+      ],
+      "total": 18,
+      "returned": 18,
+      "truncated": false
+    }
+  },
+  "budget": {
+    "goals": 1,
+    "decisions": 10,
+    "findings": 10,
+    "tasks": 20,
+    "blockers": 10,
+    "artifacts": 10,
+    "recentChanges": 20
+  },
+  "workspace": {
+    "id": "ws_a74b590d1b2e4c54",
+    "teamId": "team_engineering",
+    "name": "wco-001-rehearsal",
+    "status": "active",
+    "createdBy": {
+      "actorId": "hum_5750c8e7706b4da9",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-15T22:35:11.620Z",
+    "updatedAt": "2026-10-15T22:35:11.620Z"
+  },
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "name": "WCO Human A",
+      "role": "owner",
+      "joinedAt": "2026-10-15T22:35:11.620Z"
+    },
+    {
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "name": "WCO Agent A",
+      "role": "agent",
+      "harness": "opencode",
+      "humanOwnerId": "hum_5750c8e7706b4da9",
+      "joinedAt": "2026-10-15T22:35:11.622Z"
+    },
+    {
+      "actor": {
+        "actorId": "hum_e7530a05741546f6",
+        "actorType": "human"
+      },
+      "name": "WCO Human B",
+      "role": "member",
+      "joinedAt": "2026-10-15T22:35:29.202Z"
+    },
+    {
+      "actor": {
+        "actorId": "agt_1c870ea7f26a4188",
+        "actorType": "agent"
+      },
+      "name": "OpenCode",
+      "role": "agent",
+      "harness": "opencode",
+      "humanOwnerId": "hum_e7530a05741546f6",
+      "joinedAt": "2026-10-15T22:35:29.202Z"
+    }
+  ],
+  "proposedDecisions": [],
+  "acceptedDecisions": [
+    {
+      "createdBy": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "createdAt": "2026-10-15T22:37:53.071Z",
+      "id": "dec_c38aa3216b294aec",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "summary": "WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+      "rationale": "The working tree carries uncommitted documentation changes, so the baseline must name the exact shipped tree and derive values from committed refs.",
+      "status": "accepted",
+      "approvedBy": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "updatedAt": "2026-10-15T22:38:29.618Z",
+      "citations": [
+        {
+          "id": "cit_1da33f80136944a8",
+          "workspaceId": "ws_a74b590d1b2e4c54",
+          "decisionId": "dec_c38aa3216b294aec",
+          "findingId": "find_ce839e059deb4f38",
+          "note": "Tag commit, per-file viewer-asset hashes, and the release archive checksum were verified read-only against committed refs.",
+          "createdBy": {
+            "actorId": "agt_4b4c704997344406",
+            "actorType": "agent"
+          },
+          "agentSessionId": "ses_62ce579f43614afe",
+          "createdAt": "2026-10-15T22:37:58.719Z"
+        }
+      ]
+    }
+  ],
+  "supersededDecisions": [],
+  "openTasks": [
+    {
+      "createdBy": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "createdAt": "2026-10-15T22:37:30.493Z",
+      "id": "task_c95fe1ec031e4ecc",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "title": "Confirm the v1.17.0 release archive matches the committed tag tree",
+      "description": "Blocked: the tag-side facts for v1.17.0 are recorded in a finding in this workspace, but the archive-vs-tag comparison has not been performed yet. Pending step: extract release/campfire-darwin-arm64.tar.gz and compare the sha256 of lib/campfire/dist/src/viewer/static/index.html, lib/campfire/dist/src/viewer/static/app.js, and lib/campfire/dist/src/viewer/static/app.css inside the archive against the tag values recorded in the finding. The comparison is available to any workspace participant; whoever performs it should record the result as a new finding and update this task truthfully.",
+      "status": "blocked",
+      "assignee": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "updatedAt": "2026-10-15T22:37:58.717Z"
+    }
+  ],
+  "findings": [
+    {
+      "createdBy": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "createdAt": "2026-10-15T22:37:40.907Z",
+      "id": "find_ce839e059deb4f38",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "summary": "Baseline facts for the shipped v1.17.0 tree are verified: the tag resolves to commit 2b98c752531116654871d285142a55a7441ab665, the viewer assets index.html, app.js, and app.css hash identically under src/viewer/static and public at the tag, the local release archive matches its .sha256 file, and the archive lists its viewer assets under lib/campfire/dist/src/viewer/static/.",
+      "detail": "Verified read-only on 2026-10-15 with git, shasum, and tar; no repo files were modified.\n\nTag commit:\n  git rev-parse v1.17.0^{} -> 2b98c752531116654871d285142a55a7441ab665\n\nViewer asset sha256 at the tag (each value identical for src/viewer/static/<file> and public/<file> via git show | shasum -a 256):\n  index.html: 74120d2f33dd4e0e8b3c3421fb8d32a45c313c3e38b2ce1120b1552b37fec5dd\n  app.js:     1ab9c42a70e9377772d446e70f74e78bdd2c28e4095114b789c95071808da632\n  app.css:    d543d210fa1e9b4b0782c26e2894a2601533274b840f1269a92f1255757c607b\n\nRelease archive (local file):\n  release/campfire-darwin-arm64.tar.gz sha256 = f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151\n  release/campfire-darwin-arm64.tar.gz.sha256 records the same value for campfire-darwin-arm64.tar.gz.\n\nArchive listing includes (tar -tzf):\n  lib/campfire/dist/src/viewer/static/index.html\n  lib/campfire/dist/src/viewer/static/app.js\n  lib/campfire/dist/src/viewer/static/app.css\n  (also lib/campfire/dist/src/viewer/static/campfire-mark.svg)\n\nThe archive-vs-tag comparison for the three files above has not been performed.",
+      "confidence": 1,
+      "currentness": "current"
+    }
+  ],
+  "artifacts": [
+    {
+      "createdBy": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "createdAt": "2026-10-15T22:37:48.432Z",
+      "id": "art_956c63213a61404e",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "type": "file",
+      "title": "v1.17.0 release archive checksum file (campfire-darwin-arm64.tar.gz.sha256)",
+      "uriOrPath": "release/campfire-darwin-arm64.tar.gz.sha256",
+      "metadata": {
+        "sha256": "f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151",
+        "target": "campfire-darwin-arm64.tar.gz"
+      }
+    },
+    {
+      "createdBy": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "createdAt": "2026-10-15T22:37:48.431Z",
+      "id": "art_83a5123e2a764d02",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "type": "file",
+      "title": "v1.17.0 release archive (campfire-darwin-arm64.tar.gz)",
+      "uriOrPath": "release/campfire-darwin-arm64.tar.gz",
+      "metadata": {
+        "sha256": "f5105a00f5b844b32952b06a51336ee19a4ca58bfacf18ddcbec8b0a1b7cd151",
+        "sizeBytes": 20104638
+      }
+    }
+  ],
+  "provenance": [
+    {
+      "id": "con_156b852f762045ca",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "create",
+      "objectType": "workspace",
+      "objectId": "ws_a74b590d1b2e4c54",
+      "payload": {
+        "name": "wco-001-rehearsal"
+      },
+      "appendPosition": 1,
+      "createdAt": "2026-10-15T22:35:11.620Z"
+    },
+    {
+      "id": "con_a30b707123054132",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "join",
+      "objectType": "participant",
+      "objectId": "hum_5750c8e7706b4da9",
+      "payload": {
+        "role": "owner"
+      },
+      "appendPosition": 2,
+      "createdAt": "2026-10-15T22:35:11.620Z"
+    },
+    {
+      "id": "con_2cf8e26365034d50",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "create",
+      "objectType": "goal",
+      "objectId": "goal_850d58a03c6040d1",
+      "payload": {
+        "title": "Produce a trustworthy WCO-001 baseline for the shipped v1.17.0 tree"
+      },
+      "appendPosition": 3,
+      "createdAt": "2026-10-15T22:35:11.621Z"
+    },
+    {
+      "id": "con_4794cb43333b4d01",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "create",
+      "objectType": "invite",
+      "objectId": "inv_0ab0c45757e746fc",
+      "payload": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent",
+        "role": "agent"
+      },
+      "appendPosition": 4,
+      "createdAt": "2026-10-15T22:35:11.621Z"
+    },
+    {
+      "id": "con_5f04c05cca304f2a",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "action": "join",
+      "objectType": "participant",
+      "objectId": "agt_4b4c704997344406",
+      "payload": {
+        "role": "agent",
+        "inviteId": "inv_0ab0c45757e746fc"
+      },
+      "appendPosition": 5,
+      "createdAt": "2026-10-15T22:35:11.622Z"
+    },
+    {
+      "id": "con_ea32318124914e14",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "create",
+      "objectType": "enrollment_invitation",
+      "objectId": "ein_inv_74dc173aa585446d",
+      "payload": {
+        "expiresAt": "2026-10-16T22:35:24.197Z",
+        "role": "member"
+      },
+      "appendPosition": 6,
+      "createdAt": "2026-10-15T22:35:24.197Z"
+    },
+    {
+      "id": "con_75a92e6e7be641ca",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_e7530a05741546f6",
+        "actorType": "human"
+      },
+      "action": "update",
+      "objectType": "enrollment_invitation",
+      "objectId": "ein_inv_74dc173aa585446d",
+      "payload": {
+        "consumedAt": "2026-10-15T22:35:29.202Z",
+        "issuedByHumanId": "hum_5750c8e7706b4da9"
+      },
+      "appendPosition": 7,
+      "createdAt": "2026-10-15T22:35:29.202Z"
+    },
+    {
+      "id": "con_eb3d1c302b0a47fc",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_e7530a05741546f6",
+        "actorType": "human"
+      },
+      "action": "join",
+      "objectType": "participant",
+      "objectId": "hum_e7530a05741546f6",
+      "payload": {
+        "role": "member",
+        "actorType": "human",
+        "invitationId": "ein_inv_74dc173aa585446d"
+      },
+      "appendPosition": 8,
+      "createdAt": "2026-10-15T22:35:29.202Z"
+    },
+    {
+      "id": "con_9a00e330de2c4cae",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_e7530a05741546f6",
+        "actorType": "human"
+      },
+      "action": "join",
+      "objectType": "participant",
+      "objectId": "agt_1c870ea7f26a4188",
+      "payload": {
+        "role": "agent",
+        "actorType": "agent",
+        "invitationId": "ein_inv_74dc173aa585446d",
+        "humanOwnerId": "hum_e7530a05741546f6"
+      },
+      "appendPosition": 9,
+      "createdAt": "2026-10-15T22:35:29.202Z"
+    },
+    {
+      "id": "con_fac00eedbf984ec0",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "action": "register_session",
+      "objectType": "agent_session",
+      "objectId": "ses_62ce579f43614afe",
+      "payload": {
+        "agentId": "agt_4b4c704997344406",
+        "humanId": "hum_5750c8e7706b4da9",
+        "harness": "opencode"
+      },
+      "appendPosition": 10,
+      "createdAt": "2026-10-15T22:37:21.458Z"
+    },
+    {
+      "id": "con_f51b8adfc2464301",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "create",
+      "objectType": "task",
+      "objectId": "task_c95fe1ec031e4ecc",
+      "payload": {
+        "title": "Confirm the v1.17.0 release archive matches the committed tag tree"
+      },
+      "appendPosition": 11,
+      "createdAt": "2026-10-15T22:37:30.493Z"
+    },
+    {
+      "id": "con_26632b8325244cc8",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "create",
+      "objectType": "finding",
+      "objectId": "find_ce839e059deb4f38",
+      "payload": {
+        "summary": "Baseline facts for the shipped v1.17.0 tree are verified: the tag resolves to commit 2b98c752531116654871d285142a55a7441ab665, the viewer assets index.html, app.js, and app.css hash identically under src/viewer/static and public at the tag, the local release archive matches its .sha256 file, and the archive lists its viewer assets under lib/campfire/dist/src/viewer/static/."
+      },
+      "appendPosition": 12,
+      "createdAt": "2026-10-15T22:37:40.907Z"
+    },
+    {
+      "id": "con_9627fa0f90044fbf",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "create",
+      "objectType": "artifact",
+      "objectId": "art_83a5123e2a764d02",
+      "payload": {
+        "title": "v1.17.0 release archive (campfire-darwin-arm64.tar.gz)",
+        "type": "file"
+      },
+      "appendPosition": 13,
+      "createdAt": "2026-10-15T22:37:48.431Z"
+    },
+    {
+      "id": "con_e367257ca7964e6e",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "create",
+      "objectType": "artifact",
+      "objectId": "art_956c63213a61404e",
+      "payload": {
+        "title": "v1.17.0 release archive checksum file (campfire-darwin-arm64.tar.gz.sha256)",
+        "type": "file"
+      },
+      "appendPosition": 14,
+      "createdAt": "2026-10-15T22:37:48.432Z"
+    },
+    {
+      "id": "con_7bd97cf96d854fff",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "create",
+      "objectType": "decision",
+      "objectId": "dec_c38aa3216b294aec",
+      "payload": {
+        "summary": "WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+        "status": "proposed"
+      },
+      "appendPosition": 15,
+      "createdAt": "2026-10-15T22:37:53.071Z"
+    },
+    {
+      "id": "con_9a7f0a37d3ed4223",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "update",
+      "objectType": "task",
+      "objectId": "task_c95fe1ec031e4ecc",
+      "payload": {
+        "description": "Blocked: the tag-side facts for v1.17.0 are recorded in a finding in this workspace, but the archive-vs-tag comparison has not been performed yet. Pending step: extract release/campfire-darwin-arm64.tar.gz and compare the sha256 of lib/campfire/dist/src/viewer/static/index.html, lib/campfire/dist/src/viewer/static/app.js, and lib/campfire/dist/src/viewer/static/app.css inside the archive against the tag values recorded in the finding. The comparison is available to any workspace participant; whoever performs it should record the result as a new finding and update this task truthfully.",
+        "status": "blocked"
+      },
+      "appendPosition": 16,
+      "createdAt": "2026-10-15T22:37:58.717Z"
+    },
+    {
+      "id": "con_4f1846f1d0a7493a",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      },
+      "agentSessionId": "ses_62ce579f43614afe",
+      "action": "update",
+      "objectType": "decision",
+      "objectId": "dec_c38aa3216b294aec",
+      "payload": {
+        "summary": "cites find_ce839e059deb4f38",
+        "findingId": "find_ce839e059deb4f38",
+        "note": "Tag commit, per-file viewer-asset hashes, and the release archive checksum were verified read-only against committed refs."
+      },
+      "appendPosition": 17,
+      "createdAt": "2026-10-15T22:37:58.719Z"
+    },
+    {
+      "id": "con_69a3482956344503",
+      "workspaceId": "ws_a74b590d1b2e4c54",
+      "actor": {
+        "actorId": "hum_5750c8e7706b4da9",
+        "actorType": "human"
+      },
+      "action": "update",
+      "objectType": "decision",
+      "objectId": "dec_c38aa3216b294aec",
+      "payload": {
+        "status": "accepted",
+        "reason": "The baseline must name the exact shipped tree; deriving values from committed refs keeps the check reproducible."
+      },
+      "appendPosition": 18,
+      "createdAt": "2026-10-15T22:38:29.618Z"
+    }
+  ],
+  "provenanceTotal": 18,
+  "provenanceTruncated": false,
+  "needsYou": [],
+  "needsAttention": [
+    {
+      "kind": "task",
+      "id": "task_c95fe1ec031e4ecc",
+      "summary": "Confirm the v1.17.0 release archive matches the committed tag tree",
+      "status": "blocked",
+      "reason": "team_blocked_task",
+      "assignee": {
+        "actorId": "agt_4b4c704997344406",
+        "actorType": "agent"
+      }
+    }
+  ],
+  "currentWork": {
+    "inProgressTasks": [],
+    "blockedTasks": [
+      {
+        "createdBy": {
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent"
+        },
+        "agentSessionId": "ses_62ce579f43614afe",
+        "createdAt": "2026-10-15T22:37:30.493Z",
+        "id": "task_c95fe1ec031e4ecc",
+        "workspaceId": "ws_a74b590d1b2e4c54",
+        "title": "Confirm the v1.17.0 release archive matches the committed tag tree",
+        "description": "Blocked: the tag-side facts for v1.17.0 are recorded in a finding in this workspace, but the archive-vs-tag comparison has not been performed yet. Pending step: extract release/campfire-darwin-arm64.tar.gz and compare the sha256 of lib/campfire/dist/src/viewer/static/index.html, lib/campfire/dist/src/viewer/static/app.js, and lib/campfire/dist/src/viewer/static/app.css inside the archive against the tag values recorded in the finding. The comparison is available to any workspace participant; whoever performs it should record the result as a new finding and update this task truthfully.",
+        "status": "blocked",
+        "assignee": {
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent"
+        },
+        "updatedAt": "2026-10-15T22:37:58.717Z"
+      }
+    ],
+    "acceptedDecisions": [
+      {
+        "createdBy": {
+          "actorId": "agt_4b4c704997344406",
+          "actorType": "agent"
+        },
+        "agentSessionId": "ses_62ce579f43614afe",
+        "createdAt": "2026-10-15T22:37:53.071Z",
+        "id": "dec_c38aa3216b294aec",
+        "workspaceId": "ws_a74b590d1b2e4c54",
+        "summary": "WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+        "rationale": "The working tree carries uncommitted documentation changes, so the baseline must name the exact shipped tree and derive values from committed refs.",
+        "status": "accepted",
+        "approvedBy": {
+          "actorId": "hum_5750c8e7706b4da9",
+          "actorType": "human"
+        },
+        "updatedAt": "2026-10-15T22:38:29.618Z",
+        "citations": [
+          {
+            "id": "cit_1da33f80136944a8",
+            "workspaceId": "ws_a74b590d1b2e4c54",
+            "decisionId": "dec_c38aa3216b294aec",
+            "findingId": "find_ce839e059deb4f38",
+            "note": "Tag commit, per-file viewer-asset hashes, and the release archive checksum were verified read-only against committed refs.",
+            "createdBy": {
+              "actorId": "agt_4b4c704997344406",
+              "actorType": "agent"
+            },
+            "agentSessionId": "ses_62ce579f43614afe",
+            "createdAt": "2026-10-15T22:37:58.719Z"
+          }
+        ]
+      }
+    ]
+  },
+  "suggestedNextAction": {
+    "kind": "none",
+    "summary": "",
+    "reason": "none",
+    "orientationHint": true
+  },
+  "alignment": {
+    "status": "established",
+    "proposedDecisionIds": [],
+    "acceptedDecisionIds": [
+      "dec_c38aa3216b294aec"
+    ],
+    "unresolvedBlockedTaskIds": [
+      "task_c95fe1ec031e4ecc"
+    ]
+  },
+  "historicalCounts": {
+    "findings": 0,
+    "decisions": 0
+  },
+  "provenanceSummary": [
+    "WCO Human A contributed workspace ws_a74b590d1b2e4c54",
+    "WCO Human A joined participant hum_5750c8e7706b4da9",
+    "WCO Human A contributed goal goal_850d58a03c6040d1: Produce a trustworthy WCO-001 baseline for the shipped v1.17.0 tree",
+    "WCO Human A contributed invite inv_0ab0c45757e746fc",
+    "WCO Agent A joined participant agt_4b4c704997344406",
+    "WCO Human A contributed enrollment_invitation ein_inv_74dc173aa585446d",
+    "WCO Human B updated enrollment_invitation ein_inv_74dc173aa585446d",
+    "WCO Human B joined participant hum_e7530a05741546f6",
+    "WCO Human B joined participant agt_1c870ea7f26a4188",
+    "WCO Agent A registered agent_session ses_62ce579f43614afe",
+    "WCO Agent A contributed task task_c95fe1ec031e4ecc: Confirm the v1.17.0 release archive matches the committed tag tree",
+    "WCO Agent A contributed finding find_ce839e059deb4f38: Baseline facts for the shipped v1.17.0 tree are verified: the tag resolves to commit 2b98c752531116654871d285142a55a7441ab665, the viewer assets index.html, app.js, and app.css hash identically under src/viewer/static and public at the tag, the local release archive matches its .sha256 file, and the archive lists its viewer assets under lib/campfire/dist/src/viewer/static/.",
+    "WCO Agent A contributed artifact art_83a5123e2a764d02: v1.17.0 release archive (campfire-darwin-arm64.tar.gz)",
+    "WCO Agent A contributed artifact art_956c63213a61404e: v1.17.0 release archive checksum file (campfire-darwin-arm64.tar.gz.sha256)",
+    "WCO Agent A contributed decision dec_c38aa3216b294aec: WCO-001 baseline hash values come from committed refs via git show, not from a dirty working tree or an extracted archive",
+    "WCO Agent A updated task task_c95fe1ec031e4ecc: blocked",
+    "WCO Agent A updated decision dec_c38aa3216b294aec: cites find_ce839e059deb4f38",
+    "WCO Human A updated decision dec_c38aa3216b294aec: accepted"
+  ],
+  "goal": {
+    "createdBy": {
+      "actorId": "hum_5750c8e7706b4da9",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-15T22:35:11.621Z",
+    "id": "goal_850d58a03c6040d1",
+    "workspaceId": "ws_a74b590d1b2e4c54",
+    "title": "Produce a trustworthy WCO-001 baseline for the shipped v1.17.0 tree",
+    "status": "active",
+    "updatedAt": "2026-10-15T22:35:11.621Z"
+  }
+}
