@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations)
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override (see `docs/RELEASE_V1_17_DECISION.md`)
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1459,7 +1459,7 @@ v1.15 — Performance and security hardening   published and deployed as v1.15.0
         ↓
 v1.16 — Recall and portable handoff   published and deployed as v1.16.0 under October 13 founder release direction; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME remain; Gate E open; see docs/RELEASE_V1_16_DECISION.md
         ↓
-v1.17 — Shared Work Home   implemented engineering candidate (SWH-001); D1–D7 deterministic checks pass; controlled two-human comprehension and ordinary-work observations not yet scored; the candidate is unscored; not published; see docs/SPRINT_SWH_001_RESULT.md
+v1.17 — Shared Work Home   public release preparation under the October 14 founder release-scope override; D1–D7 deterministic checks pass; controlled human traces and observations still open; see docs/RELEASE_V1_17_DECISION.md
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1553,9 +1553,10 @@ v1.16 — RECALL AND PORTABLE HANDOFF
         second measurement: docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md; result: docs/SPRINT_RCL_002_RESULT.md
         decision-safety measurement: docs/Campfire-v1.16-RCL-003-Decision-Safety-and-Source-Use.md; result: docs/SPRINT_RCL_003_RESULT.md
 
-v1.17 — SHARED WORK HOME (IMPLEMENTED ENGINEERING CANDIDATE; NOT PUBLISHED)
+v1.17 — SHARED WORK HOME (PUBLIC RELEASE UNDER FOUNDER OVERRIDE; PROMOTION PENDING)
         contract: docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md
         result: docs/SPRINT_SWH_001_RESULT.md
+        release decision: docs/RELEASE_V1_17_DECISION.md
         one read-only home for an authorized workspace
         make existing goal, current work, participants, ownership,
         attention derived from recorded state, decisions, and source
@@ -1569,10 +1570,10 @@ v1.17 — SHARED WORK HOME (IMPLEMENTED ENGINEERING CANDIDATE; NOT PUBLISHED)
         two-human controlled trace, the shipped-v1.16 Viewer trace, the
         reference-open observation, and an ordinary-work continuation are
         not yet scored; the candidate is unscored, not CONDITIONAL GO
-        founder direction (October 14): run the two controlled traces first;
-        publication with open observations requires a separate, recorded
-        founder override, never a GO verdict; any release ships the read-only
-        Viewer home, not a hosted shared-login service
+        October 14 founder release-scope override authorizes this bounded public
+        release with the human observations open; it is recorded in
+        docs/RELEASE_V1_17_DECISION.md and is not a GO verdict; any release
+        ships the read-only Viewer home, not a hosted shared-login service
         Gate B, Gate C, Gate E, and the v1.12 human/reference observations remain open
 ```
 

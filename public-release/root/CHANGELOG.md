@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.17.0 — 2026-10-14
+
+- Added a read-only Shared Work Home to the local actor-bound Viewer: My work and Team work perspectives over the same authorized orientation read, a shared decision boundary for proposed, accepted, needs-review, and historical records, per-slice completeness, and inert artifact references.
+- My work leads with the service attention projection, then tasks assigned to the caller or their participating owned agents. Team work leads with team attention, then participants and their agents with tasks grouped by recorded assignee, including unassigned and ownership-unknown cases. Neither perspective infers agent presence or relations that were not recorded.
+- Published under a founder release-scope override for real-user testing. The two controlled human comprehension traces, the shipped-v1.16 Viewer trace, the reference-open observation, and an ordinary two-human/two-agent continuation remain unrecorded; Gate B, Gate C, and Gate E remain unmeasured. This is not a GO result.
+
 ## 1.16.0 — 2026-10-13
 
 - Added experimental, authorized one-workspace Recall through CLI, MCP, and HTTP. Results are bounded, identify source records and currentness, and report truncation. A query-matched decision set shows recorded links and unresolved conflicts without inferring a workspace-wide operative decision.

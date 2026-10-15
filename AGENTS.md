@@ -256,6 +256,15 @@ It does not change any RCL-001/002/003 verdict or close Gate E. The source is
 published and deployed as `v1.16.0`. Gate B, Gate C, and Gate E remain
 unmeasured; publication is not a GO for the frozen RCL pilots.
 
+On October 14, the founder directed a public v1.17.0 release of the Shared
+Work Home candidate. `docs/RELEASE_V1_17_DECISION.md` records that
+release-scope override. The two controlled human comprehension traces, the
+shipped-v1.16 Viewer trace, the reference-open observation, and an ordinary
+two-human/two-agent continuation are not recorded; the release is an override
+for real-user testing, not a GO. Gate B, Gate C, and Gate E remain
+unmeasured. Publication and production deployment are recorded there when
+they occur.
+
 Sprint SWH-001 — Shared Work Home is the v1.17 contract at
 `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md` and its result is
 `docs/SPRINT_SWH_001_RESULT.md`. The read-only Viewer now has My work and

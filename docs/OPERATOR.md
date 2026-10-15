@@ -2,12 +2,18 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.16.0 is a local release candidate for experimental one-workspace Recall and
-portable handoff. The founder directed release preparation with the three
-RCL pilot NO-GO verdicts and Gate E still open; see
-`RELEASE_V1_16_DECISION.md`. The v1.16.0 versioned installer is tracked, but
-the public archives and checksums must exist before Homebrew and Nix pins can
-move. The v1.15.0 pin below remains the current published channel.
+v1.17.0 is a public release under founder override for the read-only Shared
+Work Home in the local Viewer. The two controlled human comprehension traces,
+the shipped-v1.16 Viewer trace, the reference-open observation, and an
+ordinary two-human/two-agent continuation were not recorded; the release is
+not a GO. See `RELEASE_V1_17_DECISION.md`. The v1.17.0 versioned installer is
+tracked; the public archives and checksums must exist before Homebrew and Nix
+pins can move. The v1.16.0 pin below remains the current published channel
+until then.
+
+v1.16.0 is published and deployed as an experimental release for one-workspace
+Recall and portable handoff. The three RCL pilot NO-GO verdicts and Gate E
+remain; see `RELEASE_V1_16_DECISION.md`.
 
 v1.15.0 is published and deployed. It hardens the Viewer Host boundary, bounds
 Worker request bodies, contains unexpected error details, limits delivery
@@ -41,22 +47,22 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The package stays unpublished on the npm registry. The formula and flake pin published archives. During v1.16 source promotion they remain on v1.15.0 until all four new archives exist; check the pin files for the currently installed version.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The package stays unpublished on the npm registry. The formula and flake pin published archives. During v1.17 source promotion they remain on v1.16.0 until all four new archives exist; check the pin files for the currently installed version.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.16.0
+node scripts/sync-install-channels.mjs --version 1.17.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
 
-After v1.16 assets are published, pinned / explicit variants (`--help` for all flags; env equivalents
+After v1.17 assets are published, pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.16.0
-curl -fsSL https://boringinfra.company/campfire/v1.16.0/install.sh | sh -s -- --version 1.16.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.17.0
+curl -fsSL https://boringinfra.company/campfire/v1.17.0/install.sh | sh -s -- --version 1.17.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 
