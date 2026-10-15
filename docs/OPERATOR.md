@@ -2,12 +2,21 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
+v1.17.0 adds the read-only Shared Work Home to the local actor-bound Viewer:
+My work and Team work perspectives over one authorized orientation read. It is
+a founder-directed release for real-user testing; the two controlled human
+comprehension traces, the shipped-v1.16 Viewer trace, the reference-open
+observation, and an ordinary two-human/two-agent continuation are not
+recorded, so this is not a GO result and Gate B, Gate C, and Gate E remain
+unmeasured. See `RELEASE_V1_17_DECISION.md`. The v1.17 release archives,
+channel pins, and deployment are separate promotion steps and are verified
+after source export.
+
 v1.16.0 adds experimental, workspace-scoped Recall and a private, explicit
 handoff packet. It is a founder-directed release for real-user testing; the
 three frozen synthetic pilots remain NO-GO, and Gate E remains unmeasured.
 Check decision lifecycle and recorded transitions before acting from either
-surface. The v1.16 release archives, channel pins, and deployment are separate
-promotion steps and are verified after source export.
+surface.
 
 v1.15.0 is published and deployed. It hardens the Viewer Host boundary, bounds
 Worker request bodies, contains unexpected error details, limits delivery
@@ -41,22 +50,22 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
-`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The package stays unpublished on the npm registry. The formula and flake pin published archives. During v1.16 source promotion they remain on v1.15.0 until all four new archives exist; check the pin files for the currently installed version.
+`brew install` uses `packaging/homebrew/campfire.rb` from the public tap `BoringInfraCo/homebrew-campfire`. The package stays unpublished on the npm registry. The formula and flake pin published archives. During v1.17 source promotion they remain on v1.16.0 until all four new archives exist; check the pin files for the currently installed version.
 
 After the public release workflow uploads the four archives for a version, pin the formula and flake to those checksums from this repository:
 
 ```bash
-node scripts/sync-install-channels.mjs --version 1.16.0
+node scripts/sync-install-channels.mjs --version 1.17.0
 ```
 
 Commit that pin here. Copy the formula into the tap. Do not have the public release workflow commit the pin back onto the snapshot. A snapshot exported before the archives exist keeps the previous pin. Do not invent checksums or loosen the pin test.
 
-After v1.16 assets are published, pinned / explicit variants (`--help` for all flags; env equivalents
+After v1.17 assets are published, pinned / explicit variants (`--help` for all flags; env equivalents
 `CAMPREFIX`, `CAMPFIRE_VERSION`, `CAMPFIRE_URL`):
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.16.0
-curl -fsSL https://boringinfra.company/campfire/v1.16.0/install.sh | sh -s -- --version 1.16.0
+curl -fsSL https://boringinfra.company/campfire/install.sh | sh -s -- --version 1.17.0
+curl -fsSL https://boringinfra.company/campfire/v1.17.0/install.sh | sh -s -- --version 1.17.0
 CAMPREFIX=~/.local sh install.sh --dry-run
 ```
 

@@ -39,13 +39,28 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.16.0/install.sh | sh -s -- --version 1.16.0
+curl -fsSL https://boringinfra.company/campfire/v1.17.0/install.sh | sh -s -- --version 1.17.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
 ### Generated workspace view
 
 `campfire view` links to one derived page for the selected workspace. The loopback server renders it from the authorized orientation read. The page is not stored, holds no credential, and is sandboxed so contributed text cannot call Campfire. The human comprehension trace and the reference-open observation remain open. This page does not establish Gate B or Gate C.
+
+### Shared Work Home (read-only Viewer)
+
+v1.17 adds two perspectives to the local actor-bound Viewer. **My work** leads
+with what needs the caller, then tasks assigned to the caller or their
+participating owned agents. **Team work** leads with team attention, then
+participants and their agents with tasks grouped by recorded assignee,
+including unassigned and ownership-unknown cases. Both project the same
+authorized orientation read, show per-slice completeness, label proposed,
+accepted, needs-review, and historical decisions, and render artifact
+references as inert stored text. The perspectives are navigation over shared
+records, not privacy modes; the page does not infer agent presence or fetch
+references. Published under a founder override for real-user testing: no
+human comprehension evidence has been recorded yet, and Gate B, Gate C, and
+Gate E remain unmeasured. See `CHANGELOG.md`.
 
 ### Experimental incident playbook
 
