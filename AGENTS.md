@@ -267,7 +267,10 @@ Viewer trace, the reference-open observation, and an ordinary-work
 continuation are not yet scored, so the candidate is unscored and is not
 published. Keep the Viewer actor-bound and loopback by default; do not infer
 agent presence or expose private sessions. The contract is not a release
-decision.
+decision. Founder direction (October 14, 2026): run the two controlled traces
+first; publication with open observations requires a separate, recorded
+founder override, never a GO; any release ships the read-only Viewer home,
+not a hosted shared-login service.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published)
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations)
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1569,6 +1569,10 @@ v1.17 — SHARED WORK HOME (IMPLEMENTED ENGINEERING CANDIDATE; NOT PUBLISHED)
         two-human controlled trace, the shipped-v1.16 Viewer trace, the
         reference-open observation, and an ordinary-work continuation are
         not yet scored; the candidate is unscored, not CONDITIONAL GO
+        founder direction (October 14): run the two controlled traces first;
+        publication with open observations requires a separate, recorded
+        founder override, never a GO verdict; any release ships the read-only
+        Viewer home, not a hosted shared-login service
         Gate B, Gate C, Gate E, and the v1.12 human/reference observations remain open
 ```
 

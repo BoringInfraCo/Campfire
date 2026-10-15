@@ -102,3 +102,14 @@ Required next: two distinct humans (at least one who did not build the page), ea
 - Gate B (voluntary repeat use), Gate C (ordinary multi-participant value), and Gate E (historical next-action benefit) remain **unmeasured**. The controlled scenario cannot close any of them.
 - VIS-001 condition 4 (reference-open evidence) remains **open**; the shipped-v1.16 Viewer comprehension trace remains **owed**. Both are recorded in `docs/evidence/swh-001/` and must be attributed to VIS-001, not to this sprint.
 - The next step is the two-human controlled trace against the frozen key, followed by the item-level result in this document (or an amendment) and a **separate release decision** before any promotion. A founder override of an evidence hold would be recorded as an override, never as a gate pass.
+
+## 9. Founder direction — October 14, 2026
+
+The founder recorded the release path for this candidate:
+
+- The code and tests are ready for a human trace, but they do not by themselves give v1.17 a GO. The pinned result stays **unscored**.
+- Publication without completing every observation is possible only under a **separate, recorded founder override** under contract §8, never as a GO verdict. Such a record must show the contract verdict, what it waives, what remains unmeasured, and the exact public claim.
+- Recommended sequence: run the two 15-minute controlled traces first. If both pass, that is a substantially stronger basis for a bounded release decision, and the shipped-v1.16 Viewer comprehension trace, a real reference-open attempt, and an ordinary two-human/two-agent continuation may remain explicitly open under a conditional or overridden release. If either participant fails a critical item, repair that usability issue and run a fresh trace before any public launch.
+- Any v1.17 release would ship the **read-only Shared Work Home in the existing actor-bound Viewer**. It would not be the hosted, shared-login team experience. There is no v1.17 package, tag, or deployment.
+
+This direction records the release path. It is not a GO, does not close Gate B, C, or E or VIS-001 condition 4, and no release step (version bump, tag, public export, installer pin, deployment) was performed. A bounded publication with open observations requires a separate, recorded founder override naming its waivers and exact public claim; this direction does not provide it.
