@@ -262,8 +262,7 @@ release-scope override. The two controlled human comprehension traces, the
 shipped-v1.16 Viewer trace, the reference-open observation, and an ordinary
 two-human/two-agent continuation are not recorded; the release is an override
 for real-user testing, not a GO. Gate B, Gate C, and Gate E remain
-unmeasured. Publication and production deployment are recorded there when
-they occur.
+unmeasured. The source is published and deployed as `v1.17.0`.
 
 Sprint SWH-001 — Shared Work Home is the v1.17 contract at
 `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md` and its result is

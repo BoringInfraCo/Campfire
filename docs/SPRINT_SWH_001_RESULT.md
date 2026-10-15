@@ -2,7 +2,7 @@
 
 **Date:** October 14, 2026
 
-**Status:** Implemented engineering candidate in tree. D1–D7 deterministic checks pass. The two-human controlled comprehension trace and the ordinary-work observations are not yet scored, so the candidate is **UNSCORED** — not GO and not CONDITIONAL GO. No release decision; not published; the package remains `1.16.0`.
+**Status:** Implemented engineering candidate (pinned `d7e3b62`). D1–D7 deterministic checks pass. The two-human controlled comprehension trace and the ordinary-work observations are not yet scored, so the candidate is **UNSCORED** — not GO and not CONDITIONAL GO. The founder subsequently authorized a bounded public release under a recorded release-scope override; see `docs/RELEASE_V1_17_DECISION.md` (published and deployed as `v1.17.0`).
 
 **Contract:** `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md`
 **Evidence:** `docs/evidence/swh-001/`
