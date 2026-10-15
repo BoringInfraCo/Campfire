@@ -1,0 +1,1702 @@
+{
+  "acceptedDecisions": [
+    {
+      "approvedBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-13T16:00:33.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "dec_swh001_automated_rollback",
+      "predecessorId": "dec_swh001_manual_rollback",
+      "rationale": "The drill showed the automated job drains and restores the previous color faster than the manual runbook.",
+      "status": "accepted",
+      "summary": "Run the automated billing rollback job for failed deploys.",
+      "updatedAt": "2026-10-13T16:00:34.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-13T16:00:30.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "decisionId": "dec_swh001_canary",
+          "findingId": "find_swh001_health_gate",
+          "id": "cit_swh001_0060",
+          "note": "deploy health gate reading",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "createdAt": "2026-10-13T16:00:28.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "id": "dec_swh001_canary",
+      "rationale": "A canary limits a bad release to a fraction of traffic and can be halted before full rollout.",
+      "status": "accepted",
+      "summary": "Adopt canary deploys for billing-service.",
+      "updatedAt": "2026-10-13T16:00:29.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-13T16:00:27.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_swh001_blue_green",
+          "findingId": "find_swh001_draining_window",
+          "id": "cit_swh001_0052",
+          "note": "rollout trace 284",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "createdAt": "2026-10-13T16:00:25.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "dec_swh001_blue_green",
+      "needsReview": true,
+      "needsReviewFindingIds": [
+        "find_swh001_draining_window"
+      ],
+      "rationale": "Blue-green keeps the previous color available, so a bad release is one traffic switch away from rollback.",
+      "status": "accepted",
+      "summary": "Adopt blue-green deploys for billing-service.",
+      "updatedAt": "2026-10-13T16:00:26.000Z",
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "alignment": {
+    "acceptedDecisionIds": [
+      "dec_swh001_blue_green",
+      "dec_swh001_canary",
+      "dec_swh001_automated_rollback"
+    ],
+    "proposedDecisionIds": [
+      "dec_swh001_friday_windows"
+    ],
+    "status": "open",
+    "unresolvedBlockedTaskIds": [
+      "task_swh001_staging_check",
+      "task_swh001_escalation_owner"
+    ]
+  },
+  "artifacts": [
+    {
+      "createdAt": "2026-10-13T16:00:19.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "id": "art_swh001_drill_report",
+      "title": "billing-service rollback drill report (17)",
+      "type": "report",
+      "uriOrPath": "https://internal.example/billing/reports/rollback-drill-17",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "agentSessionId": "ses_swh001_codex",
+      "createdAt": "2026-10-13T16:00:18.000Z",
+      "createdBy": {
+        "actorId": "agt_swh001_codex",
+        "actorType": "agent"
+      },
+      "id": "art_swh001_trace_284",
+      "title": "billing-service rollout traffic trace 284",
+      "type": "trace",
+      "uriOrPath": "https://internal.example/billing/traces/284",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:53.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_12",
+      "title": "Deploy checklist snapshot 12",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-12",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:52.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_11",
+      "title": "Deploy checklist snapshot 11",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-11",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:51.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_10",
+      "title": "Deploy checklist snapshot 10",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-10",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:50.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_09",
+      "title": "Deploy checklist snapshot 09",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-09",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:49.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_08",
+      "title": "Deploy checklist snapshot 08",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-08",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:48.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_checklist_07",
+      "title": "Deploy checklist snapshot 07",
+      "type": "document",
+      "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-07",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "agentSessionId": "ses_swh001_codex",
+      "createdAt": "2026-10-13T16:00:21.000Z",
+      "createdBy": {
+        "actorId": "agt_swh001_codex",
+        "actorType": "agent"
+      },
+      "id": "art_swh001_pr_284",
+      "title": "Add the automated billing rollback job",
+      "type": "pull_request",
+      "uriOrPath": "https://github.example/billing-service/pull/284",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:20.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "art_swh001_runbook_ref",
+      "title": "Rollback runbook reference",
+      "type": "file",
+      "uriOrPath": "docs/ARCHITECTURE.md",
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [
+      {
+        "approvedBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-13T16:00:27.000Z",
+            "createdBy": {
+              "actorId": "hum_swh001_dana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_swh001_blue_green",
+            "findingId": "find_swh001_draining_window",
+            "id": "cit_swh001_0052",
+            "note": "rollout trace 284",
+            "workspaceId": "ws_swh001_billing"
+          }
+        ],
+        "createdAt": "2026-10-13T16:00:25.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "id": "dec_swh001_blue_green",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_swh001_draining_window"
+        ],
+        "rationale": "Blue-green keeps the previous color available, so a bad release is one traffic switch away from rollback.",
+        "status": "accepted",
+        "summary": "Adopt blue-green deploys for billing-service.",
+        "updatedAt": "2026-10-13T16:00:26.000Z",
+        "workspaceId": "ws_swh001_billing"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_swh001_rowan",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-13T16:00:30.000Z",
+            "createdBy": {
+              "actorId": "hum_swh001_rowan",
+              "actorType": "human"
+            },
+            "decisionId": "dec_swh001_canary",
+            "findingId": "find_swh001_health_gate",
+            "id": "cit_swh001_0060",
+            "note": "deploy health gate reading",
+            "workspaceId": "ws_swh001_billing"
+          }
+        ],
+        "createdAt": "2026-10-13T16:00:28.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_rowan",
+          "actorType": "human"
+        },
+        "id": "dec_swh001_canary",
+        "rationale": "A canary limits a bad release to a fraction of traffic and can be halted before full rollout.",
+        "status": "accepted",
+        "summary": "Adopt canary deploys for billing-service.",
+        "updatedAt": "2026-10-13T16:00:29.000Z",
+        "workspaceId": "ws_swh001_billing"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-13T16:00:33.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "id": "dec_swh001_automated_rollback",
+        "predecessorId": "dec_swh001_manual_rollback",
+        "rationale": "The drill showed the automated job drains and restores the previous color faster than the manual runbook.",
+        "status": "accepted",
+        "summary": "Run the automated billing rollback job for failed deploys.",
+        "updatedAt": "2026-10-13T16:00:34.000Z",
+        "workspaceId": "ws_swh001_billing"
+      }
+    ],
+    "blockedTasks": [
+      {
+        "assignee": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-13T16:00:36.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "id": "task_swh001_staging_check",
+        "status": "blocked",
+        "title": "Confirm the rollback checklist on staging",
+        "updatedAt": "2026-10-13T16:00:44.000Z",
+        "workspaceId": "ws_swh001_billing"
+      },
+      {
+        "createdAt": "2026-10-13T16:00:41.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "id": "task_swh001_escalation_owner",
+        "status": "blocked",
+        "title": "Choose an owner for billing deploy escalations",
+        "updatedAt": "2026-10-13T16:00:46.000Z",
+        "workspaceId": "ws_swh001_billing"
+      }
+    ],
+    "inProgressTasks": [
+      {
+        "assignee": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-13T16:00:37.000Z",
+        "createdBy": {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human"
+        },
+        "id": "task_swh001_reproduce_failure",
+        "status": "in_progress",
+        "title": "Reproduce the failed billing deploy",
+        "updatedAt": "2026-10-13T16:00:45.000Z",
+        "workspaceId": "ws_swh001_billing"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "createdAt": "2026-10-13T16:00:23.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "The drill completed the drain and the previous color stopped serving within 40 seconds.",
+      "evidence": [
+        {
+          "artifactId": "art_swh001_drill_report",
+          "createdAt": "2026-10-13T16:00:23.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "findingId": "find_swh001_drain_clean",
+          "id": "fev_swh001_0040",
+          "note": "drill report section 3",
+          "relation": "supports",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "id": "find_swh001_drain_clean",
+      "predecessorId": "find_swh001_draining_window",
+      "sourceArtifactId": "art_swh001_drill_report",
+      "summary": "Traffic drains cleanly once the rollback job stops opening connections; trace 284 ended mid-drain.",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "agentSessionId": "ses_swh001_opencode",
+      "createdAt": "2026-10-13T16:00:24.000Z",
+      "createdBy": {
+        "actorId": "agt_swh001_opencode",
+        "actorType": "agent"
+      },
+      "currentness": "current",
+      "detail": "Checked the deploy health gate wiring on the staging service.",
+      "id": "find_swh001_health_gate",
+      "summary": "Deploy health checks pass only after the new color reports ready, so a canary halt leaves the previous color serving.",
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "generatedAt": "2026-10-13T18:00:00.000Z",
+  "goal": {
+    "createdAt": "2026-10-13T16:00:07.000Z",
+    "createdBy": {
+      "actorId": "hum_swh001_dana",
+      "actorType": "human"
+    },
+    "description": "Two teammates and their agents share one billing-deploy workspace before Friday's release.",
+    "id": "goal_swh001_deploy_safety",
+    "status": "active",
+    "title": "Make billing-service deploys rollback-safe before Friday's release.",
+    "updatedAt": "2026-10-13T16:00:07.000Z",
+    "workspaceId": "ws_swh001_billing"
+  },
+  "historicalCounts": {
+    "decisions": 1,
+    "findings": 1
+  },
+  "needsAttention": [
+    {
+      "id": "task_swh001_escalation_owner",
+      "kind": "task",
+      "reason": "unassigned_blocked_task",
+      "status": "blocked",
+      "summary": "Choose an owner for billing deploy escalations"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_staging_check",
+      "kind": "task",
+      "reason": "team_blocked_task",
+      "status": "blocked",
+      "summary": "Confirm the rollback checklist on staging"
+    }
+  ],
+  "needsYou": [
+    {
+      "id": "dec_swh001_friday_windows",
+      "kind": "decision",
+      "reason": "proposed_decision_actionable",
+      "status": "proposed",
+      "summary": "Adopt Friday-only billing deploy windows."
+    },
+    {
+      "assignee": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "id": "task_swh001_review_drill",
+      "kind": "task",
+      "reason": "assigned_open_task",
+      "status": "open",
+      "summary": "Review the rollback drill report before Friday"
+    }
+  ],
+  "openTasks": [
+    {
+      "createdAt": "2026-10-13T16:00:41.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_escalation_owner",
+      "status": "blocked",
+      "title": "Choose an owner for billing deploy escalations",
+      "updatedAt": "2026-10-13T16:00:46.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-13T16:00:36.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_staging_check",
+      "status": "blocked",
+      "title": "Confirm the rollback checklist on staging",
+      "updatedAt": "2026-10-13T16:00:44.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-13T16:00:37.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_reproduce_failure",
+      "status": "in_progress",
+      "title": "Reproduce the failed billing deploy",
+      "updatedAt": "2026-10-13T16:00:45.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "createdAt": "2026-10-13T16:00:42.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_release_checklist",
+      "status": "open",
+      "title": "Update the release checklist with rollback steps",
+      "updatedAt": "2026-10-13T16:00:42.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_swh001_opencode",
+        "actorType": "agent"
+      },
+      "createdAt": "2026-10-13T16:00:40.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "id": "task_swh001_health_checks",
+      "status": "open",
+      "title": "Wire deploy health checks into the rollback job",
+      "updatedAt": "2026-10-13T16:00:40.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-13T16:00:39.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_review_drill",
+      "status": "open",
+      "title": "Review the rollback drill report before Friday",
+      "updatedAt": "2026-10-13T16:00:39.000Z",
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_swh001_codex",
+        "actorType": "agent"
+      },
+      "createdAt": "2026-10-13T16:00:38.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "task_swh001_rollback_job",
+      "status": "open",
+      "title": "Draft the automated rollback job",
+      "updatedAt": "2026-10-13T16:00:38.000Z",
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUzLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDExMyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUzLjAwMFoiLCJvcmlnaW5JZCI6ImNvbl9zd2gwMDFfMDExMyIsInBvc2l0aW9uIjo1MSwib3JpZ2luUG9zaXRpb24iOjUxLCJ0aXAiOjB9",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-13T16:00:06.000Z",
+      "name": "Dana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-13T16:00:09.000Z",
+      "name": "Rowan",
+      "role": "member"
+    },
+    {
+      "actor": {
+        "actorId": "agt_swh001_codex",
+        "actorType": "agent"
+      },
+      "harness": "codex",
+      "humanOwnerId": "hum_swh001_dana",
+      "joinedAt": "2026-10-13T16:00:11.000Z",
+      "name": "Codex",
+      "role": "agent"
+    },
+    {
+      "actor": {
+        "actorId": "agt_swh001_opencode",
+        "actorType": "agent"
+      },
+      "harness": "opencode",
+      "humanOwnerId": "hum_swh001_rowan",
+      "joinedAt": "2026-10-13T16:00:13.000Z",
+      "name": "OpenCode",
+      "role": "agent"
+    }
+  ],
+  "proposedDecisions": [
+    {
+      "createdAt": "2026-10-13T16:00:35.000Z",
+      "createdBy": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "id": "dec_swh001_friday_windows",
+      "rationale": "Recorded during triage as a scheduling proposal; not agreed.",
+      "status": "proposed",
+      "summary": "Adopt Friday-only billing deploy windows.",
+      "updatedAt": "2026-10-13T16:00:35.000Z",
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "provenance": [
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 32,
+      "createdAt": "2026-10-13T16:00:34.000Z",
+      "id": "con_swh001_0072",
+      "objectId": "dec_swh001_manual_rollback",
+      "objectType": "decision",
+      "payload": {
+        "changeType": "decision.superseded",
+        "reason": "The rollback drill succeeded; the automated job replaces the manual escalation.",
+        "status": "superseded",
+        "successorId": "dec_swh001_automated_rollback",
+        "summary": "Escalate billing deploy failures to the on-call engineer for a manual rollback."
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 33,
+      "createdAt": "2026-10-13T16:00:35.000Z",
+      "id": "con_swh001_0075",
+      "objectId": "dec_swh001_friday_windows",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Adopt Friday-only billing deploy windows."
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 34,
+      "createdAt": "2026-10-13T16:00:36.000Z",
+      "id": "con_swh001_0078",
+      "objectId": "task_swh001_staging_check",
+      "objectType": "task",
+      "payload": {
+        "title": "Confirm the rollback checklist on staging"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 35,
+      "createdAt": "2026-10-13T16:00:37.000Z",
+      "id": "con_swh001_0079",
+      "objectId": "task_swh001_reproduce_failure",
+      "objectType": "task",
+      "payload": {
+        "title": "Reproduce the failed billing deploy"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 36,
+      "createdAt": "2026-10-13T16:00:38.000Z",
+      "id": "con_swh001_0080",
+      "objectId": "task_swh001_rollback_job",
+      "objectType": "task",
+      "payload": {
+        "title": "Draft the automated rollback job"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 37,
+      "createdAt": "2026-10-13T16:00:39.000Z",
+      "id": "con_swh001_0081",
+      "objectId": "task_swh001_review_drill",
+      "objectType": "task",
+      "payload": {
+        "title": "Review the rollback drill report before Friday"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_rowan",
+        "actorType": "human"
+      },
+      "appendPosition": 38,
+      "createdAt": "2026-10-13T16:00:40.000Z",
+      "id": "con_swh001_0082",
+      "objectId": "task_swh001_health_checks",
+      "objectType": "task",
+      "payload": {
+        "title": "Wire deploy health checks into the rollback job"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 39,
+      "createdAt": "2026-10-13T16:00:41.000Z",
+      "id": "con_swh001_0083",
+      "objectId": "task_swh001_escalation_owner",
+      "objectType": "task",
+      "payload": {
+        "title": "Choose an owner for billing deploy escalations"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 40,
+      "createdAt": "2026-10-13T16:00:42.000Z",
+      "id": "con_swh001_0084",
+      "objectId": "task_swh001_release_checklist",
+      "objectType": "task",
+      "payload": {
+        "title": "Update the release checklist with rollback steps"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 41,
+      "createdAt": "2026-10-13T16:00:43.000Z",
+      "id": "con_swh001_0085",
+      "objectId": "task_swh001_staging_env",
+      "objectType": "task",
+      "payload": {
+        "title": "Set up the billing-service staging environment"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 42,
+      "createdAt": "2026-10-13T16:00:44.000Z",
+      "id": "con_swh001_0086",
+      "objectId": "task_swh001_staging_check",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 43,
+      "createdAt": "2026-10-13T16:00:45.000Z",
+      "id": "con_swh001_0089",
+      "objectId": "task_swh001_reproduce_failure",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 44,
+      "createdAt": "2026-10-13T16:00:46.000Z",
+      "id": "con_swh001_0092",
+      "objectId": "task_swh001_escalation_owner",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 45,
+      "createdAt": "2026-10-13T16:00:47.000Z",
+      "id": "con_swh001_0095",
+      "objectId": "task_swh001_staging_env",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 46,
+      "createdAt": "2026-10-13T16:00:48.000Z",
+      "id": "con_swh001_0098",
+      "objectId": "art_swh001_checklist_07",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 07",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 47,
+      "createdAt": "2026-10-13T16:00:49.000Z",
+      "id": "con_swh001_0101",
+      "objectId": "art_swh001_checklist_08",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 08",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 48,
+      "createdAt": "2026-10-13T16:00:50.000Z",
+      "id": "con_swh001_0104",
+      "objectId": "art_swh001_checklist_09",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 09",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 49,
+      "createdAt": "2026-10-13T16:00:51.000Z",
+      "id": "con_swh001_0107",
+      "objectId": "art_swh001_checklist_10",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 10",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 50,
+      "createdAt": "2026-10-13T16:00:52.000Z",
+      "id": "con_swh001_0110",
+      "objectId": "art_swh001_checklist_11",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 11",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_swh001_dana",
+        "actorType": "human"
+      },
+      "appendPosition": 51,
+      "createdAt": "2026-10-13T16:00:53.000Z",
+      "id": "con_swh001_0113",
+      "objectId": "art_swh001_checklist_12",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Deploy checklist snapshot 12",
+        "type": "document"
+      },
+      "workspaceId": "ws_swh001_billing"
+    }
+  ],
+  "provenanceSummary": [
+    "Dana decision.superseded decision dec_swh001_manual_rollback: The rollback drill succeeded; the automated job replaces the manual escalation.",
+    "Dana contributed decision dec_swh001_friday_windows: Adopt Friday-only billing deploy windows.",
+    "Dana contributed task task_swh001_staging_check: Confirm the rollback checklist on staging",
+    "Dana contributed task task_swh001_reproduce_failure: Reproduce the failed billing deploy",
+    "Dana contributed task task_swh001_rollback_job: Draft the automated rollback job",
+    "Dana contributed task task_swh001_review_drill: Review the rollback drill report before Friday",
+    "Rowan contributed task task_swh001_health_checks: Wire deploy health checks into the rollback job",
+    "Dana contributed task task_swh001_escalation_owner: Choose an owner for billing deploy escalations",
+    "Dana contributed task task_swh001_release_checklist: Update the release checklist with rollback steps",
+    "Dana contributed task task_swh001_staging_env: Set up the billing-service staging environment",
+    "Dana updated task task_swh001_staging_check: blocked",
+    "Dana updated task task_swh001_reproduce_failure: in_progress",
+    "Dana updated task task_swh001_escalation_owner: blocked",
+    "Dana updated task task_swh001_staging_env: completed",
+    "Dana contributed artifact art_swh001_checklist_07: Deploy checklist snapshot 07",
+    "Dana contributed artifact art_swh001_checklist_08: Deploy checklist snapshot 08",
+    "Dana contributed artifact art_swh001_checklist_09: Deploy checklist snapshot 09",
+    "Dana contributed artifact art_swh001_checklist_10: Deploy checklist snapshot 10",
+    "Dana contributed artifact art_swh001_checklist_11: Deploy checklist snapshot 11",
+    "Dana contributed artifact art_swh001_checklist_12: Deploy checklist snapshot 12"
+  ],
+  "provenanceTotal": 51,
+  "provenanceTruncated": true,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [
+        {
+          "createdAt": "2026-10-13T16:00:19.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "id": "art_swh001_drill_report",
+          "title": "billing-service rollback drill report (17)",
+          "type": "report",
+          "uriOrPath": "https://internal.example/billing/reports/rollback-drill-17",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "agentSessionId": "ses_swh001_codex",
+          "createdAt": "2026-10-13T16:00:18.000Z",
+          "createdBy": {
+            "actorId": "agt_swh001_codex",
+            "actorType": "agent"
+          },
+          "id": "art_swh001_trace_284",
+          "title": "billing-service rollout traffic trace 284",
+          "type": "trace",
+          "uriOrPath": "https://internal.example/billing/traces/284",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:53.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_12",
+          "title": "Deploy checklist snapshot 12",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-12",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:52.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_11",
+          "title": "Deploy checklist snapshot 11",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-11",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:51.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_10",
+          "title": "Deploy checklist snapshot 10",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-10",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:50.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_09",
+          "title": "Deploy checklist snapshot 09",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-09",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:49.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_08",
+          "title": "Deploy checklist snapshot 08",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-08",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:48.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_checklist_07",
+          "title": "Deploy checklist snapshot 07",
+          "type": "document",
+          "uriOrPath": "https://internal.example/billing/docs/deploy-checklist-07",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "agentSessionId": "ses_swh001_codex",
+          "createdAt": "2026-10-13T16:00:21.000Z",
+          "createdBy": {
+            "actorId": "agt_swh001_codex",
+            "actorType": "agent"
+          },
+          "id": "art_swh001_pr_284",
+          "title": "Add the automated billing rollback job",
+          "type": "pull_request",
+          "uriOrPath": "https://github.example/billing-service/pull/284",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:20.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "art_swh001_runbook_ref",
+          "title": "Rollback runbook reference",
+          "type": "file",
+          "uriOrPath": "docs/ARCHITECTURE.md",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoiYXJ0aWZhY3QiLCJ3b3Jrc3BhY2VJZCI6IndzX3N3aDAwMV9iaWxsaW5nIiwicmFuayI6MSwiYXQiOiIyMDI2LTEwLTEzVDE2OjAwOjIwLjAwMFoiLCJpZCI6ImFydF9zd2gwMDFfcnVuYm9va19yZWYifQ",
+      "returned": 10,
+      "total": 12,
+      "truncated": true
+    },
+    "blockers": {
+      "items": [
+        {
+          "createdAt": "2026-10-13T16:00:41.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_escalation_owner",
+          "status": "blocked",
+          "title": "Choose an owner for billing deploy escalations",
+          "updatedAt": "2026-10-13T16:00:46.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:36.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_staging_check",
+          "status": "blocked",
+          "title": "Confirm the rollback checklist on staging",
+          "updatedAt": "2026-10-13T16:00:44.000Z",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "returned": 2,
+      "total": 2,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [
+        {
+          "approvedBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:33.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "dec_swh001_automated_rollback",
+          "predecessorId": "dec_swh001_manual_rollback",
+          "rationale": "The drill showed the automated job drains and restores the previous color faster than the manual runbook.",
+          "status": "accepted",
+          "summary": "Run the automated billing rollback job for failed deploys.",
+          "updatedAt": "2026-10-13T16:00:34.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-13T16:00:30.000Z",
+              "createdBy": {
+                "actorId": "hum_swh001_rowan",
+                "actorType": "human"
+              },
+              "decisionId": "dec_swh001_canary",
+              "findingId": "find_swh001_health_gate",
+              "id": "cit_swh001_0060",
+              "note": "deploy health gate reading",
+              "workspaceId": "ws_swh001_billing"
+            }
+          ],
+          "createdAt": "2026-10-13T16:00:28.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "id": "dec_swh001_canary",
+          "rationale": "A canary limits a bad release to a fraction of traffic and can be halted before full rollout.",
+          "status": "accepted",
+          "summary": "Adopt canary deploys for billing-service.",
+          "updatedAt": "2026-10-13T16:00:29.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-13T16:00:27.000Z",
+              "createdBy": {
+                "actorId": "hum_swh001_dana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_swh001_blue_green",
+              "findingId": "find_swh001_draining_window",
+              "id": "cit_swh001_0052",
+              "note": "rollout trace 284",
+              "workspaceId": "ws_swh001_billing"
+            }
+          ],
+          "createdAt": "2026-10-13T16:00:25.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "dec_swh001_blue_green",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_swh001_draining_window"
+          ],
+          "rationale": "Blue-green keeps the previous color available, so a bad release is one traffic switch away from rollback.",
+          "status": "accepted",
+          "summary": "Adopt blue-green deploys for billing-service.",
+          "updatedAt": "2026-10-13T16:00:26.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:35.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "dec_swh001_friday_windows",
+          "rationale": "Recorded during triage as a scheduling proposal; not agreed.",
+          "status": "proposed",
+          "summary": "Adopt Friday-only billing deploy windows.",
+          "updatedAt": "2026-10-13T16:00:35.000Z",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "returned": 4,
+      "total": 4,
+      "truncated": false
+    },
+    "findings": {
+      "items": [
+        {
+          "createdAt": "2026-10-13T16:00:23.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "currentness": "current",
+          "detail": "The drill completed the drain and the previous color stopped serving within 40 seconds.",
+          "evidence": [
+            {
+              "artifactId": "art_swh001_drill_report",
+              "createdAt": "2026-10-13T16:00:23.000Z",
+              "createdBy": {
+                "actorId": "hum_swh001_dana",
+                "actorType": "human"
+              },
+              "findingId": "find_swh001_drain_clean",
+              "id": "fev_swh001_0040",
+              "note": "drill report section 3",
+              "relation": "supports",
+              "workspaceId": "ws_swh001_billing"
+            }
+          ],
+          "id": "find_swh001_drain_clean",
+          "predecessorId": "find_swh001_draining_window",
+          "sourceArtifactId": "art_swh001_drill_report",
+          "summary": "Traffic drains cleanly once the rollback job stops opening connections; trace 284 ended mid-drain.",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "agentSessionId": "ses_swh001_opencode",
+          "createdAt": "2026-10-13T16:00:24.000Z",
+          "createdBy": {
+            "actorId": "agt_swh001_opencode",
+            "actorType": "agent"
+          },
+          "currentness": "current",
+          "detail": "Checked the deploy health gate wiring on the staging service.",
+          "id": "find_swh001_health_gate",
+          "summary": "Deploy health checks pass only after the new color reports ready, so a canary halt leaves the previous color serving.",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "returned": 2,
+      "total": 2,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "agt_swh001_codex",
+          "actorType": "agent",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjIxLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDAzNCIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_pr_284",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:21.000Z",
+          "summary": "create artifact art_swh001_pr_284: Add the automated billing rollback job"
+        },
+        {
+          "actorId": "agt_swh001_codex",
+          "actorType": "agent",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjIyLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDAzNyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxOCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "find_swh001_draining_window",
+          "objectType": "finding",
+          "occurredAt": "2026-10-13T16:00:22.000Z",
+          "summary": "create finding find_swh001_draining_window: The previous color kept serving traffic after the failed rollout was marked rolled back."
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjIzLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA0MSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoxOSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "find_swh001_draining_window",
+          "objectType": "finding",
+          "occurredAt": "2026-10-13T16:00:23.000Z",
+          "reason": "The drill showed trace 284 captured the pre-drain window, not a stuck rollback.",
+          "successorId": "find_swh001_drain_clean",
+          "summary": "finding.corrected finding find_swh001_draining_window: The drill showed trace 284 captured the pre-drain window, not a stuck rollback."
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjIzLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA0MiIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyMCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "find_swh001_drain_clean",
+          "objectType": "finding",
+          "occurredAt": "2026-10-13T16:00:23.000Z",
+          "predecessorId": "find_swh001_draining_window",
+          "reason": "The drill showed trace 284 captured the pre-drain window, not a stuck rollback.",
+          "summary": "finding.corrected finding find_swh001_drain_clean: The drill showed trace 284 captured the pre-drain window, not a stuck rollback."
+        },
+        {
+          "actorId": "agt_swh001_opencode",
+          "actorType": "agent",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjI0LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA0MyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyMSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "find_swh001_health_gate",
+          "objectType": "finding",
+          "occurredAt": "2026-10-13T16:00:24.000Z",
+          "summary": "create finding find_swh001_health_gate: Deploy health checks pass only after the new color reports ready, so a canary halt leaves the previous color serving."
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjI2LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA0OSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyMywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "dec_swh001_blue_green",
+          "objectType": "decision",
+          "occurredAt": "2026-10-13T16:00:26.000Z",
+          "summary": "update:accepted decision dec_swh001_blue_green"
+        },
+        {
+          "actorId": "hum_swh001_rowan",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjI5LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA1NyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyNiwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "dec_swh001_canary",
+          "objectType": "decision",
+          "occurredAt": "2026-10-13T16:00:29.000Z",
+          "summary": "update:accepted decision dec_swh001_canary"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjMyLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA2NSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjoyOSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "dec_swh001_manual_rollback",
+          "objectType": "decision",
+          "occurredAt": "2026-10-13T16:00:32.000Z",
+          "summary": "update:accepted decision dec_swh001_manual_rollback"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjM0LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA3MSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjozMSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "dec_swh001_automated_rollback",
+          "objectType": "decision",
+          "occurredAt": "2026-10-13T16:00:34.000Z",
+          "predecessorId": "dec_swh001_manual_rollback",
+          "reason": "The rollback drill succeeded; the automated job replaces the manual escalation.",
+          "summary": "update:accepted decision dec_swh001_automated_rollback: The rollback drill succeeded; the automated job replaces the manual escalation."
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "decision.superseded",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjM0LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA3MiIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjozMiwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "dec_swh001_manual_rollback",
+          "objectType": "decision",
+          "occurredAt": "2026-10-13T16:00:34.000Z",
+          "reason": "The rollback drill succeeded; the automated job replaces the manual escalation.",
+          "successorId": "dec_swh001_automated_rollback",
+          "summary": "decision.superseded decision dec_swh001_manual_rollback: The rollback drill succeeded; the automated job replaces the manual escalation."
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ0LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA4NiIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0Miwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "task_swh001_staging_check",
+          "objectType": "task",
+          "occurredAt": "2026-10-13T16:00:44.000Z",
+          "summary": "update:blocked task task_swh001_staging_check"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ1LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA4OSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0Mywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "task_swh001_reproduce_failure",
+          "objectType": "task",
+          "occurredAt": "2026-10-13T16:00:45.000Z",
+          "summary": "update:in_progress task task_swh001_reproduce_failure"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ2LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA5MiIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0NCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "task_swh001_escalation_owner",
+          "objectType": "task",
+          "occurredAt": "2026-10-13T16:00:46.000Z",
+          "summary": "update:blocked task task_swh001_escalation_owner"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ3LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA5NSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0NSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "task_swh001_staging_env",
+          "objectType": "task",
+          "occurredAt": "2026-10-13T16:00:47.000Z",
+          "summary": "update:completed task task_swh001_staging_env"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ4LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDA5OCIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0Niwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_07",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:48.000Z",
+          "summary": "create artifact art_swh001_checklist_07: Deploy checklist snapshot 07"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjQ5LjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDEwMSIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0Nywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_08",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:49.000Z",
+          "summary": "create artifact art_swh001_checklist_08: Deploy checklist snapshot 08"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUwLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDEwNCIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0OCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_09",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:50.000Z",
+          "summary": "create artifact art_swh001_checklist_09: Deploy checklist snapshot 09"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUxLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDEwNyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo0OSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_10",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:51.000Z",
+          "summary": "create artifact art_swh001_checklist_10: Deploy checklist snapshot 10"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUyLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDExMCIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo1MCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_11",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:52.000Z",
+          "summary": "create artifact art_swh001_checklist_11: Deploy checklist snapshot 11"
+        },
+        {
+          "actorId": "hum_swh001_dana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUzLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDExMyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIiLCJvcmlnaW5JZCI6IiIsInBvc2l0aW9uIjo1MSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "high",
+          "objectId": "art_swh001_checklist_12",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-13T16:00:53.000Z",
+          "summary": "create artifact art_swh001_checklist_12: Deploy checklist snapshot 12"
+        }
+      ],
+      "returned": 20,
+      "total": 51,
+      "truncated": true
+    },
+    "tasks": {
+      "items": [
+        {
+          "createdAt": "2026-10-13T16:00:41.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_escalation_owner",
+          "status": "blocked",
+          "title": "Choose an owner for billing deploy escalations",
+          "updatedAt": "2026-10-13T16:00:46.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:36.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_staging_check",
+          "status": "blocked",
+          "title": "Confirm the rollback checklist on staging",
+          "updatedAt": "2026-10-13T16:00:44.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:37.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_reproduce_failure",
+          "status": "in_progress",
+          "title": "Reproduce the failed billing deploy",
+          "updatedAt": "2026-10-13T16:00:45.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "createdAt": "2026-10-13T16:00:42.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_release_checklist",
+          "status": "open",
+          "title": "Update the release checklist with rollback steps",
+          "updatedAt": "2026-10-13T16:00:42.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_swh001_opencode",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-13T16:00:40.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "id": "task_swh001_health_checks",
+          "status": "open",
+          "title": "Wire deploy health checks into the rollback job",
+          "updatedAt": "2026-10-13T16:00:40.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_swh001_rowan",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:39.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_review_drill",
+          "status": "open",
+          "title": "Review the rollback drill report before Friday",
+          "updatedAt": "2026-10-13T16:00:39.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_swh001_codex",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-13T16:00:38.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_rollback_job",
+          "status": "open",
+          "title": "Draft the automated rollback job",
+          "updatedAt": "2026-10-13T16:00:38.000Z",
+          "workspaceId": "ws_swh001_billing"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-13T16:00:43.000Z",
+          "createdBy": {
+            "actorId": "hum_swh001_dana",
+            "actorType": "human"
+          },
+          "id": "task_swh001_staging_env",
+          "status": "completed",
+          "title": "Set up the billing-service staging environment",
+          "updatedAt": "2026-10-13T16:00:47.000Z",
+          "workspaceId": "ws_swh001_billing"
+        }
+      ],
+      "returned": 8,
+      "total": 8,
+      "truncated": false
+    }
+  },
+  "suggestedNextAction": {
+    "id": "dec_swh001_friday_windows",
+    "kind": "decision",
+    "orientationHint": true,
+    "reason": "proposed_decision_actionable",
+    "summary": "Adopt Friday-only billing deploy windows."
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-13T16:00:06.000Z",
+    "createdBy": {
+      "actorId": "hum_swh001_dana",
+      "actorType": "human"
+    },
+    "id": "ws_swh001_billing",
+    "name": "swh-billing-deploy",
+    "status": "active",
+    "teamId": "team_swh001",
+    "updatedAt": "2026-10-13T16:00:06.000Z"
+  }
+}

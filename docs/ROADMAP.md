@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published)
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -958,6 +958,12 @@ previews and shared highlights stayed deferred. A human comprehension trace
 on that surface is still open. Section 21 records the override and the
 evidence still required.
 
+After v1.16, the proposed v1.17 Shared Work Home makes this existing
+projection easier to use from a personal or team perspective. Its attention
+items must be derived from authorized recorded state; it cannot infer live
+agent presence from a session timestamp or turn the Viewer into a process
+manager. Section 21 defines the proposed scope and its open evidence gates.
+
 Generated workspace views stay later. They are derived from authorized
 structured state, sandboxed, and non-canonical. They receive no Campfire
 credentials and no unrestricted writes. Arbitrary HTML is untrusted:
@@ -1153,6 +1159,12 @@ Measure:
 - repeated investigations avoided,
 - manual handoffs avoided,
 - workspace continuation rate.
+
+For the proposed personal-to-team path, also measure a dated sequence:
+voluntary return to a workspace, an invited second human's authorized use,
+and a subsequent human-agent continuation. Define each denominator before
+calling it conversion or weekly team usage. Installation identifiers and
+agent sessions do not establish unique humans or active teams.
 
 ### Team memory
 
@@ -1446,6 +1458,8 @@ v1.14 — Generated workspace views   published and deployed under founder overr
 v1.15 — Performance and security hardening   published and deployed as v1.15.0; no new product surface; see docs/SPRINT_PSA_001_RESULT.md
         ↓
 v1.16 — Recall and portable handoff   published and deployed as v1.16.0 under October 13 founder release direction; RCL-001, RCL-002, and RCL-003 NO-GO / REFRAME remain; Gate E open; see docs/RELEASE_V1_16_DECISION.md
+        ↓
+v1.17 — Shared Work Home   implemented engineering candidate (SWH-001); D1–D7 deterministic checks pass; controlled two-human comprehension and ordinary-work observations not yet scored; the candidate is unscored; not published; see docs/SPRINT_SWH_001_RESULT.md
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1538,6 +1552,24 @@ v1.16 — RECALL AND PORTABLE HANDOFF
         contract: docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md
         second measurement: docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md; result: docs/SPRINT_RCL_002_RESULT.md
         decision-safety measurement: docs/Campfire-v1.16-RCL-003-Decision-Safety-and-Source-Use.md; result: docs/SPRINT_RCL_003_RESULT.md
+
+v1.17 — SHARED WORK HOME (IMPLEMENTED ENGINEERING CANDIDATE; NOT PUBLISHED)
+        contract: docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md
+        result: docs/SPRINT_SWH_001_RESULT.md
+        one read-only home for an authorized workspace
+        make existing goal, current work, participants, ownership,
+        attention derived from recorded state, decisions, and source
+        references legible
+        personal and team perspectives are projections of the same state
+        My work / Team work in the existing Viewer; shared decision boundary;
+        bounded completeness per slice; inert artifact references
+        no raw prompts, transcripts, terminal output, inferred agent presence,
+        agent process control, new collection primitive, or hosted multi-tenancy
+        D1–D7 deterministic checks pass on the recorded candidate; the
+        two-human controlled trace, the shipped-v1.16 Viewer trace, the
+        reference-open observation, and an ordinary-work continuation are
+        not yet scored; the candidate is unscored, not CONDITIONAL GO
+        Gate B, Gate C, Gate E, and the v1.12 human/reference observations remain open
 ```
 
 The original v1.12 entry contract required all of these before sprint scope:
@@ -1574,11 +1606,104 @@ These boundaries govern the sequence:
 - Setup may disappear into the agent's normal workflow. Authorization stays visible. The promise is: if an agent supports MCP, it can work from the caller's authorized Campfire context. Enrollment and the session boundary stay explicit.
 - A playbook is guidance for how to record useful state. It is not workflow execution and not new domain machinery. `incident-investigation` 1.0.0 is published opt-in. Further playbooks wait on a continuation gain, or on a founder decision that names what else would be measured. Call it a workspace playbook, not a harness skill.
 
+## Post-v1.16 direction — make shared work legible
+
+The next product question is whether two people using different coding agents
+can understand each other's recorded work, identify where they need to
+coordinate, and continue without sharing private agent sessions. Campfire
+should make that possible through the workspace they already use, rather than
+requiring a new coding environment or a new kind of thread. A developer alone
+should find the same workspace useful with their own agents; inviting a
+teammate should add a team perspective, not migrate the work to another
+product or plan. "Personal" and "team" describe views of authorized state,
+not new storage or automatic privacy classes.
+
+Solo, Delta, and Agentbox sharpen this direction in different ways:
+
+| Reference | Lesson for Campfire | Boundary |
+| --- | --- | --- |
+| [Solo](https://github.com/soloterm/solo) | One compact place to navigate work can reduce the cost of checking several concurrent activities. | Solo is a Laravel command manager. Campfire is not adding a terminal multiplexer or agent start/stop controls in v1.17. |
+| [Delta](https://zed.dev/blog/introducing-delta) | Shared work is easier to understand when decisions, code references, and review context stay connected. | Delta is also pursuing external agents; harness independence alone is not a proven moat. Campfire does not need synchronized worktrees, conversation sharing, or a new version-control layer. |
+| [Agentbox](https://github.com/savannahfeder/agentbox) | Put actionable attention derived from recorded work ahead of a stream of agent activity. | Campfire does not become an agent runner, scheduler, queue, or source of inferred live status. Study the interaction pattern; do not reuse its GPL code without a license review. |
+
+### v1.17 — Shared Work Home
+
+Start with one authorized workspace and the existing read-only Viewer. The
+first view should answer: What is the goal? What work is open or blocked? What
+needs me or the team based on recorded state? Which human or agent owns a task?
+Which decisions and cited findings affect it? Where is the recorded artifact or code
+reference? Preserve source IDs, currentness, provenance, and completeness
+signals when a list is truncated. Use existing workspace participants, agent
+ownership, tasks, orientation, attention items, and activity rather than
+inventing agent presence or a second canonical work feed. A session timestamp
+does not establish that an agent is working, waiting, or blocked now.
+
+The personal perspective emphasizes a caller's owned agents and actionable
+items. The team perspective shows the other authorized participants and their
+**recorded** work at a useful level of detail. Workspace records are shared
+with authorized participants under the existing membership model; merely
+hiding a field in the Viewer is not a privacy boundary. Private prompts,
+responses, tool arguments, terminal output, and unshared local files must not
+be pulled into that model or exposed through a new read path. Task titles,
+artifact names, and summaries can themselves reveal information, so any new
+shared field needs service-side authorization and a deliberate write/share
+contract. The Viewer must continue to use its bounded read allowlist and
+server-side credential handling.
+
+Link a decision or finding to a code, test, commit, or artifact reference only
+when that relationship was recorded. Make the reference inspectable without
+claiming Campfire fetched, verified, or synchronized its target. First observe
+an actual attempt to open a real accessible reference, as VIS-001 condition 4
+requires. If the missing affordance is the obstacle, scope a read-only link
+that performs no preview or external fetch, and record its security review in
+the v1.17 sprint. Rich previews, automatic code ingestion, inline code review,
+and cross-workspace dependency detection remain later questions.
+
+The v1.17 sprint contract freezes this slice, the authorization and privacy
+checks, a human comprehension task, a real
+reference-open observation path, and release criteria before implementation
+is judged. See `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md`. The bounded
+slice is implemented as an engineering candidate; `docs/SPRINT_SWH_001_RESULT.md`
+records the D1–D7 deterministic checks and the still-unscored human
+observations. The
+observation should test whether a person can identify the
+current work and unresolved or competing decisions **without** Campfire
+inventing an operative decision. It should include a genuine two-person,
+two-agent continuation in ordinary work when available. Count voluntary
+return and real cross-human use separately from installation activity. If a
+prior evidence gate is bypassed to ship a bounded slice, record the founder
+decision as an override, not as a GO or gate satisfaction. v1.16 publication
+did not change the RCL-001/002/003 NO-GO / REFRAME verdicts or close Gate E.
+
+### Direction after v1.17
+
+| Order | Product question | Evidence before expansion |
+| --- | --- | --- |
+| Work continuity | Can an invited teammate and their agent take over recorded work, resolve a real dependency, and leave the next person oriented? Build on existing enrollment, task ownership, corrections, and handoff. | Voluntary repeat use (Gate B) and ordinary multi-participant value (Gate C), not another fixture-only pass. |
+| Team attention | Which recorded blockers, reviews, or ownership conflicts need a particular human or team? Consider notifications or controlled requests only after the work view is useful. | Measure missed and false attention; Gate F precedes coordination or action. |
+| Historical reuse | Does prior completed work materially improve a new task, and can a recipient safely use a portable packet? | Collect ordinary-work Gate E observations under `docs/GATE_E_PROTOCOL.md`; the v1.16 synthetic NO-GO results stay visible. |
+| Hosted team offering | Does a team return, invite others, and value durable shared state enough to pay? | Gate B/C evidence, a cost and retention picture, and an explicit product/architecture decision before accounts, tenant boundaries, billing, or quotas. |
+
+The commercial hypothesis is a free downloadable core and, later, a paid team
+service for the collaboration that teams repeatedly use. A small free hosted
+allowance (for example, up to three humans and five registered agent
+identities per team) and a founding-team price are experiments, not a v1.17
+entitlement or pricing commitment. An installation ID is not a unique person,
+an active team, or a paying customer. Billing and a hosted multi-tenant
+control plane remain explicitly deferred in the Product Definition and the
+engineering skill for v1.x; moving them into a numbered release requires a
+separate amendment and evidence. Do not assign them v1.19 or v1.20 merely
+because that sequence sounds convenient.
+
+## Other adjacent references
+
 Television is an adjacent personal-agent product that organizes persistent interactive artifacts into Channels and pins those Channels. Its repository is [telepath-computer/television](https://github.com/telepath-computer/television), and its channel specification is [channels.md](https://github.com/telepath-computer/television/blob/main/specs/product/channels.md). That contrast is useful. It is not a roadmap to copy.
 
 > Television organizes things. Campfire should organize understanding.
 
 Telepath Stash is worth monitoring and not worth adopting. It describes shared planning files, artifacts, and coordination state across agents, and it points toward indexing, meaning, versioning, and collaboration layers. The note is [Introducing Stash](https://buttondown.com/telepath/archive/introducing-stash-local-first-sync-for-agents/). That territory is adjacent to Campfire. It does not change this sequence.
+
+## Roadmap and sprint boundary
 
 The roadmap provides direction.
 

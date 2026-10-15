@@ -2,6 +2,8 @@
 
 const STORAGE_KEY = "campfire.viewer.workspaceId";
 const CURSOR_PREFIX = "campfire.viewer.lastSeen.";
+// SWH-001: local UI preference only. Never workspace content.
+const PERSPECTIVE_KEY = "campfire.viewer.perspective";
 const POLL_MS = 2000;
 const LIMIT = 50;
 
@@ -13,6 +15,10 @@ const els = {
   error: document.getElementById("error"),
   workspace: document.getElementById("workspace"),
   generatedViewLink: document.getElementById("generated-view-link"),
+  perspectiveMine: document.getElementById("perspective-mine"),
+  perspectiveTeam: document.getElementById("perspective-team"),
+  orientation: document.getElementById("orientation"),
+  currentWorkTitle: document.getElementById("current-work-title"),
   mast: document.getElementById("mast"),
   people: document.getElementById("people"),
   goal: document.getElementById("goal"),
@@ -21,6 +27,7 @@ const els = {
   needsYou: document.getElementById("needs-you"),
   needsAttention: document.getElementById("needs-attention"),
   currentWork: document.getElementById("current-work"),
+  sources: document.getElementById("sources"),
   since: document.getElementById("since"),
   stream: document.getElementById("stream"),
   hint: document.getElementById("hint"),
@@ -34,6 +41,7 @@ const state = {
   context: null,
   view: null,
   activity: null,
+  perspective: readStoredPerspective(),
   // "Since You Were Here" is a client-held cursor. sincePending is true until
   // the first context fetch resolves for the current workspace; sinceView is
   // the frozen snapshot rendered from that fetch.
@@ -86,6 +94,90 @@ function asArray(value) {
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+// --- SWH-001 one home, two perspectives -------------------------------------
+// Both perspectives project the same authorized get_workspace_context read.
+// They are navigation over already-authorized records, not privacy modes.
+
+function perspectiveLabel(value) {
+  return value === "team" ? "Team work" : "My work";
+}
+
+function readStoredPerspective() {
+  try {
+    if (typeof localStorage !== "undefined" && localStorage) {
+      return localStorage.getItem(PERSPECTIVE_KEY) === "team" ? "team" : "mine";
+    }
+  } catch (err) {
+    // A UI preference is a convenience; storage may be unavailable.
+  }
+  return "mine";
+}
+
+function persistPerspective(value) {
+  try {
+    if (typeof localStorage !== "undefined" && localStorage) {
+      localStorage.setItem(PERSPECTIVE_KEY, value);
+    }
+  } catch (err) {
+    // Never fail a render over a preference.
+  }
+}
+
+function renderPerspective() {
+  const value = state.perspective === "team" ? "team" : "mine";
+  if (els.perspectiveMine) {
+    els.perspectiveMine.setAttribute("aria-pressed", value === "mine" ? "true" : "false");
+  }
+  if (els.perspectiveTeam) {
+    els.perspectiveTeam.setAttribute("aria-pressed", value === "team" ? "true" : "false");
+  }
+  if (els.orientation) els.orientation.setAttribute("data-perspective", value);
+  if (els.currentWorkTitle) els.currentWorkTitle.textContent = perspectiveLabel(value);
+}
+
+function setPerspective(value) {
+  state.perspective = value === "team" ? "team" : "mine";
+  persistPerspective(state.perspective);
+  renderPerspective();
+  renderOrientation();
+}
+
+// The caller is the authenticated whoami actor. A role never comes from it.
+// The whoami defaults to current state so the render pipeline is unchanged;
+// the parameter is the seam the wiring tests drive directly.
+function callerRef(whoami = state.whoami) {
+  const actor = whoami && whoami.actor;
+  if (!actor || typeof actor.actorId !== "string" || !actor.actorId) return null;
+  const actorType = strField(actor.actorType);
+  if (actorType !== "human" && actorType !== "agent") return null;
+  return { actorId: actor.actorId, actorType };
+}
+
+// Ownership is only the participant's recorded humanOwnerId. An agent with no
+// owner, or an owner who is not a participant, stays ownership-unknown; it is
+// never silently attributed to the current caller.
+function ownedAgentIds(participants, who) {
+  if (!who || who.actorType !== "human") return [];
+  const ids = [];
+  for (const participant of asArray(participants)) {
+    if (!isRecord(participant) || !isRecord(participant.actor)) continue;
+    if (participant.actor.actorType !== "agent") continue;
+    if (strField(participant.humanOwnerId) !== who.actorId) continue;
+    const id = strField(participant.actor.actorId);
+    if (id && ids.indexOf(id) === -1) ids.push(id);
+  }
+  return ids;
+}
+
+// Assignment is the task's stored assignee, matched on id AND type. A task's
+// createdBy is provenance, never assignment.
+function taskAssignedToActor(task, ref) {
+  if (!isRecord(task) || !ref) return false;
+  const assignee = isRecord(task.assignee) ? task.assignee : null;
+  if (!assignee) return false;
+  return assignee.actorId === ref.actorId && assignee.actorType === ref.actorType;
 }
 
 // --- Sprint 008 orientation projection (read-only) --------------------------
@@ -548,8 +640,11 @@ function attentionItemHtml(item) {
   const meta = [item.kind, item.status].filter(Boolean).join(" · ");
   const metaHtml = meta ? `<span class="ometa">${esc(meta)}</span>` : "";
   const sentence = item.summary || item.id || "";
+  // SWH-001: the source id stays visible even when a summary exists, so an
+  // attention cue can always be tied back to its recorded object.
+  const sourceHtml = item.id ? `<span class="osource">${esc(item.id)}</span>` : "";
   const reasonHtml = item.reason ? `<span class="oreason">${esc(item.reason)}</span>` : "";
-  return `<li class="oitem">${metaHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}</li>`;
+  return `<li class="oitem">${metaHtml}${sourceHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}</li>`;
 }
 
 function renderAttentionList(el, items, emptyText) {
@@ -577,6 +672,25 @@ function needsReview(decision) {
   return decision.needsReview === true || reviewFindingIds(decision).length > 0;
 }
 
+// Recorded replacement links and the stored reason only. Absent fields render
+// nothing: the page never invents why a decision changed.
+function decisionTransitionParts(decision) {
+  const parts = [];
+  const predecessorId = strField(decision.predecessorId);
+  if (predecessorId) parts.push(`replaces ${predecessorId}`);
+  const successorId = strField(decision.successorId);
+  if (successorId) parts.push(`replaced by ${successorId}`);
+  const reason = strField(decision.supersedeReason);
+  if (reason) parts.push(`reason: ${reason}`);
+  return parts;
+}
+
+function decisionTransitionHtml(decision) {
+  const parts = decisionTransitionParts(decision);
+  if (!parts.length) return "";
+  return `<span class="oreason">${esc(parts.join(" · "))}</span>`;
+}
+
 // An accepted decision that needs review is not the team's current position.
 // It is separated from the accepted list and marked by a bordered badge plus an
 // aria label, so the distinction survives without color and without relying on
@@ -592,7 +706,15 @@ function workDecisionHtml(decision) {
         ids.length ? ` cites non-current finding${ids.length > 1 ? "s" : ""} ${esc(ids.join(", "))}` : ""
       }</span>`
     : "";
-  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${marker}</li>`;
+  return `<li class="oitem"><span class="ometa">accepted</span><span class="osentence">${esc(title)}</span>${marker}${decisionTransitionHtml(decision)}</li>`;
+}
+
+function acceptedDecisionGroupsHtml(decisions) {
+  const accepted = partitionAcceptedDecisions(decisions);
+  return (
+    workGroup("accepted decisions", accepted.settled, workDecisionHtml) +
+    workGroup("accepted decisions needing review", accepted.flagged, workDecisionHtml)
+  );
 }
 
 function partitionAcceptedDecisions(decisions) {
@@ -671,7 +793,10 @@ function compareByUpdatedDescThenId(a, b) {
 
 function renderCurrentWork(el, work, context) {
   if (!el) return;
-  const decisions = partitionAcceptedDecisions(work.acceptedDecisions);
+  // Frozen VIS-001 surface: this stays the 3-arg current-work renderer. The
+  // accepted-decision groups were extracted so the SWH-001 perspectives can
+  // share them without changing this output.
+  const acceptedGroups = acceptedDecisionGroupsHtml(work.acceptedDecisions);
   // Open tasks are enumerated, not left to id lookup. Previously they were
   // returned by the service but never listed, so the next action was
   // unreachable whenever nothing was in progress or blocked.
@@ -687,14 +812,357 @@ function renderCurrentWork(el, work, context) {
     workGroup("in progress", work.inProgressTasks, workTaskHtml) +
     workGroup("blocked", work.blockedTasks, workTaskHtml) +
     workGroup("open", openTasks, workTaskHtml) +
-    workGroup("accepted decisions", decisions.settled, workDecisionHtml) +
-    workGroup("accepted decisions needing review", decisions.flagged, workDecisionHtml);
+    acceptedGroups;
   // Stated once per bounded slice, outside the groups. Attaching counts to a
   // group made them vanish whenever that group had no rows — a flagged-only
   // decision list lost its decision count — which left a truncated section
   // looking empty.
   const html = groups + renderSliceCompleteness(totals);
   el.innerHTML = groups.length > 0 ? html : `<div class="empty">No current work</div>` + renderSliceCompleteness(totals);
+}
+
+// --- SWH-001 Shared Work Home renderers -------------------------------------
+// All of these read the already-fetched authorized context. They never call
+// the service, never fetch a reference, and never infer live agent state.
+
+function participantKey(ref) {
+  return ref ? `${strField(ref.actorType)}:${strField(ref.actorId)}` : "";
+}
+
+function refByKey(participants, ref) {
+  const key = participantKey(ref);
+  if (!key) return null;
+  for (const participant of asArray(participants)) {
+    if (!isRecord(participant) || !isRecord(participant.actor)) continue;
+    if (participantKey(participant.actor) === key) return participant;
+  }
+  return null;
+}
+
+// The tasks page plus the current-work page, deduped by id. Completed tasks
+// are historical; they are inspected through the workstream, not counted here.
+function collectOpenTasks(context) {
+  const work = deriveCurrentWork(context);
+  const rows = [];
+  const seen = new Set();
+  const candidates = [
+    ...asArray(isRecord(context) ? context.openTasks : undefined),
+    ...work.inProgressTasks,
+    ...work.blockedTasks,
+  ];
+  for (const task of candidates) {
+    if (!isRecord(task)) continue;
+    if (strField(task.status) === "completed") continue;
+    const id = strField(task.id);
+    if (id && seen.has(id)) continue;
+    if (id) seen.add(id);
+    rows.push(task);
+  }
+  return rows.sort(compareByUpdatedDescThenId);
+}
+
+function myWorkGroups(context, who) {
+  const participants = isRecord(context) ? context.participants : [];
+  const owned = ownedAgentIds(participants, who);
+  const isMine = (task) => {
+    if (taskAssignedToActor(task, who)) return true;
+    for (const id of owned) {
+      if (taskAssignedToActor(task, { actorId: id, actorType: "agent" })) return true;
+    }
+    return false;
+  };
+  const rows = collectOpenTasks(context).filter(isMine);
+  const known = ["in_progress", "blocked", "open"];
+  return {
+    ownedAgentIds: owned,
+    inProgress: rows.filter((task) => strField(task.status) === "in_progress"),
+    blocked: rows.filter((task) => strField(task.status) === "blocked"),
+    open: rows.filter((task) => strField(task.status) === "open"),
+    other: rows.filter((task) => known.indexOf(strField(task.status)) === -1),
+  };
+}
+
+function teamWorkGroups(context) {
+  const participants = asArray(isRecord(context) ? context.participants : [])
+    .filter((row) => isRecord(row) && isRecord(row.actor));
+  const tasks = collectOpenTasks(context);
+  const humans = participants.filter((row) => row.actor.actorType === "human");
+  const agents = participants.filter((row) => row.actor.actorType === "agent");
+
+  const agentsOf = new Map();
+  const unowned = [];
+  for (const participant of agents) {
+    const ownerId = strField(participant.humanOwnerId);
+    const owner = ownerId ? refByKey(participants, { actorId: ownerId, actorType: "human" }) : null;
+    if (owner) {
+      const list = agentsOf.get(ownerId) || [];
+      list.push(participant);
+      agentsOf.set(ownerId, list);
+    } else {
+      unowned.push({
+        participant,
+        recordedOwnerId: ownerId,
+        tasks: tasks.filter((task) => taskAssignedToActor(task, participant.actor)),
+      });
+    }
+  }
+
+  const grouped = humans.map((human) => ({
+    participant: human,
+    tasks: tasks.filter((task) => taskAssignedToActor(task, human.actor)),
+    agents: (agentsOf.get(human.actor.actorId) || []).map((agent) => ({
+      participant: agent,
+      tasks: tasks.filter((task) => taskAssignedToActor(task, agent.actor)),
+    })),
+  }));
+
+  const foreign = new Map();
+  const unassigned = [];
+  for (const task of tasks) {
+    const assignee = isRecord(task.assignee) ? task.assignee : null;
+    if (!assignee) {
+      unassigned.push(task);
+      continue;
+    }
+    if (refByKey(participants, assignee)) continue;
+    const key = participantKey(assignee);
+    const row = foreign.get(key) || { assignee, tasks: [] };
+    row.tasks.push(task);
+    foreign.set(key, row);
+  }
+  const foreignGroups = Array.from(foreign.values()).sort((a, b) =>
+    participantKey(a.assignee) < participantKey(b.assignee) ? -1 : 1,
+  );
+  return { humans: grouped, unowned, foreign: foreignGroups, unassigned };
+}
+
+// A filtered group drawn from a truncated slice cannot claim "none". The
+// wording mirrors the bounded-read completeness boundary (§4.4).
+function taskGroupEmptyNote(totals) {
+  const slice = totals && totals.tasks ? totals.tasks : null;
+  if (!slice) return "none recorded in the returned orientation; completeness not reported";
+  if (slice.truncated === true) {
+    const shown = typeof slice.returned === "number" ? slice.returned : "?";
+    const total = typeof slice.total === "number" ? slice.total : "?";
+    return `no matching tasks in the returned ${shown} of ${total}; more may exist`;
+  }
+  return "none";
+}
+
+function completenessRowHtml(name, totals) {
+  const note = completenessNote(totals);
+  if (!note) return "";
+  return `<div class="oslice-complete"><span class="ometa">${esc(name)}</span><span class="osentence">${esc(note)}</span></div>`;
+}
+
+// Assignee identity is the recorded actor, matched on id and type. An unknown
+// name is stated as unknown; it is never guessed from another record.
+function assigneeIdentity(participants, assignee) {
+  const id = strField(assignee.actorId);
+  const type = strField(assignee.actorType, "unknown");
+  const match = refByKey(participants, assignee);
+  const name = match ? strField(match.name) : "";
+  return `${name || "(name not recorded)"} (${type}) ${id}`;
+}
+
+function homeTaskRowHtml(context, task) {
+  const participants = isRecord(context) ? context.participants : [];
+  const status = strField(task.status);
+  const title = strField(task.title, task.summary, task.id);
+  const id = strField(task.id);
+  const assignee = isRecord(task.assignee) ? task.assignee : null;
+  const assigned = assignee
+    ? `assigned to ${esc(assigneeIdentity(participants, assignee))}`
+    : "unassigned";
+  return `<li class="oitem"><span class="ometa">${esc(status)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · ${assigned}</span></li>`;
+}
+
+function groupTasksHtml(context, tasks, emptyNote) {
+  if (!tasks.length) return `<div class="empty">${esc(emptyNote)}</div>`;
+  return `<ul class="olist">${tasks.map((task) => homeTaskRowHtml(context, task)).join("")}</ul>`;
+}
+
+function participantGroupLabel(participant) {
+  const name = strField(participant.name, participant.actor.actorId);
+  if (participant.actor.actorType === "human") return `${name} (human)`;
+  const harness = strField(participant.harness);
+  return harness ? `${name} (agent · ${harness})` : `${name} (agent)`;
+}
+
+function ownedAgentsSectionHtml(context, who, groups) {
+  const participants = isRecord(context) ? context.participants : [];
+  if (who && who.actorType === "agent") {
+    // An agent-bound Viewer shows that agent's tasks only; it never acquires a
+    // human owner's other work.
+    const match = refByKey(participants, who);
+    const name = match ? strField(match.name, who.actorId) : who.actorId;
+    return `<div class="ogroup"><div class="ogroup-label">caller</div><ul class="olist"><li class="oitem"><span class="osentence">${esc(`Viewer bound to agent ${name}; showing tasks assigned to this agent only`)}</span></li></ul></div>`;
+  }
+  if (!who) {
+    return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">No caller identity recorded; owned agents cannot be derived</span></li></ul></div>`;
+  }
+  const rows = [];
+  for (const id of groups.ownedAgentIds) {
+    const match = refByKey(participants, { actorId: id, actorType: "agent" });
+    const name = match ? strField(match.name, id) : id;
+    const harness = match ? strField(match.harness, "harness not recorded") : "harness not recorded";
+    rows.push(`<li class="oitem"><span class="osentence">${esc(`${name} · harness ${harness} · owned by you`)}</span></li>`);
+  }
+  if (!rows.length) rows.push(`<li class="oitem"><span class="osentence">none recorded</span></li>`);
+  return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist">${rows.join("")}</ul></div>`;
+}
+
+function taskStatusGroupsHtml(context, groups, emptyNote) {
+  const parts = [];
+  parts.push(`<div class="ogroup"><div class="ogroup-label">in progress</div>${groupTasksHtml(context, groups.inProgress, emptyNote)}</div>`);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">blocked</div>${groupTasksHtml(context, groups.blocked, emptyNote)}</div>`);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">open</div>${groupTasksHtml(context, groups.open, emptyNote)}</div>`);
+  if (groups.other.length) {
+    parts.push(`<div class="ogroup"><div class="ogroup-label">other status</div>${groupTasksHtml(context, groups.other, emptyNote)}</div>`);
+  }
+  return parts.join("");
+}
+
+function proposedDecisionHtml(decision) {
+  const title = strField(decision.summary, decision.title, decision.id);
+  const lines = [`id ${strField(decision.id)}`].concat(decisionTransitionParts(decision));
+  return `<li class="oitem"><span class="ometa">proposed</span><span class="osentence">${esc(title)}</span><span class="oreason">${esc(lines.join(" · "))}</span></li>`;
+}
+
+function supersededDecisionHtml(decision) {
+  const title = strField(decision.summary, decision.title, decision.id);
+  const lines = [`id ${strField(decision.id)}`].concat(decisionTransitionParts(decision));
+  return `<li class="oitem"><span class="ometa">superseded (historical)</span><span class="osentence">${esc(title)}</span><span class="oreason">${esc(lines.join(" · "))}</span></li>`;
+}
+
+function historicalLineHtml(context) {
+  const counts = isRecord(context && context.historicalCounts) ? context.historicalCounts : null;
+  if (!counts) return "";
+  const decisions = typeof counts.decisions === "number" ? counts.decisions : 0;
+  const findings = typeof counts.findings === "number" ? counts.findings : 0;
+  return `<div class="oslice-complete"><span class="ometa">historical</span><span class="osentence">${esc(`Historical: ${decisions} superseded decisions / ${findings} corrected findings recorded — inspect the workstream`)}</span></div>`;
+}
+
+// Shared by My work and Team work: both perspectives show the same accepted,
+// proposed, and historical decision facts. No accepted decision is picked as
+// "the" current one.
+function decisionBoundaryHtml(work, context) {
+  const totals = sliceTotals(context);
+  const proposed = asArray(isRecord(context) ? context.proposedDecisions : undefined).filter(isRecord);
+  const superseded = asArray(isRecord(context) ? context.supersededDecisions : undefined).filter(isRecord);
+  return (
+    acceptedDecisionGroupsHtml(work.acceptedDecisions) +
+    workGroup("proposed decisions — not accepted, not permission to act", proposed, proposedDecisionHtml) +
+    workGroup("superseded (historical)", superseded, supersededDecisionHtml) +
+    completenessRowHtml("decisions", totals.decisions) +
+    historicalLineHtml(context)
+  );
+}
+
+function renderMyWork(el, context, who) {
+  if (!el) return;
+  const groups = myWorkGroups(context, who);
+  const totals = sliceTotals(context);
+  const emptyNote = taskGroupEmptyNote(totals);
+  const parts = [];
+  parts.push(ownedAgentsSectionHtml(context, who, groups));
+  parts.push(`<div class="ogroup"><div class="ogroup-label">my tasks</div>`);
+  parts.push(taskStatusGroupsHtml(context, groups, emptyNote));
+  parts.push(`</div>`);
+  parts.push(completenessRowHtml("tasks", totals.tasks));
+  parts.push(decisionBoundaryHtml(deriveCurrentWork(context), context));
+  el.innerHTML = parts.join("");
+}
+
+function renderTeamWork(el, context, who) {
+  if (!el) return;
+  const groups = teamWorkGroups(context);
+  const totals = sliceTotals(context);
+  const emptyNote = taskGroupEmptyNote(totals);
+  const parts = [];
+  for (const human of groups.humans) {
+    const name = strField(human.participant.name, human.participant.actor.actorId);
+    parts.push(`<div class="ogroup"><div class="ogroup-label">${esc(participantGroupLabel(human.participant))}</div>`);
+    parts.push(groupTasksHtml(context, human.tasks, emptyNote));
+    for (const agent of human.agents) {
+      parts.push(`<div class="ogroup-label">${esc(participantGroupLabel(agent.participant))} · owned by ${esc(name)}</div>`);
+      parts.push(groupTasksHtml(context, agent.tasks, emptyNote));
+    }
+    parts.push(`</div>`);
+  }
+  if (groups.unowned.length) {
+    parts.push(`<div class="ogroup"><div class="ogroup-label">Unowned agents (ownership unknown)</div>`);
+    for (const entry of groups.unowned) {
+      const label = entry.recordedOwnerId
+        ? `${participantGroupLabel(entry.participant)} — ownership unknown; recorded owner ${entry.recordedOwnerId} is not a participant (unresolvable)`
+        : `${participantGroupLabel(entry.participant)} — ownership unknown`;
+      parts.push(`<div class="ogroup-label">${esc(label)}</div>`);
+      parts.push(groupTasksHtml(context, entry.tasks, emptyNote));
+    }
+    parts.push(`</div>`);
+  }
+  for (const entry of groups.foreign) {
+    const label = `${strField(entry.assignee.actorType, "unknown")} ${strField(entry.assignee.actorId)} — (name not recorded)`;
+    parts.push(`<div class="ogroup"><div class="ogroup-label">${esc(label)}</div>`);
+    parts.push(groupTasksHtml(context, entry.tasks, emptyNote));
+    parts.push(`</div>`);
+  }
+  parts.push(`<div class="ogroup"><div class="ogroup-label">Unassigned</div>${groupTasksHtml(context, groups.unassigned, emptyNote)}</div>`);
+  parts.push(completenessRowHtml("tasks", totals.tasks));
+  parts.push(decisionBoundaryHtml(deriveCurrentWork(context), context));
+  el.innerHTML = parts.join("");
+}
+
+function findingSourceHtml(finding) {
+  const id = strField(finding.id);
+  const summary = strField(finding.summary, id);
+  const currentness = strField(finding.currentness, "current");
+  const evidence = asArray(finding.evidence)
+    .filter(isRecord)
+    .map((row) => {
+      const artifactId = strField(row.artifactId);
+      if (!artifactId) return "";
+      const relation = strField(row.relation);
+      return relation ? `${artifactId} (${relation})` : artifactId;
+    })
+    .filter((text) => text);
+  const evidenceText = evidence.length ? `evidence: ${evidence.join(", ")}` : "evidence: none recorded";
+  return `<li class="oitem"><span class="ometa">${esc(currentness)}</span><span class="osentence">${esc(summary)}</span><span class="oreason">id ${esc(id)} · ${esc(evidenceText)}</span></li>`;
+}
+
+function artifactSourceHtml(artifact) {
+  const id = strField(artifact.id);
+  const type = strField(artifact.type);
+  const title = strField(artifact.title, id);
+  // The stored reference is inert text. It is never fetched, previewed, or
+  // linked, and listing it does not claim the target exists or is accessible.
+  const reference = strField(artifact.uriOrPath);
+  const referenceHtml = reference
+    ? `reference: <code>${esc(reference)}</code> (stored reference, not fetched)`
+    : "no reference recorded";
+  return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · ${referenceHtml}</span></li>`;
+}
+
+function sourceListHtml(rows, name, totals) {
+  const note = completenessRowHtml(name, totals && totals[name] ? totals[name] : null);
+  if (rows.length) return `<ul class="olist">${rows.join("")}</ul>${note}`;
+  const slice = totals && totals[name] ? totals[name] : null;
+  if (slice && slice.truncated === true) return `<div class="empty">more available</div>${note}`;
+  if (slice) return `<div class="empty">none</div>${note}`;
+  return `<div class="empty">none recorded in the returned orientation</div>`;
+}
+
+// Shared sources: current findings and artifact references, both perspectives.
+function renderSources(el, context) {
+  if (!el) return;
+  const totals = sliceTotals(context);
+  const slices = isRecord(context) && isRecord(context.slices) ? context.slices : {};
+  const findings = asArray(isRecord(slices.findings) ? slices.findings.items : undefined).filter(isRecord);
+  const artifacts = asArray(isRecord(slices.artifacts) ? slices.artifacts.items : undefined).filter(isRecord);
+  const parts = [];
+  parts.push(`<div class="ogroup"><div class="ogroup-label">current findings</div>${sourceListHtml(findings.map(findingSourceHtml), "findings", totals)}</div>`);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">artifact references</div>${sourceListHtml(artifacts.map(artifactSourceHtml), "artifacts", totals)}</div>`);
+  el.innerHTML = parts.join("");
 }
 
 function sinceItemHtml(item) {
@@ -858,14 +1326,25 @@ function renderRecordNotes(el, context) {
   el.hidden = text.length === 0;
 }
 
-function renderOrientation() {
-  renderRecordNotes(els.recordNotes, state.context);
-  renderAlignment(els.alignment, deriveAlignment(state.context), state.context);
-  renderAttentionList(els.needsYou, deriveNeedsYou(state.context), "You're all caught up");
-  renderAttentionList(els.needsAttention, deriveNeedsAttention(state.context), "Nothing needs attention");
-  renderCurrentWork(els.currentWork, deriveCurrentWork(state.context), state.context);
-  renderSince(els.since, state.sinceView);
-  renderNextAction(els.nextAction, deriveSuggestedNextAction(state.context));
+// The els/state parameters default to the live globals; render() and
+// setPerspective() keep calling this with no arguments. The seam exists so the
+// wiring (whoami -> My work, perspective -> renderer) is testable without a DOM.
+function renderOrientation(homeEls = els, homeState = state) {
+  renderRecordNotes(homeEls.recordNotes, homeState.context);
+  renderAlignment(homeEls.alignment, deriveAlignment(homeState.context), homeState.context);
+  renderAttentionList(homeEls.needsYou, deriveNeedsYou(homeState.context), "You're all caught up");
+  renderAttentionList(homeEls.needsAttention, deriveNeedsAttention(homeState.context), "Nothing needs attention");
+  // Both perspectives render from this same context; only the leading panel
+  // differs (CSS order/visibility). No section makes its own read.
+  const who = callerRef(homeState.whoami);
+  if (homeState.perspective === "team") {
+    renderTeamWork(homeEls.currentWork, homeState.context, who);
+  } else {
+    renderMyWork(homeEls.currentWork, homeState.context, who);
+  }
+  renderSources(homeEls.sources, homeState.context);
+  renderSince(homeEls.since, homeState.sinceView);
+  renderNextAction(homeEls.nextAction, deriveSuggestedNextAction(homeState.context));
 }
 
 function renderDetail(lines) {
@@ -1164,6 +1643,14 @@ if (els.workspace) {
   });
 }
 
+// Native buttons handle Enter/Space themselves; click keeps one code path.
+if (els.perspectiveMine) {
+  els.perspectiveMine.addEventListener("click", () => setPerspective("mine"));
+}
+if (els.perspectiveTeam) {
+  els.perspectiveTeam.addEventListener("click", () => setPerspective("team"));
+}
+
 if (els.stream) {
   els.stream.addEventListener("click", (event) => {
     const older = event.target.closest("#older");
@@ -1216,8 +1703,16 @@ document.addEventListener("keydown", (event) => {
     return;
   }
   if (!inField && event.key === "Enter") {
+    // A focused native control keeps its own activation; the perspective
+    // buttons must stay keyboard-operable.
+    if (tag === "BUTTON") return;
     event.preventDefault();
     toggleExpand();
+    return;
+  }
+  if (!inField && (event.key === "p" || event.key === "P")) {
+    event.preventDefault();
+    setPerspective(state.perspective === "team" ? "mine" : "team");
     return;
   }
   if (event.key === "[") {
@@ -1239,6 +1734,10 @@ document.addEventListener("keydown", (event) => {
     }
   }
 });
+
+// Apply the stored perspective before the first render so the shell, the
+// aria state, and the panel order cannot disagree.
+renderPerspective();
 
 async function boot() {
   try {

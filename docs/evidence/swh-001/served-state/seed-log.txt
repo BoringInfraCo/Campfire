@@ -1,0 +1,92 @@
+# SWH-001 served-state seed log
+
+FIXTURE EVIDENCE — calibrates UI and rubric; cannot establish Gate B, C, or E.
+
+Recorded 2026-10-14 (UTC) by the SWH-001 recording session. No token value,
+token hash, or `cft_` string appears in this directory.
+
+## Source position
+
+| Item | Value |
+| --- | --- |
+| Repo commit at freeze | `db3a121d3cbbc4beed1965ef6956b3294a109c7c` ("Record v1.16.0 publication and deployment") |
+| Package version | `1.16.0` (`package.json`) |
+| Seed command | `npx tsx fixtures/swh-001/seed.ts --out fixtures/swh-001/.tmp/run-a --force` |
+| Dump command | `npx tsx fixtures/swh-001/dump.ts --db fixtures/swh-001/.tmp/run-a/campfire.db --tokens fixtures/swh-001/.tmp/run-a/tokens.json --out docs/evidence/swh-001/served-state` |
+| Determinism check | second fresh seed at `.tmp/run-b` + dump to `.tmp/dumps-b`; `diff -r` over the two dump directories reported no differences |
+| Seed clock | base `2026-10-13T16:00:00.000Z`, +1 s per write, final `2026-10-13T16:00:56.000Z` |
+| Frozen read clock | `2026-10-13T18:00:00.000Z` is the `generatedAt` of both served contexts (`dump.ts` uses `SERVED_AT`, not wall time) |
+| Orientation cursor (Dana and Rowan) | `cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19zd2gwMDFfYmlsbGluZyIsIm9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUzLjAwMFoiLCJpZCI6ImNvbl9zd2gwMDFfMDExMyIsInBoYXNlIjoiaGlnaCIsIm9yaWdpbk9jY3VycmVkQXQiOiIyMDI2LTEwLTEzVDE2OjAwOjUzLjAwMFoiLCJvcmlnaW5JZCI6ImNvbl9zd2gwMDFfMDExMyIsInBvc2l0aW9uIjo1MSwib3JpZ2luUG9zaXRpb24iOjUxLCJ0aXAiOjB9` |
+| Cursor decodes to | `{"v":1,"kind":"contribution","workspaceId":"ws_swh001_billing","occurredAt":"2026-10-13T16:00:53.000Z","id":"con_swh001_0113","phase":"high","originOccurredAt":"2026-10-13T16:00:53.000Z","originId":"con_swh001_0113","position":51,"originPosition":51,"tip":0}` |
+
+## Dump hashes (sha256, as written)
+
+| File | sha256 |
+| --- | --- |
+| `context-dana.json` | `45c9098257b73460eb150f9f5c178cb2700483c1625d955fc368b893e7e381f6` |
+| `context-rowan.json` | `728050ebc127b2a8ebb5eeeba7531f4c5155aa5d88021e859b10e82e94ffcd87` |
+| `workspace-dana.json` | `23a1d2c763c0b7f2f589eec134e98fd98a02bc0e507400e012109b6faeb1aab6` |
+
+Both context dumps are identical except `needsYou` and `needsAttention` (verified
+by field-level diff). `workspace-dana.json` is the `get_workspace` inspector
+read as Dana, including superseded rows.
+
+## Determinism
+
+- Ids: keyed records use pinned ids (below); every other record is
+  `*_swh001_0001`, `*_swh001_0002`, ... in insertion order (`queueSource`).
+- Clock: fixed base plus 1000 ms per write.
+- Exceptions: raw actor tokens are random by construction
+  (`mintToken` uses WebCrypto). The token values and their stored hashes differ
+  between runs; they never enter the workspace context, the dumps, this log, or
+  the key. Nothing else varied between the two fresh seeds.
+
+## Deterministic ids (frozen)
+
+| Record | Id |
+| --- | --- |
+| organization | `org_swh001` |
+| team | `team_swh001` |
+| workspace | `ws_swh001_billing` (name `swh-billing-deploy`) |
+| goal | `goal_swh001_deploy_safety` |
+| Dana (human, owner) | `hum_swh001_dana` |
+| Rowan (human, member) | `hum_swh001_rowan` |
+| Codex (agent of Dana, harness `codex`) | `agt_swh001_codex` |
+| OpenCode (agent of Rowan, harness `opencode`) | `agt_swh001_opencode` |
+| Codex session | `ses_swh001_codex` |
+| OpenCode session | `ses_swh001_opencode` |
+| task `stagingCheck` | `task_swh001_staging_check` |
+| task `reproduceFailure` | `task_swh001_reproduce_failure` |
+| task `rollbackJob` | `task_swh001_rollback_job` |
+| task `reviewDrill` | `task_swh001_review_drill` |
+| task `healthChecks` | `task_swh001_health_checks` |
+| task `escalationOwner` | `task_swh001_escalation_owner` |
+| task `releaseChecklist` | `task_swh001_release_checklist` |
+| task `stagingEnv` | `task_swh001_staging_env` |
+| decision `blueGreen` | `dec_swh001_blue_green` |
+| decision `canary` | `dec_swh001_canary` |
+| decision `manualRollback` | `dec_swh001_manual_rollback` |
+| decision `automatedRollback` | `dec_swh001_automated_rollback` |
+| decision `fridayWindows` | `dec_swh001_friday_windows` |
+| finding `drainingWindow` | `find_swh001_draining_window` |
+| finding `drainClean` | `find_swh001_drain_clean` |
+| finding `healthGate` | `find_swh001_health_gate` |
+| artifact `checklist05`..`checklist12` | `art_swh001_checklist_05` .. `art_swh001_checklist_12` |
+| artifact `trace284` | `art_swh001_trace_284` |
+| artifact `drillReport` | `art_swh001_drill_report` |
+| artifact `runbookRef` | `art_swh001_runbook_ref` |
+| artifact `pr284` | `art_swh001_pr_284` |
+
+## Seed-time verification
+
+`seed.ts` fails unless the served projection matches the frozen scenario:
+artifact slice 10/12 truncated; tasks 8/8, findings 2/2, decisions 4/4 complete;
+d1 `needsReview` citing `find_swh001_draining_window` with no decision transition;
+d2 accepted and clean; d3 superseded with successor, reason and `supersededAt`;
+d4 accepted with predecessor d3; p1 proposed; f1 superseded; f2 current with
+evidence `art_swh001_drill_report`; f3 current; per-participant `needsYou` /
+`needsAttention`; Rowan's blocked group empty on the complete tasks slice.
+
+No token appears here. The seed's stdout summary (which includes tokens for the
+local trace runbook) is deliberately not retained; `tokens.json` lives only in
+the gitignored `.tmp/` output directory, mode 0600.

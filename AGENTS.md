@@ -58,7 +58,7 @@ docs/PRODUCT_DEFINITION.md
 docs/VISION.md
 docs/ARCHITECTURE.md
 docs/ROADMAP.md
-docs/SPRINT_020.md
+docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md
 ```
 
 Sprint 009 — Align Before Execution is complete (GO); its result is
@@ -202,24 +202,24 @@ The human comprehension trace, the reference-open observation, and the
 presentation-defect finding are unrecorded. This release is not a GO,
 Gate B, or Gate C result. See `docs/SPRINT_GWV_001_RESULT.md`.
 
-Sprint RCL-001 — Recall and Portable Handoff is an implemented candidate for
+Sprint RCL-001 — Recall and Portable Handoff was an implemented candidate for
 v1.16. It adds one authorized recall read and one CLI-written offline packet.
-The October 11 scored pilot verdict is NO-GO. The package stays `1.15.0`.
+The October 11 scored pilot verdict is NO-GO. The package was `1.15.0` at that pilot.
 Gate B, Gate C, and Gate E are unmeasured. Do not add embeddings, Viewer writes,
 packet import, or per-command telemetry. See
 `docs/Campfire-v1.16-RCL-001-Recall-and-Portable-Handoff.md` and
 `docs/SPRINT_RCL_001_RESULT.md`.
 
 Sprint RCL-002 — Recall over Orientation completed its October 11 synthetic
-pilot with a NO-GO / REFRAME verdict. v1.16 stays held; package stays
-`1.15.0`. The RCL-001 NO-GO and its runs are unchanged. S1 matched answers
+pilot with a NO-GO / REFRAME verdict. At that pilot, v1.16 stayed held and the
+package stayed `1.15.0`. The RCL-001 NO-GO and its runs are unchanged. S1 matched answers
 chose the same next action, S2 treatment chose one rule despite two accepted
 conflicting decisions, and the S2 offline recipient missed the required
 decision transition. Gate B, Gate C, and Gate E remain unmeasured. See
 `docs/Campfire-v1.16-RCL-002-Recall-Over-Orientation.md`,
 `docs/SPRINT_RCL_002_RESULT.md`, and `docs/evidence/rcl-002/`.
 
-Sprint RCL-003 — Decision safety and source use is a local `1.15.0` candidate
+Sprint RCL-003 — Decision safety and source use was a local `1.15.0` candidate
 with an October 11–12 synthetic NO-GO / REFRAME verdict. Its contract is
 `docs/Campfire-v1.16-RCL-003-Decision-Safety-and-Source-Use.md` and its result
 is `docs/SPRINT_RCL_003_RESULT.md`.
@@ -236,7 +236,8 @@ now carry a bounded `rationale`, reversing the RCL-002 excerpt-only position.
 paginated. RCL-001 and RCL-002 stay frozen; their fixtures and results are not
 edited or rescored. Gate B, Gate C, and Gate E remain unmeasured.
 RCL-003 recorded zero qualified treatment wins and an S2 offline recipient
-that promoted a superseded rationale into a live condition; v1.16 stays held.
+that promoted a superseded rationale into a live condition; v1.16 stayed held
+at that point.
 The scored packet had a projection defect, corrected after the verdict: a
 decision-set member no longer flattens its `section` to `decision-set`, a
 superseded member no longer carries `rationale`, and `linkedNextStep` guidance
@@ -252,8 +253,21 @@ On October 13, the founder directed preparation of a bounded public v1.16.0
 release so existing users can test Recall and portable handoff in ordinary
 work. `docs/RELEASE_V1_16_DECISION.md` records that release-scope override.
 It does not change any RCL-001/002/003 verdict or close Gate E. The source is
-being prepared as an experimental release candidate; publication and
-production deployment remain separate promotion steps until recorded there.
+published and deployed as `v1.16.0`. Gate B, Gate C, and Gate E remain
+unmeasured; publication is not a GO for the frozen RCL pilots.
+
+Sprint SWH-001 — Shared Work Home is the v1.17 contract at
+`docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md` and its result is
+`docs/SPRINT_SWH_001_RESULT.md`. The read-only Viewer now has My work and
+Team work perspectives over the same authorized workspace read, a shared
+decision boundary, bounded completeness per slice, and inert artifact
+references. The D1–D7 deterministic checks pass on the recorded candidate.
+The two-human controlled comprehension trace, the overdue shipped-v1.16
+Viewer trace, the reference-open observation, and an ordinary-work
+continuation are not yet scored, so the candidate is unscored and is not
+published. Keep the Viewer actor-bound and loopback by default; do not infer
+agent presence or expose private sessions. The contract is not a release
+decision.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

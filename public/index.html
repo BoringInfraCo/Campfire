@@ -19,38 +19,48 @@
       </label>
       <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Workspace view ↗</a>
     </header>
+    <!-- SWH-001: one home, two perspectives. Both buttons are native controls;
+         the other perspective is always one visible control away. -->
+    <nav id="perspective" class="perspective" aria-label="Perspectives">
+      <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
+      <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
+    </nav>
     <section id="mast" aria-label="Workspace now">
       <div id="people"></div>
       <div id="goal"></div>
     </section>
     <main>
-      <section id="orientation" class="orientation" aria-label="Orientation">
+      <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
         <div id="record-notes" class="panel-body" hidden></div>
         <section class="panel alignment" aria-labelledby="alignment-title">
           <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
           <div id="alignment" class="panel-body"></div>
         </section>
         <div id="next-action" class="next-action" aria-label="Suggested next action"></div>
-        <section class="panel" aria-labelledby="needs-you-title">
+        <section class="panel" id="needs-you-panel" aria-labelledby="needs-you-title">
           <h2 class="panel-title" id="needs-you-title">Needs You</h2>
           <div id="needs-you" class="panel-body"></div>
         </section>
-        <section class="panel" aria-labelledby="needs-attention-title">
+        <section class="panel" id="needs-attention-panel" aria-labelledby="needs-attention-title">
           <h2 class="panel-title" id="needs-attention-title">Needs Attention</h2>
           <div id="needs-attention" class="panel-body"></div>
         </section>
-        <section class="panel" aria-labelledby="current-work-title">
+        <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
           <h2 class="panel-title" id="current-work-title">Current Work</h2>
           <div id="current-work" class="panel-body"></div>
         </section>
-        <section class="panel" aria-labelledby="since-title">
+        <section class="panel sources" id="sources-panel" aria-labelledby="sources-title">
+          <h2 class="panel-title" id="sources-title">Shared sources</h2>
+          <div id="sources" class="panel-body"></div>
+        </section>
+        <section class="panel" id="since-panel" aria-labelledby="since-title">
           <h2 class="panel-title" id="since-title">Since You Were Here</h2>
           <div id="since" class="panel-body"></div>
         </section>
       </section>
       <section id="stream" class="stream" aria-label="Workstream"></section>
     </main>
-    <p id="hint">j/k navigate   ↵ inspect   [/] workspace</p>
+    <p id="hint">j/k navigate   ↵ inspect   [/] workspace   p perspective</p>
     <script>
       try {
         var t = new URLSearchParams(window.location.search).get("theme");

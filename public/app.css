@@ -520,3 +520,71 @@ main {
 .generated-view-link:focus-visible {
   text-decoration: underline;
 }
+
+/* SWH-001 Shared Work Home: one workspace, two perspectives. The two buttons
+   are the shell's only controls; both perspectives read the same authorized
+   context and differ only in which recorded facts lead. */
+.perspective {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 1ch;
+  padding: 0.45em 1.5ch 0;
+}
+
+.perspective-btn {
+  font: inherit;
+  padding: 0.2em 1.2ch;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.perspective-btn:hover {
+  color: var(--fg);
+}
+
+/* The selected perspective must survive without color: bold, underlined, and
+   bordered, not a color-only state. */
+.perspective-btn[aria-pressed="true"] {
+  color: var(--fg);
+  border-color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.perspective-btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Attention rows keep the service-provided source id visible next to the
+   summary, so a cue can always be tied back to its record. */
+.osource {
+  flex: none;
+  color: var(--muted);
+}
+
+.sources {
+  grid-column: 1 / -1;
+}
+
+/* Perspective order and visibility. CSS on the shared DOM: no panel is
+   duplicated and both perspectives render from the same context read. */
+#orientation[data-perspective="mine"] #needs-you-panel { order: 1; }
+#orientation[data-perspective="mine"] #current-work-panel { order: 2; }
+#orientation[data-perspective="mine"] .alignment { order: 3; }
+#orientation[data-perspective="mine"] #next-action { order: 4; }
+#orientation[data-perspective="mine"] #sources-panel { order: 5; }
+#orientation[data-perspective="mine"] #since-panel { order: 6; }
+#orientation[data-perspective="mine"] #needs-attention-panel { display: none; }
+
+#orientation[data-perspective="team"] #needs-attention-panel { order: 1; }
+#orientation[data-perspective="team"] #current-work-panel { order: 2; }
+#orientation[data-perspective="team"] .alignment { order: 3; }
+#orientation[data-perspective="team"] #sources-panel { order: 4; }
+#orientation[data-perspective="team"] #since-panel { order: 5; }
+#orientation[data-perspective="team"] #needs-you-panel,
+#orientation[data-perspective="team"] #next-action { display: none; }
