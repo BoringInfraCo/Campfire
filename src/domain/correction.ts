@@ -3,7 +3,7 @@
  * from text, time, or an agent assertion.
  */
 import { ValidationError } from "./errors.js";
-import type { FindingEvidenceRelation } from "./types.js";
+import { FINDING_EVIDENCE_RELATIONS, type FindingEvidenceRelation } from "./types.js";
 
 export const CORRECTION_REASON_MAX = 2000;
 export const EVIDENCE_NOTE_MAX = 500;
@@ -32,11 +32,11 @@ export function assertEvidenceNote(note: string | undefined): string | undefined
 }
 
 export function assertEvidenceRelation(relation: string): FindingEvidenceRelation {
-  if (relation !== "supports" && relation !== "contradicts") {
+  if (!(FINDING_EVIDENCE_RELATIONS as readonly string[]).includes(relation)) {
     throw new ValidationError("Evidence relation must be supports or contradicts", {
       field: "relation",
       value: relation,
     });
   }
-  return relation;
+  return relation as FindingEvidenceRelation;
 }

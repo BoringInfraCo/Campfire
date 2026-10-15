@@ -11,6 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { CampfireError, ValidationError } from "../domain/errors.js";
+import { FINDING_EVIDENCE_RELATIONS } from "../domain/types.js";
 import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { getPlaybook } from "../playbooks/index.js";
@@ -288,7 +289,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "get_workspace_context",
     {
       description:
-        "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou/needsAttention, current work, and an orientation hint. Each slice carries total, returned, and truncated. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
+        "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou (work you can act on) and needsAttention (other team records — attention ordering, not an access boundary), current work, and an orientation hint. Each slice carries total, returned, and truncated. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
       inputSchema: { workspaceId: z.string(), since: z.string().optional() },
     },
     (args) => run("get_workspace_context", () => invoke("get_workspace_context", args)),
@@ -547,7 +548,13 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         confidence: z.number().optional(),
         sourceArtifactId: z.string().optional(),
         evidence: z
-          .array(z.object({ artifactId: z.string(), relation: z.string(), note: z.string().optional() }))
+          .array(
+            z.object({
+              artifactId: z.string(),
+              relation: z.enum(FINDING_EVIDENCE_RELATIONS),
+              note: z.string().optional(),
+            }),
+          )
           .optional(),
       },
     },
@@ -568,11 +575,11 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     "cite_finding_evidence",
     {
       description:
-        "Cite an artifact as evidence for a finding. Records an explicit citation and does not edit the old assertion.",
+        "Cite an artifact as evidence for a finding. The relation must be supports or contradicts. Records an explicit citation and does not edit the old assertion.",
       inputSchema: {
         findingId: z.string(),
         artifactId: z.string(),
-        relation: z.string(),
+        relation: z.enum(FINDING_EVIDENCE_RELATIONS),
         note: z.string().optional(),
       },
     },

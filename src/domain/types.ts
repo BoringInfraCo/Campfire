@@ -20,7 +20,13 @@ export type TaskStatus = "open" | "in_progress" | "blocked" | "completed";
 export type DecisionStatus = "proposed" | "accepted" | "superseded";
 /** Whether a finding is what the workspace currently believes. */
 export type FindingCurrentness = "current" | "superseded" | "withdrawn";
-export type FindingEvidenceRelation = "supports" | "contradicts";
+/**
+ * The closed evidence-relation vocabulary (COR-001). Exported as a value so
+ * every boundary — the service validator and the MCP input schemas — enumerates
+ * the same set instead of drifting.
+ */
+export const FINDING_EVIDENCE_RELATIONS = ["supports", "contradicts"] as const;
+export type FindingEvidenceRelation = (typeof FINDING_EVIDENCE_RELATIONS)[number];
 export type FindingTransitionKind = "superseded" | "withdrawn";
 export type DecisionTransitionKind = "superseded" | "rejected";
 export type ParticipantRole = "owner" | "member" | "agent" | "viewer";

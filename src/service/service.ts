@@ -344,7 +344,11 @@ export interface WorkspaceContext {
   provenanceTruncated: boolean;
   /** Items the caller is authorized to act on outside Campfire. */
   needsYou: AttentionItem[];
-  /** Team-level items the caller cannot act on directly. */
+  /**
+   * Team records not actionably assigned to the caller. Attention ordering,
+   * not an access boundary: a writing participant may still take up a shared
+   * task (the change is recorded with their own provenance).
+   */
   needsAttention: AttentionItem[];
   currentWork: CurrentWork;
   suggestedNextAction: SuggestedNextAction;
