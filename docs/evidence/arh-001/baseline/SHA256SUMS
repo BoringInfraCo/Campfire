@@ -2,7 +2,7 @@
 #   shasum -a 256 -c docs/evidence/arh-001/baseline/SHA256SUMS
 01a3997f5bbfc551e1fedf8766c8d284bca6aea136ee6ec7e4a863662b0e1cad  docs/evidence/arh-001/baseline/BASELINE_CHECKS.md
 b1945af9de421acde19b7ce434e20dec3a002c0956a4b9cc09350fd79a85f7f4  docs/evidence/arh-001/baseline/PIN.md
-77ed5686facf582c9c19d7bd211dcb53a701544600303b9083f66988e1faa00f  docs/evidence/arh-001/baseline/SURFACE_FACTS.md
+fd72e23bdd8813672153ade17faccb4fa3d077a8101f8baf9e1cd01c2738a4cf  docs/evidence/arh-001/baseline/SURFACE_FACTS.md
 c5da8327aa0b8954cdd78653e2be4db0064ed38a2a187ecf688a22e92e75bfef  docs/evidence/arh-001/baseline/captures/cli/artifacts-ws_arh001_lab-ana.json
 816a59c65068036034cbf2d31038f841167fb0dc03427fe9e2098125e9e51cac  docs/evidence/arh-001/baseline/captures/cli/artifacts-ws_arh001_trunc_artifacts-ana.json
 7e72703ea3dda9162d051c8c1343dafb1773c4a98cb3fa82d6c58e42f536a22f  docs/evidence/arh-001/baseline/captures/cli/context-ws_arh001_lab-ana-cli.json

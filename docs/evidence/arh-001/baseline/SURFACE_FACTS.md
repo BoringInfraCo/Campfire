@@ -211,9 +211,9 @@ Evidence base:
   `cmdStatus` `src/cli/index.ts:1389-1403`) builds
   `WorkspaceStatusResult` (`src/cli/projections.ts:143-154`,
   `buildWorkspaceStatus` `:168-212`), which has no artifacts field or count.
-  In the captured status JSON the substring `artifact` occurs exactly once —
-  inside the fixture workspace name `ARH-001 artifact handoff lab` — and
-  nowhere as a data field.
+  In the captured status JSON the substring `artifact` occurs twice — once
+  inside the fixture workspace name `ARH-001 artifact handoff lab` and once in
+  the goal title — and nowhere as a data field or count.
 
 ## (e) MCP
 

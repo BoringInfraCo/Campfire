@@ -6,7 +6,7 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
-**Next planning step:** v1.21 has a proposed artifact-reference handoff contract at `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`, scoped from the released v1.20.1 baseline. It is not implemented or a release decision.
+**Next planning step:** v1.21 ARH-001 has its v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human observation materials frozen (commit `cec4e63`; `docs/evidence/arh-001/`, `fixtures/artifact-handoff/arh-001/`), and its result is recorded as **UNSCORED — no eligible ordinary-work attempt yet** (`docs/SPRINT_ARH_001_RESULT.md`). The next step is one real reference-open attempt in ordinary work, then the two-human/two-harness handoff. No product change exists and no release decision is requested.
 
 ---
 
@@ -1469,7 +1469,7 @@ v1.19 — Trustworthy Team Attention   ATT-001: v1.18.0 baseline frozen (fixture
         ↓
 v1.20 — Shared Work Console   UIX-001: read-only terminal dashboard (`campfire dashboard`) and Viewer refresh implemented, D1–D6 pass, independently verified; five pre-registered cold tasks NOT OBSERVED; recorded as CONDITIONAL GO — engineering candidate; founder directed a public v1.20.0 release under the recorded release-scope override (docs/RELEASE_V1_20_DECISION.md); v1.20.0 frozen unpublished before promotion (machine-local Playwright path in the pty capture test, repaired in `70f4023`: PTY assertions mandatory, evidence capture opt-in); release re-cut as v1.20.1 under the recorded release-scope override (docs/RELEASE_V1_20_1_DECISION.md); published and deployed as v1.20.1
         ↓
-v1.21 — Artifact reference handoff   ARH-001 proposed contract, not implemented: test one real reference-open attempt and a cross-harness handoff from the released console; if Campfire causes an access or interpretation failure, scope the smallest authorized inspect/open path while the external system keeps the file; no file hosting, automatic ingestion, or gate claim by declaration
+v1.21 — Artifact reference handoff   ARH-001: v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human materials frozen (commit `cec4e63`); result **UNSCORED** — the real reference-open attempt and the two-human/two-harness handoff are NOT OBSERVED, so no bounded repair is scoped and no v1.21 feature exists; if an ordinary-work attempt later shows an access or navigation failure, scope the smallest authorized inspect/open path while the external system keeps the file; no file hosting, automatic ingestion, or gate claim by declaration
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1740,11 +1740,15 @@ The release did not close the ATT-001/WCO-001 observations or Gate B/C/E/F.
 
 ### v1.21 candidate — make cited work usable in a handoff
 
-The proposed sprint contract is
+The sprint contract is
 `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`. It freezes an
 observation-first sequence, a bounded repair path, source and authorization
-checks, a two-human/two-harness rubric, and a separate release boundary. No
-v1.21 implementation or verdict is recorded yet.
+checks, a two-human/two-harness rubric, and a separate release boundary. Its
+baseline, fixture, evidence plan, and human materials are frozen in commit
+`cec4e63`; the recorded result is **UNSCORED**
+(`docs/SPRINT_ARH_001_RESULT.md`): the ordinary-work reference-open attempt
+and the two-human/two-harness handoff are **NOT OBSERVED**, so no Campfire gap
+is observed and no v1.21 feature exists yet.
 
 The [Guillermo Rauch interview assessment](GUILLERMO_RAUCH_INTERVIEW_ROADMAP_ASSESSMENT.md)
 sharpens the next product question: can an authorized teammate and a different
