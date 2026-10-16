@@ -1,0 +1,24 @@
+Campfire  /  ATT-001 attention lab  ws_att001_lab
+hum_att001_ana human  ·  refreshed 2026-10-16T18:06:43.524Z
+GOAL
+  Make team attention cues trustworthy without changing recorded work.
+  goal_att001_attention
+  20/21 truncated tasks · 7/7 decisions
+  art_att001_trace_284  trace  https://internal.example/att-001/traces/284 
+  stored reference, not fetched
+  art_att001_runbook_ref  document  references/att-001/attention-runbook.md 
+  stored reference, not fetched
+  accepted  dec_att001_new
+  accepted  dec_att001_plain
+  accepted  dec_att001_competing_b
+  accepted  dec_att001_competing_a
+  accepted  dec_att001_review_withdrawn  needs review  find_att001_withdrawn
+  accepted  dec_att001_review_superseded  needs review  find_att001_superseded
+  accepted  dec_att001_accepted_current
+MY WORK  Needs You  ATTENTION  20/21 truncated tasks · 7/7 decisions
+  Attention coverage: tasks 20 of 21 (truncated), decisions 7 of 7. Cues beyond
+  the returned pages may exist.
+  > blocked  task_att001_blocked_ana  blocked task assigned to you  Package the
+  lab baseline evidence  assignee: hum_att001_ana
+  accepted  dec_att001_review_withdrawn  The quiet desk needs no review because
+j/k move   enter inspect   r refresh   q quit

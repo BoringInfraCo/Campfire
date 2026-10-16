@@ -20,8 +20,10 @@ const els = {
   orientation: document.getElementById("orientation"),
   currentWorkTitle: document.getElementById("current-work-title"),
   mast: document.getElementById("mast"),
+  recordedCounts: document.getElementById("recorded-counts"),
   people: document.getElementById("people"),
   goal: document.getElementById("goal"),
+  density: document.getElementById("density"),
   alignment: document.getElementById("alignment"),
   nextAction: document.getElementById("next-action"),
   needsYou: document.getElementById("needs-you"),
@@ -614,7 +616,24 @@ function renderHeader() {
   }
 }
 
+// Recorded participants only. Registration is not a status.
+function recordedCountText(list) {
+  let people = 0;
+  let agents = 0;
+  for (const participant of asArray(list)) {
+    const actor = isRecord(participant) ? participant.actor : null;
+    const type = isRecord(actor) ? strField(actor.actorType) : "";
+    if (type === "human") people += 1;
+    else if (type === "agent") agents += 1;
+  }
+  return `${people} people · ${agents} registered agents`;
+}
+
 function renderMast() {
+  if (els.recordedCounts) {
+    const list = state.context && Array.isArray(state.context.participants) ? state.context.participants : null;
+    els.recordedCounts.textContent = list ? recordedCountText(list) : "";
+  }
   if (els.people) {
     if (!state.workspaces.length) {
       els.people.innerHTML = "";
@@ -632,7 +651,8 @@ function renderMast() {
   if (els.goal) {
     const goal = currentGoal();
     if (goal && goal.title) {
-      els.goal.innerHTML = `<span class="glabel">GOAL</span> ${esc(goal.title)}`;
+      const idHtml = goal.id ? ` <span class="gid">${esc(goal.id)}</span>` : "";
+      els.goal.innerHTML = `<span class="glabel">GOAL</span> ${esc(goal.title)}${idHtml}`;
     } else {
       els.goal.innerHTML = "";
     }
@@ -1762,6 +1782,56 @@ if (els.perspectiveTeam) {
   els.perspectiveTeam.addEventListener("click", () => setPerspective("team"));
 }
 
+// Local display preference only. It is not a workspace object and does not read
+// or write Campfire state.
+const DENSITY_KEY = "campfire-viewer-density";
+
+function readStoredDensity() {
+  try {
+    if (typeof localStorage !== "undefined" && localStorage) {
+      return localStorage.getItem(DENSITY_KEY) === "compact" ? "compact" : "comfortable";
+    }
+  } catch (err) {
+    // A display preference is a convenience; storage may be unavailable.
+  }
+  return "comfortable";
+}
+
+function persistDensity(value) {
+  try {
+    if (typeof localStorage !== "undefined" && localStorage) {
+      localStorage.setItem(DENSITY_KEY, value);
+    }
+  } catch (err) {
+    // Never fail a render over a preference.
+  }
+}
+
+function applyDensity(mode) {
+  const value = mode === "compact" ? "compact" : "comfortable";
+  const root = typeof document !== "undefined" && document.documentElement ? document.documentElement : null;
+  if (root) {
+    if (!root.dataset) root.dataset = {};
+    root.dataset.density = value;
+  }
+  if (els.density) els.density.setAttribute("aria-pressed", value === "compact" ? "true" : "false");
+  return value;
+}
+
+function toggleDensity() {
+  const root = typeof document !== "undefined" && document.documentElement ? document.documentElement : null;
+  const current = root && root.dataset && root.dataset.density === "compact" ? "compact" : "comfortable";
+  const next = current === "compact" ? "comfortable" : "compact";
+  applyDensity(next);
+  persistDensity(next);
+}
+
+if (els.density) {
+  els.density.addEventListener("click", () => {
+    toggleDensity();
+  });
+}
+
 if (els.stream) {
   els.stream.addEventListener("click", (event) => {
     const older = event.target.closest("#older");
@@ -1846,11 +1916,13 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Apply the stored perspective before the first render so the shell, the
-// aria state, and the panel order cannot disagree.
+// Apply stored display preferences before the first render so the shell and
+// the aria state cannot disagree. Density is read again at the start of boot.
+applyDensity(readStoredDensity());
 renderPerspective();
 
 async function boot() {
+  applyDensity(readStoredDensity());
   try {
     state.whoami = await api("whoami");
   } catch (err) {

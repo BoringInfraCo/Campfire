@@ -470,7 +470,7 @@ describe("WCO-001 D6 — compatibility", () => {
 
   it("keeps the CLI command catalog unchanged for continuation commands", () => {
     const commands = [...CLI_COMMAND_NAMES];
-    expect(commands).toHaveLength(59);
+    expect(commands).toHaveLength(60);
     for (const command of ["status", "context", "catch-up", "tasks", "update-task", "cite-evidence", "inspect"]) {
       expect(commands).toContain(command);
     }

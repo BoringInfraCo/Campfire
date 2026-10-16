@@ -13,11 +13,14 @@
       </span>
       <span id="whoami"></span>
       <span id="error" hidden></span>
-      <label class="ws">
-        <span class="ws-label">workspace</span>
-        <select id="workspace" aria-label="Workspace"></select>
-      </label>
-      <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Workspace view ↗</a>
+      <div class="header-tools">
+        <button type="button" id="density" aria-pressed="false">Density</button>
+        <label class="ws">
+          <span class="ws-label">workspace</span>
+          <select id="workspace" aria-label="Workspace"></select>
+        </label>
+        <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Workspace view ↗</a>
+      </div>
     </header>
     <!-- SWH-001: one home, two perspectives. Both buttons are native controls;
          the other perspective is always one visible control away. -->
@@ -26,6 +29,7 @@
       <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
     </nav>
     <section id="mast" aria-label="Workspace now">
+      <div id="recorded-counts"></div>
       <div id="people"></div>
       <div id="goal"></div>
     </section>

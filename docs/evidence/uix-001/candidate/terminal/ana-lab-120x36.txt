@@ -1,0 +1,36 @@
+Campfire  /  ATT-001 attention lab  ws_att001_lab
+hum_att001_ana human  ·  refreshed 2026-10-16T18:06:43.901Z
+GOAL
+  Make team attention cues trustworthy without changing recorded work.
+  goal_att001_attention
+  20/21 truncated tasks · 7/7 decisions
+2 people · 2 registered agents
+  Codex  codex  owner hum_att001_ana  registered  recorded
+  OpenCode  opencode  owner hum_att001_ben  registered  recorded
+ARTIFACT REFERENCES
+  art_att001_trace_284  trace  https://internal.example/att-001/traces/284  stored reference, not fetched
+  art_att001_runbook_ref  document  references/att-001/attention-runbook.md  stored reference, not fetched
+  accepted  dec_att001_new
+  accepted  dec_att001_plain
+  accepted  dec_att001_competing_b
+  accepted  dec_att001_competing_a
+  accepted  dec_att001_review_withdrawn  needs review  find_att001_withdrawn
+  accepted  dec_att001_review_superseded  needs review  find_att001_superseded
+  accepted  dec_att001_accepted_current
+MY WORK  Needs You  ATTENTION  20/21 truncated tasks · 7/7  RECORDED DECISIONS
+decisions                                                     accepted  dec_att001_new  Replace the weekly manual review
+  Attention coverage: tasks 20 of 21 (truncated), decisions   with coverage-qualified attention cues.
+  7 of 7. Cues beyond the returned pages may exist.           accepted  dec_att001_plain  Keep the workspace read-only
+  Recorded assignment is a record, not a permission: it       during the baseline freeze.
+  > blocked  task_att001_blocked_ana  blocked task assigned   newest record.
+  to you  Package the lab baseline evidence  assignee:        accepted  dec_att001_competing_a  Order attention cues by
+  hum_att001_ana                                              recorded assignment.
+  open  task_att001_open_ana  open task assigned to you       accepted  dec_att001_review_withdrawn  The quiet desk
+  Review the lab attention rules  assignee: hum_att001_ana    needs no review because its attention lists are empty.
+CURRENT WORK                                                  needs review  find_att001_withdrawn
+  orientation hint, not an action  task_att001_blocked_ana    accepted  dec_att001_review_superseded  The lab attention
+  Package the lab baseline evidence                           lists are complete because the task slice is complete.
+  blocked  task_att001_blocked_noassignee  Decide what        needs review  find_att001_superseded
+SOURCE
+  get_workspace_context  task_att001_blocked_ana
+p perspective   tab section   j/k move   enter inspect   r refresh   ? help   q quit

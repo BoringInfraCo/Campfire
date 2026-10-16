@@ -2,7 +2,7 @@
 
 **Status:** Revised  
 **Version:** 0.2  
-**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`); October 15 v1.18 work-continuity contract drafted; October 15 WCO-001 baseline recorded and a labeled single-operator rehearsal run (eligible two-human case NOT OBSERVED), Amendment 1's bounded guidance/schema repair implemented with D1–D6 passing, recorded as CONDITIONAL GO — engineering candidate; October 15 v1.18.0 published and deployed under the recorded release-scope override in `docs/RELEASE_V1_18_DECISION.md`; October 15 v1.19 team-attention contract proposed (unimplemented and unscored); October 15 ATT-001 baseline frozen (fixture v2), engineering candidate implemented with D1–D6 passing and independent verification, two-person trace NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 15 founder directed a full public v1.19.0 release under the recorded release-scope override (docs/RELEASE_V1_19_DECISION.md); October 15 v1.19.0 published and deployed under that override
+**Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`); October 15 v1.18 work-continuity contract drafted; October 15 WCO-001 baseline recorded and a labeled single-operator rehearsal run (eligible two-human case NOT OBSERVED), Amendment 1's bounded guidance/schema repair implemented with D1–D6 passing, recorded as CONDITIONAL GO — engineering candidate; October 15 v1.18.0 published and deployed under the recorded release-scope override in `docs/RELEASE_V1_18_DECISION.md`; October 15 v1.19 team-attention contract proposed (unimplemented and unscored); October 15 ATT-001 baseline frozen (fixture v2), engineering candidate implemented with D1–D6 passing and independent verification, two-person trace NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 15 founder directed a full public v1.19.0 release under the recorded release-scope override (docs/RELEASE_V1_19_DECISION.md); October 15 v1.19.0 published and deployed under that override; October 16 interface reassessment recorded after v1.19; October 16 founder directed UIX-001 terminal and Viewer planning before the open human traces
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -1689,6 +1689,48 @@ did not change the RCL-001/002/003 NO-GO / REFRAME verdicts or close Gate E.
 The v1.18 work-continuity sprint is `docs/Campfire-v1.18-WCO-001-Continue-the-Work.md`. It began with the shipped v1.17 behavior and allowed a dated, evidence-backed amendment for the smallest repair. The contract did not close Gate B/C/E or the open v1.17 human observations by declaration. Its recorded status is CONDITIONAL GO — engineering candidate: the eligible two-human case is NOT OBSERVED, the witnessed gap comes from a labeled rehearsal, and the bounded Amendment 1 repair passes D1–D6 without claiming human continuation; see `docs/SPRINT_WCO_001_RESULT.md`. v1.18.0 was separately released under the recorded founder override.
 
 The v1.19 team-attention sprint is `docs/Campfire-v1.19-ATT-001-Trustworthy-Team-Attention.md`. It targets two inspectable gaps in the shipped context projection: attention derived from bounded task/decision pages can appear exhaustive when those pages are truncated, and an accepted decision citing non-current evidence has no team review cue. The contract froze a v1.18.0 baseline (fixture v2), limits the change to existing service and read-only Viewer surfaces, and scores both deterministic source fidelity (D1–D6) and a two-person comprehension trace (H1–H6). Its recorded status is **CONDITIONAL GO — engineering candidate**: D1–D6 pass on the recorded candidate (`b18a536`, `bb007c7`, `d7addb2`), independent verification closed two mutation survivors, and the two-person trace is **NOT OBSERVED** because the engineering session had one operator and §6 forbids substituting agents or the builder; see `docs/SPRINT_ATT_001_RESULT.md`. The founder subsequently directed a full public v1.19.0 release, published and deployed on October 15, 2026 under the recorded release-scope override in `docs/RELEASE_V1_19_DECISION.md`; that override moves no gate. It introduces no notifications, ownership inference, controlled requests, coordination, or Gate F evidence, and it does not close Gate B/C/E/F or the WCO-001/SWH-001 observations.
+
+### Interface reassessment after v1.19
+
+Solo, Delta, and Rex are useful interface references, not a reason to replace
+the existing Campfire clients. `campfire status` and the JSON CLI already give
+terminal users an authorized overview; the read-only Viewer already presents
+the same workspace to humans. Extend those surfaces from observed navigation
+or comprehension failures before starting a separate full-screen terminal UI,
+native app, inbox, or agent-control surface. The linked
+[`soloterm/solo`](https://github.com/soloterm/solo) is a Laravel command
+manager; its lesson is compact command navigation, not evidence of a generic
+agent-presence model. Delta connects conversations and code through its own
+collaborative worktree; Campfire's shared record should remain usable across
+independent harnesses without importing those private conversations.
+
+Rex's [Program Status Protocol (OSC 7501)](https://www.superlogical.com/rex/docs/build/program-status)
+is worth an interoperability spike only after a concrete need is observed. It
+reports a program's transient state **to its terminal**; it does not supply
+Campfire with an authenticated workspace status feed. Do not derive “working,”
+“blocked,” or “needs approval” from a registered agent session, a terminal
+window, or a task alone. A future explicit status adapter would need a named
+origin and actor/session/workspace binding, freshness, authorization, and a
+separate evidence-backed rule before influencing shared attention. It would
+not replace durable Task, Finding, Decision, or Contribution records.
+
+The next evidence remains the open two-person comprehension and continuation
+traces, reference-open attempt, and ordinary repeat use. A faster terminal
+navigation prototype can be justified later by measured time-to-find and
+missed/false attention in real work; the comparison should include the shipped
+CLI and Viewer, not an imagined blank baseline. This was the sequencing
+preference before the founder's October 16 direction below.
+
+**October 16 founder direction:** Start a focused terminal and Viewer interface
+sprint now. The founder chose both surfaces because the shipped presentation is
+not sufficient for the target audience and a clearer product experience is
+important while the market is moving. This changes the sequencing preference
+above; it does not change the workspace architecture, ATT-001/WCO-001 verdicts,
+or any open evidence gate. `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`
+is the sprint plan. It uses existing authorized work state, explicitly
+avoids invented live agent status, and leaves release authorization separate.
+An engineering candidate is in the working tree; see `docs/SPRINT_UIX_001_RESULT.md`.
+The human comparison is not observed, and nothing here is a release or a GO.
 
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |

@@ -75,7 +75,9 @@ import {
   type TelemetryEndpoint,
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
+import { runDashboardSession } from "./dashboard.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
+import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
 import { getPlaybook, listPlaybooks, type PlaybookDefinition } from "../playbooks/index.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
@@ -1400,6 +1402,42 @@ async function cmdStatus(parsed: ParsedArgs, argv: string[]): Promise<void> {
   });
 }
 
+async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  if (!isInteractiveTty()) {
+    throw new ValidationError(DASHBOARD_NON_TTY_MESSAGE);
+  }
+  const explicit = explicitWorkspaceArgument(parsed);
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit, { allowAwaiting: true });
+    if ("awaiting" in selection) {
+      console.log("Waiting for an agent to start work.");
+      return;
+    }
+    const workspaceId = selection.workspaceId;
+    const actor = backend.identity.ctx.actor;
+    await runDashboardSession({
+      workspaceId,
+      actorId: actor.actorId,
+      actorType: actor.actorType,
+      load: async () =>
+        (await backend.call("get_workspace_context", { workspaceId })) as WorkspaceContext,
+      inspect: (kind, id) => {
+        const method =
+          kind === "task"
+            ? "get_task"
+            : kind === "finding"
+              ? "get_finding"
+              : kind === "decision"
+                ? "get_decision"
+                : "get_artifact";
+        const idField =
+          kind === "task" ? "taskId" : kind === "finding" ? "findingId" : kind === "decision" ? "decisionId" : "artifactId";
+        return backend.call(method, { workspaceId, [idField]: id });
+      },
+    });
+  });
+}
+
 async function cmdAgents(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const mode = commandOutput(parsed);
   const explicit = explicitWorkspaceArgument(parsed);
@@ -2537,6 +2575,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   handoff: (parsed) => cmdHandoff(parsed),
   up: (parsed) => cmdUp(parsed),
   status: (parsed, argv) => cmdStatus(parsed, argv),
+  dashboard: (parsed, argv) => cmdDashboard(parsed, argv),
   agents: (parsed, argv) => cmdAgents(parsed, argv),
   decisions: (parsed, argv) => cmdDecisions(parsed, argv),
   context: (parsed, argv) => cmdContext(parsed, argv),

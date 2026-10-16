@@ -1123,7 +1123,23 @@ Current truth
 Playbook text
         !=
 Workflow execution or workspace state
+
+Terminal program status
+        !=
+Recorded task state, agent presence, or authorization
 ```
+
+Terminal status reports, including Rex's OSC 7501, describe what a program
+tells its terminal at a moment in time. They are neither Campfire
+Contributions nor proof that an agent is still running, blocked on a team
+decision, or allowed to act. OSC 7501 is a program-to-terminal reporting
+protocol; Campfire cannot treat it as a generic inbound status feed. If a
+future harness or terminal adapter explicitly sends status to Campfire, bind
+each report to an authenticated actor, agent session, and authorized workspace;
+retain its origin and observation time; expire it; and keep it separate from
+canonical Task/Decision state and private session content. Any rule that turns
+such a report into shared attention requires its own product and authorization
+review. The current CLI and Viewer infer no live agent presence.
 
 Future cloud/team architecture should assume:
 
