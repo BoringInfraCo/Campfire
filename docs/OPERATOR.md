@@ -2,14 +2,25 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.17.0 is a public release under founder override for the read-only Shared
-Work Home in the local Viewer. The two controlled human comprehension traces,
-the shipped-v1.16 Viewer trace, the reference-open observation, and an
-ordinary two-human/two-agent continuation were not recorded; the release is
-not a GO. See `RELEASE_V1_17_DECISION.md`. The v1.17.0 versioned installer is
-tracked; the public archives and checksums must exist before Homebrew and Nix
-pins can move. The v1.16.0 pin below remains the current published channel
-until then.
+v1.18.0 makes the MCP boundary for continuing a teammate's work more explicit.
+`needsAttention` is documented as attention ordering, not an access boundary: a
+blocked or open task assigned to another participant is still shared work, and
+a writing participant may take it up with `update_task`, recorded under their
+own provenance. Finding-evidence citations now enumerate the accepted
+`supports` or `contradicts` relation in their tool schemas, backed by one
+shared vocabulary. It is a founder-directed release for real-user testing; the
+WCO-001 two-human case is NOT OBSERVED and the sprint remains CONDITIONAL GO, so
+this is not a human continuation result and Gate B, Gate C, and Gate E remain
+unmeasured. See `RELEASE_V1_18_DECISION.md`. This release includes no new read
+surface, no new object, and no schema or migration change; its archives,
+channel pins, and deployment are separate promotion steps.
+
+v1.17.0 added the read-only Shared Work Home to the local Viewer and was
+published and deployed under founder override. The two controlled human
+comprehension traces, the shipped-v1.16 Viewer trace, the reference-open
+observation, and an ordinary two-human/two-agent continuation were not
+recorded; that release is not a GO. See `RELEASE_V1_17_DECISION.md`. The
+v1.17.0 archives and channel pins are published.
 
 v1.16.0 is published and deployed as an experimental release for one-workspace
 Recall and portable handoff. The three RCL pilot NO-GO verdicts and Gate E

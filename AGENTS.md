@@ -264,6 +264,14 @@ two-human/two-agent continuation are not recorded; the release is an override
 for real-user testing, not a GO. Gate B, Gate C, and Gate E remain
 unmeasured. The source is published and deployed as `v1.17.0`.
 
+On October 15, 2026 the founder directed a public v1.18.0 release of the
+WCO-001 guidance/schema repair under the recorded release-scope override in
+`docs/RELEASE_V1_18_DECISION.md`. The override records the exact bounded public
+claim and moves no gate: WCO-001 remains CONDITIONAL GO — engineering candidate,
+the two-human case remains NOT OBSERVED, and Gate B, Gate C, Gate E, and
+VIS-001 condition 4 remain open. The release includes no orientation selection
+rule, attention label, CLI, Viewer, HTTP, Worker, or schema change.
+
 Sprint SWH-001 — Shared Work Home is the v1.17 contract at
 `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md` and its result is
 `docs/SPRINT_SWH_001_RESULT.md`. The read-only Viewer now has My work and
@@ -290,9 +298,11 @@ Sprint WCO-001 — Continue the Work has its v1.18 contract at
 Amendment 1 scopes a bounded guidance/schema repair, implemented and passing
 D1–D6 on the recorded candidate. The recorded verdict is **CONDITIONAL GO —
 engineering candidate**: it does not claim human continuation and moves no
-gate. No v1.18 release artifact or release decision exists. Gate B, Gate C,
-Gate E, VIS-001 condition 4, and the open v1.17/SWH-001 human observations
-remain open.
+gate. The founder subsequently directed a public v1.18.0 release of the
+Amendment 1 repair under the recorded release-scope override in
+`docs/RELEASE_V1_18_DECISION.md`; that override does not change this verdict,
+and Gate B, Gate C, Gate E, VIS-001 condition 4, and the open v1.17/SWH-001
+human observations remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

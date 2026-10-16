@@ -5,9 +5,11 @@
 **Status:** **CONDITIONAL GO — engineering candidate.** The eligible two-human
 case is **NOT OBSERVED** (recorded reason below); a bounded §4.2 repair
 (Amendment 1) passes the D1–D6 deterministic checks on the recorded candidate.
-No v1.18 release artifact exists and no release decision was made. This record
-does not claim human continuation, Gate B, Gate C, Gate E, or VIS-001
-condition 4, and does not rescore any earlier sprint.
+The founder subsequently directed a public v1.18.0 release under a recorded
+release-scope override; see `docs/RELEASE_V1_18_DECISION.md` (that override is
+not a GO and does not change this verdict). This record does not claim human
+continuation, Gate B, Gate C, Gate E, or VIS-001 condition 4, and does not
+rescore any earlier sprint.
 
 **Contract:** `docs/Campfire-v1.18-WCO-001-Continue-the-Work.md` (Amendment 1,
 October 15, 2026)
