@@ -1,0 +1,45 @@
+historical findings 0 decisions 0
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_att001_quiet_accepted
+Keep the quiet desk in the baseline freeze.
+NEEDS ATTENTION
+No recorded attention cues match these rules. This does not mean all work is done.
+Attention coverage: tasks 3 of 3, decisions 1 of 1. Both source pages are complete.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+TEAM WORK
+Ana (human)
+none
+Ben (human)
+none
+Unassigned
+open
+Choose the quiet-desk next step
+id task_att001_quiet_open · unassigned
+tasks
+showing 3 of 3
+accepted decisions
+accepted
+Keep the quiet desk in the baseline freeze.
+decisions
+showing 1 of 1
+historical
+Historical: 0 superseded decisions / 0 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+The quiet desk has no recorded attention cues.
+id find_att001_quiet_current · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+none
+artifacts
+showing 0 of 0
+SINCE YOU WERE HERE
+First visit — new activity will appear here.

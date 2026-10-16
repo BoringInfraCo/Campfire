@@ -1,0 +1,128 @@
+historical findings 2 decisions 1
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_att001_accepted_current
+Cut a fresh ATT-001 baseline before changing attention behavior.
+dec_att001_competing_a
+Order attention cues by recorded assignment.
+dec_att001_competing_b
+Order attention cues by newest record.
+dec_att001_plain
+Keep the workspace read-only during the baseline freeze.
+dec_att001_new
+Replace the weekly manual review with coverage-qualified attention cues.
+accepted needing review
+dec_att001_review_superseded
+The lab attention lists are complete because the task slice is complete.
+dec_att001_review_withdrawn
+The quiet desk needs no review because its attention lists are empty.
+unresolved blocked tasks
+task_att001_blocked_ana
+Package the lab baseline evidence
+task_att001_blocked_opencode
+Reproduce the truncated-page cue gap
+task_att001_blocked_noassignee
+Decide what counts as an all-clear
+NEEDS ATTENTION
+task · blocked
+task_att001_blocked_noassignee
+Decide what counts as an all-clear
+blocked task with no recorded assignee
+task · blocked
+task_att001_blocked_ana
+Package the lab baseline evidence
+blocked task assigned to another participant
+assignee: hum_att001_ana
+task · blocked
+task_att001_blocked_opencode
+Reproduce the truncated-page cue gap
+blocked task assigned to another participant
+assignee: agt_att001_opencode
+decision · accepted
+dec_att001_review_withdrawn
+The quiet desk needs no review because its attention lists are empty.
+accepted decision cites non-current evidence — needs human review
+non-current citations: find_att001_withdrawn
+decision · accepted
+dec_att001_review_superseded
+The lab attention lists are complete because the task slice is complete.
+accepted decision cites non-current evidence — needs human review
+non-current citations: find_att001_superseded
+Attention coverage: tasks 20 of 21 (truncated), decisions 7 of 7. Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+TEAM WORK
+Ana (human)
+blocked
+Package the lab baseline evidence
+id task_att001_blocked_ana · assigned to Ana (human) hum_att001_ana
+open
+Review the lab attention rules
+id task_att001_open_ana · assigned to Ana (human) hum_att001_ana
+Codex (agent · codex) · owned by Ana
+open
+Draft the quiet-desk checklist
+id task_att001_filler_open_codex · assigned to Codex (agent) agt_att001_codex
+Ben (human)
+no matching tasks in the returned 20 of 21; more may exist
+OpenCode (agent · opencode) · owned by Ben
+blocked
+Reproduce the truncated-page cue gap
+id task_att001_blocked_opencode · assigned to OpenCode (agent) agt_att001_opencode
+Unassigned
+in_progress
+Reformat the lab trace notes
+id task_att001_filler_inprogress · unassigned
+blocked
+Decide what counts as an all-clear
+id task_att001_blocked_noassignee · unassigned
+open
+Pick a lab reviewer
+id task_att001_open_noassignee · unassigned
+tasks
+showing 20 of 21 · more available — open the list for the rest
+accepted decisions
+accepted
+Cut a fresh ATT-001 baseline before changing attention behavior.
+accepted
+Order attention cues by recorded assignment.
+accepted
+Order attention cues by newest record.
+accepted
+Keep the workspace read-only during the baseline freeze.
+accepted
+Replace the weekly manual review with coverage-qualified attention cues.
+replaces dec_att001_old
+accepted decisions needing review
+accepted
+The lab attention lists are complete because the task slice is complete.
+needs review cites non-current finding find_att001_superseded
+accepted
+The quiet desk needs no review because its attention lists are empty.
+needs review cites non-current finding find_att001_withdrawn
+decisions
+showing 7 of 7
+historical
+Historical: 1 superseded decisions / 2 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+The lab attention read covers only the returned task page.
+id find_att001_current · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+trace
+attention lab trace 284
+id art_att001_trace_284 · reference: https://internal.example/att-001/traces/284 (stored reference, not fetched)
+document
+ATT-001 baseline runbook reference
+id art_att001_runbook_ref · reference: references/att-001/attention-runbook.md (stored reference, not fetched)
+artifacts
+showing 2 of 2
+SINCE YOU WERE HERE
+First visit — new activity will appear here.

@@ -1,0 +1,1854 @@
+{
+  "acceptedDecisions": [
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:38.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_new",
+      "predecessorId": "dec_att001_old",
+      "rationale": "Coverage metadata from the returned pages makes the manual sweep unnecessary.",
+      "status": "accepted",
+      "summary": "Replace the weekly manual review with coverage-qualified attention cues.",
+      "updatedAt": "2026-10-15T16:00:39.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:34.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_plain",
+      "rationale": "No write path may change the baseline before captures are frozen.",
+      "status": "accepted",
+      "summary": "Keep the workspace read-only during the baseline freeze.",
+      "updatedAt": "2026-10-15T16:00:35.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:32.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_competing_b",
+      "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+      "status": "accepted",
+      "summary": "Order attention cues by newest record.",
+      "updatedAt": "2026-10-15T16:00:33.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:30.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_competing_a",
+      "rationale": "Assignment is the only recorded grouping, so it should lead the attention order.",
+      "status": "accepted",
+      "summary": "Order attention cues by recorded assignment.",
+      "updatedAt": "2026-10-15T16:00:31.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-15T16:00:29.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_att001_review_withdrawn",
+          "findingId": "find_att001_withdrawn",
+          "id": "cit_att001_0055",
+          "note": "withdrawn reading of the quiet desk",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "createdAt": "2026-10-15T16:00:27.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_review_withdrawn",
+      "needsReview": true,
+      "needsReviewFindingIds": [
+        "find_att001_withdrawn"
+      ],
+      "rationale": "Read the empty lists as a statement about the whole team.",
+      "status": "accepted",
+      "summary": "The quiet desk needs no review because its attention lists are empty.",
+      "updatedAt": "2026-10-15T16:00:28.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-15T16:00:26.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_att001_review_superseded",
+          "findingId": "find_att001_superseded",
+          "id": "cit_att001_0047",
+          "note": "original observation",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "createdAt": "2026-10-15T16:00:24.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_review_superseded",
+      "needsReview": true,
+      "needsReviewFindingIds": [
+        "find_att001_superseded"
+      ],
+      "rationale": "Assumed the default task page returned every recorded task.",
+      "status": "accepted",
+      "summary": "The lab attention lists are complete because the task slice is complete.",
+      "updatedAt": "2026-10-15T16:00:25.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-15T16:00:23.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_att001_accepted_current",
+          "findingId": "find_att001_current",
+          "id": "cit_att001_0039",
+          "note": "baseline recount",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "createdAt": "2026-10-15T16:00:21.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_accepted_current",
+      "rationale": "The contract requires the v1.18.0 baseline to be frozen before implementation.",
+      "status": "accepted",
+      "summary": "Cut a fresh ATT-001 baseline before changing attention behavior.",
+      "updatedAt": "2026-10-15T16:00:22.000Z",
+      "workspaceId": "ws_att001_lab"
+    }
+  ],
+  "alignment": {
+    "acceptedDecisionIds": [
+      "dec_att001_accepted_current",
+      "dec_att001_review_superseded",
+      "dec_att001_review_withdrawn",
+      "dec_att001_competing_a",
+      "dec_att001_competing_b",
+      "dec_att001_plain",
+      "dec_att001_new"
+    ],
+    "proposedDecisionIds": [],
+    "status": "established",
+    "unresolvedBlockedTaskIds": [
+      "task_att001_blocked_ana",
+      "task_att001_blocked_opencode",
+      "task_att001_blocked_noassignee"
+    ]
+  },
+  "artifacts": [
+    {
+      "createdAt": "2026-10-15T16:00:16.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "art_att001_trace_284",
+      "title": "attention lab trace 284",
+      "type": "trace",
+      "uriOrPath": "https://internal.example/att-001/traces/284",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "createdAt": "2026-10-15T16:00:15.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "art_att001_runbook_ref",
+      "title": "ATT-001 baseline runbook reference",
+      "type": "document",
+      "uriOrPath": "references/att-001/attention-runbook.md",
+      "workspaceId": "ws_att001_lab"
+    }
+  ],
+  "attentionCoverage": {
+    "completeUnderRules": false,
+    "decisions": {
+      "returned": 7,
+      "total": 7,
+      "truncated": false
+    },
+    "tasks": {
+      "returned": 20,
+      "total": 21,
+      "truncated": true
+    }
+  },
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-15T16:00:23.000Z",
+            "createdBy": {
+              "actorId": "hum_att001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_att001_accepted_current",
+            "findingId": "find_att001_current",
+            "id": "cit_att001_0039",
+            "note": "baseline recount",
+            "workspaceId": "ws_att001_lab"
+          }
+        ],
+        "createdAt": "2026-10-15T16:00:21.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_accepted_current",
+        "rationale": "The contract requires the v1.18.0 baseline to be frozen before implementation.",
+        "status": "accepted",
+        "summary": "Cut a fresh ATT-001 baseline before changing attention behavior.",
+        "updatedAt": "2026-10-15T16:00:22.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-15T16:00:26.000Z",
+            "createdBy": {
+              "actorId": "hum_att001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_att001_review_superseded",
+            "findingId": "find_att001_superseded",
+            "id": "cit_att001_0047",
+            "note": "original observation",
+            "workspaceId": "ws_att001_lab"
+          }
+        ],
+        "createdAt": "2026-10-15T16:00:24.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_review_superseded",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_att001_superseded"
+        ],
+        "rationale": "Assumed the default task page returned every recorded task.",
+        "status": "accepted",
+        "summary": "The lab attention lists are complete because the task slice is complete.",
+        "updatedAt": "2026-10-15T16:00:25.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-15T16:00:29.000Z",
+            "createdBy": {
+              "actorId": "hum_att001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_att001_review_withdrawn",
+            "findingId": "find_att001_withdrawn",
+            "id": "cit_att001_0055",
+            "note": "withdrawn reading of the quiet desk",
+            "workspaceId": "ws_att001_lab"
+          }
+        ],
+        "createdAt": "2026-10-15T16:00:27.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_review_withdrawn",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_att001_withdrawn"
+        ],
+        "rationale": "Read the empty lists as a statement about the whole team.",
+        "status": "accepted",
+        "summary": "The quiet desk needs no review because its attention lists are empty.",
+        "updatedAt": "2026-10-15T16:00:28.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:00:30.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_competing_a",
+        "rationale": "Assignment is the only recorded grouping, so it should lead the attention order.",
+        "status": "accepted",
+        "summary": "Order attention cues by recorded assignment.",
+        "updatedAt": "2026-10-15T16:00:31.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:00:32.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_competing_b",
+        "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+        "status": "accepted",
+        "summary": "Order attention cues by newest record.",
+        "updatedAt": "2026-10-15T16:00:33.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:00:34.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_plain",
+        "rationale": "No write path may change the baseline before captures are frozen.",
+        "status": "accepted",
+        "summary": "Keep the workspace read-only during the baseline freeze.",
+        "updatedAt": "2026-10-15T16:00:35.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:00:38.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_new",
+        "predecessorId": "dec_att001_old",
+        "rationale": "Coverage metadata from the returned pages makes the manual sweep unnecessary.",
+        "status": "accepted",
+        "summary": "Replace the weekly manual review with coverage-qualified attention cues.",
+        "updatedAt": "2026-10-15T16:00:39.000Z",
+        "workspaceId": "ws_att001_lab"
+      }
+    ],
+    "blockedTasks": [
+      {
+        "assignee": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:00:40.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_blocked_ana",
+        "status": "blocked",
+        "title": "Package the lab baseline evidence",
+        "updatedAt": "2026-10-15T16:01:01.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_att001_opencode",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-15T16:00:43.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_blocked_opencode",
+        "status": "blocked",
+        "title": "Reproduce the truncated-page cue gap",
+        "updatedAt": "2026-10-15T16:01:02.000Z",
+        "workspaceId": "ws_att001_lab"
+      },
+      {
+        "createdAt": "2026-10-15T16:00:44.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_blocked_noassignee",
+        "status": "blocked",
+        "title": "Decide what counts as an all-clear",
+        "updatedAt": "2026-10-15T16:01:03.000Z",
+        "workspaceId": "ws_att001_lab"
+      }
+    ],
+    "inProgressTasks": [
+      {
+        "createdAt": "2026-10-15T16:00:45.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_filler_inprogress",
+        "status": "in_progress",
+        "title": "Reformat the lab trace notes",
+        "updatedAt": "2026-10-15T16:01:04.000Z",
+        "workspaceId": "ws_att001_lab"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "createdAt": "2026-10-15T16:00:18.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "The 21st task sits outside the default 20-row page and is not inspected.",
+      "id": "find_att001_current",
+      "predecessorId": "find_att001_superseded",
+      "sourceArtifactId": "art_att001_trace_284",
+      "summary": "The lab attention read covers only the returned task page.",
+      "workspaceId": "ws_att001_lab"
+    }
+  ],
+  "generatedAt": "2026-10-15T18:00:00.000Z",
+  "goal": {
+    "createdAt": "2026-10-15T16:00:08.000Z",
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "description": "Two humans and two owned agents share one lab while the v1.18.0 attention baseline is frozen.",
+    "id": "goal_att001_attention",
+    "status": "active",
+    "title": "Make team attention cues trustworthy without changing recorded work.",
+    "updatedAt": "2026-10-15T16:00:08.000Z",
+    "workspaceId": "ws_att001_lab"
+  },
+  "historicalCounts": {
+    "decisions": 1,
+    "findings": 2
+  },
+  "needsAttention": [
+    {
+      "id": "task_att001_blocked_noassignee",
+      "kind": "task",
+      "reason": "unassigned_blocked_task",
+      "status": "blocked",
+      "summary": "Decide what counts as an all-clear"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_blocked_ana",
+      "kind": "task",
+      "reason": "team_blocked_task",
+      "status": "blocked",
+      "summary": "Package the lab baseline evidence"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_att001_opencode",
+        "actorType": "agent"
+      },
+      "id": "task_att001_blocked_opencode",
+      "kind": "task",
+      "reason": "team_blocked_task",
+      "status": "blocked",
+      "summary": "Reproduce the truncated-page cue gap"
+    },
+    {
+      "id": "dec_att001_review_withdrawn",
+      "kind": "decision",
+      "needsReviewFindingIds": [
+        "find_att001_withdrawn"
+      ],
+      "reason": "accepted_decision_needs_review",
+      "status": "accepted",
+      "summary": "The quiet desk needs no review because its attention lists are empty."
+    },
+    {
+      "id": "dec_att001_review_superseded",
+      "kind": "decision",
+      "needsReviewFindingIds": [
+        "find_att001_superseded"
+      ],
+      "reason": "accepted_decision_needs_review",
+      "status": "accepted",
+      "summary": "The lab attention lists are complete because the task slice is complete."
+    }
+  ],
+  "needsYou": [],
+  "openTasks": [
+    {
+      "createdAt": "2026-10-15T16:00:44.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_blocked_noassignee",
+      "status": "blocked",
+      "title": "Decide what counts as an all-clear",
+      "updatedAt": "2026-10-15T16:01:03.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_att001_opencode",
+        "actorType": "agent"
+      },
+      "createdAt": "2026-10-15T16:00:43.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_blocked_opencode",
+      "status": "blocked",
+      "title": "Reproduce the truncated-page cue gap",
+      "updatedAt": "2026-10-15T16:01:02.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:40.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_blocked_ana",
+      "status": "blocked",
+      "title": "Package the lab baseline evidence",
+      "updatedAt": "2026-10-15T16:01:01.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "createdAt": "2026-10-15T16:00:45.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_filler_inprogress",
+      "status": "in_progress",
+      "title": "Reformat the lab trace notes",
+      "updatedAt": "2026-10-15T16:01:04.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_att001_codex",
+        "actorType": "agent"
+      },
+      "createdAt": "2026-10-15T16:00:46.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_filler_open_codex",
+      "status": "open",
+      "title": "Draft the quiet-desk checklist",
+      "updatedAt": "2026-10-15T16:00:46.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "createdAt": "2026-10-15T16:00:42.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_open_noassignee",
+      "status": "open",
+      "title": "Pick a lab reviewer",
+      "updatedAt": "2026-10-15T16:00:42.000Z",
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "assignee": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:00:41.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_open_ana",
+      "status": "open",
+      "title": "Review the lab attention rules",
+      "updatedAt": "2026-10-15T16:00:41.000Z",
+      "workspaceId": "ws_att001_lab"
+    }
+  ],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTYwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTguMDAwWiIsIm9yaWdpbklkIjoiY29uX2F0dDAwMV8wMTYwIiwicG9zaXRpb24iOjc1LCJvcmlnaW5Qb3NpdGlvbiI6NzUsInRpcCI6MH0",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:00:07.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:00:10.000Z",
+      "name": "Ben",
+      "role": "member"
+    },
+    {
+      "actor": {
+        "actorId": "agt_att001_codex",
+        "actorType": "agent"
+      },
+      "harness": "codex",
+      "humanOwnerId": "hum_att001_ana",
+      "joinedAt": "2026-10-15T16:00:12.000Z",
+      "name": "Codex",
+      "role": "agent"
+    },
+    {
+      "actor": {
+        "actorId": "agt_att001_opencode",
+        "actorType": "agent"
+      },
+      "harness": "opencode",
+      "humanOwnerId": "hum_att001_ben",
+      "joinedAt": "2026-10-15T16:00:14.000Z",
+      "name": "OpenCode",
+      "role": "agent"
+    }
+  ],
+  "proposedDecisions": [],
+  "provenance": [
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 56,
+      "createdAt": "2026-10-15T16:00:59.000Z",
+      "id": "con_att001_0107",
+      "objectId": "task_att001_filler_completed_13",
+      "objectType": "task",
+      "payload": {
+        "title": "Lab baseline housekeeping 13"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 57,
+      "createdAt": "2026-10-15T16:01:00.000Z",
+      "id": "con_att001_0108",
+      "objectId": "task_att001_filler_completed_14",
+      "objectType": "task",
+      "payload": {
+        "title": "Lab baseline housekeeping 14"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 58,
+      "createdAt": "2026-10-15T16:01:01.000Z",
+      "id": "con_att001_0109",
+      "objectId": "task_att001_blocked_ana",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 59,
+      "createdAt": "2026-10-15T16:01:02.000Z",
+      "id": "con_att001_0112",
+      "objectId": "task_att001_blocked_opencode",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 60,
+      "createdAt": "2026-10-15T16:01:03.000Z",
+      "id": "con_att001_0115",
+      "objectId": "task_att001_blocked_noassignee",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 61,
+      "createdAt": "2026-10-15T16:01:04.000Z",
+      "id": "con_att001_0118",
+      "objectId": "task_att001_filler_inprogress",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 62,
+      "createdAt": "2026-10-15T16:01:05.000Z",
+      "id": "con_att001_0121",
+      "objectId": "task_att001_filler_completed_01",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 63,
+      "createdAt": "2026-10-15T16:01:06.000Z",
+      "id": "con_att001_0124",
+      "objectId": "task_att001_filler_completed_02",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 64,
+      "createdAt": "2026-10-15T16:01:07.000Z",
+      "id": "con_att001_0127",
+      "objectId": "task_att001_filler_completed_03",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 65,
+      "createdAt": "2026-10-15T16:01:08.000Z",
+      "id": "con_att001_0130",
+      "objectId": "task_att001_filler_completed_04",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 66,
+      "createdAt": "2026-10-15T16:01:09.000Z",
+      "id": "con_att001_0133",
+      "objectId": "task_att001_filler_completed_05",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 67,
+      "createdAt": "2026-10-15T16:01:10.000Z",
+      "id": "con_att001_0136",
+      "objectId": "task_att001_filler_completed_06",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 68,
+      "createdAt": "2026-10-15T16:01:11.000Z",
+      "id": "con_att001_0139",
+      "objectId": "task_att001_filler_completed_07",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 69,
+      "createdAt": "2026-10-15T16:01:12.000Z",
+      "id": "con_att001_0142",
+      "objectId": "task_att001_filler_completed_08",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 70,
+      "createdAt": "2026-10-15T16:01:13.000Z",
+      "id": "con_att001_0145",
+      "objectId": "task_att001_filler_completed_09",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 71,
+      "createdAt": "2026-10-15T16:01:14.000Z",
+      "id": "con_att001_0148",
+      "objectId": "task_att001_filler_completed_10",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 72,
+      "createdAt": "2026-10-15T16:01:15.000Z",
+      "id": "con_att001_0151",
+      "objectId": "task_att001_filler_completed_11",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 73,
+      "createdAt": "2026-10-15T16:01:16.000Z",
+      "id": "con_att001_0154",
+      "objectId": "task_att001_filler_completed_12",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 74,
+      "createdAt": "2026-10-15T16:01:17.000Z",
+      "id": "con_att001_0157",
+      "objectId": "task_att001_filler_completed_13",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 75,
+      "createdAt": "2026-10-15T16:01:18.000Z",
+      "id": "con_att001_0160",
+      "objectId": "task_att001_filler_completed_14",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_lab"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana contributed task task_att001_filler_completed_13: Lab baseline housekeeping 13",
+    "Ana contributed task task_att001_filler_completed_14: Lab baseline housekeeping 14",
+    "Ana updated task task_att001_blocked_ana: blocked",
+    "Ana updated task task_att001_blocked_opencode: blocked",
+    "Ana updated task task_att001_blocked_noassignee: blocked",
+    "Ana updated task task_att001_filler_inprogress: in_progress",
+    "Ana updated task task_att001_filler_completed_01: completed",
+    "Ana updated task task_att001_filler_completed_02: completed",
+    "Ana updated task task_att001_filler_completed_03: completed",
+    "Ana updated task task_att001_filler_completed_04: completed",
+    "Ana updated task task_att001_filler_completed_05: completed",
+    "Ana updated task task_att001_filler_completed_06: completed",
+    "Ana updated task task_att001_filler_completed_07: completed",
+    "Ana updated task task_att001_filler_completed_08: completed",
+    "Ana updated task task_att001_filler_completed_09: completed",
+    "Ana updated task task_att001_filler_completed_10: completed",
+    "Ana updated task task_att001_filler_completed_11: completed",
+    "Ana updated task task_att001_filler_completed_12: completed",
+    "Ana updated task task_att001_filler_completed_13: completed",
+    "Ana updated task task_att001_filler_completed_14: completed"
+  ],
+  "provenanceTotal": 75,
+  "provenanceTruncated": true,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:00:16.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "art_att001_trace_284",
+          "title": "attention lab trace 284",
+          "type": "trace",
+          "uriOrPath": "https://internal.example/att-001/traces/284",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:15.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "art_att001_runbook_ref",
+          "title": "ATT-001 baseline runbook reference",
+          "type": "document",
+          "uriOrPath": "references/att-001/attention-runbook.md",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "returned": 2,
+      "total": 2,
+      "truncated": false
+    },
+    "blockers": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:00:44.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_noassignee",
+          "status": "blocked",
+          "title": "Decide what counts as an all-clear",
+          "updatedAt": "2026-10-15T16:01:03.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_att001_opencode",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-15T16:00:43.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_opencode",
+          "status": "blocked",
+          "title": "Reproduce the truncated-page cue gap",
+          "updatedAt": "2026-10-15T16:01:02.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:40.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_ana",
+          "status": "blocked",
+          "title": "Package the lab baseline evidence",
+          "updatedAt": "2026-10-15T16:01:01.000Z",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "returned": 3,
+      "total": 3,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:38.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_new",
+          "predecessorId": "dec_att001_old",
+          "rationale": "Coverage metadata from the returned pages makes the manual sweep unnecessary.",
+          "status": "accepted",
+          "summary": "Replace the weekly manual review with coverage-qualified attention cues.",
+          "updatedAt": "2026-10-15T16:00:39.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:34.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_plain",
+          "rationale": "No write path may change the baseline before captures are frozen.",
+          "status": "accepted",
+          "summary": "Keep the workspace read-only during the baseline freeze.",
+          "updatedAt": "2026-10-15T16:00:35.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:32.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_competing_b",
+          "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+          "status": "accepted",
+          "summary": "Order attention cues by newest record.",
+          "updatedAt": "2026-10-15T16:00:33.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:30.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_competing_a",
+          "rationale": "Assignment is the only recorded grouping, so it should lead the attention order.",
+          "status": "accepted",
+          "summary": "Order attention cues by recorded assignment.",
+          "updatedAt": "2026-10-15T16:00:31.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-15T16:00:29.000Z",
+              "createdBy": {
+                "actorId": "hum_att001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_att001_review_withdrawn",
+              "findingId": "find_att001_withdrawn",
+              "id": "cit_att001_0055",
+              "note": "withdrawn reading of the quiet desk",
+              "workspaceId": "ws_att001_lab"
+            }
+          ],
+          "createdAt": "2026-10-15T16:00:27.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_review_withdrawn",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_att001_withdrawn"
+          ],
+          "rationale": "Read the empty lists as a statement about the whole team.",
+          "status": "accepted",
+          "summary": "The quiet desk needs no review because its attention lists are empty.",
+          "updatedAt": "2026-10-15T16:00:28.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-15T16:00:26.000Z",
+              "createdBy": {
+                "actorId": "hum_att001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_att001_review_superseded",
+              "findingId": "find_att001_superseded",
+              "id": "cit_att001_0047",
+              "note": "original observation",
+              "workspaceId": "ws_att001_lab"
+            }
+          ],
+          "createdAt": "2026-10-15T16:00:24.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_review_superseded",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_att001_superseded"
+          ],
+          "rationale": "Assumed the default task page returned every recorded task.",
+          "status": "accepted",
+          "summary": "The lab attention lists are complete because the task slice is complete.",
+          "updatedAt": "2026-10-15T16:00:25.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-15T16:00:23.000Z",
+              "createdBy": {
+                "actorId": "hum_att001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_att001_accepted_current",
+              "findingId": "find_att001_current",
+              "id": "cit_att001_0039",
+              "note": "baseline recount",
+              "workspaceId": "ws_att001_lab"
+            }
+          ],
+          "createdAt": "2026-10-15T16:00:21.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_accepted_current",
+          "rationale": "The contract requires the v1.18.0 baseline to be frozen before implementation.",
+          "status": "accepted",
+          "summary": "Cut a fresh ATT-001 baseline before changing attention behavior.",
+          "updatedAt": "2026-10-15T16:00:22.000Z",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "returned": 7,
+      "total": 7,
+      "truncated": false
+    },
+    "findings": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:00:18.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "currentness": "current",
+          "detail": "The 21st task sits outside the default 20-row page and is not inspected.",
+          "id": "find_att001_current",
+          "predecessorId": "find_att001_superseded",
+          "sourceArtifactId": "art_att001_trace_284",
+          "summary": "The lab attention read covers only the returned task page.",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "returned": 1,
+      "total": 1,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDA6MzkuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMDg0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_new",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:00:39.000Z",
+          "predecessorId": "dec_att001_old",
+          "reason": "The ATT-001 contract replaces the weekly manual review; list coverage qualifies the cues.",
+          "summary": "update:accepted decision dec_att001_new: The ATT-001 contract replaces the weekly manual review; list coverage qualifies the cues."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "decision.superseded",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDA6MzkuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMDg1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_old",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:00:39.000Z",
+          "reason": "The ATT-001 contract replaces the weekly manual review; list coverage qualifies the cues.",
+          "successorId": "dec_att001_new",
+          "summary": "decision.superseded decision dec_att001_old: The ATT-001 contract replaces the weekly manual review; list coverage qualifies the cues."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDEuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTA5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjU4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_blocked_ana",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:01.000Z",
+          "summary": "update:blocked task task_att001_blocked_ana"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDIuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTEyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjU5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_blocked_opencode",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:02.000Z",
+          "summary": "update:blocked task task_att001_blocked_opencode"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDMuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTE1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_blocked_noassignee",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:03.000Z",
+          "summary": "update:blocked task task_att001_blocked_noassignee"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDQuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTE4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYxLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_inprogress",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:04.000Z",
+          "summary": "update:in_progress task task_att001_filler_inprogress"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDUuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTIxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_01",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:05.000Z",
+          "summary": "update:completed task task_att001_filler_completed_01"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDYuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTI0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYzLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_02",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:06.000Z",
+          "summary": "update:completed task task_att001_filler_completed_02"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDcuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTI3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_03",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:07.000Z",
+          "summary": "update:completed task task_att001_filler_completed_03"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTMwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_04",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:08.000Z",
+          "summary": "update:completed task task_att001_filler_completed_04"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MDkuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTMzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_05",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:09.000Z",
+          "summary": "update:completed task task_att001_filler_completed_05"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTAuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTM2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_06",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:10.000Z",
+          "summary": "update:completed task task_att001_filler_completed_06"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTEuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTM5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_07",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:11.000Z",
+          "summary": "update:completed task task_att001_filler_completed_07"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTIuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTQyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjY5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_08",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:12.000Z",
+          "summary": "update:completed task task_att001_filler_completed_08"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTMuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTQ1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjcwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_09",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:13.000Z",
+          "summary": "update:completed task task_att001_filler_completed_09"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTQuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTQ4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjcxLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_10",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:14.000Z",
+          "summary": "update:completed task task_att001_filler_completed_10"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTUuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTUxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjcyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_11",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:15.000Z",
+          "summary": "update:completed task task_att001_filler_completed_11"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTYuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTU0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjczLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_12",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:16.000Z",
+          "summary": "update:completed task task_att001_filler_completed_12"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTcuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTU3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjc0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_13",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:17.000Z",
+          "summary": "update:completed task task_att001_filler_completed_13"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDE6MTguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMTYwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjc1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_att001_filler_completed_14",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:18.000Z",
+          "summary": "update:completed task task_att001_filler_completed_14"
+        }
+      ],
+      "returned": 20,
+      "total": 75,
+      "truncated": true
+    },
+    "tasks": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:00:44.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_noassignee",
+          "status": "blocked",
+          "title": "Decide what counts as an all-clear",
+          "updatedAt": "2026-10-15T16:01:03.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_att001_opencode",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-15T16:00:43.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_opencode",
+          "status": "blocked",
+          "title": "Reproduce the truncated-page cue gap",
+          "updatedAt": "2026-10-15T16:01:02.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:40.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_blocked_ana",
+          "status": "blocked",
+          "title": "Package the lab baseline evidence",
+          "updatedAt": "2026-10-15T16:01:01.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:45.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_inprogress",
+          "status": "in_progress",
+          "title": "Reformat the lab trace notes",
+          "updatedAt": "2026-10-15T16:01:04.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_att001_codex",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-15T16:00:46.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_open_codex",
+          "status": "open",
+          "title": "Draft the quiet-desk checklist",
+          "updatedAt": "2026-10-15T16:00:46.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:42.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_open_noassignee",
+          "status": "open",
+          "title": "Pick a lab reviewer",
+          "updatedAt": "2026-10-15T16:00:42.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:00:41.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_open_ana",
+          "status": "open",
+          "title": "Review the lab attention rules",
+          "updatedAt": "2026-10-15T16:00:41.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:00.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_14",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 14",
+          "updatedAt": "2026-10-15T16:01:18.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:59.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_13",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 13",
+          "updatedAt": "2026-10-15T16:01:17.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:58.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_12",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 12",
+          "updatedAt": "2026-10-15T16:01:16.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:57.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_11",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 11",
+          "updatedAt": "2026-10-15T16:01:15.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:56.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_10",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 10",
+          "updatedAt": "2026-10-15T16:01:14.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:55.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_09",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 09",
+          "updatedAt": "2026-10-15T16:01:13.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:54.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_08",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 08",
+          "updatedAt": "2026-10-15T16:01:12.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:53.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_07",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 07",
+          "updatedAt": "2026-10-15T16:01:11.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:52.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_06",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 06",
+          "updatedAt": "2026-10-15T16:01:10.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:51.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_05",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 05",
+          "updatedAt": "2026-10-15T16:01:09.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:50.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_04",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 04",
+          "updatedAt": "2026-10-15T16:01:08.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:49.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_03",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 03",
+          "updatedAt": "2026-10-15T16:01:07.000Z",
+          "workspaceId": "ws_att001_lab"
+        },
+        {
+          "createdAt": "2026-10-15T16:00:48.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_filler_completed_02",
+          "status": "completed",
+          "title": "Lab baseline housekeeping 02",
+          "updatedAt": "2026-10-15T16:01:06.000Z",
+          "workspaceId": "ws_att001_lab"
+        }
+      ],
+      "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoidGFzayIsIndvcmtzcGFjZUlkIjoid3NfYXR0MDAxX2xhYiIsInJhbmsiOjMsImF0IjoiMjAyNi0xMC0xNVQxNjowMTowNi4wMDBaIiwiaWQiOiJ0YXNrX2F0dDAwMV9maWxsZXJfY29tcGxldGVkXzAyIn0",
+      "returned": 20,
+      "total": 21,
+      "truncated": true
+    }
+  },
+  "suggestedNextAction": {
+    "id": "task_att001_blocked_noassignee",
+    "kind": "task",
+    "orientationHint": true,
+    "reason": "unassigned_blocked_task",
+    "summary": "Decide what counts as an all-clear"
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-15T16:00:07.000Z",
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_att001_lab",
+    "name": "ATT-001 attention lab",
+    "status": "active",
+    "teamId": "team_att001",
+    "updatedAt": "2026-10-15T16:00:07.000Z"
+  }
+}

@@ -37,10 +37,11 @@ Keyed baseline facts (asserted by `seed.ts` before it writes its receipt):
 - quiet: both humans `needsYou = []`, `needsAttention = []`, complete source
   pages, `suggestedNextAction` is the `team_open_task` fallback pointing at
   `task_att001_quiet_open`.
-- lab (scenario repair v2): Ben has no assigned tasks and no cues while the lab
+- lab (scenario repair v2): Ben has no assigned tasks and no My work attention cues while the lab
   task page is truncated (21 total / 20 returned), so his My work attention list
   is an **incomplete empty** — the direct H4 observation the trace workspace
-  must provide. Ana's lists stay nonempty and truncated.
+  must provide. Ben's Team work attention list is non-empty, and Ana's lists stay
+  nonempty and truncated.
 - truncated workspaces: both humans `needsYou = []`, `needsAttention = []`
   while the corresponding slice reports `truncated = true`.
 

@@ -1,0 +1,53 @@
+{
+  "provenance": "FIXTURE EVIDENCE — cannot establish Gate B, C, or E.",
+  "label": "candidate",
+  "workspaceId": "ws_att001_lab",
+  "caller": {
+    "actorId": "hum_att001_ana",
+    "actorType": "human"
+  },
+  "taskId": "task_att001_blocked_opencode",
+  "requested": {
+    "status": "in_progress"
+  },
+  "cue": {
+    "list": "needsAttention",
+    "reason": "team_blocked_task",
+    "note": "Cued to Ana in the v1.18.0 baseline while the task is assigned to agt_att001_opencode."
+  },
+  "outcome": "allowed",
+  "returnedTask": {
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-15T16:00:43.000Z",
+    "id": "task_att001_blocked_opencode",
+    "workspaceId": "ws_att001_lab",
+    "title": "Reproduce the truncated-page cue gap",
+    "status": "in_progress",
+    "assignee": {
+      "actorId": "agt_att001_opencode",
+      "actorType": "agent"
+    },
+    "updatedAt": "2026-10-16T02:58:43.151Z"
+  },
+  "recordedContribution": {
+    "id": "con_d46c4f419d0547f2",
+    "workspaceId": "ws_att001_lab",
+    "actor": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "action": "update",
+    "objectType": "task",
+    "objectId": "task_att001_blocked_opencode",
+    "payload": {
+      "status": "in_progress"
+    },
+    "appendPosition": 76,
+    "createdAt": "2026-10-16T02:58:43.151Z"
+  },
+  "contributionActorId": "hum_att001_ana",
+  "assertion": "The recorded contribution actor equals the caller hum_att001_ana."
+}

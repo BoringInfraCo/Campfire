@@ -1,6 +1,6 @@
 # Campfire v1.19 — ATT-001: Trustworthy Team Attention
 
-**Status:** Proposed sprint contract; no implementation, observation, verdict, or release decision recorded.  
+**Status:** Implemented engineering candidate (October 15, 2026); result in `docs/SPRINT_ATT_001_RESULT.md`. D1–D6 pass on the recorded candidate (`bb007c7`, verifier-driven test-gap fixes in `d7addb2`); the eligible two-person human trace is **NOT OBSERVED**; recorded verdict **CONDITIONAL GO — engineering candidate**. The fixture is scenario v2 (repair recorded in `docs/evidence/att-001/baseline/SCENARIO_REPAIR.md`). No version bump, tag, release decision, or deployment.  
 **Date:** October 15, 2026  
 **Target release:** v1.19.0, subject to this contract and a separate release decision.  
 **Baseline:** Published v1.18.0 (`docs/RELEASE_V1_18_DECISION.md`).  

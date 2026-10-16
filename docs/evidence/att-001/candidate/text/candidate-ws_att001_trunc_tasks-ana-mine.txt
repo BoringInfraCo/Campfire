@@ -1,0 +1,38 @@
+historical findings 0 decisions 0
+RECORDED ALIGNMENT
+status
+unspecified
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+NEEDS YOU
+No cue found in the returned records; more matching records may exist.
+Attention coverage: tasks 20 of 22 (truncated), decisions 0 of 0. Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+MY WORK
+your agents
+none recorded
+my tasks
+in progress
+no matching tasks in the returned 20 of 22; more may exist
+blocked
+no matching tasks in the returned 20 of 22; more may exist
+open
+no matching tasks in the returned 20 of 22; more may exist
+tasks
+showing 20 of 22 · more available — open the list for the rest
+decisions
+showing 0 of 0
+historical
+Historical: 0 superseded decisions / 0 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+none
+findings
+showing 0 of 0
+artifact references
+none
+artifacts
+showing 0 of 0
+SINCE YOU WERE HERE
+First visit — new activity will appear here.

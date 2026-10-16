@@ -305,14 +305,22 @@ Amendment 1 repair under the recorded release-scope override in
 and Gate B, Gate C, Gate E, VIS-001 condition 4, and the open v1.17/SWH-001
 human observations remain open.
 
-Sprint ATT-001 — Trustworthy Team Attention has a proposed v1.19 contract at
-`docs/Campfire-v1.19-ATT-001-Trustworthy-Team-Attention.md`. It is not yet
-implemented or scored. The bounded slice qualifies attention coverage when
-task or decision pages are truncated and adds a team review cue for a returned
-accepted decision with `needsReview`. It must not infer a reviewer, permission,
-operative decision, urgency, presence, or coordination action. Freeze the v1.18
-baseline and rubric before implementation; preserve the WCO-001 and SWH-001
-open human observations and Gate B/C/E/F status.
+Sprint ATT-001 — Trustworthy Team Attention has its v1.19 contract at
+`docs/Campfire-v1.19-ATT-001-Trustworthy-Team-Attention.md`, a frozen
+v1.18.0 baseline (fixture v2), frozen human-observation materials, and an
+implemented engineering candidate (`b18a536` baseline/fixture/materials,
+`bb007c7` change + tests, `d7addb2` verifier-driven test-gap fixes). The
+result is `docs/SPRINT_ATT_001_RESULT.md`: **CONDITIONAL GO — engineering
+candidate**. D1–D6 pass (23 focused tests; full suite 88 files / 1101 tests);
+the two-person controlled comprehension trace is **NOT OBSERVED** (one
+operator available; contract §6 forbids substituting agents or the builder)
+and a labeled subagent rehearsal is not human evidence. Attention coverage is
+derived from the existing bounded slices, and a team cue
+(`accepted_decision_needs_review`) surfaces returned accepted decisions whose
+cited findings are no longer current; no reviewer, permission, urgency,
+operative decision, presence, or coordination action is inferred. No release
+decision, version bump, tag, or deployment is recorded. Gate B/C/E/F,
+WCO-001, and SWH-001 remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

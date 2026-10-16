@@ -1,0 +1,85 @@
+historical findings 2 decisions 0
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_att001_td_plain_02
+Truncated-decisions plain filler 02
+dec_att001_td_plain_03
+Truncated-decisions plain filler 03
+dec_att001_td_plain_04
+Truncated-decisions plain filler 04
+dec_att001_td_plain_05
+Truncated-decisions plain filler 05
+dec_att001_td_plain_06
+Truncated-decisions plain filler 06
+dec_att001_td_plain_07
+Truncated-decisions plain filler 07
+dec_att001_td_plain_08
+Truncated-decisions plain filler 08
+dec_att001_td_plain_09
+Truncated-decisions plain filler 09
+dec_att001_td_plain_10
+Truncated-decisions plain filler 10
+accepted needing review
+dec_att001_page_review
+Keep the review cue tied to the returned page.
+NEEDS YOU
+No cue found in the returned records; more matching records may exist.
+Attention coverage: tasks 0 of 0, decisions 10 of 12 (truncated). Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+MY WORK
+your agents
+none recorded
+my tasks
+in progress
+none
+blocked
+none
+open
+none
+tasks
+showing 0 of 0
+accepted decisions
+accepted
+Truncated-decisions plain filler 02
+accepted
+Truncated-decisions plain filler 03
+accepted
+Truncated-decisions plain filler 04
+accepted
+Truncated-decisions plain filler 05
+accepted
+Truncated-decisions plain filler 06
+accepted
+Truncated-decisions plain filler 07
+accepted
+Truncated-decisions plain filler 08
+accepted
+Truncated-decisions plain filler 09
+accepted
+Truncated-decisions plain filler 10
+accepted decisions needing review
+accepted
+Keep the review cue tied to the returned page.
+needs review cites non-current finding find_att001_td_withdrawn
+decisions
+showing 10 of 12 · more available — open the list for the rest
+historical
+Historical: 0 superseded decisions / 2 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+The decision page returns the ten newest accepted decisions.
+id find_att001_td_current · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+none
+artifacts
+showing 0 of 0
+SINCE YOU WERE HERE
+First visit — new activity will appear here.
