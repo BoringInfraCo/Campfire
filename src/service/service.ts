@@ -250,7 +250,8 @@ export type AttentionReason =
   | "team_proposed_decision"
   | "unassigned_blocked_task"
   | "team_blocked_task"
-  | "team_open_task";
+  | "team_open_task"
+  | "accepted_decision_needs_review";
 
 /** One authorization-aware orientation item for a cold entrant. */
 export interface AttentionItem {
@@ -260,6 +261,27 @@ export interface AttentionItem {
   status: string;
   reason: AttentionReason;
   assignee?: ActorRef;
+  /**
+   * ATT-001: cited non-current finding ids on an accepted review cue. Read from
+   * the decorated decision; the cue never revokes acceptance and never picks an
+   * operative decision.
+   */
+  needsReviewFindingIds?: string[];
+}
+
+/**
+ * ATT-001: coverage of the two source pages attention is derived from.
+ *
+ * The service keeps selecting attention items from the returned task and
+ * decision pages only. `completeUnderRules` is true only when both returned
+ * pages were complete, so an empty list reads as "no recorded attention cue
+ * matches these rules" rather than "no work remains". Derived from `slices`;
+ * it never triggers another read.
+ */
+export interface AttentionCoverage {
+  tasks: { total: number; returned: number; truncated: boolean };
+  decisions: { total: number; returned: number; truncated: boolean };
+  completeUnderRules: boolean;
 }
 
 /** The live state of the work, independent of who may act on it. */
@@ -347,9 +369,17 @@ export interface WorkspaceContext {
   /**
    * Team records not actionably assigned to the caller. Attention ordering,
    * not an access boundary: a writing participant may still take up a shared
-   * task (the change is recorded with their own provenance).
+   * task (the change is recorded with their own provenance). Includes ATT-001
+   * review cues for returned accepted decisions whose read-time `needsReview`
+   * decoration is set.
    */
   needsAttention: AttentionItem[];
+  /**
+   * ATT-001: whether the returned task and decision pages were complete. An
+   * attention list is complete under its selection rules only when both source
+   * pages are complete; a truncated source can hide a matching cue.
+   */
+  attentionCoverage: AttentionCoverage;
   currentWork: CurrentWork;
   suggestedNextAction: SuggestedNextAction;
   /** Recorded boundary derived from decision and task status. Not permission to execute. */

@@ -106,6 +106,9 @@ export function formatContributionDeltaLine(contribution: Contribution): string 
 }
 
 export function formatAttentionItem(item: AttentionItem): string {
+  const reviewedFindingIds = Array.isArray(item.needsReviewFindingIds)
+    ? item.needsReviewFindingIds.filter((id) => typeof id === "string" && id.length > 0)
+    : [];
   return joinFields(
     item.kind,
     item.id,
@@ -113,6 +116,14 @@ export function formatAttentionItem(item: AttentionItem): string {
     item.summary,
     `(${item.reason})`,
     item.assignee === undefined ? undefined : `assignee=${item.assignee.actorId}`,
+    reviewedFindingIds.length > 0
+      ? `non-current citations=${reviewedFindingIds.join(",")}`
+      : undefined,
+    // ATT-001: plain-language meaning for the review cue only; the other reason
+    // codes stay as the stable Sprint 008 labels.
+    item.reason === "accepted_decision_needs_review"
+      ? "accepted decision cites non-current evidence; needs human review; acceptance stays recorded until an explicit transition"
+      : undefined,
   );
 }
 
