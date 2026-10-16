@@ -2,6 +2,18 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
+v1.19.0 makes the attention view honest about its own coverage: the workspace
+context states the returned task and decision page counts and whether the
+attention lists are complete under their selection rules, and an accepted
+decision that still cites a non-current finding carries a team review cue with
+the cited finding ids. The cue does not revoke acceptance, does not choose an
+operative decision, and is never a next action. It is a founder-directed
+release for real-user testing; the ATT-001 two-person comprehension trace is
+NOT OBSERVED and the sprint remains CONDITIONAL GO, so this is not a
+comprehension result and Gate B, Gate C, Gate E, and Gate F remain unmeasured.
+See `RELEASE_V1_19_DECISION.md`. The v1.19 release archives, channel pins, and
+deployment are separate promotion steps and are verified after source export.
+
 v1.18.0 updates the MCP guidance for teammate tasks and makes the
 finding-evidence relation vocabulary explicit: `needsAttention` is attention
 ordering, not an access boundary, and a writing participant may take up a

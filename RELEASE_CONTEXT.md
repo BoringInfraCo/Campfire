@@ -1,6 +1,6 @@
-# Campfire 1.18.0 release context
+# Campfire 1.19.0 release context
 
-This public source snapshot was exported on 2026-10-16 from private canonical source commit `7f606493dc7af958ae75fbc80fd6ed5065be786d` (dated 2026-10-15T20:58:40-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-16 from private canonical source commit `4641decafc2402be6117859dbbe26419b9299864` (dated 2026-10-15T23:23:11-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -25,6 +25,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Anonymous product telemetry measures installation, activation, and return with an enforced field allow-list, a locally generated installation id, and no identity, content, or credentials; a fetch of the installer is recorded by the Worker and cannot be suppressed from the client.
 - Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
 - A finding can be corrected or withdrawn in place, and a decision can name one predecessor. The old text stays on the old row. Orientation keeps the current record and marks a decision that still cites a non-current finding.
+- Orientation attention is honest about its own coverage: the projection states the returned task and decision page counts and whether the attention lists are complete under their selection rules, and an accepted decision whose cited finding is no longer current carries a team review cue with the cited ids. The cue does not revoke acceptance and does not choose an operative decision. Human comprehension of the updated attention semantics is unverified: the two-person trace is not observed.
 - The read-only Viewer separates accepted decisions needing review, lists open tasks, labels cited references, and shows completeness for bounded sections even when no rows are displayed. Human comprehension on this updated surface is unverified. Artifact previews and shared highlights remain deferred. Gate B and Gate C remain unmeasured. Production deployment is separate.
 - One opt-in, static incident-investigation playbook is available through read-only CLI and MCP surfaces. It changes no workspace schema, default tool list, Viewer permission, or write path. A frozen synthetic pilot met its GO rubric through better recording in three matched pairs; continuation quality stayed at the baseline ceiling. This is not Gate B/C or ordinary team-use evidence.
 - One generated workspace page is rendered at read time from the authorized orientation read. It is sandboxed, stored nowhere, and holds no Campfire credential. The release is a founder override. The human comprehension trace, the reference-open observation, and the presentation-defect finding remain open. This is not Gate B or Gate C.
@@ -42,19 +43,19 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.18.0.
+- The versioned installer source for v1.19.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.18.0 candidate passed type checking,
+At source preparation, the private 1.19.0 candidate passed type checking,
 build, local Darwin ARM64 packaging and install from that archive, and a Worker
-deployment dry run. The full suite had 1,077 passing tests and one expected
-install-channel assertion awaiting the four v1.18.0 release checksums;
+deployment dry run. The full suite had 1,101 passing tests and one expected
+install-channel assertion awaiting the four v1.19.0 release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate
 promotion steps and are recorded only when performed. This source snapshot does
-not establish a human team-continuation result, Gate E/B/C, or a production
+not establish a human comprehension result, Gate E/B/C, or a production
 performance claim.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

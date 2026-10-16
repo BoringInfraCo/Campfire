@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.19.0 — 2026-10-15
+
+- Qualify attention coverage in `get_workspace_context`: the response states the returned task and decision page counts and whether the attention lists are complete under their selection rules. A truncated source page can no longer read as an unqualified all-clear, and an empty list means "no cue matched the returned records", never that the team is done.
+- Add a team review cue (`accepted_decision_needs_review`) for a returned accepted decision whose existing read-time `needsReview` flag is set, carrying the cited non-current finding ids. The cue stays out of `needsYou`, does not revive a superseded decision, does not revoke acceptance, and is not elevated to `suggestedNextAction`.
+- The read-only Viewer renders coverage-qualified empty and nonempty attention lists, plain-language reason labels (raw codes retained in `data-reason`), cited non-current finding ids, and the recorded assignee, and states that recorded assignment is not a permission.
+- Published under a founder release-scope override. ATT-001 remains CONDITIONAL GO — engineering candidate: the eligible two-person comprehension trace is NOT OBSERVED, and a labeled subagent rehearsal is not human evidence. This release does not claim comprehension, Gate B, Gate C, Gate E, Gate F, or resolution of the WCO-001/SWH-001 observations. No schema, migration, budget, cursor, read-method, notification, or coordination change is included.
+
 ## 1.18.0 — 2026-10-15
 
 - State in the MCP session guidance that `needsAttention` is attention ordering, not an access boundary: a blocked or open task assigned to another participant is still shared work, and a writing participant may take it up with `update_task`, recorded under their own provenance.

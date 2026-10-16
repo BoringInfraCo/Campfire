@@ -194,6 +194,9 @@ function normalizeAttentionItem(item) {
     status: strField(item.status),
     reason: strField(item.reason),
     assignee: isRecord(item.assignee) ? item.assignee : null,
+    // ATT-001: an accepted-decision review cue carries the cited non-current
+    // finding ids. Dropping them here would hide the basis of the cue.
+    needsReviewFindingIds: reviewFindingIds(item),
   };
 }
 
@@ -636,24 +639,127 @@ function renderMast() {
   }
 }
 
+// ATT-001: the service reason codes are stable identifiers for drill-down;
+// the human surface shows plain language. Unknown codes fall through as
+// themselves rather than being hidden.
+const ATTENTION_REASON_LABELS = {
+  proposed_decision_actionable: "proposed decision — actionable by you, not accepted",
+  assigned_blocked_task: "blocked task assigned to you",
+  assigned_open_task: "open task assigned to you",
+  unassigned_blocked_task: "blocked task with no recorded assignee",
+  team_proposed_decision: "proposed decision recorded by the team — not accepted",
+  team_blocked_task: "blocked task assigned to another participant",
+  team_open_task: "open task — orientation hint only",
+  accepted_decision_needs_review: "accepted decision cites non-current evidence — needs human review",
+};
+
+function attentionReasonLabel(reason) {
+  return Object.prototype.hasOwnProperty.call(ATTENTION_REASON_LABELS, reason)
+    ? ATTENTION_REASON_LABELS[reason]
+    : reason;
+}
+
+// ATT-001: coverage of the two source pages attention is selected from. The
+// service projects `attentionCoverage`; an older context only carries the
+// `slices` values, so the same shape is derived from those. No read is issued.
+function attentionCoverageFrom(context) {
+  if (!isRecord(context)) return undefined;
+  if (isRecord(context.attentionCoverage)) return context.attentionCoverage;
+  const slices = isRecord(context.slices) ? context.slices : null;
+  if (!slices) return undefined;
+  const read = (name) => {
+    const slice = slices[name];
+    if (!isRecord(slice)) return null;
+    return {
+      total: typeof slice.total === "number" ? slice.total : 0,
+      returned: typeof slice.returned === "number" ? slice.returned : 0,
+      truncated: slice.truncated === true,
+    };
+  };
+  const tasks = read("tasks");
+  const decisions = read("decisions");
+  if (!tasks && !decisions) return undefined;
+  const absent = { total: 0, returned: 0, truncated: false };
+  const coverage = { tasks: tasks || absent, decisions: decisions || absent };
+  coverage.completeUnderRules = !coverage.tasks.truncated && !coverage.decisions.truncated;
+  return coverage;
+}
+
+// ATT-001: one coverage line for both attention lists, from the same two
+// source pages. Nonempty lists are qualified too: a visible cue does not
+// prove the list exhaustive.
+function attentionCoverageText(coverage) {
+  if (!isRecord(coverage)) return "";
+  const part = (slice) => {
+    const returned = isRecord(slice) && typeof slice.returned === "number" ? slice.returned : "?";
+    const total = isRecord(slice) && typeof slice.total === "number" ? slice.total : "?";
+    const truncated = isRecord(slice) && slice.truncated === true;
+    return `${returned} of ${total}${truncated ? " (truncated)" : ""}`;
+  };
+  const truncated =
+    (isRecord(coverage.tasks) && coverage.tasks.truncated === true) ||
+    (isRecord(coverage.decisions) && coverage.decisions.truncated === true);
+  const text = `Attention coverage: tasks ${part(coverage.tasks)}, decisions ${part(coverage.decisions)}.`;
+  return truncated
+    ? `${text} Cues beyond the returned pages may exist.`
+    : `${text} Both source pages are complete.`;
+}
+
+// ATT-001: an empty attention list is not an all-clear. Complete pages mean no
+// recorded cue matches the rules; incomplete or unreported pages mean only
+// that none was found in the returned records.
+function attentionEmptyText(coverage) {
+  if (!isRecord(coverage)) {
+    return "No recorded attention cues in the returned records; completeness was not reported.";
+  }
+  if (coverage.completeUnderRules === true) {
+    return "No recorded attention cues match these rules. This does not mean all work is done.";
+  }
+  return "No cue found in the returned records; more matching records may exist.";
+}
+
 function attentionItemHtml(item) {
+  return `<li class="oitem">${attentionItemBodyHtml(item)}</li>`;
+}
+
+function attentionItemBodyHtml(item) {
   const meta = [item.kind, item.status].filter(Boolean).join(" · ");
   const metaHtml = meta ? `<span class="ometa">${esc(meta)}</span>` : "";
   const sentence = item.summary || item.id || "";
   // SWH-001: the source id stays visible even when a summary exists, so an
   // attention cue can always be tied back to its recorded object.
   const sourceHtml = item.id ? `<span class="osource">${esc(item.id)}</span>` : "";
-  const reasonHtml = item.reason ? `<span class="oreason">${esc(item.reason)}</span>` : "";
-  return `<li class="oitem">${metaHtml}${sourceHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}</li>`;
+  // ATT-001: the raw code stays in data-reason for drill-down; the visible
+  // text is plain language.
+  const reason = strField(item.reason);
+  const reasonHtml = reason
+    ? `<span class="oreason" data-reason="${esc(reason)}">${esc(attentionReasonLabel(reason))}</span>`
+    : "";
+  // The cited non-current findings come from the returned decorated decision.
+  // They are shown only when the service set them; nothing is invented.
+  const cited = reviewFindingIds(item);
+  const citedHtml = cited.length
+    ? `<span class="ocited">${esc(`non-current citations: ${cited.join(", ")}`)}</span>`
+    : "";
+  // Recorded assignment, stated as a record. It is never a permission claim.
+  const assigneeId = isRecord(item.assignee) ? strField(item.assignee.actorId) : "";
+  const assigneeHtml = assigneeId
+    ? `<span class="oassignee">${esc(`assignee: ${assigneeId}`)}</span>`
+    : "";
+  return `${metaHtml}${sourceHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}${citedHtml}${assigneeHtml}`;
 }
 
-function renderAttentionList(el, items, emptyText) {
+function renderAttentionList(el, items, emptyText, coverageText) {
   if (!el) return;
+  const coverageHtml =
+    typeof coverageText === "string" && coverageText.length
+      ? `<div class="coverage">${esc(coverageText)}</div>`
+      : "";
   if (!items.length) {
-    el.innerHTML = `<div class="empty">${esc(emptyText)}</div>`;
+    el.innerHTML = `<div class="empty">${esc(emptyText)}</div>` + coverageHtml;
     return;
   }
-  el.innerHTML = `<ul class="olist">${items.map(attentionItemHtml).join("")}</ul>`;
+  el.innerHTML = `<ul class="olist">${items.map((item) => attentionItemHtml(item)).join("")}</ul>` + coverageHtml;
 }
 
 function workTaskHtml(task) {
@@ -1330,10 +1436,15 @@ function renderRecordNotes(el, context) {
 // setPerspective() keep calling this with no arguments. The seam exists so the
 // wiring (whoami -> My work, perspective -> renderer) is testable without a DOM.
 function renderOrientation(homeEls = els, homeState = state) {
+  // ATT-001: both attention lists report the same source-page coverage, and an
+  // empty list is qualified by it. No extra read is made.
+  const coverage = attentionCoverageFrom(homeState.context);
+  const coverageText = attentionCoverageText(coverage);
+  const emptyText = attentionEmptyText(coverage);
   renderRecordNotes(homeEls.recordNotes, homeState.context);
   renderAlignment(homeEls.alignment, deriveAlignment(homeState.context), homeState.context);
-  renderAttentionList(homeEls.needsYou, deriveNeedsYou(homeState.context), "You're all caught up");
-  renderAttentionList(homeEls.needsAttention, deriveNeedsAttention(homeState.context), "Nothing needs attention");
+  renderAttentionList(homeEls.needsYou, deriveNeedsYou(homeState.context), emptyText, coverageText);
+  renderAttentionList(homeEls.needsAttention, deriveNeedsAttention(homeState.context), emptyText, coverageText);
   // Both perspectives render from this same context; only the leading panel
   // differs (CSS order/visibility). No section makes its own read.
   const who = callerRef(homeState.whoami);

@@ -8,6 +8,7 @@
 import { CONTEXT_SCHEMA_VERSION, toContextSlice, type ChangeSummary, type ContextBudget } from "../domain/context-policy.js";
 import type { Artifact, Contribution, Decision, Finding, Goal, Task, Workspace } from "../domain/types.js";
 import type {
+  AttentionCoverage,
   AttentionItem,
   CurrentWork,
   ParticipantView,
@@ -59,6 +60,18 @@ export function assembleWorkspaceContext(parts: OrientationAssembly): WorkspaceC
     parts.recentChanges.total,
     parts.recentChanges.nextCursor,
   );
+  // ATT-001: coverage of the two pages attention items are selected from. It is
+  // derived from the values above and never triggers another read, so the local
+  // and Workers/D1 paths agree by construction.
+  const attentionCoverage: AttentionCoverage = {
+    tasks: { total: tasks.total, returned: tasks.returned, truncated: tasks.truncated },
+    decisions: {
+      total: decisions.total,
+      returned: decisions.returned,
+      truncated: decisions.truncated,
+    },
+    completeUnderRules: !tasks.truncated && !decisions.truncated,
+  };
   const context: WorkspaceContext = {
     schemaVersion: CONTEXT_SCHEMA_VERSION,
     generatedAt: parts.generatedAt,
@@ -80,6 +93,7 @@ export function assembleWorkspaceContext(parts: OrientationAssembly): WorkspaceC
     provenanceTruncated: parts.provenance.length < parts.provenanceTotal,
     needsYou: parts.needsYou,
     needsAttention: parts.needsAttention,
+    attentionCoverage,
     currentWork: parts.currentWork,
     suggestedNextAction: parts.suggestedNextAction,
     alignment: parts.alignment,

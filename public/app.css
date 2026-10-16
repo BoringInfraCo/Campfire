@@ -567,6 +567,34 @@ main {
   color: var(--muted);
 }
 
+/* ATT-001: coverage and cue annotations. Each states its meaning in text, in
+   normal flow, so nothing depends on color alone. */
+.coverage {
+  padding: 0.3em 0 0;
+  color: var(--muted);
+  font-size: 0.85em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ocited,
+.oassignee {
+  flex-basis: 100%;
+  min-width: 0;
+  padding-left: 1.5ch;
+  color: var(--muted);
+  font-size: 0.85em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.panel-note {
+  margin: 0.35em 0 0;
+  color: var(--muted);
+  font-size: 0.85em;
+  line-height: 1.35;
+}
+
 .sources {
   grid-column: 1 / -1;
 }

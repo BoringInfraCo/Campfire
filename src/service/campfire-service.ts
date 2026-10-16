@@ -407,6 +407,28 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     };
   }
 
+  /**
+   * ATT-001: a team-level review cue for a returned accepted decision whose
+   * read-time `needsReview` decoration is set (a cited finding is no longer
+   * current). Campfire records no reviewer, so this stays team attention. The
+   * cue carries the cited non-current finding ids; it does not revoke the
+   * acceptance, choose an operative decision, or elevate a next action.
+   */
+  function attentionItemFromReviewDecision(decision: Decision): AttentionItem {
+    const item: AttentionItem = {
+      kind: "decision",
+      id: decision.id,
+      summary: decision.summary,
+      status: decision.status,
+      reason: "accepted_decision_needs_review",
+    };
+    const findingIds = (decision.needsReviewFindingIds ?? []).filter((id) => id.length > 0);
+    if (findingIds.length > 0) {
+      item.needsReviewFindingIds = [...findingIds];
+    }
+    return item;
+  }
+
   function deriveSuggestedNextAction(
     needsYou: AttentionItem[],
     needsAttention: AttentionItem[],
@@ -554,6 +576,12 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       ...otherBlocked.map((task) => attentionItemFromTask(task, "team_blocked_task")),
       ...demotedBlocked.map((task) => attentionItemFromTask(task, "team_blocked_task")),
       ...demotedOpen.map((task) => attentionItemFromTask(task, "assigned_open_task")),
+      // ATT-001: review cues come from the same returned decision page. A
+      // qualifying decision outside the page stays a coverage limitation; the
+      // cue is never manufactured from a count.
+      ...decisions
+        .filter((decision) => decision.status === "accepted" && decision.needsReview === true)
+        .map(attentionItemFromReviewDecision),
     ];
 
     return {

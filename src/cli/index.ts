@@ -137,6 +137,8 @@ import { collectBridgeReport, formatBridgeReport, type BridgeReport } from "../b
 import { createRuntime } from "../runtime.js";
 import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
+  AttentionCoverage,
+  AttentionItem,
   GetActivityInput,
   SuggestedNextAction,
   WorkspaceCatchUp,
@@ -556,6 +558,42 @@ function appendShowing(
   return [...lines, `Showing ${slice.returned} of ${slice.total}`];
 }
 
+/**
+ * ATT-001: attention sections always render. An empty list is qualified with
+ * its coverage so an incomplete page can never read as an unqualified all-clear.
+ * The reason codes stay the stable Sprint 008 labels.
+ */
+function attentionSection(
+  title: string,
+  items: AttentionItem[],
+  coverage: AttentionCoverage | undefined,
+): string[] {
+  if (items.length > 0) {
+    return section(title, items.map(formatAttentionItem));
+  }
+  let empty: string;
+  if (coverage === undefined) {
+    empty = "none in the returned records; completeness not reported";
+  } else if (coverage.completeUnderRules) {
+    empty = "none — no recorded attention cues match the current rules";
+  } else {
+    empty = "none in the returned records; more matching records may exist";
+  }
+  return [title, `  ${empty}`];
+}
+
+/** ATT-001: one coverage line for both attention lists (same source pages). */
+function attentionCoverageLines(coverage: AttentionCoverage | undefined): string[] {
+  if (coverage === undefined) return [];
+  const part = (slice: { returned: number; total: number; truncated: boolean }): string =>
+    `${slice.returned} of ${slice.total}${slice.truncated ? " (truncated)" : ""}`;
+  const line = `Attention coverage  tasks ${part(coverage.tasks)}, decisions ${part(coverage.decisions)}`;
+  if (coverage.tasks.truncated || coverage.decisions.truncated) {
+    return [line, "  cues beyond the returned pages may exist"];
+  }
+  return [line];
+}
+
 function provenanceSection(
   title: string,
   contributions: Contribution[],
@@ -635,8 +673,9 @@ function formatOrientation(context: WorkspaceContext, since?: string): string {
   }
   lines.push(
     ...formatAlignmentBoundary(context),
-    ...section("Needs You", context.needsYou.map(formatAttentionItem)),
-    ...section("Needs Attention", context.needsAttention.map(formatAttentionItem)),
+    ...attentionSection("Needs You", context.needsYou, context.attentionCoverage),
+    ...attentionSection("Needs Attention", context.needsAttention, context.attentionCoverage),
+    ...attentionCoverageLines(context.attentionCoverage),
     ...section("Current Work", [
       ...context.currentWork.inProgressTasks.map(formatTask),
       ...context.currentWork.blockedTasks.map(formatTask),
