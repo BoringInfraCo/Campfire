@@ -320,10 +320,11 @@ derived from the existing bounded slices, and a team cue
 cited findings are no longer current; no reviewer, permission, urgency,
 operative decision, presence, or coordination action is inferred. No release
 decision, version bump, tag, or deployment is recorded. The founder subsequently
-directed a full public v1.19.0 release under the recorded release-scope override
-in `docs/RELEASE_V1_19_DECISION.md`; publication does not change the CONDITIONAL
-GO verdict, the NOT OBSERVED human trace, or any gate. Gate B/C/E/F,
-WCO-001, and SWH-001 remain open.
+directed a full public v1.19.0 release, recorded in
+`docs/RELEASE_V1_19_DECISION.md` and published and deployed on October 15, 2026
+(archives, channel pins, and live installer checks recorded there); the override
+does not change the CONDITIONAL GO verdict, the NOT OBSERVED human trace, or any
+gate. Gate B/C/E/F, WCO-001, and SWH-001 remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

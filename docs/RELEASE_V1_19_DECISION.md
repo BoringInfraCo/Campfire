@@ -85,9 +85,9 @@ Each step is recorded with its evidence as it completes; do not loosen a check.
 
 | Step | Evidence |
 | --- | --- |
-| Founder direction and prep checks | This document; prep commit on private `main` |
-| Private annotated `v1.19.0` tag | Pending |
-| Audited public source snapshot | Pending |
-| Public GitHub Release and four checked archives | Pending |
-| Homebrew / Nix pins, tap promotion, installer checks | Pending |
-| Production Worker deployment and live verification | Pending |
+| Founder direction and prep checks | This document; prep commit `4641dec`. Typecheck clean; full suite 88 files / 1,100 passing with the one expected install-channel assertion awaiting the v1.19.0 archives (not loosened); Darwin ARM64 packaging built (local sha256 `b8fb8c2a970b753917d2076e5288b8e6bf8478c7ac4eee9f294cff61470438d3`), archive extracts with package `1.19.0`; versioned installer created; Worker deployment dry run passed. |
+| Private annotated `v1.19.0` tag | Pushed. Annotated tag object `c3e252e` → commit `4641dec`. |
+| Audited public source snapshot | Export audit passed, 295 files + manifest. Public commit `e208a071` on top of `dd60eef`; public annotated tag `v1.19.0` (object `0dd1f91`). |
+| Public GitHub Release and four checked archives | Published. Workflow `38845444171` completed successfully; eight assets attached (four archives + four checksums). Pre-pin snapshot `ci` runs failed only on the expected install-channel assertion (`expected formula to contain '/v1.19.0/'`), which was not loosened. Local `shasum -a 256 -c` on the published `campfire-darwin-arm64.tar.gz` passed. |
+| Homebrew / Nix pins, tap promotion, installer checks | Private pin commit `4a6f5c5eee1835f58dc7aae5ee6a7f97c9022632` (suite 1,101/1,101 after pin). Public post-tag addendum `636165f` records `installChannelsCommit` in the manifest; the addendum message's hand-typed hash was corrected append-only in `3b4a91a` (manifest was already correct). Homebrew tap `BoringInfraCo/homebrew-campfire` promoted as `243332f` (`campfire 1.19.0`). |
+| Production Worker deployment and live verification | Deployed. Cloudflare Worker version `09f29f22-1f56-4993-8747-54e91080e3f5`. Live and versioned installer URLs are byte-identical to the tracked files (sha256 `ba8603bd106277bf520b1789b77e4e95c8b2bc9c9cae5db5059965bf25d26900`). A clean install from the versioned URL into an isolated prefix reported package `1.19.0` with telemetry disabled and the CLI ran. |
