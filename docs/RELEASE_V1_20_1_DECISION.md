@@ -112,9 +112,9 @@ Each step is recorded with its evidence as it completes; do not loosen a check.
 
 | Step | Evidence |
 | --- | --- |
-| Founder direction and prep checks | This document; prep commit on private `main` |
-| Private annotated `v1.20.1` tag | Pending |
-| Audited public source snapshot | Pending |
-| Public GitHub Release and four checked archives | Pending |
-| Homebrew / Nix pins, tap promotion, installer checks | Pending |
-| Production Worker deployment and live verification | Pending |
+| Founder direction and prep checks | This document; prep commit `dc3c2a4`. Typecheck clean; full suite 93 files / 1,127 (1,125 passing, 1 opt-in capture skipped, one expected install-channel assertion awaiting the v1.20.1 archives, not loosened); clean-machine CI at fix `70f4023` (run `38948832973`) failed only on that expected assertion; Darwin ARM64 packaging built (local sha256 `04cda575b2375d6a13b1058509e296ef0bf7b542d2ce57164f962ac8e3c6c04b`), archive extracts with package `1.20.1`; versioned installer created; Worker deployment dry run passed. The v1.20.0 abandonment is recorded in `docs/RELEASE_V1_20_DECISION.md`. |
+| Private annotated `v1.20.1` tag | Pushed. Annotated tag object `4d74b4241ef79ce5fd9c39c0185d56840902008c` → commit `dc3c2a4`. The frozen `v1.20.0` tag stays unpublished and untouched. |
+| Audited public source snapshot | Export audit passed from a clean worktree at the tag, 304 files including the manifest; independent export review found no blocking discrepancy. Public commit `d66a4e6` on top of `3b4a91a`; public annotated tag `v1.20.1` (object `25f22519a5cc2300072e539fc4b84597eaf79cf7`). |
+| Public GitHub Release and four checked archives | Published. Workflow `38951095296` completed successfully; eight assets attached (four archives + four checksums). Pre-pin snapshot `ci` runs (`38951071231`, `38951074033`) failed only on the expected install-channel assertion (`expected formula to contain '/v1.20.1/'`), which was not loosened. Local `shasum -a 256 -c` on the published `campfire-darwin-arm64.tar.gz` passed and matches the pin `6262438230c43db749fc091ba28ca42a6664b245f2003d13702367e465af27f3`. |
+| Homebrew / Nix pins, tap promotion, installer checks | Private pin commit `1102ff56940aebedfb4b43cc715de44ca62fbaef` (suite 1,126/1,126 passing, 1 opt-in capture skipped after pin). Public post-tag addendum `8feaa76` records `installChannelsCommit` in the manifest; post-pin public `ci` passed (run `38951527384` at `8feaa76`). Homebrew tap `BoringInfraCo/homebrew-campfire` promoted as `d0338af` (`campfire 1.20.1`). |
+| Production Worker deployment and live verification | Deployed. Cloudflare Worker version `3300f315-2204-481a-98b2-16dcf95ba5b9`. Live and versioned installer URLs are byte-identical to the tracked files (sha256 `ba8603bd106277bf520b1789b77e4e95c8b2bc9c9cae5db5059965bf25d26900`). A clean install from the versioned URL into an isolated prefix verified the published archive checksum (`62624382…`), reported package `1.20.1` with telemetry disabled, and the CLI ran. |

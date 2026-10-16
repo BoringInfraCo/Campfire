@@ -345,7 +345,9 @@ promotion when the export review and clean-machine CI found the pty capture
 test required a machine-local Playwright install. The repair (`70f4023`) keeps
 the PTY behavior assertions mandatory and makes terminal evidence capture an
 explicit opt-in step; the release is re-cut as v1.20.1 under
-`docs/RELEASE_V1_20_1_DECISION.md`. Neither override changes the CONDITIONAL GO
+`docs/RELEASE_V1_20_1_DECISION.md` and was published and deployed on
+October 16, 2026 (archives, channel pins, and live installer checks recorded
+there). Neither override changes the CONDITIONAL GO
 verdict, the NOT OBSERVED five cold tasks, or any gate. Gate B/C/E/F, ATT-001,
 WCO-001, SWH-001, and VIS-001 condition 4 remain open.
 
