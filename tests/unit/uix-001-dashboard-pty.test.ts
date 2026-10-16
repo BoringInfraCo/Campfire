@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir, userInfo } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,8 +8,17 @@ import { SCENARIO, UNRELATED_FINDING_SENTINEL, seedDatabase } from "../../fixtur
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const EVIDENCE = join(ROOT, "docs/evidence/uix-001/candidate/terminal");
-const PLAYWRIGHT_NODE_PATH =
-  "/private/var/folders/b5/wj2djqx569x96bjvf5wclxf80000gn/T/opencode/att-001-pw/node_modules";
+// Evidence capture is an explicit opt-in step. The default suite asserts the
+// PTY behavior without Playwright (not a repo dependency) and never writes
+// into docs/; regenerate the committed captures with CAMPFIRE_UIX_CAPTURE=1
+// and CAMPFIRE_PLAYWRIGHT_NODE_PATH pointing at an external node_modules
+// directory that contains playwright.
+const CAPTURE_ENABLED = process.env.CAMPFIRE_UIX_CAPTURE === "1";
+const PLAYWRIGHT_NODE_PATH = process.env.CAMPFIRE_PLAYWRIGHT_NODE_PATH ?? "";
+const FRAME_SIZES = [
+  { columns: 80, rows: 24, name: "ana-lab-80x24" },
+  { columns: 120, rows: 36, name: "ana-lab-120x36" },
+] as const;
 const GOAL_ID = SCENARIO.goal.lab;
 const WORKSPACE_ID = SCENARIO.workspaces.lab;
 const ACTOR_ID = SCENARIO.humans.ana;
@@ -269,6 +278,23 @@ function lastFrame(stream: Buffer, rows: number, columns: number): string {
   return `${lines.join("\n")}\n`;
 }
 
+function assertFrameFacts(text: string, size: { columns: number; rows: number }): void {
+  expect(text).toContain(GOAL_ID);
+  expect(text).toContain("Make team attention cues trustworthy without changing recorded work.");
+  expect(text).toContain("q quit");
+  expect(text).toContain(WORKSPACE_ID);
+  expect(text).toMatch(/20\/21|20 of 21/);
+  expect(text.includes("\u001b")).toBe(false);
+  expect(text.includes("cft_")).toBe(false);
+  expect(text.includes("/Users/")).toBe(false);
+  expect(text.includes(UNRELATED_FINDING_SENTINEL)).toBe(false);
+  const lines = text.slice(0, -1).split("\n");
+  expect(lines).toHaveLength(size.rows);
+  if (size.columns === 120) {
+    expect(lines.some((line) => line.length > 80)).toBe(true);
+  }
+}
+
 describe("UIX-001 dashboard pty", () => {
   it("restores the terminal after q", () => {
     const db = seedScratch();
@@ -285,32 +311,33 @@ describe("UIX-001 dashboard pty", () => {
     assertRestored(runDashboard(db, scratch ?? "", 24, 80, "sigint"), [0, 130]);
   }, 90_000);
 
-  it("captures Ana on the lab workspace at 80x24 and 120x36", () => {
+  it("renders truthful frames at 80x24 and 120x36", () => {
     const db = seedScratch();
-    const sizes = [
-      { columns: 80, rows: 24, name: "ana-lab-80x24" },
-      { columns: 120, rows: 36, name: "ana-lab-120x36" },
-    ] as const;
+    for (const size of FRAME_SIZES) {
+      const result = runDashboard(db, scratch ?? "", size.rows, size.columns, "q");
+      assertRestored(result, [0]);
+      assertFrameFacts(lastFrame(result.stream, size.rows, size.columns), size);
+    }
+  }, 120_000);
+
+  // Optional evidence step; skipped unless CAMPFIRE_UIX_CAPTURE=1. Regenerate
+  // the committed captures with:
+  //   CAMPFIRE_UIX_CAPTURE=1 \
+  //   CAMPFIRE_PLAYWRIGHT_NODE_PATH=<node_modules containing playwright> \
+  //   npx vitest run tests/unit/uix-001-dashboard-pty.test.ts
+  it.skipIf(!CAPTURE_ENABLED)("captures terminal evidence frames (opt-in)", () => {
+    expect(
+      PLAYWRIGHT_NODE_PATH.length > 0 && existsSync(join(PLAYWRIGHT_NODE_PATH, "playwright")),
+      "set CAMPFIRE_PLAYWRIGHT_NODE_PATH to an external node_modules directory containing playwright",
+    ).toBe(true);
+    const db = seedScratch();
     mkdirSync(EVIDENCE, { recursive: true });
     const frames: Array<{ name: string; columns: number; rows: number; text: string }> = [];
-    for (const size of sizes) {
+    for (const size of FRAME_SIZES) {
       const result = runDashboard(db, scratch ?? "", size.rows, size.columns, "q");
       assertRestored(result, [0]);
       const text = lastFrame(result.stream, size.rows, size.columns);
-      expect(text).toContain(GOAL_ID);
-      expect(text).toContain("Make team attention cues trustworthy without changing recorded work.");
-      expect(text).toContain("q quit");
-      expect(text).toContain(WORKSPACE_ID);
-      expect(text).toMatch(/20\/21|20 of 21/);
-      expect(text.includes("\u001b")).toBe(false);
-      expect(text.includes("cft_")).toBe(false);
-      expect(text.includes("/Users/")).toBe(false);
-      expect(text.includes(UNRELATED_FINDING_SENTINEL)).toBe(false);
-      const lines = text.slice(0, -1).split("\n");
-      expect(lines).toHaveLength(size.rows);
-      if (size.columns === 120) {
-        expect(lines.some((line) => line.length > 80)).toBe(true);
-      }
+      assertFrameFacts(text, size);
       writeFileSync(join(EVIDENCE, `${size.name}.txt`), text);
       frames.push({ name: size.name, columns: size.columns, rows: size.rows, text });
     }
@@ -325,7 +352,7 @@ describe("UIX-001 dashboard pty", () => {
       },
     );
     expect(shot.status, redact(shot.stderr ?? shot.stdout ?? "")).toBe(0);
-    for (const size of sizes) {
+    for (const size of FRAME_SIZES) {
       const png = readFileSync(join(EVIDENCE, `${size.name}.png`));
       expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
     }

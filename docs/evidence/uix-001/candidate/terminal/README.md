@@ -4,4 +4,12 @@ These files are captures of the pty frame for visual review of clipping. They ar
 
 `ana-lab-80x24.txt` and `ana-lab-80x24.png` are the 80×24 frame. `ana-lab-120x36.txt` and `ana-lab-120x36.png` are the 120×36 frame. Each text file is the last complete frame after the final clear, with CSI/OSC and cursor controls removed. Each screenshot is that text in a monospace `pre` on `#171717`, not a terminal emulator window.
 
-Vitest: `npx vitest run tests/unit/uix-001-dashboard-pty.test.ts` — pass, 4 tests.
+The PTY behavior assertions in `tests/unit/uix-001-dashboard-pty.test.ts` run in the default suite and require no external tooling. Regenerating these evidence files is a separate, opt-in step (Playwright is not a repo dependency):
+
+```sh
+CAMPFIRE_UIX_CAPTURE=1 \
+CAMPFIRE_PLAYWRIGHT_NODE_PATH=<external node_modules containing playwright> \
+npx vitest run tests/unit/uix-001-dashboard-pty.test.ts
+```
+
+Regenerated frames carry a live `refreshed` timestamp; the committed files are the candidate capture.
