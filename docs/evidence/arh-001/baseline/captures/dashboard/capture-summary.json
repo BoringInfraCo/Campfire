@@ -1,0 +1,137 @@
+{
+  "provenance": "FIXTURE EVIDENCE — cannot establish Gate B, C, or E.",
+  "methodNote": "pty = real `campfire dashboard` in a python3 pty at the stated winsize, last screen clear, controls stripped; renderer-fallback = exported renderDashboard at the stated size (labeled per capture).",
+  "captures": [
+    {
+      "name": "lab-ana-120x36",
+      "workspaceId": "ws_arh001_lab",
+      "actorId": "hum_arh001_ana",
+      "actorType": "human",
+      "columns": 120,
+      "rows": 36,
+      "pty": {
+        "exitCode": 0,
+        "timedOut": false,
+        "sent": true,
+        "termiosRestored": true,
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_arh001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_arh001_lab\"}\n",
+        "enterAltScreen": true,
+        "leaveAltScreen": true,
+        "hideCursor": true,
+        "showCursor": true
+      },
+      "checks": {
+        "lineCount": 36,
+        "sectionTitleDrawn": true,
+        "referenceLabelDrawn": true,
+        "artifactRowsDrawn": [
+          "art_arh001_safe_output",
+          "art_arh001_hostile_markup",
+          "art_arh001_credentialed",
+          "art_arh001_insecure_scheme",
+          "art_arh001_path",
+          "art_arh001_stale",
+          "art_arh001_safe_old_report"
+        ],
+        "expectedArtifactRowsPresent": true,
+        "absentArtifactRowsAbsent": true,
+        "moreAvailableDrawn": false,
+        "showingTruncCountDrawn": false,
+        "noEscapeControls": true,
+        "noCredentialShape": true,
+        "noHomePath": true,
+        "noUnrelatedSentinel": true
+      },
+      "method": "pty",
+      "passed": true
+    },
+    {
+      "name": "lab-ana-80x24",
+      "workspaceId": "ws_arh001_lab",
+      "actorId": "hum_arh001_ana",
+      "actorType": "human",
+      "columns": 80,
+      "rows": 24,
+      "pty": {
+        "exitCode": 0,
+        "timedOut": false,
+        "sent": true,
+        "termiosRestored": true,
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_arh001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_arh001_lab\"}\n",
+        "enterAltScreen": true,
+        "leaveAltScreen": true,
+        "hideCursor": true,
+        "showCursor": true
+      },
+      "checks": {
+        "lineCount": 24,
+        "sectionTitleDrawn": false,
+        "referenceLabelDrawn": true,
+        "artifactRowsDrawn": [
+          "art_arh001_safe_output",
+          "art_arh001_hostile_markup",
+          "art_arh001_credentialed",
+          "art_arh001_insecure_scheme",
+          "art_arh001_path",
+          "art_arh001_stale"
+        ],
+        "expectedArtifactRowsPresent": true,
+        "absentArtifactRowsAbsent": true,
+        "moreAvailableDrawn": false,
+        "showingTruncCountDrawn": false,
+        "noEscapeControls": true,
+        "noCredentialShape": true,
+        "noHomePath": true,
+        "noUnrelatedSentinel": true
+      },
+      "method": "pty",
+      "passed": true
+    },
+    {
+      "name": "trunc-ana-120x36",
+      "workspaceId": "ws_arh001_trunc_artifacts",
+      "actorId": "hum_arh001_ana",
+      "actorType": "human",
+      "columns": 120,
+      "rows": 36,
+      "pty": {
+        "exitCode": 0,
+        "timedOut": false,
+        "sent": true,
+        "termiosRestored": true,
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_arh001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_arh001_trunc_artifacts\"}\n",
+        "enterAltScreen": true,
+        "leaveAltScreen": true,
+        "hideCursor": true,
+        "showCursor": true
+      },
+      "checks": {
+        "lineCount": 36,
+        "sectionTitleDrawn": true,
+        "referenceLabelDrawn": true,
+        "artifactRowsDrawn": [
+          "art_arh001_trunc_linked",
+          "art_arh001_trunc_filler_09",
+          "art_arh001_trunc_filler_08",
+          "art_arh001_trunc_filler_07",
+          "art_arh001_trunc_filler_06",
+          "art_arh001_trunc_filler_05",
+          "art_arh001_trunc_filler_04",
+          "art_arh001_trunc_filler_03",
+          "art_arh001_trunc_filler_02",
+          "art_arh001_trunc_filler_01"
+        ],
+        "expectedArtifactRowsPresent": true,
+        "absentArtifactRowsAbsent": true,
+        "moreAvailableDrawn": false,
+        "showingTruncCountDrawn": false,
+        "noEscapeControls": true,
+        "noCredentialShape": true,
+        "noHomePath": true,
+        "noUnrelatedSentinel": true
+      },
+      "method": "pty",
+      "passed": true
+    }
+  ]
+}

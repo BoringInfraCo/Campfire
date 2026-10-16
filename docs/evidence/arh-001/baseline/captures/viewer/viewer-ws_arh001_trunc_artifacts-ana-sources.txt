@@ -1,0 +1,39 @@
+current findings
+current
+The truncation runbook is the recorded source for the page-boundary check.
+id find_arh001_trunc · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+document
+Truncation runbook (returned page source)
+id art_arh001_trunc_linked · reference: references/arh-001/trunc/runbook.md (stored reference, not fetched)
+document
+Truncation filler 09
+id art_arh001_trunc_filler_09 · reference: https://example.com/arh-001/trunc/filler-09.md (stored reference, not fetched)
+document
+Truncation filler 08
+id art_arh001_trunc_filler_08 · reference: https://example.com/arh-001/trunc/filler-08.md (stored reference, not fetched)
+document
+Truncation filler 07
+id art_arh001_trunc_filler_07 · reference: https://example.com/arh-001/trunc/filler-07.md (stored reference, not fetched)
+document
+Truncation filler 06
+id art_arh001_trunc_filler_06 · reference: https://example.com/arh-001/trunc/filler-06.md (stored reference, not fetched)
+document
+Truncation filler 05
+id art_arh001_trunc_filler_05 · reference: https://example.com/arh-001/trunc/filler-05.md (stored reference, not fetched)
+document
+Truncation filler 04
+id art_arh001_trunc_filler_04 · reference: https://example.com/arh-001/trunc/filler-04.md (stored reference, not fetched)
+document
+Truncation filler 03
+id art_arh001_trunc_filler_03 · reference: https://example.com/arh-001/trunc/filler-03.md (stored reference, not fetched)
+document
+Truncation filler 02
+id art_arh001_trunc_filler_02 · reference: https://example.com/arh-001/trunc/filler-02.md (stored reference, not fetched)
+document
+Truncation filler 01
+id art_arh001_trunc_filler_01 · reference: https://example.com/arh-001/trunc/filler-01.md (stored reference, not fetched)
+artifacts
+showing 10 of 12 · more available — open the list for the rest

@@ -1,0 +1,1671 @@
+{
+  "acceptedDecisions": [
+    {
+      "approvedBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-16T16:00:42.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_arh001_new",
+      "predecessorId": "dec_arh001_old",
+      "rationale": "The stored reference and its recorded evidence replace the private recap.",
+      "status": "accepted",
+      "summary": "Replace the recap thread with the recorded artifact reference chain.",
+      "updatedAt": "2026-10-16T16:00:43.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-16T16:00:38.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_arh001_competing_b",
+      "rationale": "Manual copying keeps Campfire out of the navigation path.",
+      "status": "accepted",
+      "summary": "Keep every external reference inert and hand off by copying the stored URI.",
+      "updatedAt": "2026-10-16T16:00:39.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-16T16:00:36.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_arh001_competing_a",
+      "rationale": "A deliberate open keeps the recipient inside their own authority.",
+      "status": "accepted",
+      "summary": "Open the external report from the stored reference when the recipient is ready.",
+      "updatedAt": "2026-10-16T16:00:37.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-16T16:00:35.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_arh001_review",
+          "findingId": "find_arh001_superseded",
+          "id": "cit_arh001_review_basis",
+          "note": "original reading",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "createdAt": "2026-10-16T16:00:33.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_arh001_review",
+      "needsReview": true,
+      "needsReviewFindingIds": [
+        "find_arh001_superseded"
+      ],
+      "rationale": "Accepted while the lab believed the report was an internal export.",
+      "status": "accepted",
+      "summary": "The handoff needs no second source: the Q3 report covers the period.",
+      "updatedAt": "2026-10-16T16:00:34.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-16T16:00:32.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_arh001_current",
+          "findingId": "find_arh001_current",
+          "id": "cit_arh001_current_basis",
+          "note": "recorded source chain",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "createdAt": "2026-10-16T16:00:30.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_arh001_current",
+      "rationale": "Agent A recorded the finding against the external report reference; the citation chain is the handoff.",
+      "status": "accepted",
+      "summary": "Treat the Q3 handoff report as the recorded source for the follow-up work.",
+      "updatedAt": "2026-10-16T16:00:31.000Z",
+      "workspaceId": "ws_arh001_lab"
+    }
+  ],
+  "alignment": {
+    "acceptedDecisionIds": [
+      "dec_arh001_current",
+      "dec_arh001_review",
+      "dec_arh001_competing_a",
+      "dec_arh001_competing_b",
+      "dec_arh001_new"
+    ],
+    "proposedDecisionIds": [],
+    "status": "established",
+    "unresolvedBlockedTaskIds": [
+      "task_arh001_waiting_access"
+    ]
+  },
+  "artifacts": [
+    {
+      "createdAt": "2026-10-16T16:00:17.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_safe_output",
+      "metadata": {
+        "period": "2026-Q3",
+        "source": "external-reporting"
+      },
+      "title": "Q3 handoff analysis (external report)",
+      "type": "report",
+      "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis.html",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:23.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_hostile_markup",
+      "title": "Report <script>alert(1)</script>",
+      "type": "other",
+      "uriOrPath": "https://example.com/arh-001/report\"><img src=x onerror=alert(1)>",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:22.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_credentialed",
+      "title": "Protected analytics view",
+      "type": "other",
+      "uriOrPath": "https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:21.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_insecure_scheme",
+      "title": "Legacy FTP archive",
+      "type": "file",
+      "uriOrPath": "ftp://files.example.com/arh-001/export.tar.gz",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:20.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_path",
+      "title": "Local working notes",
+      "type": "document",
+      "uriOrPath": "reports/arh-001/working-notes.md",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:19.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_stale",
+      "metadata": {
+        "environment": "preview",
+        "note": "superseded"
+      },
+      "title": "Preview deployment (stale)",
+      "type": "deployment",
+      "uriOrPath": "https://example.com/arh-001/deployments/old-preview",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:18.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_safe_old_report",
+      "title": "Q3 handoff analysis (external report) — earlier draft",
+      "type": "report",
+      "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis-draft.html",
+      "workspaceId": "ws_arh001_lab"
+    }
+  ],
+  "attentionCoverage": {
+    "completeUnderRules": true,
+    "decisions": {
+      "returned": 5,
+      "total": 5,
+      "truncated": false
+    },
+    "tasks": {
+      "returned": 6,
+      "total": 6,
+      "truncated": false
+    }
+  },
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [
+      {
+        "approvedBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-16T16:00:32.000Z",
+            "createdBy": {
+              "actorId": "hum_arh001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_arh001_current",
+            "findingId": "find_arh001_current",
+            "id": "cit_arh001_current_basis",
+            "note": "recorded source chain",
+            "workspaceId": "ws_arh001_lab"
+          }
+        ],
+        "createdAt": "2026-10-16T16:00:30.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_arh001_current",
+        "rationale": "Agent A recorded the finding against the external report reference; the citation chain is the handoff.",
+        "status": "accepted",
+        "summary": "Treat the Q3 handoff report as the recorded source for the follow-up work.",
+        "updatedAt": "2026-10-16T16:00:31.000Z",
+        "workspaceId": "ws_arh001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-16T16:00:35.000Z",
+            "createdBy": {
+              "actorId": "hum_arh001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_arh001_review",
+            "findingId": "find_arh001_superseded",
+            "id": "cit_arh001_review_basis",
+            "note": "original reading",
+            "workspaceId": "ws_arh001_lab"
+          }
+        ],
+        "createdAt": "2026-10-16T16:00:33.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_arh001_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_arh001_superseded"
+        ],
+        "rationale": "Accepted while the lab believed the report was an internal export.",
+        "status": "accepted",
+        "summary": "The handoff needs no second source: the Q3 report covers the period.",
+        "updatedAt": "2026-10-16T16:00:34.000Z",
+        "workspaceId": "ws_arh001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-16T16:00:36.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_arh001_competing_a",
+        "rationale": "A deliberate open keeps the recipient inside their own authority.",
+        "status": "accepted",
+        "summary": "Open the external report from the stored reference when the recipient is ready.",
+        "updatedAt": "2026-10-16T16:00:37.000Z",
+        "workspaceId": "ws_arh001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-16T16:00:38.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_arh001_competing_b",
+        "rationale": "Manual copying keeps Campfire out of the navigation path.",
+        "status": "accepted",
+        "summary": "Keep every external reference inert and hand off by copying the stored URI.",
+        "updatedAt": "2026-10-16T16:00:39.000Z",
+        "workspaceId": "ws_arh001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-16T16:00:42.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_arh001_new",
+        "predecessorId": "dec_arh001_old",
+        "rationale": "The stored reference and its recorded evidence replace the private recap.",
+        "status": "accepted",
+        "summary": "Replace the recap thread with the recorded artifact reference chain.",
+        "updatedAt": "2026-10-16T16:00:43.000Z",
+        "workspaceId": "ws_arh001_lab"
+      }
+    ],
+    "blockedTasks": [
+      {
+        "assignee": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-16T16:00:46.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "task_arh001_waiting_access",
+        "status": "blocked",
+        "title": "Confirm the recipient's access to the external report",
+        "updatedAt": "2026-10-16T16:00:51.000Z",
+        "workspaceId": "ws_arh001_lab"
+      }
+    ],
+    "inProgressTasks": [
+      {
+        "createdAt": "2026-10-16T16:00:47.000Z",
+        "createdBy": {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human"
+        },
+        "id": "task_arh001_working_notes",
+        "status": "in_progress",
+        "title": "Draft the handoff checklist from the stored references",
+        "updatedAt": "2026-10-16T16:00:52.000Z",
+        "workspaceId": "ws_arh001_lab"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "agentSessionId": "ses_arh001_opencode",
+      "createdAt": "2026-10-16T16:00:26.000Z",
+      "createdBy": {
+        "actorId": "agt_arh001_opencode",
+        "actorType": "agent"
+      },
+      "currentness": "current",
+      "detail": "Campfire stores the reference only; the external system owns the report bytes and its access rules.",
+      "evidence": [
+        {
+          "agentSessionId": "ses_arh001_opencode",
+          "artifactId": "art_arh001_safe_output",
+          "createdAt": "2026-10-16T16:00:27.000Z",
+          "createdBy": {
+            "actorId": "agt_arh001_opencode",
+            "actorType": "agent"
+          },
+          "findingId": "find_arh001_current",
+          "id": "fev_arh001_current_supports",
+          "note": "external report is the recorded source",
+          "relation": "supports",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "id": "find_arh001_current",
+      "sourceArtifactId": "art_arh001_safe_output",
+      "summary": "The recorded Q3 handoff analysis reference points outside Campfire.",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "agentSessionId": "ses_arh001_codex",
+      "createdAt": "2026-10-16T16:00:28.000Z",
+      "createdBy": {
+        "actorId": "agt_arh001_codex",
+        "actorType": "agent"
+      },
+      "currentness": "current",
+      "detail": "The deployment reference is stale and must not be offered as the handoff source.",
+      "evidence": [
+        {
+          "agentSessionId": "ses_arh001_codex",
+          "artifactId": "art_arh001_stale",
+          "createdAt": "2026-10-16T16:00:29.000Z",
+          "createdBy": {
+            "actorId": "agt_arh001_codex",
+            "actorType": "agent"
+          },
+          "findingId": "find_arh001_contradicts",
+          "id": "fev_arh001_contradicts_stale",
+          "note": "stale preview contradicts the current source",
+          "relation": "contradicts",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "id": "find_arh001_contradicts",
+      "summary": "The old preview deployment no longer matches the handoff analysis.",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:25.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "The stored reference points at an external site; the internal dashboard does not carry this report.",
+      "id": "find_arh001_superseded_fix",
+      "predecessorId": "find_arh001_superseded",
+      "summary": "The Q3 handoff analysis is an external report, not an internal export.",
+      "workspaceId": "ws_arh001_lab"
+    }
+  ],
+  "generatedAt": "2026-10-16T18:00:00.000Z",
+  "goal": {
+    "createdAt": "2026-10-16T16:00:08.000Z",
+    "createdBy": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "description": "Two humans and two owned agents share one lab while the ARH-001 artifact reference boundary is frozen.",
+    "id": "goal_arh001_handoff",
+    "status": "active",
+    "title": "Hand the recorded Q3 artifact reference chain to a second teammate and their agent.",
+    "updatedAt": "2026-10-16T16:00:08.000Z",
+    "workspaceId": "ws_arh001_lab"
+  },
+  "historicalCounts": {
+    "decisions": 1,
+    "findings": 1
+  },
+  "needsAttention": [
+    {
+      "assignee": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "task_arh001_waiting_access",
+      "kind": "task",
+      "reason": "team_blocked_task",
+      "status": "blocked",
+      "summary": "Confirm the recipient's access to the external report"
+    },
+    {
+      "id": "dec_arh001_review",
+      "kind": "decision",
+      "needsReviewFindingIds": [
+        "find_arh001_superseded"
+      ],
+      "reason": "accepted_decision_needs_review",
+      "status": "accepted",
+      "summary": "The handoff needs no second source: the Q3 report covers the period."
+    }
+  ],
+  "needsYou": [
+    {
+      "assignee": {
+        "actorId": "agt_arh001_codex",
+        "actorType": "agent"
+      },
+      "id": "task_arh001_followup",
+      "kind": "task",
+      "reason": "assigned_open_task",
+      "status": "open",
+      "summary": "Follow up on the Q3 handoff analysis reference"
+    }
+  ],
+  "openTasks": [
+    {
+      "assignee": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-16T16:00:46.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "task_arh001_waiting_access",
+      "status": "blocked",
+      "title": "Confirm the recipient's access to the external report",
+      "updatedAt": "2026-10-16T16:00:51.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:47.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "task_arh001_working_notes",
+      "status": "in_progress",
+      "title": "Draft the handoff checklist from the stored references",
+      "updatedAt": "2026-10-16T16:00:52.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:48.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "task_arh001_archive_draft",
+      "status": "open",
+      "title": "Archive the earlier draft reference",
+      "updatedAt": "2026-10-16T16:00:48.000Z",
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "assignee": {
+        "actorId": "agt_arh001_codex",
+        "actorType": "agent"
+      },
+      "createdAt": "2026-10-16T16:00:44.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "task_arh001_followup",
+      "status": "open",
+      "title": "Follow up on the Q3 handoff analysis reference",
+      "updatedAt": "2026-10-16T16:00:44.000Z",
+      "workspaceId": "ws_arh001_lab"
+    }
+  ],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTA4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTMuMDAwWiIsIm9yaWdpbklkIjoiY29uX2FyaDAwMV8wMTA4IiwicG9zaXRpb24iOjUwLCJvcmlnaW5Qb3NpdGlvbiI6NTAsInRpcCI6MH0",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-16T16:00:07.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_arh001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-16T16:00:10.000Z",
+      "name": "Ben",
+      "role": "member"
+    },
+    {
+      "actor": {
+        "actorId": "agt_arh001_codex",
+        "actorType": "agent"
+      },
+      "harness": "codex",
+      "humanOwnerId": "hum_arh001_ben",
+      "joinedAt": "2026-10-16T16:00:12.000Z",
+      "name": "Codex",
+      "role": "agent"
+    },
+    {
+      "actor": {
+        "actorId": "agt_arh001_opencode",
+        "actorType": "agent"
+      },
+      "harness": "opencode",
+      "humanOwnerId": "hum_arh001_ana",
+      "joinedAt": "2026-10-16T16:00:14.000Z",
+      "name": "OpenCode",
+      "role": "agent"
+    }
+  ],
+  "proposedDecisions": [],
+  "provenance": [
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 31,
+      "createdAt": "2026-10-16T16:00:35.000Z",
+      "id": "con_arh001_0067",
+      "objectId": "dec_arh001_review",
+      "objectType": "decision",
+      "payload": {
+        "findingId": "find_arh001_superseded",
+        "note": "original reading",
+        "summary": "cites find_arh001_superseded"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 32,
+      "createdAt": "2026-10-16T16:00:36.000Z",
+      "id": "con_arh001_0068",
+      "objectId": "dec_arh001_competing_a",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Open the external report from the stored reference when the recipient is ready."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 33,
+      "createdAt": "2026-10-16T16:00:37.000Z",
+      "id": "con_arh001_0071",
+      "objectId": "dec_arh001_competing_a",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 34,
+      "createdAt": "2026-10-16T16:00:38.000Z",
+      "id": "con_arh001_0074",
+      "objectId": "dec_arh001_competing_b",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Keep every external reference inert and hand off by copying the stored URI."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 35,
+      "createdAt": "2026-10-16T16:00:39.000Z",
+      "id": "con_arh001_0077",
+      "objectId": "dec_arh001_competing_b",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 36,
+      "createdAt": "2026-10-16T16:00:40.000Z",
+      "id": "con_arh001_0080",
+      "objectId": "dec_arh001_old",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Route handoff questions through the weekly recap thread."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 37,
+      "createdAt": "2026-10-16T16:00:41.000Z",
+      "id": "con_arh001_0083",
+      "objectId": "dec_arh001_old",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 38,
+      "createdAt": "2026-10-16T16:00:42.000Z",
+      "id": "con_arh001_0086",
+      "objectId": "dec_arh001_new",
+      "objectType": "decision",
+      "payload": {
+        "predecessorId": "dec_arh001_old",
+        "status": "proposed",
+        "summary": "Replace the recap thread with the recorded artifact reference chain."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 39,
+      "createdAt": "2026-10-16T16:00:43.000Z",
+      "id": "con_arh001_0089",
+      "objectId": "dec_arh001_new",
+      "objectType": "decision",
+      "payload": {
+        "predecessorId": "dec_arh001_old",
+        "reason": "The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source.",
+        "status": "accepted",
+        "summary": "Replace the recap thread with the recorded artifact reference chain."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 40,
+      "createdAt": "2026-10-16T16:00:43.000Z",
+      "id": "con_arh001_0090",
+      "objectId": "dec_arh001_old",
+      "objectType": "decision",
+      "payload": {
+        "changeType": "decision.superseded",
+        "reason": "The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source.",
+        "status": "superseded",
+        "successorId": "dec_arh001_new",
+        "summary": "Route handoff questions through the weekly recap thread."
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 41,
+      "createdAt": "2026-10-16T16:00:44.000Z",
+      "id": "con_arh001_0093",
+      "objectId": "task_arh001_followup",
+      "objectType": "task",
+      "payload": {
+        "title": "Follow up on the Q3 handoff analysis reference"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 42,
+      "createdAt": "2026-10-16T16:00:45.000Z",
+      "id": "con_arh001_0094",
+      "objectId": "task_arh001_verify_chain",
+      "objectType": "task",
+      "payload": {
+        "title": "Verify the recorded evidence chain before handoff"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 43,
+      "createdAt": "2026-10-16T16:00:46.000Z",
+      "id": "con_arh001_0095",
+      "objectId": "task_arh001_waiting_access",
+      "objectType": "task",
+      "payload": {
+        "title": "Confirm the recipient's access to the external report"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 44,
+      "createdAt": "2026-10-16T16:00:47.000Z",
+      "id": "con_arh001_0096",
+      "objectId": "task_arh001_working_notes",
+      "objectType": "task",
+      "payload": {
+        "title": "Draft the handoff checklist from the stored references"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 45,
+      "createdAt": "2026-10-16T16:00:48.000Z",
+      "id": "con_arh001_0097",
+      "objectId": "task_arh001_archive_draft",
+      "objectType": "task",
+      "payload": {
+        "title": "Archive the earlier draft reference"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 46,
+      "createdAt": "2026-10-16T16:00:49.000Z",
+      "id": "con_arh001_0098",
+      "objectId": "task_arh001_wrap_up",
+      "objectType": "task",
+      "payload": {
+        "title": "Close the ARH-001 lab setup"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 47,
+      "createdAt": "2026-10-16T16:00:50.000Z",
+      "id": "con_arh001_0099",
+      "objectId": "task_arh001_verify_chain",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 48,
+      "createdAt": "2026-10-16T16:00:51.000Z",
+      "id": "con_arh001_0102",
+      "objectId": "task_arh001_waiting_access",
+      "objectType": "task",
+      "payload": {
+        "status": "blocked"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 49,
+      "createdAt": "2026-10-16T16:00:52.000Z",
+      "id": "con_arh001_0105",
+      "objectId": "task_arh001_working_notes",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_arh001_lab"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 50,
+      "createdAt": "2026-10-16T16:00:53.000Z",
+      "id": "con_arh001_0108",
+      "objectId": "task_arh001_wrap_up",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_arh001_lab"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana updated decision dec_arh001_review: cites find_arh001_superseded",
+    "Ana contributed decision dec_arh001_competing_a: Open the external report from the stored reference when the recipient is ready.",
+    "Ana updated decision dec_arh001_competing_a: accepted",
+    "Ana contributed decision dec_arh001_competing_b: Keep every external reference inert and hand off by copying the stored URI.",
+    "Ana updated decision dec_arh001_competing_b: accepted",
+    "Ana contributed decision dec_arh001_old: Route handoff questions through the weekly recap thread.",
+    "Ana updated decision dec_arh001_old: accepted",
+    "Ana contributed decision dec_arh001_new: Replace the recap thread with the recorded artifact reference chain.",
+    "Ana updated decision dec_arh001_new: Replace the recap thread with the recorded artifact reference chain.",
+    "Ana decision.superseded decision dec_arh001_old: The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source.",
+    "Ana contributed task task_arh001_followup: Follow up on the Q3 handoff analysis reference",
+    "Ana contributed task task_arh001_verify_chain: Verify the recorded evidence chain before handoff",
+    "Ana contributed task task_arh001_waiting_access: Confirm the recipient's access to the external report",
+    "Ana contributed task task_arh001_working_notes: Draft the handoff checklist from the stored references",
+    "Ana contributed task task_arh001_archive_draft: Archive the earlier draft reference",
+    "Ana contributed task task_arh001_wrap_up: Close the ARH-001 lab setup",
+    "Ana updated task task_arh001_verify_chain: completed",
+    "Ana updated task task_arh001_waiting_access: blocked",
+    "Ana updated task task_arh001_working_notes: in_progress",
+    "Ana updated task task_arh001_wrap_up: completed"
+  ],
+  "provenanceTotal": 50,
+  "provenanceTruncated": true,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [
+        {
+          "createdAt": "2026-10-16T16:00:17.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_safe_output",
+          "metadata": {
+            "period": "2026-Q3",
+            "source": "external-reporting"
+          },
+          "title": "Q3 handoff analysis (external report)",
+          "type": "report",
+          "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis.html",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:23.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_hostile_markup",
+          "title": "Report <script>alert(1)</script>",
+          "type": "other",
+          "uriOrPath": "https://example.com/arh-001/report\"><img src=x onerror=alert(1)>",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:22.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_credentialed",
+          "title": "Protected analytics view",
+          "type": "other",
+          "uriOrPath": "https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:21.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_insecure_scheme",
+          "title": "Legacy FTP archive",
+          "type": "file",
+          "uriOrPath": "ftp://files.example.com/arh-001/export.tar.gz",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:20.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_path",
+          "title": "Local working notes",
+          "type": "document",
+          "uriOrPath": "reports/arh-001/working-notes.md",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:19.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_stale",
+          "metadata": {
+            "environment": "preview",
+            "note": "superseded"
+          },
+          "title": "Preview deployment (stale)",
+          "type": "deployment",
+          "uriOrPath": "https://example.com/arh-001/deployments/old-preview",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:18.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_safe_old_report",
+          "title": "Q3 handoff analysis (external report) — earlier draft",
+          "type": "report",
+          "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis-draft.html",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "returned": 7,
+      "total": 7,
+      "truncated": false
+    },
+    "blockers": {
+      "items": [
+        {
+          "assignee": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-16T16:00:46.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_waiting_access",
+          "status": "blocked",
+          "title": "Confirm the recipient's access to the external report",
+          "updatedAt": "2026-10-16T16:00:51.000Z",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "returned": 1,
+      "total": 1,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [
+        {
+          "approvedBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-16T16:00:42.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_arh001_new",
+          "predecessorId": "dec_arh001_old",
+          "rationale": "The stored reference and its recorded evidence replace the private recap.",
+          "status": "accepted",
+          "summary": "Replace the recap thread with the recorded artifact reference chain.",
+          "updatedAt": "2026-10-16T16:00:43.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-16T16:00:38.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_arh001_competing_b",
+          "rationale": "Manual copying keeps Campfire out of the navigation path.",
+          "status": "accepted",
+          "summary": "Keep every external reference inert and hand off by copying the stored URI.",
+          "updatedAt": "2026-10-16T16:00:39.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-16T16:00:36.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_arh001_competing_a",
+          "rationale": "A deliberate open keeps the recipient inside their own authority.",
+          "status": "accepted",
+          "summary": "Open the external report from the stored reference when the recipient is ready.",
+          "updatedAt": "2026-10-16T16:00:37.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-16T16:00:35.000Z",
+              "createdBy": {
+                "actorId": "hum_arh001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_arh001_review",
+              "findingId": "find_arh001_superseded",
+              "id": "cit_arh001_review_basis",
+              "note": "original reading",
+              "workspaceId": "ws_arh001_lab"
+            }
+          ],
+          "createdAt": "2026-10-16T16:00:33.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_arh001_review",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_arh001_superseded"
+          ],
+          "rationale": "Accepted while the lab believed the report was an internal export.",
+          "status": "accepted",
+          "summary": "The handoff needs no second source: the Q3 report covers the period.",
+          "updatedAt": "2026-10-16T16:00:34.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-16T16:00:32.000Z",
+              "createdBy": {
+                "actorId": "hum_arh001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_arh001_current",
+              "findingId": "find_arh001_current",
+              "id": "cit_arh001_current_basis",
+              "note": "recorded source chain",
+              "workspaceId": "ws_arh001_lab"
+            }
+          ],
+          "createdAt": "2026-10-16T16:00:30.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_arh001_current",
+          "rationale": "Agent A recorded the finding against the external report reference; the citation chain is the handoff.",
+          "status": "accepted",
+          "summary": "Treat the Q3 handoff report as the recorded source for the follow-up work.",
+          "updatedAt": "2026-10-16T16:00:31.000Z",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "returned": 5,
+      "total": 5,
+      "truncated": false
+    },
+    "findings": {
+      "items": [
+        {
+          "agentSessionId": "ses_arh001_opencode",
+          "createdAt": "2026-10-16T16:00:26.000Z",
+          "createdBy": {
+            "actorId": "agt_arh001_opencode",
+            "actorType": "agent"
+          },
+          "currentness": "current",
+          "detail": "Campfire stores the reference only; the external system owns the report bytes and its access rules.",
+          "evidence": [
+            {
+              "agentSessionId": "ses_arh001_opencode",
+              "artifactId": "art_arh001_safe_output",
+              "createdAt": "2026-10-16T16:00:27.000Z",
+              "createdBy": {
+                "actorId": "agt_arh001_opencode",
+                "actorType": "agent"
+              },
+              "findingId": "find_arh001_current",
+              "id": "fev_arh001_current_supports",
+              "note": "external report is the recorded source",
+              "relation": "supports",
+              "workspaceId": "ws_arh001_lab"
+            }
+          ],
+          "id": "find_arh001_current",
+          "sourceArtifactId": "art_arh001_safe_output",
+          "summary": "The recorded Q3 handoff analysis reference points outside Campfire.",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "agentSessionId": "ses_arh001_codex",
+          "createdAt": "2026-10-16T16:00:28.000Z",
+          "createdBy": {
+            "actorId": "agt_arh001_codex",
+            "actorType": "agent"
+          },
+          "currentness": "current",
+          "detail": "The deployment reference is stale and must not be offered as the handoff source.",
+          "evidence": [
+            {
+              "agentSessionId": "ses_arh001_codex",
+              "artifactId": "art_arh001_stale",
+              "createdAt": "2026-10-16T16:00:29.000Z",
+              "createdBy": {
+                "actorId": "agt_arh001_codex",
+                "actorType": "agent"
+              },
+              "findingId": "find_arh001_contradicts",
+              "id": "fev_arh001_contradicts_stale",
+              "note": "stale preview contradicts the current source",
+              "relation": "contradicts",
+              "workspaceId": "ws_arh001_lab"
+            }
+          ],
+          "id": "find_arh001_contradicts",
+          "summary": "The old preview deployment no longer matches the handoff analysis.",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:25.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "currentness": "current",
+          "detail": "The stored reference points at an external site; the internal dashboard does not carry this report.",
+          "id": "find_arh001_superseded_fix",
+          "predecessorId": "find_arh001_superseded",
+          "summary": "The Q3 handoff analysis is an external report, not an internal export.",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "returned": 3,
+      "total": 3,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjAuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDI5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_path",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:20.000Z",
+          "summary": "create artifact art_arh001_path: Local working notes"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjEuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDMyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_insecure_scheme",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:21.000Z",
+          "summary": "create artifact art_arh001_insecure_scheme: Legacy FTP archive"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjIuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDM1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_credentialed",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:22.000Z",
+          "summary": "create artifact art_arh001_credentialed: Protected analytics view"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDM4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_hostile_markup",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:23.000Z",
+          "summary": "create artifact art_arh001_hostile_markup: Report <script>alert(1)</script>"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjQuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDQxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_superseded",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:00:24.000Z",
+          "summary": "create finding find_arh001_superseded: The Q3 handoff analysis is an internal dashboard export."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjUuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDQ0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_superseded",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:00:25.000Z",
+          "reason": "The first reading confused the external report with the internal dashboard export.",
+          "successorId": "find_arh001_superseded_fix",
+          "summary": "finding.corrected finding find_arh001_superseded: The first reading confused the external report with the internal dashboard export."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjUuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDQ1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_superseded_fix",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:00:25.000Z",
+          "predecessorId": "find_arh001_superseded",
+          "reason": "The first reading confused the external report with the internal dashboard export.",
+          "summary": "finding.corrected finding find_arh001_superseded_fix: The first reading confused the external report with the internal dashboard export."
+        },
+        {
+          "actorId": "agt_arh001_opencode",
+          "actorType": "agent",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjYuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDQ2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_current",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:00:26.000Z",
+          "summary": "create finding find_arh001_current: The recorded Q3 handoff analysis reference points outside Campfire."
+        },
+        {
+          "actorId": "agt_arh001_codex",
+          "actorType": "agent",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MjguMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDUwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjI0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_contradicts",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:00:28.000Z",
+          "summary": "create finding find_arh001_contradicts: The old preview deployment no longer matches the handoff analysis."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MzEuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDU3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjI3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_current",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:31.000Z",
+          "summary": "update:accepted decision dec_arh001_current"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MzQuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDY0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjMwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_review",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:34.000Z",
+          "summary": "update:accepted decision dec_arh001_review"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MzcuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDcxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjMzLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_competing_a",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:37.000Z",
+          "summary": "update:accepted decision dec_arh001_competing_a"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6MzkuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDc3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_competing_b",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:39.000Z",
+          "summary": "update:accepted decision dec_arh001_competing_b"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NDEuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDgzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_old",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:41.000Z",
+          "summary": "update:accepted decision dec_arh001_old"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NDMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDg5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_new",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:43.000Z",
+          "predecessorId": "dec_arh001_old",
+          "reason": "The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source.",
+          "summary": "update:accepted decision dec_arh001_new: The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "decision.superseded",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NDMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDkwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjQwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_arh001_old",
+          "objectType": "decision",
+          "occurredAt": "2026-10-16T16:00:43.000Z",
+          "reason": "The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source.",
+          "successorId": "dec_arh001_new",
+          "summary": "decision.superseded decision dec_arh001_old: The ARH-001 contract replaces the weekly recap; the recorded reference chain is the handoff source."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTAuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMDk5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjQ3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_arh001_verify_chain",
+          "objectType": "task",
+          "occurredAt": "2026-10-16T16:00:50.000Z",
+          "summary": "update:completed task task_arh001_verify_chain"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:blocked",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTEuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTAyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjQ4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_arh001_waiting_access",
+          "objectType": "task",
+          "occurredAt": "2026-10-16T16:00:51.000Z",
+          "summary": "update:blocked task task_arh001_waiting_access"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTIuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTA1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjQ5LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_arh001_working_notes",
+          "objectType": "task",
+          "occurredAt": "2026-10-16T16:00:52.000Z",
+          "summary": "update:in_progress task task_arh001_working_notes"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTA4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjUwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "task_arh001_wrap_up",
+          "objectType": "task",
+          "occurredAt": "2026-10-16T16:00:53.000Z",
+          "summary": "update:completed task task_arh001_wrap_up"
+        }
+      ],
+      "returned": 20,
+      "total": 50,
+      "truncated": true
+    },
+    "tasks": {
+      "items": [
+        {
+          "assignee": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-16T16:00:46.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_waiting_access",
+          "status": "blocked",
+          "title": "Confirm the recipient's access to the external report",
+          "updatedAt": "2026-10-16T16:00:51.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:47.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_working_notes",
+          "status": "in_progress",
+          "title": "Draft the handoff checklist from the stored references",
+          "updatedAt": "2026-10-16T16:00:52.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:48.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_archive_draft",
+          "status": "open",
+          "title": "Archive the earlier draft reference",
+          "updatedAt": "2026-10-16T16:00:48.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_arh001_codex",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-16T16:00:44.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_followup",
+          "status": "open",
+          "title": "Follow up on the Q3 handoff analysis reference",
+          "updatedAt": "2026-10-16T16:00:44.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:49.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_wrap_up",
+          "status": "completed",
+          "title": "Close the ARH-001 lab setup",
+          "updatedAt": "2026-10-16T16:00:53.000Z",
+          "workspaceId": "ws_arh001_lab"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:45.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "task_arh001_verify_chain",
+          "status": "completed",
+          "title": "Verify the recorded evidence chain before handoff",
+          "updatedAt": "2026-10-16T16:00:50.000Z",
+          "workspaceId": "ws_arh001_lab"
+        }
+      ],
+      "returned": 6,
+      "total": 6,
+      "truncated": false
+    }
+  },
+  "suggestedNextAction": {
+    "id": "task_arh001_followup",
+    "kind": "task",
+    "orientationHint": true,
+    "reason": "assigned_open_task",
+    "summary": "Follow up on the Q3 handoff analysis reference"
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-16T16:00:07.000Z",
+    "createdBy": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_arh001_lab",
+    "name": "ARH-001 artifact handoff lab",
+    "status": "active",
+    "teamId": "team_arh001",
+    "updatedAt": "2026-10-16T16:00:07.000Z"
+  }
+}

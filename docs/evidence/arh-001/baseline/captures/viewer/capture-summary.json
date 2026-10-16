@@ -1,0 +1,134 @@
+{
+  "provenance": "FIXTURE EVIDENCE — cannot establish Gate B, C, or E.",
+  "methodNote": "actor-bound in-process read-only Viewer (startCampfireViewer, port 0) + Playwright Chromium from the local cache; 1440x900 full-page PNG; #orientation and #sources text and HTML captured; every page network request recorded.",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "captures": [
+    {
+      "label": "ws_arh001_lab-ana",
+      "workspaceId": "ws_arh001_lab",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "screenshot": "viewer-ws_arh001_lab-ana.png",
+      "signature": [
+        "artifact references",
+        "current findings",
+        "id find_arh001_current · evidence: art_arh001_safe_output (supports)",
+        "id art_arh001_safe_output · reference: https://example.com/arh-001/q3-handoff-analysis.html (stored reference, not fetched)",
+        "showing 7 of 7"
+      ],
+      "orientationTextHasSignature": true,
+      "orientationHasArtifactGroup": true,
+      "orientationHasStoredReferenceLabel": true,
+      "orientationHasEvidenceChain": true,
+      "sourcesHtmlHasCodeElement": true,
+      "sourcesHtmlHasAnchorTag": false,
+      "sourcesAnchorCount": 0,
+      "sourcesInjectedElementCount": 0,
+      "sourcesHtmlEscapesHostileMarkup": true,
+      "hostileReferenceShownAsText": true,
+      "credentialedReferenceShownAsText": true,
+      "artifactCompletenessNote": true,
+      "networkRequests": [
+        "http://127.0.0.1:51457/",
+        "http://127.0.0.1:51457/app.css",
+        "http://127.0.0.1:51457/campfire-mark.svg",
+        "http://127.0.0.1:51457/app.js",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call"
+      ],
+      "externalTargetRequests": []
+    },
+    {
+      "label": "ws_arh001_trunc_artifacts-ana",
+      "workspaceId": "ws_arh001_trunc_artifacts",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "screenshot": "viewer-ws_arh001_trunc_artifacts-ana.png",
+      "signature": [
+        "artifact references",
+        "id art_arh001_trunc_linked · reference: references/arh-001/trunc/runbook.md (stored reference, not fetched)",
+        "showing 10 of 12",
+        "more available — open the list for the rest"
+      ],
+      "orientationTextHasSignature": true,
+      "orientationHasArtifactGroup": true,
+      "orientationHasStoredReferenceLabel": true,
+      "orientationHasEvidenceChain": null,
+      "sourcesHtmlHasCodeElement": true,
+      "sourcesHtmlHasAnchorTag": false,
+      "sourcesAnchorCount": 0,
+      "sourcesInjectedElementCount": 0,
+      "sourcesHtmlEscapesHostileMarkup": null,
+      "hostileReferenceShownAsText": false,
+      "credentialedReferenceShownAsText": null,
+      "artifactCompletenessNote": true,
+      "networkRequests": [
+        "http://127.0.0.1:51457/",
+        "http://127.0.0.1:51457/app.css",
+        "http://127.0.0.1:51457/campfire-mark.svg",
+        "http://127.0.0.1:51457/app.js",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call",
+        "http://127.0.0.1:51457/api/call"
+      ],
+      "externalTargetRequests": []
+    },
+    {
+      "label": "ws_arh001_lab-ben",
+      "workspaceId": "ws_arh001_lab",
+      "actor": {
+        "actorId": "hum_arh001_ben",
+        "actorType": "human"
+      },
+      "screenshot": "viewer-ws_arh001_lab-ben.png",
+      "signature": [
+        "artifact references",
+        "current findings",
+        "id find_arh001_current · evidence: art_arh001_safe_output (supports)",
+        "id art_arh001_safe_output · reference: https://example.com/arh-001/q3-handoff-analysis.html (stored reference, not fetched)",
+        "showing 7 of 7"
+      ],
+      "orientationTextHasSignature": true,
+      "orientationHasArtifactGroup": true,
+      "orientationHasStoredReferenceLabel": true,
+      "orientationHasEvidenceChain": true,
+      "sourcesHtmlHasCodeElement": true,
+      "sourcesHtmlHasAnchorTag": false,
+      "sourcesAnchorCount": 0,
+      "sourcesInjectedElementCount": 0,
+      "sourcesHtmlEscapesHostileMarkup": true,
+      "hostileReferenceShownAsText": true,
+      "credentialedReferenceShownAsText": true,
+      "artifactCompletenessNote": true,
+      "networkRequests": [
+        "http://127.0.0.1:51461/",
+        "http://127.0.0.1:51461/app.css",
+        "http://127.0.0.1:51461/campfire-mark.svg",
+        "http://127.0.0.1:51461/app.js",
+        "http://127.0.0.1:51461/api/call",
+        "http://127.0.0.1:51461/api/call",
+        "http://127.0.0.1:51461/api/call",
+        "http://127.0.0.1:51461/api/call",
+        "http://127.0.0.1:51461/api/call"
+      ],
+      "externalTargetRequests": []
+    }
+  ]
+}

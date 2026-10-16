@@ -1,0 +1,37 @@
+[?1049h[?25l[H[2JCampfire  /  ARH-001 artifact handoff lab  ws_arh001_lab
+hum_arh001_ana human  ·  refreshed 2026-10-16T20:37:25.281Z
+GOAL
+  Hand the recorded Q3 artifact reference chain to a second teammate and their agent.
+  goal_arh001_handoff
+  6/6 tasks · 5/5 decisions
+2 people · 2 registered agents
+  Codex  codex  owner hum_arh001_ben  registered  recorded
+  OpenCode  opencode  owner hum_arh001_ana  registered  recorded
+ARTIFACT REFERENCES
+  art_arh001_safe_output  report  https://example.com/arh-001/q3-handoff-analysis.html  stored reference, not fetched
+  art_arh001_hostile_markup  other  https://example.com/arh-001/report"><img src=x onerror=alert(1)>  stored reference,
+  not fetched
+  art_arh001_credentialed  other  https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view  stored
+  reference, not fetched
+  art_arh001_insecure_scheme  file  ftp://files.example.com/arh-001/export.tar.gz  stored reference, not fetched
+  art_arh001_path  document  reports/arh-001/working-notes.md  stored reference, not fetched
+  art_arh001_stale  deployment  https://example.com/arh-001/deployments/old-preview  stored reference, not fetched
+  art_arh001_safe_old_report  report  https://example.com/arh-001/q3-handoff-analysis-draft.html  stored reference, not
+  fetched
+  accepted  dec_arh001_new
+  accepted  dec_arh001_competing_b
+  accepted  dec_arh001_competing_a
+  accepted  dec_arh001_review  needs review  find_arh001_superseded
+  accepted  dec_arh001_current
+MY WORK  Needs You  ATTENTION  6/6 tasks · 5/5 decisions    RECORDED DECISIONS
+  Attention coverage: tasks 6 of 6, decisions 5 of 5. Both    accepted  dec_arh001_new  Replace the recap thread with
+  source pages are complete.                                  the recorded artifact reference chain.
+  > blocked  task_arh001_waiting_access  blocked task         accepted  dec_arh001_competing_a  Open the external report
+  assigned to you  Confirm the recipient's access to the      from the stored reference when the recipient is ready.
+  external report  assignee: hum_arh001_ana                   accepted  dec_arh001_review  The handoff needs no second
+CURRENT WORK                                                  source: the Q3 report covers the period.  needs review
+  orientation hint, not an action                             find_arh001_superseded
+SOURCE
+  get_workspace_context  task_arh001_waiting_access
+p perspective   tab section   j/k move   enter inspect   r refresh   ? help   q quit
+[H[?25h[?1049l

@@ -1,0 +1,33 @@
+{
+  "provenance": "FIXTURE EVIDENCE — cannot establish Gate B, C, or E.",
+  "methodNote": "Live in-process MCP: createCampfireMcpServer + @modelcontextprotocol/sdk InMemoryTransport client, actor hum_arh001_ana; files hold the parsed JSON text of each tool result.",
+  "toolCount": 36,
+  "artifactTools": [
+    "list_artifacts",
+    "get_artifact",
+    "add_artifact"
+  ],
+  "getArtifact": {
+    "isError": false,
+    "id": "art_arh001_safe_output",
+    "fields": [
+      "createdAt",
+      "createdBy",
+      "id",
+      "metadata",
+      "title",
+      "type",
+      "uriOrPath",
+      "workspaceId"
+    ],
+    "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis.html"
+  },
+  "listArtifacts": {
+    "isError": false,
+    "total": 12,
+    "returned": 10,
+    "truncated": true,
+    "nextCursorPresent": true,
+    "itemCount": 10
+  }
+}

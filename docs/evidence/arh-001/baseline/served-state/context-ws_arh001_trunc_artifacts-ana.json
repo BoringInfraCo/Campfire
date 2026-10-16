@@ -1,0 +1,899 @@
+{
+  "acceptedDecisions": [],
+  "alignment": {
+    "acceptedDecisionIds": [],
+    "proposedDecisionIds": [],
+    "status": "unspecified",
+    "unresolvedBlockedTaskIds": []
+  },
+  "artifacts": [
+    {
+      "createdAt": "2026-10-16T16:01:08.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_linked",
+      "title": "Truncation runbook (returned page source)",
+      "type": "document",
+      "uriOrPath": "references/arh-001/trunc/runbook.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:07.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_09",
+      "title": "Truncation filler 09",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-09.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:06.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_08",
+      "title": "Truncation filler 08",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-08.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:05.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_07",
+      "title": "Truncation filler 07",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-07.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:04.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_06",
+      "title": "Truncation filler 06",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-06.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:03.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_05",
+      "title": "Truncation filler 05",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-05.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:02.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_04",
+      "title": "Truncation filler 04",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-04.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:01.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_03",
+      "title": "Truncation filler 03",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-03.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:01:00.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_02",
+      "title": "Truncation filler 02",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-02.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "createdAt": "2026-10-16T16:00:59.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "id": "art_arh001_trunc_filler_01",
+      "title": "Truncation filler 01",
+      "type": "document",
+      "uriOrPath": "https://example.com/arh-001/trunc/filler-01.md",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    }
+  ],
+  "attentionCoverage": {
+    "completeUnderRules": true,
+    "decisions": {
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "tasks": {
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    }
+  },
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [],
+    "blockedTasks": [],
+    "inProgressTasks": []
+  },
+  "findings": [
+    {
+      "createdAt": "2026-10-16T16:01:09.000Z",
+      "createdBy": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "Linked to the artifact that stays inside the returned page.",
+      "id": "find_arh001_trunc",
+      "sourceArtifactId": "art_arh001_trunc_linked",
+      "summary": "The truncation runbook is the recorded source for the page-boundary check.",
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    }
+  ],
+  "generatedAt": "2026-10-16T18:00:00.000Z",
+  "historicalCounts": {
+    "decisions": 0,
+    "findings": 0
+  },
+  "needsAttention": [],
+  "needsYou": [],
+  "openTasks": [],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDkuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTUyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDkuMDAwWiIsIm9yaWdpbklkIjoiY29uX2FyaDAwMV8wMTUyIiwicG9zaXRpb24iOjE3LCJvcmlnaW5Qb3NpdGlvbiI6MTcsInRpcCI6MH0",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-16T16:00:54.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_arh001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-16T16:00:56.000Z",
+      "name": "Ben",
+      "role": "member"
+    }
+  ],
+  "proposedDecisions": [],
+  "provenance": [
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 1,
+      "createdAt": "2026-10-16T16:00:54.000Z",
+      "id": "con_arh001_0111",
+      "objectId": "ws_arh001_trunc_artifacts",
+      "objectType": "workspace",
+      "payload": {
+        "name": "ARH-001 truncated artifacts"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "join",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 2,
+      "createdAt": "2026-10-16T16:00:54.000Z",
+      "id": "con_arh001_0112",
+      "objectId": "hum_arh001_ana",
+      "objectType": "participant",
+      "payload": {
+        "role": "owner"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 3,
+      "createdAt": "2026-10-16T16:00:55.000Z",
+      "id": "con_arh001_0114",
+      "objectId": "inv_arh001_0113",
+      "objectType": "invite",
+      "payload": {
+        "actorId": "hum_arh001_ben",
+        "actorType": "human",
+        "role": "member"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "join",
+      "actor": {
+        "actorId": "hum_arh001_ben",
+        "actorType": "human"
+      },
+      "appendPosition": 4,
+      "createdAt": "2026-10-16T16:00:56.000Z",
+      "id": "con_arh001_0115",
+      "objectId": "hum_arh001_ben",
+      "objectType": "participant",
+      "payload": {
+        "inviteId": "inv_arh001_0113",
+        "role": "member"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 5,
+      "createdAt": "2026-10-16T16:00:57.000Z",
+      "id": "con_arh001_0116",
+      "objectId": "art_arh001_beyond_page",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Archived intake log (earliest)",
+        "type": "log"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 6,
+      "createdAt": "2026-10-16T16:00:58.000Z",
+      "id": "con_arh001_0119",
+      "objectId": "art_arh001_trunc_older",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Archived intake log (second)",
+        "type": "log"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 7,
+      "createdAt": "2026-10-16T16:00:59.000Z",
+      "id": "con_arh001_0122",
+      "objectId": "art_arh001_trunc_filler_01",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 01",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 8,
+      "createdAt": "2026-10-16T16:01:00.000Z",
+      "id": "con_arh001_0125",
+      "objectId": "art_arh001_trunc_filler_02",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 02",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 9,
+      "createdAt": "2026-10-16T16:01:01.000Z",
+      "id": "con_arh001_0128",
+      "objectId": "art_arh001_trunc_filler_03",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 03",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 10,
+      "createdAt": "2026-10-16T16:01:02.000Z",
+      "id": "con_arh001_0131",
+      "objectId": "art_arh001_trunc_filler_04",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 04",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 11,
+      "createdAt": "2026-10-16T16:01:03.000Z",
+      "id": "con_arh001_0134",
+      "objectId": "art_arh001_trunc_filler_05",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 05",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 12,
+      "createdAt": "2026-10-16T16:01:04.000Z",
+      "id": "con_arh001_0137",
+      "objectId": "art_arh001_trunc_filler_06",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 06",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 13,
+      "createdAt": "2026-10-16T16:01:05.000Z",
+      "id": "con_arh001_0140",
+      "objectId": "art_arh001_trunc_filler_07",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 07",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 14,
+      "createdAt": "2026-10-16T16:01:06.000Z",
+      "id": "con_arh001_0143",
+      "objectId": "art_arh001_trunc_filler_08",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 08",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 15,
+      "createdAt": "2026-10-16T16:01:07.000Z",
+      "id": "con_arh001_0146",
+      "objectId": "art_arh001_trunc_filler_09",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation filler 09",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 16,
+      "createdAt": "2026-10-16T16:01:08.000Z",
+      "id": "con_arh001_0149",
+      "objectId": "art_arh001_trunc_linked",
+      "objectType": "artifact",
+      "payload": {
+        "title": "Truncation runbook (returned page source)",
+        "type": "document"
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_arh001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 17,
+      "createdAt": "2026-10-16T16:01:09.000Z",
+      "id": "con_arh001_0152",
+      "objectId": "find_arh001_trunc",
+      "objectType": "finding",
+      "payload": {
+        "summary": "The truncation runbook is the recorded source for the page-boundary check."
+      },
+      "workspaceId": "ws_arh001_trunc_artifacts"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana contributed workspace ws_arh001_trunc_artifacts",
+    "Ana joined participant hum_arh001_ana",
+    "Ana contributed invite inv_arh001_0113",
+    "Ben joined participant hum_arh001_ben",
+    "Ana contributed artifact art_arh001_beyond_page: Archived intake log (earliest)",
+    "Ana contributed artifact art_arh001_trunc_older: Archived intake log (second)",
+    "Ana contributed artifact art_arh001_trunc_filler_01: Truncation filler 01",
+    "Ana contributed artifact art_arh001_trunc_filler_02: Truncation filler 02",
+    "Ana contributed artifact art_arh001_trunc_filler_03: Truncation filler 03",
+    "Ana contributed artifact art_arh001_trunc_filler_04: Truncation filler 04",
+    "Ana contributed artifact art_arh001_trunc_filler_05: Truncation filler 05",
+    "Ana contributed artifact art_arh001_trunc_filler_06: Truncation filler 06",
+    "Ana contributed artifact art_arh001_trunc_filler_07: Truncation filler 07",
+    "Ana contributed artifact art_arh001_trunc_filler_08: Truncation filler 08",
+    "Ana contributed artifact art_arh001_trunc_filler_09: Truncation filler 09",
+    "Ana contributed artifact art_arh001_trunc_linked: Truncation runbook (returned page source)",
+    "Ana contributed finding find_arh001_trunc: The truncation runbook is the recorded source for the page-boundary check."
+  ],
+  "provenanceTotal": 17,
+  "provenanceTruncated": false,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [
+        {
+          "createdAt": "2026-10-16T16:01:08.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_linked",
+          "title": "Truncation runbook (returned page source)",
+          "type": "document",
+          "uriOrPath": "references/arh-001/trunc/runbook.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:07.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_09",
+          "title": "Truncation filler 09",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-09.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:06.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_08",
+          "title": "Truncation filler 08",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-08.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:05.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_07",
+          "title": "Truncation filler 07",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-07.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:04.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_06",
+          "title": "Truncation filler 06",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-06.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:03.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_05",
+          "title": "Truncation filler 05",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-05.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:02.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_04",
+          "title": "Truncation filler 04",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-04.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:01.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_03",
+          "title": "Truncation filler 03",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-03.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:01:00.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_02",
+          "title": "Truncation filler 02",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-02.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        },
+        {
+          "createdAt": "2026-10-16T16:00:59.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "id": "art_arh001_trunc_filler_01",
+          "title": "Truncation filler 01",
+          "type": "document",
+          "uriOrPath": "https://example.com/arh-001/trunc/filler-01.md",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        }
+      ],
+      "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoiYXJ0aWZhY3QiLCJ3b3Jrc3BhY2VJZCI6IndzX2FyaDAwMV90cnVuY19hcnRpZmFjdHMiLCJyYW5rIjoxLCJhdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTkuMDAwWiIsImlkIjoiYXJ0X2FyaDAwMV90cnVuY19maWxsZXJfMDEifQ",
+      "returned": 10,
+      "total": 12,
+      "truncated": true
+    },
+    "blockers": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "findings": {
+      "items": [
+        {
+          "createdAt": "2026-10-16T16:01:09.000Z",
+          "createdBy": {
+            "actorId": "hum_arh001_ana",
+            "actorType": "human"
+          },
+          "currentness": "current",
+          "detail": "Linked to the artifact that stays inside the returned page.",
+          "id": "find_arh001_trunc",
+          "sourceArtifactId": "art_arh001_trunc_linked",
+          "summary": "The truncation runbook is the recorded source for the page-boundary check.",
+          "workspaceId": "ws_arh001_trunc_artifacts"
+        }
+      ],
+      "returned": 1,
+      "total": 1,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTcuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTE2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjUsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "art_arh001_beyond_page",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:57.000Z",
+          "summary": "create artifact art_arh001_beyond_page: Archived intake log (earliest)"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTguMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTE5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_older",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:58.000Z",
+          "summary": "create artifact art_arh001_trunc_older: Archived intake log (second)"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTkuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTIyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjcsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_01",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:00:59.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_01: Truncation filler 01"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDAuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTI1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjgsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_02",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:00.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_02: Truncation filler 02"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDEuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTI4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjksIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_03",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:01.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_03: Truncation filler 03"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDIuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTMxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_04",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:02.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_04: Truncation filler 04"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDMuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTM0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjExLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_05",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:03.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_05: Truncation filler 05"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDQuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTM3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_06",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:04.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_06: Truncation filler 06"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDUuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTQwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEzLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_07",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:05.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_07: Truncation filler 07"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDYuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTQzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_08",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:06.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_08: Truncation filler 08"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDcuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTQ2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE1LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_filler_09",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:07.000Z",
+          "summary": "create artifact art_arh001_trunc_filler_09: Truncation filler 09"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDguMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTQ5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "art_arh001_trunc_linked",
+          "objectType": "artifact",
+          "occurredAt": "2026-10-16T16:01:08.000Z",
+          "summary": "create artifact art_arh001_trunc_linked: Truncation runbook (returned page source)"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDE6MDkuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTUyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE3LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "find_arh001_trunc",
+          "objectType": "finding",
+          "occurredAt": "2026-10-16T16:01:09.000Z",
+          "summary": "create finding find_arh001_trunc: The truncation runbook is the recorded source for the page-boundary check."
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTQuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTExIiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "normal",
+          "objectId": "ws_arh001_trunc_artifacts",
+          "objectType": "workspace",
+          "occurredAt": "2026-10-16T16:00:54.000Z",
+          "summary": "create workspace ws_arh001_trunc_artifacts"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "join",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTQuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTEyIiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6Miwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "normal",
+          "objectId": "hum_arh001_ana",
+          "objectType": "participant",
+          "occurredAt": "2026-10-16T16:00:54.000Z",
+          "summary": "join participant hum_arh001_ana"
+        },
+        {
+          "actorId": "hum_arh001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTUuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTE0IiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6Mywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "normal",
+          "objectId": "inv_arh001_0113",
+          "objectType": "invite",
+          "occurredAt": "2026-10-16T16:00:55.000Z",
+          "summary": "create invite inv_arh001_0113"
+        },
+        {
+          "actorId": "hum_arh001_ben",
+          "actorType": "human",
+          "changeType": "join",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hcmgwMDFfdHJ1bmNfYXJ0aWZhY3RzIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTZUMTY6MDA6NTYuMDAwWiIsImlkIjoiY29uX2FyaDAwMV8wMTE1IiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+          "materiality": "normal",
+          "objectId": "hum_arh001_ben",
+          "objectType": "participant",
+          "occurredAt": "2026-10-16T16:00:56.000Z",
+          "summary": "join participant hum_arh001_ben"
+        }
+      ],
+      "returned": 17,
+      "total": 17,
+      "truncated": false
+    },
+    "tasks": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    }
+  },
+  "suggestedNextAction": {
+    "kind": "none",
+    "orientationHint": true,
+    "reason": "none",
+    "summary": ""
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-16T16:00:54.000Z",
+    "createdBy": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_arh001_trunc_artifacts",
+    "name": "ARH-001 truncated artifacts",
+    "status": "active",
+    "teamId": "team_arh001",
+    "updatedAt": "2026-10-16T16:00:54.000Z"
+  }
+}

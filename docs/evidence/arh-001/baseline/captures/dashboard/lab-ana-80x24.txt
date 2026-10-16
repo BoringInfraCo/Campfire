@@ -1,0 +1,24 @@
+Campfire  /  ARH-001 artifact handoff lab  ws_arh001_lab
+hum_arh001_ana human  ·  refreshed 2026-10-16T20:37:25.650Z
+GOAL
+  Hand the recorded Q3 artifact reference chain to a second teammate and their
+  agent.
+  goal_arh001_handoff
+  6/6 tasks · 5/5 decisions
+  art_arh001_safe_output  report 
+  https://example.com/arh-001/q3-handoff-analysis.html  stored reference, not
+  fetched
+  art_arh001_hostile_markup  other  https://example.com/arh-001/report"><img
+  src=x onerror=alert(1)>  stored reference, not fetched
+  art_arh001_credentialed  other 
+  https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view 
+  stored reference, not fetched
+  art_arh001_insecure_scheme  file 
+  ftp://files.example.com/arh-001/export.tar.gz  stored reference, not fetched
+  art_arh001_path  document  reports/arh-001/working-notes.md  stored reference,
+  not fetched
+  art_arh001_stale  deployment 
+  https://example.com/arh-001/deployments/old-preview  stored reference, not
+  fetched
+  task_arh001_waiting_access
+j/k move   enter inspect   r refresh   q quit

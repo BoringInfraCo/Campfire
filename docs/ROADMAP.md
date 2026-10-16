@@ -6,6 +6,8 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
+**Next planning step:** v1.21 has a proposed artifact-reference handoff contract at `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`, scoped from the released v1.20.1 baseline. It is not implemented or a release decision.
+
 ---
 
 ## 1. Purpose
@@ -1466,6 +1468,8 @@ v1.18 — Continue the Work   WCO-001: baseline and labeled rehearsal recorded (
 v1.19 — Trustworthy Team Attention   ATT-001: v1.18.0 baseline frozen (fixture v2), engineering candidate implemented, D1–D6 pass, independently verified; two-person comprehension trace NOT OBSERVED; recorded as CONDITIONAL GO — engineering candidate; published and deployed as v1.19.0 under the recorded founder release-scope override (docs/RELEASE_V1_19_DECISION.md); human trace still not observed
         ↓
 v1.20 — Shared Work Console   UIX-001: read-only terminal dashboard (`campfire dashboard`) and Viewer refresh implemented, D1–D6 pass, independently verified; five pre-registered cold tasks NOT OBSERVED; recorded as CONDITIONAL GO — engineering candidate; founder directed a public v1.20.0 release under the recorded release-scope override (docs/RELEASE_V1_20_DECISION.md); v1.20.0 frozen unpublished before promotion (machine-local Playwright path in the pty capture test, repaired in `70f4023`: PTY assertions mandatory, evidence capture opt-in); release re-cut as v1.20.1 under the recorded release-scope override (docs/RELEASE_V1_20_1_DECISION.md); published and deployed as v1.20.1
+        ↓
+v1.21 — Artifact reference handoff   ARH-001 proposed contract, not implemented: test one real reference-open attempt and a cross-harness handoff from the released console; if Campfire causes an access or interpretation failure, scope the smallest authorized inspect/open path while the external system keeps the file; no file hosting, automatic ingestion, or gate claim by declaration
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1723,22 +1727,69 @@ missed/false attention in real work; the comparison should include the shipped
 CLI and Viewer, not an imagined blank baseline. This was the sequencing
 preference before the founder's October 16 direction below.
 
-**October 16 founder direction:** Start a focused terminal and Viewer interface
-sprint now. The founder chose both surfaces because the shipped presentation is
-not sufficient for the target audience and a clearer product experience is
-important while the market is moving. This changes the sequencing preference
-above; it does not change the workspace architecture, ATT-001/WCO-001 verdicts,
-or any open evidence gate. `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`
-is the sprint plan. It uses existing authorized work state, explicitly
-avoids invented live agent status, and leaves release authorization separate.
-An engineering candidate is in the working tree; see `docs/SPRINT_UIX_001_RESULT.md`.
-The human comparison is not observed, and nothing here is a release or a GO.
+**October 16 founder direction and release:** The founder chose both the
+terminal and Viewer surfaces because the presentation was not sufficient for
+the target audience. UIX-001 uses existing authorized work state and avoids
+invented live agent status. Its engineering verdict remains **CONDITIONAL GO**;
+the five cold tasks are **NOT OBSERVED**. The defective v1.20.0 tag was frozen
+unpublished, its portable test repair became v1.20.1, and v1.20.1 was
+published and deployed under a separate founder release-scope override. See
+`docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`,
+`docs/SPRINT_UIX_001_RESULT.md`, and `docs/RELEASE_V1_20_1_DECISION.md`.
+The release did not close the ATT-001/WCO-001 observations or Gate B/C/E/F.
+
+### v1.21 candidate — make cited work usable in a handoff
+
+The proposed sprint contract is
+`docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`. It freezes an
+observation-first sequence, a bounded repair path, source and authorization
+checks, a two-human/two-harness rubric, and a separate release boundary. No
+v1.21 implementation or verdict is recorded yet.
+
+The [Guillermo Rauch interview assessment](GUILLERMO_RAUCH_INTERVIEW_ROADMAP_ASSESSMENT.md)
+sharpens the next product question: can an authorized teammate and a different
+agent use the **same recorded decision state and cited external output** without
+receiving the first person's transcript? Campfire already makes references
+visible in the console and Viewer, but visibility alone does not show that a
+recipient can open the target, understand its relationship to the decision, or
+act with the right permissions. Files remain in the system that owns them;
+Campfire keeps the authorized account of the work around them.
+
+Use the released v1.20.1 console as the baseline. Observe one ordinary-work
+reference-open attempt and the next person's handoff, including what the
+recipient tried, whether access succeeded, which source IDs they used, and
+whether they confused a historical or competing decision for current work.
+Record a denied or unavailable target as a result. Run the outstanding UIX-001
+cold tasks, SWH-001/ATT-001 comprehension traces, and WCO-001 eligible
+two-person case under their own frozen rubrics when participants are available;
+this v1.21 work does not rescore those sprints or turn a rehearsal into a
+human observation. Gate B/C/E/F and VIS-001 condition 4 move only when their
+specific evidence rules are met.
+
+If the reference attempt exposes an access or navigation failure, scope the
+smallest authorized inspect/open affordance for a typed external artifact
+reference. Preserve the record ID, source, contributor, any recorded relation
+to a finding, decision, or task, and currentness. Test authorized and unauthorized
+actors and stale or denied links. A displayed link must not claim Campfire
+fetched, verified, or synchronized the target. The v1.21 sprint contract must
+freeze its baseline, exact surface, access boundary, observation rubric, and
+release criteria before implementation is judged. A provider connector is
+conditional on a concrete need; file storage, automatic ingestion, rich
+previews, and an agent runner are outside this candidate slice.
+
+After ordinary teams show repeated value, one production event may be tested
+as a cited, reviewable finding or proposed task. It cannot silently become an
+accepted decision or controlled action. Agent-facing discovery through the
+existing CLI/MCP path and hosted-team economics follow measured return use
+and team continuation, not an interview's adoption claims.
 
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |
 | Work continuity | Can an invited teammate and their agent take over recorded work, resolve a real dependency, and leave the next person oriented? Build on existing enrollment, task ownership, corrections, and handoff. | Voluntary repeat use (Gate B) and ordinary multi-participant value (Gate C), not another fixture-only pass. |
 | Team attention | Which recorded blockers, reviews, or ownership conflicts need a particular human or team? Consider notifications or controlled requests only after the work view is useful. | Measure missed and false attention; Gate F precedes coordination or action. |
+| Cited artifact handoff | Can an authorized teammate open and use the external output behind a Campfire reference, with its source and decision relationship clear? | Observe a real open attempt; test authorized and denied access before expanding beyond a safe inspect/open affordance. External systems keep file bytes. |
 | Historical reuse | Does prior completed work materially improve a new task, and can a recipient safely use a portable packet? | Collect ordinary-work Gate E observations under `docs/GATE_E_PROTOCOL.md`; the v1.16 synthetic NO-GO results stay visible. |
+| Production signals | Does one cited external event help a team resolve an incident without obscuring its origin or currentness? | One ordinary incident handoff and repeated value before an integration; controlled actions remain behind Gate F. |
 | Hosted team offering | Does a team return, invite others, and value durable shared state enough to pay? | Gate B/C evidence, a cost and retention picture, and an explicit product/architecture decision before accounts, tenant boundaries, billing, or quotas. |
 
 The commercial hypothesis is a free downloadable core and, later, a paid team

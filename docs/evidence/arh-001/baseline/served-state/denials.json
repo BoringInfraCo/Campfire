@@ -1,0 +1,67 @@
+[
+  {
+    "actor": {
+      "actorId": "hum_arh001_zed",
+      "actorType": "human"
+    },
+    "case": "zed-reads-lab-context",
+    "error": {
+      "code": "ParticipantRequired",
+      "message": "Actor hum_arh001_zed is not a participant of workspace ws_arh001_lab",
+      "name": "ParticipantRequired"
+    },
+    "method": "get_workspace_context",
+    "note": "Zed is not a lab participant; the message names only the caller and the workspace id.",
+    "outcome": "denied",
+    "workspaceId": "ws_arh001_lab"
+  },
+  {
+    "actor": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "case": "ana-reads-unrelated-context",
+    "error": {
+      "code": "ParticipantRequired",
+      "message": "Actor hum_arh001_ana is not a participant of workspace ws_arh001_unrelated",
+      "name": "ParticipantRequired"
+    },
+    "method": "get_workspace_context",
+    "note": "Ana is not a participant of the unrelated workspace; no title, finding, or count crosses the boundary.",
+    "outcome": "denied",
+    "workspaceId": "ws_arh001_unrelated"
+  },
+  {
+    "actor": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "case": "ana-reads-unknown-workspace-context",
+    "error": {
+      "code": "WorkspaceNotFound",
+      "message": "Workspace not found: ws_arh001_unknown",
+      "name": "WorkspaceNotFound"
+    },
+    "method": "get_workspace_context",
+    "note": "The workspace does not exist; only the caller-supplied id is echoed.",
+    "outcome": "denied",
+    "workspaceId": "ws_arh001_unknown"
+  },
+  {
+    "actor": {
+      "actorId": "hum_arh001_ana",
+      "actorType": "human"
+    },
+    "artifactId": "art_arh001_trunc_linked",
+    "case": "ana-reads-trunc-artifact-through-lab-workspace",
+    "error": {
+      "code": "ArtifactNotFound",
+      "message": "Artifact not found: art_arh001_trunc_linked",
+      "name": "ArtifactNotFound"
+    },
+    "method": "get_artifact",
+    "note": "A record id from another workspace addressed through the lab route is not found; nothing from the other workspace is returned.",
+    "outcome": "denied",
+    "workspaceId": "ws_arh001_lab"
+  }
+]

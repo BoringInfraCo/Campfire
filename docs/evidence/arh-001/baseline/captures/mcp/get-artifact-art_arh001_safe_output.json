@@ -1,0 +1,16 @@
+{
+  "createdBy": {
+    "actorId": "hum_arh001_ana",
+    "actorType": "human"
+  },
+  "createdAt": "2026-10-16T16:00:17.000Z",
+  "id": "art_arh001_safe_output",
+  "workspaceId": "ws_arh001_lab",
+  "type": "report",
+  "title": "Q3 handoff analysis (external report)",
+  "uriOrPath": "https://example.com/arh-001/q3-handoff-analysis.html",
+  "metadata": {
+    "period": "2026-Q3",
+    "source": "external-reporting"
+  }
+}

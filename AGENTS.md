@@ -351,6 +351,15 @@ there). Neither override changes the CONDITIONAL GO
 verdict, the NOT OBSERVED five cold tasks, or any gate. Gate B/C/E/F, ATT-001,
 WCO-001, SWH-001, and VIS-001 condition 4 remain open.
 
+Sprint ARH-001 — Artifact Reference Handoff is the proposed v1.21 contract at
+`docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`. It begins from
+published v1.20.1 and requires an ordinary-work reference-open attempt before
+choosing a bounded product repair. The external system keeps the artifact bytes
+and its own access rules; Campfire keeps the authorized record and any actual
+evidence relationships. No candidate implementation, human score, verdict,
+version bump, or release decision is recorded. Existing VIS-001, SWH-001,
+WCO-001, ATT-001, and UIX-001 observations retain their own rules and status.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new

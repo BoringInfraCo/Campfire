@@ -1,0 +1,36 @@
+current findings
+current
+The recorded Q3 handoff analysis reference points outside Campfire.
+id find_arh001_current · evidence: art_arh001_safe_output (supports)
+current
+The old preview deployment no longer matches the handoff analysis.
+id find_arh001_contradicts · evidence: art_arh001_stale (contradicts)
+current
+The Q3 handoff analysis is an external report, not an internal export.
+id find_arh001_superseded_fix · evidence: none recorded
+findings
+showing 3 of 3
+artifact references
+report
+Q3 handoff analysis (external report)
+id art_arh001_safe_output · reference: https://example.com/arh-001/q3-handoff-analysis.html (stored reference, not fetched)
+other
+Report <script>alert(1)</script>
+id art_arh001_hostile_markup · reference: https://example.com/arh-001/report"><img src=x onerror=alert(1)> (stored reference, not fetched)
+other
+Protected analytics view
+id art_arh001_credentialed · reference: https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view (stored reference, not fetched)
+file
+Legacy FTP archive
+id art_arh001_insecure_scheme · reference: ftp://files.example.com/arh-001/export.tar.gz (stored reference, not fetched)
+document
+Local working notes
+id art_arh001_path · reference: reports/arh-001/working-notes.md (stored reference, not fetched)
+deployment
+Preview deployment (stale)
+id art_arh001_stale · reference: https://example.com/arh-001/deployments/old-preview (stored reference, not fetched)
+report
+Q3 handoff analysis (external report) — earlier draft
+id art_arh001_safe_old_report · reference: https://example.com/arh-001/q3-handoff-analysis-draft.html (stored reference, not fetched)
+artifacts
+showing 7 of 7

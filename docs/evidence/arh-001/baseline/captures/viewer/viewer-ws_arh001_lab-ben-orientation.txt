@@ -1,0 +1,101 @@
+historical findings 1 decisions 1
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_arh001_current
+Treat the Q3 handoff report as the recorded source for the follow-up work.
+dec_arh001_competing_a
+Open the external report from the stored reference when the recipient is ready.
+dec_arh001_competing_b
+Keep every external reference inert and hand off by copying the stored URI.
+dec_arh001_new
+Replace the recap thread with the recorded artifact reference chain.
+accepted needing review
+dec_arh001_review
+The handoff needs no second source: the Q3 report covers the period.
+unresolved blocked tasks
+task_arh001_waiting_access
+Confirm the recipient's access to the external report
+SUGGESTED NEXT — orientation hint, not an action
+Follow up on the Q3 handoff analysis reference
+task task_arh001_followup
+team_open_task
+NEEDS YOU
+No recorded attention cues match these rules. This does not mean all work is done.
+Attention coverage: tasks 6 of 6, decisions 5 of 5. Both source pages are complete.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+MY WORK
+your agents
+Codex · harness codex · owned by you
+my tasks
+in progress
+none
+blocked
+none
+open
+open
+Follow up on the Q3 handoff analysis reference
+id task_arh001_followup · assigned to Codex (agent) agt_arh001_codex
+tasks
+showing 6 of 6
+accepted decisions
+accepted
+Treat the Q3 handoff report as the recorded source for the follow-up work.
+accepted
+Open the external report from the stored reference when the recipient is ready.
+accepted
+Keep every external reference inert and hand off by copying the stored URI.
+accepted
+Replace the recap thread with the recorded artifact reference chain.
+replaces dec_arh001_old
+accepted decisions needing review
+accepted
+The handoff needs no second source: the Q3 report covers the period.
+needs review cites non-current finding find_arh001_superseded
+decisions
+showing 5 of 5
+historical
+Historical: 1 superseded decisions / 1 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+The recorded Q3 handoff analysis reference points outside Campfire.
+id find_arh001_current · evidence: art_arh001_safe_output (supports)
+current
+The old preview deployment no longer matches the handoff analysis.
+id find_arh001_contradicts · evidence: art_arh001_stale (contradicts)
+current
+The Q3 handoff analysis is an external report, not an internal export.
+id find_arh001_superseded_fix · evidence: none recorded
+findings
+showing 3 of 3
+artifact references
+report
+Q3 handoff analysis (external report)
+id art_arh001_safe_output · reference: https://example.com/arh-001/q3-handoff-analysis.html (stored reference, not fetched)
+other
+Report <script>alert(1)</script>
+id art_arh001_hostile_markup · reference: https://example.com/arh-001/report"><img src=x onerror=alert(1)> (stored reference, not fetched)
+other
+Protected analytics view
+id art_arh001_credentialed · reference: https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view (stored reference, not fetched)
+file
+Legacy FTP archive
+id art_arh001_insecure_scheme · reference: ftp://files.example.com/arh-001/export.tar.gz (stored reference, not fetched)
+document
+Local working notes
+id art_arh001_path · reference: reports/arh-001/working-notes.md (stored reference, not fetched)
+deployment
+Preview deployment (stale)
+id art_arh001_stale · reference: https://example.com/arh-001/deployments/old-preview (stored reference, not fetched)
+report
+Q3 handoff analysis (external report) — earlier draft
+id art_arh001_safe_old_report · reference: https://example.com/arh-001/q3-handoff-analysis-draft.html (stored reference, not fetched)
+artifacts
+showing 7 of 7
+SINCE YOU WERE HERE
+First visit — new activity will appear here.

@@ -1,0 +1,330 @@
+{
+  "provenance": "FIXTURE EVIDENCE — cannot establish Gate B, C, or E.",
+  "servedAt": "2026-10-16T18:00:00.000Z",
+  "files": [
+    {
+      "name": "context-ws_arh001_lab-ana.json",
+      "sha256": "8af05ee9e04cc2487c56cfbef5a417ee51a621068cbda5cd84815bde4df1b3f9"
+    },
+    {
+      "name": "context-ws_arh001_lab-ben.json",
+      "sha256": "b5073970b14deaff5305ba677a9cc1f63476e76c9386ea80fdd3ab0faee3868d"
+    },
+    {
+      "name": "context-ws_arh001_lab-codex.json",
+      "sha256": "77a7e3334b0192eb1e681bda119cc83e6e324595345e74c4b24d046c773c13b7"
+    },
+    {
+      "name": "context-ws_arh001_lab-opencode.json",
+      "sha256": "b5073970b14deaff5305ba677a9cc1f63476e76c9386ea80fdd3ab0faee3868d"
+    },
+    {
+      "name": "context-ws_arh001_trunc_artifacts-ana.json",
+      "sha256": "59d1b549dfa35e3f8c6d03d608e067d17bdeef3ebc1ee8fd82e9b0837478f989"
+    },
+    {
+      "name": "context-ws_arh001_trunc_artifacts-ben.json",
+      "sha256": "59d1b549dfa35e3f8c6d03d608e067d17bdeef3ebc1ee8fd82e9b0837478f989"
+    },
+    {
+      "name": "denials.json",
+      "sha256": "1f687bfec15fac9629642a1b399bfa7c22534fc6051027755769ad5adc8e7dbd"
+    },
+    {
+      "name": "whoami-ana.json",
+      "sha256": "7f6e9950369920720b797c735ccf4ddb90c876036443e6085ee775b1b11926e0"
+    },
+    {
+      "name": "whoami-ben.json",
+      "sha256": "f00c41eb94312ef4cb6bae8cf949e14b0099ffda66fb5d108a12ed0c6401cae1"
+    },
+    {
+      "name": "whoami-codex.json",
+      "sha256": "dc0ff8088648ca02dd77464ebd6af29412d91ae3acb1827d79ff6c1a515cd470"
+    },
+    {
+      "name": "whoami-opencode.json",
+      "sha256": "7a81d2e51c4d15ee25123757cefddda5268c798fe2dd71dd6c0dd089a47f2c02"
+    },
+    {
+      "name": "whoami-zed.json",
+      "sha256": "68ac8d8b836959e082e49e8079925549a32847bb6f09ef336f31a831867e44fa"
+    },
+    {
+      "name": "workspace-ws_arh001_lab-ana.json",
+      "sha256": "70f594c7a19b25eff0bc06f546a16f30bbb1869a1f7511c5f5140c9022fe8109"
+    },
+    {
+      "name": "workspace-ws_arh001_lab-ben.json",
+      "sha256": "70f594c7a19b25eff0bc06f546a16f30bbb1869a1f7511c5f5140c9022fe8109"
+    },
+    {
+      "name": "workspace-ws_arh001_lab-codex.json",
+      "sha256": "70f594c7a19b25eff0bc06f546a16f30bbb1869a1f7511c5f5140c9022fe8109"
+    },
+    {
+      "name": "workspace-ws_arh001_lab-opencode.json",
+      "sha256": "70f594c7a19b25eff0bc06f546a16f30bbb1869a1f7511c5f5140c9022fe8109"
+    },
+    {
+      "name": "workspace-ws_arh001_trunc_artifacts-ana.json",
+      "sha256": "e49dea2966a3c8cbe8ace0838852de3e02dd8b786a0df82a9568765a965f827c"
+    },
+    {
+      "name": "workspace-ws_arh001_trunc_artifacts-ben.json",
+      "sha256": "e49dea2966a3c8cbe8ace0838852de3e02dd8b786a0df82a9568765a965f827c"
+    }
+  ],
+  "slices": [
+    {
+      "actor": "ana",
+      "workspaceId": "ws_arh001_lab",
+      "slices": {
+        "tasks": {
+          "total": 6,
+          "returned": 6,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 3,
+          "returned": 3,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 5,
+          "returned": 5,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 7,
+          "returned": 7,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "recentChanges": {
+          "total": 50,
+          "returned": 20,
+          "truncated": true,
+          "nextCursorPresent": false
+        }
+      }
+    },
+    {
+      "actor": "ben",
+      "workspaceId": "ws_arh001_lab",
+      "slices": {
+        "tasks": {
+          "total": 6,
+          "returned": 6,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 3,
+          "returned": 3,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 5,
+          "returned": 5,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 7,
+          "returned": 7,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "recentChanges": {
+          "total": 50,
+          "returned": 20,
+          "truncated": true,
+          "nextCursorPresent": false
+        }
+      }
+    },
+    {
+      "actor": "codex",
+      "workspaceId": "ws_arh001_lab",
+      "slices": {
+        "tasks": {
+          "total": 6,
+          "returned": 6,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 3,
+          "returned": 3,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 5,
+          "returned": 5,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 7,
+          "returned": 7,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "recentChanges": {
+          "total": 50,
+          "returned": 20,
+          "truncated": true,
+          "nextCursorPresent": false
+        }
+      }
+    },
+    {
+      "actor": "opencode",
+      "workspaceId": "ws_arh001_lab",
+      "slices": {
+        "tasks": {
+          "total": 6,
+          "returned": 6,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 3,
+          "returned": 3,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 5,
+          "returned": 5,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 7,
+          "returned": 7,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "recentChanges": {
+          "total": 50,
+          "returned": 20,
+          "truncated": true,
+          "nextCursorPresent": false
+        }
+      }
+    },
+    {
+      "actor": "ana",
+      "workspaceId": "ws_arh001_trunc_artifacts",
+      "slices": {
+        "tasks": {
+          "total": 0,
+          "returned": 0,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 1,
+          "returned": 1,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 0,
+          "returned": 0,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 12,
+          "returned": 10,
+          "truncated": true,
+          "nextCursorPresent": true
+        },
+        "recentChanges": {
+          "total": 17,
+          "returned": 17,
+          "truncated": false,
+          "nextCursorPresent": false
+        }
+      }
+    },
+    {
+      "actor": "ben",
+      "workspaceId": "ws_arh001_trunc_artifacts",
+      "slices": {
+        "tasks": {
+          "total": 0,
+          "returned": 0,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "findings": {
+          "total": 1,
+          "returned": 1,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "decisions": {
+          "total": 0,
+          "returned": 0,
+          "truncated": false,
+          "nextCursorPresent": false
+        },
+        "artifacts": {
+          "total": 12,
+          "returned": 10,
+          "truncated": true,
+          "nextCursorPresent": true
+        },
+        "recentChanges": {
+          "total": 17,
+          "returned": 17,
+          "truncated": false,
+          "nextCursorPresent": false
+        }
+      }
+    }
+  ],
+  "denials": [
+    {
+      "case": "zed-reads-lab-context",
+      "outcome": "denied",
+      "error": {
+        "name": "ParticipantRequired",
+        "code": "ParticipantRequired"
+      }
+    },
+    {
+      "case": "ana-reads-unrelated-context",
+      "outcome": "denied",
+      "error": {
+        "name": "ParticipantRequired",
+        "code": "ParticipantRequired"
+      }
+    },
+    {
+      "case": "ana-reads-unknown-workspace-context",
+      "outcome": "denied",
+      "error": {
+        "name": "WorkspaceNotFound",
+        "code": "WorkspaceNotFound"
+      }
+    },
+    {
+      "case": "ana-reads-trunc-artifact-through-lab-workspace",
+      "outcome": "denied",
+      "error": {
+        "name": "ArtifactNotFound",
+        "code": "ArtifactNotFound"
+      }
+    }
+  ]
+}

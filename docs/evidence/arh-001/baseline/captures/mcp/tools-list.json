@@ -1,0 +1,1061 @@
+[
+  {
+    "name": "preflight",
+    "description": "Check endpoint, authenticated identity, and agent-session readiness without changing Campfire state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "whoami",
+    "description": "Report the Campfire actor identity bound to this server process.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "list_workspaces",
+    "description": "List the workspaces the acting actor participates in.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "create_workspace",
+    "description": "Create a workspace. The acting actor becomes the owner.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "teamId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "teamId",
+        "name"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "update_workspace",
+    "description": "Change a workspace lifecycle status explicitly after inspecting its recorded state. Use completed only when the recorded goal is finished and no recorded work or proposal remains; completion preserves the workspace and its history. Use active for ongoing or deliberately reopened work. Archived is terminal retirement, not a synonym for completed. Quiet state alone never grants permission and never proves success.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "completed",
+            "archived"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId",
+        "status"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_workspace",
+    "description": "Read the full current-state projection of a workspace, including provenance.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_workspace_context",
+    "description": "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou (work you can act on) and needsAttention (other team records — attention ordering, not an access boundary), current work, and an orientation hint. Each slice carries total, returned, and truncated; attentionCoverage states the returned task and decision page counts and whether the attention lists are complete under their selection rules (a truncated source page can hide a matching cue). needsAttention also carries a team review cue with reason accepted_decision_needs_review for a returned accepted decision whose cited findings are no longer current — a review cue, not a revocation of acceptance and not a transition. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "since": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_workspace_changes",
+    "description": "Read the bounded catch-up after an orientationCursor or a previous catch-up cursor. The result is bounded; pass the returned cursor to continue.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "workspaceId",
+        "after"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "recall_workspace",
+    "description": "Bounded read of one authorized workspace. Returns current, historical, and artifact sections with lifecycle and provenance, plus a decisionSet grouping every decision this query matches. The set describes query matches only, not every decision in the workspace. Read decisionSet.state before acting: when it is unresolved-accepted-decisions or truncated, Campfire has not selected an operative decision and beforeActing says what must happen first. Cite the ids you rely on. Does not write a handoff file, a contribution, or search another workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "query"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "list_decisions",
+    "description": "List a bounded page of decisions in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "accepted",
+            "superseded"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "list_findings",
+    "description": "List a bounded page of findings in a workspace. Pass currentness current, superseded, withdrawn, or all. The result is bounded; pass the returned cursor to continue the list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string"
+        },
+        "currentness": {
+          "type": "string",
+          "enum": [
+            "current",
+            "superseded",
+            "withdrawn",
+            "all"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "list_tasks",
+    "description": "List a bounded page of tasks in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "in_progress",
+            "blocked",
+            "completed"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "list_artifacts",
+    "description": "List a bounded page of artifacts in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_decision",
+    "description": "Read one decision in a workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "decisionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "decisionId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_finding",
+    "description": "Read one finding in a workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "findingId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "findingId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_task",
+    "description": "Read one task in a workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "taskId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_artifact",
+    "description": "Read one artifact in a workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "artifactId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "get_activity",
+    "description": "List the append-only contribution history for a workspace.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "before": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "join_workspace",
+    "description": "Join a workspace as the acting actor. Requires a pending invite; the role comes from the invite, not this request.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "owner",
+            "member",
+            "agent",
+            "viewer"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "invite_workspace",
+    "description": "Invite an actor to a workspace. Owner and member may invite; viewer and agent may not. Role is taken from the invite when the actor joins.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "actorId": {
+          "type": "string"
+        },
+        "actorType": {
+          "type": "string",
+          "enum": [
+            "human",
+            "agent"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "owner",
+            "member",
+            "agent",
+            "viewer"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId",
+        "actorId",
+        "actorType",
+        "role"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "register_agent_session",
+    "description": "Register an agent session in a workspace for a human principal.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "humanId": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        },
+        "harness": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId",
+        "workspaceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "create_goal",
+    "description": "Create the current goal for a workspace. Fails if an active goal already exists.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "title"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "update_goal",
+    "description": "Change shared team intent only when the goal itself changed. Do not use it to narrate progress; progress belongs in findings, tasks, or artifacts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "goalId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "completed",
+            "abandoned"
+          ]
+        }
+      },
+      "required": [
+        "goalId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "add_finding",
+    "description": "Record a durable fact or conclusion useful to later participants. Include evidence or confidence when useful. Do not paste a private transcript or scratch reasoning.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "sourceArtifactId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "summary"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "correct_finding",
+    "description": "Record a new correction of a finding. It does not edit the old assertion. The predecessor remains; the returned finding is the successor.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "sourceArtifactId": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "artifactId": {
+                "type": "string"
+              },
+              "relation": {
+                "type": "string",
+                "enum": [
+                  "supports",
+                  "contradicts"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "artifactId",
+              "relation"
+            ]
+          }
+        }
+      },
+      "required": [
+        "findingId",
+        "summary",
+        "reason"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "withdraw_finding",
+    "description": "Withdraw a finding by an explicit transition. It does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "reason"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "cite_finding_evidence",
+    "description": "Cite an artifact as evidence for a finding. The relation must be supports or contradicts. Records an explicit citation and does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "supports",
+            "contradicts"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "artifactId",
+        "relation"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "remove_finding_evidence",
+    "description": "Remove one finding evidence citation by an explicit transition. It does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "evidenceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidenceId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "add_decision",
+    "description": "Record a direction that still needs explicit acceptance. Creating a decision only proposes it; it does not approve it. replacesDecisionId records a new decision and does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "accepted",
+            "superseded"
+          ]
+        },
+        "replacesDecisionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceId",
+        "summary"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "cite_decision_basis",
+    "description": "Cite a finding as a basis for a decision. Records an explicit citation and does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "decisionId": {
+          "type": "string"
+        },
+        "findingId": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "decisionId",
+        "findingId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "remove_decision_basis",
+    "description": "Remove one decision basis citation by an explicit transition. It does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "citationId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "citationId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "accept_decision",
+    "description": "Accept a proposed decision only for an explicit approval. Never call it as an automatic follow-up to proposing. reason records why this acceptance happened and does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "decisionId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "decisionId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "retire_decision",
+    "description": "Retire a decision by an explicit transition. It does not edit the old assertion.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "decisionId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "decisionId",
+        "reason"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "create_task",
+    "description": "Create actionable shared work with a truthful initial lifecycle state and assignee.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "object",
+          "properties": {
+            "actorId": {
+              "type": "string"
+            },
+            "actorType": {
+              "type": "string",
+              "enum": [
+                "human",
+                "agent"
+              ]
+            }
+          },
+          "required": [
+            "actorId",
+            "actorType"
+          ]
+        }
+      },
+      "required": [
+        "workspaceId",
+        "title"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "update_task",
+    "description": "Update shared work to its truthful current lifecycle status, title, description, or assignee. Move to in_progress when started, blocked when waiting, completed only when the completion condition is met. Pass assignee null to clear.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "in_progress",
+            "blocked",
+            "completed"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "assignee": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "actorId": {
+                  "type": "string"
+                },
+                "actorType": {
+                  "type": "string",
+                  "enum": [
+                    "human",
+                    "agent"
+                  ]
+                }
+              },
+              "required": [
+                "actorId",
+                "actorType"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "taskId"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  },
+  {
+    "name": "add_artifact",
+    "description": "Attach a stable reference to a useful output or source with metadata. Store the reference, not copied secret material or private session content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "file",
+            "pull_request",
+            "commit",
+            "log",
+            "trace",
+            "document",
+            "deployment",
+            "screenshot",
+            "report",
+            "other"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "uriOrPath": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "workspaceId",
+        "type",
+        "title",
+        "uriOrPath"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "execution": {
+      "taskSupport": "forbidden"
+    }
+  }
+]

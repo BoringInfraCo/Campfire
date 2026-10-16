@@ -1,0 +1,36 @@
+Campfire  /  ARH-001 truncated artifacts  ws_arh001_trunc_artifacts
+hum_arh001_ana human  ·  refreshed 2026-10-16T20:37:26.020Z
+GOAL
+  no recorded goal
+  0/0 tasks · 0/0 decisions
+2 people · 0 registered agents
+ARTIFACT REFERENCES
+  art_arh001_trunc_linked  document  references/arh-001/trunc/runbook.md  stored reference, not fetched
+  art_arh001_trunc_filler_09  document  https://example.com/arh-001/trunc/filler-09.md  stored reference, not fetched
+  art_arh001_trunc_filler_08  document  https://example.com/arh-001/trunc/filler-08.md  stored reference, not fetched
+  art_arh001_trunc_filler_07  document  https://example.com/arh-001/trunc/filler-07.md  stored reference, not fetched
+  art_arh001_trunc_filler_06  document  https://example.com/arh-001/trunc/filler-06.md  stored reference, not fetched
+  art_arh001_trunc_filler_05  document  https://example.com/arh-001/trunc/filler-05.md  stored reference, not fetched
+  art_arh001_trunc_filler_04  document  https://example.com/arh-001/trunc/filler-04.md  stored reference, not fetched
+  art_arh001_trunc_filler_03  document  https://example.com/arh-001/trunc/filler-03.md  stored reference, not fetched
+  art_arh001_trunc_filler_02  document  https://example.com/arh-001/trunc/filler-02.md  stored reference, not fetched
+  art_arh001_trunc_filler_01  document  https://example.com/arh-001/trunc/filler-01.md  stored reference, not fetched
+  No recorded attention cues match these rules. This does not mean all work is done.
+MY WORK  Needs You  ATTENTION  0/0 tasks · 0/0 decisions    RECORDED DECISIONS
+  Attention coverage: tasks 0 of 0, decisions 0 of 0. Both    No proposed or accepted decision in the returned records.
+  source pages are complete.                                RECENT CHANGES  showing 17 of 17
+  Recorded assignment is a record, not a permission: it       hum_arh001_ana  human  create  ws_arh001_trunc_artifacts
+  does not grant or deny a write.                             hum_arh001_ana  human  join  hum_arh001_ana
+  No recorded attention cues match these rules. This does     hum_arh001_ana  human  create  inv_arh001_0113
+  not mean all work is done.                                  hum_arh001_ben  human  join  hum_arh001_ben
+CURRENT WORK                                                  hum_arh001_ana  human  create  art_arh001_beyond_page
+  orientation hint, not an action                             hum_arh001_ana  human  create  art_arh001_trunc_older
+  No open, in_progress, or blocked task in the returned       hum_arh001_ana  human  create  art_arh001_trunc_filler_01
+  records.                                                    hum_arh001_ana  human  create  art_arh001_trunc_filler_02
+                                                              hum_arh001_ana  human  create  art_arh001_trunc_filler_03
+                                                              hum_arh001_ana  human  create  art_arh001_trunc_filler_04
+                                                              hum_arh001_ana  human  create  art_arh001_trunc_filler_05
+                                                              hum_arh001_ana  human  create  art_arh001_trunc_filler_06
+                                                              hum_arh001_ana  human  create  art_arh001_trunc_filler_07
+SOURCE
+p perspective   tab section   j/k move   enter inspect   r refresh   ? help   q quit
