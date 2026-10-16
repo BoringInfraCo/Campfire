@@ -2,6 +2,21 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
+v1.19.0 makes the attention view honest about its own coverage. The workspace
+context now states the returned task and decision page counts and whether the
+attention lists are complete under their selection rules, so a truncated page
+can never read as an unqualified all-clear; and an accepted decision that still
+cites a non-current finding carries a team review cue (`accepted_decision_needs_review`)
+with the cited finding ids. The cue does not revoke acceptance, does not choose
+an operative decision, and is never a next action. It is a founder-directed
+release for real-user testing: the ATT-001 two-person comprehension trace is
+NOT OBSERVED and the sprint remains CONDITIONAL GO — engineering candidate, so
+this is not a comprehension result and Gate B, Gate C, Gate E, and Gate F
+remain unmeasured. See `RELEASE_V1_19_DECISION.md`. This release includes no new
+read surface, no new object, and no schema or migration change. The release is
+published and deployed; its archives, channel pins, and live installer checks
+are recorded in that decision.
+
 v1.18.0 makes the MCP boundary for continuing a teammate's work more explicit.
 `needsAttention` is documented as attention ordering, not an access boundary: a
 blocked or open task assigned to another participant is still shared work, and

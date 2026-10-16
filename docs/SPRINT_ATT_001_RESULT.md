@@ -2,7 +2,7 @@
 
 **Date:** October 15, 2026 (local; capture timestamps cross October 16 UTC)
 
-**Status:** **CONDITIONAL GO — engineering candidate.** The D1–D6 focused checks pass on the recorded candidate and no known safety failure remains; the eligible two-person controlled comprehension trace is **NOT OBSERVED** (recorded reason below). No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. This record does not claim human comprehension, ordinary team value, Gate B/C/E/F, or resolution of the open WCO-001 and SWH-001 observations.
+**Status:** **CONDITIONAL GO — engineering candidate.** The D1–D6 focused checks pass on the recorded candidate and no known safety failure remains; the eligible two-person controlled comprehension trace is **NOT OBSERVED** (recorded reason below). No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. The founder subsequently directed a full public v1.19.0 release under the recorded release-scope override in `docs/RELEASE_V1_19_DECISION.md`; that override does not change this verdict, the open human trace, or any gate. This record does not claim human comprehension, ordinary team value, Gate B/C/E/F, or resolution of the open WCO-001 and SWH-001 observations.
 
 **Contract:** `docs/Campfire-v1.19-ATT-001-Trustworthy-Team-Attention.md`
 **Evidence:** `docs/evidence/att-001/` (baseline, candidate, restricted key, participant packet, scoring form, trace runbook)
