@@ -1,0 +1,351 @@
+{
+  "activity": [
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 1,
+      "createdAt": "2026-10-15T16:01:19.000Z",
+      "id": "con_att001_0163",
+      "objectId": "ws_att001_quiet",
+      "objectType": "workspace",
+      "payload": {
+        "name": "ATT-001 quiet desk"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "join",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 2,
+      "createdAt": "2026-10-15T16:01:19.000Z",
+      "id": "con_att001_0164",
+      "objectId": "hum_att001_ana",
+      "objectType": "participant",
+      "payload": {
+        "role": "owner"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 3,
+      "createdAt": "2026-10-15T16:01:20.000Z",
+      "id": "con_att001_0166",
+      "objectId": "inv_att001_0165",
+      "objectType": "invite",
+      "payload": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human",
+        "role": "member"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "join",
+      "actor": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human"
+      },
+      "appendPosition": 4,
+      "createdAt": "2026-10-15T16:01:21.000Z",
+      "id": "con_att001_0167",
+      "objectId": "hum_att001_ben",
+      "objectType": "participant",
+      "payload": {
+        "inviteId": "inv_att001_0165",
+        "role": "member"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 5,
+      "createdAt": "2026-10-15T16:01:22.000Z",
+      "id": "con_att001_0168",
+      "objectId": "find_att001_quiet_current",
+      "objectType": "finding",
+      "payload": {
+        "summary": "The quiet desk has no recorded attention cues."
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 6,
+      "createdAt": "2026-10-15T16:01:23.000Z",
+      "id": "con_att001_0171",
+      "objectId": "dec_att001_quiet_accepted",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Keep the quiet desk in the baseline freeze."
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 7,
+      "createdAt": "2026-10-15T16:01:24.000Z",
+      "id": "con_att001_0174",
+      "objectId": "dec_att001_quiet_accepted",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 8,
+      "createdAt": "2026-10-15T16:01:25.000Z",
+      "id": "con_att001_0178",
+      "objectId": "dec_att001_quiet_accepted",
+      "objectType": "decision",
+      "payload": {
+        "findingId": "find_att001_quiet_current",
+        "note": "quiet desk read",
+        "summary": "cites find_att001_quiet_current"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 9,
+      "createdAt": "2026-10-15T16:01:26.000Z",
+      "id": "con_att001_0179",
+      "objectId": "task_att001_quiet_open",
+      "objectType": "task",
+      "payload": {
+        "title": "Choose the quiet-desk next step"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 10,
+      "createdAt": "2026-10-15T16:01:27.000Z",
+      "id": "con_att001_0180",
+      "objectId": "task_att001_quiet_completed_01",
+      "objectType": "task",
+      "payload": {
+        "title": "Quiet desk setup"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 11,
+      "createdAt": "2026-10-15T16:01:28.000Z",
+      "id": "con_att001_0181",
+      "objectId": "task_att001_quiet_completed_02",
+      "objectType": "task",
+      "payload": {
+        "title": "Quiet desk review"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 12,
+      "createdAt": "2026-10-15T16:01:29.000Z",
+      "id": "con_att001_0182",
+      "objectId": "task_att001_quiet_completed_01",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 13,
+      "createdAt": "2026-10-15T16:01:30.000Z",
+      "id": "con_att001_0185",
+      "objectId": "task_att001_quiet_completed_02",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_quiet"
+    }
+  ],
+  "artifacts": [],
+  "decisions": [
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-15T16:01:25.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_att001_quiet_accepted",
+          "findingId": "find_att001_quiet_current",
+          "id": "cit_att001_0177",
+          "note": "quiet desk read",
+          "workspaceId": "ws_att001_quiet"
+        }
+      ],
+      "createdAt": "2026-10-15T16:01:23.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_quiet_accepted",
+      "rationale": "It is the complete-page empty-attention counterexample for ATT-001.",
+      "status": "accepted",
+      "summary": "Keep the quiet desk in the baseline freeze.",
+      "updatedAt": "2026-10-15T16:01:24.000Z",
+      "workspaceId": "ws_att001_quiet"
+    }
+  ],
+  "findings": [
+    {
+      "createdAt": "2026-10-15T16:01:22.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "One unassigned open task, two completed tasks, one accepted decision citing this finding.",
+      "id": "find_att001_quiet_current",
+      "summary": "The quiet desk has no recorded attention cues.",
+      "workspaceId": "ws_att001_quiet"
+    }
+  ],
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:01:19.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:01:21.000Z",
+      "name": "Ben",
+      "role": "member"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana contributed workspace ws_att001_quiet",
+    "Ana joined participant hum_att001_ana",
+    "Ana contributed invite inv_att001_0165",
+    "Ben joined participant hum_att001_ben",
+    "Ana contributed finding find_att001_quiet_current: The quiet desk has no recorded attention cues.",
+    "Ana contributed decision dec_att001_quiet_accepted: Keep the quiet desk in the baseline freeze.",
+    "Ana updated decision dec_att001_quiet_accepted: accepted",
+    "Ana updated decision dec_att001_quiet_accepted: cites find_att001_quiet_current",
+    "Ana contributed task task_att001_quiet_open: Choose the quiet-desk next step",
+    "Ana contributed task task_att001_quiet_completed_01: Quiet desk setup",
+    "Ana contributed task task_att001_quiet_completed_02: Quiet desk review",
+    "Ana updated task task_att001_quiet_completed_01: completed",
+    "Ana updated task task_att001_quiet_completed_02: completed"
+  ],
+  "tasks": [
+    {
+      "createdAt": "2026-10-15T16:01:26.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_quiet_open",
+      "status": "open",
+      "title": "Choose the quiet-desk next step",
+      "updatedAt": "2026-10-15T16:01:26.000Z",
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:27.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_quiet_completed_01",
+      "status": "completed",
+      "title": "Quiet desk setup",
+      "updatedAt": "2026-10-15T16:01:29.000Z",
+      "workspaceId": "ws_att001_quiet"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:28.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_quiet_completed_02",
+      "status": "completed",
+      "title": "Quiet desk review",
+      "updatedAt": "2026-10-15T16:01:30.000Z",
+      "workspaceId": "ws_att001_quiet"
+    }
+  ],
+  "workspace": {
+    "createdAt": "2026-10-15T16:01:19.000Z",
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_att001_quiet",
+    "name": "ATT-001 quiet desk",
+    "status": "active",
+    "teamId": "team_att001",
+    "updatedAt": "2026-10-15T16:01:19.000Z"
+  }
+}

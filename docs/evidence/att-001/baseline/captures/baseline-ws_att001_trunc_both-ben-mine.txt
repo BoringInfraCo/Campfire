@@ -1,0 +1,81 @@
+historical findings 2 decisions 0
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_att001_tb_plain_02
+Truncated-both plain filler 02
+dec_att001_tb_plain_03
+Truncated-both plain filler 03
+dec_att001_tb_plain_04
+Truncated-both plain filler 04
+dec_att001_tb_plain_05
+Truncated-both plain filler 05
+dec_att001_tb_plain_06
+Truncated-both plain filler 06
+dec_att001_tb_plain_07
+Truncated-both plain filler 07
+dec_att001_tb_plain_08
+Truncated-both plain filler 08
+dec_att001_tb_plain_09
+Truncated-both plain filler 09
+dec_att001_tb_plain_10
+Truncated-both plain filler 10
+accepted needing review
+dec_att001_tb_page_review
+Keep the review cue tied to the returned page when both pages are bounded.
+NEEDS YOU
+You're all caught up
+MY WORK
+your agents
+none recorded
+my tasks
+in progress
+no matching tasks in the returned 20 of 22; more may exist
+blocked
+no matching tasks in the returned 20 of 22; more may exist
+open
+no matching tasks in the returned 20 of 22; more may exist
+tasks
+showing 20 of 22 · more available — open the list for the rest
+accepted decisions
+accepted
+Truncated-both plain filler 02
+accepted
+Truncated-both plain filler 03
+accepted
+Truncated-both plain filler 04
+accepted
+Truncated-both plain filler 05
+accepted
+Truncated-both plain filler 06
+accepted
+Truncated-both plain filler 07
+accepted
+Truncated-both plain filler 08
+accepted
+Truncated-both plain filler 09
+accepted
+Truncated-both plain filler 10
+accepted decisions needing review
+accepted
+Keep the review cue tied to the returned page when both pages are bounded.
+needs review cites non-current finding find_att001_tb_withdrawn
+decisions
+showing 10 of 12 · more available — open the list for the rest
+historical
+Historical: 0 superseded decisions / 2 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+Both pages are bounded by their default budgets.
+id find_att001_tb_current · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+none
+artifacts
+showing 0 of 0
+SINCE YOU WERE HERE
+First visit — new activity will appear here.

@@ -305,6 +305,15 @@ Amendment 1 repair under the recorded release-scope override in
 and Gate B, Gate C, Gate E, VIS-001 condition 4, and the open v1.17/SWH-001
 human observations remain open.
 
+Sprint ATT-001 — Trustworthy Team Attention has a proposed v1.19 contract at
+`docs/Campfire-v1.19-ATT-001-Trustworthy-Team-Attention.md`. It is not yet
+implemented or scored. The bounded slice qualifies attention coverage when
+task or decision pages are truncated and adds a team review cue for a returned
+accepted decision with `needsReview`. It must not infer a reviewer, permission,
+operative decision, urgency, presence, or coordination action. Freeze the v1.18
+baseline and rubric before implementation; preserve the WCO-001 and SWH-001
+open human observations and Gate B/C/E/F status.
+
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
 unexpected-error responses, delivery batching, and dependencies without a new

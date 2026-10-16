@@ -1,0 +1,150 @@
+# ATT-001 baseline served-state seed log
+
+FIXTURE EVIDENCE — calibrates UI and rubric; cannot establish Gate B, C, or E.
+
+Recorded 2026-10-15 (local, EDT) / 2026-10-16 02:30–02:32Z by the ATT-001
+baseline capture session, from a clean v1.18.0 git worktree. No token value,
+token hash, or credential-shaped token string appears in this directory;
+`dump.ts` fails if any dumped text contains such a string, an absolute home
+path, or the unrelated sentinel.
+
+Scenario: ATT-001 fixture v2 (scenario repair recorded in SCENARIO_REPAIR.md).
+
+## Source position
+
+| Item | Value |
+| --- | --- |
+| Source pin | Tag `v1.18.0`, commit `7f606493dc7af958ae75fbc80fd6ed5065be786d` (the published release tag) |
+| Capture worktree | Clean detached git worktree at tag `v1.18.0` (created with `git worktree add ... v1.18.0` OUTSIDE the repository, under the OpenCode temp dir); product source unmodified |
+| Main worktree at capture | Carried the in-flight v1.19 ATT-001 candidate change (`src/` and `tests/` modified, untracked contract and fixture); it was NOT used to produce this baseline |
+| Package version | `1.18.0` (`package.json`, from the tag) |
+| Product source at capture | Unmodified. The six product-surface hashes in the clean worktree match the published `v1.18.0` tag exactly (table below). The only files added to the worktree were the ATT-001 fixture scripts (`seed.ts`, `dump.ts`, `capture-viewer.ts`, `README.md`, `.gitignore`) and a `node_modules` symlink. |
+| Seed command (A) | `npx tsx fixtures/attention/att-001/seed.ts --out fixtures/attention/att-001/.tmp/run-a --force` |
+| Seed command (B) | `npx tsx fixtures/attention/att-001/seed.ts --out fixtures/attention/att-001/.tmp/run-b --force` |
+| Dump command (A) | `npx tsx fixtures/attention/att-001/dump.ts --db fixtures/attention/att-001/.tmp/run-a/campfire.db --tokens fixtures/attention/att-001/.tmp/run-a/tokens.json --out fixtures/attention/att-001/.tmp/run-a/dump` |
+| Dump command (B) | `npx tsx fixtures/attention/att-001/dump.ts --db fixtures/attention/att-001/.tmp/run-b/campfire.db --tokens fixtures/attention/att-001/.tmp/run-b/tokens.json --out fixtures/attention/att-001/.tmp/run-b/dump` |
+| Determinism check | `diff -r fixtures/attention/att-001/.tmp/run-a/dump fixtures/attention/att-001/.tmp/run-b/dump` printed nothing (byte-identical, 24 files per run: 23 dumps + `dump-summary.json`) |
+| Capture command | `NODE_PATH=<external playwright install>/node_modules npx tsx fixtures/attention/att-001/capture-viewer.ts --db fixtures/attention/att-001/.tmp/run-a/campfire.db --out fixtures/attention/att-001/.tmp/capture --label baseline` |
+| Capture environment | Node v22.23.2; Playwright 1.63.0 from the external install with cached Chromium 1243; headless; viewport 1440×900, `deviceScaleFactor` 1; one in-process Viewer per actor on port 0 |
+| Seed clock | base `2026-10-15T16:00:00.000Z`, +1 s per write, final `2026-10-15T16:04:19.000Z` |
+| Frozen read clock | `SERVED_AT = 2026-10-15T18:00:00.000Z` is the `generatedAt` of every served context (`dump.ts` does not use wall time) |
+| Capture wall clock | 2026-10-15T22:30–22:32 local EDT (2026-10-16T02:30–02:32Z): seeds 22:31:06/22:31:11, dumps 22:31:18, captures 22:31:48–50; the write probe runs on a fresh seed instance with the real clock (`2026-10-16T02:31:50.786Z`) and is therefore not part of the byte-identical dump set |
+
+## Product-surface hashes (sha256)
+
+Worktree hashes were taken in the clean v1.18.0 worktree with
+`shasum -a 256 <path>`; the v1.18.0 column is
+`git show v1.18.0:<path> | shasum -a 256`. All six match.
+
+| Path | Worktree sha256 | v1.18.0 sha256 |
+| --- | --- | --- |
+| `src/service/campfire-service.ts` | `be53361bc7d041a5e8d0b3ceb824f18e0f674ab5b1acb185bf77d2657ba26648` | same |
+| `src/service/context-assembly.ts` | `83b765df170712b8eb42486d379eefa9244b6cd87ffce2fa48301f3c40e7868d` | same |
+| `src/worker/async-service.ts` | `0cdb6aa24b70d791e4a7c0c3327dd7d91ddfacbef4ae65ff98f7ee54dcc4efd2` | same |
+| `src/viewer/static/app.js` | `1ab9c42a70e9377772d446e70f74e78bdd2c28e4095114b789c95071808da632` | same |
+| `src/viewer/static/index.html` | `74120d2f33dd4e0e8b3c3421fb8d32a45c313c3e38b2ce1120b1552b37fec5dd` | same |
+| `public/app.js` | `1ab9c42a70e9377772d446e70f74e78bdd2c28e4095114b789c95071808da632` | same |
+
+## Dump hashes (sha256, as written; mirrored in `dump-summary.json`)
+
+| File | sha256 |
+| --- | --- |
+| `context-ws_att001_lab-ana.json` | `da2ecc843dbf282962fd934114195dbca9fee5801060944c261bb9de2762089b` |
+| `context-ws_att001_lab-ben.json` | `0b11914456dcf42d16fd6c074dcc79883f842206a6bd3e17c40628041ed57693` |
+| `context-ws_att001_quiet-ana.json` | `a306d4e60cd1a888a39d2e51ecb77bcde9f37a296f492a99107a94ea522e9551` |
+| `context-ws_att001_quiet-ben.json` | `a306d4e60cd1a888a39d2e51ecb77bcde9f37a296f492a99107a94ea522e9551` |
+| `context-ws_att001_trunc_both-ana.json` | `10b66c0e0817bbbf03e71405412c70a720215634bc29fcf6fc3534791f873afb` |
+| `context-ws_att001_trunc_both-ben.json` | `10b66c0e0817bbbf03e71405412c70a720215634bc29fcf6fc3534791f873afb` |
+| `context-ws_att001_trunc_decisions-ana.json` | `6286662b7ec1df64f4fdba99a1000bb6a43a5b798668a1182400175d513398e4` |
+| `context-ws_att001_trunc_decisions-ben.json` | `6286662b7ec1df64f4fdba99a1000bb6a43a5b798668a1182400175d513398e4` |
+| `context-ws_att001_trunc_tasks-ana.json` | `5bbd8a05ab90f69de12683cea4e5b1085a76787153af37c1144974320278dcb3` |
+| `context-ws_att001_trunc_tasks-ben.json` | `5bbd8a05ab90f69de12683cea4e5b1085a76787153af37c1144974320278dcb3` |
+| `denials.json` | `f0abfdd658e1564f8af90b6ebe81a2d8cd8e3844a80572388d80799430a9f398` |
+| `whoami-ana.json` | `c3c4adc00e8a5e6790000c0383be389f97adcdb3b53d24c0ccf6b7c1235ba63f` |
+| `whoami-ben.json` | `bc008eda83f035f3e809d19c9ec0378fdc75a03d48fa95f788ae8fceb9889713` |
+| `workspace-ws_att001_lab-ana.json` | `95778da65f51b780a653fb5a0875f79b6c28278db740bc06b24638a0c5da8e04` |
+| `workspace-ws_att001_lab-ben.json` | `95778da65f51b780a653fb5a0875f79b6c28278db740bc06b24638a0c5da8e04` |
+| `workspace-ws_att001_quiet-ana.json` | `0445417cd17a5d1f4ef39411bdc6dac0d52ec3faf70b8908531b1f3118b25a45` |
+| `workspace-ws_att001_quiet-ben.json` | `0445417cd17a5d1f4ef39411bdc6dac0d52ec3faf70b8908531b1f3118b25a45` |
+| `workspace-ws_att001_trunc_both-ana.json` | `a1e3dbfe86e671ae4736efbb5758b3db724a79974e48a1f28580792af78d9381` |
+| `workspace-ws_att001_trunc_both-ben.json` | `a1e3dbfe86e671ae4736efbb5758b3db724a79974e48a1f28580792af78d9381` |
+| `workspace-ws_att001_trunc_decisions-ana.json` | `b74793a2aaceb4a6c85662b990a9a2a0508886d95b125e2e7393512211fc8d60` |
+| `workspace-ws_att001_trunc_decisions-ben.json` | `b74793a2aaceb4a6c85662b990a9a2a0508886d95b125e2e7393512211fc8d60` |
+| `workspace-ws_att001_trunc_tasks-ana.json` | `dee23c61941556abb44f463cd95de31c26eb51b1c28bf2253609ca834d13d1a8` |
+| `workspace-ws_att001_trunc_tasks-ben.json` | `dee23c61941556abb44f463cd95de31c26eb51b1c28bf2253609ca834d13d1a8` |
+
+`context-*-ana.json` and `context-*-ben.json` are byte-identical in the four
+non-lab workspaces because no cue in those contexts differs by actor; the lab
+contexts differ in `needsYou`, `needsAttention`, and `currentWork`.
+`workspace-*.json` is the full `get_workspace` inspector and carries no
+attention fields, so it is identical for both actors.
+
+## Seed-time verification (from `seed-receipt.json`, `.tmp` only)
+
+`seed.ts` fails before writing unless the served projection matches the frozen
+v1.18.0 scenario (fixture v2). Verified at seed time:
+
+- Lab `ws_att001_lab` tasks: **21 total / 20 returned / truncated true**, with
+  all five keyed tasks inside the returned page (`task_att001_blocked_ana`,
+  `task_att001_open_ana`, `task_att001_open_noassignee`,
+  `task_att001_blocked_opencode`, `task_att001_blocked_noassignee`).
+- Lab decisions: **7 total / 7 returned / truncated false** (scenario repair
+  v2 removed the lab proposed decision); the two review decisions carry
+  `needsReview = true` with `needsReviewFindingIds`
+  `[find_att001_superseded]` and `[find_att001_withdrawn]`; the
+  accepted-current decision has no flag; `dec_att001_old` is excluded
+  (`superseded`, successor `dec_att001_new`, recorded reason);
+  `historicalCounts = { findings: 2, decisions: 1 }`.
+- Lab attention (v1.18.0, repaired fixture v2): Ana `needsYou` =
+  assigned-blocked `task_att001_blocked_ana` / assigned-open
+  `task_att001_open_ana`; Ana `needsAttention` = unassigned-blocked
+  `task_att001_blocked_noassignee` / team-blocked `task_att001_blocked_opencode`;
+  **Ben `needsYou = []` while the lab task page is truncated (21/20)** — the
+  incomplete-empty H4 observation the trace workspace must provide; Ben
+  `needsAttention` = the same unassigned-blocked task plus team-blocked
+  `task_att001_blocked_ana` and `task_att001_blocked_opencode`. **Neither
+  review decision appears in either attention list.**
+- Quiet: tasks **3/3**, decisions **1/1**, both humans `needsYou = []` and
+  `needsAttention = []`; `suggestedNextAction` = task `task_att001_quiet_open`
+  reason `team_open_task`.
+- Truncated tasks: tasks **22/20/truncated true**, both humans empty attention,
+  `suggestedNextAction.kind = "none"`; `task_att001_beyond_open_ana` outside the
+  returned page.
+- Truncated decisions: decisions **12/10/truncated true**;
+  `dec_att001_page_review` inside the page with `needsReview = true`
+  (`[find_att001_td_withdrawn]`); `dec_att001_beyond_review` outside the page;
+  both humans empty attention.
+- Truncated both: tasks **22/20/truncated true** and decisions
+  **12/10/truncated true**; both humans empty attention.
+- The unrelated sentinel does not appear in any authorized context, and the
+  denied read error (`ParticipantRequired`) does not contain it.
+
+The full verification object (including token-free ids) lives in
+`fixtures/attention/att-001/.tmp/run-a/seed-receipt.json`, which is not copied
+here because it embeds the local database path.
+
+## Viewer captures
+
+20 PNG screenshots (`captures/baseline-<workspaceId>-<actor>-<perspective>.png`,
+full page) and 20 `#orientation` text captures
+(`captures/baseline-<workspaceId>-<actor>-<perspective>.txt`) for Ana and Ben
+across `ws_att001_lab`, `ws_att001_quiet`, `ws_att001_trunc_tasks`,
+`ws_att001_trunc_decisions`, `ws_att001_trunc_both`, both perspectives. Same
+file set and names as the previous capture; the lab captures reflect the
+repaired fixture (no proposed decision).
+
+Write probe (`probe/ana-updates-opencode-task.json`): on a fresh seed instance,
+Ana updated `task_att001_blocked_opencode` (the task cued to her under team
+attention while assigned to `agt_att001_opencode`) from `blocked` to
+`in_progress`. Outcome: **allowed**; the recorded contribution actor is
+`hum_att001_ana`, and the returned task keeps its recorded assignee
+`agt_att001_opencode`. The cue is ordering, not an access boundary.
+
+## Sanitization
+
+- No token value, token hash, or credential-shaped token string in this
+  directory (grep-checked on copy and asserted by `dump.ts`).
+- No absolute home path in this directory (grep-checked on copy and asserted
+  by `dump.ts`).
+- The unrelated sentinel does not appear anywhere in this directory.
+- `tokens.json` files exist only under the gitignored `.tmp/` (mode 0600).

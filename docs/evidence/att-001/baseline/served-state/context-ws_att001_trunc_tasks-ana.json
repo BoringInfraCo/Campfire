@@ -1,0 +1,1408 @@
+{
+  "acceptedDecisions": [],
+  "alignment": {
+    "acceptedDecisionIds": [],
+    "proposedDecisionIds": [],
+    "status": "unspecified",
+    "unresolvedBlockedTaskIds": []
+  },
+  "artifacts": [],
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [],
+    "blockedTasks": [],
+    "inProgressTasks": [
+      {
+        "createdAt": "2026-10-15T16:01:34.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_01",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 01",
+        "updatedAt": "2026-10-15T16:01:56.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:35.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_02",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 02",
+        "updatedAt": "2026-10-15T16:01:57.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:36.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_03",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 03",
+        "updatedAt": "2026-10-15T16:01:58.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:37.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_04",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 04",
+        "updatedAt": "2026-10-15T16:01:59.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:38.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_05",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 05",
+        "updatedAt": "2026-10-15T16:02:00.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:39.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_06",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 06",
+        "updatedAt": "2026-10-15T16:02:01.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:40.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_07",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 07",
+        "updatedAt": "2026-10-15T16:02:02.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:41.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_08",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 08",
+        "updatedAt": "2026-10-15T16:02:03.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:42.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_09",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 09",
+        "updatedAt": "2026-10-15T16:02:04.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:43.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_10",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 10",
+        "updatedAt": "2026-10-15T16:02:05.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:44.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_11",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 11",
+        "updatedAt": "2026-10-15T16:02:06.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:45.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_12",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 12",
+        "updatedAt": "2026-10-15T16:02:07.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:46.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_13",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 13",
+        "updatedAt": "2026-10-15T16:02:08.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:47.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_14",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 14",
+        "updatedAt": "2026-10-15T16:02:09.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:48.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_15",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 15",
+        "updatedAt": "2026-10-15T16:02:10.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:49.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_16",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 16",
+        "updatedAt": "2026-10-15T16:02:11.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:50.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_17",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 17",
+        "updatedAt": "2026-10-15T16:02:12.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:51.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_18",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 18",
+        "updatedAt": "2026-10-15T16:02:13.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:52.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_19",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 19",
+        "updatedAt": "2026-10-15T16:02:14.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      },
+      {
+        "createdAt": "2026-10-15T16:01:53.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "task_att001_inprogress_20",
+        "status": "in_progress",
+        "title": "Truncated-tasks filler 20",
+        "updatedAt": "2026-10-15T16:02:15.000Z",
+        "workspaceId": "ws_att001_trunc_tasks"
+      }
+    ]
+  },
+  "findings": [],
+  "generatedAt": "2026-10-15T18:00:00.000Z",
+  "historicalCounts": {
+    "decisions": 0,
+    "findings": 0
+  },
+  "needsAttention": [],
+  "needsYou": [],
+  "openTasks": [
+    {
+      "createdAt": "2026-10-15T16:01:53.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_20",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 20",
+      "updatedAt": "2026-10-15T16:02:15.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:52.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_19",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 19",
+      "updatedAt": "2026-10-15T16:02:14.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:51.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_18",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 18",
+      "updatedAt": "2026-10-15T16:02:13.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:50.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_17",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 17",
+      "updatedAt": "2026-10-15T16:02:12.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:49.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_16",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 16",
+      "updatedAt": "2026-10-15T16:02:11.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:48.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_15",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 15",
+      "updatedAt": "2026-10-15T16:02:10.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:47.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_14",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 14",
+      "updatedAt": "2026-10-15T16:02:09.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:46.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_13",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 13",
+      "updatedAt": "2026-10-15T16:02:08.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:45.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_12",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 12",
+      "updatedAt": "2026-10-15T16:02:07.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:44.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_11",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 11",
+      "updatedAt": "2026-10-15T16:02:06.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:43.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_10",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 10",
+      "updatedAt": "2026-10-15T16:02:05.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:42.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_09",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 09",
+      "updatedAt": "2026-10-15T16:02:04.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:41.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_08",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 08",
+      "updatedAt": "2026-10-15T16:02:03.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:40.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_07",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 07",
+      "updatedAt": "2026-10-15T16:02:02.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:39.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_06",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 06",
+      "updatedAt": "2026-10-15T16:02:01.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:38.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_05",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 05",
+      "updatedAt": "2026-10-15T16:02:00.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:37.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_04",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 04",
+      "updatedAt": "2026-10-15T16:01:59.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:36.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_03",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 03",
+      "updatedAt": "2026-10-15T16:01:58.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:35.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_02",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 02",
+      "updatedAt": "2026-10-15T16:01:57.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "createdAt": "2026-10-15T16:01:34.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "task_att001_inprogress_01",
+      "status": "in_progress",
+      "title": "Truncated-tasks filler 01",
+      "updatedAt": "2026-10-15T16:01:56.000Z",
+      "workspaceId": "ws_att001_trunc_tasks"
+    }
+  ],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxNi4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNzUiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxNi4wMDBaIiwib3JpZ2luSWQiOiJjb25fYXR0MDAxXzAyNzUiLCJwb3NpdGlvbiI6NDcsIm9yaWdpblBvc2l0aW9uIjo0NywidGlwIjowfQ",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:01:31.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:01:33.000Z",
+      "name": "Ben",
+      "role": "member"
+    }
+  ],
+  "proposedDecisions": [],
+  "provenance": [
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 28,
+      "createdAt": "2026-10-15T16:01:57.000Z",
+      "id": "con_att001_0218",
+      "objectId": "task_att001_inprogress_02",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 29,
+      "createdAt": "2026-10-15T16:01:58.000Z",
+      "id": "con_att001_0221",
+      "objectId": "task_att001_inprogress_03",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 30,
+      "createdAt": "2026-10-15T16:01:59.000Z",
+      "id": "con_att001_0224",
+      "objectId": "task_att001_inprogress_04",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 31,
+      "createdAt": "2026-10-15T16:02:00.000Z",
+      "id": "con_att001_0227",
+      "objectId": "task_att001_inprogress_05",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 32,
+      "createdAt": "2026-10-15T16:02:01.000Z",
+      "id": "con_att001_0230",
+      "objectId": "task_att001_inprogress_06",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 33,
+      "createdAt": "2026-10-15T16:02:02.000Z",
+      "id": "con_att001_0233",
+      "objectId": "task_att001_inprogress_07",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 34,
+      "createdAt": "2026-10-15T16:02:03.000Z",
+      "id": "con_att001_0236",
+      "objectId": "task_att001_inprogress_08",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 35,
+      "createdAt": "2026-10-15T16:02:04.000Z",
+      "id": "con_att001_0239",
+      "objectId": "task_att001_inprogress_09",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 36,
+      "createdAt": "2026-10-15T16:02:05.000Z",
+      "id": "con_att001_0242",
+      "objectId": "task_att001_inprogress_10",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 37,
+      "createdAt": "2026-10-15T16:02:06.000Z",
+      "id": "con_att001_0245",
+      "objectId": "task_att001_inprogress_11",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 38,
+      "createdAt": "2026-10-15T16:02:07.000Z",
+      "id": "con_att001_0248",
+      "objectId": "task_att001_inprogress_12",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 39,
+      "createdAt": "2026-10-15T16:02:08.000Z",
+      "id": "con_att001_0251",
+      "objectId": "task_att001_inprogress_13",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 40,
+      "createdAt": "2026-10-15T16:02:09.000Z",
+      "id": "con_att001_0254",
+      "objectId": "task_att001_inprogress_14",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 41,
+      "createdAt": "2026-10-15T16:02:10.000Z",
+      "id": "con_att001_0257",
+      "objectId": "task_att001_inprogress_15",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 42,
+      "createdAt": "2026-10-15T16:02:11.000Z",
+      "id": "con_att001_0260",
+      "objectId": "task_att001_inprogress_16",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 43,
+      "createdAt": "2026-10-15T16:02:12.000Z",
+      "id": "con_att001_0263",
+      "objectId": "task_att001_inprogress_17",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 44,
+      "createdAt": "2026-10-15T16:02:13.000Z",
+      "id": "con_att001_0266",
+      "objectId": "task_att001_inprogress_18",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 45,
+      "createdAt": "2026-10-15T16:02:14.000Z",
+      "id": "con_att001_0269",
+      "objectId": "task_att001_inprogress_19",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 46,
+      "createdAt": "2026-10-15T16:02:15.000Z",
+      "id": "con_att001_0272",
+      "objectId": "task_att001_inprogress_20",
+      "objectType": "task",
+      "payload": {
+        "status": "in_progress"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 47,
+      "createdAt": "2026-10-15T16:02:16.000Z",
+      "id": "con_att001_0275",
+      "objectId": "task_att001_trunc_completed",
+      "objectType": "task",
+      "payload": {
+        "status": "completed"
+      },
+      "workspaceId": "ws_att001_trunc_tasks"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana updated task task_att001_inprogress_02: in_progress",
+    "Ana updated task task_att001_inprogress_03: in_progress",
+    "Ana updated task task_att001_inprogress_04: in_progress",
+    "Ana updated task task_att001_inprogress_05: in_progress",
+    "Ana updated task task_att001_inprogress_06: in_progress",
+    "Ana updated task task_att001_inprogress_07: in_progress",
+    "Ana updated task task_att001_inprogress_08: in_progress",
+    "Ana updated task task_att001_inprogress_09: in_progress",
+    "Ana updated task task_att001_inprogress_10: in_progress",
+    "Ana updated task task_att001_inprogress_11: in_progress",
+    "Ana updated task task_att001_inprogress_12: in_progress",
+    "Ana updated task task_att001_inprogress_13: in_progress",
+    "Ana updated task task_att001_inprogress_14: in_progress",
+    "Ana updated task task_att001_inprogress_15: in_progress",
+    "Ana updated task task_att001_inprogress_16: in_progress",
+    "Ana updated task task_att001_inprogress_17: in_progress",
+    "Ana updated task task_att001_inprogress_18: in_progress",
+    "Ana updated task task_att001_inprogress_19: in_progress",
+    "Ana updated task task_att001_inprogress_20: in_progress",
+    "Ana updated task task_att001_trunc_completed: completed"
+  ],
+  "provenanceTotal": 47,
+  "provenanceTruncated": true,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "blockers": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "findings": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMTo1Ny4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMTgiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MjgsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_02",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:57.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_02"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMTo1OC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMjEiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MjksIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_03",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:58.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_03"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMTo1OS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMjQiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzAsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_04",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:01:59.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_04"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowMC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMjciLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzEsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_05",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:00.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_05"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowMS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMzAiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzIsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_06",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:01.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_06"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowMi4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMzMiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzMsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_07",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:02.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_07"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowMy4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMzYiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzQsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_08",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:03.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_08"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowNC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyMzkiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzUsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_09",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:04.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_09"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowNS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNDIiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzYsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_10",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:05.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_10"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowNi4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNDUiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzcsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_11",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:06.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_11"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowNy4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNDgiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzgsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_12",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:07.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_12"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowOC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNTEiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzksIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_13",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:08.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_13"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjowOS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNTQiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDAsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_14",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:09.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_14"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxMC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNTciLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDEsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_15",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:10.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_15"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxMS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNjAiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDIsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_16",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:11.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_16"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxMi4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNjMiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDMsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_17",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:12.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_17"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxMy4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNjYiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDQsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_18",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:13.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_18"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxNC4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNjkiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDUsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_19",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:14.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_19"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:in_progress",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxNS4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNzIiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDYsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_inprogress_20",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:15.000Z",
+          "summary": "update:in_progress task task_att001_inprogress_20"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:completed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfdGFza3MiLCJvY2N1cnJlZEF0IjoiMjAyNi0xMC0xNVQxNjowMjoxNi4wMDBaIiwiaWQiOiJjb25fYXR0MDAxXzAyNzUiLCJwaGFzZSI6ImhpZ2giLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6NDcsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "task_att001_trunc_completed",
+          "objectType": "task",
+          "occurredAt": "2026-10-15T16:02:16.000Z",
+          "summary": "update:completed task task_att001_trunc_completed"
+        }
+      ],
+      "returned": 20,
+      "total": 47,
+      "truncated": true
+    },
+    "tasks": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:01:53.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_20",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 20",
+          "updatedAt": "2026-10-15T16:02:15.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:52.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_19",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 19",
+          "updatedAt": "2026-10-15T16:02:14.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:51.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_18",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 18",
+          "updatedAt": "2026-10-15T16:02:13.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:50.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_17",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 17",
+          "updatedAt": "2026-10-15T16:02:12.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:49.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_16",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 16",
+          "updatedAt": "2026-10-15T16:02:11.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:48.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_15",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 15",
+          "updatedAt": "2026-10-15T16:02:10.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:47.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_14",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 14",
+          "updatedAt": "2026-10-15T16:02:09.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:46.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_13",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 13",
+          "updatedAt": "2026-10-15T16:02:08.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:45.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_12",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 12",
+          "updatedAt": "2026-10-15T16:02:07.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:44.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_11",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 11",
+          "updatedAt": "2026-10-15T16:02:06.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:43.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_10",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 10",
+          "updatedAt": "2026-10-15T16:02:05.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:42.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_09",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 09",
+          "updatedAt": "2026-10-15T16:02:04.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:41.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_08",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 08",
+          "updatedAt": "2026-10-15T16:02:03.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:40.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_07",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 07",
+          "updatedAt": "2026-10-15T16:02:02.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:39.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_06",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 06",
+          "updatedAt": "2026-10-15T16:02:01.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:38.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_05",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 05",
+          "updatedAt": "2026-10-15T16:02:00.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:37.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_04",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 04",
+          "updatedAt": "2026-10-15T16:01:59.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:36.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_03",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 03",
+          "updatedAt": "2026-10-15T16:01:58.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:35.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_02",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 02",
+          "updatedAt": "2026-10-15T16:01:57.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        },
+        {
+          "createdAt": "2026-10-15T16:01:34.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "task_att001_inprogress_01",
+          "status": "in_progress",
+          "title": "Truncated-tasks filler 01",
+          "updatedAt": "2026-10-15T16:01:56.000Z",
+          "workspaceId": "ws_att001_trunc_tasks"
+        }
+      ],
+      "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoidGFzayIsIndvcmtzcGFjZUlkIjoid3NfYXR0MDAxX3RydW5jX3Rhc2tzIiwicmFuayI6MSwiYXQiOiIyMDI2LTEwLTE1VDE2OjAxOjU2LjAwMFoiLCJpZCI6InRhc2tfYXR0MDAxX2lucHJvZ3Jlc3NfMDEifQ",
+      "returned": 20,
+      "total": 22,
+      "truncated": true
+    }
+  },
+  "suggestedNextAction": {
+    "kind": "none",
+    "orientationHint": true,
+    "reason": "none",
+    "summary": ""
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-15T16:01:31.000Z",
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_att001_trunc_tasks",
+    "name": "ATT-001 truncated tasks",
+    "status": "active",
+    "teamId": "team_att001",
+    "updatedAt": "2026-10-15T16:01:31.000Z"
+  }
+}

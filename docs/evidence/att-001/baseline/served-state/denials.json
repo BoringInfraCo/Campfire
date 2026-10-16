@@ -1,0 +1,18 @@
+[
+  {
+    "actor": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "case": "ana-reads-unrelated-workspace-context",
+    "error": {
+      "code": "ParticipantRequired",
+      "message": "Actor hum_att001_ana is not a participant of workspace ws_att001_unrelated",
+      "name": "ParticipantRequired"
+    },
+    "method": "get_workspace_context",
+    "note": "The message names only the caller and the workspace id; no title, participant, count, or record text crosses the boundary.",
+    "outcome": "denied",
+    "workspaceId": "ws_att001_unrelated"
+  }
+]

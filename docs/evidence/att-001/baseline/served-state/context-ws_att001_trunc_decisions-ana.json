@@ -1,0 +1,1306 @@
+{
+  "acceptedDecisions": [
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "citations": [
+        {
+          "createdAt": "2026-10-15T16:02:49.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "decisionId": "dec_att001_page_review",
+          "findingId": "find_att001_td_withdrawn",
+          "id": "cit_att001_0366",
+          "note": "withdrawn citation inside the page",
+          "workspaceId": "ws_att001_trunc_decisions"
+        }
+      ],
+      "createdAt": "2026-10-15T16:02:47.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_page_review",
+      "needsReview": true,
+      "needsReviewFindingIds": [
+        "find_att001_td_withdrawn"
+      ],
+      "rationale": "The withdrawn citation is the only review signal inside the page budget.",
+      "status": "accepted",
+      "summary": "Keep the review cue tied to the returned page.",
+      "updatedAt": "2026-10-15T16:02:48.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:45.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_10",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 10",
+      "updatedAt": "2026-10-15T16:02:46.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:43.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_09",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 09",
+      "updatedAt": "2026-10-15T16:02:44.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:41.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_08",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 08",
+      "updatedAt": "2026-10-15T16:02:42.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:39.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_07",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 07",
+      "updatedAt": "2026-10-15T16:02:40.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:37.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_06",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 06",
+      "updatedAt": "2026-10-15T16:02:38.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:35.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_05",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 05",
+      "updatedAt": "2026-10-15T16:02:36.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:33.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_04",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 04",
+      "updatedAt": "2026-10-15T16:02:34.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:31.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_03",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 03",
+      "updatedAt": "2026-10-15T16:02:32.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "approvedBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-15T16:02:29.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "id": "dec_att001_td_plain_02",
+      "rationale": "Plain accepted filler with no citations.",
+      "status": "accepted",
+      "summary": "Truncated-decisions plain filler 02",
+      "updatedAt": "2026-10-15T16:02:30.000Z",
+      "workspaceId": "ws_att001_trunc_decisions"
+    }
+  ],
+  "alignment": {
+    "acceptedDecisionIds": [
+      "dec_att001_td_plain_02",
+      "dec_att001_td_plain_03",
+      "dec_att001_td_plain_04",
+      "dec_att001_td_plain_05",
+      "dec_att001_td_plain_06",
+      "dec_att001_td_plain_07",
+      "dec_att001_td_plain_08",
+      "dec_att001_td_plain_09",
+      "dec_att001_td_plain_10",
+      "dec_att001_page_review"
+    ],
+    "proposedDecisionIds": [],
+    "status": "established",
+    "unresolvedBlockedTaskIds": []
+  },
+  "artifacts": [],
+  "budget": {
+    "artifacts": 10,
+    "blockers": 10,
+    "decisions": 10,
+    "findings": 10,
+    "goals": 1,
+    "recentChanges": 20,
+    "tasks": 20
+  },
+  "completeness": {
+    "drillDownAvailable": true,
+    "fullHistoryIncluded": false
+  },
+  "currentWork": {
+    "acceptedDecisions": [
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:29.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_02",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 02",
+        "updatedAt": "2026-10-15T16:02:30.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:31.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_03",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 03",
+        "updatedAt": "2026-10-15T16:02:32.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:33.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_04",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 04",
+        "updatedAt": "2026-10-15T16:02:34.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:35.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_05",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 05",
+        "updatedAt": "2026-10-15T16:02:36.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:37.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_06",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 06",
+        "updatedAt": "2026-10-15T16:02:38.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:39.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_07",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 07",
+        "updatedAt": "2026-10-15T16:02:40.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:41.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_08",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 08",
+        "updatedAt": "2026-10-15T16:02:42.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:43.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_09",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 09",
+        "updatedAt": "2026-10-15T16:02:44.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-15T16:02:45.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_td_plain_10",
+        "rationale": "Plain accepted filler with no citations.",
+        "status": "accepted",
+        "summary": "Truncated-decisions plain filler 10",
+        "updatedAt": "2026-10-15T16:02:46.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-15T16:02:49.000Z",
+            "createdBy": {
+              "actorId": "hum_att001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_att001_page_review",
+            "findingId": "find_att001_td_withdrawn",
+            "id": "cit_att001_0366",
+            "note": "withdrawn citation inside the page",
+            "workspaceId": "ws_att001_trunc_decisions"
+          }
+        ],
+        "createdAt": "2026-10-15T16:02:47.000Z",
+        "createdBy": {
+          "actorId": "hum_att001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_att001_page_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_att001_td_withdrawn"
+        ],
+        "rationale": "The withdrawn citation is the only review signal inside the page budget.",
+        "status": "accepted",
+        "summary": "Keep the review cue tied to the returned page.",
+        "updatedAt": "2026-10-15T16:02:48.000Z",
+        "workspaceId": "ws_att001_trunc_decisions"
+      }
+    ],
+    "blockedTasks": [],
+    "inProgressTasks": []
+  },
+  "findings": [
+    {
+      "createdAt": "2026-10-15T16:02:21.000Z",
+      "createdBy": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "currentness": "current",
+      "detail": "Older accepted decisions sit outside the default decision page.",
+      "id": "find_att001_td_current",
+      "predecessorId": "find_att001_td_superseded",
+      "summary": "The decision page returns the ten newest accepted decisions.",
+      "workspaceId": "ws_att001_trunc_decisions"
+    }
+  ],
+  "generatedAt": "2026-10-15T18:00:00.000Z",
+  "historicalCounts": {
+    "decisions": 0,
+    "findings": 2
+  },
+  "needsAttention": [],
+  "needsYou": [],
+  "openTasks": [],
+  "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDkuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzY3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDkuMDAwWiIsIm9yaWdpbklkIjoiY29uX2F0dDAwMV8wMzY3IiwicG9zaXRpb24iOjM1LCJvcmlnaW5Qb3NpdGlvbiI6MzUsInRpcCI6MH0",
+  "participants": [
+    {
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:02:17.000Z",
+      "name": "Ana",
+      "role": "owner"
+    },
+    {
+      "actor": {
+        "actorId": "hum_att001_ben",
+        "actorType": "human"
+      },
+      "joinedAt": "2026-10-15T16:02:19.000Z",
+      "name": "Ben",
+      "role": "member"
+    }
+  ],
+  "proposedDecisions": [],
+  "provenance": [
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 16,
+      "createdAt": "2026-10-15T16:02:30.000Z",
+      "id": "con_att001_0309",
+      "objectId": "dec_att001_td_plain_02",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 17,
+      "createdAt": "2026-10-15T16:02:31.000Z",
+      "id": "con_att001_0312",
+      "objectId": "dec_att001_td_plain_03",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 03"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 18,
+      "createdAt": "2026-10-15T16:02:32.000Z",
+      "id": "con_att001_0315",
+      "objectId": "dec_att001_td_plain_03",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 19,
+      "createdAt": "2026-10-15T16:02:33.000Z",
+      "id": "con_att001_0318",
+      "objectId": "dec_att001_td_plain_04",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 04"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 20,
+      "createdAt": "2026-10-15T16:02:34.000Z",
+      "id": "con_att001_0321",
+      "objectId": "dec_att001_td_plain_04",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 21,
+      "createdAt": "2026-10-15T16:02:35.000Z",
+      "id": "con_att001_0324",
+      "objectId": "dec_att001_td_plain_05",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 05"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 22,
+      "createdAt": "2026-10-15T16:02:36.000Z",
+      "id": "con_att001_0327",
+      "objectId": "dec_att001_td_plain_05",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 23,
+      "createdAt": "2026-10-15T16:02:37.000Z",
+      "id": "con_att001_0330",
+      "objectId": "dec_att001_td_plain_06",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 06"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 24,
+      "createdAt": "2026-10-15T16:02:38.000Z",
+      "id": "con_att001_0333",
+      "objectId": "dec_att001_td_plain_06",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 25,
+      "createdAt": "2026-10-15T16:02:39.000Z",
+      "id": "con_att001_0336",
+      "objectId": "dec_att001_td_plain_07",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 07"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 26,
+      "createdAt": "2026-10-15T16:02:40.000Z",
+      "id": "con_att001_0339",
+      "objectId": "dec_att001_td_plain_07",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 27,
+      "createdAt": "2026-10-15T16:02:41.000Z",
+      "id": "con_att001_0342",
+      "objectId": "dec_att001_td_plain_08",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 08"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 28,
+      "createdAt": "2026-10-15T16:02:42.000Z",
+      "id": "con_att001_0345",
+      "objectId": "dec_att001_td_plain_08",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 29,
+      "createdAt": "2026-10-15T16:02:43.000Z",
+      "id": "con_att001_0348",
+      "objectId": "dec_att001_td_plain_09",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 09"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 30,
+      "createdAt": "2026-10-15T16:02:44.000Z",
+      "id": "con_att001_0351",
+      "objectId": "dec_att001_td_plain_09",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 31,
+      "createdAt": "2026-10-15T16:02:45.000Z",
+      "id": "con_att001_0354",
+      "objectId": "dec_att001_td_plain_10",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Truncated-decisions plain filler 10"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 32,
+      "createdAt": "2026-10-15T16:02:46.000Z",
+      "id": "con_att001_0357",
+      "objectId": "dec_att001_td_plain_10",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "create",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 33,
+      "createdAt": "2026-10-15T16:02:47.000Z",
+      "id": "con_att001_0360",
+      "objectId": "dec_att001_page_review",
+      "objectType": "decision",
+      "payload": {
+        "status": "proposed",
+        "summary": "Keep the review cue tied to the returned page."
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 34,
+      "createdAt": "2026-10-15T16:02:48.000Z",
+      "id": "con_att001_0363",
+      "objectId": "dec_att001_page_review",
+      "objectType": "decision",
+      "payload": {
+        "status": "accepted"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    },
+    {
+      "action": "update",
+      "actor": {
+        "actorId": "hum_att001_ana",
+        "actorType": "human"
+      },
+      "appendPosition": 35,
+      "createdAt": "2026-10-15T16:02:49.000Z",
+      "id": "con_att001_0367",
+      "objectId": "dec_att001_page_review",
+      "objectType": "decision",
+      "payload": {
+        "findingId": "find_att001_td_withdrawn",
+        "note": "withdrawn citation inside the page",
+        "summary": "cites find_att001_td_withdrawn"
+      },
+      "workspaceId": "ws_att001_trunc_decisions"
+    }
+  ],
+  "provenanceSummary": [
+    "Ana updated decision dec_att001_td_plain_02: accepted",
+    "Ana contributed decision dec_att001_td_plain_03: Truncated-decisions plain filler 03",
+    "Ana updated decision dec_att001_td_plain_03: accepted",
+    "Ana contributed decision dec_att001_td_plain_04: Truncated-decisions plain filler 04",
+    "Ana updated decision dec_att001_td_plain_04: accepted",
+    "Ana contributed decision dec_att001_td_plain_05: Truncated-decisions plain filler 05",
+    "Ana updated decision dec_att001_td_plain_05: accepted",
+    "Ana contributed decision dec_att001_td_plain_06: Truncated-decisions plain filler 06",
+    "Ana updated decision dec_att001_td_plain_06: accepted",
+    "Ana contributed decision dec_att001_td_plain_07: Truncated-decisions plain filler 07",
+    "Ana updated decision dec_att001_td_plain_07: accepted",
+    "Ana contributed decision dec_att001_td_plain_08: Truncated-decisions plain filler 08",
+    "Ana updated decision dec_att001_td_plain_08: accepted",
+    "Ana contributed decision dec_att001_td_plain_09: Truncated-decisions plain filler 09",
+    "Ana updated decision dec_att001_td_plain_09: accepted",
+    "Ana contributed decision dec_att001_td_plain_10: Truncated-decisions plain filler 10",
+    "Ana updated decision dec_att001_td_plain_10: accepted",
+    "Ana contributed decision dec_att001_page_review: Keep the review cue tied to the returned page.",
+    "Ana updated decision dec_att001_page_review: accepted",
+    "Ana updated decision dec_att001_page_review: cites find_att001_td_withdrawn"
+  ],
+  "provenanceTotal": 35,
+  "provenanceTruncated": true,
+  "schemaVersion": 1,
+  "slices": {
+    "artifacts": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "blockers": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    },
+    "decisions": {
+      "items": [
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-15T16:02:49.000Z",
+              "createdBy": {
+                "actorId": "hum_att001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_att001_page_review",
+              "findingId": "find_att001_td_withdrawn",
+              "id": "cit_att001_0366",
+              "note": "withdrawn citation inside the page",
+              "workspaceId": "ws_att001_trunc_decisions"
+            }
+          ],
+          "createdAt": "2026-10-15T16:02:47.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_page_review",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_att001_td_withdrawn"
+          ],
+          "rationale": "The withdrawn citation is the only review signal inside the page budget.",
+          "status": "accepted",
+          "summary": "Keep the review cue tied to the returned page.",
+          "updatedAt": "2026-10-15T16:02:48.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:45.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_10",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 10",
+          "updatedAt": "2026-10-15T16:02:46.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:43.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_09",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 09",
+          "updatedAt": "2026-10-15T16:02:44.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:41.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_08",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 08",
+          "updatedAt": "2026-10-15T16:02:42.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:39.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_07",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 07",
+          "updatedAt": "2026-10-15T16:02:40.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:37.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_06",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 06",
+          "updatedAt": "2026-10-15T16:02:38.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:35.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_05",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 05",
+          "updatedAt": "2026-10-15T16:02:36.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:33.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_04",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 04",
+          "updatedAt": "2026-10-15T16:02:34.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:31.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_03",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 03",
+          "updatedAt": "2026-10-15T16:02:32.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-15T16:02:29.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_att001_td_plain_02",
+          "rationale": "Plain accepted filler with no citations.",
+          "status": "accepted",
+          "summary": "Truncated-decisions plain filler 02",
+          "updatedAt": "2026-10-15T16:02:30.000Z",
+          "workspaceId": "ws_att001_trunc_decisions"
+        }
+      ],
+      "returned": 10,
+      "total": 12,
+      "truncated": true
+    },
+    "findings": {
+      "items": [
+        {
+          "createdAt": "2026-10-15T16:02:21.000Z",
+          "createdBy": {
+            "actorId": "hum_att001_ana",
+            "actorType": "human"
+          },
+          "currentness": "current",
+          "detail": "Older accepted decisions sit outside the default decision page.",
+          "id": "find_att001_td_current",
+          "predecessorId": "find_att001_td_superseded",
+          "summary": "The decision page returns the ten newest accepted decisions.",
+          "workspaceId": "ws_att001_trunc_decisions"
+        }
+      ],
+      "returned": 1,
+      "total": 1,
+      "truncated": false
+    },
+    "recentChanges": {
+      "items": [
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjAuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjgzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjUsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "find_att001_td_superseded",
+          "objectType": "finding",
+          "occurredAt": "2026-10-15T16:02:20.000Z",
+          "summary": "create finding find_att001_td_superseded: The decision page returned every recorded decision."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjEuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjg2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjYsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "find_att001_td_superseded",
+          "objectType": "finding",
+          "occurredAt": "2026-10-15T16:02:21.000Z",
+          "reason": "The workspace grew past the default decision page; only the returned rows are inspected.",
+          "successorId": "find_att001_td_current",
+          "summary": "finding.corrected finding find_att001_td_superseded: The workspace grew past the default decision page; only the returned rows are inspected."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "finding.corrected",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjEuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjg3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjcsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "find_att001_td_current",
+          "objectType": "finding",
+          "occurredAt": "2026-10-15T16:02:21.000Z",
+          "predecessorId": "find_att001_td_superseded",
+          "reason": "The workspace grew past the default decision page; only the returned rows are inspected.",
+          "summary": "finding.corrected finding find_att001_td_current: The workspace grew past the default decision page; only the returned rows are inspected."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "create",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjIuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjg4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjgsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "find_att001_td_withdrawn",
+          "objectType": "finding",
+          "occurredAt": "2026-10-15T16:02:22.000Z",
+          "summary": "create finding find_att001_td_withdrawn: The truncated decision page hides nothing important."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "finding.withdrawn",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjMuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjkxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjksIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "high",
+          "objectId": "find_att001_td_withdrawn",
+          "objectType": "finding",
+          "occurredAt": "2026-10-15T16:02:23.000Z",
+          "reason": "Importance is not recorded; the page boundary alone does not establish it.",
+          "summary": "finding.withdrawn finding find_att001_td_withdrawn: Importance is not recorded; the page boundary alone does not establish it."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjUuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMjk1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjExLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_beyond_review",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:25.000Z",
+          "summary": "update:accepted decision dec_att001_beyond_review"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MjguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzAzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_01",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:28.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_01"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MzAuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzA5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_02",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:30.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_02"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MzIuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzE1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_03",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:32.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_03"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MzQuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzIxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_04",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:34.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_04"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MzYuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzI3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_05",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:36.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_05"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6MzguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzMzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjI0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_06",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:38.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_06"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDAuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzM5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjI2LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_07",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:40.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_07"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDIuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzQ1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjI4LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_08",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:42.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_08"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDQuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzUxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjMwLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_09",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:44.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_09"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDYuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzU3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjMyLCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_td_plain_10",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:46.000Z",
+          "summary": "update:accepted decision dec_att001_td_plain_10"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update:accepted",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDguMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzYzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjM0LCJvcmlnaW5Qb3NpdGlvbiI6MCwidGlwIjowfQ",
+          "materiality": "high",
+          "objectId": "dec_att001_page_review",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:48.000Z",
+          "summary": "update:accepted decision dec_att001_page_review"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "create:proposed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDUuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzU0IiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzEsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "normal",
+          "objectId": "dec_att001_td_plain_10",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:45.000Z",
+          "summary": "create:proposed decision dec_att001_td_plain_10: Truncated-decisions plain filler 10"
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "create:proposed",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDcuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzYwIiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzMsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "normal",
+          "objectId": "dec_att001_page_review",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:47.000Z",
+          "summary": "create:proposed decision dec_att001_page_review: Keep the review cue tied to the returned page."
+        },
+        {
+          "actorId": "hum_att001_ana",
+          "actorType": "human",
+          "changeType": "update",
+          "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19hdHQwMDFfdHJ1bmNfZGVjaXNpb25zIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTVUMTY6MDI6NDkuMDAwWiIsImlkIjoiY29uX2F0dDAwMV8wMzY3IiwicGhhc2UiOiJub3JtYWwiLCJvcmlnaW5PY2N1cnJlZEF0IjoiIiwib3JpZ2luSWQiOiIiLCJwb3NpdGlvbiI6MzUsIm9yaWdpblBvc2l0aW9uIjowLCJ0aXAiOjB9",
+          "materiality": "normal",
+          "objectId": "dec_att001_page_review",
+          "objectType": "decision",
+          "occurredAt": "2026-10-15T16:02:49.000Z",
+          "summary": "update decision dec_att001_page_review: cites find_att001_td_withdrawn"
+        }
+      ],
+      "returned": 20,
+      "total": 35,
+      "truncated": true
+    },
+    "tasks": {
+      "items": [],
+      "returned": 0,
+      "total": 0,
+      "truncated": false
+    }
+  },
+  "suggestedNextAction": {
+    "kind": "none",
+    "orientationHint": true,
+    "reason": "none",
+    "summary": ""
+  },
+  "supersededDecisions": [],
+  "workspace": {
+    "createdAt": "2026-10-15T16:02:17.000Z",
+    "createdBy": {
+      "actorId": "hum_att001_ana",
+      "actorType": "human"
+    },
+    "id": "ws_att001_trunc_decisions",
+    "name": "ATT-001 truncated decisions",
+    "status": "active",
+    "teamId": "team_att001",
+    "updatedAt": "2026-10-15T16:02:17.000Z"
+  }
+}

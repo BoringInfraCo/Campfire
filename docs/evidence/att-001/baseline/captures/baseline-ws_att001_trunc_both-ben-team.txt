@@ -1,0 +1,137 @@
+historical findings 2 decisions 0
+RECORDED ALIGNMENT
+status
+established
+Records what the team has proposed, accepted, or left unspecified. Not permission to execute.
+accepted
+dec_att001_tb_plain_02
+Truncated-both plain filler 02
+dec_att001_tb_plain_03
+Truncated-both plain filler 03
+dec_att001_tb_plain_04
+Truncated-both plain filler 04
+dec_att001_tb_plain_05
+Truncated-both plain filler 05
+dec_att001_tb_plain_06
+Truncated-both plain filler 06
+dec_att001_tb_plain_07
+Truncated-both plain filler 07
+dec_att001_tb_plain_08
+Truncated-both plain filler 08
+dec_att001_tb_plain_09
+Truncated-both plain filler 09
+dec_att001_tb_plain_10
+Truncated-both plain filler 10
+accepted needing review
+dec_att001_tb_page_review
+Keep the review cue tied to the returned page when both pages are bounded.
+NEEDS ATTENTION
+Nothing needs attention
+TEAM WORK
+Ana (human)
+no matching tasks in the returned 20 of 22; more may exist
+Ben (human)
+no matching tasks in the returned 20 of 22; more may exist
+Unassigned
+in_progress
+Truncated-both filler 20
+id task_att001_tb_inprogress_20 · unassigned
+in_progress
+Truncated-both filler 19
+id task_att001_tb_inprogress_19 · unassigned
+in_progress
+Truncated-both filler 18
+id task_att001_tb_inprogress_18 · unassigned
+in_progress
+Truncated-both filler 17
+id task_att001_tb_inprogress_17 · unassigned
+in_progress
+Truncated-both filler 16
+id task_att001_tb_inprogress_16 · unassigned
+in_progress
+Truncated-both filler 15
+id task_att001_tb_inprogress_15 · unassigned
+in_progress
+Truncated-both filler 14
+id task_att001_tb_inprogress_14 · unassigned
+in_progress
+Truncated-both filler 13
+id task_att001_tb_inprogress_13 · unassigned
+in_progress
+Truncated-both filler 12
+id task_att001_tb_inprogress_12 · unassigned
+in_progress
+Truncated-both filler 11
+id task_att001_tb_inprogress_11 · unassigned
+in_progress
+Truncated-both filler 10
+id task_att001_tb_inprogress_10 · unassigned
+in_progress
+Truncated-both filler 09
+id task_att001_tb_inprogress_09 · unassigned
+in_progress
+Truncated-both filler 08
+id task_att001_tb_inprogress_08 · unassigned
+in_progress
+Truncated-both filler 07
+id task_att001_tb_inprogress_07 · unassigned
+in_progress
+Truncated-both filler 06
+id task_att001_tb_inprogress_06 · unassigned
+in_progress
+Truncated-both filler 05
+id task_att001_tb_inprogress_05 · unassigned
+in_progress
+Truncated-both filler 04
+id task_att001_tb_inprogress_04 · unassigned
+in_progress
+Truncated-both filler 03
+id task_att001_tb_inprogress_03 · unassigned
+in_progress
+Truncated-both filler 02
+id task_att001_tb_inprogress_02 · unassigned
+in_progress
+Truncated-both filler 01
+id task_att001_tb_inprogress_01 · unassigned
+tasks
+showing 20 of 22 · more available — open the list for the rest
+accepted decisions
+accepted
+Truncated-both plain filler 02
+accepted
+Truncated-both plain filler 03
+accepted
+Truncated-both plain filler 04
+accepted
+Truncated-both plain filler 05
+accepted
+Truncated-both plain filler 06
+accepted
+Truncated-both plain filler 07
+accepted
+Truncated-both plain filler 08
+accepted
+Truncated-both plain filler 09
+accepted
+Truncated-both plain filler 10
+accepted decisions needing review
+accepted
+Keep the review cue tied to the returned page when both pages are bounded.
+needs review cites non-current finding find_att001_tb_withdrawn
+decisions
+showing 10 of 12 · more available — open the list for the rest
+historical
+Historical: 0 superseded decisions / 2 corrected findings recorded — inspect the workstream
+SHARED SOURCES
+current findings
+current
+Both pages are bounded by their default budgets.
+id find_att001_tb_current · evidence: none recorded
+findings
+showing 1 of 1
+artifact references
+none
+artifacts
+showing 0 of 0
+SINCE YOU WERE HERE
+First visit — new activity will appear here.
