@@ -2,7 +2,7 @@
 
 **Date:** October 16, 2026
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D6 pass on the checks recorded below. The five cold tasks are **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. The candidate is committed as `6df822c`. The founder subsequently directed a public v1.20.0 release under the recorded release-scope override in `docs/RELEASE_V1_20_DECISION.md`; that override does not change this verdict, the NOT OBSERVED five cold tasks, or any gate. This record does not claim human comprehension, and it does not close ATT-001, WCO-001, SWH-001, VIS-001 condition 4, or Gate B/C/E/F.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D6 pass on the checks recorded below. The five cold tasks are **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. The candidate is committed as `6df822c`. The founder directed a public v1.20.0 release under the recorded release-scope override in `docs/RELEASE_V1_20_DECISION.md`, then froze that tag unpublished before promotion (the pty capture test required a machine-local Playwright install; repaired in `70f4023`, re-cut as v1.20.1 under `docs/RELEASE_V1_20_1_DECISION.md`); neither override changes this verdict, the NOT OBSERVED five cold tasks, or any gate. This record does not claim human comprehension, and it does not close ATT-001, WCO-001, SWH-001, VIS-001 condition 4, or Gate B/C/E/F.
 
 **Contract:** `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`  
 **Field map and answer key:** `docs/evidence/uix-001/FIELD_MAP.md`  

@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.20.0 adds a read-only terminal console and refreshes the local Viewer.
+v1.20.1 adds a read-only terminal console and refreshes the local Viewer.
 `campfire dashboard [workspace]` renders one authorized workspace read as an
 interactive TTY screen — goal, recorded participants, attention beside current
 work, decisions, source detail, and recent changes; a non-TTY call returns the
@@ -15,10 +15,12 @@ and never infer live presence from registration or recent activity. It is a
 founder-directed release for real-user testing: the UIX-001 five cold tasks are
 NOT OBSERVED and the sprint remains CONDITIONAL GO — engineering candidate, so
 this is not a comprehension result and Gate B, Gate C, Gate E, and Gate F
-remain unmeasured. See `RELEASE_V1_20_DECISION.md`. This release includes no new
-object, no schema or migration change, and no new Viewer read method. The v1.20
-release archives, channel pins, and deployment are separate promotion steps and
-are verified after source export.
+remain unmeasured. This is the first published 1.20 release; the v1.20.0
+candidate was held before promotion and never published. See
+`RELEASE_V1_20_1_DECISION.md`. This release includes no new object, no schema or
+migration change, and no new Viewer read method. The v1.20.1 release archives,
+channel pins, and deployment are separate promotion steps and are verified
+after source export.
 
 v1.19.0 makes the attention view honest about its own coverage: the workspace
 context states the returned task and decision page counts and whether the

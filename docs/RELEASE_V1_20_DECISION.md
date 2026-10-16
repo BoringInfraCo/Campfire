@@ -2,11 +2,12 @@
 
 **Date:** October 16, 2026
 
-**Status:** Founder-directed public release; prep checks recorded below. Publication, channel pins, and production deployment are separate promotion steps and are recorded in the promotion table as they complete.
+**Status:** **Withdrawn before promotion** (October 16, 2026). The `v1.20.0` tag was frozen unpublished after the pre-promotion export review and clean-machine CI found a CI-blocking, machine-local test dependency; see the abandonment record below. No promotion step was performed. The repaired source is released as v1.20.1 under `docs/RELEASE_V1_20_1_DECISION.md`.
 **Package target:** `1.20.0`
 **Contract:** `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`
 **Sprint result:** `docs/SPRINT_UIX_001_RESULT.md` (CONDITIONAL GO — engineering candidate)
 **Candidate commit:** `6df822c`
+**Tag:** private annotated `v1.20.0` (object `0d397dc` → commit `eab6c65`), frozen unpublished
 
 ## Founder direction and scope
 
@@ -47,6 +48,35 @@ The bounded release surface is the UIX-001 change and nothing else:
   density preference (`campfire-viewer-density`); `public/` stays byte-identical
   to `src/viewer/static/`.
 - No schema, migration, MCP tool, write path, or Viewer read-method change.
+
+## Abandonment record — why v1.20.0 was never promoted
+
+The annotated private tag `v1.20.0` (object `0d397dc` → commit `eab6c65`)
+remains in the private repository as a frozen, unpublished record. Nothing was
+promoted from it: no public snapshot, no public tag, no GitHub Release, no
+channel pins, and no deployment.
+
+The step-6 export review before promotion (and private CI run `38944995759`,
+which reproduced it on the candidate commit `6df822c`) found that the new
+`tests/unit/uix-001-dashboard-pty.test.ts` required a machine-local Playwright
+`node_modules` path for its evidence-capture test and ran it unconditionally.
+On any clean machine, `npm test` failed with `Cannot find module 'playwright'`,
+so promoting as-is would have shipped a red public `ci` run and the machine
+path in the exported source.
+
+SKILL.md says a pushed release tag is the source boundary and must not be
+retargeted. On October 16, 2026 the founder therefore directed, verbatim:
+
+> "Keep v1.20.0 unchanged and unpublished. Remove the machine-specific Playwright path from the required test suite. Keep PTY behavior assertions mandatory; make screenshot capture an explicit optional evidence step. Commit the fix, run clean-machine CI, then prepare a new v1.20.1 release decision and tag. Record why v1.20.0 was abandoned before promotion."
+
+The repair landed as `70f4023`: PTY behavior assertions are mandatory in the
+default suite with no external tooling, and terminal evidence capture (txt
+frames + PNG screenshots) is an explicit opt-in step
+(`CAMPFIRE_UIX_CAPTURE=1`, `CAMPFIRE_PLAYWRIGHT_NODE_PATH`). Clean-machine CI
+at `70f4023` (run `38948832973`) shows the repair: 1,125 passed, the optional
+capture skipped, and the only failure is the expected install-channel
+assertion awaiting the archives (not loosened). The release was re-cut as
+v1.20.1; see `docs/RELEASE_V1_20_1_DECISION.md`.
 
 ## Evidence that remains adverse or absent
 
@@ -95,9 +125,9 @@ Each step is recorded with its evidence as it completes; do not loosen a check.
 
 | Step | Evidence |
 | --- | --- |
-| Founder direction and prep checks | This document; prep commit on private `main` |
-| Private annotated `v1.20.0` tag | Pending |
-| Audited public source snapshot | Pending |
-| Public GitHub Release and four checked archives | Pending |
-| Homebrew / Nix pins, tap promotion, installer checks | Pending |
-| Production Worker deployment and live verification | Pending |
+| Founder direction and prep checks | This document; prep commit `eab6c65` on private `main`. |
+| Private annotated `v1.20.0` tag | Frozen unpublished (object `0d397dc` → commit `eab6c65`); not retargeted. |
+| Audited public source snapshot | Not performed — v1.20.0 was withdrawn before promotion (see the abandonment record). |
+| Public GitHub Release and four checked archives | Not performed — v1.20.0 was withdrawn before promotion (see the abandonment record). |
+| Homebrew / Nix pins, tap promotion, installer checks | Not performed — v1.20.0 was withdrawn before promotion (see the abandonment record). |
+| Production Worker deployment and live verification | Not performed — v1.20.0 was withdrawn before promotion (see the abandonment record). |

@@ -2,7 +2,7 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
-v1.20.0 adds a read-only terminal console and refreshes the local Viewer.
+v1.20.1 adds a read-only terminal console and refreshes the local Viewer.
 `campfire dashboard [workspace]` renders one authorized workspace read as an
 interactive TTY screen — goal, recorded participants, attention beside current
 work, decisions, source detail, and recent changes — with `p`, `tab`, `j`/`k`,
@@ -13,14 +13,17 @@ five read methods and gains attention beside current work on wide screens,
 stacked panels on narrow screens, recorded participant counts, the goal id, and
 a local density preference. Both surfaces project existing authorized state,
 keep private agent sessions private, and never infer live presence from
-registration or recent activity. It is a founder-directed release for real-user
-testing: the UIX-001 five cold tasks are NOT OBSERVED and the sprint remains
-CONDITIONAL GO — engineering candidate, so this is not a comprehension result
-and Gate B, Gate C, Gate E, and Gate F remain unmeasured. See
-`RELEASE_V1_20_DECISION.md`. This release includes no new object, no schema or
-migration change, and no new Viewer read method. The release archives, channel
-pins, and live installer checks are separate promotion steps and are recorded
-in that decision as they complete.
+registration or recent activity. The v1.20.0 candidate was never published: it
+was held before promotion because its terminal evidence-capture test required a
+machine-local Playwright install; the repaired suite keeps the PTY behavior
+assertions mandatory and makes screenshot capture an explicit opt-in step. It
+is a founder-directed release for real-user testing: the UIX-001 five cold
+tasks are NOT OBSERVED and the sprint remains CONDITIONAL GO — engineering
+candidate, so this is not a comprehension result and Gate B, Gate C, Gate E,
+and Gate F remain unmeasured. See `RELEASE_V1_20_1_DECISION.md`. This release
+includes no new object, no schema or migration change, and no new Viewer read
+method. The release archives, channel pins, and live installer checks are
+separate promotion steps and are recorded in that decision as they complete.
 
 v1.19.0 makes the attention view honest about its own coverage. The workspace
 context now states the returned task and decision page counts and whether the

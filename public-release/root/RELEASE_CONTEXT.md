@@ -51,7 +51,8 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 At source preparation, the private {{VERSION}} candidate passed type checking,
 build, local Darwin ARM64 packaging and install from that archive, and a Worker
-deployment dry run. The full suite had 1,125 passing tests and one expected
+deployment dry run. The full suite had 93 files / 1,127 tests with 1,125
+passing, one opt-in terminal capture skipped by default, and one expected
 install-channel assertion awaiting the four v{{VERSION}} release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate

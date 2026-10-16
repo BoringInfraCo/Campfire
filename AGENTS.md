@@ -339,10 +339,15 @@ They are visual and fixture evidence. The five
 cold tasks are **NOT OBSERVED**. Both clients must keep projecting existing
 authorized workspace state, keep private agent sessions private, and never
 infer live agent presence from registration or recent activity. The founder
-subsequently directed a public v1.20.0 release under the recorded release-scope
-override in `docs/RELEASE_V1_20_DECISION.md`; the override does not change the
-CONDITIONAL GO verdict, the NOT OBSERVED five cold tasks, or any gate. Gate
-B/C/E/F, ATT-001, WCO-001, SWH-001, and VIS-001 condition 4 remain open.
+directed a public v1.20.0 release under the recorded release-scope override in
+`docs/RELEASE_V1_20_DECISION.md`; that tag was then frozen unpublished before
+promotion when the export review and clean-machine CI found the pty capture
+test required a machine-local Playwright install. The repair (`70f4023`) keeps
+the PTY behavior assertions mandatory and makes terminal evidence capture an
+explicit opt-in step; the release is re-cut as v1.20.1 under
+`docs/RELEASE_V1_20_1_DECISION.md`. Neither override changes the CONDITIONAL GO
+verdict, the NOT OBSERVED five cold tasks, or any gate. Gate B/C/E/F, ATT-001,
+WCO-001, SWH-001, and VIS-001 condition 4 remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
