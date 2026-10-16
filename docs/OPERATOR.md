@@ -12,8 +12,9 @@ shared vocabulary. It is a founder-directed release for real-user testing; the
 WCO-001 two-human case is NOT OBSERVED and the sprint remains CONDITIONAL GO, so
 this is not a human continuation result and Gate B, Gate C, and Gate E remain
 unmeasured. See `RELEASE_V1_18_DECISION.md`. This release includes no new read
-surface, no new object, and no schema or migration change; its archives,
-channel pins, and deployment are separate promotion steps.
+surface, no new object, and no schema or migration change. The release is
+published and deployed; its archives, channel pins, and live installer checks
+are recorded in that decision.
 
 v1.17.0 added the read-only Shared Work Home to the local Viewer and was
 published and deployed under founder override. The two controlled human

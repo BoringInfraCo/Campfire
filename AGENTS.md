@@ -271,6 +271,7 @@ claim and moves no gate: WCO-001 remains CONDITIONAL GO — engineering candidat
 the two-human case remains NOT OBSERVED, and Gate B, Gate C, Gate E, and
 VIS-001 condition 4 remain open. The release includes no orientation selection
 rule, attention label, CLI, Viewer, HTTP, Worker, or schema change.
+The source is published and deployed as `v1.18.0`.
 
 Sprint SWH-001 — Shared Work Home is the v1.17 contract at
 `docs/Campfire-v1.17-SWH-001-Shared-Work-Home.md` and its result is

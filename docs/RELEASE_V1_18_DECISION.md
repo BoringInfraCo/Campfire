@@ -2,8 +2,7 @@
 
 **Date:** October 15, 2026
 
-**Status:** Prepared under founder override; publication and deployment record
-below is filled only when each promotion step is performed.
+**Status:** Published and deployed as v1.18.0 (October 15, 2026).
 **Package target:** `1.18.0`
 
 ## Founder direction and scope
@@ -53,7 +52,7 @@ Worker, or schema change is included. No migration.
 | Gate B / Gate C / Gate E | **Unmeasured.** Publication does not satisfy any gate. |
 | VIS-001 condition 4 (reference-open) | **Open.** The rehearsal's reference-open attempt is not eligible evidence. |
 | SWH-001 controlled traces and shipped-v1.16 Viewer trace | **Not run** (unchanged by this release). |
-| D1–D6 deterministic checks | **Pass** at pin `e3fda9e` (14 tests); full private suite 87 files / 1,078 tests passed pre-bump; one expected install-channel assertion awaits the v1.18.0 archives until the pins move. |
+| D1–D6 deterministic checks | **Pass** at pin `e3fda9e` (14 tests); full private suite 1,078 tests across 87 files passed post-pin (October 15). |
 
 ## The exact public claim
 
@@ -80,14 +79,13 @@ follows.
 
 ## Promotion record
 
-Filled as each step completes. Promotion steps are distinct external mutations;
-none implies another.
+All promotion steps completed October 15, 2026 (UTC).
 
 | Step | Evidence |
 | --- | --- |
-| Private source and annotated tag | *Pending.* |
-| Typecheck, full tests, build, local package, deployment dry run | *Pending.* |
-| Audited public source snapshot and diff | *Pending.* |
-| Public GitHub Release and four checked archives | *Pending.* |
-| Homebrew / Nix pins and installer verification | *Pending.* |
-| Production Worker deployment and live verification | *Pending.* |
+| Private source and annotated tag | Pushed. Private tag `v1.18.0` on commit `7f60649`; post-pin commit `c9882ef`. |
+| Typecheck, full tests, build, local package, deployment dry run | Node 22: typecheck passed; build passed; Darwin ARM64 packaging passed (local archive SHA-256 `c6ecef202938a32c98b9c0632bc9136e33859e25115e3c38e00fda66e2720463`, versioned installer created); Worker deployment dry run passed. Pre-pin suite: 1,077 passed with the one expected install-channel assertion awaiting the four v1.18.0 checksums; that assertion was not loosened. Post-pin suite: 1,078 passed across 87 files. |
+| Audited public source snapshot and diff | Export passed audit with 288 manifest files; compared against the fetched public v1.17 branch as 2 added, 14 changed, 0 removed. Public tag `v1.18.0` on commit `e575002`. |
+| Public GitHub Release and four checked archives | Published. Release workflow `38832670863` passed all four platforms (Darwin ARM64, Darwin x64, Linux ARM64, Linux x64); eight assets attached. The published `campfire-darwin-arm64.tar.gz` independently passed `shasum -a 256 -c` against its attached checksum (`891a1e5b…`). The pre-pin tag CI failure (`38832652497`) was the expected install-channel assertion and was not loosened. |
+| Homebrew / Nix pins and installer verification | Private pins committed as `c9882ef`; public post-tag addendum `dd60eef` (manifest records `installChannelsCommit`); Homebrew tap promoted as `9144b1c`. Post-pin public CI passed (`38833112569`). Live `/campfire/install.sh` and `/campfire/v1.18.0/install.sh` are byte-identical to the tracked files (SHA-256 `ba8603bd106277bf520b1789b77e4e95c8b2bc9c9cae5db5059965bf25d26900`). Clean installs from both URLs into isolated prefixes installed package version `1.18.0` with telemetry disabled; the installed CLI passed a `capabilities` smoke check (58 commands). |
+| Production Worker deployment and live verification | Deployed. Cloudflare Worker version `43db08c6-04ae-4d79-887e-7f1403639796`. No schema or migration changes; the installer URLs above were served from this deployment and verified byte-identical. |
