@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.20.1 — 2026-10-16
+
+- Add a read-only terminal console: `campfire dashboard [workspace]` renders one authorized `get_workspace_context` read as an interactive TTY screen — goal, recorded participants, attention beside current work, decisions, source detail, and recent changes — with `p` perspectives, `tab`/`j`/`k`/`enter` inspection, a rate-limited `r` refresh, and `q` quit that restores terminal state on every exit path. A non-TTY call returns the `campfire status --output human|json` instruction and writes no cursor controls; `status` JSON is unchanged, and record text is stripped of control sequences before it is written.
+- Share one presentation-label table (`src/presentation/work-console.ts`) between the dashboard and the Viewer instead of parallel caption rules; a drift test fails if the Viewer sentences and the shared labels diverge.
+- Refresh the read-only Viewer: attention beside current work on wide screens, stacked panels on narrow screens, recorded participant counts, the goal id, and a local density preference. The five Viewer read methods are unchanged.
+- First published 1.20 release, superseding an unpublished v1.20.0 candidate that was held before promotion because its terminal evidence-capture test required a machine-local Playwright install; the required suite now runs without Playwright and keeps the PTY behavior checks, and screenshot capture is an opt-in evidence step.
+- Published under a founder release-scope override. UIX-001 remains CONDITIONAL GO — engineering candidate: the five pre-registered cold tasks are NOT OBSERVED, and a fixture capture is not a comprehension result. Both clients project existing authorized workspace state, keep private agent sessions private, and never infer live agent presence from registration or recent activity. This release does not claim comprehension, human continuation, or team-value results, and it moves no gate (Gate B/C/E/F, ATT-001, WCO-001, SWH-001, and VIS-001 condition 4 remain open). No schema, migration, MCP tool, write path, or Viewer read-method change is included.
+
 ## 1.19.0 — 2026-10-15
 
 - Qualify attention coverage in `get_workspace_context`: the response states the returned task and decision page counts and whether the attention lists are complete under their selection rules. A truncated source page can no longer read as an unqualified all-clear, and an empty list means "no cue matched the returned records", never that the team is done.

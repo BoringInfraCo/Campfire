@@ -1109,7 +1109,7 @@ function verifyScenario(
   };
 }
 
-function keyIdMap(): Record<string, string> {
+function keyIdMap(): Record<string, unknown> {
   return {
     organization: SCENARIO.organizationId,
     team: SCENARIO.teamId,
