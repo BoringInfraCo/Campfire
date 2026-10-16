@@ -6,7 +6,7 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
-**Next planning step:** v1.21 ARH-001 has its v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human observation materials frozen (commit `cec4e63`; `docs/evidence/arh-001/`, `fixtures/artifact-handoff/arh-001/`), and its result is recorded as **UNSCORED — no eligible ordinary-work attempt yet** (`docs/SPRINT_ARH_001_RESULT.md`). The next step is one real reference-open attempt in ordinary work, then the two-human/two-harness handoff. No product change exists and no release decision is requested.
+**Next planning step:** v1.21 ARH-001 has its v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human observation materials frozen (commit `cec4e63`; `docs/evidence/arh-001/`, `fixtures/artifact-handoff/arh-001/`), and its result is recorded as **UNSCORED — no eligible ordinary-work attempt yet** (`docs/SPRINT_ARH_001_RESULT.md`). The October 16 founder amendment to the ARH-001 contract permits a separately scoped, bounded artifact-navigation candidate to be implemented and assessed with local engineering checks before a human handoff is observed. No candidate, version bump, or release decision is yet recorded. Run real observations when eligible work and people exist; do not label missing observations PASS.
 
 ---
 
@@ -1623,6 +1623,19 @@ These boundaries govern the sequence:
 
 ## Post-v1.16 direction — make shared work legible
 
+**October 16 founder delivery rule (prospective):** Campfire may implement and
+release a bounded, security-reviewed product slice after reproducible local
+engineering checks pass, even when a multi-person comprehension or ordinary-work
+observation is unavailable. A sprint must name its exact scope and acceptance
+checks before implementation; a release needs its own recorded decision and
+accurate public claim. A local pass establishes the tested behavior, not user
+understanding, external-system access, repeat use, or Gate B/C/E/F. Keep those
+observations open and collect them during real use. A known authorization,
+credential, data-leak, or decision-safety failure still blocks release. This
+rule changes future sequencing and does not rewrite older verdicts. The founder
+reports approximately 500 daily users; that report motivates a faster feedback
+loop but is not a verified metric or evidence that any specific feature works.
+
 The next product question is whether two people using different coding agents
 can understand each other's recorded work, identify where they need to
 coordinate, and continue without sharing private agent sessions. Campfire
@@ -1750,6 +1763,19 @@ baseline, fixture, evidence plan, and human materials are frozen in commit
 and the two-human/two-harness handoff are **NOT OBSERVED**, so no Campfire gap
 is observed and no v1.21 feature exists yet.
 
+**October 16 founder sequencing decision:** the observation-first
+implementation hold in ARH-001 is waived prospectively for a bounded
+artifact-navigation candidate. Freeze its exact surface, reference classes,
+authorization boundary, and deterministic checks before coding. Local tests,
+typecheck, build, packaging, dry run, and direct inspection can establish an
+engineering PASS or FAIL; they cannot establish that a person understood the
+handoff or could access the external target. A passing candidate may be
+released through a separate recorded founder decision with a precise public
+claim and human outcome marked NOT OBSERVED. The earlier UNSCORED result and
+all other sprint/gate observations remain unchanged. Human observations are
+collected alongside subsequent real work rather than serving as a standing
+prerequisite to implementation or publication.
+
 The [Guillermo Rauch interview assessment](GUILLERMO_RAUCH_INTERVIEW_ROADMAP_ASSESSMENT.md)
 sharpens the next product question: can an authorized teammate and a different
 agent use the **same recorded decision state and cited external output** without
@@ -1759,21 +1785,25 @@ recipient can open the target, understand its relationship to the decision, or
 act with the right permissions. Files remain in the system that owns them;
 Campfire keeps the authorized account of the work around them.
 
-Use the released v1.20.1 console as the baseline. Observe one ordinary-work
-reference-open attempt and the next person's handoff, including what the
-recipient tried, whether access succeeded, which source IDs they used, and
-whether they confused a historical or competing decision for current work.
-Record a denied or unavailable target as a result. Run the outstanding UIX-001
-cold tasks, SWH-001/ATT-001 comprehension traces, and WCO-001 eligible
-two-person case under their own frozen rubrics when participants are available;
+Use the released v1.20.1 console as the baseline. For the prospective candidate,
+record a bounded scope and verify its authorized inspect/open behavior locally
+under the amended ARH-001 contract. In parallel, observe a reference-open
+attempt and the next person's handoff when ordinary work supplies an eligible
+case, including what the recipient tried, whether access succeeded, which
+source IDs they used, and whether they confused a historical or competing
+decision for current work. Record a denied or unavailable target as a result.
+Run the outstanding UIX-001 cold tasks, SWH-001/ATT-001 comprehension traces,
+and WCO-001 eligible two-person case under their own frozen rubrics when
+participants are available;
 this v1.21 work does not rescore those sprints or turn a rehearsal into a
 human observation. Gate B/C/E/F and VIS-001 condition 4 move only when their
 specific evidence rules are met.
 
-If the reference attempt exposes an access or navigation failure, scope the
-smallest authorized inspect/open affordance for a typed external artifact
-reference. Preserve the record ID, source, contributor, any recorded relation
-to a finding, decision, or task, and currentness. Test authorized and unauthorized
+The founder has authorized scoping the smallest authorized inspect/open
+affordance for a typed external artifact reference before that human attempt;
+the original observation-first ARH-001 result remains UNSCORED. Preserve the
+record ID, source, contributor, any recorded relation to a finding, decision,
+or task, and currentness. Test authorized and unauthorized
 actors and stale or denied links. A displayed link must not claim Campfire
 fetched, verified, or synchronized the target. The v1.21 sprint contract must
 freeze its baseline, exact surface, access boundary, observation rubric, and

@@ -1,17 +1,58 @@
 # Campfire v1.21 — ARH-001: Artifact Reference Handoff
 
-**Status:** Proposed contract; no baseline observation, product change, score, or release decision has been recorded.  
+**Status:** Prospective sequencing amended October 16; the earlier ARH-001 result remains UNSCORED, and no product candidate or release decision is recorded.
+
 **Date:** October 16, 2026  
-**Target:** A v1.21 product candidate only if an observed gap earns a bounded change; any publication requires a separate release decision.  
+**Target:** A bounded v1.21 artifact-navigation candidate may now proceed under §0 without a prior human attempt; any publication requires a separate release decision.
+
 **Baseline source:** Published and deployed v1.20.1, private tag `v1.20.1` at `dc3c2a4c1f10f7815de78c4143fe564331406c73`; the later installer pin and release record do not change product behavior.  
 **Roadmap:** `docs/ROADMAP.md` §21, “v1.21 candidate — make cited work usable in a handoff.”  
 **Related evidence:** VIS-001 condition 4; SWH-001, WCO-001, ATT-001, and UIX-001 retain their own observation rules.
+
+## 0. Founder sequencing amendment — October 16, 2026
+
+The founder directs Campfire to continue building and releasing bounded product
+improvements without waiting for a multi-person observation. The founder reports
+approximately 500 daily users; this is an operating claim, not a verified metric
+in this contract or evidence that this particular handoff succeeds. The
+previously recorded ARH-001 result remains **UNSCORED**, with its ordinary-work
+attempt and two-person handoff **NOT OBSERVED**. This amendment applies only to
+work started after it; it does not rescore an attempt or change a frozen key.
+
+For a prospective v1.21 artifact-navigation candidate, the observation-first
+implementation condition in §§3.2–3.3 and §8 steps 2–3 is waived. Before code
+changes, record a dated candidate scope that names the exact existing surfaces,
+reference classes, user action, authorization boundary, and deterministic
+checks. The bounded candidate may make authorized Artifact references and their
+recorded evidence relationships easier to inspect, and may offer a deliberate
+external-open control for safe absolute HTTPS references. The security and
+scope limits in §§3.3–5 still apply. No external fetch, content hosting,
+automatic navigation, inferred relationship, or claim of external access is
+authorized by this amendment.
+
+Judge implementation with the applicable D1–D6 checks, typecheck, relevant
+tests, build, packaging and deployment dry run, and direct terminal/browser
+inspection of changed surfaces. Record each as PASS, FAIL, or NOT RUN with its
+reason. A known authorization, credential, decision-safety, or unsafe-navigation
+failure blocks publication. When those checks pass, report **ENGINEERING PASS
+— human outcome NOT OBSERVED** for the new candidate; do not call H1–H6 PASS
+or retroactively turn the earlier UNSCORED result into GO. A failed check is
+**ENGINEERING FAIL** until repaired and reverified.
+
+A public release still requires a separate recorded founder release decision
+and the repository's release checks. That decision must name the exact shipped
+behavior and the unmeasured human outcome; it must not claim that recipients
+can reach an external target or complete a handoff. Real ordinary-work
+observations and the §6 rubric can follow publication when eligible people
+and tasks exist. Their absence does not block this bounded candidate's
+implementation or release. Any later observation is recorded under its own
+date and source; it never silently rewrites the earlier result.
 
 ## 1. Sprint question
 
 > Can an authorized teammate and a different agent find a cited external output from Campfire's recorded work, reach it with their own authority, and use it for a safe next step without a private transcript or a prepared recap?
 
-Campfire already records Artifact references and renders them as “stored reference, not fetched.” The v1.20.1 console improves visibility, but visibility does not prove that a reference is usable. This sprint tests that gap on ordinary work before choosing link behavior. The expected product contribution is a **trustworthy path from a work claim to its external source**, not a Campfire file store.
+Campfire already records Artifact references and renders them as “stored reference, not fetched.” The v1.20.1 console improves visibility, but visibility does not prove that a reference is usable. The original sequence below tested that gap on ordinary work before choosing link behavior; §0 changes that sequence for future work while leaving the UNSCORED result intact. The expected product contribution is a **trustworthy path from a work claim to its external source**, not a Campfire file store.
 
 This sprint belongs to the narrow edge of Phase 5: Campfire owns the workspace record; the external system owns the file, report, PR, or deployment. One case may inform a product repair. It cannot establish general team demand, retention, or that all referenced content is accessible.
 

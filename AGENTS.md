@@ -364,6 +364,19 @@ system keeps the artifact bytes and its own access rules; Campfire keeps the
 authorized record and any actual evidence relationships. No version bump, tag,
 release decision, or deployment is recorded. Existing VIS-001, SWH-001,
 WCO-001, ATT-001, and UIX-001 observations retain their own rules and status.
+The contract's October 16 founder sequencing amendment prospectively permits
+a separately scoped artifact-navigation candidate to be built and evaluated
+with deterministic engineering checks without first obtaining a human
+reference-open attempt. Preserve the historical UNSCORED result and keep
+human handoff observations NOT OBSERVED until actually run. A later candidate
+requires its own recorded engineering result and a separate release decision;
+an engineering pass must not be presented as a human handoff pass.
+
+For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
+rule: passing local engineering checks can support a separately approved,
+accurately described release while multi-person observations remain open.
+Known authorization, credential, data-leak, or decision-safety defects still
+block publication. This does not change any earlier sprint verdict.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,
