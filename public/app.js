@@ -718,13 +718,8 @@ function attentionEmptyText(coverage) {
   return "No cue found in the returned records; more matching records may exist.";
 }
 
-function attentionItemHtml(item, maybeItem) {
-  // Two pinned call shapes: (item) returns the row markup, and the wiring
-  // seam drives (el, item) to write the same row into el.
-  const cue = maybeItem === undefined ? item : maybeItem;
-  const html = `<li class="oitem">${attentionItemBodyHtml(cue)}</li>`;
-  if (maybeItem !== undefined && item && typeof item === "object") item.innerHTML = html;
-  return html;
+function attentionItemHtml(item) {
+  return `<li class="oitem">${attentionItemBodyHtml(item)}</li>`;
 }
 
 function attentionItemBodyHtml(item) {

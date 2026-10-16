@@ -264,6 +264,37 @@ function renderWith(sandbox: Record<string, unknown>, fn: string, ...args: unkno
   return renderInto(sandbox, `${fn}(el, ${args.map((value) => JSON.stringify(value)).join(", ")})`);
 }
 
+/** Drive renderOrientation through the real wiring seam with a fixed whoami. */
+function renderHome(
+  sandbox: Record<string, unknown>,
+  contextValue: WorkspaceContext,
+  perspective: string,
+): { currentWork: string; needsYou: string; needsAttention: string } {
+  const make = () => ({ innerHTML: "", textContent: "", hidden: false });
+  sandbox.fakeEls = {
+    recordNotes: make(),
+    alignment: make(),
+    needsYou: make(),
+    needsAttention: make(),
+    currentWork: make(),
+    sources: make(),
+    since: make(),
+    nextAction: make(),
+  };
+  sandbox.fakeState = {
+    whoami: { actor: { actorId: HUMAN_A.actorId, actorType: "human" } },
+    perspective,
+    context: contextValue,
+    sinceView: null,
+  };
+  vm.runInContext("renderOrientation(fakeEls, fakeState)", sandbox);
+  return {
+    currentWork: evalIn<string>(sandbox, "fakeEls.currentWork.innerHTML"),
+    needsYou: evalIn<string>(sandbox, "fakeEls.needsYou.innerHTML"),
+    needsAttention: evalIn<string>(sandbox, "fakeEls.needsAttention.innerHTML"),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // D1 — coverage truth
 // ---------------------------------------------------------------------------
@@ -347,6 +378,62 @@ describe("ATT-001 D1 — coverage truth", () => {
 
     const unknownEmpty = evalIn<string>(sandbox, "attentionEmptyText(undefined)");
     expect(unknownEmpty).toContain("completeness was not reported");
+  });
+
+  it("qualifies the rendered attention panels through the real renderOrientation wiring", () => {
+    const seeded = seedLab();
+    const { sandbox } = loadAppSandbox();
+
+    // Incomplete empty: a truncated task page with no cue for the caller.
+    const truncated = service.createWorkspace(ctxA, { teamId: "team_att", name: "att-001 truncated empty" });
+    for (let index = 0; index < 21; index += 1) {
+      const id = addTask(truncated.id, `Truncated filler ${index}`);
+      service.updateTask(ctxA, { taskId: id, status: "in_progress" });
+    }
+    const contextEmpty = context(ctxA, truncated.id);
+    expect(contextEmpty.slices.tasks.truncated).toBe(true);
+    expect(contextEmpty.needsYou).toEqual([]);
+    expect(contextEmpty.needsAttention).toEqual([]);
+    const renderedEmpty = renderHome(sandbox, contextEmpty, "mine");
+    expect(renderedEmpty.needsYou).toContain("No cue found in the returned records");
+    expect(renderedEmpty.needsYou).toContain("may exist");
+    expect(renderedEmpty.needsYou).toContain("Attention coverage:");
+    expect(renderedEmpty.needsYou).toContain("20 of 21");
+    expect(renderedEmpty.needsYou).not.toContain("caught up");
+    expect(renderedEmpty.needsAttention).toContain("Attention coverage:");
+
+    // Ana's nonempty Team work list still carries the coverage qualification and
+    // the review cues with their cited non-current finding ids.
+    const contextA = context(ctxA, seeded.workspaceId);
+    const renderedA = renderHome(sandbox, contextA, "team");
+    expect(renderedA.needsAttention).toContain("Attention coverage:");
+    expect(renderedA.needsAttention).toContain("5 of 5");
+    expect(renderedA.needsAttention).toContain("needs human review");
+    expect(renderedA.needsAttention).toContain("non-current citations:");
+    expect(renderedA.needsAttention).toContain(seeded.findingStale);
+  });
+
+  it("renders a qualified complete-empty state for complete pages through the wiring", () => {
+    const { workspaceId } = baseLab();
+    const done = addTask(workspaceId, "Completed setup");
+    service.updateTask(ctxA, { taskId: done, status: "in_progress" });
+    service.updateTask(ctxA, { taskId: done, status: "completed" });
+    const finding = service.addFinding(ctxA, { workspaceId, summary: "Current basis" });
+    const decision = service.addDecision(ctxA, { workspaceId, summary: "Accepted with current basis" });
+    service.acceptDecision(ctxA, decision.id);
+    service.citeDecisionBasis(ctxA, { decisionId: decision.id, findingId: finding.id });
+
+    const contextA = context(ctxA, workspaceId);
+    expect(contextA.attentionCoverage.completeUnderRules).toBe(true);
+    expect(contextA.needsYou).toEqual([]);
+    expect(contextA.needsAttention).toEqual([]);
+    const { sandbox } = loadAppSandbox();
+    const rendered = renderHome(sandbox, contextA, "mine");
+    expect(rendered.needsYou).toContain("No recorded attention cues match these rules");
+    expect(rendered.needsYou).toContain("does not mean all work is done");
+    expect(rendered.needsYou).toContain("Both source pages are complete");
+    expect(rendered.needsYou).not.toContain("may exist");
+    expect(rendered.needsYou).not.toContain("caught up");
   });
 
   it("qualifies nonempty lists too and never renders an unqualified all-clear", () => {
@@ -442,6 +529,25 @@ describe("ATT-001 D2 — review source fidelity", () => {
     expect(contextA.attentionCoverage.completeUnderRules).toBe(false);
   });
 
+  it("does not surface a proposed decision's stale citation as a review cue", () => {
+    const { workspaceId } = baseLab();
+    const withdrawn = service.addFinding(ctxA, { workspaceId, summary: "Withdrawn basis" });
+    service.withdrawFinding(ctxA, { findingId: withdrawn.id, reason: "sampling error" });
+    const proposed = service.addDecision(ctxA, { workspaceId, summary: "Proposed but stale" });
+    service.citeDecisionBasis(ctxA, { decisionId: proposed.id, findingId: withdrawn.id });
+
+    const contextA = context(ctxA, workspaceId);
+    const item = contextA.slices.decisions.items.find((decision) => decision.id === proposed.id);
+    expect(item?.status).toBe("proposed");
+    // The read-time decoration exists on the proposal, but the team review cue
+    // is reserved for accepted decisions only.
+    expect(item?.needsReview).toBe(true);
+    expect(contextA.needsAttention.filter((cue) => cue.reason === "accepted_decision_needs_review")).toEqual([]);
+    expect(contextA.needsYou.some((cue) => cue.id === proposed.id && cue.reason === "proposed_decision_actionable")).toBe(
+      true,
+    );
+  });
+
   it("does not elevate the review cue to suggestedNextAction", () => {
     const reviewOnly = seedReviewOnly();
     const reviewOnlyContext = context(ctxA, reviewOnly.workspaceId);
@@ -464,7 +570,7 @@ describe("ATT-001 D2 — review source fidelity", () => {
       reason: "accepted_decision_needs_review",
       needsReviewFindingIds: ["find_stale", "find_withdrawn"],
     };
-    const html = renderWith(sandbox, "attentionItemHtml", cue);
+    const html = evalIn<string>(sandbox, `attentionItemHtml(${JSON.stringify(cue)})`);
     expect(html).toContain("dec_review");
     expect(html).toContain("accepted");
     expect(html).toContain("needs human review");
@@ -650,7 +756,7 @@ describe("ATT-001 D5 — surface parity and accessibility", () => {
       reason: "team_blocked_task",
       assignee: { actorId: "agt_ben", actorType: "agent" },
     };
-    const html = renderWith(sandbox, "attentionItemHtml", teamItem);
+    const html = evalIn<string>(sandbox, `attentionItemHtml(${JSON.stringify(teamItem)})`);
     expect(html).toContain("another participant");
     expect(html).toContain("task_team");
     expect(html).toContain("agt_ben");
