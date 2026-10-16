@@ -330,15 +330,19 @@ Sprint UIX-001 — Shared Work Console has its v1.20 plan at
 `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md` and its result at
 `docs/SPRINT_UIX_001_RESULT.md`. On October 16 the founder directed a
 terminal-dashboard and Viewer-refresh sprint before the open human traces
-are complete. The working tree has a read-only `campfire dashboard` command
-and a Viewer layout refresh over the same authorized workspace read. The
-recorded verdict is **CONDITIONAL GO — engineering candidate**. Candidate
+are complete. The recorded candidate (`6df822c`) has a read-only
+`campfire dashboard` command and a Viewer layout refresh over the same
+authorized workspace read. The recorded verdict is **CONDITIONAL GO —
+engineering candidate**. Candidate
 frames and the same-fixture comparison are in `docs/evidence/uix-001/candidate/`.
 They are visual and fixture evidence. The five
 cold tasks are **NOT OBSERVED**. Both clients must keep projecting existing
 authorized workspace state, keep private agent sessions private, and never
-infer live agent presence from registration or recent activity. No version
-bump or release decision is part of this result.
+infer live agent presence from registration or recent activity. The founder
+subsequently directed a public v1.20.0 release under the recorded release-scope
+override in `docs/RELEASE_V1_20_DECISION.md`; the override does not change the
+CONDITIONAL GO verdict, the NOT OBSERVED five cold tasks, or any gate. Gate
+B/C/E/F, ATT-001, WCO-001, SWH-001, and VIS-001 condition 4 remain open.
 
 Sprint PSA-001 — Bound Work and Protect Read Boundaries is published and
 deployed as `v1.15.0`. It hardened Viewer Host validation, Worker body reads,

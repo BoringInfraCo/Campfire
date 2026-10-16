@@ -26,6 +26,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Orientation and catch-up stay bounded. Catch-up follows a durable per-workspace append position and a frozen stream tip, so a later contribution that shares a timestamp remains reachable.
 - A finding can be corrected or withdrawn in place, and a decision can name one predecessor. The old text stays on the old row. Orientation keeps the current record and marks a decision that still cites a non-current finding.
 - Orientation attention is honest about its own coverage: the projection states the returned task and decision page counts and whether the attention lists are complete under their selection rules, and an accepted decision whose cited finding is no longer current carries a team review cue with the cited ids. The cue does not revoke acceptance and does not choose an operative decision. Human comprehension of the updated attention semantics is unverified: the two-person trace is not observed.
+- The read-only terminal console (`campfire dashboard`) and the refreshed local Viewer present the same authorized workspace read as two clients: goal, recorded participants, attention beside current work, decisions, source detail, and recent changes, with bounded coverage kept visible in both. Both keep private agent sessions private and never infer live presence from registration or recent activity. The five pre-registered cold-task comprehension observations are not recorded; this release is a founder override for real-user testing, not a comprehension result.
 - The read-only Viewer separates accepted decisions needing review, lists open tasks, labels cited references, and shows completeness for bounded sections even when no rows are displayed. Human comprehension on this updated surface is unverified. Artifact previews and shared highlights remain deferred. Gate B and Gate C remain unmeasured. Production deployment is separate.
 - One opt-in, static incident-investigation playbook is available through read-only CLI and MCP surfaces. It changes no workspace schema, default tool list, Viewer permission, or write path. A frozen synthetic pilot met its GO rubric through better recording in three matched pairs; continuation quality stayed at the baseline ceiling. This is not Gate B/C or ordinary team-use evidence.
 - One generated workspace page is rendered at read time from the authorized orientation read. It is sandboxed, stored nowhere, and holds no Campfire credential. The release is a founder override. The human comprehension trace, the reference-open observation, and the presentation-defect finding remain open. This is not Gate B or Gate C.
@@ -50,7 +51,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 At source preparation, the private {{VERSION}} candidate passed type checking,
 build, local Darwin ARM64 packaging and install from that archive, and a Worker
-deployment dry run. The full suite had 1,101 passing tests and one expected
+deployment dry run. The full suite had 1,125 passing tests and one expected
 install-channel assertion awaiting the four v{{VERSION}} release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate

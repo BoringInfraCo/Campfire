@@ -2,13 +2,13 @@
 
 **Date:** October 16, 2026
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D6 pass on the checks recorded below. The five cold tasks are **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. This record does not claim human comprehension, and it does not close ATT-001, WCO-001, SWH-001, VIS-001 condition 4, or Gate B/C/E/F.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D6 pass on the checks recorded below. The five cold tasks are **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. The candidate is committed as `6df822c`. The founder subsequently directed a public v1.20.0 release under the recorded release-scope override in `docs/RELEASE_V1_20_DECISION.md`; that override does not change this verdict, the NOT OBSERVED five cold tasks, or any gate. This record does not claim human comprehension, and it does not close ATT-001, WCO-001, SWH-001, VIS-001 condition 4, or Gate B/C/E/F.
 
 **Contract:** `docs/Campfire-v1.20-UIX-001-Shared-Work-Console.md`  
 **Field map and answer key:** `docs/evidence/uix-001/FIELD_MAP.md`  
 **v1.19.0 byte pin:** `docs/evidence/uix-001/baseline/PIN.md`  
 **Candidate captures:** `docs/evidence/uix-001/candidate/`  
-**Baseline:** package `1.19.0` at git `5674de1`, before these edits. The candidate is the uncommitted working tree on that commit. There is no candidate commit yet.
+**Baseline:** package `1.19.0` at git `5674de1`, before these edits. The candidate is committed as `6df822c`.
 
 ## 0. Verdict and what it does not claim
 
