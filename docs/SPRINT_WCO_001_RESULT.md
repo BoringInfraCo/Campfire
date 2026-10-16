@@ -180,6 +180,14 @@ builder's report. Both returned **clean**.
 - **Reference-open:** Agent B opened the stored archive reference during the
   rehearsal; because the run is a rehearsal, it is not eligible evidence for
   VIS-001 condition 4.
+- **Runbook corrected after review (October 15, 2026).** The first
+  `TRACE_RUNBOOK.md` draft described creating a fresh workspace via `onboard`,
+  which conflicts with contract §4.1's requirement to use an existing
+  ordinary-work workspace and task. It now requires a pre-existing workspace
+  with a real task dependency, enrolls only the second pair through the
+  invitation path, forbids creating case records, and records the case
+  **not observed** when no eligible task exists. No case had been run, so
+  nothing is rescored.
 - No Gate E claim arises from this sprint.
 
 ## 7. Open gates and next steps
