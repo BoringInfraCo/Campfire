@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.18.0 — 2026-10-15
+
+- State in the MCP session guidance that `needsAttention` is attention ordering, not an access boundary: a blocked or open task assigned to another participant is still shared work, and a writing participant may take it up with `update_task`, recorded under their own provenance.
+- Make the evidence-relation vocabulary explicit: `cite_finding_evidence` and `correct_finding` enumerate `supports` or `contradicts` in their input schemas, and the citation description names the closed set. The service validator and the shared constant now agree.
+- Clarify the `get_workspace_context` description (`needsYou` versus `needsAttention`) and correct an internal doc comment.
+- Published under a founder release-scope override. WCO-001 remains CONDITIONAL GO — engineering candidate: the eligible two-human/two-harness case is NOT OBSERVED, and the witnessed gap came from a labeled single-operator rehearsal. This release does not claim human continuation, Gate B, Gate C, Gate E, or VIS-001 condition 4. No orientation selection rule, CLI, Viewer, HTTP, Worker, or schema change is included.
+
 ## 1.17.0 — 2026-10-14
 
 - Added a read-only Shared Work Home to the local actor-bound Viewer: My work and Team work perspectives over the same authorized orientation read, a shared decision boundary for proposed, accepted, needs-review, and historical records, per-slice completeness, and inert artifact references.

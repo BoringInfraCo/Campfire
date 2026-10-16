@@ -1,6 +1,6 @@
-# Campfire 1.17.0 release context
+# Campfire 1.18.0 release context
 
-This public source snapshot was exported on 2026-10-15 from private canonical source commit `2b98c752531116654871d285142a55a7441ab665` (dated 2026-10-14T23:58:50-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-16 from private canonical source commit `7f606493dc7af958ae75fbc80fd6ed5065be786d` (dated 2026-10-15T20:58:40-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -34,24 +34,27 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Experimental Recall searches one authorized workspace and returns bounded source records with currentness, provenance, and a query-matched decision set. It does not select a workspace-wide operative decision. A named authorized recipient can receive a private local handoff packet with bounded context; the packet is not a credential or an instruction to act.
 - The three frozen synthetic Recall pilots were NO-GO. A post-verdict packet projection repair has deterministic checks and one unscored recipient recheck. This release is a founder override for real-user testing, not a GO result or a demonstration of improved next actions. Gate E, B, and C remain unmeasured.
 - The read-only Viewer adds a Shared Work Home: My work and Team work perspectives over one authorized orientation read, with a shared decision boundary, per-slice completeness, and inert artifact references. The perspectives are navigation over already-authorized shared records, not privacy modes; the page does not infer agent presence, fetch references, or assert unrecorded relations.
+- The MCP session guidance and the `get_workspace_context` description now state that `needsAttention` is attention ordering, not an access boundary, and that a writing participant may take up a blocked or open task assigned to another participant with `update_task`, recorded under their own provenance. The change is guidance: authorization, attention reason labels, and the attention projection are unchanged.
+- Finding-evidence relations are enumerated in the `cite_finding_evidence` and `correct_finding` tool schemas as `supports` or `contradicts`, validated against one shared vocabulary. Citations and corrections remain additive records that never edit the old assertion.
+- The WCO-001 ordinary two-human continuation case was not observed; the witnessed gap comes from a labeled single-operator rehearsal, and the sprint remains CONDITIONAL GO — engineering candidate. This release is a founder override for real-user testing, not a human continuation result, and it moves no gate.
 - The two controlled human comprehension traces, the shipped-v1.16 Viewer comprehension trace, the reference-open observation, and an ordinary two-human/two-agent continuation were not recorded before this release. The release is a founder override for real-user testing, not a GO result. Gate B, Gate C, and Gate E remain unmeasured.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.17.0.
+- The versioned installer source for v1.18.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.17.0 candidate passed type checking,
+At source preparation, the private 1.18.0 candidate passed type checking,
 build, local Darwin ARM64 packaging and install from that archive, and a Worker
-deployment dry run. The full suite had 1,063 passing tests and one expected
-install-channel assertion awaiting the four v1.17.0 release checksums;
+deployment dry run. The full suite had 1,077 passing tests and one expected
+install-channel assertion awaiting the four v1.18.0 release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate
 promotion steps and are recorded only when performed. This source snapshot does
-not establish a Shared Work Home comprehension result, Gate E/B/C, or a
-production performance claim.
+not establish a human team-continuation result, Gate E/B/C, or a production
+performance claim.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

@@ -2,6 +2,18 @@
 
 Requirements: Node.js 22+ for the curl and Homebrew installs. Nix provides Node.js 22.
 
+v1.18.0 updates the MCP guidance for teammate tasks and makes the
+finding-evidence relation vocabulary explicit: `needsAttention` is attention
+ordering, not an access boundary, and a writing participant may take up a
+blocked or open task assigned to another participant with `update_task`,
+recorded under their own provenance; `cite_finding_evidence` and
+`correct_finding` enumerate `supports` or `contradicts`. It is a
+founder-directed release for real-user testing; the WCO-001 two-human case is
+NOT OBSERVED and the sprint remains CONDITIONAL GO, so this is not a human
+continuation result and Gate B, Gate C, and Gate E remain unmeasured. See
+`RELEASE_V1_18_DECISION.md`. The v1.18 release archives, channel pins, and
+deployment are separate promotion steps and are verified after source export.
+
 v1.17.0 adds the read-only Shared Work Home to the local actor-bound Viewer:
 My work and Team work perspectives over one authorized orientation read. It is
 a founder-directed release for real-user testing; the two controlled human
