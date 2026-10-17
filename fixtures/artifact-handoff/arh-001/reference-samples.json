@@ -1,0 +1,418 @@
+{
+  "_provenance": "ARH-001 frozen reference-class sample set (scope §2, recorded before this candidate's code). Each row is the exact stored `uriOrPath` shape plus its frozen classification. A parity test runs every row through BOTH implementations — src/presentation/work-console.ts (classifyArtifactReference, terminal dashboard) and src/viewer/static/app.js (classifyArtifactReference, browser) — and both must equal these expectations AND each other. Fixture evidence only: cannot establish Gate B, C, or E. The first six rows are the ARH-001 lab artifacts; the rest pin the frozen boundary edges. The final block adds exactly one openable-shaped https row per frozen credential deny-set name (token through sessionid), each carrying that name as the query parameter with a value prefixed arh001-demo- so nothing real is stored; every such row must classify credential-bearing ahead of openable https in BOTH implementations, with no open control, so a one-name deny-set drift on either surface fails parity.",
+  "samples": [
+    {
+      "reference": "https://example.com/arh-001/q3-handoff-analysis.html",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "example.com"
+    },
+    {
+      "reference": "https://example.com/arh-001/deployments/old-preview",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "example.com"
+    },
+    {
+      "reference": "reports/arh-001/working-notes.md",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "ftp://files.example.com/arh-001/export.tar.gz",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/report\"><img src=x onerror=alert(1)>",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "http://example.com/insecure",
+      "class": "insecure http",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "//example.com/proxy-relative",
+      "class": "insecure http",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "http://user:pass@example.com/legacy",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/usage?api_key=abc",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/usage?SessionID=abc",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/usage?q=1&password=p",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/usage?sig=abc",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "git:a1b2c3d4e5f6",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "git://vcs.example.com/team/repo.git",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "git://deploy-only@vcs.example.com/team/repo.git",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "file:///etc/hosts",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "javascript:alert(1)",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "data:text/html;base64,PGh0bWw+",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "mailto:team@example.com",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "tel:+15551234567",
+      "class": "other scheme",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "/srv/notes/report.md",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "./notes/todo.md",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "../notes/todo.md",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "~/notes/todo.md",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "C:\\Users\\demo\\report.pdf",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "C:/Archive/demo/report.pdf",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "\\fileserver\\share\\report.docx",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/my file.pdf",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/%41",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://exa mple.com/path",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "notaurl",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "notes.txt",
+      "class": "unparsed",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "",
+      "class": "none",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "   ",
+      "class": "none",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": " https://example.com/x",
+      "class": "local path",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://EXAMPLE.COM/Reports/Q3.html",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "EXAMPLE.COM"
+    },
+    {
+      "reference": "https://example.com:8443/monitor.html",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "example.com:8443"
+    },
+    {
+      "reference": "https://192.168.10.7/metrics.html",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "192.168.10.7"
+    },
+    {
+      "reference": "https://example.com/usage#section",
+      "class": "openable https",
+      "unsafe": false,
+      "openable": true,
+      "host": "example.com"
+    },
+    {
+      "reference": "https://example.com/a\nb",
+      "class": "unparsed",
+      "unsafe": true,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/a\u0007b",
+      "class": "unparsed",
+      "unsafe": true,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/a\u0009b",
+      "class": "unparsed",
+      "unsafe": true,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com\u001B[31m",
+      "class": "unparsed",
+      "unsafe": true,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "ftp://files.example.com/x?token=abc",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "//deploy-only@fileserver/share",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/exports?token=arh001-demo-share",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/profile?access_token=arh001-demo-oauth",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/console?auth=arh001-demo-ticket",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/usage?api_key=arh001-demo-billing",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/usage?apikey=arh001-demo-meters",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/mapping?key=arh001-demo-lookup",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/signin?password=arh001-demo-login",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/hooks?secret=arh001-demo-signing",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/payments?signature=arh001-demo-hmac",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/webhooks?sig=arh001-demo-receipt",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/workspace?session=arh001-demo-seat",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    },
+    {
+      "reference": "https://example.com/arh-001/console?sessionid=arh001-demo-console",
+      "class": "credential-bearing",
+      "unsafe": false,
+      "openable": false,
+      "host": null
+    }
+  ]
+}

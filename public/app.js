@@ -98,6 +98,151 @@ function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+// --- ARH-001 frozen reference classes ----------------------------------------
+// Direct mirror of `src/presentation/work-console.ts` (`classifyArtifactReference`,
+// scope §2 taxonomy, recorded before code). Rendering fetches nothing, never
+// navigates on render, and keeps every unsupported class inert; only the
+// openable-https class may carry the explicitly labeled deliberate open
+// control. `fixtures/artifact-handoff/arh-001/reference-samples.json` is the
+// shared frozen sample set that a parity test runs through BOTH
+// implementations so the two surfaces cannot drift.
+const ARTIFACT_EXTERNAL_UNVERIFIED_LABEL =
+  "external and unverified by Campfire; workspace membership does not grant access";
+const ARTIFACT_UNSAFE_CONTROL_LABEL = "unsafe — control characters; rendered inert";
+const ARTIFACT_OPEN_CONTROL_SUFFIX = "(external, unverified)";
+
+const OPENABLE_AUTHORITY_RE = /^[A-Za-z0-9._-]+(?::[0-9]{1,5})?$/;
+const OPENABLE_REST_RE = /^[A-Za-z0-9\-._~:/?#@!$&()*+,;=]*$/;
+const CONTROL_CHAR_RE = /[\u0000-\u001F\u007F-\u009F]/;
+const SCHEME_RE = /^([A-Za-z][A-Za-z0-9+.-]*):/;
+const DRIVE_LETTER_RE = /^[A-Za-z]:[\\/]/;
+
+// Scope §2 query deny-set plus the dated §9 signed-URL correction.
+const ARTIFACT_CREDENTIAL_QUERY_DENY_SET = new Set([
+  "token",
+  "access_token",
+  "auth",
+  "api_key",
+  "apikey",
+  "key",
+  "password",
+  "secret",
+  "signature",
+  "sig",
+  "session",
+  "sessionid",
+  "x-amz-signature",
+  "x-goog-signature",
+  "x-amz-credential",
+  "x-goog-credential",
+  "x-amz-security-token",
+  "awsaccesskeyid",
+  "googleaccessid",
+]);
+
+/** The deliberate open control text: host first, boundary stated in the label. */
+function artifactOpenControlLabel(host) {
+  return `Open ${host} ${ARTIFACT_OPEN_CONTROL_SUFFIX}`;
+}
+
+/** Authority segment of a hierarchical reference: text before any /, ?, or #. */
+function artifactReferenceAuthority(afterSlashes) {
+  for (let index = 0; index < afterSlashes.length; index += 1) {
+    const char = afterSlashes[index];
+    if (char === "/" || char === "?" || char === "#") {
+      return { authority: afterSlashes.slice(0, index), remainder: afterSlashes.slice(index) };
+    }
+  }
+  return { authority: afterSlashes, remainder: "" };
+}
+
+function artifactCredentialQueryPresent(reference) {
+  const queryStart = reference.indexOf("?");
+  if (queryStart < 0) return false;
+  const pairs = reference.slice(queryStart + 1).split("&");
+  for (const pair of pairs) {
+    const valueStart = pair.indexOf("=");
+    const name = (valueStart >= 0 ? pair.slice(0, valueStart) : pair).toLowerCase();
+    if (name.length > 0 && ARTIFACT_CREDENTIAL_QUERY_DENY_SET.has(name)) return true;
+  }
+  return false;
+}
+
+function artifactReferencePathLike(reference) {
+  if (
+    reference.startsWith("/") ||
+    reference.startsWith("./") ||
+    reference.startsWith("../") ||
+    reference.startsWith("~/") ||
+    DRIVE_LETTER_RE.test(reference)
+  ) {
+    return true;
+  }
+  return reference.includes("/");
+}
+
+/** An open control must point to the same host its label announces. */
+function artifactBrowserDestinationMatches(reference, authority) {
+  try {
+    const parsed = new URL(reference);
+    return (
+      parsed.protocol === "https:" &&
+      parsed.host.toLowerCase() === authority.toLowerCase() &&
+      /[A-Za-z0-9]/.test(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function classifyArtifactReference(reference) {
+  if (typeof reference !== "string" || reference.length === 0 || reference.trim().length === 0) {
+    return { class: "none", unsafe: false, host: null, openable: false };
+  }
+  const unsafe = CONTROL_CHAR_RE.test(reference);
+  const schemeMatch = reference.match(SCHEME_RE);
+  const scheme = schemeMatch === null ? null : schemeMatch[1].toLowerCase();
+  const rest = schemeMatch === null ? reference : reference.slice(schemeMatch[1].length + 1);
+  const hierarchical = rest.startsWith("//");
+  let authority = "";
+  let remainder = "";
+  if (hierarchical) {
+    const segment = artifactReferenceAuthority(rest.slice(2));
+    authority = segment.authority;
+    remainder = segment.remainder;
+  }
+  // Userinfo is a structural fact of hierarchical references only, so a
+  // non-hierarchical `@` (mailto address, data: payload) never reads as a
+  // credential; a deny-set query parameter counts on any reference.
+  if (artifactCredentialQueryPresent(reference) || (hierarchical && authority.indexOf("@") !== -1)) {
+    return { class: "credential-bearing", unsafe, host: null, openable: false };
+  }
+  // A Windows drive-letter form is a local path even though `C:` is formally
+  // scheme-shaped under RFC 3986 — the frozen taxonomy puts it in local path.
+  if (scheme !== null && scheme.length === 1 && DRIVE_LETTER_RE.test(reference)) {
+    return { class: "local path", unsafe, host: null, openable: false };
+  }
+  if (scheme === "http") {
+    return { class: "insecure http", unsafe, host: null, openable: false };
+  }
+  if (scheme === null && hierarchical) {
+    return { class: "insecure http", unsafe, host: null, openable: false };
+  }
+  if (scheme === "https") {
+    if (authority.length > 0 && OPENABLE_AUTHORITY_RE.test(authority) && OPENABLE_REST_RE.test(remainder) && artifactBrowserDestinationMatches(reference, authority)) {
+      return { class: "openable https", unsafe, host: authority, openable: !unsafe };
+    }
+    return { class: "unparsed", unsafe, host: null, openable: false };
+  }
+  if (scheme !== null) {
+    return { class: "other scheme", unsafe, host: null, openable: false };
+  }
+  if (artifactReferencePathLike(reference)) {
+    return { class: "local path", unsafe, host: null, openable: false };
+  }
+  return { class: "unparsed", unsafe, host: null, openable: false };
+}
+
 // --- SWH-001 one home, two perspectives -------------------------------------
 // Both perspectives project the same authorized get_workspace_context read.
 // They are navigation over already-authorized records, not privacy modes.
@@ -1256,17 +1401,73 @@ function findingSourceHtml(finding) {
   return `<li class="oitem"><span class="ometa">${esc(currentness)}</span><span class="osentence">${esc(summary)}</span><span class="oreason">id ${esc(id)} · ${esc(evidenceText)}</span></li>`;
 }
 
-function artifactSourceHtml(artifact) {
+/**
+ * ARH-001 cited-by relations, exactly as the same authorized read records
+ * them (Finding ID + relation, one entry per recorded evidence row). Nothing
+ * is inferred from titles or proximity, and a missing relation is never
+ * filled in: the row simply shows what the read carries.
+ */
+function artifactCitedByText(findings, artifactId) {
+  const cites = [];
+  const seen = new Set();
+  for (const finding of asArray(findings).filter(isRecord)) {
+    const findingId = strField(finding.id);
+    for (const row of asArray(finding.evidence).filter(isRecord)) {
+      if (strField(row.artifactId) !== artifactId) continue;
+      const relation = strField(row.relation);
+      if (!findingId || !relation) continue;
+      const key = `${findingId}\u0000${relation}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      cites.push(`${findingId} (${relation})`);
+    }
+  }
+  return cites;
+}
+
+/**
+ * The single deliberate external-open control. Rendered only for the
+ * `openable https` class: the stored URL, the destination host repeated in the
+ * label, opener and referrer protections, no color-only cue (the label itself
+ * states the boundary). Rendering only builds the anchor; navigating is the
+ * user's own activation, and the anchor adds no Campfire token and cannot
+ * receive one. Everything else stays inert labeled text.
+ */
+function artifactOpenControlHtml(reference, host) {
+  return `<a class="oopen" href="${esc(reference)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">${esc(artifactOpenControlLabel(host))}</a>`;
+}
+
+function artifactSourceHtml(artifact, findings) {
   const id = strField(artifact.id);
   const type = strField(artifact.type);
   const title = strField(artifact.title, id);
-  // The stored reference is inert text. It is never fetched, previewed, or
-  // linked, and listing it does not claim the target exists or is accessible.
+  // The stored reference is text. It is never fetched or previewed, and
+  // listing it does not claim the target exists or is accessible.
   const reference = strField(artifact.uriOrPath);
-  const referenceHtml = reference
-    ? `reference: <code>${esc(reference)}</code> (stored reference, not fetched)`
-    : "no reference recorded";
-  return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · ${referenceHtml}</span></li>`;
+  if (!reference) {
+    // No reference recorded: nothing beyond the existing label renders —
+    // no class, host, caveat, or open control is invented.
+    return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · no reference recorded</span></li>`;
+  }
+  const classification = classifyArtifactReference(reference);
+  const parts = [`id ${esc(id)}`, `reference: <code>${esc(reference)}</code> (stored reference, not fetched)`];
+  // Class, host, and the open control describe the reference, so a missing
+  // reference renders none of them; cited-by is a fact about the artifact
+  // record, so it stays independent of the class. This mirrors the terminal
+  // row tail in `src/cli/dashboard.ts` (`artifactReferenceTail`) field for
+  // field, including the caveat/unsafe pairing.
+  if (classification.class !== "none") {
+    parts.push(`class ${esc(classification.class)}`);
+    if (classification.host !== null) parts.push(`host ${esc(classification.host)}`);
+  }
+  const cites = artifactCitedByText(findings, id);
+  if (cites.length) parts.push(`cited by ${esc(cites.join(", "))}`);
+  if (classification.class !== "none") {
+    parts.push(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL);
+    if (classification.unsafe) parts.push(ARTIFACT_UNSAFE_CONTROL_LABEL);
+    if (classification.openable) parts.push(artifactOpenControlHtml(reference, classification.host));
+  }
+  return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">${parts.join(" · ")}</span></li>`;
 }
 
 function sourceListHtml(rows, name, totals) {
@@ -1279,6 +1480,8 @@ function sourceListHtml(rows, name, totals) {
 }
 
 // Shared sources: current findings and artifact references, both perspectives.
+// Findings are passed so artifact rows can show the cited-by relations the
+// same read records; no extra read and no cross-record inference happens here.
 function renderSources(el, context) {
   if (!el) return;
   const totals = sliceTotals(context);
@@ -1287,7 +1490,7 @@ function renderSources(el, context) {
   const artifacts = asArray(isRecord(slices.artifacts) ? slices.artifacts.items : undefined).filter(isRecord);
   const parts = [];
   parts.push(`<div class="ogroup"><div class="ogroup-label">current findings</div>${sourceListHtml(findings.map(findingSourceHtml), "findings", totals)}</div>`);
-  parts.push(`<div class="ogroup"><div class="ogroup-label">artifact references</div>${sourceListHtml(artifacts.map(artifactSourceHtml), "artifacts", totals)}</div>`);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">artifact references</div>${sourceListHtml(artifacts.map((artifact) => artifactSourceHtml(artifact, findings)), "artifacts", totals)}</div>`);
   el.innerHTML = parts.join("");
 }
 

@@ -1,6 +1,6 @@
-# Campfire 1.20.1 release context
+# Campfire 1.21.0 release context
 
-This public source snapshot was exported on 2026-10-16 from private canonical source commit `dc3c2a4c1f10f7815de78c4143fe564331406c73` (dated 2026-10-16T14:52:12-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-17 from private canonical source commit `5523305ec1c7334d8789b4c895610ff13f266d5a` (dated 2026-10-17T00:17:41-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -40,20 +40,21 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Finding-evidence relations are enumerated in the `cite_finding_evidence` and `correct_finding` tool schemas as `supports` or `contradicts`, validated against one shared vocabulary. Citations and corrections remain additive records that never edit the old assertion.
 - The WCO-001 ordinary two-human continuation case was not observed; the witnessed gap comes from a labeled single-operator rehearsal, and the sprint remains CONDITIONAL GO — engineering candidate. This release is a founder override for real-user testing, not a human continuation result, and it moves no gate.
 - The two controlled human comprehension traces, the shipped-v1.16 Viewer comprehension trace, the reference-open observation, and an ordinary two-human/two-agent continuation were not recorded before this release. The release is a founder override for real-user testing, not a GO result. Gate B, Gate C, and Gate E remain unmeasured.
+- Artifact references now render with a typed, deterministic reference class (safe absolute HTTPS, insecure HTTP, credential-bearing, local path, other/internal scheme, or unparsed; control characters force inert text), the destination host for openable references, and the recorded Finding evidence relation where one exists; relations are never inferred and historical or competing decisions are not promoted. The Viewer adds a clearly labeled deliberate open control for safe absolute HTTPS references only — `noopener noreferrer`, no referrer, destination host shown, navigation only on the user's own activation, no rendering-time fetches — while the terminal stays inspect-only. Whether a person can use this to reach, verify, or act on an external output in ordinary work is unmeasured: the artifact-handoff human observations are NOT OBSERVED, the sprint result stands as UNSCORED, and Gate B/C/E/F remain open. Campfire never fetches, hosts, or verifies targets, and workspace membership does not grant external access.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.20.1.
+- The versioned installer source for v1.21.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.20.1 candidate passed type checking,
-build, local Darwin ARM64 packaging and install from that archive, and a Worker
-deployment dry run. The full suite had 93 files / 1,127 tests with 1,125
+At source preparation, the private 1.21.0 candidate passed type checking,
+build, local Darwin ARM64 packaging with a version-derived installer copy, and a
+Worker deployment dry run. The full suite had 95 files / 1,166 tests with 1,164
 passing, one opt-in terminal capture skipped by default, and one expected
-install-channel assertion awaiting the four v1.20.1 release checksums;
+install-channel assertion awaiting the four v1.21.0 release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate
 promotion steps and are recorded only when performed. This source snapshot does
