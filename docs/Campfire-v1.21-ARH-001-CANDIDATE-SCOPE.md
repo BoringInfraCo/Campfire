@@ -74,3 +74,25 @@ External fetch, content hosting, previews, automatic navigation, speculative pre
 - Human falsifier retained: the first real ordinary-work open of this control (by a human, recorder-first, runbook §2) is the standing test of whether the affordance actually helps; the §6 two-human/two-harness case remains the full-handoff falsifier.
 
 **Provenance:** scoped by the coding agent under the founder's October 16 §0 amendment and delivery rule; no product file touched at the time of this record.
+
+## 9. Post-result correction scope — October 16, 2026
+
+A later direct review of the implemented classifier found two counterexamples
+to this scope's intended `openable https` boundary. `https://example.com:99999/`
+was classified openable although the browser URL parser rejects its port.
+`https://example.com/report?X-Amz-Signature=abc` was classified openable
+although that query key denotes a signed URL credential. These examples are
+engineering findings, not human handoff observations. They do not change the
+earlier 59-row frozen sample set or retroactively change its test run.
+
+Before any release decision, correct both mirrored classifiers and add focused
+regression tests on both surfaces. An openable reference must also parse as a
+browser HTTPS URL whose actual host matches the host shown in the label; reject
+invalid ports and browser-normalized host aliases that would show a misleading
+destination. Extend the credential query deny-set with common AWS and Google
+signed-URL keys (`x-amz-signature`, `x-goog-signature`, `x-amz-credential`,
+`x-goog-credential`, `x-amz-security-token`, `awsaccesskeyid`, and
+`googleaccessid`). These references remain visible only as inert stored text.
+No new surface, fetch, schema, Viewer method, or external-open mechanism is
+authorized. Preserve the original result and append the new verification and
+candidate commit as a post-result correction.
