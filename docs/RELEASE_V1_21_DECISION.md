@@ -61,9 +61,9 @@ Each step is recorded with its evidence as it completes; no check is loosened. T
 
 | Step | Evidence |
 | --- | --- |
-| Founder direction, candidate chain, and prep checks | This document; prep commit on this day carrying the founder's Navigator/ROADMAP edits (`44f7bc2`), this decision, and the `1.21.0` package bump. Prep verification recorded in the promotion rows below. |
-| Private annotated `v1.21.0` tag | (pending) |
-| Audited public source snapshot | (pending) |
-| Public GitHub Release and four checked archives | (pending) |
+| Founder direction, candidate chain, and prep checks | This document; prep commits `44f7bc2` (founder Navigator/ROADMAP edits), `5258d5b`→`d0e16f4` candidate chain, `6d39a51` (decision + `1.21.0` bump and pre-verification: typecheck PASS; full suite 95 files / 1,166 tests — 1,164 passed, 1 opt-in capture skipped, 1 expected install-channel assertion awaiting the v1.21.0 archives, **not loosened**; build PASS with `public/` byte-identical to `src/viewer/static/`; Darwin ARM64 packaging sha256 `3d2297adeb213f597ea7649987cb44a38ce74391bdf4a0a3a94c3dd3b8fb699c` with extracted package `1.21.0`; deploy dry-run PASS, wrangler 4.149.0, 61 public assets), and `5523305` (pre-tag fixes: ARH sample path sanitized for the export audit, `1.21.0` public claim added to CHANGELOG/RELEASE_CONTEXT, versioned installer tracked). Fresh export audit at `v1.21.0`: PASS — 315 files incl. manifest (`sourceCommit` `5523305…`, exported `2026-10-17`); token/home-path/sentinel sweeps clean. |
+| Private annotated `v1.21.0` tag | Pushed origin `main` (`76db5be..5523305`) and tag. Annotated tag object `38e03e88873ea742177eeb0b92ae2561fa6dae8d` → commit `5523305ec1c7334d8789b4c895610ff13f266d5a`. Private CI at both pushes (runs `39002149501`, `39002149505`) failed only on the expected install-channel assertion (`expected … to contain '/v1.21.0/'`) — not loosened. |
+| Audited public source snapshot | Published. Public commit `5dd00f99ae4aebf44148e54f87911ac8c6aeb266` on top of `8feaa76`; public annotated tag `v1.21.0` (object `e97ea4acdf592f16721989631840b3ddccbe75f8`). The push's rule-bypass note for the required `ci` check is the documented pre-pin state. Export manifest: 315 files; delta vs `8feaa76` = +11 (the 8 ARH fixture files, the 2 ARH test files, and the tracked `campfire/v1.21.0/install.sh`). |
+| Public GitHub Release and four checked archives | (pending — release published, workflow `39002799456` building) |
 | Homebrew / Nix pins, tap promotion, installer checks | (pending) |
 | Production Worker deployment and live verification | (pending) |
