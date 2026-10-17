@@ -379,9 +379,12 @@ and the dated scope freeze at `5258d5b`; implementation and independent
 verification are recorded as **ENGINEERING PASS — human outcome NOT OBSERVED**
 in `docs/SPRINT_ARH_001_RESULT.md` §9 (candidate `ace3b0f`). The UNSCORED
 verdict, the NOT OBSERVED §3.2/§6 observations, and all human-outcome claims
-stand unchanged; a v1.21.0 publication remains a separate founder release
-decision that must name the exact shipped behavior and the unmeasured human
-outcome.
+stand unchanged. The founder then directed a public v1.21.0 release, recorded
+in `docs/RELEASE_V1_21_DECISION.md` and published and deployed on October 17,
+2026 (four checksummed archives, channel pins, tap promotion, production
+Worker, and live installer checks recorded there); that decision does not
+change the UNSCORED verdict, the NOT OBSERVED human observations, or any
+gate, and the public claim marks the human outcome NOT OBSERVED.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
