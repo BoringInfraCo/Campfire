@@ -1,0 +1,69 @@
+# v1.21.0 release decision — Artifact Reference Handoff (scoped candidate)
+
+**Date:** October 17, 2026
+
+**Status:** Founder-directed public release, recorded as the separate founder release-scope decision that ARH-001 contract §7/§0 require. Publication, channel pins, and production deployment are recorded in the promotion table as they complete.
+**Package target:** `1.21.0`
+**Contract:** `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md` (§0 founder sequencing amendment; §3.3–5 security and scope limits)
+**Candidate scope (frozen before code):** `docs/Campfire-v1.21-ARH-001-CANDIDATE-SCOPE.md` (commit `5258d5b`)
+**Sprint result:** `docs/SPRINT_ARH_001_RESULT.md` — §1–§8 **UNSCORED** (observations NOT OBSERVED, unchanged); §9 records the scoped candidate as **ENGINEERING PASS — human outcome NOT OBSERVED**
+**Candidate commits:** scope freeze `5258d5b`; implementation `ace3b0f`; result/evidence `d0e16f4`
+
+## Why this release exists
+
+On October 16, 2026 the founder amended the ARH-001 contract (§0) prospectively: a bounded artifact-navigation candidate may be implemented and released after reproducible local engineering checks pass, without a multi-person observation, with a separately recorded release decision. The scoped candidate was subsequently frozen (`5258d5b`), implemented (`ace3b0f`), independently verified, and recorded as **ENGINEERING PASS — human outcome NOT OBSERVED** (`d0e16f4`). The founder then directed, verbatim (October 17, 2026 UTC boundary; acting in the `Campfire-Internal` repository):
+
+> "fully commit/push and release to the public now please v.1.21. use subagents to help you"
+
+This document is that recorded release decision. It is **not a human-outcome result and is not a GO/CONDITIONAL-GO verdict change**:
+
+- ARH-001 §1–§8 remains **UNSCORED**; the ordinary-work reference-open attempt (§3.2), the two-human/two-harness handoff (§6), and every item H1–H6 remain **NOT OBSERVED**. Nothing is rescored.
+- The candidate's **ENGINEERING PASS** states only that the tested behavior works as governed (D1–D6, typecheck, suite, build, packaging/deployment dry run, and direct terminal/browser inspection at the recorded commits). It does not state that any person can reach an external target, complete a handoff, comprehend the surface, or return to it. The approximately-500-daily-users figure remains an operating claim by the founder, not a verified metric in this record, and presents no evidence about this feature.
+- Real ordinary-work observations may follow publication when eligible people and tasks exist, under the original §2/§6 procedures; any later observation is recorded under its own date and never rewrites this record. Human observation being open does **not** block this release under §0.
+
+## The exact release surface (nothing else)
+
+The published v1.20.1 surfaces gain exactly the scoped candidate (`ace3b0f`) and no other product change:
+
+- **Typed reference projection** on both human surfaces (terminal dashboard and local read-only Viewer): each authorized Artifact's stored reference is classified by a frozen deterministic taxonomy — `openable https` / `insecure http` / `credential-bearing` / `local path` / `other scheme` (including internal record forms like `git:<sha>`) / `unparsed` / `none`, with C0/C1 control characters forcing inert. The destination host is shown for openable references before any navigation.
+- **Deliberate open control, Viewer only, for `openable https` only:** explicitly labeled ("Open `<host>` (external, unverified)"), `target="_blank"`, `rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`, keyboard-reachable, escaped markup; navigation happens only on the user's own activation. Rendering, refresh, hover, and source inspection make **zero** network requests (browser-asserted with request interception at wide and 420px viewports).
+- **Recorded cited-by relations:** where the same authorized read records a Finding→Artifact `supports`/`contradicts` citation, the artifact row shows it as the recorded relation. No relation is ever inferred; absence is not asserted beyond the read; historical and competing decisions are not promoted.
+- **Terminal dashboard:** inspect-only (class, host, recorded cited-by, caveat). No open action, no shell command, no local-file open.
+- **Caveat text on both surfaces:** the target is external and unverified by Campfire, and workspace membership does not grant access.
+- **Unchanged:** CLI JSON shapes, MCP tools/contracts, the five `VIEWER_READ_METHODS`, service, schema/migrations, `wrangler.toml`/Worker assets, installer scripts, GWV. No server-side fetch, proxy, preview, automatic navigation, credential, token, or new dependency. No telemetry change; no new events.
+- The `docs/mockups/` Navigator HTML added with commit `44f7bc2` is a founder design reference only — not shipped behavior, not scope, evidence of nothing.
+
+## Evidence that remains open or unmeasured
+
+| Evidence | Status in this release |
+| --- | --- |
+| ARH-001 §3.2 ordinary-work attempt, §6 two-human/two-harness handoff, H1–H6 | **NOT OBSERVED** (unchanged; UNSCORED verdict stands) |
+| Deterministic D1–D6 candidate checks, typecheck, full suite (95 files / 1161 + 1 opt-in skipped), build, `pack:tarball`, `deploy:dry-run`, terminal/browser inspection | **Engineering PASS**, recorded in result §9 with the two-pass verification chain and the browser-capture evidence (`docs/evidence/arh-001/candidate/`) |
+| Whether a real user opens an external output and completes a handoff | **Unmeasured.** Later observations record it under their own date, per §2/§6. |
+| VIS-001 condition 4; SWH-001/WCO-001/ATT-001/UIX-001 observations; Gate B/C/E/F | **Unchanged/unmeasured.** This release satisfies none of them and moves none. |
+| A live interactive human walk of the released surface | **Unmeasured.** The pre-release browser check was headless, scripted, at two viewport sizes. |
+
+## The exact public claim
+
+Campfire v1.21.0 makes cited external work easier to inspect and deliberately open. Authorized artifact references now render on the terminal dashboard and the local read-only Viewer with a typed, deterministic reference class, the destination host for safe links, and the recorded Finding→Artifact evidence relation where one exists. The Viewer adds a clearly labeled open control for safe absolute HTTPS references: it shows the destination host, marks the target external and unverified by Campfire, and navigates only when you yourself activate it (`noopener noreferrer`, no referrer). Rendering itself performs no fetches; the terminal remains inspect-only; CLI JSON, MCP, the Viewer's five read methods, and all schemas are unchanged. **It is experimental**: no person has yet been observed using this to reach, verify, or act on an external output in ordinary work; the ARH-001 human observations are NOT OBSERVED and the UNSCORED result stands; Gate B/C/E/F and the earlier sprint observations remain open. Campfire never fetches, hosts, or verifies the external target, and Campfire workspace membership does not grant access to it.
+
+## What users should know
+
+- The open control is your action, to your external system with your own access. Campfire adds nothing to your authorization there. If the link is stale or your access is denied, Campfire says nothing about it — it never probes the target.
+- Credential-bearing, insecure HTTP, local-path, and exotic-scheme references never become open controls; they stay labeled inert text. Hostile markup stays escaped.
+- `git:<sha>` and similar internal record forms are classified as non-openable record references — that is correct, not a defect.
+- Agents see no new tool, method, or credential; the browser remains token-free.
+- No object, schema, migration, notification, or write path is added.
+
+## Promotion record
+
+Each step is recorded with its evidence as it completes; no check is loosened. The private-repository CI install-channel assertion is expected to fail until the post-release pin commit (pre-recorded as the expected failure, not a defect).
+
+| Step | Evidence |
+| --- | --- |
+| Founder direction, candidate chain, and prep checks | This document; prep commit on this day carrying the founder's Navigator/ROADMAP edits (`44f7bc2`), this decision, and the `1.21.0` package bump. Prep verification recorded in the promotion rows below. |
+| Private annotated `v1.21.0` tag | (pending) |
+| Audited public source snapshot | (pending) |
+| Public GitHub Release and four checked archives | (pending) |
+| Homebrew / Nix pins, tap promotion, installer checks | (pending) |
+| Production Worker deployment and live verification | (pending) |
