@@ -1,0 +1,236 @@
+<div id="campfire-navigator-full" aria-label="Campfire focused Navigator mockup">
+  <style>
+    #campfire-navigator-full {
+      color-scheme: light dark;
+      --bg: light-dark(#f8faf6,#0d1512);
+      --panel: light-dark(#f0f4ed,#111e17);
+      --panel-2: light-dark(#e8efe5,#17271d);
+      --selected: light-dark(#dcebdc,#25402d);
+      --hover: light-dark(#e8f0e6,#1a2e21);
+      --line: light-dark(#d1ddcf,#304538);
+      --text: light-dark(#1a2a1f,#e6efe6);
+      --muted: light-dark(#607264,#a0b5a4);
+      --green: light-dark(#277849,#9cdda9);
+      --amber: light-dark(#94671b,#f0c975);
+      --red: light-dark(#aa5046,#f0a69c);
+      --blue: light-dark(#3e6694,#9ac9ec);
+      color:var(--text); font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    #campfire-navigator-full * { box-sizing:border-box; }
+    #campfire-navigator-full [hidden] { display:none!important; }
+    #campfire-navigator-full button, #campfire-navigator-full input { font:inherit; }
+    #campfire-navigator-full button { color:inherit; }
+    #campfire-navigator-full .cf-window { width:100%; min-height:770px; background:var(--bg); border:1px solid var(--line); border-radius:11px; overflow:hidden; display:flex; flex-direction:column; }
+    #campfire-navigator-full .cf-top { display:flex; align-items:center; gap:16px; min-height:58px; padding:11px 18px; border-bottom:1px solid var(--line); background:var(--panel); }
+    #campfire-navigator-full .cf-brand { color:var(--green); font-weight:700; letter-spacing:.09em; white-space:nowrap; }
+    #campfire-navigator-full .cf-path { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+    #campfire-navigator-full .cf-top-right { margin-left:auto; text-align:right; white-space:nowrap; color:var(--muted); font-size:12px; }
+    #campfire-navigator-full .cf-top-right strong { color:var(--text); font-weight:500; }
+    #campfire-navigator-full .cf-goal { display:flex; align-items:baseline; gap:17px; padding:12px 18px; border-bottom:1px solid var(--line); }
+    #campfire-navigator-full .cf-kicker { text-transform:uppercase; letter-spacing:.09em; color:var(--muted); font-size:11px; white-space:nowrap; }
+    #campfire-navigator-full .cf-goal-text { overflow-wrap:anywhere; }
+    #campfire-navigator-full .cf-body { display:grid; grid-template-columns:174px minmax(292px,340px) minmax(0,1fr); min-height:628px; flex:1; }
+    #campfire-navigator-full .cf-rail { min-width:0; background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; }
+    #campfire-navigator-full .cf-rail-label { padding:17px 14px 8px; }
+    #campfire-navigator-full .cf-nav { display:grid; gap:3px; padding:0 7px; }
+    #campfire-navigator-full .cf-nav-btn { display:flex; align-items:center; gap:9px; width:100%; padding:10px 8px; border:0; border-left:2px solid transparent; border-radius:4px; background:transparent; text-align:left; }
+    #campfire-navigator-full .cf-nav-btn:hover { background:var(--hover); }
+    #campfire-navigator-full .cf-nav-btn[aria-pressed="true"] { background:var(--selected); border-left-color:var(--green); }
+    #campfire-navigator-full .cf-nav-btn .cf-count { margin-left:auto; font-variant-numeric:tabular-nums; color:var(--muted); }
+    #campfire-navigator-full .cf-nav-icon { width:13px; flex:none; color:var(--muted); text-align:center; }
+    #campfire-navigator-full .cf-nav-btn[aria-pressed="true"] .cf-nav-icon { color:var(--green); }
+    #campfire-navigator-full .cf-rail-bottom { margin-top:auto; padding:16px 13px; border-top:1px solid var(--line); color:var(--muted); font-size:11px; line-height:1.6; }
+    #campfire-navigator-full .cf-rail-bottom strong { display:block; color:var(--text); font-size:12px; font-weight:500; margin-bottom:4px; }
+    #campfire-navigator-full .cf-list-pane { border-right:1px solid var(--line); min-width:0; display:flex; flex-direction:column; }
+    #campfire-navigator-full .cf-list-head { padding:17px 15px 12px; border-bottom:1px solid var(--line); }
+    #campfire-navigator-full .cf-list-title { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+    #campfire-navigator-full .cf-list-title h2 { margin:0; font-size:15px; line-height:1.3; font-weight:600; }
+    #campfire-navigator-full .cf-small { color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-list-sub { margin:5px 0 0; color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-filter { display:flex; align-items:center; gap:7px; margin-top:14px; padding:5px 9px; border:1px solid var(--line); border-radius:5px; background:var(--bg); color:var(--muted); }
+    #campfire-navigator-full .cf-filter:focus-within { outline:1px solid var(--green); }
+    #campfire-navigator-full .cf-filter input { min-width:0; width:100%; padding:2px 0; border:0; outline:0; background:transparent; color:var(--text); font-size:12px; }
+    #campfire-navigator-full .cf-filter input::placeholder { color:var(--muted); opacity:1; }
+    #campfire-navigator-full .cf-filter-key { border:1px solid var(--line); border-radius:3px; padding:0 4px; line-height:1.3; }
+    #campfire-navigator-full .cf-items { padding:7px; flex:1; }
+    #campfire-navigator-full .cf-row { display:block; width:100%; margin:0 0 3px; padding:10px 9px 10px 10px; background:transparent; border:0; border-left:2px solid transparent; border-radius:4px; text-align:left; }
+    #campfire-navigator-full .cf-row:hover { background:var(--hover); }
+    #campfire-navigator-full .cf-row[aria-pressed="true"] { background:var(--selected); border-left-color:var(--green); }
+    #campfire-navigator-full .cf-row-top { display:flex; align-items:baseline; gap:8px; }
+    #campfire-navigator-full .cf-symbol { flex:none; font-weight:700; width:12px; text-align:center; }
+    #campfire-navigator-full .cf-symbol.amber { color:var(--amber); }
+    #campfire-navigator-full .cf-symbol.red { color:var(--red); }
+    #campfire-navigator-full .cf-symbol.blue { color:var(--blue); }
+    #campfire-navigator-full .cf-symbol.green { color:var(--green); }
+    #campfire-navigator-full .cf-row-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+    #campfire-navigator-full .cf-row-id { flex:none; color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-row-meta { display:block; padding-left:20px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-empty { padding:28px 12px; color:var(--muted); }
+    #campfire-navigator-full .cf-list-foot { border-top:1px solid var(--line); padding:11px 15px; color:var(--muted); font-size:11px; line-height:1.5; }
+    #campfire-navigator-full .cf-detail { min-width:0; padding:0 24px 20px; }
+    #campfire-navigator-full .cf-detail-top { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:55px; border-bottom:1px solid var(--line); }
+    #campfire-navigator-full .cf-state { padding:3px 7px; background:var(--panel-2); border-radius:4px; font-size:11px; white-space:nowrap; }
+    #campfire-navigator-full .cf-state.amber { color:var(--amber); }
+    #campfire-navigator-full .cf-state.red { color:var(--red); }
+    #campfire-navigator-full .cf-state.blue { color:var(--blue); }
+    #campfire-navigator-full .cf-state.green { color:var(--green); }
+    #campfire-navigator-full .cf-record-type { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+    #campfire-navigator-full .cf-detail h2 { margin:19px 0 7px; font-size:21px; line-height:1.25; font-weight:600; letter-spacing:-.025em; }
+    #campfire-navigator-full .cf-summary { margin:0 0 17px; max-width:72ch; line-height:1.55; }
+    #campfire-navigator-full .cf-tabs { display:flex; gap:17px; border-bottom:1px solid var(--line); }
+    #campfire-navigator-full .cf-tab { padding:10px 1px 9px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--muted); }
+    #campfire-navigator-full .cf-tab[aria-pressed="true"] { border-bottom-color:var(--green); color:var(--text); }
+    #campfire-navigator-full .cf-tab-content { padding-top:16px; }
+    #campfire-navigator-full .cf-section { margin:0 0 22px; }
+    #campfire-navigator-full .cf-section h3 { margin:0 0 10px; font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:.08em; }
+    #campfire-navigator-full .cf-fact { display:grid; grid-template-columns:112px minmax(0,1fr); gap:13px; padding:8px 0; border-top:1px solid var(--line); }
+    #campfire-navigator-full .cf-fact-label { color:var(--muted); }
+    #campfire-navigator-full .cf-fact-value { min-width:0; overflow-wrap:anywhere; }
+    #campfire-navigator-full .cf-note-box { margin-top:12px; padding:11px 13px; border-left:2px solid var(--amber); background:var(--panel); font-size:12px; line-height:1.5; }
+    #campfire-navigator-full .cf-note-box.green { border-left-color:var(--green); }
+    #campfire-navigator-full .cf-source { padding:11px 0; border-top:1px solid var(--line); }
+    #campfire-navigator-full .cf-source:first-child { border-top:0; padding-top:0; }
+    #campfire-navigator-full .cf-source b { font-weight:500; }
+    #campfire-navigator-full .cf-source p { margin:3px 0 0; color:var(--muted); font-size:12px; }
+    #campfire-navigator-full .cf-timeline { border-left:1px solid var(--line); margin-left:5px; padding-left:17px; }
+    #campfire-navigator-full .cf-event { position:relative; margin-bottom:18px; }
+    #campfire-navigator-full .cf-event:before { content:""; position:absolute; top:5px; left:-22px; width:7px; height:7px; border-radius:50%; border:1px solid var(--green); background:var(--bg); }
+    #campfire-navigator-full .cf-event-time { color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-event p { margin:2px 0 0; }
+    #campfire-navigator-full .cf-footer { display:flex; flex-wrap:wrap; gap:8px 22px; padding:11px 18px; border-top:1px solid var(--line); background:var(--panel); color:var(--muted); font-size:11px; }
+    #campfire-navigator-full .cf-footer b { color:var(--text); font-weight:500; }
+    #campfire-navigator-full .cf-footer .cf-concept { margin-left:auto; }
+    #campfire-navigator-full .cf-muted { color:var(--muted); }
+    @media(max-width:970px) {
+      #campfire-navigator-full .cf-body { grid-template-columns:145px minmax(270px,38%) minmax(0,1fr); }
+      #campfire-navigator-full .cf-detail { padding:0 17px 20px; }
+      #campfire-navigator-full .cf-fact { grid-template-columns:85px minmax(0,1fr); gap:8px; }
+    }
+    @media(max-width:720px) {
+      #campfire-navigator-full .cf-body { display:block; }
+      #campfire-navigator-full .cf-rail { border-right:0; border-bottom:1px solid var(--line); }
+      #campfire-navigator-full .cf-rail-label, #campfire-navigator-full .cf-rail-bottom { display:none; }
+      #campfire-navigator-full .cf-nav { display:flex; flex-wrap:wrap; gap:4px; padding:7px; }
+      #campfire-navigator-full .cf-nav-btn { width:auto; white-space:nowrap; padding:7px 9px; }
+      #campfire-navigator-full .cf-nav-btn .cf-count { margin-left:2px; }
+      #campfire-navigator-full .cf-list-pane { border-right:0; border-bottom:1px solid var(--line); }
+      #campfire-navigator-full .cf-items { min-height:200px; }
+      #campfire-navigator-full .cf-detail { min-height:400px; }
+      #campfire-navigator-full .cf-top-right { display:none; }
+      #campfire-navigator-full .cf-footer .cf-concept { width:100%; margin-left:0; }
+    }
+    @media(max-width:420px) {
+      #campfire-navigator-full .cf-top { padding:10px 12px; gap:8px; }
+      #campfire-navigator-full .cf-goal { display:block; padding:10px 12px; }
+      #campfire-navigator-full .cf-goal-text { display:block; margin-top:3px; }
+      #campfire-navigator-full .cf-list-head { padding:13px 12px; }
+      #campfire-navigator-full .cf-detail { padding:0 12px 18px; }
+      #campfire-navigator-full .cf-detail h2 { font-size:18px; }
+      #campfire-navigator-full .cf-fact { grid-template-columns:1fr; gap:0; }
+    }
+  </style>
+  <div class="cf-window">
+    <header class="cf-top">
+      <span class="cf-brand">◆ CAMPFIRE</span>
+      <span class="cf-path">/ billing-deploy</span>
+      <span class="cf-top-right"><strong>Ana</strong> · read snapshot 14:32<br>workspace records, not live sessions</span>
+    </header>
+    <div class="cf-goal"><span class="cf-kicker">Workspace goal</span><span class="cf-goal-text">Resolve billing deployment failures and ship a safe migration</span></div>
+    <div class="cf-body">
+      <aside class="cf-rail" aria-label="Workspace navigation">
+        <div class="cf-rail-label cf-kicker">Navigate</div>
+        <nav class="cf-nav" aria-label="Navigator sections">
+          <button type="button" class="cf-nav-btn cursor-interaction" data-cf-category="attention" aria-pressed="true"><span class="cf-nav-icon">◆</span><span>Needs you</span><span class="cf-count">3</span></button>
+          <button type="button" class="cf-nav-btn cursor-interaction" data-cf-category="work" aria-pressed="false"><span class="cf-nav-icon">▤</span><span>Team work</span><span class="cf-count">64</span></button>
+          <button type="button" class="cf-nav-btn cursor-interaction" data-cf-category="decisions" aria-pressed="false"><span class="cf-nav-icon">◇</span><span>Decisions</span><span class="cf-count">4</span></button>
+          <button type="button" class="cf-nav-btn cursor-interaction" data-cf-category="people" aria-pressed="false"><span class="cf-nav-icon">○</span><span>People</span><span class="cf-count">20</span></button>
+        </nav>
+        <div class="cf-rail-bottom"><strong>20 people · 37 agents</strong>Registered relationships only. Presence and running sessions are not inferred.</div>
+      </aside>
+      <section class="cf-list-pane" aria-labelledby="cf-list-title">
+        <div class="cf-list-head">
+          <div class="cf-list-title"><h2 id="cf-list-title">Needs you</h2><span class="cf-small" id="cf-list-count">3 cues</span></div>
+          <p class="cf-list-sub" id="cf-list-sub">Recorded changes that may need a human response</p>
+          <label class="cf-filter"><span aria-hidden="true">⌕</span><input id="cf-filter-input" type="search" placeholder="Filter these shown records" aria-label="Filter shown records"><span class="cf-filter-key">/</span></label>
+        </div>
+        <div class="cf-items" id="cf-items" aria-label="Recorded items"></div>
+        <div class="cf-list-foot" id="cf-list-foot">Showing all 3 attention cues in this illustrative snapshot.</div>
+      </section>
+      <main class="cf-detail" id="cf-detail" aria-live="polite"></main>
+    </div>
+    <footer class="cf-footer"><span><b>j / k</b> select shown row</span><span><b>/</b> filter</span><span><b>esc</b> clear filter</span><span class="cf-concept">Navigator concept · illustrative records</span></footer>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('campfire-navigator-full');
+      const itemsEl = root.querySelector('#cf-items');
+      const detailEl = root.querySelector('#cf-detail');
+      const filterEl = root.querySelector('#cf-filter-input');
+      const categories = {
+        attention:{title:'Needs you',count:'3 cues',sub:'Recorded changes that may need a human response',foot:'Showing all 3 attention cues in this illustrative snapshot.',ids:['decision','blocker','report']},
+        work:{title:'Team work',count:'8 shown / 64',sub:'Tasks are paged; this view shows a sample of the returned page',foot:'8 representative tasks shown · 64 total recorded tasks · retrieve another page to see more.',ids:['blocker','migration','traces','rollback','schema','canary','metrics','docs']},
+        decisions:{title:'Decisions',count:'4 recorded',sub:'Recorded decisions and their current relationship to evidence',foot:'Showing 4 illustrative decisions. Accepted is a recorded state, not a product judgment.',ids:['decision','rollbackdecision','windowdecision','scopedecision']},
+        people:{title:'People',count:'8 shown / 20',sub:'Directory on demand · registered agents are relationships',foot:'8 representative people shown · 20 in directory · 37 registered agents across the team.',ids:['ana','ben','maya','luis','noor','iris','sam','jo']}
+      };
+      const records = {
+        decision:{type:'Decision',id:'dec_204',title:'Review migration decision',state:'Needs review',tone:'amber',symbol:'◇',meta:'Cites a withdrawn finding · Ana',summary:'The team accepted a two-phase migration, then the lock-duration finding used to support it was withdrawn. A person needs to review the decision before using it for the next deployment.',facts:[['Record state','Accepted · review cue'],['Recorded by','Ana via Codex'],['Last change','14:28 · cited finding withdrawn'],['Next action','Review the basis and record an explicit outcome']],sources:[['find_087 · withdrawn','The original lock-duration observation is no longer current.'],['task_318 · blocked','Ben is waiting for the decision review before completing the lock check.'],['art_091 · external reference','Migration lock report is cited, but the target has not been fetched or verified here.']],history:[['14:28','find_087 marked withdrawn; this review cue appeared.'],['11:06','Ana accepted the two-phase migration decision.'],['Yesterday','Ben recorded the lock-duration finding.']],note:'Campfire surfaces the changed evidence relationship. It does not reverse or replace the team’s decision.'},
+        blocker:{type:'Task',id:'task_318',title:'Verify migration lock duration',state:'Blocked',tone:'red',symbol:'■',meta:'Ben needs an answer · recorded task',summary:'Ben recorded a blocker while checking migration 284 against the deployment timeout. The next step depends on reviewing the cited migration decision.',facts:[['Record state','Blocked'],['Owner','Ben'],['Contribution','Ben via OpenCode'],['Dependency','dec_204 · accepted, needs review']],sources:[['dec_204 · needs review','Decision cited by this task.'],['find_087 · withdrawn','The lock-duration observation requires a new check.']],history:[['14:30','Ben recorded the task blocker.'],['11:06','The cited decision was accepted.']],note:'Blocked describes the task record. It does not mean Ben or OpenCode is running now.'},
+        report:{type:'Artifact',id:'art_091',title:'Inspect cited migration report',state:'External reference',tone:'blue',symbol:'○',meta:'Linked report · availability unknown',summary:'A report in another system is cited as evidence for the migration work. Campfire shows the recorded reference and its relationship to the task.',facts:[['Record state','Reference recorded'],['Recorded by','Ana via Codex'],['Related work','task_318 · verify lock duration'],['Location','External system']],sources:[['find_087 · withdrawn','Finding originally cited this report.'],['dec_204 · needs review','Decision still points to the finding.']],history:[['Yesterday','Ana attached the report reference to the workspace.']],note:'The external target has not been fetched, checked for availability, or granted to this viewer.'},
+        migration:{type:'Task',id:'task_322',title:'Prepare migration fix',state:'Open',tone:'blue',symbol:'○',meta:'Ana · depends on lock check',summary:'Prepare the migration change after the lock-duration evidence and decision review are resolved.',facts:[['Record state','Open'],['Owner','Ana'],['Dependency','task_318 · blocked'],['Contribution','Ana via Codex']],sources:[['task_318 · blocked','Lock-duration check must finish first.']],history:[['13:02','Ana created the task.']],note:'Open is a recorded lifecycle state; it is not an instruction to launch an agent.'},
+        traces:{type:'Task',id:'task_325',title:'Review timeout traces',state:'In progress',tone:'green',symbol:'◐',meta:'Maya · finding linked',summary:'Review deployment traces and record the observed timeout boundary for the billing deploy.',facts:[['Record state','In progress'],['Owner','Maya'],['Related finding','find_092']],sources:[['find_092 · current','Recorded timeout observation.']],history:[['13:44','Maya updated this task to in progress.']],note:'In progress is a task lifecycle label, not live presence.'},
+        rollback:{type:'Task',id:'task_328',title:'Check deploy rollback',state:'Open',tone:'blue',symbol:'○',meta:'Luis · external PR cited',summary:'Confirm the rollback path before the deployment plan changes.',facts:[['Record state','Open'],['Owner','Luis'],['External reference','PR #284']],sources:[['PR #284 · external reference','Campfire has not fetched or verified this target.']],history:[['12:18','Luis created the task.']],note:'The external pull request may require separate access.'},
+        schema:{type:'Task',id:'task_330',title:'Validate schema compatibility',state:'Open',tone:'blue',symbol:'○',meta:'Noor · test plan attached',summary:'Check compatibility between the current billing schema and the proposed migration.',facts:[['Record state','Open'],['Owner','Noor'],['Related artifact','art_096 · test plan']],sources:[['art_096 · recorded reference','Compatibility test plan.']],history:[['11:52','Noor created the task.']],note:'The recorded work item is available to authorized workspace participants.'},
+        canary:{type:'Task',id:'task_332',title:'Define canary threshold',state:'Open',tone:'blue',symbol:'○',meta:'Iris · waiting on metrics',summary:'Set an explicit threshold for the first billing deployment canary.',facts:[['Record state','Open'],['Owner','Iris'],['Dependency','task_334 · metrics baseline']],sources:[['task_334 · in progress','Metrics baseline needed for threshold.']],history:[['10:24','Iris created the task.']],note:'This is an assigned work item, not an agent run.'},
+        metrics:{type:'Task',id:'task_334',title:'Record error-rate baseline',state:'In progress',tone:'green',symbol:'◐',meta:'Sam · observation underway',summary:'Record the pre-migration error-rate baseline for comparison with the canary.',facts:[['Record state','In progress'],['Owner','Sam'],['Related work','task_332 · canary threshold']],sources:[['task_332 · open','Threshold depends on this baseline.']],history:[['09:47','Sam updated the task.']],note:'The task state says nothing about whether an agent is currently active.'},
+        docs:{type:'Task',id:'task_336',title:'Update operator runbook',state:'Open',tone:'blue',symbol:'○',meta:'Jo · after migration plan',summary:'Document the final rollout and rollback steps once the migration decision is reviewed.',facts:[['Record state','Open'],['Owner','Jo'],['Dependency','dec_204 · needs review']],sources:[['dec_204 · needs review','The runbook needs an operative plan.']],history:[['Yesterday','Jo created the task.']],note:'A linked decision still requires human review.'},
+        rollbackdecision:{type:'Decision',id:'dec_198',title:'Keep rollback under ten minutes',state:'Accepted',tone:'green',symbol:'◇',meta:'Luis · supported by test',summary:'The team recorded a rollback time target for the billing deployment.',facts:[['Record state','Accepted'],['Recorded by','Luis'],['Evidence','find_080 · current']],sources:[['find_080 · current','Rollback rehearsal observation.']],history:[['Yesterday','Luis recorded the accepted decision.']],note:'Accepted is the workspace record state.'},
+        windowdecision:{type:'Decision',id:'dec_193',title:'Use a low-traffic deploy window',state:'Accepted',tone:'green',symbol:'◇',meta:'Ana · operations plan',summary:'The team selected a low-traffic window for the migration rollout.',facts:[['Record state','Accepted'],['Recorded by','Ana'],['Related artifact','art_083 · schedule']],sources:[['art_083 · recorded reference','Operations schedule.']],history:[['Monday','Ana recorded the accepted decision.']],note:'The cited schedule is an external reference.'},
+        scopedecision:{type:'Decision',id:'dec_190',title:'Limit first release to billing API',state:'Proposed',tone:'blue',symbol:'◇',meta:'Noor · awaiting review',summary:'A proposed scope boundary for the initial migration release.',facts:[['Record state','Proposed'],['Recorded by','Noor'],['Next action','Review and record an outcome']],sources:[['task_330 · open','Schema compatibility check informs this proposal.']],history:[['Monday','Noor proposed the scope boundary.']],note:'Proposed decisions are not operative until reviewed.'},
+        ana:{type:'Person',id:'person_01',title:'Ana Rivera',state:'Member',tone:'green',symbol:'○',meta:'3 registered agents · migration lead',summary:'Ana contributes to the billing deployment workspace and is responsible for the migration plan.',facts:[['Role','Migration lead'],['Workspace','billing-deploy'],['Registered agents','3 · Codex, Claude Code, OpenCode'],['Recent record','dec_204 · needs review']],sources:[['dec_204 · decision','Ana recorded the two-phase migration decision.'],['task_322 · task','Ana owns the migration fix.']],history:[['14:28','A finding cited by Ana’s decision was withdrawn.'],['11:06','Ana accepted dec_204.']],note:'Registrations identify allowed agent relationships. They do not show whether Ana or an agent is online.'},
+        ben:{type:'Person',id:'person_02',title:'Ben Ortiz',state:'Member',tone:'green',symbol:'○',meta:'2 registered agents · deploy checks',summary:'Ben contributes deployment checks and handoff notes to this workspace.',facts:[['Role','Deploy checks'],['Workspace','billing-deploy'],['Registered agents','2 · OpenCode, Codex'],['Recent record','task_318 · blocked']],sources:[['task_318 · task','Ben recorded the migration lock blocker.']],history:[['14:30','Ben updated task_318.']],note:'No live session or availability is inferred from registration.'},
+        maya:{type:'Person',id:'person_03',title:'Maya Chen',state:'Member',tone:'green',symbol:'○',meta:'2 registered agents · observability',summary:'Maya reviews deployment traces and records findings for the team.',facts:[['Role','Observability'],['Workspace','billing-deploy'],['Registered agents','2'],['Recent record','task_325 · in progress']],sources:[['task_325 · task','Review timeout traces.']],history:[['13:44','Maya updated task_325.']],note:'In-progress work is not a presence signal.'},
+        luis:{type:'Person',id:'person_04',title:'Luis Vega',state:'Member',tone:'green',symbol:'○',meta:'1 registered agent · rollback',summary:'Luis owns rollback checks for this deployment.',facts:[['Role','Rollback'],['Workspace','billing-deploy'],['Registered agents','1'],['Recent record','task_328 · open']],sources:[['task_328 · task','Check deploy rollback.'],['dec_198 · decision','Rollback target.']],history:[['12:18','Luis created task_328.']],note:'Agent registration does not indicate a running agent.'},
+        noor:{type:'Person',id:'person_05',title:'Noor Ahmed',state:'Member',tone:'green',symbol:'○',meta:'3 registered agents · schema',summary:'Noor owns schema compatibility checks and a proposed scope boundary.',facts:[['Role','Schema'],['Registered agents','3'],['Recent record','task_330 · open']],sources:[['task_330 · task','Validate schema compatibility.'],['dec_190 · proposed','Limit release scope.']],history:[['11:52','Noor created task_330.']],note:'Only recorded contributions are shown.'},
+        iris:{type:'Person',id:'person_06',title:'Iris Park',state:'Member',tone:'green',symbol:'○',meta:'2 registered agents · canary',summary:'Iris is defining the canary threshold for the first rollout.',facts:[['Role','Canary'],['Registered agents','2'],['Recent record','task_332 · open']],sources:[['task_332 · task','Define canary threshold.']],history:[['10:24','Iris created task_332.']],note:'This directory is on demand, keeping the default work view compact.'},
+        sam:{type:'Person',id:'person_07',title:'Sam Brooks',state:'Member',tone:'green',symbol:'○',meta:'1 registered agent · metrics',summary:'Sam records the metrics baseline for the migration.',facts:[['Role','Metrics'],['Registered agents','1'],['Recent record','task_334 · in progress']],sources:[['task_334 · task','Record error-rate baseline.']],history:[['09:47','Sam updated task_334.']],note:'Task state is distinct from live activity.'},
+        jo:{type:'Person',id:'person_08',title:'Jo Martin',state:'Member',tone:'green',symbol:'○',meta:'2 registered agents · runbooks',summary:'Jo maintains operator documentation for the deployment.',facts:[['Role','Runbooks'],['Registered agents','2'],['Recent record','task_336 · open']],sources:[['task_336 · task','Update operator runbook.']],history:[['Yesterday','Jo created task_336.']],note:'Agent registrations are shown as a count until a person is selected.'}
+      };
+      let category = 'attention';
+      let selected = 'decision';
+      let tab = 'overview';
+      const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      function rows() { const q=filterEl.value.trim().toLowerCase(); return categories[category].ids.filter(id => !q || [records[id].title,records[id].id,records[id].meta,records[id].state].some(v=>v.toLowerCase().includes(q))); }
+      function renderList(){
+        const c=categories[category];
+        root.querySelector('#cf-list-title').textContent=c.title;
+        root.querySelector('#cf-list-count').textContent=c.count;
+        root.querySelector('#cf-list-sub').textContent=c.sub;
+        root.querySelector('#cf-list-foot').textContent=c.foot;
+        root.querySelectorAll('[data-cf-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cfCategory===category)));
+        const shown=rows();
+        if(!shown.includes(selected)) selected=shown[0]||null;
+        itemsEl.innerHTML=shown.length?shown.map(id=>{
+          const r=records[id];return `<button type="button" class="cf-row cursor-interaction" data-cf-row="${esc(id)}" aria-pressed="${selected===id}" data-tooltip="${esc(r.title)}"><span class="cf-row-top"><span class="cf-symbol ${esc(r.tone)}">${esc(r.symbol)}</span><span class="cf-row-name">${esc(r.title)}</span><span class="cf-row-id">${esc(r.id)}</span></span><span class="cf-row-meta">${esc(r.meta)}</span></button>`;
+        }).join(''):'<div class="cf-empty">No records match this filter on the shown page.</div>';
+        itemsEl.querySelectorAll('[data-cf-row]').forEach(b=>b.addEventListener('click',()=>{selected=b.dataset.cfRow;tab='overview';renderList();renderDetail();}));
+      }
+      function renderDetail(){
+        if(!selected){detailEl.innerHTML='<div class="cf-detail-top"><span class="cf-kicker">Selected source</span></div><p class="cf-muted">Clear the filter to inspect a record.</p>';return;}
+        const r=records[selected];
+        const facts=`<section class="cf-section"><h3>Record at a glance</h3>${r.facts.map(([a,b])=>`<div class="cf-fact"><span class="cf-fact-label">${esc(a)}</span><span class="cf-fact-value">${esc(b)}</span></div>`).join('')}</section><div class="cf-note-box ${r.type==='Person'?'green':''}">${esc(r.note)}</div>`;
+        const sources=`<section class="cf-section"><h3>Linked sources · recorded relationships</h3>${r.sources.map(([a,b])=>`<div class="cf-source"><b>${esc(a)}</b><p>${esc(b)}</p></div>`).join('')}</section><div class="cf-note-box">References and access are scoped to the workspace snapshot. External targets are not implied to be available.</div>`;
+        const history=`<section class="cf-section"><h3>Recorded changes</h3><div class="cf-timeline">${r.history.map(([a,b])=>`<div class="cf-event"><div class="cf-event-time">${esc(a)}</div><p>${esc(b)}</p></div>`).join('')}</div></section>`;
+        detailEl.innerHTML=`<div class="cf-detail-top"><span class="cf-record-type">Selected source · ${esc(r.type)} ${esc(r.id)}</span><span class="cf-state ${esc(r.tone)}">${esc(r.state)}</span></div><h2>${esc(r.title)}</h2><p class="cf-summary">${esc(r.summary)}</p><div class="cf-tabs" role="group" aria-label="Record detail"><button type="button" class="cf-tab cursor-interaction" data-cf-tab="overview" aria-pressed="${tab==='overview'}">Overview</button><button type="button" class="cf-tab cursor-interaction" data-cf-tab="sources" aria-pressed="${tab==='sources'}">Sources <span class="cf-muted">${r.sources.length}</span></button><button type="button" class="cf-tab cursor-interaction" data-cf-tab="history" aria-pressed="${tab==='history'}">History <span class="cf-muted">${r.history.length}</span></button></div><div class="cf-tab-content">${tab==='overview'?facts:tab==='sources'?sources:history}</div>`;
+        detailEl.querySelectorAll('[data-cf-tab]').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.cfTab;renderDetail();}));
+      }
+      root.querySelectorAll('[data-cf-category]').forEach(b=>b.addEventListener('click',()=>{category=b.dataset.cfCategory;filterEl.value='';selected=categories[category].ids[0];tab='overview';renderList();renderDetail();}));
+      filterEl.addEventListener('input',()=>{renderList();renderDetail();});
+      root.addEventListener('keydown',e=>{
+        if(e.key==='Escape' && document.activeElement===filterEl){filterEl.value='';filterEl.blur();renderList();renderDetail();e.preventDefault();return;}
+        if(e.key==='/' && document.activeElement!==filterEl){filterEl.focus();e.preventDefault();return;}
+        if((e.key==='j'||e.key==='k') && document.activeElement!==filterEl){const shown=rows();if(!shown.length)return;const index=shown.indexOf(selected);selected=shown[(index+(e.key==='j'?1:-1)+shown.length)%shown.length];tab='overview';renderList();renderDetail();itemsEl.querySelector('[aria-pressed="true"]')?.scrollIntoView({block:'nearest'});e.preventDefault();}
+      });
+      renderList();renderDetail();
+    })();
+  </script>
+</div>

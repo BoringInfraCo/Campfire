@@ -1469,7 +1469,13 @@ v1.19 — Trustworthy Team Attention   ATT-001: v1.18.0 baseline frozen (fixture
         ↓
 v1.20 — Shared Work Console   UIX-001: read-only terminal dashboard (`campfire dashboard`) and Viewer refresh implemented, D1–D6 pass, independently verified; five pre-registered cold tasks NOT OBSERVED; recorded as CONDITIONAL GO — engineering candidate; founder directed a public v1.20.0 release under the recorded release-scope override (docs/RELEASE_V1_20_DECISION.md); v1.20.0 frozen unpublished before promotion (machine-local Playwright path in the pty capture test, repaired in `70f4023`: PTY assertions mandatory, evidence capture opt-in); release re-cut as v1.20.1 under the recorded release-scope override (docs/RELEASE_V1_20_1_DECISION.md); published and deployed as v1.20.1
         ↓
-v1.21 — Artifact reference handoff   ARH-001: v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human materials frozen (commit `cec4e63`); result **UNSCORED** — the real reference-open attempt and the two-human/two-harness handoff are NOT OBSERVED, so no bounded repair is scoped and no v1.21 feature exists; if an ordinary-work attempt later shows an access or navigation failure, scope the smallest authorized inspect/open path while the external system keeps the file; no file hosting, automatic ingestion, or gate claim by declaration
+v1.21 — Artifact reference handoff   ARH-001: initial result **UNSCORED**, real reference-open and two-human/two-harness handoff NOT OBSERVED; a separately scoped artifact-navigation candidate later reached **ENGINEERING PASS — human outcome NOT OBSERVED** (commit `ace3b0f`); no release decision or publication recorded; external systems keep file bytes
+        ↓
+provisional v1.22 — NAV-001 Focused Terminal Navigator   work-first list and one selected record over existing authorized reads; scope and release decision still required
+        ↓
+provisional v1.23 — NAV-002 Source and People Drill-down   real source/history coverage, paged work, and on-demand people/agent relationships; scope and release decision still required
+        ↓
+provisional v1.24 — NAV-003 Viewer Alignment and Human Use   matching navigation semantics in the Viewer and a recorded human-use outcome; scope and release decision still required
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1751,6 +1757,29 @@ published and deployed under a separate founder release-scope override. See
 `docs/SPRINT_UIX_001_RESULT.md`, and `docs/RELEASE_V1_20_1_DECISION.md`.
 The release did not close the ATT-001/WCO-001 observations or Gate B/C/E/F.
 
+**Focused Navigator concept (October 16):** The founder selected the
+[interactive Navigator mockup](mockups/campfire-navigator.html) as the next
+interface direction to explore after comparing the dense Rex-style agent panes
+with a compact list-and-detail layout. Open the HTML locally to inspect the
+sections and record details; the [editable fragment](mockups/campfire-navigator.fragment.html)
+is kept beside it. This is an illustrative design reference, **not shipped
+behavior, a frozen sprint scope, or evidence from a human trace**. Its sample
+people, agents, counts, and work records are fictional.
+
+The proposed default is a workspace-first **Needs you** list, with bounded
+Team work and Decisions views. Selecting one item opens its recorded state,
+source relationships, provenance, and history in a single detail pane. People
+move to an on-demand directory, where registered agent relationships appear
+only when relevant, so a workspace with 20 people and many agents does not
+become a wall of terminal panes. The design keeps bounded-result labels
+visible, distinguishes a registered agent from a
+live session, and treats external artifacts as recorded references whose
+availability and access are not implied. It borrows focused navigation from
+Minimal and the scanability of Rex without turning Campfire into an agent
+runner or terminal multiplexer. Any implementation still needs a separately
+scoped sprint and comparison against the shipped v1.20.1 CLI and Viewer under
+the open UIX-001 observation rules.
+
 ### v1.21 candidate — make cited work usable in a handoff
 
 The sprint contract is
@@ -1761,7 +1790,9 @@ baseline, fixture, evidence plan, and human materials are frozen in commit
 `cec4e63`; the recorded result is **UNSCORED**
 (`docs/SPRINT_ARH_001_RESULT.md`): the ordinary-work reference-open attempt
 and the two-human/two-harness handoff are **NOT OBSERVED**, so no Campfire gap
-is observed and no v1.21 feature exists yet.
+was observed at that stop point and no repair was scoped under the original
+observation-first rule. A later, separately scoped candidate is recorded below;
+it does not change the UNSCORED result.
 
 **October 16 founder sequencing decision:** the observation-first
 implementation hold in ARH-001 is waived prospectively for a bounded
@@ -1776,6 +1807,15 @@ all other sprint/gate observations remain unchanged. Human observations are
 collected alongside subsequent real work rather than serving as a standing
 prerequisite to implementation or publication.
 
+The bounded candidate is now implemented and independently verified as
+**ENGINEERING PASS — human outcome NOT OBSERVED** (`ace3b0f`;
+`docs/SPRINT_ARH_001_RESULT.md` §9). Its typed reference classes and cited-by
+relations appear in the terminal and Viewer; only the Viewer has a deliberate
+open control for safe absolute HTTPS references. No v1.21 release decision,
+tag, or publication is recorded. The founder will handle any launch through a
+separate release decision; this roadmap update does not authorize promotion or
+claim that a recipient can open an external target.
+
 The [Guillermo Rauch interview assessment](GUILLERMO_RAUCH_INTERVIEW_ROADMAP_ASSESSMENT.md)
 sharpens the next product question: can an authorized teammate and a different
 agent use the **same recorded decision state and cited external output** without
@@ -1785,12 +1825,11 @@ recipient can open the target, understand its relationship to the decision, or
 act with the right permissions. Files remain in the system that owns them;
 Campfire keeps the authorized account of the work around them.
 
-Use the released v1.20.1 console as the baseline. For the prospective candidate,
-record a bounded scope and verify its authorized inspect/open behavior locally
-under the amended ARH-001 contract. In parallel, observe a reference-open
-attempt and the next person's handoff when ordinary work supplies an eligible
-case, including what the recipient tried, whether access succeeded, which
-source IDs they used, and whether they confused a historical or competing
+Use the released v1.20.1 console as the recorded candidate baseline. Continue
+to observe a reference-open attempt and the next person's handoff when ordinary
+work supplies an eligible case, including what the recipient tried, whether
+access succeeded, which source IDs they used, and whether they confused a
+historical or competing
 decision for current work. Record a denied or unavailable target as a result.
 Run the outstanding UIX-001 cold tasks, SWH-001/ATT-001 comprehension traces,
 and WCO-001 eligible two-person case under their own frozen rubrics when
@@ -1799,17 +1838,38 @@ this v1.21 work does not rescore those sprints or turn a rehearsal into a
 human observation. Gate B/C/E/F and VIS-001 condition 4 move only when their
 specific evidence rules are met.
 
-The founder has authorized scoping the smallest authorized inspect/open
-affordance for a typed external artifact reference before that human attempt;
-the original observation-first ARH-001 result remains UNSCORED. Preserve the
-record ID, source, contributor, any recorded relation to a finding, decision,
-or task, and currentness. Test authorized and unauthorized
-actors and stale or denied links. A displayed link must not claim Campfire
-fetched, verified, or synchronized the target. The v1.21 sprint contract must
-freeze its baseline, exact surface, access boundary, observation rubric, and
-release criteria before implementation is judged. A provider connector is
-conditional on a concrete need; file storage, automatic ingestion, rich
-previews, and an agent runner are outside this candidate slice.
+The candidate preserves record ID, source, contributor, recorded relations, and
+currentness, and its local checks cover authorized and unauthorized actors and
+unsafe references. A displayed link must not claim Campfire fetched, verified,
+or synchronized the target. A provider connector is conditional on a concrete
+need; file storage, automatic ingestion, rich previews, and an agent runner
+remain outside this candidate slice.
+
+### Provisional post-v1.21 sequence — build the Focused Navigator
+
+The [Navigator mockup](mockups/campfire-navigator.html) is the visual target,
+not an implementation contract. These are three **provisional sprint slots**
+after the founder's separate v1.21 launch decision. A sprint must pin the
+actually released baseline, freeze its exact scope and checks before code, and
+record engineering results separately from human outcomes. The version numbers
+below reserve order only; they do not authorize a release or require v1.21 to
+be described as shipped before it is.
+
+| Sprint slot | Bounded build | Exit evidence |
+| --- | --- | --- |
+| **NAV-001 — Focused Terminal Navigator** (provisional v1.22) | Reshape the existing read-only `campfire dashboard` around one active section, a compact record list, and one selected detail. Start with the authorized Needs You or team-attention cues; make Team work and Decisions one control away. Move the current eager agent and artifact rows out of the default screen. Preserve source IDs, lifecycle, reason, returned/total coverage, refresh age, stale errors, keyboard navigation, and terminal cleanup. Filtering is limited to records actually loaded. | Pin the released CLI/Viewer baseline and a frozen answer key. At 80×24 and 120×36, a person can find the goal, attention cue, current task, competing or needs-review decision, and selected source without losing a coverage or safety caveat. Verify TTY safety, authorization, existing CLI JSON compatibility, and no inferred live agent status. Record human comprehension separately. |
+| **NAV-002 — Source and People Drill-down** (provisional v1.23) | Add on-demand People with recorded human–agent relationships, and source/history views for the selected record. Page work with existing authorized list methods where possible; show the exact loaded subset and whether more records exist. Use recorded citations, evidence, and contributions only. If a per-record history or bounded participant read cannot be represented truthfully with current methods, freeze the smallest authorized read change in this sprint's contract before implementing it. Keep external-reference open behavior within its separately approved Viewer scope; the terminal does not become an external browser. | Exercise a fixture with at least 20 people, 37 registered agents, and 64 tasks. Show that the default screen stays focused, all visible counts and relationships come from the same authorized reads, later pages are reachable, and absent or truncated history is not presented as complete. Test denied reads, stale refreshes, hostile record text, and no presence inference. |
+| **NAV-003 — Viewer Alignment and Human Use** (provisional v1.24) | Give the existing read-only Viewer the same work-first navigation and selected-source hierarchy, adapted to browser and narrow-screen use rather than copied as terminal chrome. Keep My work/Team work, decision boundaries, source IDs, provenance, coverage, and the approved artifact-reference behavior in parity with the terminal. Expand the Viewer read allowlist only through an explicit security and compatibility review if NAV-002 proves a new read necessary. | Check cross-surface parity, keyboard/focus behavior, responsive layouts, and the existing authorization boundary. Run non-builder human tasks for finding work, explaining a needs-review or competing decision, locating a cited output, and distinguishing a person from registered agents. Record times, source IDs, wrong inferences, and unavailable participants. The frozen UIX-001, ATT-001, SWH-001, WCO-001, and ARH-001 observations keep their own rubrics and are not silently rescored by this sprint. |
+
+The mockup's `8/64` work and `8/20` people counts are fictional; production
+counts must come from authorized reads. Its artifact example under **Needs
+You** is also illustrative: the current attention model produces task and
+decision cues, so a cited artifact belongs under its linked source unless a
+separate observed need justifies a new attention rule. These sprints change
+presentation and bounded reads, not the canonical workspace or agent-runtime
+boundary. Each requires its own result and release decision; an engineering
+pass may support an accurately labeled release while human use remains
+NOT OBSERVED, but it does not close Gate B/C/E/F or an earlier sprint's trace.
 
 After ordinary teams show repeated value, one production event may be tested
 as a cited, reviewable finding or proposed task. It cannot silently become an
