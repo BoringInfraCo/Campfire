@@ -222,3 +222,22 @@ candidate's implementation claim now rests on the corrected commit and checks
 above. ARH-001's original UNSCORED human verdict and §3.2/§6 NOT OBSERVED
 items remain intact. No v1.21 version bump, public release, installer pin,
 or production deployment is authorized or recorded by this correction.
+
+**Dated addendum (2026-10-17, independent verification of §10 as shipped in v1.21.0):** the
+release published and deployed on October 17 (see `docs/RELEASE_V1_21_DECISION.md`) therefore
+includes this correction at the tagged commit `5523305…`; the deployed Worker serves the synced
+public Viewer copy from that tree. A post-publication independent verification pass re-derived §10
+from sources at the tag: (1) scope–code review of `ad42fb8` against the dated scope `5f2cfdb` —
+6/6 PASS, including real-browser-URL parsing with displayed-host equality, invalid-destination and
+browser-normalized-alias inertness, the exact seven provider-signed deny names in both mirrors plus
+the synced copy, no new read/fetch/endpoint/schema/open action, and no weakened tests; (2) all four
+red groups demonstrably fail on the pre-correction classifier (verified by executing the `ad42fb8^`
+code), and the corrected tree passes focused 39/39 and the full suite 95 files / 1,165 tests + 1
+opt-in skipped; (3) live headless-browser interplay on the shipped code with three injected
+corrected-case rows (invalid port, S3-signed, GCS-signed): correct inert classes, zero anchors,
+zero non-loopback requests across load/hover/idle, while the three standing openable rows retain
+the correct labeled anchor. Recorded footnote: §10's "original 59-row sample set … remain
+unchanged" sentence is superseded by release-prep commit `5523305`, which reworded one sample's
+path text (`C:/Users/demo/report.pdf` → `C:/Archive/demo/report.pdf`, identical class and
+expectation) for the export audit — disclosed in `docs/RELEASE_V1_21_DECISION.md`. Nothing here
+rescores §3.2/§6: the human outcome remains NOT OBSERVED; the public claim already marks it.

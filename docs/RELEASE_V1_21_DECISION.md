@@ -7,7 +7,7 @@
 **Contract:** `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md` (§0 founder sequencing amendment; §3.3–5 security and scope limits)
 **Candidate scope (frozen before code):** `docs/Campfire-v1.21-ARH-001-CANDIDATE-SCOPE.md` (commit `5258d5b`)
 **Sprint result:** `docs/SPRINT_ARH_001_RESULT.md` — §1–§8 **UNSCORED** (observations NOT OBSERVED, unchanged); §9 records the scoped candidate as **ENGINEERING PASS — human outcome NOT OBSERVED**
-**Candidate commits:** scope freeze `5258d5b`; implementation `ace3b0f`; result/evidence `d0e16f4`
+**Candidate commits:** scope freeze `5258d5b`; implementation `ace3b0f`; result/evidence `d0e16f4`; founder's dated post-result classifier correction (scope `5f2cfdb` → implementation `ad42fb8` → record `d6b442e`), independently verified as shipped — see below and result §10 addendum.
 
 ## Why this release exists
 
@@ -23,10 +23,11 @@ This document is that recorded release decision. It is **not a human-outcome res
 
 ## The exact release surface (nothing else)
 
-The published v1.20.1 surfaces gain exactly the scoped candidate (`ace3b0f`) and no other product change:
+The published v1.20.1 surfaces gain exactly the scoped candidate (`ace3b0f`) plus the founder's dated post-result classifier correction (`5f2cfdb` → `ad42fb8`, recorded in result §10) and no other product change:
 
 - **Typed reference projection** on both human surfaces (terminal dashboard and local read-only Viewer): each authorized Artifact's stored reference is classified by a frozen deterministic taxonomy — `openable https` / `insecure http` / `credential-bearing` / `local path` / `other scheme` (including internal record forms like `git:<sha>`) / `unparsed` / `none`, with C0/C1 control characters forcing inert. The destination host is shown for openable references before any navigation.
 - **Deliberate open control, Viewer only, for `openable https` only:** explicitly labeled ("Open `<host>` (external, unverified)"), `target="_blank"`, `rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`, keyboard-reachable, escaped markup; navigation happens only on the user's own activation. Rendering, refresh, hover, and source inspection make **zero** network requests (browser-asserted with request interception at wide and 420px viewports).
+- **Classifier hardening (the founder's dated correction, shipped in this release):** `openable https` additionally requires that the browser's URL parser accept the stored authority unchanged — the displayed host must equal the parsed host, so invalid destinations such as `https://example.com:99999/report` and browser-normalized aliases stay inert — and seven provider-signed query keys (`X-Amz-Signature`, `X-Goog-Signature`, `X-Amz-Credential`, `X-Goog-Credential`, `X-Amz-Security-Token`, `AWSAccessKeyID`, `GoogleAccessID`) join the credential deny-set as inert `credential-bearing` text. Independently verified as shipped at the tag by a post-publication pass (result §10 addendum): scope–code 6/6 PASS, all four red groups fail on the pre-correction code (execution-verified), focused tests 39/39, full suite 95 files / 1,165 tests + 1 opt-in skipped, and a live headless-DOM pass with the corrected cases rendering zero anchors and zero non-loopback requests.
 - **Recorded cited-by relations:** where the same authorized read records a Finding→Artifact `supports`/`contradicts` citation, the artifact row shows it as the recorded relation. No relation is ever inferred; absence is not asserted beyond the read; historical and competing decisions are not promoted.
 - **Terminal dashboard:** inspect-only (class, host, recorded cited-by, caveat). No open action, no shell command, no local-file open.
 - **Caveat text on both surfaces:** the target is external and unverified by Campfire, and workspace membership does not grant access.
@@ -38,7 +39,7 @@ The published v1.20.1 surfaces gain exactly the scoped candidate (`ace3b0f`) and
 | Evidence | Status in this release |
 | --- | --- |
 | ARH-001 §3.2 ordinary-work attempt, §6 two-human/two-harness handoff, H1–H6 | **NOT OBSERVED** (unchanged; UNSCORED verdict stands) |
-| Deterministic D1–D6 candidate checks, typecheck, full suite (95 files / 1161 + 1 opt-in skipped), build, `pack:tarball`, `deploy:dry-run`, terminal/browser inspection | **Engineering PASS**, recorded in result §9 with the two-pass verification chain and the browser-capture evidence (`docs/evidence/arh-001/candidate/`) |
+| Deterministic D1–D6 candidate checks, typecheck, full suite (95 files / 1,165 tests + 1 opt-in skipped at the shipped tag, including the §10 correction), build, `pack:tarball`, `deploy:dry-run`, terminal/browser inspection | **Engineering PASS**, recorded in result §9 with the two-pass verification chain and the browser-capture evidence (`docs/evidence/arh-001/candidate/`), plus the §10-correction independent verification (result §10 addendum) and the release-prep runs at `6d39a51`–`5523305` (the sole interim failure was the expected install-channel assertion, now green after the pin) | |
 | Whether a real user opens an external output and completes a handoff | **Unmeasured.** Later observations record it under their own date, per §2/§6. |
 | VIS-001 condition 4; SWH-001/WCO-001/ATT-001/UIX-001 observations; Gate B/C/E/F | **Unchanged/unmeasured.** This release satisfies none of them and moves none. |
 | A live interactive human walk of the released surface | **Unmeasured.** The pre-release browser check was headless, scripted, at two viewport sizes. |
