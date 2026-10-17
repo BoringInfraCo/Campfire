@@ -133,6 +133,7 @@ function loadAppSandbox() {
       throw new Error("no fetch in sandbox");
     },
     setInterval: () => 0,
+    URL,
     CSS: { escape: (value: string) => value },
     console,
   };

@@ -196,7 +196,8 @@ export function taskStatusLabel(status: string): string {
 //     backtick, backslash, `%`, or non-ASCII, so neither a terminal, an
 //     attribute boundary, nor a URL re-decode can reinterpret it;
 //   - the scheme compare is case-insensitive (WHATWG lowercases schemes); the
-//     displayed host stays the stored authority text.
+//     displayed host stays the stored authority text. A browser parse must
+//     accept that URL without changing the announced host.
 //
 // The hostile sweep (`unsafe`) applies to every class: C0/C1 control
 // characters (U+0000–U+001F, U+007F–U+009F) or a newline force the row inert
@@ -228,7 +229,7 @@ export interface ArtifactReferenceClassification {
   openable: boolean;
 }
 
-/** Frozen scope §2 credential query deny-set, matched lowercase and exactly. */
+/** Scope §2 query deny-set plus the dated §9 signed-URL correction. */
 export const ARTIFACT_CREDENTIAL_QUERY_DENY_SET: ReadonlySet<string> = new Set([
   "token",
   "access_token",
@@ -242,6 +243,13 @@ export const ARTIFACT_CREDENTIAL_QUERY_DENY_SET: ReadonlySet<string> = new Set([
   "sig",
   "session",
   "sessionid",
+  "x-amz-signature",
+  "x-goog-signature",
+  "x-amz-credential",
+  "x-goog-credential",
+  "x-amz-security-token",
+  "awsaccesskeyid",
+  "googleaccessid",
 ]);
 
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F]/;
@@ -285,6 +293,20 @@ function pathLike(reference: string): boolean {
   return reference.includes("/");
 }
 
+/** An open control must point to the same host its label announces. */
+function browserDestinationMatches(reference: string, authority: string): boolean {
+  try {
+    const parsed = new URL(reference);
+    return (
+      parsed.protocol === "https:" &&
+      parsed.host.toLowerCase() === authority.toLowerCase() &&
+      /[A-Za-z0-9]/.test(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function classifyArtifactReference(reference: unknown): ArtifactReferenceClassification {
   if (typeof reference !== "string" || reference.length === 0 || reference.trim().length === 0) {
     return { class: "none", unsafe: false, host: null, openable: false };
@@ -323,7 +345,8 @@ export function classifyArtifactReference(reference: unknown): ArtifactReference
     if (
       authority.length > 0 &&
       OPENABLE_AUTHORITY.test(authority) &&
-      OPENABLE_REST.test(remainder)
+      OPENABLE_REST.test(remainder) &&
+      browserDestinationMatches(reference, authority)
     ) {
       // The strict charset excludes controls, so an eligible row is never unsafe;
       // the explicit check keeps the invariant local to the decision.

@@ -117,7 +117,7 @@ const CONTROL_CHAR_RE = /[\u0000-\u001F\u007F-\u009F]/;
 const SCHEME_RE = /^([A-Za-z][A-Za-z0-9+.-]*):/;
 const DRIVE_LETTER_RE = /^[A-Za-z]:[\\/]/;
 
-// Frozen scope §2 credential query deny-set, matched lowercase and exactly.
+// Scope §2 query deny-set plus the dated §9 signed-URL correction.
 const ARTIFACT_CREDENTIAL_QUERY_DENY_SET = new Set([
   "token",
   "access_token",
@@ -131,6 +131,13 @@ const ARTIFACT_CREDENTIAL_QUERY_DENY_SET = new Set([
   "sig",
   "session",
   "sessionid",
+  "x-amz-signature",
+  "x-goog-signature",
+  "x-amz-credential",
+  "x-goog-credential",
+  "x-amz-security-token",
+  "awsaccesskeyid",
+  "googleaccessid",
 ]);
 
 /** The deliberate open control text: host first, boundary stated in the label. */
@@ -174,6 +181,20 @@ function artifactReferencePathLike(reference) {
   return reference.includes("/");
 }
 
+/** An open control must point to the same host its label announces. */
+function artifactBrowserDestinationMatches(reference, authority) {
+  try {
+    const parsed = new URL(reference);
+    return (
+      parsed.protocol === "https:" &&
+      parsed.host.toLowerCase() === authority.toLowerCase() &&
+      /[A-Za-z0-9]/.test(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function classifyArtifactReference(reference) {
   if (typeof reference !== "string" || reference.length === 0 || reference.trim().length === 0) {
     return { class: "none", unsafe: false, host: null, openable: false };
@@ -208,7 +229,7 @@ function classifyArtifactReference(reference) {
     return { class: "insecure http", unsafe, host: null, openable: false };
   }
   if (scheme === "https") {
-    if (authority.length > 0 && OPENABLE_AUTHORITY_RE.test(authority) && OPENABLE_REST_RE.test(remainder)) {
+    if (authority.length > 0 && OPENABLE_AUTHORITY_RE.test(authority) && OPENABLE_REST_RE.test(remainder) && artifactBrowserDestinationMatches(reference, authority)) {
       return { class: "openable https", unsafe, host: authority, openable: !unsafe };
     }
     return { class: "unparsed", unsafe, host: null, openable: false };

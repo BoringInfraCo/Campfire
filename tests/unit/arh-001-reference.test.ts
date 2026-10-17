@@ -67,6 +67,7 @@ function loadAppSandbox() {
       throw new Error("no fetch in sandbox");
     },
     setInterval: () => 0,
+    URL,
     CSS: { escape: (value: string) => value },
     console,
   };
@@ -171,6 +172,32 @@ describe("ARH-001 frozen reference classification (terminal module)", () => {
     });
   });
 
+  it("keeps invalid or browser-normalized destinations inert", () => {
+    for (const reference of ["https://example.com:99999/report", "https://127.1/report", "https://./report"]) {
+      expect(classifyArtifactReference(reference), reference).toEqual({
+        class: "unparsed",
+        unsafe: false,
+        openable: false,
+        host: null,
+      });
+    }
+  });
+
+  it("keeps common provider-signed URLs inert as credential-bearing", () => {
+    for (const name of [
+      "X-Amz-Signature", "X-Goog-Signature", "X-Amz-Credential",
+      "X-Goog-Credential", "X-Amz-Security-Token", "AWSAccessKeyId", "GoogleAccessId",
+    ]) {
+      const reference = `https://example.com/report?${name}=demo`;
+      expect(classifyArtifactReference(reference), reference).toEqual({
+        class: "credential-bearing",
+        unsafe: false,
+        openable: false,
+        host: null,
+      });
+    }
+  });
+
   it("forces a control-character or newline reference inert and labeled unsafe", () => {
     for (const codePoint of [0x00, 0x09, 0x0a, 0x0d, 0x1b, 0x7f, 0x80, 0x9f]) {
       const reference = `https://example.com/a${String.fromCharCode(codePoint)}b`;
@@ -194,7 +221,7 @@ describe("ARH-001 frozen reference classification (terminal module)", () => {
     }
   });
 
-  it("keeps exactly the frozen scope deny-set of credential query names", () => {
+  it("includes the original credential names and the dated provider-signed correction", () => {
     expect([...ARTIFACT_CREDENTIAL_QUERY_DENY_SET].sort()).toEqual(
       [
         "token",
@@ -209,6 +236,13 @@ describe("ARH-001 frozen reference classification (terminal module)", () => {
         "sig",
         "session",
         "sessionid",
+        "x-amz-signature",
+        "x-goog-signature",
+        "x-amz-credential",
+        "x-goog-credential",
+        "x-amz-security-token",
+        "awsaccesskeyid",
+        "googleaccessid",
       ].sort(),
     );
   });
@@ -227,6 +261,29 @@ describe("ARH-001 frozen reference classification (terminal module)", () => {
 });
 
 describe("ARH-001 D5 parity — terminal module vs browser mirror", () => {
+  it("matches the dated invalid-destination and signed-URL corrections", () => {
+    const { sandbox } = loadAppSandbox();
+    const cases = [
+      "https://example.com:99999/report",
+      "https://127.1/report",
+      "https://./report",
+      ...[
+        "X-Amz-Signature", "X-Goog-Signature", "X-Amz-Credential",
+        "X-Goog-Credential", "X-Amz-Security-Token", "AWSAccessKeyId", "GoogleAccessId",
+      ].map((name) => `https://example.com/report?${name}=demo`),
+    ];
+    for (const reference of cases) {
+      const browser = vm.runInContext(
+        `JSON.stringify(classifyArtifactReference(${JSON.stringify(reference)}))`,
+        sandbox,
+        { filename: "app.js" },
+      ) as string;
+      const terminal = classifyArtifactReference(reference);
+      expect(JSON.parse(browser), reference).toEqual(terminal);
+      expect(terminal.openable, reference).toBe(false);
+    }
+  });
+
   it("classifies every frozen sample identically in both implementations", () => {
     const { sandbox } = loadAppSandbox();
     for (const sample of SAMPLES.samples) {
@@ -247,9 +304,14 @@ describe("ARH-001 D5 parity — terminal module vs browser mirror", () => {
     }
   });
 
-  it("carries a sampled credential-bearing row for every frozen deny-set name, no open control across surfaces", () => {
+  it("carries a sampled credential-bearing row for every original frozen deny-set name", () => {
     const { sandbox } = loadAppSandbox();
-    for (const name of ARTIFACT_CREDENTIAL_QUERY_DENY_SET) {
+    // The 59-row preregistered sample set stays unchanged. Dated correction
+    // cases above cover the additional provider-signed query names.
+    for (const name of [
+      "token", "access_token", "auth", "api_key", "apikey", "key",
+      "password", "secret", "signature", "sig", "session", "sessionid",
+    ]) {
       // The deny-set matches query names case-insensitively and exactly, so
       // coverage means a frozen row carrying `?name=` or `&name=` in that
       // position; the sampled value text itself is inert (arh001-demo-…).
@@ -351,6 +413,29 @@ describe("ARH-001 D3 static audit — the Viewer reference region", () => {
     expect(html).toContain("host example.com");
     expect(html).toContain('href="https://example.com/report.html" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"');
     expect(html).toContain(`Open example.com ${ARTIFACT_OPEN_CONTROL_SUFFIX}`);
+    expect(html).toContain(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL);
+  });
+
+  it("renders corrected invalid and provider-signed references without open controls", () => {
+    const { sandbox, fetchCalls } = loadAppSandbox();
+    sandbox.el = { innerHTML: "" };
+    const context = {
+      slices: {
+        findings: { items: [] },
+        artifacts: {
+          items: [
+            { id: "art_invalid_port", type: "report", title: "Invalid port", uriOrPath: "https://example.com:99999/report" },
+            { id: "art_alias", type: "report", title: "Numeric alias", uriOrPath: "https://127.1/report" },
+            { id: "art_signed", type: "report", title: "Signed", uriOrPath: "https://example.com/report?X-Amz-Signature=demo" },
+          ],
+        },
+      },
+    };
+    const html = vm.runInContext(`renderSources(el, ${JSON.stringify(context)}); el.innerHTML`, sandbox) as string;
+    expect(fetchCalls()).toBe(0);
+    expect(html).not.toContain("<a ");
+    expect(html).toContain("class unparsed");
+    expect(html).toContain("class credential-bearing");
     expect(html).toContain(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL);
   });
 
