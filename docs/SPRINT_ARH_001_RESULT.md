@@ -4,6 +4,13 @@
 
 **Status:** **UNSCORED.** Contract §7 applies because **no eligible ordinary-work attempt has occurred** and **no candidate has been evaluated**. A scoped engineering candidate recorded in §9 reached **ENGINEERING PASS — human outcome NOT OBSERVED** under the October 16 §0 founder amendment; it does not change this verdict, any NOT OBSERVED observation, or any gate, and publication still requires a separate release decision. The §3.2 ordinary-work reference-open attempt is **NOT OBSERVED** (recorded reason below); the §6 two-human/two-harness handoff is **NOT OBSERVED**; §3.2 observed no Campfire gap because no eligible attempt occurred, so per §8.3 **no product repair was scoped and no v1.21 feature exists**. No file under `src/`, `tests/`, `scripts/`, `public/`, `migrations/`, `wrangler.toml`, or `package.json` was changed; product files remain byte-identical to published `v1.20.1`. D1–D6 are candidate checks and are not applicable without a candidate; the recorded baseline checks stand in their place. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. This record does not claim human comprehension, external access, ordinary team value, or a causal gain over v1.20.1, and it moves no gate.
 
+**Reading this record:** §§1–8 describe the original no-product-change run.
+Section 9 records the later engineering candidate; §10 records its subsequent
+classifier correction. Statements in §§1–8 that no candidate or product change
+exists refer to that earlier source position, not the current working tree.
+The current candidate remains **ENGINEERING PASS — human outcome NOT OBSERVED**;
+the original **UNSCORED** human verdict remains unchanged.
+
 **Contract:** `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`
 **Evidence:** `docs/evidence/arh-001/` (baseline pin, surface facts, served state, captures, sanitized evidence plan, participant packet, scoring form, trace runbook, restricted key)
 **Baseline:** published `v1.20.1`; annotated tag object `4d74b4241ef79ce5fd9c39c0185d56840902008c` at commit `dc3c2a4c1f10f7815de78c4143fe564331406c73`; package `1.20.1`; product files byte-identical at HEAD `76db5be552ee60827aea5f03d07bf124295d06ec` (pin: `docs/evidence/arh-001/baseline/PIN.md`)
@@ -179,3 +186,39 @@ The founder's §0 sequencing amendment (`5b96512`) waived the observation-first 
 - Browser inspection was performed headless at two viewport sizes with request interception; a live interactive human walk of the surface is among the later real-use observations, not part of this engineering record.
 - A whitespace-only stored reference classifies `none` (both surfaces, frozen in the sample set); a purely cosmetic taxonomy edge, inert either way, recorded here for the published rule.
 - The scoped behavior is release-ready only through a **separate founder release decision**, which must name the exact shipped behavior and the unmeasured human outcome and cannot claim that recipients can reach an external target or complete a handoff.
+
+## 10. Post-result classifier correction — October 16, 2026
+
+Direct review after §9 found two gaps in the `openable https` classification.
+The earlier implementation offered an open control for
+`https://example.com:99999/report`, which a browser URL parser rejects, and
+for common provider-signed query keys such as `X-Amz-Signature` and
+`X-Goog-Signature`, which the original exact-name deny-set did not cover.
+This is an engineering correction to the candidate, not an ordinary-work
+attempt or human observation. The dated correction scope was committed first
+as `5f2cfdb`; the original 59-row sample set and §9 evidence remain unchanged.
+
+The corrected classifiers require a browser-parsed HTTPS URL whose actual
+host matches the displayed authority, and classify seven common AWS/Google
+signed-URL query names as `credential-bearing` inert text. The terminal and
+Viewer mirrors, synced public Viewer copy, and focused tests changed in
+`ad42fb8`. No new read, fetch, endpoint, schema, or open action was added.
+
+**Red/green evidence:** four focused checks failed on the previous code for
+invalid destinations, provider-signed URLs, deny-set coverage, and mirror
+parity. After the correction, the two focused files passed **39/39** tests,
+including a rendered-HTML assertion that the corrected cases create no anchor.
+Typecheck passed. The full suite passed **95 files / 1,165 tests**, with one
+existing opt-in capture skipped, using Node 22 and local loopback/PTY access.
+Build and `pack:tarball` passed at package version `1.20.1`; `deploy:dry-run`
+exited 0 and printed the expected asset/binding plan. In the restricted
+sandbox Wrangler also reported that it could not write its optional debug log
+under `~/.wrangler/logs`; no deployment was attempted. The earlier real-browser
+captures continue to show the unchanged safe-link behavior; no fresh browser
+capture was made for these newly inert cases.
+
+**Current engineering verdict: PASS; human outcome: NOT OBSERVED.** The §9
+candidate's implementation claim now rests on the corrected commit and checks
+above. ARH-001's original UNSCORED human verdict and §3.2/§6 NOT OBSERVED
+items remain intact. No v1.21 version bump, public release, installer pin,
+or production deployment is authorized or recorded by this correction.
