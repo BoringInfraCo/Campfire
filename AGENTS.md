@@ -372,6 +372,17 @@ human handoff observations NOT OBSERVED until actually run. A later candidate
 requires its own recorded engineering result and a separate release decision;
 an engineering pass must not be presented as a human handoff pass.
 
+For the scoped v1.21 candidate: the released v1.20.1 surfaces gained the
+typed reference-class projection, recorded cited-by relations, and a Viewer-only
+deliberate open control for safe absolute HTTPS references under contract §0
+and the dated scope freeze at `5258d5b`; implementation and independent
+verification are recorded as **ENGINEERING PASS — human outcome NOT OBSERVED**
+in `docs/SPRINT_ARH_001_RESULT.md` §9 (candidate `ace3b0f`). The UNSCORED
+verdict, the NOT OBSERVED §3.2/§6 observations, and all human-outcome claims
+stand unchanged; a v1.21.0 publication remains a separate founder release
+decision that must name the exact shipped behavior and the unmeasured human
+outcome.
+
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
 accurately described release while multi-person observations remain open.

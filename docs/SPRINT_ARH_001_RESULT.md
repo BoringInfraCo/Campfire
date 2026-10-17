@@ -2,7 +2,7 @@
 
 **Date:** October 16, 2026
 
-**Status:** **UNSCORED.** Contract §7 applies because **no eligible ordinary-work attempt has occurred** and **no candidate has been evaluated**. The §3.2 ordinary-work reference-open attempt is **NOT OBSERVED** (recorded reason below); the §6 two-human/two-harness handoff is **NOT OBSERVED**; §3.2 observed no Campfire gap because no eligible attempt occurred, so per §8.3 **no product repair was scoped and no v1.21 feature exists**. No file under `src/`, `tests/`, `scripts/`, `public/`, `migrations/`, `wrangler.toml`, or `package.json` was changed; product files remain byte-identical to published `v1.20.1`. D1–D6 are candidate checks and are not applicable without a candidate; the recorded baseline checks stand in their place. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. This record does not claim human comprehension, external access, ordinary team value, or a causal gain over v1.20.1, and it moves no gate.
+**Status:** **UNSCORED.** Contract §7 applies because **no eligible ordinary-work attempt has occurred** and **no candidate has been evaluated**. A scoped engineering candidate recorded in §9 reached **ENGINEERING PASS — human outcome NOT OBSERVED** under the October 16 §0 founder amendment; it does not change this verdict, any NOT OBSERVED observation, or any gate, and publication still requires a separate release decision. The §3.2 ordinary-work reference-open attempt is **NOT OBSERVED** (recorded reason below); the §6 two-human/two-harness handoff is **NOT OBSERVED**; §3.2 observed no Campfire gap because no eligible attempt occurred, so per §8.3 **no product repair was scoped and no v1.21 feature exists**. No file under `src/`, `tests/`, `scripts/`, `public/`, `migrations/`, `wrangler.toml`, or `package.json` was changed; product files remain byte-identical to published `v1.20.1`. D1–D6 are candidate checks and are not applicable without a candidate; the recorded baseline checks stand in their place. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. This record does not claim human comprehension, external access, ordinary team value, or a causal gain over v1.20.1, and it moves no gate.
 
 **Contract:** `docs/Campfire-v1.21-ARH-001-Artifact-Reference-Handoff.md`
 **Evidence:** `docs/evidence/arh-001/` (baseline pin, surface facts, served state, captures, sanitized evidence plan, participant packet, scoring form, trace runbook, restricted key)
@@ -149,3 +149,33 @@ Verifier scope limits: `npm run build` and the PTY/Playwright captures were not 
 - **WCO-001, ATT-001, SWH-001, UIX-001 observations and Gate B/C/E/F** remain open and untouched; this sprint rescores nothing.
 - **No release decision is requested.** A package bump, tag, public snapshot, installer pins, or deployment require a separate release decision after a result is recorded; an override cannot turn NOT OBSERVED or FAIL into PASS.
 - Update roadmap/AGENTS only for facts actually established — this result records those facts and nothing more.
+
+## 9. Engineering candidate record (October 16, 2026, later — contract §0 amendment)
+
+The founder's §0 sequencing amendment (`5b96512`) waived the observation-first implementation hold prospectively and required a dated scope **before code**; the scope was frozen at `5258d5b` (`docs/Campfire-v1.21-ARH-001-CANDIDATE-SCOPE.md`: exact surfaces, frozen reference-class taxonomy, user action, authorization boundary, D-mapping, inert list, verdict semantics). The bounded candidate was then implemented and independently verified. Sections 1–8 above — the UNSCORED verdict, the NOT OBSERVED §3.2/§6 observations, and the frozen baseline/fixture materials — are unchanged; this section records the new candidate only.
+
+**Candidate behavior (exactly the scoped slice):** the terminal dashboard projection and the local read-only Viewer now render each authorized Artifact reference with its typed reference class (frozen taxonomy: `openable https` / `insecure http` / `credential-bearing` / `local path` / `other scheme` / `unparsed` / `none`, control characters force inert), the destination host for openable references, recorded cited-by Finding relations from the same authorized read (no inference, no absence claims), and the "external and unverified by Campfire; workspace membership does not grant access" caveat. The Viewer additionally renders a **deliberate open control** only for `openable https` (`target="_blank"`, `rel="noopener noreferrer"`, `referrerpolicy="no-referrer"`, host in the label, keyboard-accessible, escaped markup); navigation happens only on user activation. The terminal gains **no** open action. CLI JSON, MCP, GWV, service, persistence, and the five `VIEWER_READ_METHODS` are unchanged; no server-side fetch, proxy, preview, or automatic navigation exists anywhere in the candidate.
+
+**Checks** — all judged by two passes (implementer, then independent verifier re-running everything fresh at pre-commit):
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Typecheck (`npx tsc --noEmit`) | **PASS** | exit 0 on both passes |
+| Focused candidate tests | **PASS** | unit `19→20` + integration `15` tests (JSON sample set frozen at 47→**59 rows** after the verifier's deny-set coverage gap was closed); all re-run green by the verifier |
+| Full suite (`npx vitest run`) | **PASS** | 95 test files / **1161 passed + 1 skipped** (opt-in PTY) on both final passes |
+| Build (`npm run build`) | **PASS** | exit 0; `sync:public` keeps `public/` byte-identical to `src/viewer/static/` (verified `cmp`-exact) |
+| Packaging / deployment dry run | **PASS** | `pack:tarball` and `deploy:dry-run` exit 0; **no deploy authorized or attempted**; package stays `1.20.1` |
+| D1 workspace authorization | **PASS** | negative reads expose no new artifact/relation/host/count detail; no unauthorized-actor leak vector found |
+| D2 recorded chain | **PASS** | facts rendered as stored; cited-by only from recorded finding-evidence rows; historical/competing decisions not promoted |
+| D3 deliberate open | **PASS** | render/hover/idle make **zero** non-loopback requests (browser-asserted, wide + 420 px narrow); non-openable and hostile rows inert; no token/referrer propagation; terminal has no open control |
+| D4 external authority | **PASS** | no surface claims opened/verified/accessible; fixture `git:`/inert references stay inert; membership never bypasses the target system |
+| D5 parity + accessibility | **PASS** | terminal↔Viewer parity over the frozen 59-row sample set (both implementations asserted identical classes/hosts); anchors keyboard-reachable, text-labeled, host visible before navigation |
+| D6 compatibility and bounds | **PASS** | five Viewer methods; page budgets/status JSON/Recall/packet schemas/installer/public asset sync intact; no new polling, migration, or unbounded read |
+| Direct terminal + browser inspection | **PASS** | dashboard frames at 200×80 / 120×36 / 80×24 (class/host/caveat/cited-by, no open control) + real-browser Viewer captures/hover/idle at wide and narrow — `docs/evidence/arh-001/candidate/` (`CAPTURE.md`, two PNGs, SHA-256 recorded) |
+
+**Verdict: ENGINEERING PASS — human outcome NOT OBSERVED.** Per §0 this states only that the tested behavior works as governed; it is not a handoff, comprehension, or external-access result. H1–H6 are not claimed; the §3.2/§6 observations above remain **NOT OBSERVED**; the UNSCORED result stands; no gate moves. Candidate commit `ace3b0f` (local); the earlier §3.2 preflight records (`a4a1439`, `6c7f6b5`) and the founder policy commit (`5b96512`) and scope freeze (`5258d5b`) are unchanged.
+
+**Recorded notes and residual limitations:**
+- Browser inspection was performed headless at two viewport sizes with request interception; a live interactive human walk of the surface is among the later real-use observations, not part of this engineering record.
+- A whitespace-only stored reference classifies `none` (both surfaces, frozen in the sample set); a purely cosmetic taxonomy edge, inert either way, recorded here for the published rule.
+- The scoped behavior is release-ready only through a **separate founder release decision**, which must name the exact shipped behavior and the unmeasured human outcome and cannot claim that recipients can reach an external target or complete a handoff.
