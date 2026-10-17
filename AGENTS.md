@@ -359,10 +359,11 @@ human observation materials (`docs/evidence/arh-001/`) are frozen in commit
 `cec4e63`. `docs/SPRINT_ARH_001_RESULT.md` records **UNSCORED**: the
 ordinary-work reference-open attempt (§3.2) and the two-human/two-harness
 handoff (§6) are **NOT OBSERVED** with the recorded reason, so no Campfire gap
-is observed, no repair is scoped, and no v1.21 feature exists. The external
+was observed at that stop point and no repair was scoped under the original
+observation-first rule. The external
 system keeps the artifact bytes and its own access rules; Campfire keeps the
-authorized record and any actual evidence relationships. No version bump, tag,
-release decision, or deployment is recorded. Existing VIS-001, SWH-001,
+authorized record and any actual evidence relationships. At that stop point,
+no version bump, tag, release decision, or deployment was recorded. Existing VIS-001, SWH-001,
 WCO-001, ATT-001, and UIX-001 observations retain their own rules and status.
 The contract's October 16 founder sequencing amendment prospectively permits
 a separately scoped artifact-navigation candidate to be built and evaluated
@@ -385,6 +386,14 @@ in `docs/RELEASE_V1_21_DECISION.md` and published and deployed on October 17,
 Worker, and live installer checks recorded there); that decision does not
 change the UNSCORED verdict, the NOT OBSERVED human observations, or any
 gate, and the public claim marks the human outcome NOT OBSERVED.
+
+The next proposed sprint is NAV-001 — Focused Terminal Navigator, scoped in
+`docs/Campfire-v1.22-NAV-001-Focused-Terminal-Navigator.md`. It starts from the
+published v1.21.0 source and changes only the read-only terminal dashboard's
+navigation and presentation. Freeze that contract and its Step 0 baseline in
+a commit before product code changes. NAV-002 and NAV-003 retain the People,
+deeper history/paging, and Viewer alignment work. No v1.22 implementation or
+release decision is recorded by this pointer.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
