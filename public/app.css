@@ -631,6 +631,19 @@ main {
   text-decoration: underline;
 }
 
+/* ARH-001: the one deliberate external-open control. The label names the
+   destination host and states the boundary in text, so nothing is color-only;
+   hover and keyboard focus keep the standard underline affordance. */
+.oopen {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.oopen:hover,
+.oopen:focus-visible {
+  text-decoration: underline;
+}
+
 /* SWH-001 Shared Work Home: one workspace, two perspectives. Both perspectives
    read the same authorized context and differ only in which recorded facts lead.
    Density is a local display preference, not a third perspective. */

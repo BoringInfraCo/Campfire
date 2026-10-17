@@ -8,13 +8,16 @@
 import { execFileSync } from "node:child_process";
 import type { Artifact, Contribution, Decision, Task } from "../domain/types.js";
 import {
+  ARTIFACT_EXTERNAL_UNVERIFIED_LABEL,
   ARTIFACT_REFERENCE_LABEL,
+  ARTIFACT_UNSAFE_CONTROL_LABEL,
   ASSIGNMENT_RECORD_NOTE,
   ORIENTATION_HINT_LABEL,
   attentionCoverageCounts,
   attentionCoverageText,
   attentionEmptyText,
   attentionReasonLabel,
+  classifyArtifactReference,
   decisionStatusLabel,
   recordedParticipantLine,
   stripTerminalControls,
@@ -238,6 +241,65 @@ function decisionText(decision: Decision): string {
     if (findings.length > 0) parts.push(findings.map((id) => clean(id)).join(", "));
   }
   return parts.filter((part) => part.length > 0).join("  ");
+}
+
+/**
+ * ARH-001 inspect-only artifact reference text.
+ *
+ * Terminal rows gain the frozen reference class, the destination host for
+ * openable-https references, and the recorded cited-by relations — all from
+ * the same authorized read this projection already holds. Relations are never
+ * inferred and never invented under "no relation found": the row simply shows
+ * them when the serving read's findings carry an evidence row for this
+ * artifact. The external caveat names the access boundary; membership is
+ * never described as external access (runbook and §4 wording preserved).
+ *
+ * There is deliberately NO open action in the terminal: inspect-only upgrade.
+ */
+function artifactReferenceTail(artifact: Artifact, context: WorkspaceContext): string {
+  const parts: string[] = [ARTIFACT_REFERENCE_LABEL];
+  const classification = classifyArtifactReference(artifact.uriOrPath);
+  // Cited-by is a fact about the artifact record, not about its reference, so
+  // it does not depend on the class; class/host/caveat do not render for a
+  // missing reference.
+  const citedBy = citedByText(artifact.id, context.findings);
+  if (classification.class !== "none") {
+    parts.push(`class ${classification.class}`);
+    if (classification.host !== null) parts.push(`host ${classification.host}`);
+  }
+  if (citedBy !== null) parts.push(citedBy);
+  if (classification.class !== "none") {
+    parts.push(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL);
+    if (classification.unsafe) parts.push(ARTIFACT_UNSAFE_CONTROL_LABEL);
+  }
+  return parts.join("  ");
+}
+
+function artifactReferenceText(artifact: Artifact, context: WorkspaceContext): string {
+  const parts = [clean(artifact.id), clean(artifact.type), clean(artifact.uriOrPath), artifactReferenceTail(artifact, context)];
+  return parts.filter((part) => part.length > 0).join("  ");
+}
+
+/**
+ * Cited-by relations exactly as the returned findings record them (Finding ID
+ * + relation, deduplicated per finding/relation pair, in read order).
+ */
+function citedByText(artifactId: string, findings: WorkspaceContext["findings"]): string | null {
+  const cites: string[] = [];
+  const seen = new Set<string>();
+  for (const finding of findings) {
+    const findingId = clean(finding.id);
+    for (const row of finding.evidence ?? []) {
+      if (row.artifactId !== artifactId) continue;
+      const relation = clean(row.relation);
+      const key = `${findingId}\u0000${relation}`;
+      if (findingId.length === 0 || relation.length === 0 || seen.has(key)) continue;
+      seen.add(key);
+      cites.push(`${findingId} (${relation})`);
+    }
+  }
+  if (cites.length === 0) return null;
+  return `cited by ${cites.join(", ")}`;
 }
 
 function historicalText(decision: SupersededDecisionSummary): string {
@@ -519,6 +581,17 @@ function detailBody(detail: unknown, columns: number): TaggedLine[] {
   }
   if (typeof fields.type === "string" && typeof fields.uriOrPath === "string") {
     lines.push(...record(ARTIFACT_REFERENCE_LABEL, columns, 0));
+    // Same frozen classification as the reference list. The get_artifact
+    // detail read carries no evidence rows, so no cited-by claim is rendered
+    // here; relations appear where the serving read records them. A reference
+    // classified `none` (missing/empty) shows nothing beyond the label.
+    const classification = classifyArtifactReference(fields.uriOrPath);
+    if (classification.class !== "none") {
+      lines.push(...record(`class ${classification.class}`, columns, 0));
+      if (classification.host !== null) lines.push(...record(`host ${classification.host}`, columns, 0));
+      lines.push(...record(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL, columns, 0));
+      if (classification.unsafe) lines.push(...record(ARTIFACT_UNSAFE_CONTROL_LABEL, columns, 0));
+    }
   }
   return lines;
 }
@@ -554,14 +627,11 @@ function buildSource(state: DashboardState, context: WorkspaceContext, columns: 
   const artifactId = selected.kind === "artifact" ? selected.id : selected.objectType === "artifact" ? selected.objectId : undefined;
   const artifact = artifactFor(context, artifactId);
   if (artifact !== undefined) {
-    lines.push(
-      ...record(
-        `${clean(artifact.id)}  ${clean(artifact.type)}  ${clean(artifact.uriOrPath)}  ${ARTIFACT_REFERENCE_LABEL}`,
-        columns,
-        0,
-      ),
-    );
+    lines.push(...record(artifactReferenceText(artifact, context), columns, 0));
   } else if (selected.objectType === "artifact" && selected.objectId !== undefined) {
+    // The artifact record was not in the returned orientation, so no class,
+    // host, or relation can be stated from this read; ids and the stored
+    // reference label alone are shown, absent facts stay absent.
     lines.push(...record(`${clean(selected.objectId)}  ${ARTIFACT_REFERENCE_LABEL}`, columns, 0));
   }
   return lines;
@@ -590,13 +660,7 @@ function buildArtifactReferences(context: WorkspaceContext, columns: number): Ta
   if (context.artifacts.length === 0) return [];
   const lines: TaggedLine[] = [...chrome("ARTIFACT REFERENCES", columns, 1)];
   for (const artifact of context.artifacts) {
-    lines.push(
-      ...record(
-        `${clean(artifact.id)}  ${clean(artifact.type)}  ${clean(artifact.uriOrPath)}  ${ARTIFACT_REFERENCE_LABEL}`,
-        columns,
-        0,
-      ),
-    );
+    lines.push(...record(artifactReferenceText(artifact, context), columns, 0));
   }
   return lines;
 }
