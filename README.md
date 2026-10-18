@@ -47,9 +47,12 @@ Every command honors `--output auto|human|json`; `--json` remains a compatibilit
 
 ## Quick start
 
-Install, then run Campfire. A terminal first-run records the human once.
+Install, then run Campfire. A terminal first-run records the human once and
+starts the local API and Viewer in that same invocation; there is no separate
+`campfire up` step. Later, `campfire` prints status and `campfire up` reopens
+the local API and Viewer when needed.
 The name defaults from `git config user.name` or the login. Agents appear
-when Codex or OpenCode is installed and `campfire up` is listening. The
+when Codex or OpenCode is installed and the local listener is running. The
 agent in that session creates the workspace and goal. Past private sessions
 are not imported. This does not register an agent session and does not
 provision Cloudflare.
