@@ -163,7 +163,7 @@ function context(partial: Partial<WorkspaceContext> = {}): WorkspaceContext {
   };
 }
 
-function stateFor(value: WorkspaceContext, extra?: { staleError?: string; perspective?: "mine" | "team"; section?: "attention" | "work" | "decisions" | "changes" }) {
+function stateFor(value: WorkspaceContext, extra?: { staleError?: string; perspective?: "mine" | "team"; section?: "attention" | "work" | "decisions" | "references" | "changes" }) {
   return createDashboardState({
     workspaceId: value.workspace.id,
     actorId: "hum_ana",
@@ -234,7 +234,11 @@ describe("UIX-001 dashboard", () => {
         }),
       ],
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    let state = stateFor(value);
+    state = reduceDashboardKey(state, "tab");
+    state = reduceDashboardKey(state, "tab");
+    expect(state.section).toBe("decisions");
+    const frame = renderDashboard(state, 120, 40);
     expect(frame).toContain("dec_att_review");
     expect(frame).toContain("find_att_old");
     expect(frame).toContain("accepted");
@@ -250,7 +254,10 @@ describe("UIX-001 dashboard", () => {
         decision("dec_competing_b", "accepted", "Ship path B"),
       ],
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    let state = stateFor(value);
+    state = reduceDashboardKey(state, "tab");
+    state = reduceDashboardKey(state, "tab");
+    const frame = renderDashboard(state, 120, 40);
     expect(frame).toContain("dec_competing_a");
     expect(frame).toContain("dec_competing_b");
     expect(frame).not.toContain("operative");
@@ -260,12 +267,15 @@ describe("UIX-001 dashboard", () => {
     const value = context({
       proposedDecisions: [decision("dec_proposed", "proposed", "Consider the split")],
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    let state = stateFor(value);
+    state = reduceDashboardKey(state, "tab");
+    state = reduceDashboardKey(state, "tab");
+    const frame = renderDashboard(state, 120, 40);
     expect(frame).toContain("dec_proposed");
     expect(frame).toContain("not an instruction");
   });
 
-  it("lists an agent as registered and does not claim a live status", () => {
+  it("does not enumerate agent rows on the default frame; registration is not presence", () => {
     const value = context({
       participants: [
         {
@@ -276,13 +286,18 @@ describe("UIX-001 dashboard", () => {
           humanOwnerId: "hum_owner",
           joinedAt: "2026-10-16T00:00:00.000Z",
         },
+        {
+          actor: actor("hum_owner", "human"),
+          name: "Owner",
+          role: "owner",
+          joinedAt: "2026-10-16T00:00:00.000Z",
+        },
       ],
     });
     const frame = renderDashboard(stateFor(value), 120, 40);
-    const line = frame.split("\n").find((row) => row.includes("Rex"));
-    expect(line).toBeDefined();
-    expect(line).toContain("registered");
-    expect(line).toContain("hum_owner");
+    expect(frame).toContain("1 people · 1 registered agents");
+    expect(frame).not.toContain("Rex");
+    expect(frame).not.toContain("hum_owner");
     expect(frame).not.toContain("online");
     expect(frame).not.toContain("working");
   });

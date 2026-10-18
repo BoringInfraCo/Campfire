@@ -87,7 +87,8 @@ function tall(state: DashboardState): string {
 function framesIncludingSelection(initial: DashboardState): string[] {
   const frames: string[] = [];
   let state = initial;
-  for (let section = 0; section < 4; section += 1) {
+  // NAV-001 has five sections: attention, work, decisions, references, changes.
+  for (let section = 0; section < 5; section += 1) {
     const count = sectionRows(state).length;
     const steps = Math.max(count, 1);
     for (let row = 0; row < steps; row += 1) {
@@ -357,10 +358,13 @@ describe("UIX-001 ATT-001 lab parity", () => {
     expect(windowAround(anaViewTeam.needsAttention, REVIEW_SUPERSEDED)).toContain(FINDING_SUPERSEDED);
     expect(windowAround(anaViewTeam.needsAttention, REVIEW_WITHDRAWN)).toContain(FINDING_WITHDRAWN);
 
-    // Competing ids are on the dashboard decision lines and in the Viewer
-    // alignment list that renderOrientation fills. Current work keeps the
-    // accepted summaries; it does not repeat the id when a summary exists.
-    for (const text of [anaTeam, anaViewTeam.alignment]) {
+    // Competing ids are on the NAV-001 decisions section (tab twice) and in
+    // the Viewer alignment list that renderOrientation fills. Current work
+    // keeps the accepted summaries; it does not repeat the id when a summary
+    // exists.
+    const anaTeamDecisions = tall(reduceDashboardKey(reduceDashboardKey(anaTeamState, "tab"), "tab"));
+    expect(anaTeamDecisions).toContain("RECORDED DECISIONS");
+    for (const text of [anaTeamDecisions, anaViewTeam.alignment]) {
       expect(text).toContain(COMPETING_A);
       expect(text).toContain(COMPETING_B);
       expect(text).toContain("accepted");
@@ -368,8 +372,8 @@ describe("UIX-001 ATT-001 lab parity", () => {
     }
     expect(anaViewTeam.currentWork).toContain("accepted");
     expect(anaViewTeam.currentWork).not.toContain("operative");
-    expect(windowAround(anaTeam, COMPETING_A)).toContain("accepted");
-    expect(windowAround(anaTeam, COMPETING_B)).toContain("accepted");
+    expect(windowAround(anaTeamDecisions, COMPETING_A)).toContain("accepted");
+    expect(windowAround(anaTeamDecisions, COMPETING_B)).toContain("accepted");
     expect(windowAround(anaViewTeam.alignment, COMPETING_A)).toContain("accepted");
     expect(windowAround(anaViewTeam.alignment, COMPETING_B)).toContain("accepted");
 

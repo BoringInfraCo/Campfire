@@ -201,6 +201,25 @@ describe("ARH-001 artifact-reference surfaces", () => {
     });
   }
 
+  /** NAV-001: artifact rows live in the references section, reachable by tab. */
+  function referencesState(context: WorkspaceContext): DashboardState {
+    let state = dashboardState(context);
+    while (state.section !== "references") state = reduceDashboardKey(state, "tab");
+    return state;
+  }
+
+  /**
+   * The reference-list region of a frame: everything above the SOURCE block.
+   * SOURCE repeats the selected artifact row, so row/label counts are asserted
+   * over the list itself — the true row count — instead of double-counting the
+   * selected-record echo.
+   */
+  function beforeSource(frame: string): string {
+    const lines = frame.split("\n");
+    const at = lines.findIndex((line) => line === "SOURCE");
+    return at < 0 ? frame : lines.slice(0, at).join("\n");
+  }
+
   /**
    * The fixture's returned provenance page holds decisions and tasks but no
    * artifact entries, so the create-artifact contribution record is placed on
@@ -243,9 +262,12 @@ describe("ARH-001 artifact-reference surfaces", () => {
 
   describe("terminal dashboard — inspect-only reference projection (D2/D3, no open action)", () => {
     it("shows every frozen class, the openable hosts, the recorded cited-by relations, and the caveat", () => {
-      const frame = renderDashboard(dashboardState(anaLab), 200, 80);
+      const frame = renderDashboard(referencesState(anaLab), 200, 80);
       expectFrameFits(frame, 200, 80);
       const text = flat(frame);
+      // Row counts are asserted over the references list (above SOURCE, which
+      // echoes the selected row): the true count is seven labeled rows.
+      const list = flat(beforeSource(frame));
 
       // The exact stored reference texts, verbatim, with the retained label.
       expect(text).toContain("https://example.com/arh-001/q3-handoff-analysis.html");
@@ -255,12 +277,12 @@ describe("ARH-001 artifact-reference surfaces", () => {
       expect(text).toContain("ftp://files.example.com/arh-001/export.tar.gz");
       expect(text).toContain("https://arh001-demo-user:arh001-demo-pass@example.com/arh-001/private-view");
       expect(text).toContain(HOSTILE_STORED);
-      expect(count(text, ARTIFACT_REFERENCE_LABEL)).toBe(7);
+      expect(count(list, ARTIFACT_REFERENCE_LABEL)).toBe(7);
 
       // One row per class; host only for openable rows, and never the raw
       // userinfo or a non-https scheme authority.
-      expect(count(text, "class openable https")).toBe(3);
-      expect(count(text, "host example.com")).toBe(3);
+      expect(count(list, "class openable https")).toBe(3);
+      expect(count(list, "host example.com")).toBe(3);
       expect(text).toContain("class local path");
       expect(text).toContain("class other scheme");
       expect(text).toContain("class credential-bearing");
@@ -270,12 +292,12 @@ describe("ARH-001 artifact-reference surfaces", () => {
       expect(text).not.toContain("host arh001-demo-user");
 
       // Recorded relations only, exactly as the serving read carries them.
-      expect(text).toContain("cited by find_arh001_current (supports)");
-      expect(text).toContain("cited by find_arh001_contradicts (contradicts)");
-      expect(count(text, "cited by")).toBe(2);
+      expect(list).toContain("cited by find_arh001_current (supports)");
+      expect(list).toContain("cited by find_arh001_contradicts (contradicts)");
+      expect(count(list, "cited by")).toBe(2);
 
       // The external boundary labels every artifact row.
-      expect(count(text, ARTIFACT_EXTERNAL_UNVERIFIED_LABEL)).toBe(7);
+      expect(count(list, ARTIFACT_EXTERNAL_UNVERIFIED_LABEL)).toBe(7);
       // No lab reference carries control characters, so the hostile sweep
       // label belongs to none of these rows.
       expect(text).not.toContain(ARTIFACT_UNSAFE_CONTROL_LABEL);
@@ -288,7 +310,7 @@ describe("ARH-001 artifact-reference surfaces", () => {
     });
 
     it("keeps hostile markup as raw stored text, classified unparsed, never openable", () => {
-      const text = flat(renderDashboard(dashboardState(anaLab), 200, 80));
+      const text = flat(renderDashboard(referencesState(anaLab), 200, 80));
       const at = text.indexOf(HOSTILE_STORED);
       const span = at < 0 ? "" : text.slice(at, at + 260);
       expect(at).toBeGreaterThanOrEqual(0);
@@ -382,7 +404,7 @@ describe("ARH-001 artifact-reference surfaces", () => {
         [120, 36],
         [80, 24],
       ] as const) {
-        const frame = renderDashboard(dashboardState(anaLab), columns, rows);
+        const frame = renderDashboard(referencesState(anaLab), columns, rows);
         expectFrameFits(frame, columns, rows);
         const text = flat(frame);
         // The cited report is the first artifact row, so its row (with the
@@ -482,7 +504,7 @@ describe("ARH-001 artifact-reference surfaces", () => {
     it("agrees with the dashboard on counts per frozen token from the same read (D5)", () => {
       const { html } = renderSourcesRaw(anaLab);
       const viewer = visible(html);
-      const frame = flat(renderDashboard(dashboardState(anaLab), 200, 80));
+      const frame = flat(beforeSource(renderDashboard(referencesState(anaLab), 200, 80)));
       for (const token of [
         "class openable https",
         "class local path",
@@ -570,7 +592,7 @@ describe("ARH-001 artifact-reference surfaces", () => {
 
   describe("D4/D6 boundaries", () => {
     it("claims nothing about the external target on either surface (D4)", () => {
-      const frame = flat(renderDashboard(dashboardState(anaLab), 200, 80));
+      const frame = flat(beforeSource(renderDashboard(referencesState(anaLab), 200, 80)));
       const { html } = renderSourcesRaw(anaLab);
       const viewer = visible(html);
       for (const text of [frame, viewer]) {

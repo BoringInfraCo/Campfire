@@ -1,9 +1,13 @@
 /**
- * UIX-001 read-only terminal console.
+ * UIX-001 read-only terminal console; NAV-001 focused navigator reshape.
  *
+ * One active section renders at a time; References and Recent changes are
+ * reachable by `tab`. The local `/` filter narrows the shown rows of the active
+ * section and is labeled as such — it filters shown records, not the workspace.
  * Record text is untrusted: only `renderDashboard` text is drawn, and every
  * record string goes through `stripTerminalControls`. Screen controls stay in
- * the session runner. A failed refresh keeps the last context.
+ * the session runner. A failed refresh keeps the last context; a successful
+ * refresh keeps the selected row id when it survives the new shown page.
  */
 import { execFileSync } from "node:child_process";
 import type { Artifact, Contribution, Decision, Task } from "../domain/types.js";
@@ -27,7 +31,7 @@ import type { AttentionItem, SupersededDecisionSummary, WorkspaceContext } from 
 
 export const DASHBOARD_AUTO_REFRESH_MS = 15_000;
 
-export type DashboardSection = "attention" | "work" | "decisions" | "changes";
+export type DashboardSection = "attention" | "work" | "decisions" | "references" | "changes";
 export type DashboardPerspective = "mine" | "team";
 export type DashboardInspectKind = "task" | "finding" | "decision" | "artifact";
 
@@ -54,6 +58,9 @@ export interface DashboardState {
   quit: boolean;
   refreshRequested: boolean;
   detailOpen: boolean;
+  /** Local filter over the shown rows of the active section (never the workspace). */
+  filter: string;
+  filterMode: boolean;
   inspectRequest?: DashboardInspectRequest;
   inspected?: DashboardInspected;
   staleError?: string;
@@ -71,16 +78,17 @@ export interface DashboardSessionOptions {
   now?: () => Date;
 }
 
-const SECTIONS: readonly DashboardSection[] = ["attention", "work", "decisions", "changes"];
+const SECTIONS: readonly DashboardSection[] = ["attention", "work", "decisions", "references", "changes"];
 
-const FOOTER = "p perspective   tab section   j/k move   enter inspect   r refresh   ? help   q quit";
-const COMPACT_FOOTER = "j/k move   enter inspect   r refresh   q quit";
+const FOOTER = "p perspective   tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit";
+const COMPACT_FOOTER = "tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit";
 
 const HELP_LINES = [
   "p switches My work and Team work. It does not change the workspace.",
-  "tab moves among attention, current work, decisions, and recent changes.",
-  "j and k move within the section. enter opens a read-only detail.",
-  "r refreshes. ? toggles this help. q quits.",
+  "tab moves among attention, current work, decisions, references, and recent changes.",
+  "j and k move within the shown rows. enter opens a read-only detail.",
+  "/ filters the shown records, not the workspace. enter confirms; esc clears.",
+  "r refreshes. ? toggles this help. q quits; ctrl-c always quits.",
   "Registration and contributions are recorded history, not live presence.",
   "needsYou and needsAttention are cues, not permission.",
 ];
@@ -122,6 +130,8 @@ export function createDashboardState(input: {
     quit: false,
     refreshRequested: false,
     detailOpen: false,
+    filter: "",
+    filterMode: false,
     ...(input.context === undefined ? {} : { context: input.context }),
     ...(input.refreshedAt === undefined ? {} : { refreshedAt: input.refreshedAt }),
     ...(input.staleError === undefined ? {} : { staleError: input.staleError }),
@@ -401,13 +411,41 @@ export function sectionRows(state: DashboardState): DashRow[] {
       }));
       return [...proposed, ...accepted, ...historical];
     }
+    case "references":
+      // NAV-001: the v1.21 typed reference rows are reachable on demand
+      // instead of printing every Artifact above the default work list.
+      return context.artifacts.map((artifact) => ({
+        kind: "artifact" as const,
+        id: artifact.id,
+        text: artifactReferenceText(artifact, context),
+        full: true,
+        reviewCue: false,
+      }));
     case "changes":
       return changeRows(context);
   }
 }
 
+/**
+ * The "shown rows": the active section's loaded rows narrowed by the local
+ * filter (case-insensitive substring over the row id or its rendered text).
+ * An empty filter returns the loaded rows unchanged.
+ */
+export function shownRows(state: DashboardState): DashRow[] {
+  const rows = sectionRows(state);
+  if (state.filter.length === 0) return rows;
+  const needle = state.filter.toLowerCase();
+  return rows.filter(
+    (row) => row.id.toLowerCase().includes(needle) || row.text.toLowerCase().includes(needle),
+  );
+}
+
+function filterActive(state: DashboardState): boolean {
+  return state.filter.length > 0 || state.filterMode;
+}
+
 function sectionCount(state: DashboardState): number {
-  return sectionRows(state).length;
+  return shownRows(state).length;
 }
 
 function clampRow(state: DashboardState): DashboardState {
@@ -428,6 +466,8 @@ function withoutTransient(state: DashboardState): DashboardState {
     quit: state.quit,
     refreshRequested: false,
     detailOpen: false,
+    filter: state.filter,
+    filterMode: state.filterMode,
     ...(state.context === undefined ? {} : { context: state.context }),
     ...(state.staleError === undefined ? {} : { staleError: state.staleError }),
     ...(state.refreshedAt === undefined ? {} : { refreshedAt: state.refreshedAt }),
@@ -441,7 +481,81 @@ function canonicalKey(key: string): string {
   return key;
 }
 
+/**
+ * Selection reconciliation across a reshaped shown list.
+ *
+ * `previous` still carries the old list (old filter text or old context);
+ * `next` carries the new one. The selected row id is preserved when it
+ * survives, keeping `detailOpen`/`inspected` only while the inspected source
+ * still equals that selection; when it disappears the top shown row is
+ * selected and stale detail is dropped so an old record never renders as the
+ * current selection.
+ */
+function reconcileSelection(previous: DashboardState, next: DashboardState): DashboardState {
+  const selectedId = shownRows(previous)[previous.row]?.id;
+  const index = selectedId === undefined ? -1 : shownRows(next).findIndex((row) => row.id === selectedId);
+  if (selectedId === undefined || index < 0) {
+    return { ...next, row: 0, detailOpen: false, inspected: undefined };
+  }
+  if (next.detailOpen && next.inspected !== undefined && next.inspected.sourceId === selectedId) {
+    return { ...next, row: index };
+  }
+  return { ...next, row: index, detailOpen: false, inspected: undefined };
+}
+
+/**
+ * Post-load reconciliation (exported for tests): replace the context and
+ * timestamp after a successful read, keep the selected row id when it
+ * survives in the new shown list, and drop `detailOpen`/`inspected` when the
+ * selection disappears so no old detail is shown as current.
+ */
+export function reconcileAfterLoad(
+  state: DashboardState,
+  loaded: WorkspaceContext,
+  refreshedAt: string,
+): DashboardState {
+  return reconcileSelection(state, {
+    ...state,
+    context: loaded,
+    staleError: undefined,
+    refreshedAt,
+    refreshRequested: false,
+  });
+}
+
+/** Filter-typing mode keys. Ctrl-C is handled first, in every mode. */
+function reduceFilterModeKey(state: DashboardState, key: string): DashboardState {
+  if (key === "\u001b" || key === "esc") {
+    // esc clears the text AND leaves typing mode in one step.
+    return reconcileSelection(state, { ...state, filter: "", filterMode: false });
+  }
+  if (key === "\r" || key === "\n" || key === "\r\n" || key === "enter") {
+    // enter confirms: the text stays and keeps narrowing the shown rows.
+    return { ...state, filterMode: false };
+  }
+  if (key === "\u007f" || key === "\u0008" || key === "backspace") {
+    if (state.filter.length === 0) return state;
+    return reconcileSelection(state, { ...state, filter: state.filter.slice(0, -1) });
+  }
+  if (key.length === 1) {
+    const code = key.codePointAt(0) ?? 0;
+    if (code >= 0x20 && code !== 0x7f) {
+      return reconcileSelection(state, { ...state, filter: state.filter + key });
+    }
+  }
+  return state;
+}
+
 export function reduceDashboardKey(state: DashboardState, key: string): DashboardState {
+  // Ctrl-C quits from every mode, including while a filter is being typed.
+  if (key === "\u0003" || key === "ctrl-c") return { ...state, quit: true, refreshRequested: false };
+  if (state.filterMode) return reduceFilterModeKey(state, key);
+  if (key === "\u001b" || key === "esc") {
+    if (state.filter.length === 0) return state;
+    return reconcileSelection(state, { ...state, filter: "" });
+  }
+  if (key === "\u007f" || key === "\u0008" || key === "backspace") return state;
+  if (key === "/") return { ...state, filterMode: true };
   const action = canonicalKey(key);
   if (action === "quit") return { ...state, quit: true, refreshRequested: false };
   if (action === "p") {
@@ -465,7 +579,7 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   if (action === "r") return { ...state, refreshRequested: true };
   if (action === "?") return { ...state, help: !state.help, refreshRequested: false };
   if (action === "enter") {
-    const selected = sectionRows(state)[state.row];
+    const selected = shownRows(state)[state.row];
     if (selected === undefined) return { ...withoutTransient(state), detailOpen: false };
     if (selected.full || selected.fetchKind === undefined) {
       return { ...withoutTransient(state), detailOpen: true };
@@ -489,9 +603,54 @@ function renderRowList(rows: DashRow[], selected: number, columns: number): Tagg
   return lines;
 }
 
+/**
+ * The local-filter indicator. The wording states the filter's scope
+ * explicitly — it narrows shown records, not the workspace read — and shows
+ * the shown-of-loaded split so a narrowed list is never mistaken for source
+ * coverage.
+ */
+function filterIndicator(state: DashboardState, columns: number): TaggedLine[] {
+  if (!filterActive(state)) return [];
+  const typing = state.filterMode ? " (typing — enter confirms, esc clears, ctrl-c quits)" : "";
+  const shown = shownRows(state).length;
+  const loaded = sectionRows(state).length;
+  return record(
+    `filter "${clean(state.filter)}"${typing}  filters shown records, not the workspace  showing ${shown} of ${loaded} loaded rows`,
+    columns,
+    0,
+  );
+}
+
+/**
+ * The rows-or-empty tail of a section. With an active filter the explicit
+ * "no shown row matches the filter" line replaces the empty state (the
+ * section's coverage/caveat lines above stay visible); the section's own
+ * empty state only appears when the loaded list itself is empty.
+ */
+function emptyOrFilterLines(
+  state: DashboardState,
+  emptyText: string,
+  columns: number,
+  emptyRank: number,
+): TaggedLine[] {
+  if (!filterActive(state)) return record(emptyText, columns, emptyRank);
+  const lines = record("no shown row matches the filter", columns, 0);
+  if (sectionRows(state).length === 0) return [...lines, ...record(emptyText, columns, emptyRank)];
+  return lines;
+}
+
+/** Slice coverage in the NAV-001 heading format: `tasks 20 of 64  truncated`. */
+function sliceCoverage(
+  label: string,
+  slice: { returned: number; total: number; truncated: boolean } | undefined,
+): string {
+  const returned = slice && typeof slice.returned === "number" ? slice.returned : "?";
+  const total = slice && typeof slice.total === "number" ? slice.total : "?";
+  const truncated = slice?.truncated === true ? "  truncated" : "";
+  return `${label} ${returned} of ${total}${truncated}`;
+}
+
 function buildAttention(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const items = attentionItems(state, context);
-  const selected = state.section === "attention";
   const counts = attentionCoverageCounts(context.attentionCoverage);
   const coverage = attentionCoverageText(context.attentionCoverage);
   const heading = state.perspective === "mine" ? "MY WORK  Needs You" : "TEAM WORK  Needs Attention";
@@ -499,18 +658,21 @@ function buildAttention(state: DashboardState, context: WorkspaceContext, column
     ...chrome(`${heading}  ATTENTION  ${counts}`, columns, 0),
     ...(coverage.length > 0 ? record(coverage, columns, 0) : []),
     ...record(ASSIGNMENT_RECORD_NOTE, columns, 1),
+    ...filterIndicator(state, columns),
   ];
-  if (items.length === 0) {
-    lines.push(...record(attentionEmptyText(context.attentionCoverage), columns, 0));
+  const rows = shownRows(state);
+  if (rows.length === 0) {
+    lines.push(...emptyOrFilterLines(state, attentionEmptyText(context.attentionCoverage), columns, 0));
     return lines;
   }
-  lines.push(...renderRowList(sectionRows({ ...state, section: "attention" }), selected ? state.row : -1, columns));
+  lines.push(...renderRowList(rows, state.row, columns));
   return lines;
 }
 
 function buildWork(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const rows = sectionRows({ ...state, section: "work" });
-  const lines: TaggedLine[] = [...chrome("CURRENT WORK", columns, 1)];
+  const lines: TaggedLine[] = [
+    ...chrome(`CURRENT WORK  ${sliceCoverage("tasks", context.slices.tasks)}`, columns, 1),
+  ];
   const hint = context.suggestedNextAction;
   if (hint !== undefined) {
     const parts = [ORIENTATION_HINT_LABEL];
@@ -518,27 +680,51 @@ function buildWork(state: DashboardState, context: WorkspaceContext, columns: nu
     if (hint.summary.length > 0) parts.push(clean(hint.summary));
     lines.push(...record(parts.join("  "), columns, 1));
   }
+  lines.push(...filterIndicator(state, columns));
+  const rows = shownRows(state);
   if (rows.length === 0) {
-    lines.push(...record("No open, in_progress, or blocked task in the returned records.", columns, 1));
+    lines.push(
+      ...emptyOrFilterLines(state, "No open, in_progress, or blocked task in the returned records.", columns, 1),
+    );
     return lines;
   }
-  lines.push(...renderRowList(rows, state.section === "work" ? state.row : -1, columns));
+  lines.push(...renderRowList(rows, state.row, columns));
   return lines;
 }
 
 function buildDecisions(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const rows = sectionRows({ ...state, section: "decisions" });
-  const lines: TaggedLine[] = [...chrome("RECORDED DECISIONS", columns, 1)];
+  const lines: TaggedLine[] = [
+    ...chrome(`RECORDED DECISIONS  ${sliceCoverage("decisions", context.slices.decisions)}`, columns, 1),
+    ...filterIndicator(state, columns),
+  ];
+  const rows = shownRows(state);
   if (rows.length === 0) {
-    lines.push(...record("No proposed or accepted decision in the returned records.", columns, 1));
+    lines.push(
+      ...emptyOrFilterLines(state, "No proposed or accepted decision in the returned records.", columns, 1),
+    );
     return lines;
   }
-  lines.push(...renderRowList(rows, state.section === "decisions" ? state.row : -1, columns));
+  lines.push(...renderRowList(rows, state.row, columns));
+  return lines;
+}
+
+function buildReferences(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
+  const lines: TaggedLine[] = [
+    ...chrome(`ARTIFACT REFERENCES  ${sliceCoverage("artifacts", context.slices.artifacts)}`, columns, 1),
+    ...filterIndicator(state, columns),
+  ];
+  const rows = shownRows(state);
+  if (rows.length === 0) {
+    lines.push(
+      ...emptyOrFilterLines(state, "No stored artifact reference in the returned records.", columns, 1),
+    );
+    return lines;
+  }
+  lines.push(...renderRowList(rows, state.row, columns));
   return lines;
 }
 
 function buildChanges(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const rows = sectionRows({ ...state, section: "changes" });
   const truncated = context.provenanceTruncated ? "  truncated" : "";
   const lines: TaggedLine[] = [
     ...chrome(
@@ -546,13 +732,30 @@ function buildChanges(state: DashboardState, context: WorkspaceContext, columns:
       columns,
       1,
     ),
+    ...filterIndicator(state, columns),
   ];
+  const rows = shownRows(state);
   if (rows.length === 0) {
-    lines.push(...record("No recent change in the returned records.", columns, 2));
+    lines.push(...emptyOrFilterLines(state, "No recent change in the returned records.", columns, 2));
     return lines;
   }
-  lines.push(...renderRowList(rows, state.section === "changes" ? state.row : -1, columns));
+  lines.push(...renderRowList(rows, state.row, columns));
   return lines;
+}
+
+function buildActiveSection(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
+  switch (state.section) {
+    case "attention":
+      return buildAttention(state, context, columns);
+    case "work":
+      return buildWork(state, context, columns);
+    case "decisions":
+      return buildDecisions(state, context, columns);
+    case "references":
+      return buildReferences(state, context, columns);
+    case "changes":
+      return buildChanges(state, context, columns);
+  }
 }
 
 function artifactFor(context: WorkspaceContext, id: string | undefined): Artifact | undefined {
@@ -597,7 +800,7 @@ function detailBody(detail: unknown, columns: number): TaggedLine[] {
 }
 
 function buildSource(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const rows = sectionRows(state);
+  const rows = shownRows(state);
   const selected = rows[state.row];
   const lines: TaggedLine[] = [...chrome("SOURCE", columns, 0)];
   if (selected === undefined) {
@@ -637,47 +840,15 @@ function buildSource(state: DashboardState, context: WorkspaceContext, columns: 
   return lines;
 }
 
-function fullWidthFacts(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
-  const lines: TaggedLine[] = [];
-  if (attentionItems(state, context).length === 0) {
-    lines.push(...record(attentionEmptyText(context.attentionCoverage), columns, 0));
-  }
-  for (const decision of context.proposedDecisions) {
-    lines.push(...record(`${decisionStatusLabel(decision.status)}  ${clean(decision.id)}`, columns, 0));
-  }
-  for (const decision of acceptedDecisions(context)) {
-    const findings = (decision.needsReviewFindingIds ?? []).map((id) => clean(id)).filter((id) => id.length > 0);
-    const review = decision.needsReview === true ? `  needs review${findings.length > 0 ? `  ${findings.join(", ")}` : ""}` : "";
-    lines.push(...record(`accepted  ${clean(decision.id)}${review}`, columns, 0));
-  }
-  for (const decision of context.supersededDecisions) {
-    lines.push(...record(`${decisionStatusLabel("superseded")}  ${clean(decision.id)}`, columns, 1));
-  }
-  return lines;
-}
-
-function buildArtifactReferences(context: WorkspaceContext, columns: number): TaggedLine[] {
-  if (context.artifacts.length === 0) return [];
-  const lines: TaggedLine[] = [...chrome("ARTIFACT REFERENCES", columns, 1)];
-  for (const artifact of context.artifacts) {
-    lines.push(...record(artifactReferenceText(artifact, context), columns, 0));
-  }
-  return lines;
-}
-
+/**
+ * NAV-001: the header keeps only the recorded participant count. Agent rows
+ * were an eager enumeration ahead of work; registered identity stays a
+ * recorded fact reachable through the existing `campfire agents` surface.
+ */
 function buildParticipants(context: WorkspaceContext, columns: number): TaggedLine[] {
   const humans = context.participants.filter((participant) => participant.actor.actorType === "human").length;
   const agents = context.participants.filter((participant) => participant.actor.actorType === "agent").length;
-  const lines: TaggedLine[] = [...chrome(recordedParticipantLine(humans, agents), columns, 1)];
-  for (const participant of context.participants) {
-    if (participant.actor.actorType !== "agent") continue;
-    const harness = participant.harness === undefined ? "harness not recorded" : clean(participant.harness);
-    const owner = participant.humanOwnerId === undefined ? "owner not recorded" : clean(participant.humanOwnerId);
-    lines.push(
-      ...record(`${clean(participant.name)}  ${harness}  owner ${owner}  registered  recorded`, columns, 1),
-    );
-  }
-  return lines;
+  return [...chrome(recordedParticipantLine(humans, agents), columns, 1)];
 }
 
 function footerLines(columns: number): TaggedLine[] {
@@ -725,22 +896,6 @@ function pinFacts(lines: string[], columns: number, facts: readonly string[]): s
   return frame;
 }
 
-function zipColumns(left: TaggedLine[], right: TaggedLine[], leftWidth: number, rightWidth: number): TaggedLine[] {
-  const count = Math.max(left.length, right.length);
-  const lines: TaggedLine[] = [];
-  for (let index = 0; index < count; index += 1) {
-    const l = left[index];
-    const r = right[index];
-    const ltext = (l?.text ?? "").padEnd(leftWidth, " ").slice(0, leftWidth);
-    const rtext = (r?.text ?? "").slice(0, rightWidth);
-    lines.push({
-      text: `${ltext} ${rtext}`.trimEnd(),
-      rank: Math.min(l?.rank ?? 9, r?.rank ?? 9),
-    });
-  }
-  return lines;
-}
-
 export function renderDashboard(state: DashboardState, columns: number, rows: number): string {
   const size = viewport(columns, rows);
   const context = sameWorkspace(state);
@@ -767,8 +922,6 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
   if (context !== undefined) {
     header.push(...record(attentionCoverageCounts(context.attentionCoverage), size.columns, 0));
     header.push(...buildParticipants(context, size.columns));
-    header.push(...buildArtifactReferences(context, size.columns));
-    header.push(...fullWidthFacts(state, context, size.columns));
   }
 
   let body: TaggedLine[] = [];
@@ -777,45 +930,14 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
     for (const line of HELP_LINES) body.push(...record(line, size.columns, 1));
   }
   if (context !== undefined) {
-    const sections: Record<DashboardSection, TaggedLine[]> = {
-      attention: buildAttention(state, context, size.columns < 100 ? size.columns : Math.floor((size.columns - 1) / 2)),
-      work: buildWork(state, context, size.columns < 100 ? size.columns : Math.floor((size.columns - 1) / 2)),
-      decisions: buildDecisions(
-        state,
-        context,
-        size.columns < 100 ? size.columns : size.columns - Math.floor((size.columns - 1) / 2) - 1,
-      ),
-      changes: buildChanges(
-        state,
-        context,
-        size.columns < 100 ? size.columns : size.columns - Math.floor((size.columns - 1) / 2) - 1,
-      ),
-    };
-    if (size.columns < 100) {
-      const order = [state.section, ...SECTIONS.filter((section) => section !== state.section)];
-      for (const section of order) {
-        const block = sections[section];
-        if (block !== undefined) body.push(...block);
-      }
-    } else {
-      const leftWidth = Math.floor((size.columns - 1) / 2);
-      const rightWidth = size.columns - leftWidth - 1;
-      body.push(
-        ...zipColumns(
-          [...sections.attention, ...sections.work],
-          [...sections.decisions, ...sections.changes],
-          leftWidth,
-          rightWidth,
-        ),
-      );
-    }
-    const sourceWidth = size.columns;
-    body.push(...buildSource(state, context, sourceWidth));
+    // NAV-001: exactly one active section, then its selected-record source block.
+    body.push(...buildActiveSection(state, context, size.columns));
+    body.push(...buildSource(state, context, size.columns));
   }
   const footer = footerLines(size.columns);
   const footerKept = footer.length >= size.rows ? footer.slice(footer.length - size.rows) : footer;
   const fitted = fit([...header, ...body], size.rows - footerKept.length);
-  const selected = context === undefined ? undefined : sectionRows(state)[state.row];
+  const selected = context === undefined ? undefined : shownRows(state)[state.row];
   const coverageToken =
     context === undefined ? "" : attentionCoverageCounts(context.attentionCoverage).split(" ")[0] ?? "";
   const facts = [state.workspaceId, context?.goal?.id ?? "", selected?.id ?? "", coverageToken];
@@ -843,12 +965,79 @@ function writeControl(stream: NodeJS.WriteStream, text: string): void {
   }
 }
 
-function normalizeInputKey(text: string): string | undefined {
-  if (text.includes("\u0003")) return "\u0003";
-  if (text === "\t") return "tab";
-  if (text === "\r" || text === "\n" || text === "\r\n") return "enter";
-  if (text === "p" || text === "j" || text === "k" || text === "r" || text === "?" || text === "q") return text;
-  return undefined;
+/**
+ * Remove complete escape sequences from one raw input chunk: CSI sequences
+ * (arrows, function keys) and unknown ESC-led chords (Alt combos). A lone
+ * ESC byte is kept so a chunk that is exactly ESC still reads as the esc key.
+ * Sequences are never leaked as text and never swallow the rest of the chunk:
+ * a coalesced `"\u001bqj"` loses the ESC chord but keeps the `j`.
+ */
+export function stripEscapeSequences(text: string): string {
+  let kept = "";
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index]!;
+    if (char !== "\u001b") {
+      kept += char;
+      continue;
+    }
+    if (index + 1 >= text.length) {
+      // A lone ESC may be the esc key itself; keep it for the caller.
+      kept += "\u001b";
+      continue;
+    }
+    if (text[index + 1] === "[") {
+      let end = index + 2;
+      while (end < text.length && !/[\u0040-\u007e]/.test(text[end]!)) end += 1;
+      index = Math.min(end, text.length - 1);
+      continue;
+    }
+    // An unknown ESC-led chord (for example Alt+key): skip ESC and one byte.
+    index += 1;
+  }
+  return kept;
+}
+
+/**
+ * Split one raw stdin chunk into the recognized keys it carries.
+ *
+ * A chunk is not guaranteed to hold a single key: a PTY delivers whatever the
+ * writer queued between reads, so a scripted or pasted burst can arrive as
+ * `"\t\tq"` in one chunk. Treating only whole-chunk single keys as input
+ * silently dropped such bursts (a scripted capture sent two tabs and q within
+ * 300 ms and the dashboard never quit). Escape sequences are stripped first,
+ * then each recognized byte is returned in order and reduced one by one,
+ * mirroring the filter-mode typing path; a chunk that is exactly ESC stays the
+ * esc key.
+ */
+export function normalizeInputChunk(text: string): string[] {
+  if (text.includes("\u0003")) return ["\u0003"];
+  const cleaned = stripEscapeSequences(text);
+  if (cleaned === "\u001b") return ["\u001b"];
+  const keys: string[] = [];
+  for (let index = 0; index < cleaned.length; index += 1) {
+    const char = cleaned[index]!;
+    if (char === "\t") {
+      keys.push("tab");
+      continue;
+    }
+    if (char === "\r") {
+      keys.push("enter");
+      if (cleaned[index + 1] === "\n") index += 1;
+      continue;
+    }
+    if (char === "\n") {
+      keys.push("enter");
+      continue;
+    }
+    if (char === "\u007f" || char === "\u0008") {
+      keys.push("\u007f");
+      continue;
+    }
+    if (char === "p" || char === "j" || char === "k" || char === "r" || char === "?" || char === "q" || char === "/") {
+      keys.push(char);
+    }
+  }
+  return keys;
 }
 
 export async function runDashboardSession(options: DashboardSessionOptions): Promise<void> {
@@ -942,13 +1131,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
       if (loaded.workspace.id !== state.workspaceId) {
         throw new Error("workspace context did not match the authorized workspace");
       }
-      state = clampRow({
-        ...state,
-        context: loaded,
-        staleError: undefined,
-        refreshedAt: now().toISOString(),
-        refreshRequested: false,
-      });
+      state = reconcileAfterLoad(state, loaded, now().toISOString());
     } catch (error) {
       if (closed) return;
       const message = stripTerminalControls(error instanceof Error ? error.message : String(error));
@@ -990,20 +1173,51 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   const onData = (chunk: Buffer | string): void => {
     if (closed || finished) return;
     const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
-    const key = normalizeInputKey(text);
-    if (key === undefined) return;
-    state = reduceDashboardKey(state, key);
-    if (state.quit) {
-      finish();
+    if (state.filterMode) {
+      // Escape sequences (arrows, function keys, Alt chords) must not append
+      // stray characters; an exact ESC is the filter's esc. Sequences are
+      // stripped first and every remaining character is reduced one by one so
+      // multi-character input (fast typing, paste) filters each character and
+      // a sequence never swallows bytes that follow it in the same chunk.
+      const typed = stripEscapeSequences(text);
+      if (typed.length === 0) return;
+      for (const char of typed) {
+        state = reduceDashboardKey(state, char);
+        if (state.quit) {
+          finish();
+          return;
+        }
+      }
+      void inspectSelection().finally(() => {
+        if (!closed) draw();
+      });
       return;
     }
-    if (state.refreshRequested) {
-      void refresh(false);
-      return;
+    const keys = normalizeInputChunk(text);
+    if (keys.length === 0) return;
+    for (const key of keys) {
+      state = reduceDashboardKey(state, key);
+      if (state.quit) {
+        // Draw the final navigated state before leaving. When a burst carries
+        // navigation and q in one chunk, the queued per-key draws are
+        // suppressed by the teardown's closed guard, so without this the last
+        // stable frame would be the first tab's section instead of the section
+        // the burst navigated to.
+        draw();
+        finish();
+        return;
+      }
+      if (state.refreshRequested) {
+        void refresh(false);
+        return;
+      }
+      // Draw after each key so a burst that ends in q leaves the section it
+      // navigated to as the last stable frame, exactly as if the keys had
+      // arrived one at a time.
+      void inspectSelection().finally(() => {
+        if (!closed) draw();
+      });
     }
-    void inspectSelection().finally(() => {
-      if (!closed) draw();
-    });
   };
 
   const onResize = (): void => {

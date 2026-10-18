@@ -1,6 +1,6 @@
-# Campfire 1.21.0 release context
+# Campfire 1.22.0 release context
 
-This public source snapshot was exported on 2026-10-17 from private canonical source commit `28d7ca94237aa7bb068a7500206099da438d1bf3` (dated 2026-10-17T00:34:49-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-18 from private canonical source commit `1b9432dca9e2900bee2378e2672ca93df07200de` (dated 2026-10-17T23:59:20-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -41,20 +41,21 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - The WCO-001 ordinary two-human continuation case was not observed; the witnessed gap comes from a labeled single-operator rehearsal, and the sprint remains CONDITIONAL GO — engineering candidate. This release is a founder override for real-user testing, not a human continuation result, and it moves no gate.
 - The two controlled human comprehension traces, the shipped-v1.16 Viewer comprehension trace, the reference-open observation, and an ordinary two-human/two-agent continuation were not recorded before this release. The release is a founder override for real-user testing, not a GO result. Gate B, Gate C, and Gate E remain unmeasured.
 - Artifact references now render with a typed, deterministic reference class (safe absolute HTTPS, insecure HTTP, credential-bearing, local path, other/internal scheme, or unparsed; control characters force inert text), the destination host for openable references, and the recorded Finding evidence relation where one exists; relations are never inferred and historical or competing decisions are not promoted. The Viewer adds a clearly labeled deliberate open control for safe absolute HTTPS references only — `noopener noreferrer`, no referrer, destination host shown, navigation only on the user's own activation, no rendering-time fetches — while the terminal stays inspect-only. Whether a person can use this to reach, verify, or act on an external output in ordinary work is unmeasured: the artifact-handoff human observations are NOT OBSERVED, the sprint result stands as UNSCORED, and Gate B/C/E/F remain open. Campfire never fetches, hosts, or verifies targets, and workspace membership does not grant external access.
+- The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.21.0.
+- The versioned installer source for v1.22.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.21.0 candidate passed type checking,
+At source preparation, the private 1.22.0 candidate passed type checking,
 build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. The full suite had 95 files / 1,166 tests with 1,164
+Worker deployment dry run. The full suite had 96 files / 1,185 tests with 1,183
 passing, one opt-in terminal capture skipped by default, and one expected
-install-channel assertion awaiting the four v1.21.0 release checksums;
+install-channel assertion awaiting the four v1.22.0 release checksums;
 that assertion was not loosened. The public export audit, archive verification,
 channel pins, production deployment, and live installer check are separate
 promotion steps and are recorded only when performed. This source snapshot does

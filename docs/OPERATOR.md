@@ -138,8 +138,9 @@ After install, run `campfire` in a terminal. That records the human once.
 The suggested name comes from `git config user.name` or the login. It does
 not ask for an agent, a workspace, or a goal. Credentials are stored under
 `$CAMPFIRE_CONFIG_DIR` or `~/.config/campfire` (credentials mode 0600).
-`campfire up` starts the local API and Viewer in this process and connects
-each installed Codex or OpenCode as an agent that human owns. It says plainly
+That first interactive `campfire` run calls `up` itself: it starts the local
+API and Viewer in this process and connects each installed Codex or OpenCode
+as an agent that human owns. It says plainly
 that past sessions are not imported. It does not register an agent session
 and does not provision Cloudflare. The agent creates the workspace and goal
 when work starts. A second workspace is a normal `create_workspace`.
@@ -159,10 +160,10 @@ cannot capture tokens by default.
 
 ```bash
 campfire
-campfire up
 ```
 
-Agents and scripts keep flags:
+On a later run, `campfire` prints status; use `campfire up` to reopen the
+local API and Viewer. For scripted setup, use the separate `onboard` path:
 
 ```bash
 campfire onboard \
@@ -470,8 +471,10 @@ architecture, `blob6` install method or `"none"`, `blob7` surface or `"none"`,
 
 ## 1. Initialize
 
-`campfire onboard` (above) creates the first workspace. The source-checkout
-commands below are the granular path. `seed --reset` loads the deterministic
+For scripted setup, `campfire onboard` (above) creates the first workspace.
+The interactive `campfire` path creates the human first and lets an agent
+create a workspace and goal when work starts. The source-checkout commands
+below are the granular path. `seed --reset` loads the deterministic
 demo/evaluation fixture; it is not how a new operator creates their workspace.
 
 ```bash
@@ -615,9 +618,10 @@ past the first 50 is silently hidden.
 
 ## First-run bootstrap
 
-The installed first workspace is `campfire onboard` (see "First shared
-workspace"). `init` creates an empty database. `seed --reset` loads the
-deterministic demo/evaluation fixture; it is not how a new operator creates
+The installed interactive first run is `campfire` (see "First shared
+workspace"); `campfire onboard` is the separate scripted path. `init` creates
+an empty database. `seed --reset` loads the deterministic demo/evaluation
+fixture; it is not how a new operator creates
 their workspace. There is no onboard reset flag. The first human may still
 be created with no token on an empty database (empty-human bootstrap); after
 that, `create-human` requires a human actor and `issue-token` mints the raw
