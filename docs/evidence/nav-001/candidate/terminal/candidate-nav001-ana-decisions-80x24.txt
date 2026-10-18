@@ -1,0 +1,24 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-18T00:51:33.218Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+20 people · 37 registered agents
+RECORDED DECISIONS  decisions 5 of 5
+  > proposed  proposed — not accepted, not an instruction  dec_nav001_proposed 
+  Adopt the focused single-screen terminal layout.
+  accepted  dec_nav001_plain  Keep the workspace read-only during the baseline
+  freeze.
+  accepted  dec_nav001_competing_b  Order the screen by newest record.
+  accepted  dec_nav001_competing_a  Order the screen by recorded assignment.
+  accepted  dec_nav001_review  The terminal screen lists every recorded task
+  because the read felt complete.  needs review  find_nav001_superseded
+SOURCE
+  get_workspace_context  dec_nav001_proposed
+  proposed  proposed — not accepted, not an instruction  dec_nav001_proposed 
+  Adopt the focused single-screen terminal layout.
+tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit
+
+
+

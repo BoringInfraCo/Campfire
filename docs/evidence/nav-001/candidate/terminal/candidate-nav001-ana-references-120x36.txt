@@ -1,0 +1,36 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-18T00:51:34.068Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+20 people · 37 registered agents
+ARTIFACT REFERENCES  artifacts 10 of 12  truncated
+  > art_nav001_notes  document  nav-001/working-notes.md  stored reference, not fetched  class local path  external and
+  unverified by Campfire; workspace membership does not grant access
+  art_nav001_hostile  other  https://example.com/nav-001/report"><img src=x onerror=alert(1)>  stored reference, not
+  fetched  class unparsed  external and unverified by Campfire; workspace membership does not grant access
+  art_nav001_runbook  report  https://example.com/nav-001/runbook.html  stored reference, not fetched  class openable
+  https  host example.com  cited by find_nav001_current (supports)  external and unverified by Campfire; workspace
+  membership does not grant access
+  art_nav001_f09  document  nav-001/filler-reference-09.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f08  document  nav-001/filler-reference-08.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f07  document  nav-001/filler-reference-07.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f06  document  nav-001/filler-reference-06.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f05  document  nav-001/filler-reference-05.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f04  document  nav-001/filler-reference-04.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+  art_nav001_f03  document  nav-001/filler-reference-03.md  stored reference, not fetched  class local path  external
+  and unverified by Campfire; workspace membership does not grant access
+SOURCE
+  get_workspace_context  art_nav001_notes
+  art_nav001_notes  document  nav-001/working-notes.md  stored reference, not fetched  class local path  external and
+  unverified by Campfire; workspace membership does not grant access
+p perspective   tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit
+
+
