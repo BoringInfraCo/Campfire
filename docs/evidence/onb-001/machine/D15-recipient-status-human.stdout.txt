@@ -1,0 +1,6 @@
+Workspace  billing-deploy-failure  [active]  ws_[id]
+Goal       Restore the billing deploy pipeline  [active]
+Participants  5 humans  5 agents
+Work       open 0  in progress 0  blocked 0
+Decisions  proposed 0  accepted 0
+Activity   26 contributions  newest con_[id]  (recent window truncated)

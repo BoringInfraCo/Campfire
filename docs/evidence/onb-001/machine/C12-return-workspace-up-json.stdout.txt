@@ -1,0 +1,1 @@
+{"human":"Ada","workspaces":[{"id":"ws_[id]","name":"billing-deploy-failure","goal":"Restore the billing deploy pipeline"}],"agents":[],"apiUrl":"http://127.0.0.1:[port]","viewerUrl":"http://127.0.0.1:[port]","openedBrowser":false,"pastSessionsImported":false}

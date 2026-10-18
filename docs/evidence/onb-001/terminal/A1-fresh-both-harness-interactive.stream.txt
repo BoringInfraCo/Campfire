@@ -1,0 +1,15 @@
+[1G[0JYour name [owner]: [20GAda
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+
+  campfire
+  the shared workspace for people and their agents
+
+  Agents     Codex, OpenCode
+  Waiting for an agent to start work.
+  Past sessions are not imported.
+
+  You        http://127.0.0.1:[port]
+  Agent      reload the harness, then continue in that session
+
+[campfire] HTTP http://127.0.0.1:[port]  viewer http://127.0.0.1:[port]
+^C[campfire] received SIGINT, shutting down

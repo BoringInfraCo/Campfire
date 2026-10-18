@@ -1,0 +1,4 @@
+[campfire] viewer listening on http://127.0.0.1:[port]
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+[campfire] received SIGINT, shutting down

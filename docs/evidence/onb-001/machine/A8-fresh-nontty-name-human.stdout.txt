@@ -1,0 +1,10 @@
+
+  campfire
+  the shared workspace for people and their agents
+  You        Ada
+  Waiting for an agent to start work.
+  Past sessions are not imported.
+
+  campfire up     start the local API and Viewer
+  campfire --help
+

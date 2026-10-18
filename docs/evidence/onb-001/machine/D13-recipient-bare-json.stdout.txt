@@ -1,0 +1,1 @@
+{"mode":"remote","human":"Ben","humanId":"hum_[id]","workspaceId":"ws_[id]","workspace":"billing-deploy-failure","agents":[{"id":"agt_[id]","name":"Codex","harness":"codex"}],"nextAction":"campfire up","pastSessionsImported":false}

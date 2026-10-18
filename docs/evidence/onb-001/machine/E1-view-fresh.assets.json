@@ -1,0 +1,40 @@
+{
+  "assets": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": "4191",
+      "bytes": 4191,
+      "sha256": "26020d2114fef88d60267d632f832a12ce9ea1e5f8248a057bf2bcad92a1ab2d",
+      "savedAs": "machine/E1-view-fresh.index.html"
+    },
+    {
+      "path": "/app.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8",
+      "contentLength": "83449",
+      "bytes": 83449,
+      "sha256": "2632df6c25e714c3096d00fa426ac1e4c39f8c94bb92d7410a526b3be0067f6c",
+      "savedAs": "machine/E1-view-fresh.app.js"
+    },
+    {
+      "path": "/app.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8",
+      "contentLength": "14194",
+      "bytes": 14194,
+      "sha256": "8cb01c963a360b6b61299dedc2eeefe059c4dac2c65d58836bc83318612c2ca1",
+      "savedAs": null
+    },
+    {
+      "path": "/campfire-mark.svg",
+      "status": 200,
+      "contentType": "image/svg+xml",
+      "contentLength": "6411",
+      "bytes": 6411,
+      "sha256": "a845ec975a6f58a5e9583d157445849a6900fd53cda0965cf5e21c94af44f311",
+      "savedAs": null
+    }
+  ]
+}

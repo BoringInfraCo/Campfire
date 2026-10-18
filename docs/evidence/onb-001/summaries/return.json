@@ -1,0 +1,835 @@
+{
+  "tool": "onb-001 capture-return",
+  "provenance": "FIXTURE EVIDENCE — scripted engineering captures of the published v1.22.0 CLI and Viewer. Not human-observation evidence.",
+  "baseline": {
+    "tag": "v1.22.0",
+    "root": "[path]",
+    "describeTag": "v1.22.0",
+    "packageVersion": "1.22.0",
+    "worktreeClean": true,
+    "srcMatchesTag": true
+  },
+  "simulatedHarnessNote": "Harness detection in v1.22.0 is configuration-path based (src/bootstrap/connect.ts detectInstalledHarnesses). Every harness presence this run is a simulated marker directory in an isolated HOME/XDG; no real codex or opencode process was launched and no real harness config was touched.",
+  "assertions": {
+    "telemetryDisabled": "CAMPFIRE_TELEMETRY=0 in every child environment",
+    "ambientEndpointsRemoved": "CAMPFIRE_URL and CAMPFIRE_TOKEN removed from every child environment",
+    "loopbackOnly": "every listener used --port 0 / --viewer-port 0 on loopback",
+    "isolatedDirs": "HOME, XDG_CONFIG_HOME, CAMPFIRE_CONFIG_DIR, CAMPFIRE_DATA_DIR, TMPDIR per scenario",
+    "colorDisabled": "NO_COLOR=1 for deterministic bytes",
+    "userIdentity": "USER=LOGNAME=owner for a deterministic name-prompt default",
+    "noRealBrowser": "CAMPFIRE_NO_BROWSER=1, --no-open, or a PATH `open` shim that only logs the URL",
+    "noLastingHarness": "no harness process is started; detection is filesystem-only"
+  },
+  "cases": [
+    {
+      "id": "C1",
+      "journey": "C",
+      "title": "returning profile, no workspace, bare campfire in a terminal (human receipt, no listener)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "any listener (a returning bare `campfire` prints status only)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/C1-return-no-workspace-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 231,
+          "sha256": "855c2a8388d36739e66b60144686ca119d708c487b4094959436f9f1b02d7c7d",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 0,
+        "stepsTotal": 0,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C2",
+      "journey": "C",
+      "title": "returning profile, no workspace, bare campfire piped (bare stays human)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C2-return-no-workspace-piped.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 221,
+          "sha256": "8513bb7e37e027514694d668db1d5533b851fadba5426084e63a6ad2135cce8f",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/C2-return-no-workspace-piped.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C3",
+      "journey": "C",
+      "title": "returning profile, no workspace, explicit JSON (profile status JSON)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C3-return-no-workspace-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 40,
+          "sha256": "9b3fda96f13a7a31d63c30c190a68530e1edaf6fc55a42634969fb52592d5432",
+          "rules": {
+            "path_var_folders": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C3-return-no-workspace-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C4",
+      "journey": "C",
+      "title": "returning profile, no workspace, `campfire status` in a terminal (awaiting_workspace human)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "any listener (status reads the local store in-process)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/C4-return-no-workspace-status-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 276,
+          "sha256": "c50d8eeeabddd2ea924eb20b307e0a615bdd7a5c9128f3d0ba92b6c4e9f9297b",
+          "rules": {
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 0,
+        "stepsTotal": 0,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C5",
+      "journey": "C",
+      "title": "returning profile, no workspace, `campfire status --output json`",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C5-return-no-workspace-status-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 267,
+          "sha256": "946ecbbaf3a1d079cbff047f339845e0400ba54f7a4d0550effd07972fcfb5f5",
+          "rules": {
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C5-return-no-workspace-status-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 81,
+          "sha256": "d8863f83f77976d18d3b6670a14a616ebdf05283521a4e8d12b0d07670f40b0e",
+          "rules": {
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C6",
+      "journey": "C",
+      "title": "returning profile with stored workspace, bare campfire in a terminal (human receipt, no listener)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "any listener (a returning bare `campfire` prints status only)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/C6-return-workspace-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 272,
+          "sha256": "66ba09241ca8f6fcd70dc586ee238c83bddcaad877507be7449e4ba39d1c763b",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 0,
+        "stepsTotal": 0,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C7",
+      "journey": "C",
+      "title": "returning profile with stored workspace, bare campfire piped (bare stays human)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C7-return-workspace-piped.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 261,
+          "sha256": "bf81d2756ca23a3c66731efcae4b105a1ad5cbab69220a359bdecc7c4b6484e0",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/C7-return-workspace-piped.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C8",
+      "journey": "C",
+      "title": "returning profile with stored workspace, explicit JSON",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C8-return-workspace-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 180,
+          "sha256": "03df179ff66d616132826d084bfadcb77db4d50cece396761a5ed8e733dd9980",
+          "rules": {
+            "path_var_folders": 1,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C8-return-workspace-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C9",
+      "journey": "C",
+      "title": "returning profile with stored workspace, `campfire status` in a terminal (ready human)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "any listener (status reads the local store in-process)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/C9-return-workspace-status-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 375,
+          "sha256": "5e3e58b39913043d3eece3386814bc589ca24439f898923b9f5099be36049973",
+          "rules": {
+            "object_id": 4
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 0,
+        "stepsTotal": 0,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C10",
+      "journey": "C",
+      "title": "returning profile with stored workspace, `campfire status --output json`",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C10-return-workspace-status-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 472,
+          "sha256": "4e068570a6d275e9e5123f4b6317ba491433bf5b113fe21e512b8f156ccbf8c7",
+          "rules": {
+            "object_id": 3
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C10-return-workspace-status-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 105,
+          "sha256": "c00eacff7612d1730ec6ba02716ab0b3e73a15c2bfc927f2d13794904c1a239b",
+          "rules": {
+            "object_id": 2
+          },
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C11",
+      "journey": "C",
+      "title": "returning profile with stored workspace, `up --no-connect` in a terminal (human receipt)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a browser launch (suppressed by CAMPFIRE_NO_BROWSER=1)",
+        "a harness reload or session registration"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/C11-return-workspace-up-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 452,
+          "sha256": "57c4e67da8de4e8ef8067b50a0b397ad0ab2cad9ef3a392743916f86ad931884",
+          "rules": {
+            "loopback_port": 3,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 1,
+        "stepsTotal": 1,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C12",
+      "journey": "C",
+      "title": "returning profile with stored workspace, `up --no-connect --no-open --output json`",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "the returning profile/database is created by shipped commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a browser launch (suppressed by --no-open)",
+        "a harness reload or session registration"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C12-return-workspace-up-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 261,
+          "sha256": "91fd4211626fe83f9c99d0851490c322eeacb0698fb5e9c2aae50ec8c5efdc10",
+          "rules": {
+            "loopback_port": 2,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C12-return-workspace-up-json.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 195,
+          "sha256": "e00bd1117bc3302c74615a0e7eedb503b142abe954c4898755f9614444304acf",
+          "rules": {
+            "loopback_port": 2,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "payloadParsed": true,
+        "openedBrowser": false,
+        "workspaces": [
+          {
+            "id": "ws_[id]",
+            "name": "billing-deploy-failure",
+            "goal": "Restore the billing deploy pipeline"
+          }
+        ]
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C13",
+      "journey": "A",
+      "title": "scripted onboard with explicit JSON shows the one-time credential receipt",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "onboard",
+        "--human-name",
+        "Ada",
+        "--agent-name",
+        "Codex",
+        "--harness",
+        "codex",
+        "--workspace-name",
+        "billing-deploy-failure",
+        "--goal",
+        "Restore the billing deploy pipeline",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "onboard",
+        "--human-name",
+        "Ada",
+        "--agent-name",
+        "Codex",
+        "--harness",
+        "codex",
+        "--workspace-name",
+        "billing-deploy-failure",
+        "--goal",
+        "Restore the billing deploy pipeline",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "a fresh isolated installation created by the scripted onboard path"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "a listener, harness reload, or agent session (onboard does none of these)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C13-onboard-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 1959,
+          "sha256": "c82b4d7a8ab0d00f018896e25e24e9e95d6edadcbb40ce40887816494ac2c941",
+          "rules": {
+            "bearer_token": 2,
+            "path_var_folders": 4,
+            "object_id": 7
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/C13-onboard-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 392,
+          "sha256": "399d796c927c8f133d641c88e9027303b571d7c7d5c643454330fec979268efc",
+          "rules": {
+            "object_id": 7
+          },
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "C14",
+      "journey": "A",
+      "title": "scripted onboard human receipt prints no token (credential-bearing command stays human under auto)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "onboard",
+        "--human-name",
+        "Ada",
+        "--agent-name",
+        "Codex",
+        "--harness",
+        "codex",
+        "--workspace-name",
+        "billing-deploy-failure",
+        "--goal",
+        "Restore the billing deploy pipeline"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "onboard",
+        "--human-name",
+        "Ada",
+        "--agent-name",
+        "Codex",
+        "--harness",
+        "codex",
+        "--workspace-name",
+        "billing-deploy-failure",
+        "--goal",
+        "Restore the billing deploy pipeline"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "a fresh isolated installation created by the scripted onboard path"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "a listener, harness reload, or agent session (onboard does none of these)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/C14-onboard-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 374,
+          "sha256": "ea1c2b130feefefd01389abc0135cc13d0e98a794eff5a0f114905aa8a2e7855",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/C14-onboard-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 392,
+          "sha256": "399d796c927c8f133d641c88e9027303b571d7c7d5c643454330fec979268efc",
+          "rules": {
+            "object_id": 7
+          },
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    }
+  ],
+  "capturedOn": "2026-10-18",
+  "machineFacts": {
+    "platform": "darwin",
+    "kernel": "Darwin 25.6.0 arm64",
+    "node": "v22.23.2",
+    "python3": "Python 3.11.7",
+    "git": "git version 2.51.2",
+    "codexCli": "codex-cli 0.163.0",
+    "opencode": "opencode v2.0.32"
+  },
+  "methodNotes": {
+    "pty": "python3 pty, 24x100, child session leader with controlling pty; stderr shares the terminal stream; an interactive step is only used for C11 (wait for the `[campfire] HTTP …` listener line, then a real SIGINT (\\u0003) after a 300 ms delay so the signal cannot race the shutdown-handler registration); frames are the raw stream text (CRLF line endings; expectation matching normalizes \\r\\n to \\n)",
+    "ptyTermios": "check `termiosRestored` is recorded false in every PTY case, including clean exit-0 runs: on macOS, tcgetattr on the pty slave fails with ENOTTY once the session leader has exited, so the post-exit snapshot is unreadable. This is a driver limitation, not a dirty-terminal observation.",
+    "piped": "spawnSync with piped stdin/stdout/stderr; no terminal anywhere",
+    "daemon": "detached child; SIGINT to its process group; stderr/stdout collected",
+    "statusOutputMode": "`campfire status` has outputModes auto/human/json (src/cli/catalog.ts spec + src/cli/output.ts resolveOutputMode): stdout TTY renders human, a pipe renders JSON unless --output human is passed. Bare `campfire` is outside that rule and stays human unless explicit JSON (src/cli/index.ts commandOutput)."
+  },
+  "maskingRules": "see BASELINE_PIN.md — cft-shaped credential tokens -> [redacted]; cfe-shaped invitation secrets -> [one-time-credential: redacted]; absolute /Users, /private, /var/folders, /tmp paths -> [path]; loopback ports -> [port]; ISO timestamps -> [timestamp]; UUIDs -> [uuid]; object ids (<prefix>_<16 hex>) -> <prefix>_[id]"
+}

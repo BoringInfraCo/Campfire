@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "kind": "enrollment_invitation",
+  "invitationId": "ein_inv_[id]",
+  "secret": "[one-time-credential: redacted]",
+  "workspace": {
+    "id": "ws_[id]",
+    "name": "billing-deploy-failure",
+    "teamId": "team_engineering"
+  },
+  "expiresAt": "[timestamp]",
+  "permittedHarnesses": [
+    "codex",
+    "opencode"
+  ],
+  "url": "http://127.0.0.1:[port]"
+}

@@ -1,0 +1,5 @@
+[campfire] viewer listening on http://127.0.0.1:[port]
+{"event":"authz","allow":false,"actorId":"hum_sergio","operation":"workspace:list","reason":"Actor not found: hum_sergio"}
+{"event":"authz","allow":false,"actorId":"hum_sergio","operation":"workspace:read","workspaceId":"ws_[id]","reason":"Actor not found: hum_sergio"}
+{"allow":false,"error":"InternalError","route":"/generated/workspaces/:id","kind":"exception"}
+[campfire] received SIGINT, shutting down

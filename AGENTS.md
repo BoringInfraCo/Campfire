@@ -408,6 +408,15 @@ change the CONDITIONAL GO verdict, the NOT OBSERVED human comparison, or any
 gate. NAV-002 and NAV-003 retain the People, deeper history/paging, and
 Viewer alignment work.
 
+Sprint ONB-001 — First-Run Handoff has its proposed v1.22.1 patch contract at
+`docs/Campfire-v1.22.1-ONB-001-First-Run-Handoff.md`. It starts from the
+published v1.22.0 tag and limits work to truthful setup/join receipts, recovery
+guidance, and the read-only no-workspace Viewer state. Freeze the baseline and
+contract before product code; no implementation, result, version bump, or
+release decision is recorded yet. If a repair needs automatic harness reload,
+new enrollment semantics, or automatic workspace/session creation, re-scope
+it as a minor sprint instead of extending this patch.
+
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
 accurately described release while multi-person observations remain open.

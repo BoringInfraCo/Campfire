@@ -1,0 +1,13 @@
+Workspace billing-deploy-failure is ready.
+
+  Goal     Restore the billing deploy pipeline
+  You      Ada
+  Agent    Codex (codex)
+
+Credentials are stored locally (mode 0600) and are not printed here.
+Pass --json for one-time tokens.
+
+Next: campfire up
+      Reload codex after connect. Approval may be required.
+      As the agent: register_agent_session, then preflight.
+

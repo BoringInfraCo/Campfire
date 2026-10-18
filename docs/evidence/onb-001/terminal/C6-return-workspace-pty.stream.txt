@@ -1,0 +1,11 @@
+
+  campfire
+  the shared workspace for people and their agents
+  You        Ada
+  Agents     Codex (codex)
+  Workspace  billing-deploy-failure
+  Goal       Restore the billing deploy pipeline
+
+  campfire up     start the local API and Viewer
+  campfire --help
+

@@ -6,7 +6,7 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
-**Next planning step:** v1.21 ARH-001 has its v1.20.1 baseline, deterministic fixture, sanitized evidence plan, and human observation materials frozen (commit `cec4e63`; `docs/evidence/arh-001/`, `fixtures/artifact-handoff/arh-001/`), and its result is recorded as **UNSCORED — no eligible ordinary-work attempt yet** (`docs/SPRINT_ARH_001_RESULT.md`). The October 16 founder amendment to the ARH-001 contract permits a separately scoped, bounded artifact-navigation candidate to be implemented and assessed with local engineering checks before a human handoff is observed. That candidate is now implemented, independently verified, and published: **ENGINEERING PASS — human outcome NOT OBSERVED** (result §9; candidate commit `ace3b0f`), then released and deployed as **v1.21.0** on October 17, 2026 under the recorded founder release-scope override in `docs/RELEASE_V1_21_DECISION.md`. The override does not change the UNSCORED verdict, the NOT OBSERVED §3.2/§6 human observations, or any gate, and the public claim marks the human outcome NOT OBSERVED with no claim of external access or handoff success. Run real observations when eligible work and people exist; do not label missing observations PASS.
+**Next planning step:** v1.22.0 is published and deployed under the recorded founder release-scope override (`docs/RELEASE_V1_22_DECISION.md`); NAV-001's two-person comparison remains NOT OBSERVED. The proposed [ONB-001 first-run handoff patch](Campfire-v1.22.1-ONB-001-First-Run-Handoff.md) is next: freeze a released v1.22.0 comparison before code, then improve truthful setup/join receipts and the empty Viewer state within existing commands and authorization. `v1.22.1` is a provisional patch slot, not a release decision. ARH-001's real reference-open and two-human handoff, WCO-001's eligible case, and the earlier comprehension traces remain open under their own rubrics; do not label missing observations PASS.
 
 ---
 
@@ -1471,7 +1471,9 @@ v1.20 — Shared Work Console   UIX-001: read-only terminal dashboard (`campfire
         ↓
 v1.21 — Artifact reference handoff   ARH-001: initial result **UNSCORED**, real reference-open and two-human/two-harness handoff NOT OBSERVED; a separately scoped artifact-navigation candidate later reached **ENGINEERING PASS — human outcome NOT OBSERVED** (commit `ace3b0f`); a founder release-scope override (docs/RELEASE_V1_21_DECISION.md) published and deployed it as **v1.21.0** on October 17, 2026 — the public claim marks the human outcome NOT OBSERVED and claims no external access; external systems keep file bytes
         ↓
-provisional v1.22 — NAV-001 Focused Terminal Navigator   work-first list and one selected record over existing authorized reads; scope and release decision still required
+v1.22.0 — NAV-001 Focused Terminal Navigator   published and deployed under the recorded founder release-scope override; D1–D6 pass, two-person comparison NOT OBSERVED; see docs/RELEASE_V1_22_DECISION.md
+        ↓
+provisional v1.22.1 — ONB-001 First-Run Handoff   patch-scoped, truthful CLI and empty-Viewer next steps over existing setup/join commands; contract drafted, no implementation or release decision
         ↓
 provisional v1.23 — NAV-002 Source and People Drill-down   real source/history coverage, paged work, and on-demand people/agent relationships; scope and release decision still required
         ↓
@@ -1845,19 +1847,21 @@ or synchronized the target. A provider connector is conditional on a concrete
 need; file storage, automatic ingestion, rich previews, and an agent runner
 remain outside this candidate slice.
 
-### Provisional post-v1.21 sequence — build the Focused Navigator
+### Post-v1.21 Navigator and first-run sequence
 
 The [Navigator mockup](mockups/campfire-navigator.html) is the visual target,
-not an implementation contract. These are three **provisional sprint slots**
-after the founder's separate v1.21 launch decision. A sprint must pin the
-actually released baseline, freeze its exact scope and checks before code, and
-record engineering results separately from human outcomes. The version numbers
-below reserve order only; they do not authorize a release or require v1.21 to
-be described as shipped before it is.
+not an implementation contract. NAV-001 is published and deployed as v1.22.0
+under the recorded founder release-scope override, with its two-person
+comparison still NOT OBSERVED. ONB-001 is a proposed patch sprint over the
+released v1.22.0 baseline; NAV-002 and NAV-003 retain their provisional order.
+Each new sprint must pin its released baseline, freeze scope and checks before
+code, and record engineering results separately from human outcomes. A version
+slot does not authorize publication.
 
 | Sprint slot | Bounded build | Exit evidence |
 | --- | --- | --- |
-| [**NAV-001 — Focused Terminal Navigator**](Campfire-v1.22-NAV-001-Focused-Terminal-Navigator.md) (provisional v1.22) | Reshape the existing read-only `campfire dashboard` around one active section, a compact record list, and one selected detail. Start with the authorized Needs You or team-attention cues; make Team work and Decisions one control away. Move the current eager agent and artifact rows out of the default screen. Preserve source IDs, lifecycle, reason, returned/total coverage, refresh age, stale errors, keyboard navigation, and terminal cleanup. Filtering is limited to records actually loaded. | Pin the released CLI/Viewer baseline and a frozen answer key. At 80×24 and 120×36, a person can find the goal, attention cue, current task, competing or needs-review decision, and selected source without losing a coverage or safety caveat. Verify TTY safety, authorization, existing CLI JSON compatibility, and no inferred live agent status. Record human comprehension separately. |
+| [**NAV-001 — Focused Terminal Navigator**](Campfire-v1.22-NAV-001-Focused-Terminal-Navigator.md) (v1.22.0 released; result [here](SPRINT_NAV_001_RESULT.md)) | Reshape the existing read-only `campfire dashboard` around one active section, a compact record list, and one selected detail. Start with authorized Needs You or team-attention cues; keep source IDs, lifecycle, reason, coverage, stale errors, keyboard navigation, and terminal cleanup. Filtering covers loaded rows only. | D1–D6 engineering checks passed. Two-person comprehension comparison remains NOT OBSERVED; the release decision did not change that verdict. |
+| [**ONB-001 — First-Run Handoff**](Campfire-v1.22.1-ONB-001-First-Run-Handoff.md) (provisional v1.22.1 patch) | Make fresh/returning `campfire`, local/remote `up`, invitation join, and the empty Viewer state name the actual preparation state and one next action. Keep existing commands, credential boundaries, JSON contracts, and agent-side workspace creation. No automatic harness reload, session registration, workspace creation, or enrollment shortcut. | Freeze the released v1.22.0 comparison; pass D1–D6 across local, no-harness, skipped, returning, and recipient paths, with direct TTY/Viewer inspection. Record any cold-human comprehension separately. A new setup capability crosses the patch stop rule and needs a minor sprint. |
 | **NAV-002 — Source and People Drill-down** (provisional v1.23) | Add on-demand People with recorded human–agent relationships, and source/history views for the selected record. Page work with existing authorized list methods where possible; show the exact loaded subset and whether more records exist. Use recorded citations, evidence, and contributions only. If a per-record history or bounded participant read cannot be represented truthfully with current methods, freeze the smallest authorized read change in this sprint's contract before implementing it. Keep external-reference open behavior within its separately approved Viewer scope; the terminal does not become an external browser. | Exercise a fixture with at least 20 people, 37 registered agents, and 64 tasks. Show that the default screen stays focused, all visible counts and relationships come from the same authorized reads, later pages are reachable, and absent or truncated history is not presented as complete. Test denied reads, stale refreshes, hostile record text, and no presence inference. |
 | **NAV-003 — Viewer Alignment and Human Use** (provisional v1.24) | Give the existing read-only Viewer the same work-first navigation and selected-source hierarchy, adapted to browser and narrow-screen use rather than copied as terminal chrome. Keep My work/Team work, decision boundaries, source IDs, provenance, coverage, and the approved artifact-reference behavior in parity with the terminal. Expand the Viewer read allowlist only through an explicit security and compatibility review if NAV-002 proves a new read necessary. | Check cross-surface parity, keyboard/focus behavior, responsive layouts, and the existing authorization boundary. Run non-builder human tasks for finding work, explaining a needs-review or competing decision, locating a cited output, and distinguishing a person from registered agents. Record times, source IDs, wrong inferences, and unavailable participants. The frozen UIX-001, ATT-001, SWH-001, WCO-001, and ARH-001 observations keep their own rubrics and are not silently rescored by this sprint. |
 

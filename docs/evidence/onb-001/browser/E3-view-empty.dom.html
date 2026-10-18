@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="campfire" data-density="comfortable"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Campfire</title>
+    <link rel="stylesheet" href="/app.css">
+  </head>
+  <body>
+    <header>
+      <span class="brand" aria-label="Campfire">
+        <img class="brand-mark" src="/campfire-mark.svg" alt="Campfire" width="18" height="20">
+      </span>
+      <span id="whoami">hum_[id]  human</span>
+      <span id="error" hidden=""></span>
+      <div class="header-tools">
+        <button type="button" id="density" aria-pressed="false">Density</button>
+        <label class="ws">
+          <span class="ws-label">workspace</span>
+          <select id="workspace" aria-label="Workspace"></select>
+        </label>
+        <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden="">Workspace view ↗</a>
+      </div>
+    </header>
+    <!-- SWH-001: one home, two perspectives. Both buttons are native controls;
+         the other perspective is always one visible control away. -->
+    <nav id="perspective" class="perspective" aria-label="Perspectives">
+      <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
+      <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
+    </nav>
+    <section id="mast" aria-label="Workspace now">
+      <div id="recorded-counts"></div>
+      <div id="people"></div>
+      <div id="goal"></div>
+    </section>
+    <main>
+      <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
+        <div id="record-notes" class="panel-body" hidden=""></div>
+        <section class="panel alignment" aria-labelledby="alignment-title">
+          <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
+          <div id="alignment" class="panel-body"><div class="empty">No recorded alignment boundary.</div></div>
+        </section>
+        <div id="next-action" class="next-action" aria-label="Suggested next action"></div>
+        <section class="panel" id="needs-you-panel" aria-labelledby="needs-you-title">
+          <h2 class="panel-title" id="needs-you-title">Needs You</h2>
+          <div id="needs-you" class="panel-body"><div class="empty">No recorded attention cues in the returned records; completeness was not reported.</div></div>
+          <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
+        </section>
+        <section class="panel" id="needs-attention-panel" aria-labelledby="needs-attention-title">
+          <h2 class="panel-title" id="needs-attention-title">Needs Attention</h2>
+          <div id="needs-attention" class="panel-body"><div class="empty">No recorded attention cues in the returned records; completeness was not reported.</div></div>
+          <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
+        </section>
+        <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
+          <h2 class="panel-title" id="current-work-title">My work</h2>
+          <div id="current-work" class="panel-body"><div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">none recorded</span></li></ul></div><div class="ogroup"><div class="ogroup-label">my tasks</div><div class="ogroup"><div class="ogroup-label">in progress</div><div class="empty">none recorded in the returned orientation; completeness not reported</div></div><div class="ogroup"><div class="ogroup-label">blocked</div><div class="empty">none recorded in the returned orientation; completeness not reported</div></div><div class="ogroup"><div class="ogroup-label">open</div><div class="empty">none recorded in the returned orientation; completeness not reported</div></div></div></div>
+        </section>
+        <section class="panel sources" id="sources-panel" aria-labelledby="sources-title">
+          <h2 class="panel-title" id="sources-title">Shared sources</h2>
+          <div id="sources" class="panel-body"><div class="ogroup"><div class="ogroup-label">current findings</div><div class="empty">none recorded in the returned orientation</div></div><div class="ogroup"><div class="ogroup-label">artifact references</div><div class="empty">none recorded in the returned orientation</div></div></div>
+        </section>
+        <section class="panel" id="since-panel" aria-labelledby="since-title">
+          <h2 class="panel-title" id="since-title">Since You Were Here</h2>
+          <div id="since" class="panel-body"><div class="empty">First visit — new activity will appear here.</div></div>
+        </section>
+      </section>
+      <section id="stream" class="stream" aria-label="Workstream"><div class="empty">Waiting for an agent to start work.</div></section>
+    </main>
+    <p id="hint">j/k navigate   ↵ inspect   [/] workspace   p perspective</p>
+    <script>
+      try {
+        var t = new URLSearchParams(window.location.search).get("theme");
+        if (t === "campfire" || t === "fx") {
+          document.documentElement.dataset.theme = t;
+        }
+      } catch (e) {}
+    </script>
+    <script src="/app.js"></script>
+  
+
+</body></html>

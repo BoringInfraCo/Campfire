@@ -1,0 +1,680 @@
+{
+  "tool": "onb-001 capture-first-run",
+  "provenance": "FIXTURE EVIDENCE — scripted engineering captures of the published v1.22.0 CLI and Viewer. Not human-observation evidence.",
+  "baseline": {
+    "tag": "v1.22.0",
+    "root": "[path]",
+    "describeTag": "v1.22.0",
+    "packageVersion": "1.22.0",
+    "worktreeClean": true,
+    "srcMatchesTag": true
+  },
+  "simulatedHarnessNote": "Harness detection in v1.22.0 is configuration-path based (src/bootstrap/connect.ts detectInstalledHarnesses). Every harness presence this run is a simulated marker directory in an isolated HOME/XDG; no real codex or opencode process was launched and no real harness config was touched.",
+  "assertions": {
+    "telemetryDisabled": "CAMPFIRE_TELEMETRY=0 in every child environment",
+    "ambientEndpointsRemoved": "CAMPFIRE_URL and CAMPFIRE_TOKEN removed from every child environment",
+    "loopbackOnly": "every listener used --port 0 / --viewer-port 0 on loopback",
+    "isolatedDirs": "HOME, XDG_CONFIG_HOME, CAMPFIRE_CONFIG_DIR, CAMPFIRE_DATA_DIR, TMPDIR per scenario",
+    "colorDisabled": "NO_COLOR=1 for deterministic bytes",
+    "userIdentity": "USER=LOGNAME=owner for a deterministic name-prompt default",
+    "noRealBrowser": "CAMPFIRE_NO_BROWSER=1, --no-open, or a PATH `open` shim that only logs the URL",
+    "noLastingHarness": "no harness process is started; detection is filesystem-only"
+  },
+  "cases": [
+    {
+      "id": "A1",
+      "journey": "A",
+      "title": "fresh interactive both harnesses simulated (config prepared, not reloaded)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "harness presence: marker directories at the exact v1.22.0 detector paths (HOME/.codex, XDG_CONFIG_HOME/opencode)",
+        "human name typed by the script after the prompt"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "pty with a controlling terminal; written \\u0003 delivered as a real SIGINT",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a real Codex/OpenCode launch, reload, or tool approval (no harness process started)",
+        "human comprehension of the screen"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/A1-fresh-both-harness-interactive.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 516,
+          "sha256": "48b67ab611ec8f4cda3255a37dff8740423a17c8fd017a4b4efe7a30d168c1dc",
+          "rules": {
+            "loopback_port": 3,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "terminal/A1-codex-config-prepared.redacted.toml",
+          "kind": "prepared-harness-config",
+          "bytes": 231,
+          "sha256": "cb55c010a9d3f19419f5f496e456eaf99320268ede359ccc946b5759a4473e89",
+          "rules": {
+            "bearer_token": 1,
+            "path_private": 1,
+            "loopback_port": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "terminal/A1-opencode-config-prepared.redacted.json",
+          "kind": "prepared-harness-config",
+          "bytes": 310,
+          "sha256": "0df9ab4426479c3ccf3ea11e7ec92b36faea32b1047d01f59f98d48f14b64721",
+          "rules": {
+            "bearer_token": 1,
+            "path_private": 1,
+            "loopback_port": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 2,
+        "stepsTotal": 2,
+        "termiosRestored": false,
+        "driverError": null,
+        "codexConfigWritten": true,
+        "opencodeConfigWritten": true
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A2",
+      "journey": "A",
+      "title": "fresh interactive codex simulated",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "harness presence: marker directories at the exact v1.22.0 detector paths (HOME/.codex, XDG_CONFIG_HOME/opencode)",
+        "human name typed by the script after the prompt"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "pty with a controlling terminal; written \\u0003 delivered as a real SIGINT",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a real Codex/OpenCode launch, reload, or tool approval (no harness process started)",
+        "human comprehension of the screen"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/A2-fresh-codex-only-interactive.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 506,
+          "sha256": "6cbb92e7d9400375376db5e36b007944f862d327a7809d72b77246921b8146f9",
+          "rules": {
+            "loopback_port": 3,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 2,
+        "stepsTotal": 2,
+        "termiosRestored": false,
+        "driverError": null,
+        "codexConfigWritten": true,
+        "opencodeConfigWritten": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A3",
+      "journey": "B",
+      "title": "fresh interactive no harness detected",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "harness presence: marker directories at the exact v1.22.0 detector paths (HOME/.codex, XDG_CONFIG_HOME/opencode)",
+        "human name typed by the script after the prompt"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "pty with a controlling terminal; written \\u0003 delivered as a real SIGINT",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a real Codex/OpenCode launch, reload, or tool approval (no harness process started)",
+        "human comprehension of the screen"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/A3-fresh-no-harness-interactive.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 455,
+          "sha256": "28cda4e0cfafd9a2c7c9745cef273277c4b458bc8921744cddd53758d66e24ee",
+          "rules": {
+            "loopback_port": 3,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 2,
+        "stepsTotal": 2,
+        "termiosRestored": false,
+        "driverError": null,
+        "codexConfigWritten": false,
+        "opencodeConfigWritten": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A4",
+      "journey": "B",
+      "title": "fresh interactive with --no-connect (both harnesses simulated but skipped)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "harness presence: marker directories at the exact v1.22.0 detector paths (HOME/.codex, XDG_CONFIG_HOME/opencode)",
+        "human name typed by the script after the prompt"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "pty with a controlling terminal; written \\u0003 delivered as a real SIGINT",
+        "loopback listeners bound with --port 0 / --viewer-port 0"
+      ],
+      "notCaptured": [
+        "a real Codex/OpenCode launch, reload, or tool approval (no harness process started)",
+        "human comprehension of the screen"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/A4-fresh-no-connect-interactive.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 455,
+          "sha256": "28cda4e0cfafd9a2c7c9745cef273277c4b458bc8921744cddd53758d66e24ee",
+          "rules": {
+            "loopback_port": 3,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 2,
+        "stepsTotal": 2,
+        "termiosRestored": false,
+        "driverError": null,
+        "codexConfigWritten": false,
+        "opencodeConfigWritten": false,
+        "receiptEqualsA3AfterPortMasking": true
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A5",
+      "journey": "B",
+      "title": "piped fresh run without a name (human error)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "no terminal on stdin/stdout"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/A5-fresh-nontty-no-name-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/A5-fresh-nontty-no-name-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 206,
+          "sha256": "e6721407e372565cbb19abfd61e99bdcc75e5b80dde58994ca316377fc72d02f",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A6",
+      "journey": "B",
+      "title": "piped fresh run without a name (explicit JSON error)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "no terminal on stdin/stdout"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/A6-fresh-nontty-no-name-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/A6-fresh-nontty-no-name-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 380,
+          "sha256": "46fceaa6b4272dc3ecc3043e635efa8a5d1c5a34ee3d79669adcfa12a59d7f43",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A7",
+      "journey": "A",
+      "title": "piped fresh run with --human-name and explicit JSON",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--human-name",
+        "Ada",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--human-name",
+        "Ada",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "profile creation in an isolated CAMPFIRE_CONFIG_DIR"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "a listener (first-run JSON profile creation does not start one)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/A7-fresh-nontty-name-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 108,
+          "sha256": "c5878f4443190cb89e2d306dd1a0f114ab5ea86a60cbb43f0dff491e0b0e3014",
+          "rules": {
+            "path_var_folders": 1,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/A7-fresh-nontty-name-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A8",
+      "journey": "A",
+      "title": "piped fresh run with --human-name (bare campfire stays human when piped)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--human-name",
+        "Ada"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--human-name",
+        "Ada"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "profile creation in an isolated CAMPFIRE_CONFIG_DIR"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "a listener (first-run human status does not start one)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/A8-fresh-nontty-name-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 221,
+          "sha256": "8513bb7e37e027514694d668db1d5533b851fadba5426084e63a6ad2135cce8f",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/A8-fresh-nontty-name-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A9",
+      "journey": "A",
+      "title": "up explicit JSON with --no-open (openedBrowser:false)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "1"
+      },
+      "simulated": [
+        "returning profile created by a prior piped `campfire --human-name Ada --output json` in the same isolated scenario"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "loopback listeners",
+        "real SIGINT (process-group signal)"
+      ],
+      "notCaptured": [
+        "a browser launch (suppressed by --no-open)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/A9-up-json-no-open.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 168,
+          "sha256": "b75ae21b2cb7e5640ab0423fae6e0b0c5b324d7a11931a61d1cff977ee843630",
+          "rules": {
+            "loopback_port": 2
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/A9-up-json-no-open.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 195,
+          "sha256": "e00bd1117bc3302c74615a0e7eedb503b142abe954c4898755f9614444304acf",
+          "rules": {
+            "loopback_port": 2,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "payloadParsed": true,
+        "openedBrowser": false,
+        "workspaces": [],
+        "agents": []
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "A10",
+      "journey": "A",
+      "title": "up explicit JSON opens the browser (PATH `open` shim records the URL)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "CAMPFIRE_NO_BROWSER": "unset",
+        "PATH": "scenario bin dir first (contains an `open` shim)"
+      },
+      "simulated": [
+        "returning profile created by a prior piped `campfire --human-name Ada --output json`",
+        "macOS `open` replaced by a PATH shim that only appends its argument to a log"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "pty (stdout is a TTY, so the browser branch runs)",
+        "real SIGINT"
+      ],
+      "notCaptured": [
+        "a real browser window (deliberately avoided)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/A10-up-json-browser-open-shim.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 368,
+          "sha256": "a106d4864455d7b0dac8c4e0104235b2281d0e1b4f906b7f5e0171ebcf134e5c",
+          "rules": {
+            "loopback_port": 4,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "terminal/A10-open-shim.log.txt",
+          "kind": "shim-log",
+          "bytes": 24,
+          "sha256": "e3379aee78a9afd1424d18e59e3e8bbd18bac80852ce0c0c82b5565167c0d697",
+          "rules": {
+            "loopback_port": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 1,
+        "stepsTotal": 1,
+        "openShimInvocations": 1,
+        "openShimUrlMatchesViewerUrl": true
+      },
+      "failed": [],
+      "notes": []
+    }
+  ],
+  "capturedOn": "2026-10-18",
+  "machineFacts": {
+    "platform": "darwin",
+    "kernel": "Darwin 25.6.0 arm64",
+    "node": "v22.23.2",
+    "python3": "Python 3.11.7",
+    "git": "git version 2.51.2",
+    "codexCli": "codex-cli 0.163.0",
+    "opencode": "opencode v2.0.32"
+  },
+  "methodNotes": {
+    "pty": "python3 pty, 24x100, child session leader with controlling pty; stderr shares the terminal stream; steps: type the name at the prompt, then wait for the `[campfire] HTTP …` listener line and send a real SIGINT (\\u0003) after a short fixed delay so the signal cannot race the shutdown-handler registration; frames are the raw stream text (CRLF line endings; expectation matching normalizes \\r\\n to \\n)",
+    "ptyTermios": "check `termiosRestored` is recorded false in every PTY case, including clean exit-0 runs: on macOS, tcgetattr on the pty slave fails with ENOTTY once the session leader has exited, so the post-exit snapshot is unreadable. This is a driver limitation, not a dirty-terminal observation.",
+    "piped": "spawnSync with piped stdin/stdout/stderr; no terminal anywhere",
+    "daemon": "detached child; SIGINT to its process group; stderr/stdout collected"
+  },
+  "maskingRules": "see BASELINE_PIN.md — cft-shaped credential tokens -> [redacted]; cfe-shaped invitation secrets -> [one-time-credential: redacted]; absolute /Users, /private, /var/folders, /tmp paths -> [path]; loopback ports -> [port]; ISO timestamps -> [timestamp]; UUIDs -> [uuid]; object ids (<prefix>_<16 hex>) -> <prefix>_[id]"
+}

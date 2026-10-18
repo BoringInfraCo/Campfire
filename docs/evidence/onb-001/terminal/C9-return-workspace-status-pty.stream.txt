@@ -1,0 +1,7 @@
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:read","workspaceId":"ws_[id]"}
+Workspace  billing-deploy-failure  [active]  ws_[id]
+Goal       Restore the billing deploy pipeline  [active]
+Participants  1 human  1 agent
+Work       open 0  in progress 0  blocked 0
+Decisions  proposed 0  accepted 0
+Activity   5 contributions  newest con_[id]

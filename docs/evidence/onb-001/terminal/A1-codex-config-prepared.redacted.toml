@@ -1,0 +1,10 @@
+# BEGIN campfire-connect
+[mcp_servers.campfire]
+command = "[path]"
+args = ["mcp"]
+
+[mcp_servers.campfire.env]
+CAMPFIRE_URL = "http://127.0.0.1:[port]"
+CAMPFIRE_TOKEN = "[redacted]"
+CAMPFIRE_HARNESS = "codex"
+# END campfire-connect

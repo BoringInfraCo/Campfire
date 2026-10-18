@@ -1,0 +1,1261 @@
+{
+  "tool": "onb-001 capture-join",
+  "provenance": "FIXTURE EVIDENCE — scripted engineering captures of the published v1.22.0 CLI and Viewer. Not human-observation evidence.",
+  "baseline": {
+    "tag": "v1.22.0",
+    "root": "[path]",
+    "describeTag": "v1.22.0",
+    "packageVersion": "1.22.0",
+    "worktreeClean": true,
+    "srcMatchesTag": true
+  },
+  "simulatedHarnessNote": "Harness detection in v1.22.0 is configuration-path based (src/bootstrap/connect.ts detectInstalledHarnesses). Every harness presence this run is a simulated marker directory in an isolated HOME/XDG; no real codex or opencode process was launched and no real harness config was touched.",
+  "assertions": {
+    "telemetryDisabled": "CAMPFIRE_TELEMETRY=0 in every child environment",
+    "ambientEndpointsRemoved": "CAMPFIRE_URL and CAMPFIRE_TOKEN removed from every child environment",
+    "loopbackOnly": "every listener used --port 0 / --viewer-port 0 on loopback",
+    "isolatedDirs": "HOME, XDG_CONFIG_HOME, CAMPFIRE_CONFIG_DIR, CAMPFIRE_DATA_DIR, TMPDIR per scenario",
+    "colorDisabled": "NO_COLOR=1 for deterministic bytes",
+    "userIdentity": "USER=LOGNAME=owner for a deterministic name-prompt default",
+    "noRealBrowser": "CAMPFIRE_NO_BROWSER=1, --no-open, or a PATH `open` shim that only logs the URL",
+    "noLastingHarness": "no harness process is started; detection is filesystem-only"
+  },
+  "cases": [
+    {
+      "id": "D1",
+      "journey": "D",
+      "title": "invite-teammate receipt and the private invitation file it writes (secret masked)",
+      "method": "file",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "invite-teammate",
+        "<workspace-id>",
+        "--out",
+        "<private-file>",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "invite-teammate",
+        "<workspace-id>",
+        "--out",
+        "<private-file>",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "CAMPFIRE_URL": "http://127.0.0.1:<port> (owner serve)",
+        "CAMPFIRE_TOKEN": "<owner human token> (never captured)"
+      },
+      "simulated": [
+        "owner profile, workspace, goal, and invitations are created by shipped v1.22.0 commands in an isolated CAMPFIRE_CONFIG_DIR (no real profile exists or is touched)"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "the raw invitation file (its cfe-shaped secret is masked before writing)",
+        "any real email or chat delivery of the invitation (the owner hands over the file out of band)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D1-invite-receipt.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 130,
+          "sha256": "6e3c7887ae783728437bff9f6d27bc762f4a31ac9a72be20f44e9f731158394b",
+          "rules": {
+            "path_var_folders": 1,
+            "loopback_port": 1,
+            "iso_timestamp": 1,
+            "object_id": 1,
+            "object_id_enrollment_invite": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D1-invite-receipt.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D1-invitation-file.masked.json",
+          "kind": "invitation-file-masked",
+          "bytes": 374,
+          "sha256": "c9191bdda5ab636a43fd77be648e3f2876cc93001fda7e19896c90b674776afa",
+          "rules": {
+            "invitation_secret": 1,
+            "loopback_port": 1,
+            "iso_timestamp": 1,
+            "object_id": 1,
+            "object_id_enrollment_invite": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "fileMode": "600",
+        "rawBytes": 415,
+        "secretShape": true
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D2",
+      "journey": "D",
+      "title": "successful join in a terminal (human receipt)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or tool approval (join writes config only; it cannot reload codex)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/D2-join-success-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 202,
+          "sha256": "5f2099e81e8917ce263709dcacf308bf13930f859ae4898deec31e95aa72d32c",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 0,
+        "stepsTotal": 0,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D3",
+      "journey": "D",
+      "title": "successful join piped (auto -> JSON receipt with stages, no token field)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or tool approval (join writes config only; it cannot reload codex)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D3-join-success-auto-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 394,
+          "sha256": "204c99cb6245152edad3deb7fc5eb91f4444da2880394c08baebf9b4af6d9b53",
+          "rules": {
+            "iso_timestamp": 1,
+            "uuid": 1,
+            "object_id": 3,
+            "object_id_enrollment_invite": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D3-join-success-auto-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "payloadParsed": true,
+        "stages": [
+          "enrolled",
+          "credentials_saved",
+          "connection_prepared",
+          "reload_required"
+        ],
+        "hasTokenField": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D4",
+      "journey": "D",
+      "title": "successful join with explicit --output human piped (human receipt bytes, no terminal)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback",
+        "--output",
+        "human"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback",
+        "--output",
+        "human"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or tool approval (join writes config only; it cannot reload codex)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D4-join-success-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 198,
+          "sha256": "74c4b74f3fee41f822efe3567f7e553c2facbb2c789198d669c863491d638318",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D4-join-success-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D5",
+      "journey": "D",
+      "title": "used invitation denied for a different recipient (claimed conflict, no success screen)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<already-claimed private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<already-claimed private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "the recipient's pending-enrollment state on disk (it may exist; never captured or copied into evidence)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D5-used-invitation.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 303,
+          "sha256": "863d3a0019e46d2803892746ca2e6520ef38be9471e63907265e60391f9edb0d",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D5-used-invitation.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D6",
+      "journey": "D",
+      "title": "expired invitation denied before any server claim (expiresAt rewritten in a private copy)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<expired private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<expired private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)",
+        "expiresAt": "rewritten to [timestamp] (masked as [timestamp])"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "any server-side claim attempt (the expiry check is client-side; the invitation stays unclaimed)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D6-expired-invitation-input.masked.json",
+          "kind": "invitation-file-masked",
+          "bytes": 374,
+          "sha256": "c9191bdda5ab636a43fd77be648e3f2876cc93001fda7e19896c90b674776afa",
+          "rules": {
+            "invitation_secret": 1,
+            "loopback_port": 1,
+            "iso_timestamp": 1,
+            "object_id": 1,
+            "object_id_enrollment_invite": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D6-expired-invitation.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 345,
+          "sha256": "fb9efed7447fc5c39cf254946e618c1f2852342317702772b7abcf7c38a76b7d",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D7",
+      "journey": "D",
+      "title": "wrong-endpoint invitation denied as an uncertain commit; bare campfire after the failure shows the uninitialized-profile error, not a success screen",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<rewritten-endpoint private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<rewritten-endpoint private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)",
+        "url": "rewritten to http://127.0.0.1:[port] (nothing listens there)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "the recipient's pending-enrollment state on disk (never captured or copied into evidence)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D7-wrong-endpoint-invitation-input.masked.json",
+          "kind": "invitation-file-masked",
+          "bytes": 374,
+          "sha256": "c9191bdda5ab636a43fd77be648e3f2876cc93001fda7e19896c90b674776afa",
+          "rules": {
+            "invitation_secret": 1,
+            "loopback_port": 1,
+            "iso_timestamp": 1,
+            "object_id": 1,
+            "object_id_enrollment_invite": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D7-wrong-endpoint.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 390,
+          "sha256": "249cd433a28e575b7004d0bfe371d3fc460c807b2ac7b6d28fb32883d5928409",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D7-post-failure-bare.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D7-post-failure-bare.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 206,
+          "sha256": "e6721407e372565cbb19abfd61e99bdcc75e5b80dde58994ca316377fc72d02f",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "joinExit": 1,
+        "postFailureBareExit": 1
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D8",
+      "journey": "D",
+      "title": "non-JSON invitation file denied (parse failure, check_invitation_file recovery)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<non-JSON private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<non-JSON private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "a synthetic 0600 private file containing `not json at all`"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "any server contact (the parse check happens before the claim)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D8-non-json-invitation.input.txt",
+          "kind": "synthetic-invitation-input",
+          "bytes": 16,
+          "sha256": "3ab6125109202d26ac7aa4704fd0380032a1c42c112bfd135a5f07bb578856b2",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D8-non-json-invitation.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 354,
+          "sha256": "b70943641ce1c53ecfb953a78b4a4975c3448ac4f7fbc4125db661bbb6c78402",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D9",
+      "journey": "D",
+      "title": "wrong-shape invitation file denied (unsupported invitation, check_invitation_file recovery)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<wrong-shape private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<wrong-shape private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "a synthetic 0600 private file containing `{\"version\": 1, \"kind\": \"something_else\"}`"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "any server contact (the shape check happens before the claim)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D9-wrong-shape-invitation.input.txt",
+          "kind": "synthetic-invitation-input",
+          "bytes": 47,
+          "sha256": "d776400fa828f001aa8c488685ca5f67923a5881299d4684555f15ab94a4f3e4",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D9-wrong-shape-invitation.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 324,
+          "sha256": "a0d95f69e7c25c631bc4a658dcfcff5948802656b97f385eeb0dc0114898d15c",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D10",
+      "journey": "D",
+      "title": "0644 invitation copy denied; the intended private-file message is swallowed by the parse catch in v1.22.0 (observed as a parse failure)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<0644 private-file copy>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<0644 private-file copy>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)",
+        "fileMode": "0600 copy chmod 0644 before the join"
+      },
+      "simulated": [
+        "a valid invitation file copied and chmod 0644 inside the recipient scenario"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx"
+      ],
+      "notCaptured": [
+        "any server contact (the permission check happens before the claim)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D10-non-private-invitation.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 354,
+          "sha256": "b70943641ce1c53ecfb953a78b4a4975c3448ac4f7fbc4125db661bbb6c78402",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {
+        "fileMode": "644"
+      },
+      "failed": [],
+      "notes": [
+        "source at v1.22.0: src/bootstrap/enrollment-client.ts:35 fails with `Enrollment file must be a bounded private file`, but failure() throws inside the try and the catch at :38 rewrites every failure to `Enrollment file is missing or invalid; use the original private file` — the observed message is the swallowed one."
+      ]
+    },
+    {
+      "id": "D11",
+      "journey": "D",
+      "title": "join against an initialized local profile is refused and the profile is unchanged (no covert merge)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<valid private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<valid private file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "codex",
+        "--allow-loopback"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)",
+        "localProfile": "created first with `campfire --human-name Rob --output json`"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "any server contact (the profile check refuses before the claim)"
+      ],
+      "exitCode": 1,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D11-initialized-profile.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 406,
+          "sha256": "0f624cca3ecd2dcb0b1c856ad0a92074d8a7816ed1e352d36c531cf76688babf",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D11-after-refusal-profile.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 40,
+          "sha256": "042c285c03044f5fe6b9725a069134c9544e170efaeaf68e55890326e1bee1a4",
+          "rules": {
+            "path_var_folders": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "postRefusalProfileParsed": true,
+        "postRefusalWorkspaceFieldPresent": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D12",
+      "journey": "D",
+      "title": "joined recipient, bare `campfire` piped (remote summary with the remote next actions)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire"
+      ],
+      "argvDisplay": [
+        "campfire"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or agent session (the recipient profile exists; no harness runs)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D12-recipient-bare.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 269,
+          "sha256": "d4d33b7df377bd684b830bfa9a78e7071e397a7ae87cc03fac60b540324afecb",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D12-recipient-bare.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D13",
+      "journey": "D",
+      "title": "joined recipient, bare `campfire --output json` (remote summary JSON)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "--output",
+        "json"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or agent session (the recipient profile exists; no harness runs)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D13-recipient-bare-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 232,
+          "sha256": "a7d75f502030c2ac52fd40fe6a2c125582e914dc187403b54163b513a9affe90",
+          "rules": {
+            "object_id": 3
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D13-recipient-bare-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D14",
+      "journey": "D",
+      "title": "joined recipient, `campfire status` piped (authorized remote read JSON)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or agent session (the recipient profile exists; no harness runs)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D14-recipient-status-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 472,
+          "sha256": "83e6924c851c7023cce3bd975ddd146c7ef5e184fff57f65d787c621a29d0e92",
+          "rules": {
+            "object_id": 3
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D14-recipient-status-json.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D15",
+      "journey": "D",
+      "title": "joined recipient, `campfire status --output human` piped (human read view)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "status",
+        "--output",
+        "human"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "status",
+        "--output",
+        "human"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or agent session (the recipient profile exists; no harness runs)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D15-recipient-status-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 293,
+          "sha256": "8d8133a08e8e2b8e6b23427bd5945da62fabf4b8bf777bf567637382f71ffad4",
+          "rules": {
+            "object_id": 2
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D15-recipient-status-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D16",
+      "journey": "D",
+      "title": "joined recipient, `up --no-connect` remote (daemon JSON receipt, viewerUrl distinct from apiUrl)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a browser launch (pip lines: non-TTY stdout does not open a browser; openedBrowser stays false)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D16-recipient-up-remote-json.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 377,
+          "sha256": "611b9b441fc2c4d8733ccc750c78fdadb851e6f301a501b0aa133c62efe5c16b",
+          "rules": {
+            "loopback_port": 2,
+            "object_id": 2
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/D16-recipient-up-remote-json.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 60,
+          "sha256": "dfabcb7fa72ff2a4e703e69f0c8db27fcc06e8d948f4acf1db55b6d17ce82c77",
+          "rules": {
+            "loopback_port": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "payloadParsed": true,
+        "openedBrowser": false,
+        "apiUrl": "http://127.0.0.1:[port]",
+        "viewerUrl": "http://127.0.0.1:[port]",
+        "viewerDistinctFromApi": true
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D17",
+      "journey": "D",
+      "title": "joined recipient, `up --no-connect --no-open` remote in a terminal (human receipt, silent shutdown)",
+      "method": "pty",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "up",
+        "--no-connect",
+        "--no-open",
+        "--port",
+        "0",
+        "--viewer-port",
+        "0"
+      ],
+      "envCase": {},
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a browser launch (suppressed by --no-open)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "terminal/D17-recipient-up-remote-pty.stream.txt",
+          "kind": "pty-stream",
+          "bytes": 349,
+          "sha256": "22b5e64b04e8fc4592011127be36264fc87044ebd41e5a25d903734d8006bd6e",
+          "rules": {
+            "loopback_port": 2
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "stepsSent": 1,
+        "stepsTotal": 1,
+        "driverError": null
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "D18",
+      "journey": "D",
+      "title": "successful join with --harness opencode (human receipt names the prepared opencode config)",
+      "method": "piped",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "opencode",
+        "--allow-loopback",
+        "--output",
+        "human"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "join",
+        "--invitation-file",
+        "<private-file>",
+        "--human-name",
+        "Ben",
+        "--harness",
+        "opencode",
+        "--allow-loopback",
+        "--output",
+        "human"
+      ],
+      "envCase": {
+        "stdoutIsTty": "false (piped)"
+      },
+      "simulated": [
+        "the recipient profile is created by the shipped `campfire join` path in an isolated CAMPFIRE_CONFIG_DIR",
+        "harness config is prepared at the simulated harness config path inside the isolated scenario HOME/XDG; no real harness is launched or detected"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "the owner `serve` listener is a real loopback server bound with --port 0"
+      ],
+      "notCaptured": [
+        "a harness reload or tool approval (join writes config only; it cannot reload opencode)"
+      ],
+      "exitCode": 0,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/D18-join-opencode-human.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 201,
+          "sha256": "f7ceef4c5e345165203ab1596653b1edcc73ebd1a89ba837ebb7e9554605e125",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/D18-join-opencode-human.stderr.txt",
+          "kind": "piped-stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "rules": {},
+          "verified": true
+        }
+      ],
+      "checks": {},
+      "failed": [],
+      "notes": []
+    }
+  ],
+  "capturedOn": "2026-10-18",
+  "machineFacts": {
+    "platform": "darwin",
+    "kernel": "Darwin 25.6.0 arm64",
+    "node": "v22.23.2",
+    "python3": "Python 3.11.7",
+    "git": "git version 2.51.2",
+    "codexCli": "codex-cli 0.163.0",
+    "opencode": "opencode v2.0.32"
+  },
+  "methodNotes": {
+    "ownerListener": "one owner scenario runs `campfire onboard` (scripted) and then `campfire serve --port 0`; every invitation is a real single-use v1.22.0 invitation issued against that loopback listener. The listener is stopped with SIGINT before scenarios are destroyed.",
+    "sharedRecipient": "D12–D17 share one recipient scenario joined with a fresh invitation by D12; each case still asserts its own surface. All other D cases use a fresh recipient scenario.",
+    "pty": "python3 pty, 24x100, child session leader with controlling pty; stderr shares the terminal stream; D2 exits on its own; D17 waits for the `[campfire] remote workspace` line, then sends a real SIGINT (\\u0003) after a 300 ms delay",
+    "piped": "spawnSync with piped stdin/stdout/stderr; no terminal anywhere",
+    "daemon": "detached child; SIGINT to its process group; stderr/stdout collected",
+    "joinOutputMode": "`campfire join` piped resolves to JSON unless --output human is passed; the human receipt is the same string in a terminal or with explicit --output human (src/cli/index.ts:2102)",
+    "participantCounts": "each successful join adds a new human/agent pair to the workspace and joins do not dedupe by name, so D14/D15 observe 5 humans / 5 agents = owner Ada+Codex plus the Ben+codex pairs from D2, D3, D4, and the shared D12 join. The count is deterministic for the fixed case order and is re-asserted on every run.",
+    "expiryCheck": "the expiry check is client-side before the claim (src/bootstrap/enrollment-client.ts:175), so D6 cannot consume the invitation",
+    "permissionMessage": "D10: the intended `Enrollment file must be a bounded private file` failure (src/bootstrap/enrollment-client.ts:35) throws inside the try and is re-wrapped by the catch at :38, so v1.22.0 reports the generic `Enrollment file is missing or invalid; use the original private file` for non-private modes as well",
+    "ownerStderr": "the owner listener prints its own authz lines; they are not captured as evidence. A `{\"allow\":false,...,\"method\":\"whoami\"}` line can appear on the owner listener stderr during recipient activity; it is recorded in the summary observations, not asserted.",
+    "ttyDetection": "non-TTY stdout suppresses the browser branch (`up` piped records openedBrowser:false without --no-open); D17 additionally passes --no-open so no browser can launch from a terminal"
+  },
+  "observations": {
+    "ownerServeExit": null,
+    "ownerStderrHadUnauthorizedWhoami": true
+  },
+  "maskingRules": "see BASELINE_PIN.md — cft-shaped credential tokens -> [redacted]; cfe-shaped invitation secrets -> [one-time-credential: redacted]; enrollment invitation ids (ein_inv_<16 hex>) -> ein_inv_[id]; absolute /Users, /private, /var/folders, /tmp paths -> [path]; loopback ports -> [port]; ISO timestamps -> [timestamp]; UUIDs -> [uuid]; object ids (<prefix>_<16 hex>) -> <prefix>_[id]"
+}

@@ -1,0 +1,4 @@
+[ValidationError] Run campfire in a terminal to confirm your name, or pass --human-name. Agents and workspaces appear when a harness connects.
+Next:
+  campfire --human-name <name>
+  campfire onboard --help

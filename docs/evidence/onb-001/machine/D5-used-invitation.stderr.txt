@@ -1,0 +1,1 @@
+{"error":{"code":"Conflict","message":"Invitation was claimed by a different enrollment request","details":{"recoveryCode":"invitation_already_claimed","httpStatus":400}},"next":[{"command":"campfire join --help","when":"Retry the original prepared request; another recipient needs a new invitation"}]}

@@ -1,0 +1,4 @@
+Joined billing-deploy-failure as Ben.
+Completed: enrolled, credentials_saved, connection_prepared, reload_required.
+Connected opencode. Reload the harness and approve Campfire tools.
+Next: campfire up

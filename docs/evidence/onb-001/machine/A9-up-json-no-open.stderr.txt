@@ -1,0 +1,3 @@
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+[campfire] HTTP http://127.0.0.1:[port]  viewer http://127.0.0.1:[port]
+[campfire] received SIGINT, shutting down

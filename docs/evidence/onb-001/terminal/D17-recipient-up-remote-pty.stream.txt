@@ -1,0 +1,13 @@
+
+  campfire
+  the shared workspace for people and their agents
+
+  You        Ben
+  Agents     no connection prepared
+  Workspace  billing-deploy-failure
+
+  Viewer     http://127.0.0.1:[port]
+  The Viewer is read-only; an agent registers its own session before contributing.
+
+[campfire] remote workspace  viewer http://127.0.0.1:[port]
+^C

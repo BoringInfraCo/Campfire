@@ -1,0 +1,1 @@
+{"mode":"remote","human":"Ben","workspaceId":"ws_[id]","workspaces":[{"id":"ws_[id]","name":"billing-deploy-failure","goal":"Restore the billing deploy pipeline"}],"agents":[],"connectionPrepared":false,"reloadRequired":false,"sessionRegistered":false,"apiUrl":"http://127.0.0.1:[port]","viewerUrl":"http://127.0.0.1:[port]","openedBrowser":false,"pastSessionsImported":false}

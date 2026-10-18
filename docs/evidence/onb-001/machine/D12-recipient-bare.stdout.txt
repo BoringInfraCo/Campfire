@@ -1,0 +1,11 @@
+
+  campfire
+  the shared workspace for people and their agents
+
+  You        Ben
+  Workspace  billing-deploy-failure
+  Agents     Codex (codex)
+
+  campfire up     open the shared workspace journal and prepare your agents
+  campfire status read current authorized work
+

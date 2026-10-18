@@ -1,0 +1,6 @@
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+You        Ada
+Waiting for an agent to start work.
+Past sessions are not imported.
+campfire up  Start the local API and Viewer so an agent can connect
+campfire --help  See the command list

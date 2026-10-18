@@ -1,0 +1,1 @@
+{"error":{"code":"ValidationError","message":"Enrollment file is missing or invalid; use the original private file","details":{"nextAction":"check_invitation_file"}},"next":[{"command":"campfire join --invitation-file <original-private-file> --human-name <original-name> --harness codex|opencode","when":"Resume using the original identity and scope"}]}

@@ -1,0 +1,1 @@
+{"error":{"code":"ValidationError","message":"Run campfire in a terminal to confirm your name, or pass --human-name. Agents and workspaces appear when a harness connects.","details":{"field":"human-name"}},"next":[{"command":"campfire --human-name <name>","when":"Record the operator in a terminal"},{"command":"campfire onboard --help","when":"Non-interactive first-run path"}]}

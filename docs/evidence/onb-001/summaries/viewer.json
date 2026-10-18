@@ -1,0 +1,437 @@
+{
+  "tool": "onb-001 capture-viewer",
+  "provenance": "FIXTURE EVIDENCE — scripted engineering captures of the published v1.22.0 CLI and Viewer. Not human-observation evidence.",
+  "baseline": {
+    "tag": "v1.22.0",
+    "root": "[path]",
+    "describeTag": "v1.22.0",
+    "packageVersion": "1.22.0",
+    "worktreeClean": true,
+    "srcMatchesTag": true
+  },
+  "simulatedHarnessNote": "Harness detection in v1.22.0 is configuration-path based (src/bootstrap/connect.ts detectInstalledHarnesses). Every harness presence this run is a simulated marker directory in an isolated HOME/XDG; no real codex or opencode process was launched and no real harness config was touched.",
+  "assertions": {
+    "telemetryDisabled": "CAMPFIRE_TELEMETRY=0 in every child environment",
+    "ambientEndpointsRemoved": "CAMPFIRE_URL and CAMPFIRE_TOKEN removed from every child environment",
+    "loopbackOnly": "every listener used --port 0 / --viewer-port 0 on loopback",
+    "isolatedDirs": "HOME, XDG_CONFIG_HOME, CAMPFIRE_CONFIG_DIR, CAMPFIRE_DATA_DIR, TMPDIR per scenario",
+    "colorDisabled": "NO_COLOR=1 for deterministic bytes",
+    "userIdentity": "USER=LOGNAME=owner for a deterministic name-prompt default",
+    "noRealBrowser": "CAMPFIRE_NO_BROWSER=1, --no-open, or a PATH `open` shim that only logs the URL",
+    "noLastingHarness": "no harness process is started; detection is filesystem-only"
+  },
+  "cases": [
+    {
+      "id": "E1",
+      "journey": "E",
+      "title": "fresh-profile Viewer: served shell/assets, whoami, empty list as an ActorNotFound error, write and Host refusals",
+      "method": "http",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "view",
+        "--port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "view",
+        "--port",
+        "0"
+      ],
+      "envCase": {
+        "profile": "none (fresh isolated CAMPFIRE_CONFIG_DIR)",
+        "stdoutIsTty": "n/a (detached listener)"
+      },
+      "simulated": [
+        "the Viewer actor is whatever the shipped CLI resolves from the isolated profile/credential state; no real profile participates"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "a real loopback HTTP listener started with `campfire view --port 0`"
+      ],
+      "notCaptured": [
+        "any browser rendering of this state (E4 dumps the DOM best-effort)",
+        "any person's browser session or profile"
+      ],
+      "exitCode": null,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/E1-view-fresh.index.html",
+          "kind": "http-body",
+          "bytes": 4191,
+          "sha256": "26020d2114fef88d60267d632f832a12ce9ea1e5f8248a057bf2bcad92a1ab2d",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.app.js",
+          "kind": "http-body",
+          "bytes": 83449,
+          "sha256": "2632df6c25e714c3096d00fa426ac1e4c39f8c94bb92d7410a526b3be0067f6c",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.assets.json",
+          "kind": "http-assets",
+          "bytes": 1145,
+          "sha256": "3c3b84f03e6b6cfa42671450c2d51425851d6753c7f5c63adde0368e7c84ebf7",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.whoami.json",
+          "kind": "http-json",
+          "bytes": 76,
+          "sha256": "487058f108ae6f17caaeb05c49d36edee0adfa7b10a6ed40e0c4ca826f5b2b73",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.list-workspaces.json",
+          "kind": "http-json",
+          "bytes": 77,
+          "sha256": "0b1ff47a3e236f053f736b59775c57d1209694d5a674c31d27e779a2b1531406",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.write-refused.json",
+          "kind": "http-json",
+          "bytes": 68,
+          "sha256": "e401909ead433f9af2ffacc353feb30e14b689c8301eaeb7cd27ff08b7eea485",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.wrong-host.json",
+          "kind": "http-json",
+          "bytes": 99,
+          "sha256": "78fef0db25535b5df8fa8da6f6e8fb223f0c7c650870d6e4239272d599e2353b",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.generated-unknown.json",
+          "kind": "http-json",
+          "bytes": 81,
+          "sha256": "0cea1c6382816dceb3a4ce7d88ebd81bd6c82f4604a5ed46110b574c390f5054",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.not-found.json",
+          "kind": "http-json",
+          "bytes": 68,
+          "sha256": "0d2503f5d87d0286033a574dd3085528603d84012aa2b3e726b10b8b519d90f0",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E1-view-fresh.viewer.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 462,
+          "sha256": "1ea6cd31900b5b18eb25690137afc2babd6e234b13080d9b2e7259c1e9f0d6f9",
+          "rules": {
+            "loopback_port": 1,
+            "object_id": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "statuses": {
+          "index": 200,
+          "appJs": 200,
+          "css": 200,
+          "svg": 200,
+          "whoami": 200,
+          "listWorkspaces": 404,
+          "writeRefused": 403,
+          "wrongHost": 403,
+          "generatedUnknown": 500,
+          "notFound": 404
+        },
+        "appJsSha256": "2632df6c25e714c3096d00fa426ac1e4c39f8c94bb92d7410a526b3be0067f6c",
+        "appJsMatchesRepoStatic": true,
+        "appJsMatchesPublicCopy": true,
+        "indexBytes": 4191,
+        "E1ViewerExit": 0,
+        "E1ViewerTimedOut": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "E2",
+      "journey": "E",
+      "title": "local-profile Viewer without a workspace: whoami is the profile human, list_workspaces is an empty success, unknown generated view is 404",
+      "method": "http",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "view",
+        "--port",
+        "0"
+      ],
+      "argvDisplay": [
+        "campfire",
+        "view",
+        "--port",
+        "0"
+      ],
+      "envCase": {
+        "profile": "created first with `campfire --human-name Rob --output json`"
+      },
+      "simulated": [
+        "the Viewer actor is whatever the shipped CLI resolves from the isolated profile/credential state; no real profile participates"
+      ],
+      "real": [
+        "campfire v1.22.0 CLI run from the pinned worktree via tsx",
+        "a real loopback HTTP listener started with `campfire view --port 0`"
+      ],
+      "notCaptured": [
+        "any browser rendering of this state (E3 dumps the DOM best-effort)"
+      ],
+      "exitCode": null,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "machine/E2-local-profile-prep.stdout.txt",
+          "kind": "piped-stdout",
+          "bytes": 108,
+          "sha256": "a6d4d68ffa7c5d7e1749586213a7b616f16f0fb545455852f5e4792cb1087eeb",
+          "rules": {
+            "path_var_folders": 1,
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/E2-view-local.index.html",
+          "kind": "http-body",
+          "bytes": 4191,
+          "sha256": "26020d2114fef88d60267d632f832a12ce9ea1e5f8248a057bf2bcad92a1ab2d",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E2-view-local.whoami.json",
+          "kind": "http-json",
+          "bytes": 74,
+          "sha256": "5ef1c73dc34f871332fa1fa7440b53f426b9e7c4a26cd286053766fe6d9aa66f",
+          "rules": {
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/E2-view-local.list-workspaces.json",
+          "kind": "http-json",
+          "bytes": 24,
+          "sha256": "91f683707af1665b430471caeb18b47d8fbb0a97d8c14ae90e737ecffc4a5902",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E2-view-local.generated-unknown.json",
+          "kind": "http-json",
+          "bytes": 75,
+          "sha256": "94a1c91111f5821fa33a44cb0a7252c1984a3ac98755471369e60db646f72dd9",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E2-view-local.viewer.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 324,
+          "sha256": "81be1bfe8e4cb724bcb6bfffb40e6b7a5cc4af8f9eedc14cbbcd37722d4f1e05",
+          "rules": {
+            "loopback_port": 1,
+            "object_id": 4
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "statuses": {
+          "index": 200,
+          "whoami": 200,
+          "listWorkspaces": 200,
+          "generatedUnknown": 404
+        },
+        "E2ViewerExit": 0,
+        "E2ViewerTimedOut": false
+      },
+      "failed": [],
+      "notes": []
+    },
+    {
+      "id": "E3",
+      "journey": "E",
+      "title": "headless DOM dump of the empty local-profile Viewer (Waiting for an agent to start work.)",
+      "method": "browser",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--dump-dom",
+        "http://127.0.0.1:<port>/"
+      ],
+      "argvDisplay": [
+        "chrome-headless-shell",
+        "--dump-dom",
+        "http://127.0.0.1:<port>/"
+      ],
+      "envCase": {
+        "profile": "created first with `campfire --human-name Rob --output json`"
+      },
+      "simulated": [
+        "the Viewer actor is whatever the shipped CLI resolves from the isolated profile/credential state; no real profile participates",
+        "the page's display font/size may differ from a person's browser; only the rendered DOM text is captured"
+      ],
+      "real": [
+        "campfire v1.22.0 Viewer on a real loopback listener",
+        "a real headless Chromium engine (Playwright `chrome-headless-shell`) fetching the served page with an isolated --user-data-dir"
+      ],
+      "notCaptured": [],
+      "exitCode": null,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "browser/E3-view-empty.dom.html",
+          "kind": "headless-dom",
+          "bytes": 5611,
+          "sha256": "826b3f337aa801404cb497fd82f71b42dba74d4ce6eadfe6fe39483ad7226338",
+          "rules": {
+            "object_id": 1
+          },
+          "verified": true
+        },
+        {
+          "file": "machine/E3-view.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 259,
+          "sha256": "f36589e00d4f506d9c96d1c92789a51af7b121459e1d707d19c7231371750998",
+          "rules": {
+            "loopback_port": 1,
+            "object_id": 2
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "headlessAvailable": true,
+        "chromeVersion": "Google Chrome for Testing 153.0.8010.12",
+        "chromeSelectedFrom": "ms-playwright cache",
+        "chromeExitCode": 0,
+        "chromeError": null,
+        "domBytes": 5623,
+        "E3ViewerExit": 0,
+        "E3ViewerTimedOut": false
+      },
+      "failed": [],
+      "notes": [
+        "observed: the served empty state renders the stream hint `Waiting for an agent to start work.` but the workspace select stays empty (app.js:66 `selectKey` guard vs the :783 option), so no placeholder text appears in the select"
+      ]
+    },
+    {
+      "id": "E4",
+      "journey": "E",
+      "title": "headless DOM dump of the fresh-profile Viewer (ActorNotFound banner plus the waiting text)",
+      "method": "browser",
+      "status": "captured",
+      "command": [
+        "campfire",
+        "--dump-dom",
+        "http://127.0.0.1:<port>/"
+      ],
+      "argvDisplay": [
+        "chrome-headless-shell",
+        "--dump-dom",
+        "http://127.0.0.1:<port>/"
+      ],
+      "envCase": {
+        "profile": "none (fresh isolated CAMPFIRE_CONFIG_DIR)"
+      },
+      "simulated": [
+        "the Viewer actor is whatever the shipped CLI resolves from the isolated profile/credential state; no real profile participates"
+      ],
+      "real": [
+        "campfire v1.22.0 Viewer on a real loopback listener",
+        "a real headless Chromium engine (Playwright `chrome-headless-shell`) fetching the served page with an isolated --user-data-dir"
+      ],
+      "notCaptured": [],
+      "exitCode": null,
+      "timedOut": false,
+      "files": [
+        {
+          "file": "browser/E4-view-fresh.dom.html",
+          "kind": "headless-dom",
+          "bytes": 5630,
+          "sha256": "df58ca516afc8bc85f55b58b84d57ce94c612bc9f13efcddc45bdf2bb55d33ce",
+          "rules": {},
+          "verified": true
+        },
+        {
+          "file": "machine/E4-view.stderr.txt",
+          "kind": "daemon-stderr",
+          "bytes": 343,
+          "sha256": "542a8ca7f3da0e0d2c3470dda22309bab05c5850b624346e642c61ff2ae821fa",
+          "rules": {
+            "loopback_port": 1
+          },
+          "verified": true
+        }
+      ],
+      "checks": {
+        "headlessAvailable": true,
+        "chromeVersion": "Google Chrome for Testing 153.0.8010.12",
+        "chromeSelectedFrom": "ms-playwright cache",
+        "chromeExitCode": 0,
+        "chromeError": null,
+        "domBytes": 5630,
+        "E4ViewerExit": 0,
+        "E4ViewerTimedOut": false
+      },
+      "failed": [],
+      "notes": []
+    }
+  ],
+  "capturedOn": "2026-10-18",
+  "machineFacts": {
+    "platform": "darwin",
+    "kernel": "Darwin 25.6.0 arm64",
+    "node": "v22.23.2",
+    "python3": "Python 3.11.7",
+    "git": "git version 2.51.2",
+    "codexCli": "codex-cli 0.163.0",
+    "opencode": "opencode v2.0.32"
+  },
+  "methodNotes": {
+    "launch": "`campfire view --port 0` binds a real loopback listener; the URL is read from the `[campfire] viewer listening on http://127.0.0.1:<port>` stderr line",
+    "actorBinding": "the browser never receives a token; the Viewer process resolves the acting human from the isolated profile (E2/E3: the profile created by `campfire --human-name Rob`; E1/E4: no profile, so the CLI default actor id `hum_sergio` from src/cli/index.ts is used and does not exist in the store)",
+    "emptyStates": "E1/E4: with no profile the store has no such actor, so list_workspaces fails with ActorNotFound and the generated route falls through to a 500 InternalError (ActorNotFound is not in the route's 404 mapping at src/viewer/server.ts). E2/E3: an initialized local profile with no workspace sees `{\"ok\":true,\"result\":[]}` and the rendered empty state `Waiting for an agent to start work.`",
+    "servedAssets": "GET /, /app.css, /app.js, /campfire-mark.svg are served from src/viewer/static/ with their content-length and content-type; the served app.js is byte-identical to both src/viewer/static/app.js and the published public/app.js copy in the v1.22.0 worktree",
+    "hostGuard": "a request whose Host header is not this listener's address/port is refused with 403 before any route runs (src/viewer/server.ts, PSA-001)",
+    "writeGuard": "POST /api/call with a method outside VIEWER_READ_METHODS is refused with 403 `Viewer is read-only` before options.call is reached",
+    "headlessDump": "`chrome-headless-shell --dump-dom --virtual-time-budget=4000` fetches the served page and dumps the DOM after the page's initial /api/call round-trip; the browser runs with an isolated --user-data-dir inside the scenario and the scenario HOME/TMPDIR. No person's browser profile is used.",
+    "shutdown": "every viewer is stopped with a real SIGINT to its process group and exits 0 with `[campfire] received SIGINT, shutting down`"
+  },
+  "observations": {
+    "appJsSha256": "2632df6c25e714c3096d00fa426ac1e4c39f8c94bb92d7410a526b3be0067f6c",
+    "chromeHeadlessShell": {
+      "available": true,
+      "version": "Google Chrome for Testing 153.0.8010.12",
+      "selectedFrom": "ms-playwright cache"
+    },
+    "viewerStaticFilesScanned": [
+      "/",
+      "/app.css",
+      "/app.js",
+      "/campfire-mark.svg"
+    ]
+  },
+  "maskingRules": "see BASELINE_PIN.md — cft-shaped credential tokens -> [redacted]; cfe-shaped invitation secrets -> [one-time-credential: redacted]; enrollment invitation ids (ein_inv_<16 hex>) -> ein_inv_[id]; absolute /Users, /private, /var/folders, /tmp paths -> [path]; loopback ports -> [port]; ISO timestamps -> [timestamp]; UUIDs -> [uuid]; object ids (<prefix>_<16 hex>) -> <prefix>_[id]"
+}

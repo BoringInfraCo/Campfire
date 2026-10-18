@@ -1,0 +1,1 @@
+{"human":"Ada","humanId":"hum_[id]","databasePath":"[path]","waiting":"agent","pastSessionsImported":false}

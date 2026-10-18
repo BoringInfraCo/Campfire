@@ -1,0 +1,1 @@
+{"workspace":"billing-deploy-failure","workspaceId":"ws_[id]","goal":"Restore the billing deploy pipeline","human":"Ada","agent":"Codex","harness":"codex","databasePath":"[path]"}

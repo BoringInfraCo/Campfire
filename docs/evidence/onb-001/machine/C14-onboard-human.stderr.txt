@@ -1,0 +1,4 @@
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"workspace:list"}
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"goal:create","workspaceId":"ws_[id]"}
+{"event":"authz","allow":true,"actorId":"hum_[id]","operation":"invite:create","workspaceId":"ws_[id]"}
+{"event":"authz","allow":true,"actorId":"agt_[id]","operation":"workspace:join","workspaceId":"ws_[id]"}

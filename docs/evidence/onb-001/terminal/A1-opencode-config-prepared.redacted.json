@@ -1,0 +1,17 @@
+{
+  "mcp": {
+    "campfire": {
+      "type": "local",
+      "command": [
+        "[path]",
+        "mcp"
+      ],
+      "enabled": true,
+      "environment": {
+        "CAMPFIRE_URL": "http://127.0.0.1:[port]",
+        "CAMPFIRE_TOKEN": "[redacted]",
+        "CAMPFIRE_HARNESS": "opencode"
+      }
+    }
+  }
+}
