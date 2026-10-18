@@ -97,9 +97,9 @@ before writing and abort the capture instead.
 
 Frame identity caveat: the header `refreshed` timestamp is wall-clock, so the
 sha256s above pin these capture-time frames; a re-capture reproduces the same
-content except that one line per frame. The A2 re-capture confirmed this
-empirically: with the `refreshed` line masked, all six frames are byte-identical
-to the independently verified first capture.
+content except that one line per frame. The re-capture at the final revision
+confirmed this empirically: with the `refreshed` line masked, all six frames
+are byte-identical to the independently verified first capture.
 
 ## Reproduction
 

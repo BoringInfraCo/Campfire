@@ -387,13 +387,21 @@ Worker, and live installer checks recorded there); that decision does not
 change the UNSCORED verdict, the NOT OBSERVED human observations, or any
 gate, and the public claim marks the human outcome NOT OBSERVED.
 
-The next proposed sprint is NAV-001 — Focused Terminal Navigator, scoped in
-`docs/Campfire-v1.22-NAV-001-Focused-Terminal-Navigator.md`. It starts from the
-published v1.21.0 source and changes only the read-only terminal dashboard's
-navigation and presentation. Freeze that contract and its Step 0 baseline in
-a commit before product code changes. NAV-002 and NAV-003 retain the People,
-deeper history/paging, and Viewer alignment work. No v1.22 implementation or
-release decision is recorded by this pointer.
+Sprint NAV-001 — Focused Terminal Navigator has its v1.22 contract at
+`docs/Campfire-v1.22-NAV-001-Focused-Terminal-Navigator.md`. The contract, the
+display-pressure fixture (`fixtures/navigator/nav-001/`), and the v1.21.0
+baseline pin are frozen in commit `ff8c327`; the implementation is recorded as
+**CONDITIONAL GO — engineering candidate** in `docs/SPRINT_NAV_001_RESULT.md`
+(candidate `c2ff97e`, independently verified revision `64cc5a4` plus two
+verifier-driven input/label adjustments). D1–D6 pass; the contract §6
+two-person comparison is **NOT OBSERVED** (one operator; §6 forbids
+substituting agents or the builder for a human answer), so human
+comprehension is not claimed. NAV-001 starts from the published v1.21.0 source
+and changes only the read-only terminal dashboard's navigation and
+presentation: one focused section plus a selected-record summary, a bounded
+shown-records filter, selection-preserving refresh, and stale labeling. No
+version bump, tag, release decision, or deployment is recorded. NAV-002 and
+NAV-003 retain the People, deeper history/paging, and Viewer alignment work.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
