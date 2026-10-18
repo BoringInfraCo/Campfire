@@ -1,5 +1,5 @@
 Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
-hum_nav001_ana human  ·  refreshed 2026-10-18T00:51:33.218Z
+hum_nav001_ana human  ·  refreshed 2026-10-18T01:08:35.399Z
 GOAL
   Give the terminal one focused screen over the recorded work.
   goal_nav001_focus

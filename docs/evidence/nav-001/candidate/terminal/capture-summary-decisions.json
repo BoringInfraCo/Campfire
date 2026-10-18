@@ -29,7 +29,7 @@
       "file": "candidate-nav001-ana-decisions-80x24.txt",
       "columns": 80,
       "rows": 24,
-      "sha256": "815cff961da4b0dc8e41bc26666ffc4378d6ad77c065356f7e3ae17079a0aba2",
+      "sha256": "274cea67c1a3d797b1216ebbce2cd77caab3f013ada6130603326bf25bf549b7",
       "pty": {
         "exitCode": 0,
         "timedOut": false,
@@ -57,7 +57,7 @@
       "file": "candidate-nav001-ana-decisions-120x36.txt",
       "columns": 120,
       "rows": 36,
-      "sha256": "33c4a40211e65b6b19078a53b1a3a8c7324d0bb9a639e5f26958b6e7f183a5e8",
+      "sha256": "68aba092736b2886de43ebe602f3bf02f9cf15104db5c36887387d8698c6c97d",
       "pty": {
         "exitCode": 0,
         "timedOut": false,

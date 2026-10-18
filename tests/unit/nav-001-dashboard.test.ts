@@ -15,6 +15,7 @@ import {
   renderDashboard,
   sectionRows,
   shownRows,
+  stripEscapeSequences,
   type DashboardState,
 } from "../../src/cli/dashboard.js";
 import type { ContextSlice } from "../../src/domain/context-policy.js";
@@ -275,7 +276,7 @@ describe("NAV-001 focused navigator", () => {
     expect(flat(frame)).toContain('filter "alpha"');
     expect(flat(frame)).toContain(FILTER_SCOPE);
     expect(flat(frame)).toContain("showing 1 of 3 loaded rows");
-    expect(flat(frame)).toContain("(typing — enter confirms, esc clears)");
+    expect(flat(frame)).toContain("(typing — enter confirms, esc clears, ctrl-c quits)");
     expect(frame).toContain("task_work_alpha");
     expect(frame).not.toContain("task_work_beta");
     expect(frame).not.toContain("task_other_gamma");
@@ -491,6 +492,25 @@ describe("NAV-001 chunked input", () => {
     expect(normalizeInputChunk("\u001b[Z")).toEqual([]); // shift-tab
     expect(normalizeInputChunk("\u001bq")).toEqual([]); // alt chord
     expect(normalizeInputChunk("tab tab")).toEqual([]); // literal token text
+  });
+
+  it("strips escape sequences without swallowing the bytes after them", () => {
+    expect(stripEscapeSequences("\u001b[Aj")).toBe("j");
+    expect(stripEscapeSequences("ab\u001b[Zc")).toBe("abc");
+    expect(stripEscapeSequences("\u001bqj")).toBe("j");
+    expect(stripEscapeSequences("\u001b")).toBe("\u001b");
+    expect(stripEscapeSequences("")).toBe("");
+    expect(stripEscapeSequences("plain")).toBe("plain");
+  });
+
+  it("keeps scanning after an unknown ESC-led sequence instead of dropping the chunk", () => {
+    // An unknown ESC chord followed by real keys: the trailing keys survive.
+    expect(normalizeInputChunk("\u001bqj")).toEqual(["j"]);
+    expect(normalizeInputChunk("jj\u001b[Ak")).toEqual(["j", "j", "k"]);
+    // A sequence between typed characters never reads as esc mid-chunk.
+    expect(normalizeInputChunk("j\u001b[Aj")).toEqual(["j", "j"]);
+    // The chord itself is still never leaked.
+    expect(normalizeInputChunk("\u001bq")).toEqual([]);
   });
 
   it("replays coalesced bursts to the same state as one-at-a-time keys", () => {

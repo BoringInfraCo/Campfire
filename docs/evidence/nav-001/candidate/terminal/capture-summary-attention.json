@@ -26,7 +26,7 @@
       "file": "candidate-nav001-ana-attention-80x24.txt",
       "columns": 80,
       "rows": 24,
-      "sha256": "75bfbf58ea804ece5a310591c624ce8391ad50e56cb1cf2890d3ee2bdbd74047",
+      "sha256": "1fc85dd4446680db1b10aa23d9f4a9217a700d3f4b27e5010dd29ef04ac617cb",
       "pty": {
         "exitCode": 0,
         "timedOut": false,
@@ -54,7 +54,7 @@
       "file": "candidate-nav001-ana-attention-120x36.txt",
       "columns": 120,
       "rows": 36,
-      "sha256": "cc205d0bc70f4896d2750298f113ac1f7fd91d9d7964ee8ba2c1ab5107e373ff",
+      "sha256": "7400cc93e6d7d0774cc7eeffe3c07d96a6ed2acecdddfbb72cb1ef226c7e7b9b",
       "pty": {
         "exitCode": 0,
         "timedOut": false,

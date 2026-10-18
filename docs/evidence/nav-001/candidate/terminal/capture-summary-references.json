@@ -30,7 +30,7 @@
       "file": "candidate-nav001-ana-references-80x24.txt",
       "columns": 80,
       "rows": 24,
-      "sha256": "eb30d020430117ade24c1b7023ee0865bf22a5c9be1a7a5205a9e4768de63a7b",
+      "sha256": "90544b201d0b5d6b54f3a90181fc35387272904c1a939de5f13adb030fb7ec4f",
       "pty": {
         "exitCode": 0,
         "timedOut": false,
@@ -58,7 +58,7 @@
       "file": "candidate-nav001-ana-references-120x36.txt",
       "columns": 120,
       "rows": 36,
-      "sha256": "6538e24d82ae710c0547405271d217673773dbd5e968e5bf0093a3cc765a2dfc",
+      "sha256": "38300b40f749a88f779d80538861eebc438c348414dea7f02139a7ce5763d57a",
       "pty": {
         "exitCode": 0,
         "timedOut": false,

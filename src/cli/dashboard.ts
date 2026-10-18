@@ -88,7 +88,7 @@ const HELP_LINES = [
   "tab moves among attention, current work, decisions, references, and recent changes.",
   "j and k move within the shown rows. enter opens a read-only detail.",
   "/ filters the shown records, not the workspace. enter confirms; esc clears.",
-  "r refreshes. ? toggles this help. q quits.",
+  "r refreshes. ? toggles this help. q quits; ctrl-c always quits.",
   "Registration and contributions are recorded history, not live presence.",
   "needsYou and needsAttention are cues, not permission.",
 ];
@@ -611,7 +611,7 @@ function renderRowList(rows: DashRow[], selected: number, columns: number): Tagg
  */
 function filterIndicator(state: DashboardState, columns: number): TaggedLine[] {
   if (!filterActive(state)) return [];
-  const typing = state.filterMode ? " (typing — enter confirms, esc clears)" : "";
+  const typing = state.filterMode ? " (typing — enter confirms, esc clears, ctrl-c quits)" : "";
   const shown = shownRows(state).length;
   const loaded = sectionRows(state).length;
   return record(
@@ -966,40 +966,63 @@ function writeControl(stream: NodeJS.WriteStream, text: string): void {
 }
 
 /**
+ * Remove complete escape sequences from one raw input chunk: CSI sequences
+ * (arrows, function keys) and unknown ESC-led chords (Alt combos). A lone
+ * ESC byte is kept so a chunk that is exactly ESC still reads as the esc key.
+ * Sequences are never leaked as text and never swallow the rest of the chunk:
+ * a coalesced `"\u001bqj"` loses the ESC chord but keeps the `j`.
+ */
+export function stripEscapeSequences(text: string): string {
+  let kept = "";
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index]!;
+    if (char !== "\u001b") {
+      kept += char;
+      continue;
+    }
+    if (index + 1 >= text.length) {
+      // A lone ESC may be the esc key itself; keep it for the caller.
+      kept += "\u001b";
+      continue;
+    }
+    if (text[index + 1] === "[") {
+      let end = index + 2;
+      while (end < text.length && !/[\u0040-\u007e]/.test(text[end]!)) end += 1;
+      index = Math.min(end, text.length - 1);
+      continue;
+    }
+    // An unknown ESC-led chord (for example Alt+key): skip ESC and one byte.
+    index += 1;
+  }
+  return kept;
+}
+
+/**
  * Split one raw stdin chunk into the recognized keys it carries.
  *
  * A chunk is not guaranteed to hold a single key: a PTY delivers whatever the
  * writer queued between reads, so a scripted or pasted burst can arrive as
  * `"\t\tq"` in one chunk. Treating only whole-chunk single keys as input
  * silently dropped such bursts (a scripted capture sent two tabs and q within
- * 300 ms and the dashboard never quit). Each recognized byte is returned in
- * order and reduced one by one, mirroring the filter-mode typing path. Escape
- * sequences (arrows, function keys, Alt chords) are skipped, never leaked as
- * characters; a chunk that is exactly ESC stays the esc key.
+ * 300 ms and the dashboard never quit). Escape sequences are stripped first,
+ * then each recognized byte is returned in order and reduced one by one,
+ * mirroring the filter-mode typing path; a chunk that is exactly ESC stays the
+ * esc key.
  */
 export function normalizeInputChunk(text: string): string[] {
   if (text.includes("\u0003")) return ["\u0003"];
-  if (text === "\u001b") return ["\u001b"];
+  const cleaned = stripEscapeSequences(text);
+  if (cleaned === "\u001b") return ["\u001b"];
   const keys: string[] = [];
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index]!;
-    if (char === "\u001b") {
-      if (text[index + 1] === "[") {
-        index += 1;
-        while (index + 1 < text.length && !/[\u0040-\u007e]/.test(text[index + 1]!)) index += 1;
-        index += 1;
-        continue;
-      }
-      // An ESC-led sequence this reader does not know: ignore it to its end.
-      return keys;
-    }
+  for (let index = 0; index < cleaned.length; index += 1) {
+    const char = cleaned[index]!;
     if (char === "\t") {
       keys.push("tab");
       continue;
     }
     if (char === "\r") {
       keys.push("enter");
-      if (text[index + 1] === "\n") index += 1;
+      if (cleaned[index + 1] === "\n") index += 1;
       continue;
     }
     if (char === "\n") {
@@ -1151,12 +1174,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     if (closed || finished) return;
     const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
     if (state.filterMode) {
-      // Escape sequences (arrows, function keys) must not append stray
-      // characters; an exact ESC is the filter's esc. Every other character in
-      // the chunk is reduced one by one so multi-character input (fast typing,
-      // paste) filters each character as typed.
-      if (text.startsWith("\u001b") && text.length > 1) return;
-      for (const char of text) {
+      // Escape sequences (arrows, function keys, Alt chords) must not append
+      // stray characters; an exact ESC is the filter's esc. Sequences are
+      // stripped first and every remaining character is reduced one by one so
+      // multi-character input (fast typing, paste) filters each character and
+      // a sequence never swallows bytes that follow it in the same chunk.
+      const typed = stripEscapeSequences(text);
+      if (typed.length === 0) return;
+      for (const char of typed) {
         state = reduceDashboardKey(state, char);
         if (state.quit) {
           finish();

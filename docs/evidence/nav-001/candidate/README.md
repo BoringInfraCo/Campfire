@@ -29,9 +29,11 @@ expected values are keyed by `docs/evidence/nav-001/FIXTURE_KEY.md`.
   **comma-separated**; `tab`/`enter`/`esc` are named keys and every other token
   is sent literally. A space-separated `"tab tab"` would be sent as one literal
   string and would not navigate.
-- **Capture session:** one session, wall clock `2026-10-18T00:51:33–34Z`
-  (PTY-side); the header `refreshed` line is wall-clock and differs between
-  frames and on any re-capture.
+- **Capture session:** re-captured wall clock `2026-10-18T01:08:35–39Z`
+  (PTY-side) after the two verifier-driven adjustments (input
+  escape-sequence stripping, `ctrl-c quits` typing hint). With the header
+  `refreshed` line masked, all six frames are byte-identical to the
+  independently verified first capture.
 
 ## Files (capture-time sha256)
 
@@ -39,12 +41,12 @@ expected values are keyed by `docs/evidence/nav-001/FIXTURE_KEY.md`.
 
 | File | sha256 |
 | --- | --- |
-| `candidate-nav001-ana-attention-80x24.txt` | `75bfbf58ea804ece5a310591c624ce8391ad50e56cb1cf2890d3ee2bdbd74047` |
-| `candidate-nav001-ana-attention-120x36.txt` | `cc205d0bc70f4896d2750298f113ac1f7fd91d9d7964ee8ba2c1ab5107e373ff` |
-| `candidate-nav001-ana-decisions-80x24.txt` | `815cff961da4b0dc8e41bc26666ffc4378d6ad77c065356f7e3ae17079a0aba2` |
-| `candidate-nav001-ana-decisions-120x36.txt` | `33c4a40211e65b6b19078a53b1a3a8c7324d0bb9a639e5f26958b6e7f183a5e8` |
-| `candidate-nav001-ana-references-80x24.txt` | `eb30d020430117ade24c1b7023ee0865bf22a5c9be1a7a5205a9e4768de63a7b` |
-| `candidate-nav001-ana-references-120x36.txt` | `6538e24d82ae710c0547405271d217673773dbd5e968e5bf0093a3cc765a2dfc` |
+| `candidate-nav001-ana-attention-80x24.txt` | `1fc85dd4446680db1b10aa23d9f4a9217a700d3f4b27e5010dd29ef04ac617cb` |
+| `candidate-nav001-ana-attention-120x36.txt` | `7400cc93e6d7d0774cc7eeffe3c07d96a6ed2acecdddfbb72cb1ef226c7e7b9b` |
+| `candidate-nav001-ana-decisions-80x24.txt` | `274cea67c1a3d797b1216ebbce2cd77caab3f013ada6130603326bf25bf549b7` |
+| `candidate-nav001-ana-decisions-120x36.txt` | `68aba092736b2886de43ebe602f3bf02f9cf15104db5c36887387d8698c6c97d` |
+| `candidate-nav001-ana-references-80x24.txt` | `90544b201d0b5d6b54f3a90181fc35387272904c1a939de5f13adb030fb7ec4f` |
+| `candidate-nav001-ana-references-120x36.txt` | `38300b40f749a88f779d80538861eebc438c348414dea7f02139a7ce5763d57a` |
 | `capture-summary-attention.json` | the per-run capture record for both attention frames |
 | `capture-summary-decisions.json` | the per-run capture record for both decisions frames |
 | `capture-summary-references.json` | the per-run capture record for both references frames |
@@ -95,7 +97,9 @@ before writing and abort the capture instead.
 
 Frame identity caveat: the header `refreshed` timestamp is wall-clock, so the
 sha256s above pin these capture-time frames; a re-capture reproduces the same
-content except that one line per frame.
+content except that one line per frame. The A2 re-capture confirmed this
+empirically: with the `refreshed` line masked, all six frames are byte-identical
+to the independently verified first capture.
 
 ## Reproduction
 
