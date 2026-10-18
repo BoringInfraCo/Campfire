@@ -2,7 +2,7 @@
 
 **Date:** October 18, 2026
 
-**Status:** **D1–D5 passed; D6 packaging pending; human comprehension NOT OBSERVED.** This is not CONDITIONAL GO. Contract §7 awards that verdict only when D1–D6 pass, and D6 requires `pack:tarball` to pass. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. A `v1.22.1` bump, tag, snapshot, channel pin, or deployment requires a separate recorded founder release decision. This record does not claim human comprehension, Gate B/C/E/F, or closure of NAV-001, WCO-001, ARH-001, ATT-001, SWH-001, UIX-001, or VIS-001.
+**Status:** **D1–D5 passed; D6 closed by the dated §D6 addendum below — CONDITIONAL GO — engineering candidate; human comprehension NOT OBSERVED.** Before that addendum this record read "D1–D5 passed; D6 packaging pending; not CONDITIONAL GO" (correction commit `4abbe2e`). The v1.22.1 release-prep revision (`b1ba31c`) and the founder release decision (`docs/RELEASE_V1_22_1_DECISION.md`) are separate from this sprint result. No tag, public snapshot, channel pin, or deployment is part of this record; a v1.22.1 publication requires that separate recorded founder release decision. This record does not claim human comprehension, Gate B/C/E/F, or closure of NAV-001, WCO-001, ARH-001, ATT-001, SWH-001, UIX-001, or VIS-001.
 
 **Contract:** `docs/Campfire-v1.22.1-ONB-001-First-Run-Handoff.md`
 **Baseline:** published `v1.22.0` — tag object `83d0602`, commit `1b9432d`, package `1.22.0`. Frozen in `docs/evidence/onb-001/`.
@@ -48,3 +48,25 @@ The awaiting-workspace machine field `next[0].when` is still `Start the local AP
 ## 3. Human outcome
 
 **NOT OBSERVED.** No cold non-builder participants ran the local scenario and the invitation scenario.
+
+---
+
+## D6 addendum — release-prep revision (October 18, 2026)
+
+The founder recorded the v1.22.1 release decision in `docs/RELEASE_V1_22_1_DECISION.md` (commit `b1ba31c`): commit the result correction, record the separate founder decision, prepare version `1.22.1` without changing the immutable `1.22.0` installer, pass packaging, close D6 in a dated addendum, and only then reassess the release gate. This addendum does that; it rewrites nothing above.
+
+**Release-prep revision:** `b1ba31c` — `package.json`/`package-lock.json` at `1.22.1`; `public/campfire/v1.22.1/install.sh` tracked from the current installer (sha256 `2256bccb086d3c83e9a997de46285e5ad5175bb3f696a6641322b16ccba8a844`); the published `public/campfire/v1.22.0/install.sh` verified byte-unchanged (sha256 `ba8603bd106277bf520b1789b77e4e95c8b2bc9c9cae5db5059965bf25d26900`, the v1.22.0 promotion value); the `scripts/package.sh` immutable-installer guard was not weakened.
+
+**Verification battery at `b1ba31c`** (macOS, fresh serial runs by an independent verifier):
+
+| Check | Result |
+| --- | --- |
+| `npm run typecheck` | PASS (exit 0). |
+| `npm test` | 97 files — 96 passed, 1 failed; 1,214 tests — 1,212 passed, 1 failed, 1 skipped (the opt-in dashboard screenshot). The one failure is the pre-recorded install-channel assertion: `tests/unit/install-channels.test.ts:31:21` expects `packaging/homebrew/campfire.rb` to contain `/v1.22.1/` while the formula and `flake.nix` remain pinned to the published v1.22.0 archives. Named here, **not loosened**; it goes green with the post-publication pin commit (`node scripts/sync-install-channels.mjs` against the four published v1.22.1 checksums), exactly as in v1.22.0. |
+| `npm run build` | PASS (exit 0); `src/viewer/static/` byte-identical to `public/` for `index.html`, `app.css`, `app.js`, and `campfire-mark.svg`. |
+| `npm run deploy:dry-run` | PASS (exit 0; wrangler 4.149.0; Total Upload 345.91 KiB / gzip 65.62 KiB). |
+| `npm run pack:tarball` | **PASS (exit 0).** `release/campfire-darwin-arm64.tar.gz` written with a matching `.sha256` sidecar; the verification run's archive sha256 is `d68c7e2dbdb53d9c76ef6af0f27c07d9543b91a195e924e783fcec92883cd4c2` (the earlier prep-run archive hashed `f5ca9d307b12ba7ef657ff2fb80f17ca6f0d5c74ada728216b31df9bf16a70c0`; local archives embed tar timestamps, so per-run digests differ — the pinned digests come from the CI-built published archives, as in every prior release). Extracted `lib/campfire/package.json` reports `1.22.1`. After the run, `public/campfire/v1.22.1/install.sh` still matches the current installer and `public/campfire/v1.22.0/install.sh` still matches the published copy. |
+
+**Effect:** with `pack:tarball` passing on the release-prep revision and the published v1.22.0 pin intact, **D6 closes as of this dated addendum**. Contract §7 now awards the **CONDITIONAL GO — engineering candidate** verdict: D1–D6 pass, and the pre-registered cold human check remains unavailable for the recorded reason (no eligible non-builder participants; §7 forbids substituting the builder, an agent, or a scripted capture). Human comprehension stays **NOT OBSERVED**. The §2 table above is left as the historical pre-addendum state; this addendum, not a table edit, is the closure.
+
+**Publication status:** as of this addendum no tag, public snapshot, GitHub Release, channel pin, or deployment exists for v1.22.1. The export/public-copy audit runs at publication from the tagged release source per the release-mirror workflow. Publication steps follow the release-gate reassessment and are recorded in `docs/RELEASE_V1_22_1_DECISION.md`'s promotion table as they complete.

@@ -408,14 +408,21 @@ change the CONDITIONAL GO verdict, the NOT OBSERVED human comparison, or any
 gate. NAV-002 and NAV-003 retain the People, deeper history/paging, and
 Viewer alignment work.
 
-Sprint ONB-001 — First-Run Handoff has its proposed v1.22.1 patch contract at
+Sprint ONB-001 — First-Run Handoff has its v1.22.1 patch contract at
 `docs/Campfire-v1.22.1-ONB-001-First-Run-Handoff.md`. It starts from the
 published v1.22.0 tag and limits work to truthful setup/join receipts, recovery
-guidance, and the read-only no-workspace Viewer state. Freeze the baseline and
-contract before product code; no implementation, result, version bump, or
-release decision is recorded yet. If a repair needs automatic harness reload,
-new enrollment semantics, or automatic workspace/session creation, re-scope
-it as a minor sprint instead of extending this patch.
+guidance, and the read-only no-workspace Viewer state. Step 0 and the
+implementation are committed (`54f6389`, `1e68373`); the result
+(`docs/SPRINT_ONB_001_RESULT.md`) was corrected (`4abbe2e`) to state D1–D5
+passed and D6 pending, and the founder-directed v1.22.1 release-prep revision
+(`b1ba31c`, decision recorded in `docs/RELEASE_V1_22_1_DECISION.md`) closes D6
+in a dated addendum: `pack:tarball` passes, the published v1.22.0 installer
+copy stays unchanged, and the guard was not weakened. The verdict is
+CONDITIONAL GO — engineering candidate; human comprehension is NOT OBSERVED.
+Publication (tag, snapshot, archives, channel pins, deployment) runs only
+after the release-gate reassessment. If a repair needs automatic harness
+reload, new enrollment semantics, or automatic workspace/session creation,
+re-scope it as a minor sprint instead of extending this patch.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
