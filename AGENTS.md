@@ -399,9 +399,14 @@ substituting agents or the builder for a human answer), so human
 comprehension is not claimed. NAV-001 starts from the published v1.21.0 source
 and changes only the read-only terminal dashboard's navigation and
 presentation: one focused section plus a selected-record summary, a bounded
-shown-records filter, selection-preserving refresh, and stale labeling. No
-version bump, tag, release decision, or deployment is recorded. NAV-002 and
-NAV-003 retain the People, deeper history/paging, and Viewer alignment work.
+shown-records filter, selection-preserving refresh, and stale labeling. The
+founder subsequently directed a full public v1.22.0 release, recorded in
+`docs/RELEASE_V1_22_DECISION.md` and published and deployed on October 17–18,
+2026 (four checksummed archives, channel pins, tap promotion, production
+Worker, and live installer checks recorded there); that decision does not
+change the CONDITIONAL GO verdict, the NOT OBSERVED human comparison, or any
+gate. NAV-002 and NAV-003 retain the People, deeper history/paging, and
+Viewer alignment work.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
