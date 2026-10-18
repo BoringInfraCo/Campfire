@@ -1,0 +1,1 @@
+{"version":1,"kind":"workspace_status","state":"awaiting_workspace","human":{"id":"[id]","name":"Ada"},"next":[{"command":"campfire up","when":"Start the local API and Viewer so an agent can connect"},{"command":"campfire --help","when":"See the command list"}]}

@@ -1,0 +1,13 @@
+d1-both-prompt 0
+d1-codex-only 0
+d2-no-harness 0
+d2-no-connect 0
+d2-return-create 0
+d2-return-bare 0
+d2-return-bare-retry 0
+d4-viewer 0
+d5-profile 0
+d5-up-json 0
+d5-status-json 0
+d5-status-human-pipe 0
+d5-up-human-pipe 0

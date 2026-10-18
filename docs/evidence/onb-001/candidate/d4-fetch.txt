@@ -1,0 +1,9 @@
+GET http://127.0.0.1:[port]/ status=200 bytes=4219
+GET http://127.0.0.1:[port]/app.js status=200 bytes=83998
+hint_local=True
+local_sentence=True
+joined_sentence=True
+waiting_in_js=False
+token_in_html=False
+token_in_js=False
+served: local empty profile via campfire (default up), not a remote join

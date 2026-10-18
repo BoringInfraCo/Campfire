@@ -1,0 +1,14 @@
+# cmd: tsx src/cli/index.ts 
+# cwd: /tmp/onb-001-d1-d6/homes/return/work
+# exit: 0
+# simulated harness dirs created by the runner, not a real Codex/OpenCode launch
+
+
+  campfire
+  the shared workspace for people and their agents
+  You        Ada
+  No workspace yet.
+  Next: Run campfire up to reopen Campfire and prepare your harness's tools.
+        Then, in that session, describe the work you want to do;
+        your agent can create a Campfire workspace and goal with you.
+  Past sessions are not imported.

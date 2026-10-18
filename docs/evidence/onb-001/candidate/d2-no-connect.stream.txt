@@ -1,0 +1,19 @@
+# cmd: tsx src/cli/index.ts --human-name Ada --no-connect --no-open --port 0 --viewer-port 0
+# cwd: /tmp/onb-001-d1-d6/homes/noconnect/work
+# exit: 0
+# simulated harness dirs created by the runner, not a real Codex/OpenCode launch
+
+{"event":"authz","allow":true,"actorId":"[id]","operation":"workspace:list"}
+
+  campfire
+  the shared workspace for people and their agents
+
+  Campfire is running for Ada.
+  Workspace  None yet
+  Harness    Connection setup skipped (--no-connect)
+  Viewer     http://127.0.0.1:[port]
+
+  Next: Run campfire up without --no-connect to prepare your harness's Campfire tools.
+
+  Past sessions are not imported.
+[campfire] HTTP http://127.0.0.1:[port]  viewer http://127.0.0.1:[port]

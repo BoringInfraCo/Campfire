@@ -1,0 +1,12 @@
+
+  campfire
+  the shared workspace for people and their agents
+
+  Campfire is running for Ada.
+  Workspace  None yet
+  Harness    No supported harness detected
+  Viewer     http://127.0.0.1:[port]
+
+  Next: Install Codex or OpenCode, then run campfire up to prepare its Campfire tools.
+
+  Past sessions are not imported.

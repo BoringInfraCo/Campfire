@@ -1,0 +1,7 @@
+You        Ada
+No workspace yet.
+Past sessions are not imported.
+campfire up  Start the local API and Viewer so an agent can connect
+campfire --help  See the command list
+  Next: After your agent has the Campfire tools loaded, describe the work
+        you want to do; your agent can create a Campfire workspace and goal with you.

@@ -1,0 +1,20 @@
+# cmd: tsx src/cli/index.ts --human-name Ada --no-open --port 0 --viewer-port 0
+# cwd: /tmp/onb-001-d1-d6/homes/codex/work
+# exit: 0
+# simulated harness dirs created by the runner, not a real Codex/OpenCode launch
+
+{"event":"authz","allow":true,"actorId":"[id]","operation":"workspace:list"}
+
+  campfire
+  the shared workspace for people and their agents
+
+  Campfire is running for Ada.
+  Workspace  None yet
+  Codex      Config prepared — restart Codex to load Campfire tools
+  Viewer     http://127.0.0.1:[port]
+
+  Next: Restart Codex. In that session, describe the work you want to do;
+        your agent can create a Campfire workspace and goal with you.
+
+  Past sessions are not imported.
+[campfire] HTTP http://127.0.0.1:[port]  viewer http://127.0.0.1:[port]
