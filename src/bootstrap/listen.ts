@@ -127,6 +127,11 @@ export interface ConnectInstalledResult {
   agents: ConnectedAgent[];
   /** Display names whose MCP block was written. */
   connected: string[];
+  /**
+   * Harnesses whose MCP block was written in this call. Callers use this to
+   * tell a prepared connection from one that was detected but not prepared.
+   */
+  prepared: SupportedHarness[];
 }
 
 export function connectInstalledHarnesses(input: ConnectInstalledInput): ConnectInstalledResult {
@@ -138,6 +143,7 @@ export function connectInstalledHarnesses(input: ConnectInstalledInput): Connect
     input.knownTokens,
   );
   const connected: string[] = [];
+  const prepared: SupportedHarness[] = [];
   for (const agent of agents) {
     if (agent.created && agent.token !== undefined) {
       input.onMintedToken(agent.harness, agent.token);
@@ -152,6 +158,7 @@ export function connectInstalledHarnesses(input: ConnectInstalledInput): Connect
       ...(input.workspaceId === undefined ? {} : { workspaceId: input.workspaceId }),
     });
     connected.push(agent.name);
+    prepared.push(agent.harness);
   }
-  return { agents, connected };
+  return { agents, connected, prepared };
 }

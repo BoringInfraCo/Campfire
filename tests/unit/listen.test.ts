@@ -122,7 +122,8 @@ describe("first-run human", () => {
       expect(await runCliEntry([])).toBe(0);
       const text = stdout.join("\n");
       expect(text).toContain("Ada");
-      expect(text).toContain("Waiting for an agent to start work.");
+      expect(text).toContain("No workspace yet.");
+      expect(text).toContain("Run campfire up to reopen Campfire and prepare your harness's tools.");
       expect(text).toContain("Past sessions are not imported.");
       expect(text).not.toMatch(/cft_/);
       expect(text).not.toContain(credentials!.humanToken);
@@ -186,7 +187,8 @@ describe("campfire up harness connection", () => {
       const status = formatStatus(loadProfile()!);
       expect(status).toContain("Codex (codex)");
       expect(status).toContain("OpenCode (opencode)");
-      expect(status).toContain("Waiting for an agent to start work.");
+      expect(status).toContain("(recorded, not live)");
+      expect(status).toContain("No workspace yet.");
       expect(status).not.toContain(minted.codex);
       expect(status).not.toContain(started.token);
 
@@ -295,10 +297,12 @@ describe("agent-created work", () => {
 });
 
 describe("viewer empty state", () => {
-  it("says it is waiting for an agent in the static viewer and the published copy", () => {
+  it("says there is no workspace to show yet in the static viewer and the published copy", () => {
+    const sentence =
+      "No workspace to show yet. After your agent has the Campfire tools loaded, describe the work you want to do; your agent can create the workspace and goal.";
     for (const path of ["src/viewer/static/app.js", "public/app.js"]) {
       const source = readFileSync(path, "utf8");
-      expect(source).toContain("Waiting for an agent to start work.");
+      expect(source).toContain(sentence);
       expect(source).not.toContain("No workspaces");
     }
   });

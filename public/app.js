@@ -746,7 +746,7 @@ function renderHeader() {
   if (key !== selectKey) {
     selectKey = key;
     if (!list.length) {
-      els.workspace.innerHTML = `<option value="">Waiting for an agent to start work.</option>`;
+      els.workspace.innerHTML = `<option value="">No workspace yet</option>`;
     } else {
       els.workspace.innerHTML = list
         .map((w) => `<option value="${esc(w.id)}">${esc(w.name)}</option>`)
@@ -1737,6 +1737,18 @@ function renderItem(item, muted) {
   </div>`;
 }
 
+const LOCAL_EMPTY_WORKSPACE =
+  "No workspace to show yet. After your agent has the Campfire tools loaded, describe the work you want to do; your agent can create the workspace and goal.";
+const JOINED_EMPTY_WORKSPACE =
+  "No workspace to show yet. This Viewer is for work you joined. It does not create a local workspace.";
+
+function emptyWorkspaceSentence() {
+  const root = typeof document !== "undefined" ? document.documentElement : null;
+  return root && root.getAttribute("data-workspace-hint") === "joined"
+    ? JOINED_EMPTY_WORKSPACE
+    : LOCAL_EMPTY_WORKSPACE;
+}
+
 function renderStream() {
   const el = els.stream;
   if (!el) return;
@@ -1744,7 +1756,7 @@ function renderStream() {
   const top = el.scrollTop;
 
   if (!state.workspaces.length) {
-    el.innerHTML = `<div class="empty">Waiting for an agent to start work.</div>`;
+    el.innerHTML = `<div class="empty">${emptyWorkspaceSentence()}</div>`;
     return;
   }
 

@@ -632,7 +632,9 @@ describe("SWH-001 D4 — read boundary", () => {
     expect(await shell.text()).toContain("Workstream");
     const client = await fetch(`${viewer.url}/app.js`);
     expect(client.status).toBe(200);
-    expect(await client.text()).toContain("Waiting for an agent to start work.");
+    expect(await client.text()).toContain(
+      "No workspace to show yet. After your agent has the Campfire tools loaded, describe the work you want to do; your agent can create the workspace and goal.",
+    );
 
     const reads: Array<[string, Record<string, unknown>]> = [
       ["whoami", {}],

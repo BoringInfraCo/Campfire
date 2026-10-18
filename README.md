@@ -51,11 +51,17 @@ Install, then run Campfire. A terminal first-run records the human once and
 starts the local API and Viewer in that same invocation; there is no separate
 `campfire up` step. Later, `campfire` prints status and `campfire up` reopens
 the local API and Viewer when needed.
-The name defaults from `git config user.name` or the login. Agents appear
-when Codex or OpenCode is installed and the local listener is running. The
-agent in that session creates the workspace and goal. Past private sessions
-are not imported. This does not register an agent session and does not
-provision Cloudflare.
+The name defaults from `git config user.name` or the login. A detected Codex
+or OpenCode gets its Campfire MCP config prepared; reload that harness to
+load the Campfire tools. The agent in that session creates the workspace and
+goal. Past private sessions are not imported. This does not register an agent
+session and does not provision Cloudflare.
+
+Joining a teammate's existing work instead? Use the invitation path in
+[Join existing team work](#join-existing-team-work):
+`campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`
+on a fresh or isolated profile, before creating a local first-run profile
+here.
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
@@ -71,7 +77,8 @@ HTTP client. The session instructions tell the agent to read the workspace
 before it builds, and to call `register_agent_session` before it contributes.
 Starting the process does not register a session.
 
-Agents and scripts keep the non-interactive path:
+Agents and scripts keep the non-interactive path — `onboard` is the scripted
+alternative to the interactive first run:
 
 ```bash
 campfire onboard \
@@ -120,19 +127,20 @@ authority for this workspace, expires after 24 hours by default, and contains
 neither the owner's credentials nor a copy of their work. Anyone holding the
 file can claim it; the recipient's display name is not verified identity.
 
-On the recipient's machine, using a fresh or isolated Campfire profile:
+On the recipient's machine, using a fresh or isolated Campfire profile that
+has not run a local first run:
 
 ```bash
 campfire join --invitation-file ./alice.invitation.json \
   --human-name "Alice" --harness opencode
-campfire status
 campfire up
 ```
 
 Select both supported harnesses by repeating `--harness codex --harness opencode`.
-Join stores the recipient's own credentials and prepares their MCP connections;
-reload the harness and approve its normal tool access. Remote `up` serves a
-local read-only journal of the shared backend. It creates no local collaboration
+Join stores the recipient's own credentials and prepares their MCP connections.
+After `campfire up`, reload each named harness and approve Campfire tools if
+asked, then begin from the joined workspace. Remote `up` serves a local
+read-only journal of the shared backend. It creates no local collaboration
 database or second shared API. Normal commands use the saved remote profile.
 
 The incoming agent reads the existing goal, decisions, blockers, findings and
@@ -173,7 +181,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | Command | Description |
 | --- | --- |
 | `campfire` | Interactive first-run human path: record the human once, then report the local profile. Use `campfire status` for the live, machine-readable overview |
-| `campfire up` | Start the local API and Viewer; connect each installed Codex or OpenCode. Does not import past sessions |
+| `campfire up` | Start the local API and Viewer; prepare a Campfire MCP config for each detected Codex or OpenCode. Does not import past sessions |
 | `campfire status [workspace]` | Live authorized workspace overview built from the authorized WorkspaceContext: goal, work counts, decisions, participants, attention, and the newest contribution cursor. Not a local-profile summary |
 | `campfire agents [workspace]` | Recorded agent participants with role, harness, human owner, and joined time. Never a presence label |
 | `campfire decisions [workspace]` | One page of decisions. Default page size is 100. `--limit`, `--cursor`, and `--status` continue the list. The page reports total, returned, and truncated |
@@ -185,7 +193,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire capabilities` | The installed CLI command manifest for shell discovery; not the future Campfire Capability domain object |
 | `campfire telemetry status\|enable\|disable` | Show or change anonymous product telemetry. Sends only the installation id, Campfire version, OS, architecture, and surface counters; never content, paths, or identity |
 | `campfire setup` | Agent-readable setup contract. Creates no state and prints no credential |
-| `campfire onboard` | First run: one human, one agent they own, one workspace, and one goal. Stores credentials locally. Does not start the server or register an agent session |
+| `campfire onboard` | Scripted alternative to the interactive first run: one human, one agent they own, one workspace, and one goal. Stores credentials locally. Does not start the server or register an agent session |
 | `campfire connect` | Write a Codex or OpenCode MCP block for the agent token. Requires a reload or new process |
 | `campfire doctor <workspace>` | Read-only setup diagnosis. Does not register a session |
 | `campfire handoff <workspace>` | Non-secret Viewer receipt. The browser stays token-free |

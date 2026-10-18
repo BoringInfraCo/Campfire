@@ -9,6 +9,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { ValidationError } from "../domain/errors.js";
+import { formatLocalStatusReceipt } from "../presentation/receipts.js";
 import { canonicalEndpoint } from "./endpoint.js";
 
 export const PROFILE_VERSION = 1 as const;
@@ -419,21 +420,18 @@ function storedEndpointMatches(env: NodeJS.ProcessEnv): boolean {
 }
 
 export function formatStatus(profile: CampfireProfile): string {
-  const lines = [`  You        ${profile.humanName}`];
   const named =
     profile.agents !== undefined && profile.agents.length > 0
       ? profile.agents.map((agent) => `${agent.name} (${agent.harness})`).join(", ")
       : profile.agentName !== undefined && profile.harness !== undefined
         ? `${profile.agentName} (${profile.harness})`
         : undefined;
-  if (named !== undefined) lines.push(`  Agents     ${named}`);
-  if (profile.workspaceName !== undefined) {
-    lines.push(`  Workspace  ${profile.workspaceName}`);
-    if (profile.goalTitle !== undefined) lines.push(`  Goal       ${profile.goalTitle}`);
-  } else {
-    lines.push("  Waiting for an agent to start work.");
-    lines.push("  Past sessions are not imported.");
-  }
-  lines.push("", "  campfire up     start the local API and Viewer", "  campfire --help", "");
-  return lines.join("\n");
+  // The receipt says what the profile records and one next action per state;
+  // it never treats the stored selection as live service or agent state.
+  return formatLocalStatusReceipt({
+    humanName: profile.humanName,
+    ...(named === undefined ? {} : { agents: named }),
+    ...(profile.workspaceName === undefined ? {} : { workspaceName: profile.workspaceName }),
+    ...(profile.goalTitle === undefined ? {} : { goalTitle: profile.goalTitle }),
+  });
 }
