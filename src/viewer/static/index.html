@@ -28,45 +28,112 @@
       <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
       <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
     </nav>
+    <nav id="sections" class="sections" aria-label="Sections">
+      <button type="button" id="section-attention" class="section-btn" data-section="attention" aria-pressed="true">Needs You</button>
+      <button type="button" id="section-work" class="section-btn" data-section="work" aria-pressed="false">Work</button>
+      <button type="button" id="section-decisions" class="section-btn" data-section="decisions" aria-pressed="false">Decisions</button>
+      <button type="button" id="section-sources" class="section-btn" data-section="sources" aria-pressed="false">Sources</button>
+      <button type="button" id="section-people" class="section-btn" data-section="people" aria-pressed="false">People</button>
+      <button type="button" id="section-changes" class="section-btn" data-section="changes" aria-pressed="false">Recent changes</button>
+    </nav>
     <section id="mast" aria-label="Workspace now">
       <div id="recorded-counts"></div>
+      <p id="last-read"></p>
+      <p id="stale-note" hidden></p>
+      <button type="button" id="retry-refresh" hidden>Retry</button>
       <div id="people"></div>
       <div id="goal"></div>
     </section>
-    <main>
-      <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
-        <div id="record-notes" class="panel-body" hidden></div>
-        <section class="panel alignment" aria-labelledby="alignment-title">
-          <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
-          <div id="alignment" class="panel-body"></div>
-        </section>
-        <div id="next-action" class="next-action" aria-label="Suggested next action"></div>
-        <section class="panel" id="needs-you-panel" aria-labelledby="needs-you-title">
-          <h2 class="panel-title" id="needs-you-title">Needs You</h2>
-          <div id="needs-you" class="panel-body"></div>
-          <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
-        </section>
-        <section class="panel" id="needs-attention-panel" aria-labelledby="needs-attention-title">
-          <h2 class="panel-title" id="needs-attention-title">Needs Attention</h2>
-          <div id="needs-attention" class="panel-body"></div>
-          <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
-        </section>
-        <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
-          <h2 class="panel-title" id="current-work-title">Current Work</h2>
-          <div id="current-work" class="panel-body"></div>
-        </section>
-        <section class="panel sources" id="sources-panel" aria-labelledby="sources-title">
-          <h2 class="panel-title" id="sources-title">Shared sources</h2>
-          <div id="sources" class="panel-body"></div>
-        </section>
-        <section class="panel" id="since-panel" aria-labelledby="since-title">
-          <h2 class="panel-title" id="since-title">Since You Were Here</h2>
-          <div id="since" class="panel-body"></div>
-        </section>
-      </section>
-      <section id="stream" class="stream" aria-label="Workstream"></section>
+    <main id="stage" data-section="attention" data-layer="list">
+      <div id="list-pane">
+        <label class="row-filter" id="row-filter-label" for="row-filter">Filter loaded rows</label>
+        <input id="row-filter" type="search" autocomplete="off" aria-describedby="filter-note" />
+        <p id="filter-note" class="panel-note">Filter matches loaded rows only.</p>
+        <div class="section-body" data-section-body="attention">
+          <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
+            <div id="record-notes" class="panel-body" hidden></div>
+            <div id="next-action" class="next-action" aria-label="Suggested next action"></div>
+            <p id="owned-note" class="panel-note" hidden></p>
+            <section class="panel" id="needs-you-panel" aria-labelledby="needs-you-title">
+              <h2 class="panel-title" id="needs-you-title">Needs You</h2>
+              <div id="needs-you" class="panel-body" data-key-list="attention" tabindex="0"></div>
+              <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
+            </section>
+            <section class="panel" id="needs-attention-panel" aria-labelledby="needs-attention-title">
+              <h2 class="panel-title" id="needs-attention-title">Needs Attention</h2>
+              <div id="needs-attention" class="panel-body" data-key-list="attention" tabindex="0"></div>
+              <p class="panel-note">Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.</p>
+            </section>
+          </section>
+        </div>
+        <div class="section-body" data-section-body="work">
+          <section class="panel" id="work-panel" aria-labelledby="work-title">
+            <h2 class="panel-title" id="work-title">Work</h2>
+            <p id="work-coverage" class="coverage"></p>
+            <div class="pager">
+              <button type="button" id="work-prev">Previous</button>
+              <button type="button" id="work-next">Next</button>
+            </div>
+            <div id="work-list" data-key-list="work" tabindex="0"></div>
+          </section>
+          <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
+            <h2 class="panel-title" id="current-work-title">Current Work</h2>
+            <div id="current-work" class="panel-body"></div>
+          </section>
+        </div>
+        <div class="section-body" data-section-body="decisions">
+          <section class="panel alignment" aria-labelledby="alignment-title">
+            <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
+            <div id="alignment" class="panel-body"></div>
+          </section>
+          <section class="panel" id="decisions-panel" aria-labelledby="decisions-title">
+            <h2 class="panel-title" id="decisions-title">Decisions</h2>
+            <p class="panel-note">Accepted decisions stay distinct. This view does not select an operative instruction, and a suggested next action is not permission.</p>
+            <div id="decision-list" data-key-list="decisions" tabindex="0"></div>
+          </section>
+        </div>
+        <div class="section-body" data-section-body="sources">
+          <section class="panel sources" id="sources-panel" aria-labelledby="sources-title">
+            <h2 class="panel-title" id="sources-title">Shared sources</h2>
+            <div id="sources" class="panel-body" data-key-list="sources" tabindex="0"></div>
+          </section>
+        </div>
+        <div class="section-body" data-section-body="people">
+          <section class="panel" id="people-panel" aria-labelledby="people-title">
+            <h2 class="panel-title" id="people-title">People</h2>
+            <p id="people-coverage" class="coverage"></p>
+            <p class="panel-note">Registration is a record, not presence or permission to act.</p>
+            <div class="pager">
+              <button type="button" id="people-prev">Previous</button>
+              <button type="button" id="people-next">Next</button>
+            </div>
+            <div id="people-list" data-key-list="people" tabindex="0"></div>
+          </section>
+        </div>
+        <div class="section-body" data-section-body="changes">
+          <section class="panel" id="since-panel" aria-labelledby="since-title">
+            <h2 class="panel-title" id="since-title">Since You Were Here</h2>
+            <div id="since" class="panel-body"></div>
+          </section>
+          <section id="stream" class="stream" aria-label="Workstream" data-key-list="changes" tabindex="0"></section>
+        </div>
+      </div>
+      <aside id="detail-pane" aria-label="Selected record">
+        <button type="button" id="panel-back">Back</button>
+        <p id="selection-lost" hidden></p>
+        <div id="source-view"></div>
+        <button type="button" id="recorded-changes" hidden>Recorded changes</button>
+        <div id="history-view" hidden>
+          <h2 class="panel-title" id="history-heading">Recorded changes</h2>
+          <div class="pager">
+            <button type="button" id="history-prev">Previous history page</button>
+            <button type="button" id="history-next">Next history page</button>
+          </div>
+          <div id="history-list" data-key-list="history" tabindex="0"></div>
+        </div>
+      </aside>
     </main>
-    <p id="hint">j/k navigate   ↵ inspect   [/] workspace   p perspective</p>
+    <p id="hint">tab sections   j/k in a focused list   enter   esc back   p perspective</p>
     <script>
       try {
         var t = new URLSearchParams(window.location.search).get("theme");

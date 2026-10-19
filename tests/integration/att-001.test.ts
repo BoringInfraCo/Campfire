@@ -830,13 +830,20 @@ describe("ATT-001 D5 — surface parity and accessibility", () => {
 // ---------------------------------------------------------------------------
 
 describe("ATT-001 D6 — boundedness and compatibility", () => {
-  it("keeps the five Viewer read methods and adds only the NAV-002 MCP reads", async () => {
+  it("keeps the NAV-003 Viewer read allowlist and the NAV-002 MCP reads", async () => {
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
 
     const server = createCampfireMcpServer({ service, identity: { ctx: ctxA } as ServerIdentity });
@@ -846,7 +853,7 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
     try {
       const names = (await client.listTools()).tools.map((tool) => tool.name);
       // ATT-001 froze 36 tools. NAV-002 adds two read-only tools and does not
-      // remove any. The Viewer allowlist stays the original five.
+      // remove any. NAV-003 extends the Viewer allowlist only.
       expect(names).toHaveLength(38);
       for (const name of [
         "get_workspace_context",

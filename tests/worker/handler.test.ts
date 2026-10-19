@@ -116,4 +116,59 @@ describe("worker fetch handler (sync service)", () => {
     const noToken = await get("/api/list_workspaces", undefined);
     expect(noToken.status).toBe(401);
   });
+
+  it("keeps contribution payloads on /v1/call and omits them from viewer history", async () => {
+    const actor = { actorId: FIXTURE.humans.sergio, actorType: "human" as const };
+    store.createTask({
+      id: "task_payload_boundary",
+      workspaceId: FIXTURE.workspaces.billing,
+      title: "boundary",
+      status: "open",
+      createdBy: actor,
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    store.createContribution({
+      id: "con_payload_boundary",
+      workspaceId: FIXTURE.workspaces.billing,
+      actor,
+      action: "create",
+      objectType: "task",
+      objectId: "task_payload_boundary",
+      payload: {
+        status: "open",
+        note: "PRIVATE_NOTE_DO_NOT_SHOW",
+        transcript: "PRIVATE_TRANSCRIPT_DO_NOT_SHOW",
+        html: "<script>alert(1)</script>",
+      },
+      createdAt: NOW,
+    });
+    const params = {
+      workspaceId: FIXTURE.workspaces.billing,
+      objectType: "task",
+      objectId: "task_payload_boundary",
+    };
+    const http = await post("/v1/call", FIXTURE.tokens.sergio, "get_record_history", params);
+    expect(http.status).toBe(200);
+    expect(JSON.stringify(http.body)).toContain('"payload"');
+    expect(JSON.stringify(http.body)).toContain("PRIVATE_NOTE_DO_NOT_SHOW");
+    expect(JSON.stringify(http.body)).toContain("PRIVATE_TRANSCRIPT_DO_NOT_SHOW");
+
+    const viewer = await post("/api/call", FIXTURE.tokens.sergio, "get_record_history", params);
+    expect(viewer.status).toBe(200);
+    expect(JSON.stringify(viewer.body)).not.toContain('"payload"');
+    expect(JSON.stringify(viewer.body)).not.toContain("PRIVATE_NOTE_DO_NOT_SHOW");
+    expect(JSON.stringify(viewer.body)).not.toContain("PRIVATE_TRANSCRIPT_DO_NOT_SHOW");
+    expect(JSON.stringify(viewer.body)).not.toContain("<script>alert(1)</script>");
+    expect(JSON.stringify(viewer.body)).toContain("status open");
+
+    const viewerGet = await get(
+      `/api/get_record_history?workspaceId=${FIXTURE.workspaces.billing}&objectType=task&objectId=task_payload_boundary`,
+      FIXTURE.tokens.sergio,
+    );
+    expect(viewerGet.status).toBe(200);
+    expect(JSON.stringify(viewerGet.body)).not.toContain('"payload"');
+    expect(JSON.stringify(viewerGet.body)).not.toContain("PRIVATE_NOTE_DO_NOT_SHOW");
+    expect(JSON.stringify(viewerGet.body)).toContain("status open");
+  });
 });

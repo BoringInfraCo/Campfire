@@ -107,14 +107,21 @@ describe("UIX-001 viewer shell", () => {
     expect(fetchCalls()).toBe(0);
   });
 
-  it("keeps the Viewer read allowlist at five methods", () => {
-    expect(VIEWER_READ_METHODS).toHaveLength(5);
+  it("keeps the Viewer read allowlist at the twelve NAV-003 methods", () => {
+    expect(VIEWER_READ_METHODS).toHaveLength(12);
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
   });
 });

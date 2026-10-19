@@ -34,6 +34,31 @@ const els = {
   stream: document.getElementById("stream"),
   hint: document.getElementById("hint"),
   recordNotes: document.getElementById("record-notes"),
+  stage: document.getElementById("stage"),
+  lastRead: document.getElementById("last-read"),
+  staleNote: document.getElementById("stale-note"),
+  retryRefresh: document.getElementById("retry-refresh"),
+  ownedNote: document.getElementById("owned-note"),
+  sectionAttention: document.getElementById("section-attention"),
+  workCoverage: document.getElementById("work-coverage"),
+  workList: document.getElementById("work-list"),
+  workPrev: document.getElementById("work-prev"),
+  workNext: document.getElementById("work-next"),
+  peopleCoverage: document.getElementById("people-coverage"),
+  peopleList: document.getElementById("people-list"),
+  peoplePrev: document.getElementById("people-prev"),
+  peopleNext: document.getElementById("people-next"),
+  decisionList: document.getElementById("decision-list"),
+  sourceView: document.getElementById("source-view"),
+  selectionLost: document.getElementById("selection-lost"),
+  recordedChanges: document.getElementById("recorded-changes"),
+  historyView: document.getElementById("history-view"),
+  historyHeading: document.getElementById("history-heading"),
+  historyList: document.getElementById("history-list"),
+  historyPrev: document.getElementById("history-prev"),
+  historyNext: document.getElementById("history-next"),
+  panelBack: document.getElementById("panel-back"),
+  rowFilter: document.getElementById("row-filter"),
 };
 
 const state = {
@@ -58,6 +83,31 @@ const state = {
   olderExhausted: false,
   loadingOlder: false,
   error: null,
+  // NAV-003 navigation. Perspective is emphasis, not authorization.
+  section: "attention",
+  layer: "list",
+  rowFilter: "",
+  lastReadAt: null,
+  stale: false,
+  selectionLost: null,
+  focusOriginId: null,
+  sectionSelection: {
+    attention: null,
+    work: null,
+    decisions: null,
+    sources: null,
+    people: null,
+    changes: null,
+  },
+  workPage: null,
+  peoplePage: null,
+  detail: null,
+  citedFindings: Object.create(null),
+  history: null,
+  workGen: 0,
+  peopleGen: 0,
+  detailGen: 0,
+  historyGen: 0,
 };
 
 let gen = 0;
@@ -282,13 +332,15 @@ function renderPerspective() {
   }
   if (els.orientation) els.orientation.setAttribute("data-perspective", value);
   if (els.currentWorkTitle) els.currentWorkTitle.textContent = perspectiveLabel(value);
+  if (els.sectionAttention) els.sectionAttention.textContent = value === "team" ? "Needs Attention" : "Needs You";
 }
 
 function setPerspective(value) {
   state.perspective = value === "team" ? "team" : "mine";
   persistPerspective(state.perspective);
   renderPerspective();
-  renderOrientation();
+  reconcileSelection("attention");
+  render();
 }
 
 // The caller is the authenticated whoami actor. A role never comes from it.
@@ -701,6 +753,26 @@ function resetSelection() {
   state.sinceRequested = false;
   state.sinceView = null;
   streamPinned = true;
+  state.layer = "list";
+  state.selectionLost = null;
+  state.focusOriginId = null;
+  state.sectionSelection = {
+    attention: null,
+    work: null,
+    decisions: null,
+    sources: null,
+    people: null,
+    changes: null,
+  };
+  state.workPage = null;
+  state.peoplePage = null;
+  state.detail = null;
+  state.citedFindings = Object.create(null);
+  state.history = null;
+  state.workGen += 1;
+  state.peopleGen += 1;
+  state.detailGen += 1;
+  state.historyGen += 1;
 }
 
 function ensureWorkspace(list) {
@@ -774,14 +846,32 @@ function recordedCountText(list) {
   return `${people} people · ${agents} registered agents`;
 }
 
+// `participants: []` with omitted coverage is not an empty roster. The total
+// is the authorized count; the human/agent split was not loaded.
+function omittedParticipantCoverage(context) {
+  const coverage = isRecord(context) ? context.participantsCoverage : null;
+  if (!isRecord(coverage) || coverage.omitted !== true) return null;
+  return { total: typeof coverage.total === "number" ? coverage.total : null };
+}
+
 function renderMast() {
+  const coverage = omittedParticipantCoverage(state.context);
   if (els.recordedCounts) {
-    const list = state.context && Array.isArray(state.context.participants) ? state.context.participants : null;
-    els.recordedCounts.textContent = list ? recordedCountText(list) : "";
+    if (coverage) {
+      els.recordedCounts.textContent =
+        coverage.total === null
+          ? "Workspace participant count is not in this read."
+          : `${coverage.total} workspace participants`;
+    } else {
+      const list = state.context && Array.isArray(state.context.participants) ? state.context.participants : null;
+      els.recordedCounts.textContent = list ? recordedCountText(list) : "";
+    }
   }
   if (els.people) {
     if (!state.workspaces.length) {
       els.people.innerHTML = "";
+    } else if (coverage) {
+      els.people.textContent = "Participant roster is not in this read.";
     } else {
       els.people.innerHTML = participants()
         .map((p) => {
@@ -802,6 +892,17 @@ function renderMast() {
       els.goal.innerHTML = "";
     }
   }
+  if (els.lastRead) {
+    els.lastRead.textContent = state.lastReadAt ? `Last successful read ${state.lastReadAt}` : "";
+  }
+  if (els.staleNote) {
+    const show = state.stale === true && Boolean(state.lastReadAt);
+    els.staleNote.hidden = !show;
+    els.staleNote.textContent = show
+      ? `Stale. Last successful read ${state.lastReadAt}. The last good view is still shown.`
+      : "";
+  }
+  if (els.retryRefresh) els.retryRefresh.hidden = state.stale !== true;
 }
 
 // ATT-001: the service reason codes are stable identifiers for drill-down;
@@ -884,7 +985,9 @@ function attentionEmptyText(coverage) {
 }
 
 function attentionItemHtml(item) {
-  return `<li class="oitem">${attentionItemBodyHtml(item)}</li>`;
+  const kind = esc(strField(item.kind));
+  const id = esc(strField(item.id));
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${id}" data-record-kind="${kind}">${attentionItemBodyHtml(item)}</button></li>`;
 }
 
 function attentionItemBodyHtml(item) {
@@ -1228,22 +1331,25 @@ function completenessRowHtml(name, totals) {
 
 // Assignee identity is the recorded actor, matched on id and type. An unknown
 // name is stated as unknown; it is never guessed from another record.
-function assigneeIdentity(participants, assignee) {
+function assigneeIdentity(participants, assignee, rosterOmitted) {
   const id = strField(assignee.actorId);
   const type = strField(assignee.actorType, "unknown");
   const match = refByKey(participants, assignee);
   const name = match ? strField(match.name) : "";
+  // A missing roster is not proof the name was never recorded.
+  if (!name && rosterOmitted) return `(name not in this read) (${type}) ${id}`;
   return `${name || "(name not recorded)"} (${type}) ${id}`;
 }
 
 function homeTaskRowHtml(context, task) {
   const participants = isRecord(context) ? context.participants : [];
+  const rosterOmitted = omittedParticipantCoverage(context) !== null;
   const status = strField(task.status);
   const title = strField(task.title, task.summary, task.id);
   const id = strField(task.id);
   const assignee = isRecord(task.assignee) ? task.assignee : null;
   const assigned = assignee
-    ? `assigned to ${esc(assigneeIdentity(participants, assignee))}`
+    ? `assigned to ${esc(assigneeIdentity(participants, assignee, rosterOmitted))}`
     : "unassigned";
   return `<li class="oitem"><span class="ometa">${esc(status)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · ${assigned}</span></li>`;
 }
@@ -1271,6 +1377,11 @@ function ownedAgentsSectionHtml(context, who, groups) {
   }
   if (!who) {
     return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">No caller identity recorded; owned agents cannot be derived</span></li></ul></div>`;
+  }
+  // Ownership is a participant field. The omit read does not carry it, so an
+  // empty participants array is not "no owned agents".
+  if (omittedParticipantCoverage(context)) {
+    return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">Owned-agent relationship is not loaded yet.</span></li></ul></div>`;
   }
   const rows = [];
   for (const id of groups.ownedAgentIds) {
@@ -1330,11 +1441,17 @@ function decisionBoundaryHtml(work, context) {
   );
 }
 
+function myTaskEmptyNote(context, totals) {
+  const base = taskGroupEmptyNote(totals);
+  if (!omittedParticipantCoverage(context)) return base;
+  return `${base}; owned-agent relationship is not loaded yet`;
+}
+
 function renderMyWork(el, context, who) {
   if (!el) return;
   const groups = myWorkGroups(context, who);
   const totals = sliceTotals(context);
-  const emptyNote = taskGroupEmptyNote(totals);
+  const emptyNote = myTaskEmptyNote(context, totals);
   const parts = [];
   parts.push(ownedAgentsSectionHtml(context, who, groups));
   parts.push(`<div class="ogroup"><div class="ogroup-label">my tasks</div>`);
@@ -1347,9 +1464,23 @@ function renderMyWork(el, context, who) {
 
 function renderTeamWork(el, context, who) {
   if (!el) return;
-  const groups = teamWorkGroups(context);
   const totals = sliceTotals(context);
   const emptyNote = taskGroupEmptyNote(totals);
+  // Grouping by person needs the roster. Do not turn the omitted array into
+  // an empty team or "name not recorded" for every assignee.
+  if (omittedParticipantCoverage(context)) {
+    const tasks = collectOpenTasks(context);
+    const parts = [];
+    parts.push(
+      `<div class="ogroup"><div class="ogroup-label">participants</div><ul class="olist"><li class="oitem"><span class="osentence">Participant roster is not in this read.</span></li></ul></div>`,
+    );
+    parts.push(`<div class="ogroup"><div class="ogroup-label">tasks in this read</div>${groupTasksHtml(context, tasks, emptyNote)}</div>`);
+    parts.push(completenessRowHtml("tasks", totals.tasks));
+    parts.push(decisionBoundaryHtml(deriveCurrentWork(context), context));
+    el.innerHTML = parts.join("");
+    return;
+  }
+  const groups = teamWorkGroups(context);
   const parts = [];
   for (const human of groups.humans) {
     const name = strField(human.participant.name, human.participant.actor.actorId);
@@ -1398,7 +1529,7 @@ function findingSourceHtml(finding) {
     })
     .filter((text) => text);
   const evidenceText = evidence.length ? `evidence: ${evidence.join(", ")}` : "evidence: none recorded";
-  return `<li class="oitem"><span class="ometa">${esc(currentness)}</span><span class="osentence">${esc(summary)}</span><span class="oreason">id ${esc(id)} · ${esc(evidenceText)}</span></li>`;
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="finding"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(currentness)}</span><span class="osentence">${esc(summary)}</span><span class="oreason">id ${esc(id)} · ${esc(evidenceText)}</span></li>`;
 }
 
 /**
@@ -1447,7 +1578,7 @@ function artifactSourceHtml(artifact, findings) {
   if (!reference) {
     // No reference recorded: nothing beyond the existing label renders —
     // no class, host, caveat, or open control is invented.
-    return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · no reference recorded</span></li>`;
+    return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · no reference recorded</span></li>`;
   }
   const classification = classifyArtifactReference(reference);
   const parts = [`id ${esc(id)}`, `reference: <code>${esc(reference)}</code> (stored reference, not fetched)`];
@@ -1467,7 +1598,7 @@ function artifactSourceHtml(artifact, findings) {
     if (classification.unsafe) parts.push(ARTIFACT_UNSAFE_CONTROL_LABEL);
     if (classification.openable) parts.push(artifactOpenControlHtml(reference, classification.host));
   }
-  return `<li class="oitem"><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">${parts.join(" · ")}</span></li>`;
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">${parts.join(" · ")}</span></li>`;
 }
 
 function sourceListHtml(rows, name, totals) {
@@ -1486,11 +1617,26 @@ function renderSources(el, context) {
   if (!el) return;
   const totals = sliceTotals(context);
   const slices = isRecord(context) && isRecord(context.slices) ? context.slices : {};
-  const findings = asArray(isRecord(slices.findings) ? slices.findings.items : undefined).filter(isRecord);
-  const artifacts = asArray(isRecord(slices.artifacts) ? slices.artifacts.items : undefined).filter(isRecord);
+  const allFindings = asArray(isRecord(slices.findings) ? slices.findings.items : undefined).filter(isRecord);
+  const allArtifacts = asArray(isRecord(slices.artifacts) ? slices.artifacts.items : undefined).filter(isRecord);
+  const query = String(state.rowFilter || "").trim().toLowerCase();
+  const findings = query
+    ? allFindings.filter((row) => `${strField(row.id)} ${strField(row.summary)}`.toLowerCase().includes(query))
+    : allFindings;
+  const artifacts = query
+    ? allArtifacts.filter((row) => `${strField(row.id)} ${strField(row.title)} ${strField(row.uriOrPath)}`.toLowerCase().includes(query))
+    : allArtifacts;
   const parts = [];
-  parts.push(`<div class="ogroup"><div class="ogroup-label">current findings</div>${sourceListHtml(findings.map(findingSourceHtml), "findings", totals)}</div>`);
-  parts.push(`<div class="ogroup"><div class="ogroup-label">artifact references</div>${sourceListHtml(artifacts.map((artifact) => artifactSourceHtml(artifact, findings)), "artifacts", totals)}</div>`);
+  const findingBody =
+    query && allFindings.length && !findings.length
+      ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`
+      : sourceListHtml(findings.map(findingSourceHtml), "findings", totals);
+  const artifactBody =
+    query && allArtifacts.length && !artifacts.length
+      ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`
+      : sourceListHtml(artifacts.map((artifact) => artifactSourceHtml(artifact, allFindings)), "artifacts", totals);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">current findings</div>${findingBody}</div>`);
+  parts.push(`<div class="ogroup"><div class="ogroup-label">artifact references</div>${artifactBody}</div>`);
   el.innerHTML = parts.join("");
 }
 
@@ -1666,8 +1812,19 @@ function renderOrientation(homeEls = els, homeState = state) {
   const emptyText = attentionEmptyText(coverage);
   renderRecordNotes(homeEls.recordNotes, homeState.context);
   renderAlignment(homeEls.alignment, deriveAlignment(homeState.context), homeState.context);
-  renderAttentionList(homeEls.needsYou, deriveNeedsYou(homeState.context), emptyText, coverageText);
-  renderAttentionList(homeEls.needsAttention, deriveNeedsAttention(homeState.context), emptyText, coverageText);
+  renderOwnedNote(homeState);
+  const filterQuery = String(homeState.rowFilter || "").trim().toLowerCase();
+  const needsYou = deriveNeedsYou(homeState.context);
+  const needsAttention = deriveNeedsAttention(homeState.context);
+  const attentionText = (item) => `${strField(item.id)} ${strField(item.summary)} ${strField(item.status)} ${strField(item.reason)}`;
+  const shownYou = filterQuery ? needsYou.filter((item) => attentionText(item).toLowerCase().includes(filterQuery)) : needsYou;
+  const shownAttention = filterQuery
+    ? needsAttention.filter((item) => attentionText(item).toLowerCase().includes(filterQuery))
+    : needsAttention;
+  if (filterQuery && needsYou.length && !shownYou.length) renderFilterMiss(homeEls.needsYou, coverageText);
+  else renderAttentionList(homeEls.needsYou, shownYou, emptyText, coverageText);
+  if (filterQuery && needsAttention.length && !shownAttention.length) renderFilterMiss(homeEls.needsAttention, coverageText);
+  else renderAttentionList(homeEls.needsAttention, shownAttention, emptyText, coverageText);
   // Both perspectives render from this same context; only the leading panel
   // differs (CSS order/visibility). No section makes its own read.
   const who = callerRef(homeState.whoami);
@@ -1724,7 +1881,13 @@ function renderItem(item, muted) {
   const extraLines = extras(item);
   const expanded = item.id === state.expandedId && extraLines.length > 0;
   const mutedClass = muted ? " muted" : "";
-  return `<div class="item${mutedClass}${selected}" data-id="${esc(item.id)}">
+  const objectType = strField(item.objectType);
+  const objectId = strField(item.objectId);
+  const recordAttr =
+    (objectType === "task" || objectType === "decision" || objectType === "finding" || objectType === "artifact") && objectId
+      ? ` data-record-id="${esc(objectId)}" data-record-kind="${esc(objectType)}"`
+      : "";
+  return `<div class="item${mutedClass}${selected}" data-id="${esc(item.id)}"${recordAttr}>
     <div class="who row">
       <span class="name">${esc(actorName(item.actor))}</span>
       <span class="time">${esc(fmtTime(item.createdAt))}</span>
@@ -1744,9 +1907,8 @@ const JOINED_EMPTY_WORKSPACE =
 
 function emptyWorkspaceSentence() {
   const root = typeof document !== "undefined" ? document.documentElement : null;
-  return root && root.getAttribute("data-workspace-hint") === "joined"
-    ? JOINED_EMPTY_WORKSPACE
-    : LOCAL_EMPTY_WORKSPACE;
+  const hint = root && typeof root.getAttribute === "function" ? root.getAttribute("data-workspace-hint") : null;
+  return hint === "joined" ? JOINED_EMPTY_WORKSPACE : LOCAL_EMPTY_WORKSPACE;
 }
 
 function renderStream() {
@@ -1800,12 +1962,928 @@ function renderStream() {
   }
 }
 
+const NAV_SECTIONS = ["attention", "work", "decisions", "sources", "people", "changes"];
+const WORK_PAGE_LIMIT = 20;
+const PEOPLE_PAGE_LIMIT = 20;
+const HISTORY_PAGE_LIMIT = 10;
+const CURSOR_STACK_LIMIT = 32;
+const RECORD_KINDS = ["task", "decision", "finding", "artifact"];
+const DECISION_STATUS_LABELS = {
+  proposed: "proposed — not accepted, not an instruction",
+  accepted: "accepted",
+  superseded: "superseded — historical",
+  rejected: "rejected — historical",
+  retired: "retired — historical",
+};
+
+function stripControls(value) {
+  let out = "";
+  for (const char of String(value ?? "")) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code === 0x09 || code === 0x0a || code === 0x0d) {
+      out += " ";
+      continue;
+    }
+    if (code < 0x20 || code === 0x7f || (code >= 0x80 && code <= 0x9f)) continue;
+    out += char;
+  }
+  return out;
+}
+
+function visibleText(value) {
+  return stripControls(value);
+}
+
+function renderFilterMiss(el, coverageText) {
+  if (!el) return;
+  const coverageHtml =
+    typeof coverageText === "string" && coverageText.length ? `<div class="coverage">${esc(coverageText)}</div>` : "";
+  el.innerHTML = `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>${coverageHtml}`;
+}
+
+function renderOwnedNote(homeState) {
+  if (!els.ownedNote) return;
+  const view = homeState || state;
+  if (view.perspective === "team" || !omittedParticipantCoverage(view.context)) {
+    els.ownedNote.hidden = true;
+    els.ownedNote.textContent = "";
+    return;
+  }
+  const who = callerRef(view.whoami);
+  const page = state.peoplePage;
+  const ownerId = who && who.actorType === "human" ? who.actorId : "";
+  if (
+    page &&
+    ownerId &&
+    page.humanOwnerId === ownerId &&
+    page.workspaceId === state.workspaceId &&
+    !page.error
+  ) {
+    els.ownedNote.hidden = false;
+    els.ownedNote.textContent =
+      page.truncated === true
+        ? "Owned-agent page is incomplete. More participating agents may exist."
+        : `Owned agents in this workspace: returned ${page.returned} of ${page.total}. Registration is not presence.`;
+    return;
+  }
+  els.ownedNote.hidden = false;
+  els.ownedNote.textContent = "Owned-agent relationship is not loaded yet.";
+}
+
+function decisionStatusText(status) {
+  const token = strField(status);
+  if (Object.prototype.hasOwnProperty.call(DECISION_STATUS_LABELS, token)) return DECISION_STATUS_LABELS[token];
+  return visibleText(token);
+}
+
+function pageContinuation(page, failed) {
+  if (failed) return "not complete";
+  if (!page) return "not loaded";
+  if (page.truncated === true && page.nextCursor) return "another API page exists";
+  if (page.truncated === true) return "truncated; no further cursor was returned";
+  return "no further API page";
+}
+
+function canPageNext(page) {
+  return Boolean(page && page.truncated === true && page.nextCursor);
+}
+
+function coverageSentence(page, failed) {
+  if (!page) return "not loaded";
+  if (page.loading && !page.readAt) return "loading";
+  if (!page.readAt && page.error) return `unavailable — ${page.error}. This read is not complete.`;
+  const returned = typeof page.returned === "number" ? page.returned : "?";
+  const total = typeof page.total === "number" ? page.total : "?";
+  const stale = page.stale || page.error ? " · stale" : "";
+  return `returned ${returned} of ${total} · page ${page.pageNumber} · ${pageContinuation(page, failed)}${stale}`;
+}
+
+function matchesRowFilter(text) {
+  const query = String(state.rowFilter || "").trim().toLowerCase();
+  if (!query) return true;
+  return String(text).toLowerCase().includes(query);
+}
+
+function workRowHtml(task) {
+  const id = strField(task.id);
+  const title = visibleText(strField(task.title, task.summary, id));
+  const status = visibleText(strField(task.status));
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="task"><span class="record-id">${esc(id)}</span> <span>${esc(status)}</span> <span>${esc(title)}</span></button>`;
+}
+
+function peopleRowHtml(item) {
+  const actor = isRecord(item.actor) ? item.actor : {};
+  const type = strField(actor.actorType);
+  const id = strField(actor.actorId);
+  const name = visibleText(strField(item.name, id));
+  const kind = type === "human" ? "human" : "agent";
+  const bits = [type === "human" ? "human" : "registered agent", id];
+  const harness = strField(item.harness);
+  if (harness) bits.push(`harness ${harness}`);
+  if (type === "agent") {
+    const owner = strField(item.humanOwnerId);
+    bits.push(owner ? `owner ${owner}` : "no recorded owner");
+    if (item.humanOwnerIsParticipant === false) bits.push("owner is outside the roster");
+    else if (item.humanOwnerIsParticipant === true) bits.push("owner is a workspace participant");
+  }
+  bits.push("registration is not presence");
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="${esc(kind)}"><span class="record-id">${esc(id)}</span> <span>${esc(name)}</span> <span>${esc(bits.join(" · "))}</span></button>`;
+}
+
+function decisionSectionRows(context) {
+  if (!isRecord(context)) return [];
+  const rows = [];
+  const seen = new Set();
+  const push = (decision) => {
+    if (!isRecord(decision)) return;
+    const id = strField(decision.id);
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    rows.push(decision);
+  };
+  for (const decision of asArray(context.proposedDecisions)) push(decision);
+  for (const decision of asArray(context.acceptedDecisions)) push(decision);
+  for (const decision of asArray(context.supersededDecisions)) push(decision);
+  const slices = isRecord(context.slices) ? context.slices : {};
+  const decisions = isRecord(slices.decisions) ? slices.decisions.items : [];
+  for (const decision of asArray(decisions)) push(decision);
+  return rows;
+}
+
+function decisionRowHtml(decision) {
+  const id = strField(decision.id);
+  const status = strField(decision.status);
+  const label = decisionStatusText(status);
+  const summary = visibleText(strField(decision.summary, decision.title, id));
+  const review = needsReview(decision);
+  const cited = reviewFindingIds(decision);
+  const parts = [`status ${status || "unrecorded"}`, label];
+  if (review && status === "accepted") {
+    parts.push("needs review — acceptance is unchanged");
+    if (cited.length) parts.push(`non-current citations: ${cited.join(", ")}`);
+  }
+  const transitions = decisionTransitionParts(decision);
+  if (transitions.length) parts.push(transitions.join(" · "));
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="decision"><span class="record-id">${esc(id)}</span> <span>${esc(summary)}</span> <span>${esc(parts.join(" · "))}</span></button>`;
+}
+
+function idsInSection(section) {
+  if (section === "work") return asArray(state.workPage && state.workPage.items).map((row) => strField(row.id));
+  if (section === "people") {
+    return asArray(state.peoplePage && state.peoplePage.items).map((row) =>
+      strField(isRecord(row) && isRecord(row.actor) ? row.actor.actorId : ""),
+    );
+  }
+  if (section === "attention") {
+    const list = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+    return list.map((row) => strField(row.id));
+  }
+  if (section === "decisions") return decisionSectionRows(state.context).map((row) => strField(row.id));
+  if (section === "sources") {
+    const ids = [];
+    if (isRecord(state.context)) {
+      for (const row of asArray(state.context.findings)) if (isRecord(row)) ids.push(strField(row.id));
+      for (const row of asArray(state.context.artifacts)) if (isRecord(row)) ids.push(strField(row.id));
+    }
+    return ids;
+  }
+  if (section === "changes") return items().map((row) => strField(row.id));
+  return [];
+}
+
+function reconcileSelection(section) {
+  const id = state.sectionSelection ? state.sectionSelection[section] : null;
+  if (!id) return;
+  if (idsInSection(section).indexOf(id) !== -1) return;
+  state.sectionSelection[section] = null;
+  state.selectionLost = `Selection ${id} is not in the loaded result.`;
+  if (state.detail && state.detail.id === id) {
+    state.layer = "list";
+    state.detailGen += 1;
+    state.historyGen += 1;
+    state.history = null;
+  }
+}
+
+function findIn(list, id) {
+  for (const row of asArray(list)) {
+    if (isRecord(row) && strField(row.id) === id) return row;
+  }
+  return null;
+}
+
+function findLocalRecord(kind, id) {
+  if (kind === "human" || kind === "agent" || kind === "participant") {
+    for (const item of asArray(state.peoplePage && state.peoplePage.items)) {
+      if (isRecord(item) && isRecord(item.actor) && item.actor.actorId === id) return item;
+    }
+    return null;
+  }
+  const context = isRecord(state.context) ? state.context : {};
+  const work = isRecord(context.currentWork) ? context.currentWork : {};
+  const slices = isRecord(context.slices) ? context.slices : {};
+  if (kind === "task") {
+    return (
+      findIn(state.workPage && state.workPage.items, id) ||
+      findIn(context.openTasks, id) ||
+      findIn(work.inProgressTasks, id) ||
+      findIn(work.blockedTasks, id) ||
+      findIn(isRecord(slices.tasks) ? slices.tasks.items : [], id)
+    );
+  }
+  if (kind === "decision") {
+    return (
+      findIn(context.proposedDecisions, id) ||
+      findIn(context.acceptedDecisions, id) ||
+      findIn(context.supersededDecisions, id) ||
+      findIn(isRecord(slices.decisions) ? slices.decisions.items : [], id)
+    );
+  }
+  if (kind === "finding") {
+    return findingById(id);
+  }
+  if (kind === "artifact") {
+    return (
+      findIn(context.artifacts, id) || findIn(isRecord(slices.artifacts) ? slices.artifacts.items : [], id)
+    );
+  }
+  return null;
+}
+
+function recordIsFull(kind, record) {
+  if (!isRecord(record)) return false;
+  if (kind === "human" || kind === "agent" || kind === "participant") return isRecord(record.actor);
+  if (kind === "task") return typeof record.createdAt === "string" || isRecord(record.createdBy);
+  if (kind === "decision") {
+    return typeof record.createdAt === "string" || typeof record.rationale === "string" || Array.isArray(record.citations);
+  }
+  if (kind === "finding") return typeof record.currentness === "string" && (typeof record.summary === "string" || typeof record.createdAt === "string");
+  if (kind === "artifact") return typeof record.type === "string" || typeof record.uriOrPath === "string";
+  return false;
+}
+
+function findingById(id) {
+  if (state.citedFindings && isRecord(state.citedFindings[id])) return state.citedFindings[id];
+  const context = isRecord(state.context) ? state.context : {};
+  const slices = isRecord(context.slices) ? context.slices : {};
+  return findIn(context.findings, id) || findIn(isRecord(slices.findings) ? slices.findings.items : [], id);
+}
+
+function attentionReasonFor(id) {
+  const lists = deriveNeedsYou(state.context).concat(deriveNeedsAttention(state.context));
+  for (const item of lists) {
+    if (strField(item.id) === id && strField(item.reason)) return strField(item.reason);
+  }
+  return "";
+}
+
+function sourceRecordHtml(kind, record) {
+  if (!isRecord(record)) return `<p>This read did not include the record.</p>`;
+  if (kind === "human" || kind === "agent" || kind === "participant") {
+    const actor = isRecord(record.actor) ? record.actor : {};
+    const lines = [
+      `<p class="record-id">id ${esc(strField(actor.actorId))}</p>`,
+      `<p>type ${esc(strField(actor.actorType))}</p>`,
+      `<p>role ${esc(visibleText(strField(record.role)))}</p>`,
+    ];
+    if (strField(record.harness)) lines.push(`<p>harness ${esc(visibleText(record.harness))}</p>`);
+    if (strField(record.joinedAt)) lines.push(`<p>joinedAt ${esc(record.joinedAt)}</p>`);
+    if (actor.actorType === "agent") {
+      const owner = strField(record.humanOwnerId);
+      lines.push(`<p>owner ${esc(owner || "no recorded owner")}</p>`);
+      if (record.humanOwnerIsParticipant === false) lines.push("<p>owner is outside the roster</p>");
+      else if (record.humanOwnerIsParticipant === true) lines.push("<p>owner is a workspace participant</p>");
+      lines.push("<p>Registration is not presence.</p>");
+    } else {
+      lines.push("<p>Membership is not presence or permission to act.</p>");
+    }
+    return lines.join("");
+  }
+  const lines = [`<p class="record-id">id ${esc(strField(record.id))}</p>`, `<p>type ${esc(kind)}</p>`];
+  const status = strField(record.status);
+  if (status) lines.push(`<p>status ${esc(status)} · ${esc(decisionStatusText(kind === "decision" ? status : status))}</p>`);
+  if (kind === "task" && status) lines.push(`<p>lifecycle ${esc(visibleText(status))}. A status is not a running process.</p>`);
+  const currentness = strField(record.currentness);
+  if (currentness) lines.push(`<p>currentness ${esc(visibleText(currentness))}</p>`);
+  const title = strField(record.title, record.summary);
+  if (title) lines.push(`<p>${esc(visibleText(title))}</p>`);
+  const rationale = strField(record.rationale);
+  if (rationale) lines.push(`<p>rationale ${esc(visibleText(rationale))}</p>`);
+  lines.push(actorLine("recorded actor", record.createdBy) || actorLine("recorded actor", record.actor));
+  if (strField(record.createdAt)) lines.push(`<p>createdAt ${esc(record.createdAt)}</p>`);
+  if (strField(record.updatedAt)) lines.push(`<p>updatedAt ${esc(record.updatedAt)}</p>`);
+  lines.push(actorLine("assignee", record.assignee));
+  lines.push(actorLine("approved by", record.approvedBy));
+  if (kind === "decision" && (record.needsReview === true || reviewFindingIds(record).length)) {
+    // needsReview is computed for any non-superseded decision that cites
+    // non-current evidence. Only an accepted decision has an acceptance to leave unchanged.
+    if (status === "accepted") lines.push("<p>needs review — acceptance is unchanged</p>");
+    const reason = attentionReasonFor(strField(record.id));
+    if (reason) lines.push(`<p>review reason ${esc(attentionReasonLabel(reason))}</p>`);
+    const cited = reviewFindingIds(record);
+    if (cited.length) lines.push(`<p>non-current citations: ${esc(cited.join(", "))}</p>`);
+    for (const findingId of cited) {
+      const finding = findingById(findingId);
+      if (!finding) {
+        lines.push(`<p>cited finding ${esc(findingId)} currentness is not in this read</p>`);
+        continue;
+      }
+      lines.push(
+        `<p>cited finding ${esc(findingId)} currentness ${esc(visibleText(strField(finding.currentness, "unrecorded")))}</p>`,
+      );
+      if (strField(finding.successorId)) lines.push(`<p>successor ${esc(finding.successorId)}</p>`);
+    }
+  }
+  for (const row of asArray(record.citations).filter(isRecord)) {
+    const citeId = strField(row.id);
+    const findingId = strField(row.findingId);
+    const note = strField(row.note);
+    if (!citeId && !findingId) continue;
+    lines.push(
+      `<p>citation ${esc(citeId)} finding ${esc(findingId)}${note ? ` note ${esc(visibleText(note))}` : ""}</p>`,
+    );
+  }
+  for (const row of asArray(record.evidence).filter(isRecord)) {
+    const artifactId = strField(row.artifactId);
+    const relation = strField(row.relation);
+    if (!artifactId && !strField(row.id)) continue;
+    lines.push(`<p>evidence ${esc(strField(row.id))} artifact ${esc(artifactId)} relation ${esc(visibleText(relation))}</p>`);
+  }
+  const transitions = decisionTransitionParts(record);
+  if (transitions.length) lines.push(`<p>${esc(transitions.join(" · "))}</p>`);
+  if (kind === "artifact") {
+    const findings = isRecord(state.context) ? asArray(state.context.findings) : [];
+    lines.push(artifactSourceHtml(record, findings));
+  }
+  return lines.filter(Boolean).join("");
+}
+
+function actorLine(label, actor) {
+  if (!isRecord(actor)) return "";
+  const type = strField(actor.actorType);
+  const id = strField(actor.actorId);
+  if (!type && !id) return "";
+  return `<p>${esc(label)} ${esc(type)} ${esc(id)}</p>`;
+}
+
+function applyPage(result, request, extra) {
+  const items = asArray(result && result.items).filter(isRecord);
+  return {
+    workspaceId: state.workspaceId,
+    items,
+    total: result && typeof result.total === "number" ? result.total : null,
+    returned: result && typeof result.returned === "number" ? result.returned : items.length,
+    truncated: Boolean(result && result.truncated === true),
+    nextCursor: result && typeof result.nextCursor === "string" ? result.nextCursor : null,
+    pageNumber: request.pageNumber,
+    cursor: request.cursor || null,
+    cursorStack: asArray(request.cursorStack).slice(-CURSOR_STACK_LIMIT),
+    readAt: new Date().toISOString(),
+    error: null,
+    stale: false,
+    loading: false,
+    ...extra,
+  };
+}
+
+async function fetchWorkPage(request) {
+  const workspaceId = state.workspaceId;
+  if (!workspaceId) return;
+  const gen = ++state.workGen;
+  const params = { workspaceId, limit: WORK_PAGE_LIMIT };
+  if (request.cursor) params.cursor = request.cursor;
+  try {
+    const result = await api("list_tasks", params);
+    if (gen !== state.workGen || state.workspaceId !== workspaceId || state.section !== "work") return;
+    state.workPage = applyPage(result, request, {});
+    reconcileSelection("work");
+  } catch (err) {
+    if (gen !== state.workGen || state.workspaceId !== workspaceId || state.section !== "work") return;
+    const message = err.message || String(err);
+    if (state.workPage && state.workPage.workspaceId === workspaceId) {
+      state.workPage.stale = true;
+      state.workPage.error = message;
+    } else {
+      state.workPage = {
+        workspaceId,
+        items: [],
+        total: null,
+        returned: 0,
+        truncated: false,
+        nextCursor: null,
+        pageNumber: request.pageNumber,
+        cursor: request.cursor || null,
+        cursorStack: asArray(request.cursorStack),
+        readAt: null,
+        error: message,
+        stale: false,
+        loading: false,
+      };
+    }
+  }
+  if (gen === state.workGen && state.section === "work" && state.workspaceId === workspaceId) render();
+}
+
+function ensureWorkPage() {
+  if (!state.workspaceId) return null;
+  if (state.workPage && state.workPage.workspaceId === state.workspaceId && state.workPage.readAt && !state.workPage.error) return null;
+  return fetchWorkPage({ pageNumber: 1, cursor: null, cursorStack: [] });
+}
+
+function pageWork(direction) {
+  const page = state.workPage;
+  if (!page) return null;
+  if (direction === "next") {
+    if (!canPageNext(page)) return null;
+    return fetchWorkPage({
+      cursor: page.nextCursor,
+      pageNumber: page.pageNumber + 1,
+      cursorStack: page.cursorStack.concat([{ cursor: page.cursor, pageNumber: page.pageNumber }]),
+    });
+  }
+  const previous = page.cursorStack[page.cursorStack.length - 1];
+  if (!previous) return null;
+  return fetchWorkPage({
+    cursor: previous.cursor,
+    pageNumber: previous.pageNumber,
+    cursorStack: page.cursorStack.slice(0, -1),
+  });
+}
+
+async function fetchPeoplePage(request) {
+  const workspaceId = state.workspaceId;
+  if (!workspaceId) return;
+  const gen = ++state.peopleGen;
+  const params = { workspaceId, limit: PEOPLE_PAGE_LIMIT };
+  if (request.cursor) params.cursor = request.cursor;
+  if (request.humanOwnerId) params.humanOwnerId = request.humanOwnerId;
+  try {
+    const result = await api("list_workspace_participants", params);
+    if (gen !== state.peopleGen || state.workspaceId !== workspaceId || state.section !== "people") return;
+    state.peoplePage = applyPage(result, request, { humanOwnerId: request.humanOwnerId || null });
+    reconcileSelection("people");
+  } catch (err) {
+    if (gen !== state.peopleGen || state.workspaceId !== workspaceId || state.section !== "people") return;
+    const message = err.message || String(err);
+    if (state.peoplePage && state.peoplePage.workspaceId === workspaceId) {
+      state.peoplePage.stale = true;
+      state.peoplePage.error = message;
+    } else {
+      state.peoplePage = {
+        workspaceId,
+        items: [],
+        total: null,
+        returned: 0,
+        truncated: false,
+        nextCursor: null,
+        pageNumber: request.pageNumber,
+        cursor: request.cursor || null,
+        cursorStack: asArray(request.cursorStack),
+        humanOwnerId: request.humanOwnerId || null,
+        readAt: null,
+        error: message,
+        stale: false,
+        loading: false,
+      };
+    }
+  }
+  if (gen === state.peopleGen && state.section === "people" && state.workspaceId === workspaceId) render();
+}
+
+function ensurePeoplePage() {
+  if (!state.workspaceId) return null;
+  if (state.peoplePage && state.peoplePage.workspaceId === state.workspaceId && state.peoplePage.readAt && !state.peoplePage.error) return null;
+  return fetchPeoplePage({ pageNumber: 1, cursor: null, cursorStack: [], humanOwnerId: null });
+}
+
+function openHumanAgents(humanId) {
+  const page = state.peoplePage;
+  const stack = page
+    ? page.cursorStack.concat([{ cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId || null }])
+    : [];
+  return fetchPeoplePage({ humanOwnerId: humanId, pageNumber: 1, cursor: null, cursorStack: stack });
+}
+
+function pagePeople(direction) {
+  const page = state.peoplePage;
+  if (!page) return;
+  if (direction === "next") {
+    if (!canPageNext(page)) return;
+    void fetchPeoplePage({
+      cursor: page.nextCursor,
+      pageNumber: page.pageNumber + 1,
+      cursorStack: page.cursorStack.concat([
+        { cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId || null },
+      ]),
+      humanOwnerId: page.humanOwnerId || null,
+    });
+    return;
+  }
+  const previous = page.cursorStack[page.cursorStack.length - 1];
+  if (!previous) return;
+  void fetchPeoplePage({
+    cursor: previous.cursor,
+    pageNumber: previous.pageNumber,
+    cursorStack: page.cursorStack.slice(0, -1),
+    humanOwnerId: previous.humanOwnerId || null,
+  });
+}
+
+async function loadMissingFindings(gen, workspaceId, decision) {
+  const ids = [];
+  for (const id of reviewFindingIds(decision)) ids.push(id);
+  for (const row of asArray(decision.citations).filter(isRecord)) {
+    const id = strField(row.findingId);
+    if (id) ids.push(id);
+  }
+  const seen = new Set();
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    if (gen !== state.detailGen || state.workspaceId !== workspaceId) return;
+    if (!state.detail || state.detail.id !== strField(decision.id)) return;
+    if (findingById(id)) continue;
+    try {
+      const finding = await api("get_finding", { workspaceId, findingId: id });
+      if (gen !== state.detailGen || state.workspaceId !== workspaceId) return;
+      if (!state.detail || state.detail.id !== strField(decision.id)) return;
+      state.citedFindings[id] = finding;
+      render();
+    } catch (err) {
+      if (gen !== state.detailGen) return;
+    }
+  }
+}
+
+async function selectRecord(kind, id) {
+  if (!id) return;
+  state.focusOriginId = id;
+  if (state.sectionSelection) state.sectionSelection[state.section] = id;
+  state.selectionLost = null;
+  if (kind === "human") {
+    state.layer = "list";
+    state.historyGen += 1;
+    state.history = null;
+    openHumanAgents(id);
+    render();
+    return;
+  }
+  const gen = ++state.detailGen;
+  state.historyGen += 1;
+  state.history = null;
+  state.layer = "source";
+  const local = findLocalRecord(kind, id);
+  const full = recordIsFull(kind, local);
+  state.detail = { id, kind, record: local, loading: !full, error: null, method: full ? "loaded" : null };
+  state.citedFindings = Object.create(null);
+  render();
+  if (!state.workspaceId) return;
+  if (full) {
+    if (kind === "decision" && local) void loadMissingFindings(gen, state.workspaceId, local);
+    return;
+  }
+  if (RECORD_KINDS.indexOf(kind) === -1) {
+    state.detail.loading = false;
+    render();
+    return;
+  }
+  const workspaceId = state.workspaceId;
+  try {
+    const record = await api(`get_${kind}`, { workspaceId, [`${kind}Id`]: id });
+    if (gen !== state.detailGen || state.workspaceId !== workspaceId || !state.detail || state.detail.id !== id) return;
+    state.detail = { id, kind, record, loading: false, error: null, method: `get_${kind}` };
+    if (kind === "decision") void loadMissingFindings(gen, workspaceId, record);
+  } catch (err) {
+    if (gen !== state.detailGen || !state.detail || state.detail.id !== id) return;
+    state.detail.loading = false;
+    state.detail.error = err.message || String(err);
+    state.detail.stale = Boolean(local);
+  }
+  if (gen === state.detailGen) render();
+}
+
+async function fetchHistory(request) {
+  const workspaceId = state.workspaceId;
+  const history = state.history;
+  if (!workspaceId || !history || history.open !== true) return;
+  const objectType = history.objectType;
+  const objectId = history.objectId;
+  const gen = ++state.historyGen;
+  const params = { workspaceId, objectType, objectId, limit: HISTORY_PAGE_LIMIT };
+  if (request.cursor) params.cursor = request.cursor;
+  try {
+    const result = await api("get_record_history", params);
+    if (gen !== state.historyGen || state.workspaceId !== workspaceId) return;
+    if (!state.history || state.history.open !== true || state.history.objectId !== objectId || state.history.objectType !== objectType) return;
+    state.history.error = null;
+    state.history.page = applyPage(historyPageResult(result), request, {});
+  } catch (err) {
+    if (gen !== state.historyGen || state.workspaceId !== workspaceId) return;
+    if (!state.history || state.history.objectId !== objectId) return;
+    state.history.error = err.message || String(err);
+    if (state.history.page) state.history.page.stale = true;
+  }
+  if (gen === state.historyGen) render();
+}
+
+function openRecordedChanges() {
+  const detail = state.detail;
+  if (!detail || RECORD_KINDS.indexOf(detail.kind) === -1) return null;
+  state.layer = "history";
+  state.history = {
+    open: true,
+    objectType: detail.kind,
+    objectId: detail.id,
+    page: null,
+    selectedId: null,
+    error: null,
+  };
+  const pending = fetchHistory({ pageNumber: 1, cursor: null, cursorStack: [] });
+  render();
+  return pending;
+}
+
+function pageHistory(direction) {
+  const history = state.history;
+  const page = history && history.page;
+  if (!history || history.open !== true || !page) return;
+  if (direction === "next") {
+    if (!canPageNext(page)) return;
+    void fetchHistory({
+      cursor: page.nextCursor,
+      pageNumber: page.pageNumber + 1,
+      cursorStack: page.cursorStack.concat([{ cursor: page.cursor, pageNumber: page.pageNumber }]),
+    });
+    return;
+  }
+  const previous = page.cursorStack[page.cursorStack.length - 1];
+  if (!previous) return;
+  void fetchHistory({
+    cursor: previous.cursor,
+    pageNumber: previous.pageNumber,
+    cursorStack: page.cursorStack.slice(0, -1),
+  });
+}
+
+function historyPageResult(result) {
+  if (!isRecord(result)) return result;
+  return {
+    ...result,
+    items: asArray(result.items).map((entry) => {
+      if (!isRecord(entry) || !Object.prototype.hasOwnProperty.call(entry, "payload")) return entry;
+      const copy = {};
+      for (const key of Object.keys(entry)) {
+        if (key === "payload") continue;
+        copy[key] = entry[key];
+      }
+      return copy;
+    }),
+  };
+}
+
+function historyPayloadSummary(entry) {
+  return typeof entry.payloadSummary === "string" ? visibleText(entry.payloadSummary) : "";
+}
+
+function historyRowHtml(entry) {
+  const actor = isRecord(entry.actor) ? entry.actor : {};
+  const session = strField(entry.agentSessionId);
+  const summary = historyPayloadSummary(entry);
+  const current = state.history && state.history.selectedId === entry.id ? ` aria-current="true"` : "";
+  return `<button type="button" class="row-btn" data-history-id="${esc(strField(entry.id))}"${current}><span class="record-id">${esc(strField(entry.id))}</span> <span>${esc(strField(actor.actorType))} ${esc(strField(actor.actorId))}</span>${session ? ` <span>agent session ${esc(session)}</span>` : ""} <span>${esc(visibleText(strField(entry.action)))}</span> <span>${esc(strField(entry.createdAt))}</span>${summary ? ` <span>payload ${esc(summary)}</span>` : ""}</button>`;
+}
+
+function historyRecordedEmpty(page, errored) {
+  return Boolean(page && page.total === 0 && !errored && page.stale !== true && page.truncated !== true);
+}
+
+function historyHeadingText(history) {
+  if (!history) return "Recorded changes";
+  if (history.error && !history.page) return `Recorded changes are unavailable. ${history.error} This read is not complete.`;
+  const page = history.page;
+  if (!page) return "Recorded changes are loading.";
+  if (historyRecordedEmpty(page, history.error)) return "No contributions were recorded for this record.";
+  const returned = typeof page.returned === "number" ? page.returned : "?";
+  const total = typeof page.total === "number" ? page.total : "?";
+  const stale = page.stale || history.error ? " stale" : "";
+  const continuation =
+    page.total === 0 && page.truncated === true && !history.error
+      ? "This read is not complete"
+      : pageContinuation(page, Boolean(history.error));
+  return `Recorded changes returned ${returned} of ${total}. ${continuation}.${stale}`;
+}
+
+function filteredPageItems(items, textOf) {
+  return asArray(items).filter((row) => matchesRowFilter(textOf(row)));
+}
+
+function listHtml(rows, emptyText) {
+  if (!rows.length) {
+    const query = String(state.rowFilter || "").trim();
+    if (query) return `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`;
+    return `<div class="empty">${esc(emptyText)}</div>`;
+  }
+  return rows.join("");
+}
+
+function renderNavigation() {
+  if (els.stage) {
+    els.stage.setAttribute("data-section", state.section);
+    els.stage.setAttribute("data-layer", state.layer);
+  }
+  if (typeof document !== "undefined" && document.getElementById) {
+    for (const name of NAV_SECTIONS) {
+      const button = document.getElementById(`section-${name}`);
+      if (button && button.setAttribute) button.setAttribute("aria-pressed", state.section === name ? "true" : "false");
+    }
+  }
+  const workFailed = Boolean(state.workPage && state.workPage.error);
+  if (els.workCoverage) {
+    const page = state.workPage;
+    els.workCoverage.textContent = page ? coverageSentence(page, workFailed) : "not loaded";
+  }
+  if (els.workList) {
+    const page = state.workPage;
+    if (!page) els.workList.innerHTML = `<div class="empty">Work is not loaded.</div>`;
+    else if (!page.readAt && page.error) els.workList.innerHTML = `<div class="empty">${esc(page.error)} This read is not complete.</div>`;
+    else {
+      const rows = filteredPageItems(page.items, (task) => `${strField(task.id)} ${strField(task.title)} ${strField(task.status)}`);
+      const html = listHtml(rows.map(workRowHtml), "No tasks were returned on this page.");
+      els.workList.innerHTML = page.items.length && !rows.length ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>` : html;
+    }
+  }
+  if (els.workPrev) els.workPrev.disabled = !(state.workPage && state.workPage.cursorStack.length);
+  if (els.workNext) els.workNext.disabled = !canPageNext(state.workPage);
+
+  const people = state.peoplePage;
+  if (els.peopleCoverage) {
+    if (!people) els.peopleCoverage.textContent = "not loaded";
+    else {
+      const who = people.humanOwnerId ? `workspace-participating agents for ${people.humanOwnerId} · ` : "";
+      els.peopleCoverage.textContent = `${who}${coverageSentence(people, Boolean(people.error))}`;
+    }
+  }
+  if (els.peopleList) {
+    if (!people) els.peopleList.innerHTML = `<div class="empty">People is not loaded.</div>`;
+    else if (!people.readAt && people.error) els.peopleList.innerHTML = `<div class="empty">${esc(people.error)} This read is not complete.</div>`;
+    else {
+      const rows = filteredPageItems(people.items, (item) => {
+        const actor = isRecord(item.actor) ? item.actor : {};
+        return `${strField(actor.actorId)} ${strField(item.name)} ${strField(actor.actorType)} ${strField(item.humanOwnerId)}`;
+      });
+      const empty = people.humanOwnerId
+        ? "No workspace-participating agents were returned for this owner."
+        : "No participants were returned on this page.";
+      els.peopleList.innerHTML =
+        people.items.length && !rows.length
+          ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`
+          : listHtml(rows.map(peopleRowHtml), empty);
+    }
+  }
+  if (els.peoplePrev) els.peoplePrev.disabled = !(people && people.cursorStack.length);
+  if (els.peopleNext) els.peopleNext.disabled = !canPageNext(people);
+
+  if (els.decisionList) {
+    const decisions = decisionSectionRows(state.context).filter((decision) =>
+      matchesRowFilter(`${strField(decision.id)} ${strField(decision.summary)} ${strField(decision.status)}`),
+    );
+    const all = decisionSectionRows(state.context);
+    els.decisionList.innerHTML =
+      all.length && !decisions.length
+        ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`
+        : listHtml(decisions.map(decisionRowHtml), "No decisions in this orientation read.");
+  }
+
+  if (els.selectionLost) {
+    const text = state.selectionLost || "";
+    els.selectionLost.hidden = !text;
+    els.selectionLost.textContent = text;
+  }
+  if (els.sourceView) {
+    const detail = state.detail;
+    if (!detail || state.layer === "list") {
+      els.sourceView.innerHTML = `<p>No selected record.</p>`;
+    } else if (detail.loading && !detail.record) {
+      els.sourceView.innerHTML = `<p class="record-id">id ${esc(detail.id)}</p><p>Loading this record.</p>`;
+    } else {
+      const failed = detail.error ? `<p>${esc(detail.error)} This read is not complete.</p>` : "";
+      els.sourceView.innerHTML = sourceRecordHtml(detail.kind, detail.record) + failed;
+    }
+  }
+  const historyOpen = Boolean(state.history && state.history.open && state.layer === "history");
+  const canHistory = Boolean(state.detail && RECORD_KINDS.indexOf(state.detail.kind) !== -1 && state.layer !== "list");
+  if (els.recordedChanges) els.recordedChanges.hidden = !canHistory;
+  if (els.historyView) els.historyView.hidden = !historyOpen;
+  if (els.historyHeading) els.historyHeading.textContent = historyHeadingText(state.history);
+  if (els.historyList) {
+    const page = state.history && state.history.page;
+    if (!historyOpen) els.historyList.innerHTML = "";
+    else if (state.history && state.history.error && !page) {
+      els.historyList.innerHTML = `<div class="empty">${esc(state.history.error)} This read is not complete.</div>`;
+    } else if (!page) els.historyList.innerHTML = `<div class="empty">Recorded changes are loading.</div>`;
+    else if (page.total === 0 && page.truncated === true) {
+      els.historyList.innerHTML = `<div class="empty">This read is not complete.</div>`;
+    } else if (historyRecordedEmpty(page, state.history.error)) {
+      els.historyList.innerHTML = `<div class="empty">No contributions were recorded for this record.</div>`;
+    } else {
+      const rows = filteredPageItems(page.items, (entry) => `${strField(entry.id)} ${strField(entry.action)}`);
+      els.historyList.innerHTML = rows.length
+        ? rows.map(historyRowHtml).join("")
+        : `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`;
+    }
+  }
+  if (els.historyPrev) els.historyPrev.disabled = !(state.history && state.history.page && state.history.page.cursorStack.length);
+  if (els.historyNext) els.historyNext.disabled = !canPageNext(state.history && state.history.page);
+  if (els.panelBack) {
+    const peopleBack = Boolean(state.section === "people" && people && people.cursorStack.length);
+    els.panelBack.hidden = state.layer === "list" && !peopleBack;
+  }
+}
+
+function setSection(name) {
+  if (NAV_SECTIONS.indexOf(name) === -1 || name === state.section) return null;
+  state.section = name;
+  state.layer = "list";
+  state.historyGen += 1;
+  state.history = null;
+  const pending = name === "work" ? ensureWorkPage() : name === "people" ? ensurePeoplePage() : null;
+  render();
+  return pending;
+}
+
+function focusRecordButton(id) {
+  if (!id || typeof document === "undefined" || !document.querySelectorAll) return;
+  const nodes = document.querySelectorAll("[data-record-id]");
+  for (const node of nodes) {
+    if (node.getAttribute("data-record-id") === id && node.focus) {
+      node.focus();
+      return;
+    }
+  }
+}
+
+function captureFocus() {
+  try {
+    const active = typeof document !== "undefined" ? document.activeElement : null;
+    if (!active || !active.getAttribute) return null;
+    return {
+      id: active.id || "",
+      recordId: active.getAttribute("data-record-id"),
+      historyId: active.getAttribute("data-history-id"),
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+function restoreFocus(saved) {
+  if (!saved) return;
+  if (saved.id && typeof document !== "undefined" && document.getElementById) {
+    const node = document.getElementById(saved.id);
+    if (node && node.focus) {
+      node.focus();
+      return;
+    }
+  }
+  focusRecordButton(saved.recordId);
+}
+
+function closeTopLayer() {
+  const origin = state.focusOriginId;
+  if (state.layer === "history") {
+    state.layer = "source";
+    state.historyGen += 1;
+    if (state.history) state.history.open = false;
+    render();
+    focusRecordButton(origin);
+    return;
+  }
+  if (state.layer === "source") {
+    state.layer = "list";
+    state.detailGen += 1;
+    render();
+    focusRecordButton(origin);
+  }
+}
+
+function panelBack() {
+  if (state.layer === "history" || state.layer === "source") {
+    closeTopLayer();
+    return;
+  }
+  if (state.section === "people" && state.peoplePage && state.peoplePage.cursorStack.length) pagePeople("prev");
+}
+
 function render() {
+  const savedFocus = captureFocus();
   rebuildNames();
   renderHeader();
   renderMast();
+  renderPerspective();
   renderOrientation();
   renderStream();
+  renderNavigation();
+  restoreFocus(savedFocus);
 }
 
 function items() {
@@ -1927,7 +3005,9 @@ async function refresh() {
 
     const cursor = readCursor(id);
     const useSince = Boolean(cursor) && state.sincePending;
-    const contextParams = { workspaceId: id };
+    // Normal orientation omits the roster. get_workspace stays allowlisted
+    // and is not requested on this path, including the poll.
+    const contextParams = { workspaceId: id, participants: "omit" };
     if (useSince) contextParams.since = cursor;
 
     const [context, activity] = await Promise.all([
@@ -1936,6 +3016,10 @@ async function refresh() {
     ]);
     if (g !== gen || state.workspaceId !== id) return;
     state.context = context;
+    // The full inspector is not part of this refresh. Drop a leftover view
+    // only after the orientation read succeeds, so a failure keeps the last
+    // good state instead of a false empty roster.
+    state.view = null;
     if (state.sincePending) {
       // Snapshot the diff only on the first context fetch for this workspace;
       // polling afterwards keeps the frozen "since you were here" view.
@@ -1965,19 +3049,16 @@ async function refresh() {
     }
     state.activity = activity;
     state.error = null;
+    state.lastReadAt = new Date().toISOString();
+    state.stale = false;
+    reconcileSelection("attention");
+    reconcileSelection("decisions");
+    reconcileSelection("sources");
     render();
-
-    api("get_workspace", { workspaceId: id }).then(
-      (view) => {
-        if (g !== gen || state.workspaceId !== id) return;
-        state.view = view;
-        render();
-      },
-      () => {},
-    );
   } catch (err) {
     if (g !== gen) return;
     state.error = err.message || String(err);
+    if (state.lastReadAt) state.stale = true;
     render();
   }
 }
@@ -2047,6 +3128,42 @@ if (els.density) {
   });
 }
 
+if (els.rowFilter) {
+  els.rowFilter.addEventListener("input", (event) => {
+    state.rowFilter = event.target && event.target.value ? event.target.value : "";
+    render();
+  });
+}
+if (els.workPrev) els.workPrev.addEventListener("click", () => pageWork("prev"));
+if (els.workNext) els.workNext.addEventListener("click", () => pageWork("next"));
+if (els.peoplePrev) els.peoplePrev.addEventListener("click", () => pagePeople("prev"));
+if (els.peopleNext) els.peopleNext.addEventListener("click", () => pagePeople("next"));
+if (els.historyPrev) els.historyPrev.addEventListener("click", () => pageHistory("prev"));
+if (els.historyNext) els.historyNext.addEventListener("click", () => pageHistory("next"));
+if (els.panelBack) els.panelBack.addEventListener("click", () => panelBack());
+if (els.recordedChanges) els.recordedChanges.addEventListener("click", () => openRecordedChanges());
+if (els.retryRefresh) els.retryRefresh.addEventListener("click", () => { void refresh(); });
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!target || !target.closest) return;
+  if (target.closest(".oopen")) return;
+  const sectionBtn = target.closest("#sections button[data-section]");
+  if (sectionBtn) {
+    setSection(sectionBtn.getAttribute("data-section"));
+    return;
+  }
+  const historyBtn = target.closest("[data-history-id]");
+  if (historyBtn && state.history) {
+    state.history.selectedId = historyBtn.getAttribute("data-history-id");
+    render();
+    return;
+  }
+  const row = target.closest("[data-record-id]");
+  if (!row) return;
+  void selectRecord(row.getAttribute("data-record-kind") || "", row.getAttribute("data-record-id") || "");
+});
+
 if (els.stream) {
   els.stream.addEventListener("click", (event) => {
     const older = event.target.closest("#older");
@@ -2082,28 +3199,81 @@ if (els.stream) {
   });
 }
 
+function focusedKeyList(event) {
+  const target = event && event.target;
+  if (!target || !target.closest) return null;
+  return target.closest("[data-key-list]");
+}
+
+function moveWithinList(list, delta) {
+  if (!list || !list.querySelectorAll) return;
+  const name = list.getAttribute ? list.getAttribute("data-key-list") : "";
+  if (name === "history") {
+    const buttons = list.querySelectorAll("[data-history-id]");
+    if (!buttons.length || !state.history) return;
+    let index = -1;
+    buttons.forEach((button, position) => {
+      if (button.getAttribute("data-history-id") === state.history.selectedId) index = position;
+    });
+    const next = index === -1 ? (delta > 0 ? 0 : buttons.length - 1) : Math.max(0, Math.min(buttons.length - 1, index + delta));
+    const historyId = buttons[next].getAttribute("data-history-id");
+    state.history.selectedId = historyId;
+    render();
+    if (typeof document !== "undefined" && document.querySelectorAll) {
+      for (const node of document.querySelectorAll("[data-history-id]")) {
+        if (node.getAttribute("data-history-id") === historyId && node.focus) {
+          node.focus();
+          return;
+        }
+      }
+    }
+    return;
+  }
+  const buttons = list.querySelectorAll("[data-record-id]");
+  if (!buttons.length) return;
+  const current = state.sectionSelection[state.section];
+  let index = -1;
+  buttons.forEach((button, position) => {
+    if (button.getAttribute("data-record-id") === current) index = position;
+  });
+  const next = index === -1 ? (delta > 0 ? 0 : buttons.length - 1) : Math.max(0, Math.min(buttons.length - 1, index + delta));
+  const recordId = buttons[next].getAttribute("data-record-id");
+  state.sectionSelection[state.section] = recordId;
+  render();
+  focusRecordButton(recordId);
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   const target = event.target;
   const tag = target && target.tagName;
   const inField = tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA";
 
-  if (!inField && (event.key === "j" || event.key === "ArrowDown")) {
+  if (event.key === "Escape") {
+    if (inField) return;
+    if (state.layer === "list" && !(state.section === "people" && state.peoplePage && state.peoplePage.cursorStack.length)) return;
     event.preventDefault();
-    moveSelection(1);
+    panelBack();
     return;
   }
-  if (!inField && (event.key === "k" || event.key === "ArrowUp")) {
+  // j/k and arrows move only inside a list the person has focused. They do not
+  // steal page scrolling, text entry, or a screen reader's browse cursor.
+  if (!inField && (event.key === "j" || event.key === "ArrowDown" || event.key === "k" || event.key === "ArrowUp")) {
+    const list = focusedKeyList(event);
+    if (!list) return;
     event.preventDefault();
-    moveSelection(-1);
+    moveWithinList(list, event.key === "j" || event.key === "ArrowDown" ? 1 : -1);
     return;
   }
   if (!inField && event.key === "Enter") {
     // A focused native control keeps its own activation; the perspective
     // buttons must stay keyboard-operable.
-    if (tag === "BUTTON") return;
-    event.preventDefault();
-    toggleExpand();
+    if (tag === "BUTTON" || tag === "A") return;
+    const list = focusedKeyList(event);
+    if (list && list.getAttribute("data-key-list") === "changes") {
+      event.preventDefault();
+      toggleExpand();
+    }
     return;
   }
   if (!inField && (event.key === "p" || event.key === "P")) {

@@ -765,3 +765,206 @@ header select:focus-visible {
 #orientation[data-perspective="team"] #since-panel { order: 5; }
 #orientation[data-perspective="team"] #needs-you-panel,
 #orientation[data-perspective="team"] #next-action { display: none; }
+
+/* NAV-003: one active section. The list and the selected record sit side by
+   side on a wide window. A narrow window stacks list, source, then history. */
+.sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 0.6ch;
+  padding: 0.35em 1.5ch 0;
+}
+
+.section-btn,
+.pager button,
+#panel-back,
+#recorded-changes,
+#retry-refresh {
+  font: inherit;
+  padding: 0.2em 1ch;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.section-btn[aria-pressed="true"] {
+  color: var(--fg);
+  border-color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.section-btn:focus-visible,
+.row-btn:focus-visible,
+.pager button:focus-visible,
+#panel-back:focus-visible,
+#recorded-changes:focus-visible,
+#retry-refresh:focus-visible,
+#row-filter:focus-visible,
+#sections button:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+#stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+#list-pane,
+#detail-pane {
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+}
+
+#detail-pane {
+  border-left: 1px solid var(--line);
+  padding: 0.6em 1.2ch 1.2em;
+}
+
+#stage .section-body {
+  display: none;
+}
+
+#stage[data-section="attention"] .section-body[data-section-body="attention"],
+#stage[data-section="work"] .section-body[data-section-body="work"],
+#stage[data-section="decisions"] .section-body[data-section-body="decisions"],
+#stage[data-section="sources"] .section-body[data-section-body="sources"],
+#stage[data-section="people"] .section-body[data-section-body="people"],
+#stage[data-section="changes"] .section-body[data-section-body="changes"] {
+  display: block;
+}
+
+.row-filter,
+#row-filter,
+#filter-note {
+  margin: 0.4em 1.5ch 0;
+}
+
+#row-filter {
+  display: block;
+  width: min(100%, 42ch);
+  max-width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0.2em 0.6ch;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  padding: 0.35em 1.5ch;
+}
+
+.row-btn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  padding: 0.4em 1.2ch;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.row-btn[aria-current="true"] {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.record-id,
+#last-read,
+#stale-note,
+#history-heading,
+#work-coverage,
+#people-coverage,
+#selection-lost {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+#last-read,
+#stale-note,
+#selection-lost {
+  margin: 0.25em 0;
+  color: var(--muted);
+}
+
+#panel-back[hidden],
+#history-view[hidden],
+#recorded-changes[hidden],
+#retry-refresh[hidden],
+#selection-lost[hidden],
+#owned-note[hidden],
+#stale-note[hidden] {
+  display: none;
+}
+
+#panel-back:not([hidden]),
+#recorded-changes:not([hidden]),
+#retry-refresh:not([hidden]) {
+  display: inline-block;
+  margin: 0.35em 0;
+}
+
+@media (max-width: 719px) {
+  #stage {
+    display: block;
+  }
+
+  #stage[data-layer="list"] #detail-pane {
+    display: none;
+  }
+
+  #stage[data-layer="source"] #list-pane,
+  #stage[data-layer="history"] #list-pane {
+    display: none;
+  }
+
+  #stage[data-layer="history"] #source-view,
+  #stage[data-layer="history"] #recorded-changes {
+    display: none;
+  }
+
+  #stage[data-layer="source"] #history-view {
+    display: none;
+  }
+
+  #detail-pane {
+    border-left: 0;
+  }
+
+  #hint {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  #people,
+  #goal,
+  .gid,
+  .osource,
+  .record-id,
+  .row-btn,
+  #history-heading {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: unset;
+    max-width: 100%;
+  }
+}
