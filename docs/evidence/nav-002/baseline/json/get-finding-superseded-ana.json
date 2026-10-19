@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "result": {
+    "correctedAt": "2026-10-17T12:03:07.000Z",
+    "correctedBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "correctionReason": "The lab grew past one default task page; the earlier observation covered only the returned page.",
+    "createdAt": "2026-10-17T12:03:06.000Z",
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "currentness": "superseded",
+    "detail": "Observed while the lab still fit inside one default task page.",
+    "id": "find_nav001_superseded",
+    "successorId": "find_nav001_current",
+    "summary": "Every recorded lab task appeared in the first terminal read.",
+    "workspaceId": "ws_nav001_lab"
+  }
+}

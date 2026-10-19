@@ -1,0 +1,371 @@
+{
+  "census": {
+    "agents": 37,
+    "contributions": 217,
+    "humans": 20,
+    "participants": 57,
+    "tasks": 64
+  },
+  "explain": {
+    "contributionsByObject": {
+      "plan": [
+        {
+          "detail": "SEARCH contributions USING INDEX idx_contributions_workspace_position (workspace_id=?)",
+          "id": 7,
+          "notused": 61,
+          "parent": 0
+        }
+      ],
+      "sql": "SELECT * FROM contributions WHERE workspace_id = ? AND object_type = ? AND object_id = ? ORDER BY append_position DESC LIMIT ?"
+    },
+    "listParticipants": {
+      "plan": [
+        {
+          "detail": "SEARCH workspace_participants USING INDEX idx_participants_workspace (workspace_id=?)",
+          "id": 4,
+          "notused": 62,
+          "parent": 0
+        },
+        {
+          "detail": "USE TEMP B-TREE FOR ORDER BY",
+          "id": 19,
+          "notused": 0,
+          "parent": 0
+        }
+      ],
+      "sql": "SELECT * FROM workspace_participants WHERE workspace_id = ? ORDER BY joined_at"
+    },
+    "listTasksPage20": {
+      "plan": [
+        {
+          "detail": "SEARCH tasks USING INDEX idx_tasks_workspace (workspace_id=?)",
+          "id": 7,
+          "notused": 62,
+          "parent": 0
+        },
+        {
+          "detail": "USE TEMP B-TREE FOR ORDER BY",
+          "id": 45,
+          "notused": 0,
+          "parent": 0
+        }
+      ],
+      "sql": "SELECT *, (CASE status WHEN 'blocked' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'open' THEN 2 ELSE 3 END) AS context_rank FROM tasks WHERE workspace_id = ? ORDER BY (CASE status WHEN 'blocked' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'open' THEN 2 ELSE 3 END) ASC, updated_at DESC, id ASC LIMIT ?"
+    },
+    "pageContributionsLimit10": {
+      "plan": [
+        {
+          "detail": "SEARCH contributions USING INDEX idx_contributions_workspace_position (workspace_id=? AND append_position<?)",
+          "id": 7,
+          "notused": 50,
+          "parent": 0
+        }
+      ],
+      "sql": "SELECT * FROM contributions WHERE workspace_id = ? AND append_position <= ? ORDER BY append_position ASC LIMIT ?"
+    },
+    "recentContributionsLimit10": {
+      "plan": [
+        {
+          "detail": "CO-ROUTINE recent_contributions",
+          "id": 2,
+          "notused": 0,
+          "parent": 0
+        },
+        {
+          "detail": "SEARCH contributions USING INDEX idx_contributions_workspace (workspace_id=?)",
+          "id": 9,
+          "notused": 62,
+          "parent": 2
+        },
+        {
+          "detail": "SCAN recent_contributions",
+          "id": 33,
+          "notused": 49,
+          "parent": 0
+        },
+        {
+          "detail": "USE TEMP B-TREE FOR ORDER BY",
+          "id": 51,
+          "notused": 0,
+          "parent": 0
+        }
+      ],
+      "sql": "SELECT * FROM (\n      SELECT contributions.rowid AS entry_rowid, contributions.*\n      FROM contributions WHERE workspace_id = ? ORDER BY created_at DESC, contributions.rowid DESC LIMIT ?\n    ) AS recent_contributions ORDER BY created_at ASC, entry_rowid ASC"
+    }
+  },
+  "files": [
+    {
+      "bytes": 97458,
+      "name": "get-workspace-context-ana.json",
+      "sha256": "180d59e0bafb9bdd5244fe4ef3928c0d6b779c69ee55a079025288dbacc4be07"
+    },
+    {
+      "bytes": 9822,
+      "name": "list-tasks-page-1-ana.json",
+      "sha256": "e3dfe954a4a33642b08d39b9e2b2e234d942a69da1dc871360dec540d8f9f621"
+    },
+    {
+      "bytes": 10008,
+      "name": "list-tasks-page-2-ana.json",
+      "sha256": "fdd9898a39c10a793ae5a60429a95da2fc19fe132962da2e28d1dca09a8eebed"
+    },
+    {
+      "bytes": 435,
+      "name": "get-task-beyond-page-1-ana.json",
+      "sha256": "e6116491f4be4878983bce927548b36f2d0f5ce4c5295c9241d1d65dcfad5d33"
+    },
+    {
+      "bytes": 1062,
+      "name": "get-decision-review-ana.json",
+      "sha256": "33aced471f8a1eacc52a7ce357be29198352cbe00f541be0db2bf39d2d696ddd"
+    },
+    {
+      "bytes": 735,
+      "name": "get-finding-superseded-ana.json",
+      "sha256": "70a06bf1d7fa234939108de8c77d29c5fc5cdaa06232ea6564761b81a80a1e46"
+    },
+    {
+      "bytes": 910,
+      "name": "get-finding-current-ana.json",
+      "sha256": "d5dde1b60db994a0ce6b7e0974dfd9883e03995c5914cf98c1f7634323f27ad6"
+    },
+    {
+      "bytes": 361,
+      "name": "get-artifact-runbook-ana.json",
+      "sha256": "b858135c9d8a88f15c9b2d9f3713592f0e5701a9530cc7d0858b477a5c91790c"
+    },
+    {
+      "bytes": 4479,
+      "name": "get-activity-limit-10-ana.json",
+      "sha256": "bab9d7c4c840bdd3b6013ccb337b87a8721ad1b5da64440b62829dce3043a6ae"
+    },
+    {
+      "bytes": 566,
+      "name": "released-method-absence.json",
+      "sha256": "db2a1d468ae1835f1478085749c90f729ad17173dd55aa29f06f3635c771fb6c"
+    },
+    {
+      "bytes": 847,
+      "name": "authorization-samples.json",
+      "sha256": "4db8476f5a82c56e7594bba115f19f2e1a19028b225a2e62dd0a642cf5ce7a0a"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "sqlite_autoindex_workspace_participants_1",
+      "sql": null
+    },
+    {
+      "name": "sqlite_autoindex_tasks_1",
+      "sql": null
+    },
+    {
+      "name": "sqlite_autoindex_contributions_1",
+      "sql": null
+    },
+    {
+      "name": "idx_participants_workspace",
+      "sql": "CREATE INDEX idx_participants_workspace ON workspace_participants(workspace_id)"
+    },
+    {
+      "name": "idx_contributions_workspace",
+      "sql": "CREATE INDEX idx_contributions_workspace ON contributions(workspace_id, created_at)"
+    },
+    {
+      "name": "idx_tasks_workspace",
+      "sql": "CREATE INDEX idx_tasks_workspace ON tasks(workspace_id, status)"
+    },
+    {
+      "name": "idx_contributions_workspace_position",
+      "sql": "CREATE UNIQUE INDEX idx_contributions_workspace_position\n  ON contributions(workspace_id, append_position)"
+    }
+  ],
+  "keyedContributions": [
+    {
+      "action": "create",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 125,
+      "created_at": "2026-10-17T12:03:03.000Z",
+      "id": "con_nav001_0257",
+      "object_id": "art_nav001_runbook",
+      "object_type": "artifact"
+    },
+    {
+      "action": "create",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 133,
+      "created_at": "2026-10-17T12:03:10.000Z",
+      "id": "con_nav001_0276",
+      "object_id": "dec_nav001_review",
+      "object_type": "decision"
+    },
+    {
+      "action": "update",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 134,
+      "created_at": "2026-10-17T12:03:11.000Z",
+      "id": "con_nav001_0279",
+      "object_id": "dec_nav001_review",
+      "object_type": "decision"
+    },
+    {
+      "action": "update",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 135,
+      "created_at": "2026-10-17T12:03:12.000Z",
+      "id": "con_nav001_0283",
+      "object_id": "dec_nav001_review",
+      "object_type": "decision"
+    },
+    {
+      "action": "create",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 130,
+      "created_at": "2026-10-17T12:03:07.000Z",
+      "id": "con_nav001_0270",
+      "object_id": "find_nav001_current",
+      "object_type": "finding"
+    },
+    {
+      "action": "update",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 131,
+      "created_at": "2026-10-17T12:03:08.000Z",
+      "id": "con_nav001_0272",
+      "object_id": "find_nav001_current",
+      "object_type": "finding"
+    },
+    {
+      "action": "create",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 128,
+      "created_at": "2026-10-17T12:03:06.000Z",
+      "id": "con_nav001_0266",
+      "object_id": "find_nav001_superseded",
+      "object_type": "finding"
+    },
+    {
+      "action": "update",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 129,
+      "created_at": "2026-10-17T12:03:07.000Z",
+      "id": "con_nav001_0269",
+      "object_id": "find_nav001_superseded",
+      "object_type": "finding"
+    },
+    {
+      "action": "create",
+      "actor_id": "hum_nav001_ana",
+      "actor_type": "human",
+      "append_position": 192,
+      "created_at": "2026-10-17T12:04:09.000Z",
+      "id": "con_nav001_0352",
+      "object_id": "task_nav001_f051",
+      "object_type": "task"
+    }
+  ],
+  "ownersWithMultipleAgents": [
+    {
+      "agents": "agt_nav001_01,agt_nav001_21",
+      "n": 2,
+      "owner": "hum_nav001_ana"
+    },
+    {
+      "agents": "agt_nav001_02,agt_nav001_22",
+      "n": 2,
+      "owner": "hum_nav001_ben"
+    },
+    {
+      "agents": "agt_nav001_03,agt_nav001_23",
+      "n": 2,
+      "owner": "hum_nav001_h03"
+    },
+    {
+      "agents": "agt_nav001_04,agt_nav001_24",
+      "n": 2,
+      "owner": "hum_nav001_h04"
+    },
+    {
+      "agents": "agt_nav001_05,agt_nav001_25",
+      "n": 2,
+      "owner": "hum_nav001_h05"
+    },
+    {
+      "agents": "agt_nav001_06,agt_nav001_26",
+      "n": 2,
+      "owner": "hum_nav001_h06"
+    },
+    {
+      "agents": "agt_nav001_07,agt_nav001_27",
+      "n": 2,
+      "owner": "hum_nav001_h07"
+    },
+    {
+      "agents": "agt_nav001_08,agt_nav001_28",
+      "n": 2,
+      "owner": "hum_nav001_h08"
+    },
+    {
+      "agents": "agt_nav001_09,agt_nav001_29",
+      "n": 2,
+      "owner": "hum_nav001_h09"
+    },
+    {
+      "agents": "agt_nav001_10,agt_nav001_30",
+      "n": 2,
+      "owner": "hum_nav001_h10"
+    },
+    {
+      "agents": "agt_nav001_11,agt_nav001_31",
+      "n": 2,
+      "owner": "hum_nav001_h11"
+    },
+    {
+      "agents": "agt_nav001_12,agt_nav001_32",
+      "n": 2,
+      "owner": "hum_nav001_h12"
+    },
+    {
+      "agents": "agt_nav001_13,agt_nav001_33",
+      "n": 2,
+      "owner": "hum_nav001_h13"
+    },
+    {
+      "agents": "agt_nav001_14,agt_nav001_34",
+      "n": 2,
+      "owner": "hum_nav001_h14"
+    },
+    {
+      "agents": "agt_nav001_15,agt_nav001_35",
+      "n": 2,
+      "owner": "hum_nav001_h15"
+    },
+    {
+      "agents": "agt_nav001_16,agt_nav001_36",
+      "n": 2,
+      "owner": "hum_nav001_h16"
+    },
+    {
+      "agents": "agt_nav001_17,agt_nav001_37",
+      "n": 2,
+      "owner": "hum_nav001_h17"
+    }
+  ],
+  "payloadBytes": {
+    "contextWithoutParticipantItems": 55725,
+    "getActivityLimit10": 2836,
+    "getWorkspaceContextAna": 64920,
+    "listTasksPage1": 6496,
+    "listTasksPage2": 6516,
+    "participantCount": 57,
+    "participantsArray": 9197
+  }
+}

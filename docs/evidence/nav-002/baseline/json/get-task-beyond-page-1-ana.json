@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "result": {
+    "assignee": {
+      "actorId": "agt_nav001_33",
+      "actorType": "agent"
+    },
+    "createdAt": "2026-10-17T12:04:09.000Z",
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "id": "task_nav001_f051",
+    "status": "open",
+    "title": "Display-pressure filler task 51",
+    "updatedAt": "2026-10-17T12:04:09.000Z",
+    "workspaceId": "ws_nav001_lab"
+  }
+}

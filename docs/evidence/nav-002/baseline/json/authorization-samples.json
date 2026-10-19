@@ -1,0 +1,32 @@
+{
+  "agentTasksFirstItem": {
+    "first": "task_nav001_blocked_agent",
+    "ok": true,
+    "returned": 1,
+    "total": 64
+  },
+  "anaCursorOnUnrelatedWorkspace": {
+    "error": "ParticipantRequired",
+    "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+    "ok": false
+  },
+  "taskCursorOnListDecisions": {
+    "details": {
+      "field": "cursor",
+      "kind": "decision"
+    },
+    "error": "ValidationError",
+    "message": "Cursor is not a decision cursor",
+    "ok": false
+  },
+  "zedContext": {
+    "error": "ParticipantRequired",
+    "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+    "ok": false
+  },
+  "zedTasks": {
+    "error": "ParticipantRequired",
+    "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+    "ok": false
+  }
+}

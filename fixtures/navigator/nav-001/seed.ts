@@ -477,11 +477,16 @@ function seedScenario(service: CampfireService): ScenarioTokens {
   assertEqual(zed.human.id, SCENARIO.humans.zed, "Zed id");
   tokens.zed = zed.token;
 
-  // 37 agents, each owned by one of the 20 lab humans (cycled), with
-  // alternating harness values "codex" and "opencode" (odd = codex).
+  // 37 agents. Owners cycle over the 20 lab humans, and harness alternates
+  // (odd = codex, even = opencode). agt_nav001_03 is the NAV-002 exception:
+  // Zed owns it. Zed is on the team and is not a lab participant, so the
+  // recorded owner is outside the workspace roster. Agent 03 is not on the
+  // first task page and is not one of the NAV-001 owner assertions
+  // (agent 01 stays Ana's; agent 37 stays on the cycle).
   for (const [index, agentId] of LAB_AGENT_IDS.entries()) {
     const agentNumber = index + 1;
-    const ownerId = LAB_HUMAN_IDS[index % LAB_HUMAN_IDS.length]!;
+    const cycledOwnerId = LAB_HUMAN_IDS[index % LAB_HUMAN_IDS.length]!;
+    const ownerId = agentId === "agt_nav001_03" ? SCENARIO.humans.zed : cycledOwnerId;
     const harness = agentNumber % 2 === 1 ? "codex" : "opencode";
     const created = service.createAgent(human(ownerId), {
       teamId: SCENARIO.teamId,
@@ -576,6 +581,12 @@ function verifyScenario(service: CampfireService, store: CampfireStore): Record<
     LAB_HUMAN_IDS[36 % LAB_HUMAN_IDS.length],
     "agent 37 owner cycles over the lab humans",
   );
+  assertEqual(store.getAgent("agt_nav001_03")?.humanId, SCENARIO.humans.zed, "agent 03 owner is Zed");
+  assertEqual(store.getAgent("agt_nav001_21")?.humanId, SCENARIO.humans.ana, "agent 21 remains Ana's second agent");
+  assert(
+    store.getParticipant(SCENARIO.workspaces.lab, { actorId: "agt_nav001_03", actorType: "agent" }) !== undefined,
+    "agent 03 left the lab roster",
+  );
   assert(store.getAgent(SCENARIO.agentIds[1]!)?.harness === "opencode", "agent 02 harness alternation");
 
   // --- Tasks slice ----------------------------------------------------------
@@ -583,6 +594,32 @@ function verifyScenario(service: CampfireService, store: CampfireStore): Record<
   assertEqual(labAna.slices.tasks.returned, 20, "lab task returned");
   assertEqual(labAna.slices.tasks.truncated, true, "lab task truncated");
   const returnedTaskIds = labAna.slices.tasks.items.map((task) => task.id);
+  assertEqual(
+    returnedTaskIds,
+    [
+      SCENARIO.tasks.blockedAgent,
+      SCENARIO.tasks.blockedNoassignee,
+      SCENARIO.tasks.assignedBlockedAna,
+      "task_nav001_f052",
+      "task_nav001_f039",
+      "task_nav001_f026",
+      "task_nav001_f013",
+      "task_nav001_f058",
+      "task_nav001_f045",
+      "task_nav001_f032",
+      "task_nav001_f019",
+      "task_nav001_f006",
+      SCENARIO.tasks.hostile,
+      SCENARIO.tasks.openNoassignee,
+      SCENARIO.tasks.assignedOpenAna,
+      "task_nav001_f057",
+      "task_nav001_f056",
+      "task_nav001_f055",
+      "task_nav001_f054",
+      "task_nav001_f053",
+    ],
+    "first task page order",
+  );
   for (const id of [
     SCENARIO.tasks.assignedOpenAna,
     SCENARIO.tasks.openNoassignee,

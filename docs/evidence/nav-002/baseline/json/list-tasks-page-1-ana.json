@@ -1,0 +1,329 @@
+{
+  "cursorShape": {
+    "at": "2026-10-17T12:04:11.000Z",
+    "id": "task_nav001_f053",
+    "kind": "task",
+    "rank": 2,
+    "v": 1,
+    "workspaceId": "ws_nav001_lab"
+  },
+  "ok": true,
+  "result": {
+    "items": [
+      {
+        "assignee": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:22.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_blocked_agent",
+        "status": "blocked",
+        "title": "Reproduce the eager-dump pressure",
+        "updatedAt": "2026-10-17T12:04:34.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:21.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_blocked_noassignee",
+        "status": "blocked",
+        "title": "Decide what counts as a focused screen",
+        "updatedAt": "2026-10-17T12:04:33.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:20.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_blocked_ana",
+        "status": "blocked",
+        "title": "Package the display-pressure baseline",
+        "updatedAt": "2026-10-17T12:04:32.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_34",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:10.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f052",
+        "status": "blocked",
+        "title": "Display-pressure filler task 52",
+        "updatedAt": "2026-10-17T12:04:30.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_21",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:57.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f039",
+        "status": "blocked",
+        "title": "Display-pressure filler task 39",
+        "updatedAt": "2026-10-17T12:04:28.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_08",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:44.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f026",
+        "status": "blocked",
+        "title": "Display-pressure filler task 26",
+        "updatedAt": "2026-10-17T12:04:26.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h15",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:31.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f013",
+        "status": "blocked",
+        "title": "Display-pressure filler task 13",
+        "updatedAt": "2026-10-17T12:04:24.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h05",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:16.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f058",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 58",
+        "updatedAt": "2026-10-17T12:04:31.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_27",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:03.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f045",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 45",
+        "updatedAt": "2026-10-17T12:04:29.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_14",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:50.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f032",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 32",
+        "updatedAt": "2026-10-17T12:04:27.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:37.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f019",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 19",
+        "updatedAt": "2026-10-17T12:04:25.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h08",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:24.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f006",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 06",
+        "updatedAt": "2026-10-17T12:04:23.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:19.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_hostile",
+        "status": "open",
+        "title": "nav-001 \u001b[31mhostile\u001b[0m\u0007 title",
+        "updatedAt": "2026-10-17T12:04:19.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:18.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_open_noassignee",
+        "status": "open",
+        "title": "Pick the screen reviewer",
+        "updatedAt": "2026-10-17T12:04:18.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:17.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_open_ana",
+        "status": "open",
+        "title": "Give the terminal one focused screen",
+        "updatedAt": "2026-10-17T12:04:17.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h04",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:15.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f057",
+        "status": "open",
+        "title": "Display-pressure filler task 57",
+        "updatedAt": "2026-10-17T12:04:15.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h03",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:14.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f056",
+        "status": "open",
+        "title": "Display-pressure filler task 56",
+        "updatedAt": "2026-10-17T12:04:14.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_37",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:13.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f055",
+        "status": "open",
+        "title": "Display-pressure filler task 55",
+        "updatedAt": "2026-10-17T12:04:13.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_36",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:12.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f054",
+        "status": "open",
+        "title": "Display-pressure filler task 54",
+        "updatedAt": "2026-10-17T12:04:12.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_35",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:11.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f053",
+        "status": "open",
+        "title": "Display-pressure filler task 53",
+        "updatedAt": "2026-10-17T12:04:11.000Z",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoidGFzayIsIndvcmtzcGFjZUlkIjoid3NfbmF2MDAxX2xhYiIsInJhbmsiOjIsImF0IjoiMjAyNi0xMC0xN1QxMjowNDoxMS4wMDBaIiwiaWQiOiJ0YXNrX25hdjAwMV9mMDUzIn0",
+    "returned": 20,
+    "schemaVersion": 1,
+    "total": 64,
+    "truncated": true,
+    "workspaceId": "ws_nav001_lab"
+  }
+}

@@ -32,7 +32,7 @@ evidence.
 | Goal | `goal_nav001_focus` — "Give the terminal one focused screen over the recorded work." |
 | Tracked humans | `hum_nav001_ana`, `hum_nav001_ben` (both lab members) |
 | Lab humans total | 20 (fixed 20-human roster) |
-| Lab agents total | 37 (`agt_nav001_01` … `agt_nav001_37`; odd = `codex`, even = `opencode`; owner = the fixed human roster member at `index % 20`) |
+| Lab agents total | 37 (`agt_nav001_01` … `agt_nav001_37`; odd = `codex`, even = `opencode`; owner = the fixed human roster member at `index % 20`, except `agt_nav001_03`) |
 | Participants | 57 (20 human + 37 agent) |
 | Tasks | 64 (58 fillers + 6 keyed) |
 | Findings in lab | 2 (`find_nav001_current` = current; `find_nav001_superseded` = superseded) |
@@ -173,6 +173,17 @@ would silently vanish. The weighted cycle (`N % 13`) holds blocked fillers at
 4 and in_progress fillers at 5 so the page is `7 blocked + 5 in_progress +
 8 open` and keeps all six keyed tasks returned. Any redesign of the filler mix
 must re-verify the page shape above, not just the ID list.
+
+## NAV-002 owner exception (2026-10-18)
+
+The owner cycle above is still the rule for every lab agent except
+`agt_nav001_03`. That agent is owned by `hum_nav001_zed`. Zed is on the team
+and is a participant only of `ws_nav001_unrelated`, so the recorded owner is
+outside the lab roster. Agent 03 stays a lab participant. The exception does
+not add a human, agent, task, or participant, and it does not change the first
+task-page order or the attention cues. `hum_nav001_h03` keeps only
+`agt_nav001_23`. Ana still owns `agt_nav001_01` and `agt_nav001_21`. The
+NAV-002 answer key is `docs/evidence/nav-002/ANSWER_SHEET.md`.
 
 ## Related evidence
 

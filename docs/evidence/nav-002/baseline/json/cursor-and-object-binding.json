@@ -1,0 +1,44 @@
+{
+  "note": "Ana is authorized on ws_nav001_lab. These cursors are synthetic cf1 tokens with no secrets. Authorization is not the failure; the cursor binding is.",
+  "foreignWorkspaceCursorOnLabTasks": {
+    "ok": false,
+    "error": "ValidationError",
+    "message": "Cursor belongs to a different workspace",
+    "details": {
+      "field": "cursor",
+      "workspaceId": "ws_nav001_lab"
+    }
+  },
+  "malformedCursorOnLabTasks": {
+    "ok": false,
+    "error": "ValidationError",
+    "message": "Cursor is malformed",
+    "details": {
+      "field": "cursor"
+    }
+  },
+  "missingWorkspace": {
+    "ok": false,
+    "error": "WorkspaceNotFound",
+    "message": "Workspace not found: ws_does_not_exist",
+    "details": {
+      "workspaceId": "ws_does_not_exist"
+    }
+  },
+  "wrongObject": {
+    "ok": false,
+    "error": "TaskNotFound",
+    "message": "Task not found: task_missing",
+    "details": {
+      "taskId": "task_missing"
+    }
+  },
+  "objectFromOtherWorkspace": {
+    "ok": false,
+    "error": "FindingNotFound",
+    "message": "Finding not found: find_nav001_unrelated",
+    "details": {
+      "findingId": "find_nav001_unrelated"
+    }
+  }
+}

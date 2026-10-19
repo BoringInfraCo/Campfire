@@ -1,0 +1,170 @@
+{
+  "ok": true,
+  "result": {
+    "items": [
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 208,
+        "createdAt": "2026-10-17T12:04:25.000Z",
+        "id": "con_nav001_0372",
+        "objectId": "task_nav001_f019",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 209,
+        "createdAt": "2026-10-17T12:04:26.000Z",
+        "id": "con_nav001_0375",
+        "objectId": "task_nav001_f026",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 210,
+        "createdAt": "2026-10-17T12:04:27.000Z",
+        "id": "con_nav001_0378",
+        "objectId": "task_nav001_f032",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 211,
+        "createdAt": "2026-10-17T12:04:28.000Z",
+        "id": "con_nav001_0381",
+        "objectId": "task_nav001_f039",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 212,
+        "createdAt": "2026-10-17T12:04:29.000Z",
+        "id": "con_nav001_0384",
+        "objectId": "task_nav001_f045",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 213,
+        "createdAt": "2026-10-17T12:04:30.000Z",
+        "id": "con_nav001_0387",
+        "objectId": "task_nav001_f052",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 214,
+        "createdAt": "2026-10-17T12:04:31.000Z",
+        "id": "con_nav001_0390",
+        "objectId": "task_nav001_f058",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 215,
+        "createdAt": "2026-10-17T12:04:32.000Z",
+        "id": "con_nav001_0393",
+        "objectId": "task_nav001_assigned_blocked_ana",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 216,
+        "createdAt": "2026-10-17T12:04:33.000Z",
+        "id": "con_nav001_0396",
+        "objectId": "task_nav001_blocked_noassignee",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 217,
+        "createdAt": "2026-10-17T12:04:34.000Z",
+        "id": "con_nav001_0399",
+        "objectId": "task_nav001_blocked_agent",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "nextBefore": "con_nav001_0372",
+    "total": 217,
+    "truncated": true
+  }
+}

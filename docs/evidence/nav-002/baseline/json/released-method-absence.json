@@ -1,0 +1,21 @@
+{
+  "get_record_history": {
+    "details": {
+      "field": "method",
+      "method": "get_record_history"
+    },
+    "error": "ValidationError",
+    "message": "Unknown method: get_record_history",
+    "ok": false
+  },
+  "list_workspace_participants": {
+    "details": {
+      "field": "method",
+      "method": "list_workspace_participants"
+    },
+    "error": "ValidationError",
+    "message": "Unknown method: list_workspace_participants",
+    "ok": false
+  },
+  "note": "Dispatched through v1.22.1 dispatchCampfireMethod. Unknown method is the released gap."
+}

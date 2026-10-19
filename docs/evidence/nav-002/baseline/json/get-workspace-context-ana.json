@@ -1,0 +1,2912 @@
+{
+  "ok": true,
+  "result": {
+    "acceptedDecisions": [
+      {
+        "approvedBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:17.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_nav001_plain",
+        "rationale": "No write path may change the fixture before captures are frozen.",
+        "status": "accepted",
+        "summary": "Keep the workspace read-only during the baseline freeze.",
+        "updatedAt": "2026-10-17T12:03:18.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:15.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_nav001_competing_b",
+        "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+        "status": "accepted",
+        "summary": "Order the screen by newest record.",
+        "updatedAt": "2026-10-17T12:03:16.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:13.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_nav001_competing_a",
+        "rationale": "Assignment is the only recorded grouping, so it should lead the order.",
+        "status": "accepted",
+        "summary": "Order the screen by recorded assignment.",
+        "updatedAt": "2026-10-17T12:03:14.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "approvedBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-10-17T12:03:12.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "decisionId": "dec_nav001_review",
+            "findingId": "find_nav001_superseded",
+            "id": "cit_nav001_0282",
+            "note": "original observation",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "createdAt": "2026-10-17T12:03:10.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_nav001_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_nav001_superseded"
+        ],
+        "rationale": "Assumed the default task page returned every recorded task.",
+        "status": "accepted",
+        "summary": "The terminal screen lists every recorded task because the read felt complete.",
+        "updatedAt": "2026-10-17T12:03:11.000Z",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "alignment": {
+      "acceptedDecisionIds": [
+        "dec_nav001_review",
+        "dec_nav001_competing_a",
+        "dec_nav001_competing_b",
+        "dec_nav001_plain"
+      ],
+      "proposedDecisionIds": [
+        "dec_nav001_proposed"
+      ],
+      "status": "open",
+      "unresolvedBlockedTaskIds": [
+        "task_nav001_f013",
+        "task_nav001_f026",
+        "task_nav001_f039",
+        "task_nav001_f052",
+        "task_nav001_assigned_blocked_ana",
+        "task_nav001_blocked_noassignee",
+        "task_nav001_blocked_agent"
+      ]
+    },
+    "artifacts": [
+      {
+        "createdAt": "2026-10-17T12:03:05.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_notes",
+        "title": "nav-001 working notes",
+        "type": "document",
+        "uriOrPath": "nav-001/working-notes.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:03:04.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_hostile",
+        "title": "nav-001 hostile markup reference",
+        "type": "other",
+        "uriOrPath": "https://example.com/nav-001/report\"><img src=x onerror=alert(1)>",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:03:03.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_runbook",
+        "title": "nav-001 runbook reference",
+        "type": "report",
+        "uriOrPath": "https://example.com/nav-001/runbook.html",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:03:02.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f09",
+        "title": "Display-pressure filler reference 09",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-09.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:03:01.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f08",
+        "title": "Display-pressure filler reference 08",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-08.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:03:00.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f07",
+        "title": "Display-pressure filler reference 07",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-07.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:02:59.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f06",
+        "title": "Display-pressure filler reference 06",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-06.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:02:58.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f05",
+        "title": "Display-pressure filler reference 05",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-05.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:02:57.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f04",
+        "title": "Display-pressure filler reference 04",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-04.md",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:02:56.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "art_nav001_f03",
+        "title": "Display-pressure filler reference 03",
+        "type": "document",
+        "uriOrPath": "nav-001/filler-reference-03.md",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "attentionCoverage": {
+      "completeUnderRules": false,
+      "decisions": {
+        "returned": 5,
+        "total": 5,
+        "truncated": false
+      },
+      "tasks": {
+        "returned": 20,
+        "total": 64,
+        "truncated": true
+      }
+    },
+    "budget": {
+      "artifacts": 10,
+      "blockers": 10,
+      "decisions": 10,
+      "findings": 10,
+      "goals": 1,
+      "recentChanges": 20,
+      "tasks": 20
+    },
+    "completeness": {
+      "drillDownAvailable": true,
+      "fullHistoryIncluded": false
+    },
+    "currentWork": {
+      "acceptedDecisions": [
+        {
+          "approvedBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "citations": [
+            {
+              "createdAt": "2026-10-17T12:03:12.000Z",
+              "createdBy": {
+                "actorId": "hum_nav001_ana",
+                "actorType": "human"
+              },
+              "decisionId": "dec_nav001_review",
+              "findingId": "find_nav001_superseded",
+              "id": "cit_nav001_0282",
+              "note": "original observation",
+              "workspaceId": "ws_nav001_lab"
+            }
+          ],
+          "createdAt": "2026-10-17T12:03:10.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_nav001_review",
+          "needsReview": true,
+          "needsReviewFindingIds": [
+            "find_nav001_superseded"
+          ],
+          "rationale": "Assumed the default task page returned every recorded task.",
+          "status": "accepted",
+          "summary": "The terminal screen lists every recorded task because the read felt complete.",
+          "updatedAt": "2026-10-17T12:03:11.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:03:13.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_nav001_competing_a",
+          "rationale": "Assignment is the only recorded grouping, so it should lead the order.",
+          "status": "accepted",
+          "summary": "Order the screen by recorded assignment.",
+          "updatedAt": "2026-10-17T12:03:14.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:03:15.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_nav001_competing_b",
+          "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+          "status": "accepted",
+          "summary": "Order the screen by newest record.",
+          "updatedAt": "2026-10-17T12:03:16.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "approvedBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:03:17.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "dec_nav001_plain",
+          "rationale": "No write path may change the fixture before captures are frozen.",
+          "status": "accepted",
+          "summary": "Keep the workspace read-only during the baseline freeze.",
+          "updatedAt": "2026-10-17T12:03:18.000Z",
+          "workspaceId": "ws_nav001_lab"
+        }
+      ],
+      "blockedTasks": [
+        {
+          "assignee": {
+            "actorId": "hum_nav001_h15",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:03:31.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f013",
+          "status": "blocked",
+          "title": "Display-pressure filler task 13",
+          "updatedAt": "2026-10-17T12:04:24.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_08",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:03:44.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f026",
+          "status": "blocked",
+          "title": "Display-pressure filler task 26",
+          "updatedAt": "2026-10-17T12:04:26.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_21",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:03:57.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f039",
+          "status": "blocked",
+          "title": "Display-pressure filler task 39",
+          "updatedAt": "2026-10-17T12:04:28.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_34",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:04:10.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f052",
+          "status": "blocked",
+          "title": "Display-pressure filler task 52",
+          "updatedAt": "2026-10-17T12:04:30.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:04:20.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_assigned_blocked_ana",
+          "status": "blocked",
+          "title": "Package the display-pressure baseline",
+          "updatedAt": "2026-10-17T12:04:32.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "createdAt": "2026-10-17T12:04:21.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_blocked_noassignee",
+          "status": "blocked",
+          "title": "Decide what counts as a focused screen",
+          "updatedAt": "2026-10-17T12:04:33.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_01",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:04:22.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_blocked_agent",
+          "status": "blocked",
+          "title": "Reproduce the eager-dump pressure",
+          "updatedAt": "2026-10-17T12:04:34.000Z",
+          "workspaceId": "ws_nav001_lab"
+        }
+      ],
+      "inProgressTasks": [
+        {
+          "assignee": {
+            "actorId": "hum_nav001_h08",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:03:24.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f006",
+          "status": "in_progress",
+          "title": "Display-pressure filler task 06",
+          "updatedAt": "2026-10-17T12:04:23.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_01",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:03:37.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f019",
+          "status": "in_progress",
+          "title": "Display-pressure filler task 19",
+          "updatedAt": "2026-10-17T12:04:25.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_14",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:03:50.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f032",
+          "status": "in_progress",
+          "title": "Display-pressure filler task 32",
+          "updatedAt": "2026-10-17T12:04:27.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "agt_nav001_27",
+            "actorType": "agent"
+          },
+          "createdAt": "2026-10-17T12:04:03.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f045",
+          "status": "in_progress",
+          "title": "Display-pressure filler task 45",
+          "updatedAt": "2026-10-17T12:04:29.000Z",
+          "workspaceId": "ws_nav001_lab"
+        },
+        {
+          "assignee": {
+            "actorId": "hum_nav001_h05",
+            "actorType": "human"
+          },
+          "createdAt": "2026-10-17T12:04:16.000Z",
+          "createdBy": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "id": "task_nav001_f058",
+          "status": "in_progress",
+          "title": "Display-pressure filler task 58",
+          "updatedAt": "2026-10-17T12:04:31.000Z",
+          "workspaceId": "ws_nav001_lab"
+        }
+      ]
+    },
+    "findings": [
+      {
+        "createdAt": "2026-10-17T12:03:07.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "currentness": "current",
+        "detail": "The 44 tasks beyond the default 20-row page are not inspected.",
+        "evidence": [
+          {
+            "artifactId": "art_nav001_runbook",
+            "createdAt": "2026-10-17T12:03:08.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "findingId": "find_nav001_current",
+            "id": "fev_nav001_0271",
+            "note": "runbook recorded beside the correction",
+            "relation": "supports",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "id": "find_nav001_current",
+        "predecessorId": "find_nav001_superseded",
+        "summary": "The terminal read covers only the returned task page.",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "generatedAt": "2026-10-17T14:00:00.000Z",
+    "goal": {
+      "createdAt": "2026-10-17T12:01:01.000Z",
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "description": "Twenty humans and thirty-seven agents share one lab while the v1.21.0 navigator baseline is frozen.",
+      "id": "goal_nav001_focus",
+      "status": "active",
+      "title": "Give the terminal one focused screen over the recorded work.",
+      "updatedAt": "2026-10-17T12:01:01.000Z",
+      "workspaceId": "ws_nav001_lab"
+    },
+    "historicalCounts": {
+      "decisions": 0,
+      "findings": 1
+    },
+    "needsAttention": [
+      {
+        "id": "task_nav001_blocked_noassignee",
+        "kind": "task",
+        "reason": "unassigned_blocked_task",
+        "status": "blocked",
+        "summary": "Decide what counts as a focused screen"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h15",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f013",
+        "kind": "task",
+        "reason": "team_blocked_task",
+        "status": "blocked",
+        "summary": "Display-pressure filler task 13"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_08",
+          "actorType": "agent"
+        },
+        "id": "task_nav001_f026",
+        "kind": "task",
+        "reason": "team_blocked_task",
+        "status": "blocked",
+        "summary": "Display-pressure filler task 26"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_21",
+          "actorType": "agent"
+        },
+        "id": "task_nav001_f039",
+        "kind": "task",
+        "reason": "team_blocked_task",
+        "status": "blocked",
+        "summary": "Display-pressure filler task 39"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_34",
+          "actorType": "agent"
+        },
+        "id": "task_nav001_f052",
+        "kind": "task",
+        "reason": "team_blocked_task",
+        "status": "blocked",
+        "summary": "Display-pressure filler task 52"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "id": "task_nav001_blocked_agent",
+        "kind": "task",
+        "reason": "team_blocked_task",
+        "status": "blocked",
+        "summary": "Reproduce the eager-dump pressure"
+      },
+      {
+        "id": "dec_nav001_review",
+        "kind": "decision",
+        "needsReviewFindingIds": [
+          "find_nav001_superseded"
+        ],
+        "reason": "accepted_decision_needs_review",
+        "status": "accepted",
+        "summary": "The terminal screen lists every recorded task because the read felt complete."
+      }
+    ],
+    "needsYou": [
+      {
+        "id": "dec_nav001_proposed",
+        "kind": "decision",
+        "reason": "proposed_decision_actionable",
+        "status": "proposed",
+        "summary": "Adopt the focused single-screen terminal layout."
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_blocked_ana",
+        "kind": "task",
+        "reason": "assigned_blocked_task",
+        "status": "blocked",
+        "summary": "Package the display-pressure baseline"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_open_ana",
+        "kind": "task",
+        "reason": "assigned_open_task",
+        "status": "open",
+        "summary": "Give the terminal one focused screen"
+      }
+    ],
+    "openTasks": [
+      {
+        "assignee": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:22.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_blocked_agent",
+        "status": "blocked",
+        "title": "Reproduce the eager-dump pressure",
+        "updatedAt": "2026-10-17T12:04:34.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:21.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_blocked_noassignee",
+        "status": "blocked",
+        "title": "Decide what counts as a focused screen",
+        "updatedAt": "2026-10-17T12:04:33.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:20.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_blocked_ana",
+        "status": "blocked",
+        "title": "Package the display-pressure baseline",
+        "updatedAt": "2026-10-17T12:04:32.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_34",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:10.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f052",
+        "status": "blocked",
+        "title": "Display-pressure filler task 52",
+        "updatedAt": "2026-10-17T12:04:30.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_21",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:57.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f039",
+        "status": "blocked",
+        "title": "Display-pressure filler task 39",
+        "updatedAt": "2026-10-17T12:04:28.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_08",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:44.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f026",
+        "status": "blocked",
+        "title": "Display-pressure filler task 26",
+        "updatedAt": "2026-10-17T12:04:26.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h15",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:31.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f013",
+        "status": "blocked",
+        "title": "Display-pressure filler task 13",
+        "updatedAt": "2026-10-17T12:04:24.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h05",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:16.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f058",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 58",
+        "updatedAt": "2026-10-17T12:04:31.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_27",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:03.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f045",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 45",
+        "updatedAt": "2026-10-17T12:04:29.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_14",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:50.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f032",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 32",
+        "updatedAt": "2026-10-17T12:04:27.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:03:37.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f019",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 19",
+        "updatedAt": "2026-10-17T12:04:25.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h08",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:24.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f006",
+        "status": "in_progress",
+        "title": "Display-pressure filler task 06",
+        "updatedAt": "2026-10-17T12:04:23.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:19.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_hostile",
+        "status": "open",
+        "title": "nav-001 \u001b[31mhostile\u001b[0m\u0007 title",
+        "updatedAt": "2026-10-17T12:04:19.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "createdAt": "2026-10-17T12:04:18.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_open_noassignee",
+        "status": "open",
+        "title": "Pick the screen reviewer",
+        "updatedAt": "2026-10-17T12:04:18.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:17.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_assigned_open_ana",
+        "status": "open",
+        "title": "Give the terminal one focused screen",
+        "updatedAt": "2026-10-17T12:04:17.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h04",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:15.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f057",
+        "status": "open",
+        "title": "Display-pressure filler task 57",
+        "updatedAt": "2026-10-17T12:04:15.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "hum_nav001_h03",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:04:14.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f056",
+        "status": "open",
+        "title": "Display-pressure filler task 56",
+        "updatedAt": "2026-10-17T12:04:14.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_37",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:13.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f055",
+        "status": "open",
+        "title": "Display-pressure filler task 55",
+        "updatedAt": "2026-10-17T12:04:13.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_36",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:12.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f054",
+        "status": "open",
+        "title": "Display-pressure filler task 54",
+        "updatedAt": "2026-10-17T12:04:12.000Z",
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "assignee": {
+          "actorId": "agt_nav001_35",
+          "actorType": "agent"
+        },
+        "createdAt": "2026-10-17T12:04:11.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "task_nav001_f053",
+        "status": "open",
+        "title": "Display-pressure filler task 53",
+        "updatedAt": "2026-10-17T12:04:11.000Z",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "orientationCursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzQuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzk5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzQuMDAwWiIsIm9yaWdpbklkIjoiY29uX25hdjAwMV8wMzk5IiwicG9zaXRpb24iOjIxNywib3JpZ2luUG9zaXRpb24iOjIxNywidGlwIjowfQ",
+    "participants": [
+      {
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:00.000Z",
+        "name": "Ana",
+        "role": "owner"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_ben",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:03.000Z",
+        "name": "Ben",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h03",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:05.000Z",
+        "name": "H03",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h04",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:07.000Z",
+        "name": "H04",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h05",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:09.000Z",
+        "name": "H05",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h06",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:11.000Z",
+        "name": "H06",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h07",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:13.000Z",
+        "name": "H07",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h08",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:15.000Z",
+        "name": "H08",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h09",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:17.000Z",
+        "name": "H09",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h10",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:19.000Z",
+        "name": "H10",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h11",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:21.000Z",
+        "name": "H11",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h12",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:23.000Z",
+        "name": "H12",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h13",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:25.000Z",
+        "name": "H13",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h14",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:27.000Z",
+        "name": "H14",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h15",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:29.000Z",
+        "name": "H15",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h16",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:31.000Z",
+        "name": "H16",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h17",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:33.000Z",
+        "name": "H17",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h18",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:35.000Z",
+        "name": "H18",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h19",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:37.000Z",
+        "name": "H19",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "hum_nav001_h20",
+          "actorType": "human"
+        },
+        "joinedAt": "2026-10-17T12:01:39.000Z",
+        "name": "H20",
+        "role": "member"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_ana",
+        "joinedAt": "2026-10-17T12:01:41.000Z",
+        "name": "Agent 01",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_02",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_ben",
+        "joinedAt": "2026-10-17T12:01:43.000Z",
+        "name": "Agent 02",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_03",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h03",
+        "joinedAt": "2026-10-17T12:01:45.000Z",
+        "name": "Agent 03",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_04",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h04",
+        "joinedAt": "2026-10-17T12:01:47.000Z",
+        "name": "Agent 04",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_05",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h05",
+        "joinedAt": "2026-10-17T12:01:49.000Z",
+        "name": "Agent 05",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_06",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h06",
+        "joinedAt": "2026-10-17T12:01:51.000Z",
+        "name": "Agent 06",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_07",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h07",
+        "joinedAt": "2026-10-17T12:01:53.000Z",
+        "name": "Agent 07",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_08",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h08",
+        "joinedAt": "2026-10-17T12:01:55.000Z",
+        "name": "Agent 08",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_09",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h09",
+        "joinedAt": "2026-10-17T12:01:57.000Z",
+        "name": "Agent 09",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_10",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h10",
+        "joinedAt": "2026-10-17T12:01:59.000Z",
+        "name": "Agent 10",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_11",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h11",
+        "joinedAt": "2026-10-17T12:02:01.000Z",
+        "name": "Agent 11",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_12",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h12",
+        "joinedAt": "2026-10-17T12:02:03.000Z",
+        "name": "Agent 12",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_13",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h13",
+        "joinedAt": "2026-10-17T12:02:05.000Z",
+        "name": "Agent 13",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_14",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h14",
+        "joinedAt": "2026-10-17T12:02:07.000Z",
+        "name": "Agent 14",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_15",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h15",
+        "joinedAt": "2026-10-17T12:02:09.000Z",
+        "name": "Agent 15",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_16",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h16",
+        "joinedAt": "2026-10-17T12:02:11.000Z",
+        "name": "Agent 16",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_17",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h17",
+        "joinedAt": "2026-10-17T12:02:13.000Z",
+        "name": "Agent 17",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_18",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h18",
+        "joinedAt": "2026-10-17T12:02:15.000Z",
+        "name": "Agent 18",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_19",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h19",
+        "joinedAt": "2026-10-17T12:02:17.000Z",
+        "name": "Agent 19",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_20",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h20",
+        "joinedAt": "2026-10-17T12:02:19.000Z",
+        "name": "Agent 20",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_21",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_ana",
+        "joinedAt": "2026-10-17T12:02:21.000Z",
+        "name": "Agent 21",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_22",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_ben",
+        "joinedAt": "2026-10-17T12:02:23.000Z",
+        "name": "Agent 22",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_23",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h03",
+        "joinedAt": "2026-10-17T12:02:25.000Z",
+        "name": "Agent 23",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_24",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h04",
+        "joinedAt": "2026-10-17T12:02:27.000Z",
+        "name": "Agent 24",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_25",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h05",
+        "joinedAt": "2026-10-17T12:02:29.000Z",
+        "name": "Agent 25",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_26",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h06",
+        "joinedAt": "2026-10-17T12:02:31.000Z",
+        "name": "Agent 26",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_27",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h07",
+        "joinedAt": "2026-10-17T12:02:33.000Z",
+        "name": "Agent 27",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_28",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h08",
+        "joinedAt": "2026-10-17T12:02:35.000Z",
+        "name": "Agent 28",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_29",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h09",
+        "joinedAt": "2026-10-17T12:02:37.000Z",
+        "name": "Agent 29",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_30",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h10",
+        "joinedAt": "2026-10-17T12:02:39.000Z",
+        "name": "Agent 30",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_31",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h11",
+        "joinedAt": "2026-10-17T12:02:41.000Z",
+        "name": "Agent 31",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_32",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h12",
+        "joinedAt": "2026-10-17T12:02:43.000Z",
+        "name": "Agent 32",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_33",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h13",
+        "joinedAt": "2026-10-17T12:02:45.000Z",
+        "name": "Agent 33",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_34",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h14",
+        "joinedAt": "2026-10-17T12:02:47.000Z",
+        "name": "Agent 34",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_35",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h15",
+        "joinedAt": "2026-10-17T12:02:49.000Z",
+        "name": "Agent 35",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_36",
+          "actorType": "agent"
+        },
+        "harness": "opencode",
+        "humanOwnerId": "hum_nav001_h16",
+        "joinedAt": "2026-10-17T12:02:51.000Z",
+        "name": "Agent 36",
+        "role": "agent"
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_37",
+          "actorType": "agent"
+        },
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_h17",
+        "joinedAt": "2026-10-17T12:02:53.000Z",
+        "name": "Agent 37",
+        "role": "agent"
+      }
+    ],
+    "proposedDecisions": [
+      {
+        "createdAt": "2026-10-17T12:03:09.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "id": "dec_nav001_proposed",
+        "rationale": "The contract seeks lower time-to-source without a second work feed.",
+        "status": "proposed",
+        "summary": "Adopt the focused single-screen terminal layout.",
+        "updatedAt": "2026-10-17T12:03:09.000Z",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "provenance": [
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 198,
+        "createdAt": "2026-10-17T12:04:15.000Z",
+        "id": "con_nav001_0358",
+        "objectId": "task_nav001_f057",
+        "objectType": "task",
+        "payload": {
+          "title": "Display-pressure filler task 57"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 199,
+        "createdAt": "2026-10-17T12:04:16.000Z",
+        "id": "con_nav001_0359",
+        "objectId": "task_nav001_f058",
+        "objectType": "task",
+        "payload": {
+          "title": "Display-pressure filler task 58"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 200,
+        "createdAt": "2026-10-17T12:04:17.000Z",
+        "id": "con_nav001_0360",
+        "objectId": "task_nav001_assigned_open_ana",
+        "objectType": "task",
+        "payload": {
+          "title": "Give the terminal one focused screen"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 201,
+        "createdAt": "2026-10-17T12:04:18.000Z",
+        "id": "con_nav001_0361",
+        "objectId": "task_nav001_open_noassignee",
+        "objectType": "task",
+        "payload": {
+          "title": "Pick the screen reviewer"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 202,
+        "createdAt": "2026-10-17T12:04:19.000Z",
+        "id": "con_nav001_0362",
+        "objectId": "task_nav001_hostile",
+        "objectType": "task",
+        "payload": {
+          "title": "nav-001 \u001b[31mhostile\u001b[0m\u0007 title"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 203,
+        "createdAt": "2026-10-17T12:04:20.000Z",
+        "id": "con_nav001_0363",
+        "objectId": "task_nav001_assigned_blocked_ana",
+        "objectType": "task",
+        "payload": {
+          "title": "Package the display-pressure baseline"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 204,
+        "createdAt": "2026-10-17T12:04:21.000Z",
+        "id": "con_nav001_0364",
+        "objectId": "task_nav001_blocked_noassignee",
+        "objectType": "task",
+        "payload": {
+          "title": "Decide what counts as a focused screen"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "create",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 205,
+        "createdAt": "2026-10-17T12:04:22.000Z",
+        "id": "con_nav001_0365",
+        "objectId": "task_nav001_blocked_agent",
+        "objectType": "task",
+        "payload": {
+          "title": "Reproduce the eager-dump pressure"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 206,
+        "createdAt": "2026-10-17T12:04:23.000Z",
+        "id": "con_nav001_0366",
+        "objectId": "task_nav001_f006",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 207,
+        "createdAt": "2026-10-17T12:04:24.000Z",
+        "id": "con_nav001_0369",
+        "objectId": "task_nav001_f013",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 208,
+        "createdAt": "2026-10-17T12:04:25.000Z",
+        "id": "con_nav001_0372",
+        "objectId": "task_nav001_f019",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 209,
+        "createdAt": "2026-10-17T12:04:26.000Z",
+        "id": "con_nav001_0375",
+        "objectId": "task_nav001_f026",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 210,
+        "createdAt": "2026-10-17T12:04:27.000Z",
+        "id": "con_nav001_0378",
+        "objectId": "task_nav001_f032",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 211,
+        "createdAt": "2026-10-17T12:04:28.000Z",
+        "id": "con_nav001_0381",
+        "objectId": "task_nav001_f039",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 212,
+        "createdAt": "2026-10-17T12:04:29.000Z",
+        "id": "con_nav001_0384",
+        "objectId": "task_nav001_f045",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 213,
+        "createdAt": "2026-10-17T12:04:30.000Z",
+        "id": "con_nav001_0387",
+        "objectId": "task_nav001_f052",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 214,
+        "createdAt": "2026-10-17T12:04:31.000Z",
+        "id": "con_nav001_0390",
+        "objectId": "task_nav001_f058",
+        "objectType": "task",
+        "payload": {
+          "status": "in_progress"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 215,
+        "createdAt": "2026-10-17T12:04:32.000Z",
+        "id": "con_nav001_0393",
+        "objectId": "task_nav001_assigned_blocked_ana",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 216,
+        "createdAt": "2026-10-17T12:04:33.000Z",
+        "id": "con_nav001_0396",
+        "objectId": "task_nav001_blocked_noassignee",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      },
+      {
+        "action": "update",
+        "actor": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "appendPosition": 217,
+        "createdAt": "2026-10-17T12:04:34.000Z",
+        "id": "con_nav001_0399",
+        "objectId": "task_nav001_blocked_agent",
+        "objectType": "task",
+        "payload": {
+          "status": "blocked"
+        },
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "provenanceSummary": [
+      "Ana contributed task task_nav001_f057: Display-pressure filler task 57",
+      "Ana contributed task task_nav001_f058: Display-pressure filler task 58",
+      "Ana contributed task task_nav001_assigned_open_ana: Give the terminal one focused screen",
+      "Ana contributed task task_nav001_open_noassignee: Pick the screen reviewer",
+      "Ana contributed task task_nav001_hostile: nav-001 \u001b[31mhostile\u001b[0m\u0007 title",
+      "Ana contributed task task_nav001_assigned_blocked_ana: Package the display-pressure baseline",
+      "Ana contributed task task_nav001_blocked_noassignee: Decide what counts as a focused screen",
+      "Ana contributed task task_nav001_blocked_agent: Reproduce the eager-dump pressure",
+      "Ana updated task task_nav001_f006: in_progress",
+      "Ana updated task task_nav001_f013: blocked",
+      "Ana updated task task_nav001_f019: in_progress",
+      "Ana updated task task_nav001_f026: blocked",
+      "Ana updated task task_nav001_f032: in_progress",
+      "Ana updated task task_nav001_f039: blocked",
+      "Ana updated task task_nav001_f045: in_progress",
+      "Ana updated task task_nav001_f052: blocked",
+      "Ana updated task task_nav001_f058: in_progress",
+      "Ana updated task task_nav001_assigned_blocked_ana: blocked",
+      "Ana updated task task_nav001_blocked_noassignee: blocked",
+      "Ana updated task task_nav001_blocked_agent: blocked"
+    ],
+    "provenanceTotal": 217,
+    "provenanceTruncated": true,
+    "schemaVersion": 1,
+    "slices": {
+      "artifacts": {
+        "items": [
+          {
+            "createdAt": "2026-10-17T12:03:05.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_notes",
+            "title": "nav-001 working notes",
+            "type": "document",
+            "uriOrPath": "nav-001/working-notes.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:04.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_hostile",
+            "title": "nav-001 hostile markup reference",
+            "type": "other",
+            "uriOrPath": "https://example.com/nav-001/report\"><img src=x onerror=alert(1)>",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:03.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_runbook",
+            "title": "nav-001 runbook reference",
+            "type": "report",
+            "uriOrPath": "https://example.com/nav-001/runbook.html",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:02.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f09",
+            "title": "Display-pressure filler reference 09",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-09.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:01.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f08",
+            "title": "Display-pressure filler reference 08",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-08.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:00.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f07",
+            "title": "Display-pressure filler reference 07",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-07.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:02:59.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f06",
+            "title": "Display-pressure filler reference 06",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-06.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:02:58.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f05",
+            "title": "Display-pressure filler reference 05",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-05.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:02:57.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f04",
+            "title": "Display-pressure filler reference 04",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-04.md",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:02:56.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "art_nav001_f03",
+            "title": "Display-pressure filler reference 03",
+            "type": "document",
+            "uriOrPath": "nav-001/filler-reference-03.md",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoiYXJ0aWZhY3QiLCJ3b3Jrc3BhY2VJZCI6IndzX25hdjAwMV9sYWIiLCJyYW5rIjoxLCJhdCI6IjIwMjYtMTAtMTdUMTI6MDI6NTYuMDAwWiIsImlkIjoiYXJ0X25hdjAwMV9mMDMifQ",
+        "returned": 10,
+        "total": 12,
+        "truncated": true
+      },
+      "blockers": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "agt_nav001_01",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:22.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_blocked_agent",
+            "status": "blocked",
+            "title": "Reproduce the eager-dump pressure",
+            "updatedAt": "2026-10-17T12:04:34.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:04:21.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_blocked_noassignee",
+            "status": "blocked",
+            "title": "Decide what counts as a focused screen",
+            "updatedAt": "2026-10-17T12:04:33.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:20.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_assigned_blocked_ana",
+            "status": "blocked",
+            "title": "Package the display-pressure baseline",
+            "updatedAt": "2026-10-17T12:04:32.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_34",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:10.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f052",
+            "status": "blocked",
+            "title": "Display-pressure filler task 52",
+            "updatedAt": "2026-10-17T12:04:30.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_21",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:57.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f039",
+            "status": "blocked",
+            "title": "Display-pressure filler task 39",
+            "updatedAt": "2026-10-17T12:04:28.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_08",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:44.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f026",
+            "status": "blocked",
+            "title": "Display-pressure filler task 26",
+            "updatedAt": "2026-10-17T12:04:26.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h15",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:31.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f013",
+            "status": "blocked",
+            "title": "Display-pressure filler task 13",
+            "updatedAt": "2026-10-17T12:04:24.000Z",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "returned": 7,
+        "total": 7,
+        "truncated": false
+      },
+      "decisions": {
+        "items": [
+          {
+            "approvedBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:17.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "dec_nav001_plain",
+            "rationale": "No write path may change the fixture before captures are frozen.",
+            "status": "accepted",
+            "summary": "Keep the workspace read-only during the baseline freeze.",
+            "updatedAt": "2026-10-17T12:03:18.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "approvedBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:15.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "dec_nav001_competing_b",
+            "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+            "status": "accepted",
+            "summary": "Order the screen by newest record.",
+            "updatedAt": "2026-10-17T12:03:16.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "approvedBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:13.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "dec_nav001_competing_a",
+            "rationale": "Assignment is the only recorded grouping, so it should lead the order.",
+            "status": "accepted",
+            "summary": "Order the screen by recorded assignment.",
+            "updatedAt": "2026-10-17T12:03:14.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "approvedBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "citations": [
+              {
+                "createdAt": "2026-10-17T12:03:12.000Z",
+                "createdBy": {
+                  "actorId": "hum_nav001_ana",
+                  "actorType": "human"
+                },
+                "decisionId": "dec_nav001_review",
+                "findingId": "find_nav001_superseded",
+                "id": "cit_nav001_0282",
+                "note": "original observation",
+                "workspaceId": "ws_nav001_lab"
+              }
+            ],
+            "createdAt": "2026-10-17T12:03:10.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "dec_nav001_review",
+            "needsReview": true,
+            "needsReviewFindingIds": [
+              "find_nav001_superseded"
+            ],
+            "rationale": "Assumed the default task page returned every recorded task.",
+            "status": "accepted",
+            "summary": "The terminal screen lists every recorded task because the read felt complete.",
+            "updatedAt": "2026-10-17T12:03:11.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:03:09.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "dec_nav001_proposed",
+            "rationale": "The contract seeks lower time-to-source without a second work feed.",
+            "status": "proposed",
+            "summary": "Adopt the focused single-screen terminal layout.",
+            "updatedAt": "2026-10-17T12:03:09.000Z",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "returned": 5,
+        "total": 5,
+        "truncated": false
+      },
+      "findings": {
+        "items": [
+          {
+            "createdAt": "2026-10-17T12:03:07.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "currentness": "current",
+            "detail": "The 44 tasks beyond the default 20-row page are not inspected.",
+            "evidence": [
+              {
+                "artifactId": "art_nav001_runbook",
+                "createdAt": "2026-10-17T12:03:08.000Z",
+                "createdBy": {
+                  "actorId": "hum_nav001_ana",
+                  "actorType": "human"
+                },
+                "findingId": "find_nav001_current",
+                "id": "fev_nav001_0271",
+                "note": "runbook recorded beside the correction",
+                "relation": "supports",
+                "workspaceId": "ws_nav001_lab"
+              }
+            ],
+            "id": "find_nav001_current",
+            "predecessorId": "find_nav001_superseded",
+            "summary": "The terminal read covers only the returned task page.",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "returned": 1,
+        "total": 1,
+        "truncated": false
+      },
+      "recentChanges": {
+        "items": [
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "create",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MDUuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjYzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEyNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "art_nav001_notes",
+            "objectType": "artifact",
+            "occurredAt": "2026-10-17T12:03:05.000Z",
+            "summary": "create artifact art_nav001_notes: nav-001 working notes"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "create",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MDYuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjY2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEyOCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "find_nav001_superseded",
+            "objectType": "finding",
+            "occurredAt": "2026-10-17T12:03:06.000Z",
+            "summary": "create finding find_nav001_superseded: Every recorded lab task appeared in the first terminal read."
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "finding.corrected",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MDcuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjY5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEyOSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "find_nav001_superseded",
+            "objectType": "finding",
+            "occurredAt": "2026-10-17T12:03:07.000Z",
+            "reason": "The lab grew past one default task page; the earlier observation covered only the returned page.",
+            "successorId": "find_nav001_current",
+            "summary": "finding.corrected finding find_nav001_superseded: The lab grew past one default task page; the earlier observation covered only the returned page."
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "finding.corrected",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MDcuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjcwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEzMCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "find_nav001_current",
+            "objectType": "finding",
+            "occurredAt": "2026-10-17T12:03:07.000Z",
+            "predecessorId": "find_nav001_superseded",
+            "reason": "The lab grew past one default task page; the earlier observation covered only the returned page.",
+            "summary": "finding.corrected finding find_nav001_current: The lab grew past one default task page; the earlier observation covered only the returned page."
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:accepted",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MTEuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjc5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEzNCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "dec_nav001_review",
+            "objectType": "decision",
+            "occurredAt": "2026-10-17T12:03:11.000Z",
+            "summary": "update:accepted decision dec_nav001_review"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:accepted",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MTQuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjg3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEzNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "dec_nav001_competing_a",
+            "objectType": "decision",
+            "occurredAt": "2026-10-17T12:03:14.000Z",
+            "summary": "update:accepted decision dec_nav001_competing_a"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:accepted",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MTYuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjkzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjEzOSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "dec_nav001_competing_b",
+            "objectType": "decision",
+            "occurredAt": "2026-10-17T12:03:16.000Z",
+            "summary": "update:accepted decision dec_nav001_competing_b"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:accepted",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDM6MTguMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMjk5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjE0MSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "dec_nav001_plain",
+            "objectType": "decision",
+            "occurredAt": "2026-10-17T12:03:18.000Z",
+            "summary": "update:accepted decision dec_nav001_plain"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:in_progress",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjMuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzY2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwNiwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f006",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:23.000Z",
+            "summary": "update:in_progress task task_nav001_f006"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjQuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzY5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f013",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:24.000Z",
+            "summary": "update:blocked task task_nav001_f013"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:in_progress",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjUuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzcyIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwOCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f019",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:25.000Z",
+            "summary": "update:in_progress task task_nav001_f019"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjYuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzc1IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIwOSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f026",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:26.000Z",
+            "summary": "update:blocked task task_nav001_f026"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:in_progress",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjcuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzc4IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxMCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f032",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:27.000Z",
+            "summary": "update:in_progress task task_nav001_f032"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjguMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzgxIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxMSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f039",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:28.000Z",
+            "summary": "update:blocked task task_nav001_f039"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:in_progress",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MjkuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzg0IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxMiwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f045",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:29.000Z",
+            "summary": "update:in_progress task task_nav001_f045"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzAuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzg3IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxMywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f052",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:30.000Z",
+            "summary": "update:blocked task task_nav001_f052"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:in_progress",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzEuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzkwIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxNCwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_f058",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:31.000Z",
+            "summary": "update:in_progress task task_nav001_f058"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzIuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzkzIiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxNSwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_assigned_blocked_ana",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:32.000Z",
+            "summary": "update:blocked task task_nav001_assigned_blocked_ana"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzMuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzk2IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxNiwib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_blocked_noassignee",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:33.000Z",
+            "summary": "update:blocked task task_nav001_blocked_noassignee"
+          },
+          {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human",
+            "changeType": "update:blocked",
+            "cursor": "cf1.eyJ2IjoxLCJraW5kIjoiY29udHJpYnV0aW9uIiwid29ya3NwYWNlSWQiOiJ3c19uYXYwMDFfbGFiIiwib2NjdXJyZWRBdCI6IjIwMjYtMTAtMTdUMTI6MDQ6MzQuMDAwWiIsImlkIjoiY29uX25hdjAwMV8wMzk5IiwicGhhc2UiOiJoaWdoIiwib3JpZ2luT2NjdXJyZWRBdCI6IiIsIm9yaWdpbklkIjoiIiwicG9zaXRpb24iOjIxNywib3JpZ2luUG9zaXRpb24iOjAsInRpcCI6MH0",
+            "materiality": "high",
+            "objectId": "task_nav001_blocked_agent",
+            "objectType": "task",
+            "occurredAt": "2026-10-17T12:04:34.000Z",
+            "summary": "update:blocked task task_nav001_blocked_agent"
+          }
+        ],
+        "returned": 20,
+        "total": 217,
+        "truncated": true
+      },
+      "tasks": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "agt_nav001_01",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:22.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_blocked_agent",
+            "status": "blocked",
+            "title": "Reproduce the eager-dump pressure",
+            "updatedAt": "2026-10-17T12:04:34.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:04:21.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_blocked_noassignee",
+            "status": "blocked",
+            "title": "Decide what counts as a focused screen",
+            "updatedAt": "2026-10-17T12:04:33.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:20.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_assigned_blocked_ana",
+            "status": "blocked",
+            "title": "Package the display-pressure baseline",
+            "updatedAt": "2026-10-17T12:04:32.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_34",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:10.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f052",
+            "status": "blocked",
+            "title": "Display-pressure filler task 52",
+            "updatedAt": "2026-10-17T12:04:30.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_21",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:57.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f039",
+            "status": "blocked",
+            "title": "Display-pressure filler task 39",
+            "updatedAt": "2026-10-17T12:04:28.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_08",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:44.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f026",
+            "status": "blocked",
+            "title": "Display-pressure filler task 26",
+            "updatedAt": "2026-10-17T12:04:26.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h15",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:31.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f013",
+            "status": "blocked",
+            "title": "Display-pressure filler task 13",
+            "updatedAt": "2026-10-17T12:04:24.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h05",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:16.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f058",
+            "status": "in_progress",
+            "title": "Display-pressure filler task 58",
+            "updatedAt": "2026-10-17T12:04:31.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_27",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:03.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f045",
+            "status": "in_progress",
+            "title": "Display-pressure filler task 45",
+            "updatedAt": "2026-10-17T12:04:29.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_14",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:50.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f032",
+            "status": "in_progress",
+            "title": "Display-pressure filler task 32",
+            "updatedAt": "2026-10-17T12:04:27.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_01",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:03:37.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f019",
+            "status": "in_progress",
+            "title": "Display-pressure filler task 19",
+            "updatedAt": "2026-10-17T12:04:25.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h08",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:03:24.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f006",
+            "status": "in_progress",
+            "title": "Display-pressure filler task 06",
+            "updatedAt": "2026-10-17T12:04:23.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:04:19.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_hostile",
+            "status": "open",
+            "title": "nav-001 \u001b[31mhostile\u001b[0m\u0007 title",
+            "updatedAt": "2026-10-17T12:04:19.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "createdAt": "2026-10-17T12:04:18.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_open_noassignee",
+            "status": "open",
+            "title": "Pick the screen reviewer",
+            "updatedAt": "2026-10-17T12:04:18.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:17.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_assigned_open_ana",
+            "status": "open",
+            "title": "Give the terminal one focused screen",
+            "updatedAt": "2026-10-17T12:04:17.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h04",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:15.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f057",
+            "status": "open",
+            "title": "Display-pressure filler task 57",
+            "updatedAt": "2026-10-17T12:04:15.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_nav001_h03",
+              "actorType": "human"
+            },
+            "createdAt": "2026-10-17T12:04:14.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f056",
+            "status": "open",
+            "title": "Display-pressure filler task 56",
+            "updatedAt": "2026-10-17T12:04:14.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_37",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:13.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f055",
+            "status": "open",
+            "title": "Display-pressure filler task 55",
+            "updatedAt": "2026-10-17T12:04:13.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_36",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:12.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f054",
+            "status": "open",
+            "title": "Display-pressure filler task 54",
+            "updatedAt": "2026-10-17T12:04:12.000Z",
+            "workspaceId": "ws_nav001_lab"
+          },
+          {
+            "assignee": {
+              "actorId": "agt_nav001_35",
+              "actorType": "agent"
+            },
+            "createdAt": "2026-10-17T12:04:11.000Z",
+            "createdBy": {
+              "actorId": "hum_nav001_ana",
+              "actorType": "human"
+            },
+            "id": "task_nav001_f053",
+            "status": "open",
+            "title": "Display-pressure filler task 53",
+            "updatedAt": "2026-10-17T12:04:11.000Z",
+            "workspaceId": "ws_nav001_lab"
+          }
+        ],
+        "nextCursor": "cf1.eyJ2IjoxLCJraW5kIjoidGFzayIsIndvcmtzcGFjZUlkIjoid3NfbmF2MDAxX2xhYiIsInJhbmsiOjIsImF0IjoiMjAyNi0xMC0xN1QxMjowNDoxMS4wMDBaIiwiaWQiOiJ0YXNrX25hdjAwMV9mMDUzIn0",
+        "returned": 20,
+        "total": 64,
+        "truncated": true
+      }
+    },
+    "suggestedNextAction": {
+      "id": "dec_nav001_proposed",
+      "kind": "decision",
+      "orientationHint": true,
+      "reason": "proposed_decision_actionable",
+      "summary": "Adopt the focused single-screen terminal layout."
+    },
+    "supersededDecisions": [],
+    "workspace": {
+      "createdAt": "2026-10-17T12:01:00.000Z",
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "id": "ws_nav001_lab",
+      "name": "nav-001 display-pressure lab",
+      "status": "active",
+      "teamId": "team_nav001",
+      "updatedAt": "2026-10-17T12:01:00.000Z"
+    }
+  }
+}

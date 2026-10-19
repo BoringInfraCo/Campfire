@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "result": {
+    "createdAt": "2026-10-17T12:03:03.000Z",
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "id": "art_nav001_runbook",
+    "title": "nav-001 runbook reference",
+    "type": "report",
+    "uriOrPath": "https://example.com/nav-001/runbook.html",
+    "workspaceId": "ws_nav001_lab"
+  }
+}

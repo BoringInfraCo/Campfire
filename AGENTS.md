@@ -429,6 +429,19 @@ automatic harness reload, new enrollment semantics, or automatic
 workspace/session creation, re-scope it as a minor sprint instead of
 extending this patch.
 
+Sprint NAV-002 — Source and People Drill-down has a proposed v1.23 contract at
+`docs/Campfire-v1.23-NAV-002-Source-and-People-Drill-down.md`. It pins the
+published v1.22.1 baseline and requires a committed Step 0 answer key before
+product code. The bounded build is paged Work, on-demand workspace People,
+selected Sources, and per-record contribution history in the read-only terminal
+Navigator. The contract freezes two authorized bounded reads and an opt-in
+participant omission for orientation; the default existing read contracts stay
+compatible. D1–D7, an independent source/authorization review, and any
+eligible non-builder human comparison must be recorded separately. NAV-002 is
+not implemented or scored by this planning document, and no v1.23 release is
+authorized by its version slot. NAV-003 retains Viewer alignment and its own
+human-use outcome.
+
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
 accurately described release while multi-person observations remain open.

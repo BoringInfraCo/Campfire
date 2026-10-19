@@ -1,0 +1,24 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T01:49:25.729Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+20 people · 37 registered agents
+MY WORK  Needs You  ATTENTION  20/64 truncated tasks · 5/5 decisions
+  Attention coverage: tasks 20 of 64 (truncated), decisions 5 of 5. Cues beyond
+  the returned pages may exist.
+  Recorded assignment is a record, not a permission: it does not grant or deny a
+  write.
+  > proposed  dec_nav001_proposed  proposed decision — actionable by you, not
+  accepted  Adopt the focused single-screen terminal layout.
+  blocked  task_nav001_assigned_blocked_ana  blocked task assigned to you 
+  Package the display-pressure baseline  assignee: hum_nav001_ana
+  open  task_nav001_assigned_open_ana  open task assigned to you  Give the
+  terminal one focused screen  assignee: hum_nav001_ana
+SOURCE
+  get_workspace_context  dec_nav001_proposed
+  proposed  proposed — not accepted, not an instruction  dec_nav001_proposed 
+  Adopt the focused single-screen terminal layout.
+tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit
+

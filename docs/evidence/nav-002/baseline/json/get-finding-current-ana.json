@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "result": {
+    "createdAt": "2026-10-17T12:03:07.000Z",
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "currentness": "current",
+    "detail": "The 44 tasks beyond the default 20-row page are not inspected.",
+    "evidence": [
+      {
+        "artifactId": "art_nav001_runbook",
+        "createdAt": "2026-10-17T12:03:08.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "findingId": "find_nav001_current",
+        "id": "fev_nav001_0271",
+        "note": "runbook recorded beside the correction",
+        "relation": "supports",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "id": "find_nav001_current",
+    "predecessorId": "find_nav001_superseded",
+    "summary": "The terminal read covers only the returned task page.",
+    "workspaceId": "ws_nav001_lab"
+  }
+}

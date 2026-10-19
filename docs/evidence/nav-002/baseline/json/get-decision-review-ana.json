@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "result": {
+    "approvedBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "citations": [
+      {
+        "createdAt": "2026-10-17T12:03:12.000Z",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "decisionId": "dec_nav001_review",
+        "findingId": "find_nav001_superseded",
+        "id": "cit_nav001_0282",
+        "note": "original observation",
+        "workspaceId": "ws_nav001_lab"
+      }
+    ],
+    "createdAt": "2026-10-17T12:03:10.000Z",
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "id": "dec_nav001_review",
+    "needsReview": true,
+    "needsReviewFindingIds": [
+      "find_nav001_superseded"
+    ],
+    "rationale": "Assumed the default task page returned every recorded task.",
+    "status": "accepted",
+    "summary": "The terminal screen lists every recorded task because the read felt complete.",
+    "updatedAt": "2026-10-17T12:03:11.000Z",
+    "workspaceId": "ws_nav001_lab"
+  }
+}
