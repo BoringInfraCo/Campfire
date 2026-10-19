@@ -43,6 +43,8 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Artifact references now render with a typed, deterministic reference class (safe absolute HTTPS, insecure HTTP, credential-bearing, local path, other/internal scheme, or unparsed; control characters force inert text), the destination host for openable references, and the recorded Finding evidence relation where one exists; relations are never inferred and historical or competing decisions are not promoted. The Viewer adds a clearly labeled deliberate open control for safe absolute HTTPS references only — `noopener noreferrer`, no referrer, destination host shown, navigation only on the user's own activation, no rendering-time fetches — while the terminal stays inspect-only. Whether a person can use this to reach, verify, or act on an external output in ordinary work is unmeasured: the artifact-handoff human observations are NOT OBSERVED, the sprint result stands as UNSCORED, and Gate B/C/E/F remain open. Campfire never fetches, hosts, or verifies targets, and workspace membership does not grant external access.
 - The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
+- The first-run and join surfaces now report actual preparation state instead of implying a live agent: a fresh interactive `campfire` (and local `campfire up`) names only successfully prepared harnesses as `Config prepared — restart <Harness> to load Campfire tools` and gives one next action (restart the named harness and describe the work); `--no-connect` is labeled as deliberately skipped; returning profiles route to `campfire up` or current authorized work without claiming service or presence state; and the join receipt distinguishes `Joined` membership from `Config prepared` configuration, never telling an unprepared harness to reload. The no-workspace Viewer names a truthful next action and stays read-only and actor-bound. Human comprehension of the new receipts is NOT OBSERVED; ONB-001 is a founder-directed engineering candidate for real-user testing and moves no gate.
+
 ## Artifacts
 
 - This source snapshot and its manifest.
@@ -53,12 +55,14 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 At source preparation, the private {{VERSION}} candidate passed type checking,
 build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. The full suite had 96 files / 1,185 tests with 1,183
+Worker deployment dry run. The full suite had 97 files / 1,214 tests with 1,212
 passing, one opt-in terminal capture skipped by default, and one expected
 install-channel assertion awaiting the four v{{VERSION}} release checksums;
-that assertion was not loosened. The public export audit, archive verification,
-channel pins, production deployment, and live installer check are separate
-promotion steps and are recorded only when performed. This source snapshot does
+that assertion was not loosened, and release hygiene (D6) closed in a dated
+result addendum after packaging passed on the release-prep revision. The
+public export audit, archive verification, channel pins, production
+deployment, and live installer check are separate promotion steps and are
+recorded only when performed. This source snapshot does
 not establish a human comprehension result, Gate E/B/C, or a production
 performance claim.
 
