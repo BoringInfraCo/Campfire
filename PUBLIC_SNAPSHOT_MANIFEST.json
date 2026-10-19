@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
   "version": "1.24.0",
-  "sourceCommit": "e2a39ed506e1ce6fe882860e9ae86fd64f0e4db1",
-  "sourceDate": "2026-10-19T18:34:26-04:00",
+  "sourceCommit": "c2d3f1d7ec39c220b08ddea3affd7b63fb8838ca",
+  "installChannelsCommit": "c2d3f1d7ec39c220b08ddea3affd7b63fb8838ca",
+  "sourceDate": "2026-10-19T18:37:35-04:00",
   "exportedAt": "2026-10-19T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
