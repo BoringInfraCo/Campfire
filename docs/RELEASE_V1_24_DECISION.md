@@ -1,0 +1,98 @@
+# v1.24.0 release decision — NAV-003 Viewer Alignment and Human Use (minor)
+
+**Date:** October 19, 2026
+
+**Status:** **Release prep recorded; publication pending the release-prep verification battery and the promotion steps below.** Founder-directed release recorded under the founder delivery rule in `docs/ROADMAP.md`. The promotion table carries the completed publication record as each step runs.
+**Package target:** `1.24.0`
+**Contract:** `docs/Campfire-v1.24-NAV-003-Viewer-Alignment-and-Human-Use.md` (§0 sprint question, §1 frozen comparison, §2 interaction contract, §3 read boundary, §4 state rules, §5 step sequence, §6 D1–D8, §7 evidence handling, §8 verdict rules, §9 stop boundary)
+**Sprint result:** `docs/SPRINT_NAV_003_RESULT.md` — **CONDITIONAL GO — engineering candidate**: D1–D8 pass on the repaired candidate (`6ed8b00` plus the payload follow-up `e2bdc93`); contract §8 human comprehension is **NOT OBSERVED**. The committed follow-up removes the raw contribution `payload` from the Viewer history read and closes the empty-and-truncated history sentence, without changing HTTP/MCP/CLI shapes or the scored candidate record.
+**Candidate commits:** Step 0 freeze `2f042af`; twelve-method allowlist and `participants: "omit"` refresh `975f790`; Viewer Work/People/source/history navigation `6ed7a6b`; result and D4/coverage repair `6ed8b00`; Viewer history payload projection `e2bdc93`.
+
+## Founder direction and sequencing
+
+On October 19, 2026 the founder, acting in the `Campfire-Internal` repository, directed the v1.24 release, verbatim:
+
+> "lets run commit/push/release for public release v1.24 make sure to bump and tag and everything like we've been doing!"
+
+The founder also endorsed the recorded sequencing recommendation, verbatim:
+
+> "Yes—I recommend proceeding with v1.24.0 as a bounded engineering release. The two-person study is not a release blocker under the founder delivery rule. Keep human comprehension marked NOT OBSERVED in the result and release decision; don't claim it has been demonstrated." … "push the five local commits now, but not tag `e2bdc93` as v1.24.0: its package is still `1.23.0`. Record your founder release decision, prepare the `1.24.0` version and immutable installer, then run the full suite, build, packaging, public export audit, and deploy dry run on that final revision."
+
+This is that **separate, recorded founder release decision** for the `v1.24.0` bump, tag, public snapshot, installer pin, and deployment that contract §9.5 requires. As with v1.22.0, v1.22.1, and v1.23.0, the public release notes describe the shipped behavior without restating the human-observation status; the human-outcome record stays in this document, in the sprint result, and in the public `CHANGELOG.md` entry.
+
+This document is **not a human-outcome result and is not a verdict change**:
+
+- NAV-003's cold two-person comparison remains **NOT OBSERVED** (this session had one operator and used coding agents and an independent review subagent; contract §8 forbids substituting the builder, an agent, or a scripted run). Nothing is rescored.
+- Contract §8's founder delivery rule allows a separately approved, accurately labeled engineering release with human use still open; publication cannot turn **NOT OBSERVED** into **PASS**. This release is that approved, labeled engineering release.
+- No check is loosened. The immutable-installer guard in `scripts/package.sh` stays, and the published `v1.23.0` installer copy is not modified.
+
+## The exact release surface (nothing else)
+
+The published v1.23.0 surface gains exactly the NAV-003 candidate plus its committed payload follow-up. The sprint adds **no** write method, schema, migration, credential in HTML/JS, client-side actor selector, organization directory, transcript endpoint, or generated-view authority.
+
+- **Twelve-method Viewer read allowlist** (`975f790`): the previous five reads (`whoami`, `list_workspaces`, `get_workspace`, `get_workspace_context`, `get_activity`) plus exactly seven existing reads — `list_tasks`, `list_workspace_participants`, `get_task`, `get_decision`, `get_finding`, `get_artifact`, and `get_record_history`. Every write and unknown method is rejected before dispatch. `get_workspace` stays allowlisted for compatibility but is no longer requested on initial load or periodic refresh.
+- **Bounded orientation refresh** (`975f790`): the normal Viewer refresh uses `get_workspace_context({workspaceId, participants: "omit"})` plus `get_activity`; `participantsCoverage` supplies the workspace participant total and `participants: []` is never treated as an empty roster. Initial and periodic traces contain no `get_workspace`, roster, task, or history call.
+- **Viewer section navigation** (`6ed7a6b`): top-level **Needs You / Needs Attention**, **Work**, **Decisions**, **Sources**, **People**, and **Recent changes**, with My work / Team work as a visible perspective control over the same authorized workspace. The first panel is Needs You in My work and Needs Attention in Team work. Goal, acting identity, last successful read time, and a truthful participant count stay visible.
+- **Bounded Work and People pages**: `list_tasks` and `list_workspace_participants` load on demand, 20 per page, with `returned X of Y`, page number, and whether another API page exists; Next/Previous follow opaque cursors through a bounded local back stack. People distinguishes humans from registered agents; a selected human pages only their workspace-participating agents through the server-side `humanOwnerId` filter; a selected agent shows its recorded owner and whether that owner participates. An owner outside the roster is labeled, never inserted. No first-page `20 people / 37 agents` split and no live-presence claim.
+- **Selected Source detail**: `get_task`, `get_decision`, `get_finding`, and `get_artifact` fill in one selected authorized row when needed, showing full ID, type, lifecycle/currentness, recorded actor and time, citations/references actually recorded, and the service's review reason. Needs-review and competing accepted decisions keep their released meanings; the Viewer chooses no operative instruction.
+- **Selected-record history**: `get_record_history` runs only on explicit open/page, `limit: 10`, bound to workspace, object type, object ID, and a frozen traversal tip, with `returned X of Y` and a truthful more/complete heading. A failed or truncated read never says complete. This is not a person-wide or transitive history.
+- **Viewer history payload projection** (`e2bdc93`): the browser-facing `get_record_history` result drops the raw contribution `payload` and returns only an allowlisted, bounded `payloadSummary` (max 160 characters, or `recorded payload omitted` when a payload existed and nothing allowlisted remained). HTTP `/v1/call`, MCP, and the CLI still return `payload`. The terminal dashboard is unchanged.
+- **Responsive and accessible composition** (`6ed7a6b`): at 390×844 the same path becomes a list → source → history stack with an explicit Back control; at 1440×900 the active list and detail sit side by side. Native buttons/links, visible focus, Tab/Shift-Tab, Enter/Space activation, Escape close with focus restoration; list arrows/`j`/`k` act only inside an explicitly focused list. Existing alignment, Since You Were Here, and workstream remain reachable from their own section.
+- **Source and reference safety preserved**: only recorded links and currentness are shown; the released artifact-reference classifier and the deliberate external-open control for the approved absolute-HTTPS class are preserved with destination host label, `noopener noreferrer`, no referrer, and the unverified-target caveat. Rendering performs no fetch, preview, or authorization check against the external destination.
+- **Versioned installer for this release**: `public/campfire/v1.24.0/install.sh` is tracked from the current installer (sha256 `2256bccb086d3c83e9a997de46285e5ad5175bb3f696a6641322b16ccba8a844`, byte-identical to the `v1.23.0` installer). The published `public/campfire/v1.23.0/install.sh` and `public/campfire/v1.22.1/install.sh` copies (same digest, `2256bccb…`) and `public/campfire/v1.22.0/install.sh` (sha256 `ba8603bd106277bf520b1789b77b4e95c8b2bc9c9cae5db5059965bf25d26900`) are immutable and verified unchanged.
+- **Read-only and additive elsewhere**: no new canonical object or write path; no service, HTTP, MCP, SQLite/D1, cursor, authorization, default JSON, schema, migration, telemetry, or generated-view change; `campfire dashboard` is unchanged; old workspace data and the five old Viewer reads behave as before.
+
+## Evidence status in this release
+
+| Evidence | Status in this release |
+| --- | --- |
+| D1 — authorization and browser boundary; D2 — work-first navigation; D3 — People and ownership; D4 — source/decision/reference truth; D5 — selected-record history; D6 — interaction and responsive safety; D7 — compatibility; D8 — bounded reads and parity | **Engineering PASS** on the repaired candidate, recorded in `docs/SPRINT_NAV_003_RESULT.md` §3 with served-Viewer captures, PTY rehearsal frames, measurements, and the answer key under `docs/evidence/nav-003/`. D4 **failed on `6ed7a6b`** (a source-panel sentence stated an acceptance a proposed decision did not have) and was repaired in the result commit; the failure and repair are preserved, not retroactively changed. |
+| Independent review | `docs/evidence/nav-003/independent-review.md` reviewed `6ed7a6b` read-only. Its must-fix (the D4 sentence) and should-fix 2 (failed Work/People refresh coverage) are repaired in the result commit. A fresh release-prep review of `e2bdc93` (payload projection, allowlist, actor/cursor isolation, stale responses, browser assets) found **no must-fix defect**; its residual should-fix notes are recorded in the sprint result and this decision. |
+| Release-prep verification battery at package `1.24.0` | Recorded in the promotion table below after it runs on this release-prep revision. |
+| Expected pre-pin install-channel assertion | `tests/unit/install-channels.test.ts` pins `packaging/homebrew/campfire.rb` and `flake.nix` to the published archives; they remain at v1.23.0 until the post-publication pin commit (`node scripts/sync-install-channels.mjs` against the four published v1.24.0 checksums), so the assertion fails exactly as pre-recorded for v1.23.0 — named here, closed by the pin, **not weakened**. |
+| Human comprehension of the Viewer navigation | **NOT OBSERVED** (unchanged). Contract §8's five cold tasks on both surfaces were not run with two eligible non-builder humans; scripted captures are not that comparison. Later observations record under their own date. |
+| Gate B/C/E/F; NAV-001, NAV-002, ONB-001, UIX-001, ATT-001, SWH-001, WCO-001, ARH-001, VIS-001 condition 4 | **Unchanged/unobserved.** This release satisfies none of them, rescores none of them, and moves no gate. |
+
+## Public release notes (v1.24.0)
+
+Used verbatim for the GitHub Release body:
+
+```markdown
+Campfire v1.24.0 — Viewer Alignment and Human Use
+
+The browser Viewer now offers the same focused navigation path as the terminal Navigator: bounded pages, selected sources, and recorded per-record history over the same authorized workspace read.
+
+- New top-level navigation — Needs You / Needs Attention, Work, Decisions, Sources, People, and Recent changes — with My work / Team work as a visible perspective control. Needs You leads in My work; Needs Attention leads in Team work. The first screen shows the workspace goal, the acting identity, the last successful read time, and the truthful workspace participant total without fetching the roster.
+- Work reads `list_tasks` only when the section is selected, 20 rows per page, with `returned X of Y`, page number, and whether another API page exists; Next/Previous follow opaque cursors through a bounded local stack, so a task beyond the first page is reachable without loading the workspace at once. People reads `list_workspace_participants` on demand the same way: humans and registered agents are distinguished, selecting a human pages only that human's workspace-participating agents, and selecting an agent shows the recorded owner and whether that owner participates in the workspace. A first page never creates a people/agents split and recorded relationships are never presented as live presence or permission.
+- A selected row opens a Source view: full ID, type, lifecycle/currentness, recorded actor and time, the citations or references actually recorded, and the service's review reason where one exists. Recorded changes opens the bounded contribution history of the selected task, decision, finding, or artifact — contribution ID, actor, optional agent-session ID, action, timestamp, and a bounded `payloadSummary` — defaulting to the service's 10-row page over a frozen traversal tip, with `returned X of Y` and a truthful more/complete heading. The Viewer never receives the raw contribution `payload`; HTTP, MCP, and the CLI keep their existing shapes.
+- The normal refresh no longer requests the full `get_workspace` inspector: orientation uses `get_workspace_context` with `participants: "omit"` plus `get_activity`, so the browser receives bounded data instead of the whole workspace. `get_workspace` stays available to the Viewer for compatibility but is not part of the normal read.
+- At 390×844 the same path becomes a list → source → history stack with an explicit Back control; at 1440×900 the active list and detail sit side by side. Native buttons and links keep Tab/Enter/Space/Escape and focus restoration working. Existing alignment, Since You Were Here, and workstream views remain reachable from their own section.
+- The Viewer stays actor-bound, read-only, token-free in the browser, and loopback by default. The allowlist is exactly the previous five reads plus seven existing read methods; every write and unknown method is rejected before dispatch. Needs-review and competing accepted decisions, provenance, and the deliberate external-open control for the approved HTTPS reference class keep their released meanings; a stored reference remains unverified and is not fetched. There is no new write path, schema, migration, credential, or transcript endpoint.
+
+Darwin and Linux archives for ARM64 and x64, with SHA-256 checksum files, are produced by the release workflow after publication. The versioned installer at `campfire/v1.24.0/install.sh` pins to this version.
+```
+
+## What users should know
+
+- The Viewer is still a read-only journal: it cannot write, approve, notify, control an agent process, or share a transcript, and the browser never receives a Campfire credential.
+- Recorded work is not presence: registration, owner, harness, join time, and contribution age are records, not online status, current execution, or permission; a human's listing never implies they have seen the work.
+- My work / Team work changes emphasis, not access: both perspectives read the same authorized workspace.
+- History is the history of contributions recorded for the selected record — not a person-wide history, a transitive graph of cited findings, or an external system's history. Inspect each linked record through its own ID.
+- A stored external artifact reference proves only that the reference is recorded; the Viewer performs no fetch, preview, or authorization check against the destination, and the labeled external open remains unverified.
+- A first page is not the workspace: orientation slices, Work/People pages, and history each keep their own total, returned count, truncation state, and read time.
+- The upgrade from v1.23.0 is the same install path; the versioned installer at `campfire/v1.24.0/install.sh` pins this release, and the published v1.23.0, v1.22.1, and v1.22.0 installer copies are unchanged and immutable.
+- This release adds no schema or migration; the first deployment changes no data.
+
+## Promotion record
+
+Each step is recorded with its evidence as it completes; no check is loosened. Publication steps below start only after the release-prep verification battery at package `1.24.0` passes on this revision. The private-repository CI install-channel assertion is expected to fail until the post-release pin commit (pre-recorded as the expected failure, not a defect).
+
+| Step | Evidence |
+| --- | --- |
+| Founder direction and release-prep revision | This document and the release-prep commit on `main`: `package.json`/`package-lock.json` at `1.24.0`; tracked `public/campfire/v1.24.0/install.sh` (sha256 `2256bccb086d3c83e9a997de46285e5ad5175bb3f696a6641322b16ccba8a844`, byte-identical to the current installer); `public/campfire/v1.23.0/install.sh` verified untouched (sha256 `2256bccb…`); `public/campfire/v1.22.0/install.sh` verified untouched (sha256 `ba8603bd106277bf520b1789b77b4e95c8b2bc9c9cae5db5059965bf25d26900`). The five candidate commits were pushed to private `origin/main` before prep. |
+| Release-prep verification battery at `1.24.0` | Pass on the release-prep revision. `npm run typecheck` pass. Full suite **100 files / 1,251 passed / 1 failed / 1 opt-in capture skipped** (1,253), where the single failure is the pre-recorded expected assertion `AssertionError: expected 'class Campfire < Formula…' to contain '/v1.24.0/'` at `tests/unit/install-channels.test.ts:31:21` — the formula and flake remain pinned to the published v1.23.0 archives until the post-publication pin commit. `npm run build` pass; `src/viewer/static/` ≡ `public/` for all four Viewer assets (`index.html` `3683b33d…`, `app.css` `f6d00d21…`, `app.js` `a276c6dd…`, `campfire-mark.svg` `a845ec97…`). `npm run deploy:dry-run` pass (Wrangler 4.149.0 stopped at `--dry-run: exiting now`; committed placeholder D1 id; 71 public assets read). `npm run pack:tarball` exit 0: `release/campfire-darwin-arm64.tar.gz` sha256 `61bdd23b2b9961d986e6c53c84e54c52679fc4d0286790d718f1c2932d6e24b0`, extracted package `1.24.0`, and `public/campfire/v1.24.0/install.sh` stayed byte-identical to the current installer. No check was loosened. |
+| Private annotated `v1.24.0` tag | Pending. |
+| Audited public source snapshot | Pending. |
+| Public GitHub Release and four checked archives | Pending. |
+| Homebrew / Nix pins, tap promotion, installer checks | Pending. |
+| Production Worker deployment and live verification | Pending. |
