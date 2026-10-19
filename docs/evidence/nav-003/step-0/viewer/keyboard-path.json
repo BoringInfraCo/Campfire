@@ -1,0 +1,91 @@
+{
+  "note": "Observed focus path on the released v1.23.0 Viewer. Tab/Shift-Tab are native. Enter activates a focused button. Escape has no page handler.",
+  "steps": [
+    {
+      "step": "ready",
+      "tag": "BODY",
+      "id": "",
+      "aria": null,
+      "text": "Ana human Density workspace nav-001 display-pressure lab Workspace view ↗ My work Team work 20 people · 37 registered ag",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Tab 1",
+      "tag": "BUTTON",
+      "id": "density",
+      "aria": null,
+      "text": "Density",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Tab 2",
+      "tag": "SELECT",
+      "id": "workspace",
+      "aria": "Workspace",
+      "text": "nav-001 display-pressure lab",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Tab 3",
+      "tag": "A",
+      "id": "generated-view-link",
+      "aria": null,
+      "text": "Workspace view ↗",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Tab 4",
+      "tag": "BUTTON",
+      "id": "perspective-mine",
+      "aria": null,
+      "text": "My work",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Tab 5",
+      "tag": "BUTTON",
+      "id": "perspective-team",
+      "aria": null,
+      "text": "Team work",
+      "perspective": "mine",
+      "teamPressed": "false"
+    },
+    {
+      "step": "Enter",
+      "tag": "BUTTON",
+      "id": "perspective-team",
+      "aria": null,
+      "text": "Team work",
+      "perspective": "team",
+      "teamPressed": "true"
+    },
+    {
+      "step": "Shift+Tab",
+      "tag": "BUTTON",
+      "id": "perspective-mine",
+      "aria": null,
+      "text": "My work",
+      "perspective": "team",
+      "teamPressed": "true"
+    },
+    {
+      "step": "Escape",
+      "tag": "BUTTON",
+      "id": "perspective-mine",
+      "aria": null,
+      "text": "My work",
+      "perspective": "team",
+      "teamPressed": "true"
+    },
+    {
+      "step": "probes",
+      "historyPanel": false,
+      "workPaging": false
+    }
+  ]
+}

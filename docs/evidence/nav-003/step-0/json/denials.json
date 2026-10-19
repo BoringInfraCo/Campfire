@@ -1,0 +1,211 @@
+{
+  "zedOnLab": [
+    {
+      "method": "get_workspace",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_workspace_context",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_activity",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "list_tasks",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "list_workspace_participants",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_task",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_decision",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_finding",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_artifact",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    },
+    {
+      "method": "get_record_history",
+      "actorId": "hum_nav001_zed",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_zed is not a participant of workspace ws_nav001_lab",
+      "details": null
+    }
+  ],
+  "anaOnUnrelated": [
+    {
+      "method": "get_workspace",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_workspace_context",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_activity",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "list_tasks",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "list_workspace_participants",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_task",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_decision",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_finding",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_artifact",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    },
+    {
+      "method": "get_record_history",
+      "actorId": "hum_nav001_ana",
+      "ok": false,
+      "error": "ParticipantRequired",
+      "message": "Actor hum_nav001_ana is not a participant of workspace ws_nav001_unrelated",
+      "details": null
+    }
+  ],
+  "zedListWorkspaces": [
+    {
+      "id": "ws_nav001_unrelated",
+      "name": "nav-001 unrelated",
+      "status": "active",
+      "openTaskCount": 0,
+      "updatedAt": "2026-10-17T12:04:35.000Z"
+    }
+  ],
+  "anaListWorkspaces": [
+    {
+      "id": "ws_nav001_lab",
+      "name": "nav-001 display-pressure lab",
+      "status": "active",
+      "goalTitle": "Give the terminal one focused screen over the recorded work.",
+      "openTaskCount": 64,
+      "updatedAt": "2026-10-17T12:01:00.000Z"
+    }
+  ],
+  "zedWhoami": {
+    "actor": {
+      "actorId": "hum_nav001_zed",
+      "actorType": "human"
+    }
+  },
+  "missingWorkspace": {
+    "method": "get_workspace_context",
+    "actorId": "hum_nav001_ana",
+    "ok": false,
+    "error": "WorkspaceNotFound",
+    "message": "Workspace not found: ws_does_not_exist",
+    "details": {
+      "workspaceId": "ws_does_not_exist"
+    }
+  },
+  "unrelatedFindingOnLab": {
+    "method": "get_finding",
+    "actorId": "hum_nav001_ana",
+    "ok": false,
+    "error": "FindingNotFound",
+    "message": "Finding not found: find_nav001_unrelated",
+    "details": {
+      "findingId": "find_nav001_unrelated"
+    }
+  }
+}

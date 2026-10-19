@@ -1,0 +1,25 @@
+{
+  "viewerUrlHost": "127.0.0.1",
+  "shots": [
+    {
+      "name": "ana-lab-mine-1440x900",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sha256": "d4d8b900faeb1b9d057b9251a4fd30d779fdd29f9a3a792385222dbf70c34ff5"
+    },
+    {
+      "name": "ana-lab-mine-390x844",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sha256": "d4d8b900faeb1b9d057b9251a4fd30d779fdd29f9a3a792385222dbf70c34ff5"
+    },
+    {
+      "name": "ana-lab-keyboard-1440x900",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "sha256": "241865edb18473079082c264c500399f2560b1127f192295de992eeaf2e0a52c"
+    }
+  ],
+  "traceCalls": 9,
+  "getWorkspaceCallCount": 2
+}

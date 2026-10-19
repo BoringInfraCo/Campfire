@@ -1,0 +1,644 @@
+{
+  "label": "FIXTURE EVIDENCE — engineering evidence only. Not a human observation and not a verdict.",
+  "clock": "2026-10-17T14:00:00.000Z",
+  "actor": "hum_nav001_ana",
+  "workspaceId": "ws_nav001_lab",
+  "census": {
+    "humans": 20,
+    "registeredAgents": 37,
+    "tasks": 64,
+    "workspaceParticipants": 57,
+    "humanIds": [
+      "hum_nav001_ana",
+      "hum_nav001_ben",
+      "hum_nav001_h03",
+      "hum_nav001_h04",
+      "hum_nav001_h05",
+      "hum_nav001_h06",
+      "hum_nav001_h07",
+      "hum_nav001_h08",
+      "hum_nav001_h09",
+      "hum_nav001_h10",
+      "hum_nav001_h11",
+      "hum_nav001_h12",
+      "hum_nav001_h13",
+      "hum_nav001_h14",
+      "hum_nav001_h15",
+      "hum_nav001_h16",
+      "hum_nav001_h17",
+      "hum_nav001_h18",
+      "hum_nav001_h19",
+      "hum_nav001_h20"
+    ],
+    "agentIds": [
+      "agt_nav001_01",
+      "agt_nav001_02",
+      "agt_nav001_03",
+      "agt_nav001_04",
+      "agt_nav001_05",
+      "agt_nav001_06",
+      "agt_nav001_07",
+      "agt_nav001_08",
+      "agt_nav001_09",
+      "agt_nav001_10",
+      "agt_nav001_11",
+      "agt_nav001_12",
+      "agt_nav001_13",
+      "agt_nav001_14",
+      "agt_nav001_15",
+      "agt_nav001_16",
+      "agt_nav001_17",
+      "agt_nav001_18",
+      "agt_nav001_19",
+      "agt_nav001_20",
+      "agt_nav001_21",
+      "agt_nav001_22",
+      "agt_nav001_23",
+      "agt_nav001_24",
+      "agt_nav001_25",
+      "agt_nav001_26",
+      "agt_nav001_27",
+      "agt_nav001_28",
+      "agt_nav001_29",
+      "agt_nav001_30",
+      "agt_nav001_31",
+      "agt_nav001_32",
+      "agt_nav001_33",
+      "agt_nav001_34",
+      "agt_nav001_35",
+      "agt_nav001_36",
+      "agt_nav001_37"
+    ]
+  },
+  "taskBeyondWorkPage1": {
+    "id": "task_nav001_f051",
+    "page": 2,
+    "positionOnPage": 0,
+    "record": {
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-17T12:04:09.000Z",
+      "id": "task_nav001_f051",
+      "workspaceId": "ws_nav001_lab",
+      "title": "Display-pressure filler task 51",
+      "status": "open",
+      "assignee": {
+        "actorId": "agt_nav001_33",
+        "actorType": "agent"
+      },
+      "updatedAt": "2026-10-17T12:04:09.000Z"
+    }
+  },
+  "listTasksLimit20": [
+    {
+      "page": 1,
+      "total": 64,
+      "returned": 20,
+      "truncated": true,
+      "nextCursorPresent": true,
+      "ids": [
+        "task_nav001_blocked_agent",
+        "task_nav001_blocked_noassignee",
+        "task_nav001_assigned_blocked_ana",
+        "task_nav001_f052",
+        "task_nav001_f039",
+        "task_nav001_f026",
+        "task_nav001_f013",
+        "task_nav001_f058",
+        "task_nav001_f045",
+        "task_nav001_f032",
+        "task_nav001_f019",
+        "task_nav001_f006",
+        "task_nav001_hostile",
+        "task_nav001_open_noassignee",
+        "task_nav001_assigned_open_ana",
+        "task_nav001_f057",
+        "task_nav001_f056",
+        "task_nav001_f055",
+        "task_nav001_f054",
+        "task_nav001_f053"
+      ]
+    },
+    {
+      "page": 2,
+      "total": 64,
+      "returned": 20,
+      "truncated": true,
+      "nextCursorPresent": true,
+      "ids": [
+        "task_nav001_f051",
+        "task_nav001_f050",
+        "task_nav001_f049",
+        "task_nav001_f048",
+        "task_nav001_f047",
+        "task_nav001_f046",
+        "task_nav001_f044",
+        "task_nav001_f043",
+        "task_nav001_f042",
+        "task_nav001_f041",
+        "task_nav001_f040",
+        "task_nav001_f038",
+        "task_nav001_f037",
+        "task_nav001_f036",
+        "task_nav001_f035",
+        "task_nav001_f034",
+        "task_nav001_f033",
+        "task_nav001_f031",
+        "task_nav001_f030",
+        "task_nav001_f029"
+      ]
+    },
+    {
+      "page": 3,
+      "total": 64,
+      "returned": 20,
+      "truncated": true,
+      "nextCursorPresent": true,
+      "ids": [
+        "task_nav001_f028",
+        "task_nav001_f027",
+        "task_nav001_f025",
+        "task_nav001_f024",
+        "task_nav001_f023",
+        "task_nav001_f022",
+        "task_nav001_f021",
+        "task_nav001_f020",
+        "task_nav001_f018",
+        "task_nav001_f017",
+        "task_nav001_f016",
+        "task_nav001_f015",
+        "task_nav001_f014",
+        "task_nav001_f012",
+        "task_nav001_f011",
+        "task_nav001_f010",
+        "task_nav001_f009",
+        "task_nav001_f008",
+        "task_nav001_f007",
+        "task_nav001_f005"
+      ]
+    },
+    {
+      "page": 4,
+      "total": 64,
+      "returned": 4,
+      "truncated": true,
+      "nextCursorPresent": false,
+      "ids": [
+        "task_nav001_f004",
+        "task_nav001_f003",
+        "task_nav001_f002",
+        "task_nav001_f001"
+      ]
+    }
+  ],
+  "listWorkspaceParticipantsLimit20": [
+    {
+      "page": 1,
+      "total": 57,
+      "returned": 20,
+      "truncated": true,
+      "nextCursorPresent": true,
+      "ids": [
+        "agt_nav001_01",
+        "agt_nav001_02",
+        "agt_nav001_03",
+        "agt_nav001_04",
+        "agt_nav001_05",
+        "agt_nav001_06",
+        "agt_nav001_07",
+        "agt_nav001_08",
+        "agt_nav001_09",
+        "agt_nav001_10",
+        "agt_nav001_11",
+        "agt_nav001_12",
+        "agt_nav001_13",
+        "agt_nav001_14",
+        "agt_nav001_15",
+        "agt_nav001_16",
+        "agt_nav001_17",
+        "agt_nav001_18",
+        "agt_nav001_19",
+        "agt_nav001_20"
+      ]
+    },
+    {
+      "page": 2,
+      "total": 57,
+      "returned": 20,
+      "truncated": true,
+      "nextCursorPresent": true,
+      "ids": [
+        "agt_nav001_21",
+        "agt_nav001_22",
+        "agt_nav001_23",
+        "agt_nav001_24",
+        "agt_nav001_25",
+        "agt_nav001_26",
+        "agt_nav001_27",
+        "agt_nav001_28",
+        "agt_nav001_29",
+        "agt_nav001_30",
+        "agt_nav001_31",
+        "agt_nav001_32",
+        "agt_nav001_33",
+        "agt_nav001_34",
+        "agt_nav001_35",
+        "agt_nav001_36",
+        "agt_nav001_37",
+        "hum_nav001_ana",
+        "hum_nav001_ben",
+        "hum_nav001_h03"
+      ]
+    },
+    {
+      "page": 3,
+      "total": 57,
+      "returned": 17,
+      "truncated": false,
+      "nextCursorPresent": false,
+      "ids": [
+        "hum_nav001_h04",
+        "hum_nav001_h05",
+        "hum_nav001_h06",
+        "hum_nav001_h07",
+        "hum_nav001_h08",
+        "hum_nav001_h09",
+        "hum_nav001_h10",
+        "hum_nav001_h11",
+        "hum_nav001_h12",
+        "hum_nav001_h13",
+        "hum_nav001_h14",
+        "hum_nav001_h15",
+        "hum_nav001_h16",
+        "hum_nav001_h17",
+        "hum_nav001_h18",
+        "hum_nav001_h19",
+        "hum_nav001_h20"
+      ]
+    }
+  ],
+  "anaParticipatingAgents": {
+    "schemaVersion": 1,
+    "workspaceId": "ws_nav001_lab",
+    "filter": {
+      "humanOwnerId": "hum_nav001_ana"
+    },
+    "items": [
+      {
+        "actor": {
+          "actorId": "agt_nav001_01",
+          "actorType": "agent"
+        },
+        "name": "Agent 01",
+        "role": "agent",
+        "joinedAt": "2026-10-17T12:01:41.000Z",
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_ana",
+        "humanOwnerIsParticipant": true
+      },
+      {
+        "actor": {
+          "actorId": "agt_nav001_21",
+          "actorType": "agent"
+        },
+        "name": "Agent 21",
+        "role": "agent",
+        "joinedAt": "2026-10-17T12:02:21.000Z",
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_ana",
+        "humanOwnerIsParticipant": true
+      }
+    ],
+    "total": 2,
+    "returned": 2,
+    "truncated": false
+  },
+  "ownerOutsideRoster": {
+    "schemaVersion": 1,
+    "workspaceId": "ws_nav001_lab",
+    "filter": {
+      "humanOwnerId": "hum_nav001_zed"
+    },
+    "items": [
+      {
+        "actor": {
+          "actorId": "agt_nav001_03",
+          "actorType": "agent"
+        },
+        "name": "Agent 03",
+        "role": "agent",
+        "joinedAt": "2026-10-17T12:01:45.000Z",
+        "harness": "codex",
+        "humanOwnerId": "hum_nav001_zed",
+        "humanOwnerIsParticipant": false
+      }
+    ],
+    "total": 1,
+    "returned": 1,
+    "truncated": false
+  },
+  "decisionReview": {
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-17T12:03:10.000Z",
+    "id": "dec_nav001_review",
+    "workspaceId": "ws_nav001_lab",
+    "summary": "The terminal screen lists every recorded task because the read felt complete.",
+    "rationale": "Assumed the default task page returned every recorded task.",
+    "status": "accepted",
+    "approvedBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "updatedAt": "2026-10-17T12:03:11.000Z",
+    "citations": [
+      {
+        "id": "cit_nav001_0282",
+        "workspaceId": "ws_nav001_lab",
+        "decisionId": "dec_nav001_review",
+        "findingId": "find_nav001_superseded",
+        "note": "original observation",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:12.000Z"
+      }
+    ],
+    "needsReview": true,
+    "needsReviewFindingIds": [
+      "find_nav001_superseded"
+    ]
+  },
+  "decisionHistory": {
+    "defaultLimit": {
+      "total": 3,
+      "returned": 3,
+      "truncated": false,
+      "nextCursorPresent": false,
+      "ids": [
+        "con_nav001_0283",
+        "con_nav001_0279",
+        "con_nav001_0276"
+      ],
+      "items": [
+        {
+          "id": "con_nav001_0283",
+          "workspaceId": "ws_nav001_lab",
+          "actor": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "action": "update",
+          "objectType": "decision",
+          "objectId": "dec_nav001_review",
+          "payload": {
+            "summary": "cites find_nav001_superseded",
+            "findingId": "find_nav001_superseded",
+            "note": "original observation"
+          },
+          "appendPosition": 135,
+          "createdAt": "2026-10-17T12:03:12.000Z"
+        },
+        {
+          "id": "con_nav001_0279",
+          "workspaceId": "ws_nav001_lab",
+          "actor": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "action": "update",
+          "objectType": "decision",
+          "objectId": "dec_nav001_review",
+          "payload": {
+            "status": "accepted"
+          },
+          "appendPosition": 134,
+          "createdAt": "2026-10-17T12:03:11.000Z"
+        },
+        {
+          "id": "con_nav001_0276",
+          "workspaceId": "ws_nav001_lab",
+          "actor": {
+            "actorId": "hum_nav001_ana",
+            "actorType": "human"
+          },
+          "action": "create",
+          "objectType": "decision",
+          "objectId": "dec_nav001_review",
+          "payload": {
+            "summary": "The terminal screen lists every recorded task because the read felt complete.",
+            "status": "proposed"
+          },
+          "appendPosition": 133,
+          "createdAt": "2026-10-17T12:03:10.000Z"
+        }
+      ]
+    },
+    "limit1": {
+      "total": 3,
+      "returned": 1,
+      "truncated": true,
+      "firstId": "con_nav001_0283",
+      "decodedCursor": {
+        "v": 1,
+        "kind": "record-history",
+        "workspaceId": "ws_nav001_lab",
+        "objectType": "decision",
+        "objectId": "dec_nav001_review",
+        "order": "append-position-desc",
+        "tip": 217,
+        "beforePosition": 135
+      }
+    }
+  },
+  "citedFindingSuperseded": {
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-17T12:03:06.000Z",
+    "id": "find_nav001_superseded",
+    "workspaceId": "ws_nav001_lab",
+    "summary": "Every recorded lab task appeared in the first terminal read.",
+    "detail": "Observed while the lab still fit inside one default task page.",
+    "currentness": "superseded",
+    "successorId": "find_nav001_current",
+    "correctionReason": "The lab grew past one default task page; the earlier observation covered only the returned page.",
+    "correctedBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "correctedAt": "2026-10-17T12:03:07.000Z"
+  },
+  "citedFindingCurrent": {
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-17T12:03:07.000Z",
+    "id": "find_nav001_current",
+    "workspaceId": "ws_nav001_lab",
+    "summary": "The terminal read covers only the returned task page.",
+    "detail": "The 44 tasks beyond the default 20-row page are not inspected.",
+    "currentness": "current",
+    "predecessorId": "find_nav001_superseded",
+    "evidence": [
+      {
+        "id": "fev_nav001_0271",
+        "workspaceId": "ws_nav001_lab",
+        "findingId": "find_nav001_current",
+        "artifactId": "art_nav001_runbook",
+        "relation": "supports",
+        "note": "runbook recorded beside the correction",
+        "createdBy": {
+          "actorId": "hum_nav001_ana",
+          "actorType": "human"
+        },
+        "createdAt": "2026-10-17T12:03:08.000Z"
+      }
+    ]
+  },
+  "citedArtifact": {
+    "record": {
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-17T12:03:03.000Z",
+      "id": "art_nav001_runbook",
+      "workspaceId": "ws_nav001_lab",
+      "type": "report",
+      "title": "nav-001 runbook reference",
+      "uriOrPath": "https://example.com/nav-001/runbook.html"
+    },
+    "referenceClass": {
+      "class": "openable https",
+      "unsafe": false,
+      "host": "example.com",
+      "openable": true
+    }
+  },
+  "competingDecisions": {
+    "a": {
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-17T12:03:13.000Z",
+      "id": "dec_nav001_competing_a",
+      "workspaceId": "ws_nav001_lab",
+      "summary": "Order the screen by recorded assignment.",
+      "rationale": "Assignment is the only recorded grouping, so it should lead the order.",
+      "status": "accepted",
+      "approvedBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "updatedAt": "2026-10-17T12:03:14.000Z"
+    },
+    "b": {
+      "createdBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "createdAt": "2026-10-17T12:03:15.000Z",
+      "id": "dec_nav001_competing_b",
+      "workspaceId": "ws_nav001_lab",
+      "summary": "Order the screen by newest record.",
+      "rationale": "Recency shows the latest change first; assignment ordering hides fresh work.",
+      "status": "accepted",
+      "approvedBy": {
+        "actorId": "hum_nav001_ana",
+        "actorType": "human"
+      },
+      "updatedAt": "2026-10-17T12:03:16.000Z"
+    }
+  },
+  "participantsCoverage": {
+    "defaultHasKey": false,
+    "defaultParticipantCount": 57,
+    "omitParticipantCount": 0,
+    "omit": {
+      "returned": 0,
+      "total": 57,
+      "truncated": true,
+      "omitted": true
+    }
+  },
+  "attention": {
+    "needsYou": [
+      {
+        "id": "dec_nav001_proposed",
+        "reason": "proposed_decision_actionable"
+      },
+      {
+        "id": "task_nav001_assigned_blocked_ana",
+        "reason": "assigned_blocked_task"
+      },
+      {
+        "id": "task_nav001_assigned_open_ana",
+        "reason": "assigned_open_task"
+      }
+    ],
+    "needsAttention": [
+      {
+        "id": "task_nav001_blocked_noassignee",
+        "reason": "unassigned_blocked_task"
+      },
+      {
+        "id": "task_nav001_f013",
+        "reason": "team_blocked_task"
+      },
+      {
+        "id": "task_nav001_f026",
+        "reason": "team_blocked_task"
+      },
+      {
+        "id": "task_nav001_f039",
+        "reason": "team_blocked_task"
+      },
+      {
+        "id": "task_nav001_f052",
+        "reason": "team_blocked_task"
+      },
+      {
+        "id": "task_nav001_blocked_agent",
+        "reason": "team_blocked_task"
+      },
+      {
+        "id": "dec_nav001_review",
+        "reason": "accepted_decision_needs_review"
+      }
+    ]
+  },
+  "goal": {
+    "createdBy": {
+      "actorId": "hum_nav001_ana",
+      "actorType": "human"
+    },
+    "createdAt": "2026-10-17T12:01:01.000Z",
+    "id": "goal_nav001_focus",
+    "workspaceId": "ws_nav001_lab",
+    "title": "Give the terminal one focused screen over the recorded work.",
+    "description": "Twenty humans and thirty-seven agents share one lab while the v1.21.0 navigator baseline is frozen.",
+    "status": "active",
+    "updatedAt": "2026-10-17T12:01:01.000Z"
+  },
+  "authorizedAgentHistoryIds": [
+    "con_nav001_0283",
+    "con_nav001_0279",
+    "con_nav001_0276"
+  ],
+  "viewerReadMethodsOnThisCommit": [
+    "whoami",
+    "list_workspaces",
+    "get_workspace",
+    "get_workspace_context",
+    "get_activity"
+  ]
+}

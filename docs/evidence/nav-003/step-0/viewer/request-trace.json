@@ -1,0 +1,101 @@
+{
+  "note": "Methods the Viewer process called through options.call for one 1440x900 load, split after the first settled paint (600ms) and one poll interval (2600ms). No tokens, cursors, or bodies.",
+  "actor": "hum_nav001_ana",
+  "workspaceId": "ws_nav001_lab",
+  "calls": [
+    {
+      "phase": "initial",
+      "method": "whoami",
+      "compactBytes": 58,
+      "paramKeys": [],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "initial",
+      "method": "list_workspaces",
+      "compactBytes": 213,
+      "paramKeys": [],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "initial",
+      "method": "get_workspace_context",
+      "compactBytes": 64920,
+      "paramKeys": [
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "initial",
+      "method": "get_activity",
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": 50
+    },
+    {
+      "phase": "initial",
+      "method": "get_workspace",
+      "compactBytes": 115288,
+      "paramKeys": [
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "poll",
+      "method": "list_workspaces",
+      "compactBytes": 213,
+      "paramKeys": [],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "poll",
+      "method": "get_workspace_context",
+      "compactBytes": 64920,
+      "paramKeys": [
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": null
+    },
+    {
+      "phase": "poll",
+      "method": "get_activity",
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": 50
+    },
+    {
+      "phase": "poll",
+      "method": "get_workspace",
+      "compactBytes": 115288,
+      "paramKeys": [
+        "workspaceId"
+      ],
+      "since": false,
+      "limit": null
+    }
+  ],
+  "getWorkspaceCallCount": 2,
+  "methods": [
+    "whoami",
+    "list_workspaces",
+    "get_workspace_context",
+    "get_activity",
+    "get_workspace"
+  ]
+}

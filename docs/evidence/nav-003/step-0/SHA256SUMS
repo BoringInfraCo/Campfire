@@ -1,0 +1,17 @@
+7998a3482947bdac59a98aa1a2a1ca501de1f4fac9e7161be18fc55e4577b595  ./json/answer-key.json
+3a50483916d40b90e73a6e3d0ec52f21245c0b72049ad4ae9b0d14291955114e  ./json/denials.json
+e4ec0c77856e64b7d30621186a7864577ce01f9338c65e2271814e19527786f2  ./json/measurements.json
+d97490e112089965b19c6374820eb936cdd312a30a07df35363fec908592ece7  ./README.md
+22a403ada618d8d97c6dc17c7c9eae1d4997dc173e1fda6e9f14653915a81c1d  ./STEP0.md
+b713cc097cef88d130345ca6d8a802106d644c50cf0cf762dfda34896e7fdcfe  ./terminal/baseline-v1.23.0-ana-lab-120x36.txt
+9a18570c7130494947a0fed38db92690c824abd836b8bb29a97d16b0f842ca1d  ./terminal/baseline-v1.23.0-ana-lab-80x24.txt
+b03914624905758bbca8119fb225ec095babd17a0e5294600ed82c00745dc3f7  ./terminal/capture-summary.json
+e98ef4db8ff7219b8eedf3c49f47d624d8716fe1707915a61337e6791ba2039a  ./viewer/ana-lab-keyboard-1440x900.png
+241865edb18473079082c264c500399f2560b1127f192295de992eeaf2e0a52c  ./viewer/ana-lab-keyboard-1440x900.txt
+26194f46b9e5d7453fab419cf60e28e8d5f27ac19efcd0790e15ceed6c55ec92  ./viewer/ana-lab-mine-1440x900.png
+d4d8b900faeb1b9d057b9251a4fd30d779fdd29f9a3a792385222dbf70c34ff5  ./viewer/ana-lab-mine-1440x900.txt
+e9849492ded99849596c4cbc7111dbfa77cdedea4d372453f3b8e204008b7d4a  ./viewer/ana-lab-mine-390x844.png
+d4d8b900faeb1b9d057b9251a4fd30d779fdd29f9a3a792385222dbf70c34ff5  ./viewer/ana-lab-mine-390x844.txt
+61ffdce5eb92dc4aaad9536bc6a5b4acf5f38c37221818fbffb3302c8cc123a6  ./viewer/capture-summary.json
+9deb630cfc88fc151273893988932338cd172da3beff20ba5a260500373bf552  ./viewer/keyboard-path.json
+b89af6aa4214f3eb964fd7cd03780dd3ed2f35b6163a5c339bf977e24e0abbec  ./viewer/request-trace.json
