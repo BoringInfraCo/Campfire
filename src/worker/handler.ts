@@ -44,6 +44,7 @@ import {
   type RateLimiterBinding,
 } from "./telemetry.js";
 import type { IdSource } from "../domain/ids.js";
+import { projectViewerRecordHistory } from "../viewer/history-view.js";
 
 const MAX_BODY_BYTES = 1_048_576;
 
@@ -134,6 +135,11 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     default:
       return 400;
   }
+}
+
+/** Viewer history must not carry a raw contribution payload. Other methods are unchanged. */
+function projectViewerResult(method: string, result: unknown): unknown {
+  return method === "get_record_history" ? projectViewerRecordHistory(result) : result;
 }
 
 function json(status: number, body: unknown): Response {
@@ -610,7 +616,7 @@ async function handleSyncViewerPost(service: CampfireService, request: Request):
 
   try {
     const result = dispatchCampfireMethod(service, ctx, method, params);
-    return json(200, { ok: true, result });
+    return json(200, { ok: true, result: projectViewerResult(method, result) });
   } catch (error) {
     if (error instanceof CampfireError) {
       return fail(statusFor(error.code, false), error.code, error.message);
@@ -642,7 +648,7 @@ async function handleAsyncViewerPost(service: AsyncCampfireService, request: Req
 
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
-    return json(200, { ok: true, result });
+    return json(200, { ok: true, result: projectViewerResult(method, result) });
   } catch (error) {
     if (error instanceof CampfireError) {
       return fail(statusFor(error.code, false), error.code, error.message);
@@ -668,7 +674,7 @@ async function handleSyncViewerGet(
   if (sessionId !== undefined) ctx.agentSessionId = sessionId;
   try {
     const result = dispatchCampfireMethod(service, ctx, method, params);
-    return json(200, { ok: true, result });
+    return json(200, { ok: true, result: projectViewerResult(method, result) });
   } catch (error) {
     if (error instanceof CampfireError) {
       return fail(statusFor(error.code, false), error.code, error.message);
@@ -694,7 +700,7 @@ async function handleAsyncViewerGet(
   if (sessionId !== undefined) ctx.agentSessionId = sessionId;
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
-    return json(200, { ok: true, result });
+    return json(200, { ok: true, result: projectViewerResult(method, result) });
   } catch (error) {
     if (error instanceof CampfireError) {
       return fail(statusFor(error.code, false), error.code, error.message);

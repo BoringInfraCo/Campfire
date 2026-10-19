@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
 import type { WorkspaceContext } from "../service/service.js";
 import { GENERATED_VIEW_CSP, renderGeneratedWorkspaceView } from "./generated-workspace-view.js";
+import { projectViewerRecordHistory } from "./history-view.js";
 
 export const DEFAULT_VIEWER_HOST = "127.0.0.1";
 export const DEFAULT_VIEWER_PORT = 9415;
@@ -408,7 +409,10 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
 
     try {
       const result = await options.call(method, params);
-      writeJson(res, 200, { ok: true, result });
+      // History payloads can carry notes and transcript-like text. The browser
+      // gets a bounded summary. Every other Viewer method stays the service JSON.
+      const body = method === "get_record_history" ? projectViewerRecordHistory(result) : result;
+      writeJson(res, 200, { ok: true, result: body });
     } catch (error) {
       if (error instanceof CampfireError) {
         fail(res, statusFor(error.code, false), error.code, error.message);

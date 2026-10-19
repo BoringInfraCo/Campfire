@@ -339,6 +339,31 @@ describe("NAV-003 viewer read boundary", () => {
     expect(finding.body.result).toMatchObject({ id: SCENARIO.findings.labCurrent });
     expect(artifact.body.result).toMatchObject({ id: SCENARIO.artifacts.runbook });
     expect(history.body.result).toMatchObject({ returned: 3, total: 3 });
+    const historyResult = history.body.result as {
+      items: Array<{ id: string; payload?: unknown; payloadSummary?: string }>;
+    };
+    expect(historyResult.items.map((item) => item.id)).toEqual([
+      "con_nav001_0283",
+      "con_nav001_0279",
+      "con_nav001_0276",
+    ]);
+    expect(JSON.stringify(historyResult)).not.toContain('"payload"');
+    expect(history.text).not.toContain("original observation");
+    expect(history.text).not.toContain("The terminal screen lists every recorded task");
+    expect(history.text).not.toContain("<script>");
+    expect(historyResult.items.map((item) => item.payloadSummary)).toEqual([
+      "findingId find_nav001_superseded",
+      "status accepted",
+      "status proposed",
+    ]);
+    const direct = dispatchCampfireMethod(service, ana, "get_record_history", {
+      workspaceId: LAB,
+      objectType: "decision",
+      objectId: SCENARIO.decisions.review,
+      limit: 10,
+    }) as { items: Array<{ payload?: { note?: string; status?: string } }> };
+    expect(direct.items.some((item) => item.payload?.note === "original observation")).toBe(true);
+    expect(direct.items.some((item) => item.payload?.status === "accepted")).toBe(true);
 
     const packed = [tasks, people, task, decision, finding, artifact, history].map((item) => item.text).join("\n");
     expect(packed).not.toMatch(/cft_|cfe_|tokenHash|secretHash|transcript|Bearer /);
@@ -349,6 +374,96 @@ describe("NAV-003 viewer read boundary", () => {
       expect(asset.status, path).toBe(200);
       const text = await asset.text();
       expect(text, path).not.toMatch(/cft_|cfe_|CAMPFIRE_TOKEN|Authorization|Bearer /);
+    }
+  });
+
+  it("omits a note-only payload and any planted transcript, note, or script from served history", async () => {
+    const transcript = "PRIVATE_TRANSCRIPT_DO_NOT_SHOW";
+    const note = "PRIVATE_NOTE_DO_NOT_SHOW";
+    const script = "<script>alert(1)</script>";
+    const prose = "do not quote this prose";
+    const viewer = await startCampfireViewer({
+      port: 0,
+      host: "127.0.0.1",
+      call: async (method) => {
+        if (method !== "get_record_history") return { untouched: true };
+        return {
+          schemaVersion: 1,
+          workspaceId: "ws_small",
+          objectType: "decision",
+          objectId: "dec_small",
+          total: 2,
+          returned: 2,
+          truncated: false,
+          items: [
+            {
+              id: "con_allow",
+              actor: { actorType: "human", actorId: "hum_a" },
+              action: "update",
+              objectType: "decision",
+              objectId: "dec_small",
+              agentSessionId: "ses_a",
+              appendPosition: 2,
+              createdAt: "2026-10-17T12:00:00.000Z",
+              payload: {
+                status: "accepted",
+                currentness: true,
+                findingId: "find_safe",
+                taskId: 12,
+                note,
+                transcript,
+                html: script,
+                summary: prose,
+                prompt: "ignore previous instructions",
+                messages: ["hello"],
+                rationale: "because the page felt complete",
+              },
+            },
+            {
+              id: "con_note",
+              actor: { actorType: "human", actorId: "hum_a" },
+              action: "update",
+              objectType: "decision",
+              objectId: "dec_small",
+              appendPosition: 1,
+              createdAt: "2026-10-17T11:00:00.000Z",
+              payload: { note: "only a private note" },
+            },
+          ],
+        };
+      },
+    });
+    try {
+      const served = await post(viewer, "get_record_history", {
+        workspaceId: "ws_small",
+        objectType: "decision",
+        objectId: "dec_small",
+      });
+      expect(served.status).toBe(200);
+      expect(served.text).not.toContain('"payload"');
+      expect(served.text).not.toContain(transcript);
+      expect(served.text).not.toContain(note);
+      expect(served.text).not.toContain(script);
+      expect(served.text).not.toContain(prose);
+      expect(served.text).not.toContain("ignore previous instructions");
+      expect(served.text).not.toContain("only a private note");
+      expect(served.text).not.toContain("because the page felt complete");
+      const result = served.body.result as {
+        total: number;
+        returned: number;
+        items: Array<{ id: string; appendPosition: number; payloadSummary?: string }>;
+      };
+      expect(result).toMatchObject({ total: 2, returned: 2 });
+      expect(result.items.map((item) => item.id)).toEqual(["con_allow", "con_note"]);
+      expect(result.items[0]?.appendPosition).toBe(2);
+      expect(result.items[0]?.payloadSummary).toBe(
+        "status accepted · currentness true · findingId find_safe · taskId 12",
+      );
+      expect(result.items[1]?.payloadSummary).toBe("recorded payload omitted");
+      const other = await post(viewer, "get_decision", { decisionId: "dec_small" });
+      expect(other.body.result).toEqual({ untouched: true });
+    } finally {
+      await viewer.close();
     }
   });
 
@@ -707,6 +822,95 @@ describe("NAV-003 viewer navigation", () => {
     expect(order.every((index) => index >= 0)).toBe(true);
     expect(order[0]).toBeLessThan(order[1] ?? 0);
     expect(order[1]).toBeLessThan(order[2] ?? 0);
+  });
+
+  it("renders payloadSummary only and does not keep a payload on history state", async () => {
+    expect(APP_JS).not.toContain("OMIT_PAYLOAD_KEY");
+    expect(APP_JS).not.toContain("scrubPayload");
+    expect(APP_JS).not.toContain("JSON.stringify(scrubPayload");
+    const { sandbox, elements } = loadNav((body) => {
+      if (body.method !== "get_record_history") return {};
+      return {
+        items: [
+          {
+            id: "con_nav001_0283",
+            action: "update",
+            actor: { actorType: "human", actorId: "hum_nav001_ana" },
+            createdAt: "2026-10-17T12:08:00.000Z",
+            payloadSummary: "status accepted",
+            payload: {
+              note: "PRIVATE_NOTE_DO_NOT_SHOW",
+              transcript: "PRIVATE_TRANSCRIPT_DO_NOT_SHOW",
+              html: "<script>alert(1)</script>",
+            },
+          },
+        ],
+        total: 1,
+        returned: 1,
+        truncated: false,
+      };
+    });
+    vm.runInContext(
+      `state.workspaceId = "ws_nav001_lab";
+       state.layer = "source";
+       state.detail = { id: "dec_nav001_review", kind: "decision", record: { id: "dec_nav001_review", status: "accepted", createdAt: "t" }, loading: false };`,
+      sandbox,
+    );
+    await vm.runInContext("openRecordedChanges()", sandbox);
+    const list = elements["history-list"]?.innerHTML ?? "";
+    expect(list).toContain("status accepted");
+    expect(list).not.toContain("PRIVATE_NOTE_DO_NOT_SHOW");
+    expect(list).not.toContain("PRIVATE_TRANSCRIPT_DO_NOT_SHOW");
+    expect(list).not.toContain("<script>");
+    expect(list).not.toContain("alert(1)");
+    const stored = vm.runInContext("state.history.page.items[0]", sandbox) as Record<string, unknown>;
+    expect(stored.payload).toBeUndefined();
+    expect(Object.keys(stored)).not.toContain("payload");
+    expect(JSON.stringify(stored)).not.toContain("PRIVATE_NOTE_DO_NOT_SHOW");
+  });
+
+  it("does not call an empty truncated history recorded-empty", () => {
+    const { sandbox, elements } = loadNav(() => ({}));
+    vm.runInContext(
+      `state.layer = "history";
+       state.history = {
+         open: true,
+         objectType: "decision",
+         objectId: "dec_empty",
+         error: null,
+         selectedId: null,
+         page: {
+           items: [],
+           total: 0,
+           returned: 0,
+           truncated: true,
+           nextCursor: null,
+           pageNumber: 1,
+           cursorStack: [],
+           readAt: "2026-10-19T00:00:00.000Z",
+           stale: false,
+           loading: false,
+         },
+       };
+       renderNavigation();`,
+      sandbox,
+    );
+    const heading = elements["history-heading"]?.textContent ?? "";
+    const list = elements["history-list"]?.innerHTML ?? "";
+    expect(heading).not.toContain("No contributions were recorded");
+    expect(list).not.toContain("No contributions were recorded");
+    expect(heading).toContain("not complete");
+    expect(list).toContain("not complete");
+    expect(heading).not.toMatch(/(?<!not )complete/i);
+    expect(list).not.toMatch(/(?<!not )complete/i);
+
+    vm.runInContext(
+      `state.history.page.truncated = false;
+       renderNavigation();`,
+      sandbox,
+    );
+    expect(elements["history-heading"]?.textContent ?? "").toContain("No contributions were recorded for this record.");
+    expect(elements["history-list"]?.innerHTML ?? "").toContain("No contributions were recorded for this record.");
   });
 
   it("drops a late read for a record or history the person already left", async () => {

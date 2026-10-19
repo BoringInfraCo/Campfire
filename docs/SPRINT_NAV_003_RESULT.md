@@ -142,4 +142,12 @@ Harness notes that were not product failures:
 - A second Escape closing the source layer. The keyboard capture stops after one Escape, which closes history and restores the originating row.
 - A 390 screenshot of the decision source itself. The 390 history frame shows the three contribution ids. The decision source text is the 1440 frame.
 - A rendered denial page for the lab. Zed’s evidence is the served 403 responses and the absence of the lab goal in the page text.
-- The remaining payload-key limit in §4, and an empty history page that is both `total === 0` and `truncated: true`.
+- The remaining payload-key limit in §4, and an empty history page that is both `total === 0` and `truncated: true`. Both are closed by the follow-up in §8. This sentence records what D1–D8 on `6ed8b00` did not demonstrate. It is not a later pass of those checks.
+
+## 8. Follow-up: Viewer history payload
+
+Previous candidate: `6ed8b00c138fc57dbe53cd92a1b87992d44dfacb`.
+
+The commit that adds this follow-up closes the payload-key limit and the empty-and-truncated history sentence left open in §2, §4, and §7. Viewer `get_record_history` no longer returns the contribution `payload`. Each item may carry `payloadSummary`: allowlisted short tokens (`status`, `currentness`, `findingId`, `artifactId`, `decisionId`, `taskId`, `objectId`, `objectType`, `fromStatus`, `toStatus`) joined as `key value` with ` · `, at most 160 characters, or `recorded payload omitted` when a payload existed and nothing allowlisted remained. The summary is omitted when there is no payload. The browser renders `payloadSummary` only and does not keep a payload object. HTTP `/v1/call`, MCP, and the CLI still return `payload`. The terminal dashboard is unchanged. An empty history says no contributions were recorded only when `total` is 0, there is no error, and `truncated` is not true. When `truncated` is true, the heading says the read is not complete.
+
+Verdict is unchanged: **CONDITIONAL GO — engineering candidate**. Human outcome remains **NOT OBSERVED**. This follow-up does not rewrite the D4 failure on `6ed7a6b` into a pass. It does not bump a version, tag, publish, or deploy. `npm run typecheck` passed. `tests/integration/nav-003-viewer.test.ts`, `tests/worker/handler.test.ts`, and `tests/unit/nav-002-reads.test.ts` passed (33 tests).

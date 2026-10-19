@@ -1967,8 +1967,6 @@ const WORK_PAGE_LIMIT = 20;
 const PEOPLE_PAGE_LIMIT = 20;
 const HISTORY_PAGE_LIMIT = 10;
 const CURSOR_STACK_LIMIT = 32;
-const PAYLOAD_SUMMARY_LIMIT = 160;
-const OMIT_PAYLOAD_KEY = /^(transcript|privatetranscript|prompt|messages)$/i;
 const RECORD_KINDS = ["task", "decision", "finding", "artifact"];
 const DECISION_STATUS_LABELS = {
   proposed: "proposed — not accepted, not an instruction",
@@ -2064,33 +2062,6 @@ function matchesRowFilter(text) {
   const query = String(state.rowFilter || "").trim().toLowerCase();
   if (!query) return true;
   return String(text).toLowerCase().includes(query);
-}
-
-function scrubPayload(value) {
-  if (Array.isArray(value)) return value.map(scrubPayload);
-  if (isRecord(value)) {
-    const out = {};
-    for (const key of Object.keys(value)) {
-      if (OMIT_PAYLOAD_KEY.test(key)) continue;
-      out[key] = scrubPayload(value[key]);
-    }
-    return out;
-  }
-  if (typeof value === "string") return visibleText(value);
-  return value;
-}
-
-function payloadSummary(payload) {
-  if (!isRecord(payload)) return "";
-  let text = "";
-  try {
-    text = JSON.stringify(scrubPayload(payload)) ?? "";
-  } catch (err) {
-    return "";
-  }
-  text = visibleText(text);
-  if (!text || text === "{}") return "";
-  return text.length > PAYLOAD_SUMMARY_LIMIT ? `${text.slice(0, PAYLOAD_SUMMARY_LIMIT)}…` : text;
 }
 
 function workRowHtml(task) {
@@ -2605,7 +2576,7 @@ async function fetchHistory(request) {
     if (gen !== state.historyGen || state.workspaceId !== workspaceId) return;
     if (!state.history || state.history.open !== true || state.history.objectId !== objectId || state.history.objectType !== objectType) return;
     state.history.error = null;
-    state.history.page = applyPage(result, request, {});
+    state.history.page = applyPage(historyPageResult(result), request, {});
   } catch (err) {
     if (gen !== state.historyGen || state.workspaceId !== workspaceId) return;
     if (!state.history || state.history.objectId !== objectId) return;
@@ -2654,12 +2625,36 @@ function pageHistory(direction) {
   });
 }
 
+function historyPageResult(result) {
+  if (!isRecord(result)) return result;
+  return {
+    ...result,
+    items: asArray(result.items).map((entry) => {
+      if (!isRecord(entry) || !Object.prototype.hasOwnProperty.call(entry, "payload")) return entry;
+      const copy = {};
+      for (const key of Object.keys(entry)) {
+        if (key === "payload") continue;
+        copy[key] = entry[key];
+      }
+      return copy;
+    }),
+  };
+}
+
+function historyPayloadSummary(entry) {
+  return typeof entry.payloadSummary === "string" ? visibleText(entry.payloadSummary) : "";
+}
+
 function historyRowHtml(entry) {
   const actor = isRecord(entry.actor) ? entry.actor : {};
   const session = strField(entry.agentSessionId);
-  const summary = payloadSummary(entry.payload);
+  const summary = historyPayloadSummary(entry);
   const current = state.history && state.history.selectedId === entry.id ? ` aria-current="true"` : "";
   return `<button type="button" class="row-btn" data-history-id="${esc(strField(entry.id))}"${current}><span class="record-id">${esc(strField(entry.id))}</span> <span>${esc(strField(actor.actorType))} ${esc(strField(actor.actorId))}</span>${session ? ` <span>agent session ${esc(session)}</span>` : ""} <span>${esc(visibleText(strField(entry.action)))}</span> <span>${esc(strField(entry.createdAt))}</span>${summary ? ` <span>payload ${esc(summary)}</span>` : ""}</button>`;
+}
+
+function historyRecordedEmpty(page, errored) {
+  return Boolean(page && page.total === 0 && !errored && page.stale !== true && page.truncated !== true);
 }
 
 function historyHeadingText(history) {
@@ -2667,11 +2662,15 @@ function historyHeadingText(history) {
   if (history.error && !history.page) return `Recorded changes are unavailable. ${history.error} This read is not complete.`;
   const page = history.page;
   if (!page) return "Recorded changes are loading.";
-  if (page.total === 0 && !history.error && page.stale !== true) return "No contributions were recorded for this record.";
+  if (historyRecordedEmpty(page, history.error)) return "No contributions were recorded for this record.";
   const returned = typeof page.returned === "number" ? page.returned : "?";
   const total = typeof page.total === "number" ? page.total : "?";
   const stale = page.stale || history.error ? " stale" : "";
-  return `Recorded changes returned ${returned} of ${total}. ${pageContinuation(page, Boolean(history.error))}.${stale}`;
+  const continuation =
+    page.total === 0 && page.truncated === true && !history.error
+      ? "This read is not complete"
+      : pageContinuation(page, Boolean(history.error));
+  return `Recorded changes returned ${returned} of ${total}. ${continuation}.${stale}`;
 }
 
 function filteredPageItems(items, textOf) {
@@ -2782,7 +2781,9 @@ function renderNavigation() {
     else if (state.history && state.history.error && !page) {
       els.historyList.innerHTML = `<div class="empty">${esc(state.history.error)} This read is not complete.</div>`;
     } else if (!page) els.historyList.innerHTML = `<div class="empty">Recorded changes are loading.</div>`;
-    else if (page.total === 0 && !state.history.error) {
+    else if (page.total === 0 && page.truncated === true) {
+      els.historyList.innerHTML = `<div class="empty">This read is not complete.</div>`;
+    } else if (historyRecordedEmpty(page, state.history.error)) {
       els.historyList.innerHTML = `<div class="empty">No contributions were recorded for this record.</div>`;
     } else {
       const rows = filteredPageItems(page.items, (entry) => `${strField(entry.id)} ${strField(entry.action)}`);
