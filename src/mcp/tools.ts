@@ -290,9 +290,44 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     {
       description:
         "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou (work you can act on) and needsAttention (other team records — attention ordering, not an access boundary), current work, and an orientation hint. Each slice carries total, returned, and truncated; attentionCoverage states the returned task and decision page counts and whether the attention lists are complete under their selection rules (a truncated source page can hide a matching cue). needsAttention also carries a team review cue with reason accepted_decision_needs_review for a returned accepted decision whose cited findings are no longer current — a review cue, not a revocation of acceptance and not a transition. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
-      inputSchema: { workspaceId: z.string(), since: z.string().optional() },
+      inputSchema: {
+        workspaceId: z.string(),
+        since: z.string().optional(),
+        participants: z.literal("omit").optional(),
+      },
     },
     (args) => run("get_workspace_context", () => invoke("get_workspace_context", args)),
+  );
+
+  server.registerTool(
+    "list_workspace_participants",
+    {
+      description:
+        "Bounded read of one workspace's participants. Returns human and agent identities in that workspace only. This is not a team directory, not tokens or email, and not live presence. Pass the cursor to continue. humanOwnerId limits the page to agent participants recorded as owned by that human.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+        humanOwnerId: z.string().min(1).optional(),
+      },
+    },
+    (args) => run("list_workspace_participants", () => invoke("list_workspace_participants", args)),
+  );
+
+  server.registerTool(
+    "get_record_history",
+    {
+      description:
+        "Bounded read of Campfire contributions whose objectType and objectId equal the selected task, decision, finding, or artifact. Matching contributions only: not cited findings, not referenced artifacts, not a team directory, and not live presence. Pass the cursor to continue the same frozen traversal.",
+      inputSchema: {
+        workspaceId: z.string(),
+        objectType: z.enum(["task", "decision", "finding", "artifact"]),
+        objectId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("get_record_history", () => invoke("get_record_history", args)),
   );
 
   server.registerTool(

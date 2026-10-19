@@ -380,7 +380,9 @@ describe("CTX-001 orientation and drill-down", () => {
     let page = first;
     for (let guard = 0; guard < 40; guard += 1) {
       for (const change of page.changes.items) {
-        seen.push(decodeContextCursor(change.cursor).id);
+        const decoded = decodeContextCursor(change.cursor);
+        if (decoded.kind !== "contribution") throw new Error("expected a contribution cursor");
+        seen.push(decoded.id);
       }
       if (page.changes.nextCursor === undefined) break;
       expect(page.toCursor).not.toBe(after);

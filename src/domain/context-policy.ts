@@ -60,12 +60,37 @@ export function toContextSlice<T>(items: readonly T[], total: number, nextCursor
 }
 
 export function clampPageLimit(limit: number | undefined, fallback: number): number {
+  return clampBoundedLimit(limit, fallback, MAX_PAGE_SIZE);
+}
+
+/** People pages. Not the history maximum. */
+export const DEFAULT_PARTICIPANT_PAGE_SIZE = 20;
+
+/**
+ * Record history is not an object page. `clampPageLimit` caps at 100;
+ * history must not reuse that ceiling.
+ */
+export const DEFAULT_RECORD_HISTORY_PAGE_SIZE = 10;
+export const MAX_RECORD_HISTORY_PAGE_SIZE = 50;
+
+export const HISTORY_OBJECT_TYPES = ["task", "decision", "finding", "artifact"] as const;
+export type HistoryObjectType = (typeof HISTORY_OBJECT_TYPES)[number];
+
+export function assertHistoryObjectType(value: string): HistoryObjectType {
+  if ((HISTORY_OBJECT_TYPES as readonly string[]).includes(value)) return value as HistoryObjectType;
+  throw new ValidationError("objectType must be task, decision, finding, or artifact", {
+    field: "objectType",
+    value,
+  });
+}
+
+export function clampBoundedLimit(limit: number | undefined, fallback: number, max: number): number {
   const resolved = limit === undefined ? fallback : limit;
   if (!Number.isInteger(resolved) || resolved < 1) {
     throw new ValidationError("limit must be a positive integer", { field: "limit", limit: resolved });
   }
-  if (resolved > MAX_PAGE_SIZE) {
-    throw new ValidationError(`limit must be at most ${MAX_PAGE_SIZE}`, { field: "limit", limit: resolved });
+  if (resolved > max) {
+    throw new ValidationError(`limit must be at most ${max}`, { field: "limit", limit: resolved });
   }
   return resolved;
 }
@@ -211,6 +236,27 @@ export type ContextCursor =
       rank: number;
       at: string;
       id: string;
+    }
+  | {
+      v: 1;
+      kind: "participant";
+      workspaceId: string;
+      /** Null is the unfiltered roster. A different value is a different cursor. */
+      humanOwnerId: string | null;
+      actorType: "agent" | "human";
+      actorId: string;
+    }
+  | {
+      v: 1;
+      kind: "record-history";
+      workspaceId: string;
+      objectType: HistoryObjectType;
+      objectId: string;
+      order: "append-position-desc";
+      /** Inclusive append-position high-water mark frozen on the first page. */
+      tip: number;
+      /** Oldest append position already returned. The next page is strictly before it. */
+      beforePosition: number;
     };
 
 const CURSOR_PREFIX = "cf1.";
@@ -248,10 +294,81 @@ function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
+function isParticipantCursor(cursor: Record<string, unknown>): boolean {
+  if (cursor.actorType !== "agent" && cursor.actorType !== "human") return false;
+  if (typeof cursor.actorId !== "string" || cursor.actorId.length === 0) return false;
+  if (cursor.humanOwnerId === null) return true;
+  return typeof cursor.humanOwnerId === "string" && cursor.humanOwnerId.length > 0;
+}
+
+function isRecordHistoryCursor(cursor: Record<string, unknown>): boolean {
+  if (typeof cursor.objectType !== "string" || !(HISTORY_OBJECT_TYPES as readonly string[]).includes(cursor.objectType)) {
+    return false;
+  }
+  if (typeof cursor.objectId !== "string" || cursor.objectId.length === 0) return false;
+  if (cursor.order !== "append-position-desc") return false;
+  if (!isNonNegativeInteger(cursor.tip) || cursor.tip < 1) return false;
+  if (!isNonNegativeInteger(cursor.beforePosition) || cursor.beforePosition < 1) return false;
+  return cursor.beforePosition <= cursor.tip;
+}
+
+/**
+ * Participant cursors are a current-read keyset, not a frozen membership snapshot.
+ * Returns the exclusive lower bound, or undefined when the caller asked for the first page.
+ * Call only after `workspace:read`.
+ */
+export function readParticipantCursor(
+  token: string | undefined,
+  workspaceId: string,
+  humanOwnerId: string | null,
+): { actorType: "agent" | "human"; actorId: string } | undefined {
+  if (token === undefined) return undefined;
+  const cursor = decodeContextCursor(token);
+  assertCursorWorkspace(cursor, workspaceId);
+  if (cursor.kind !== "participant") {
+    throw new ValidationError("Cursor is not a participant cursor", { field: "cursor" });
+  }
+  if (cursor.humanOwnerId !== humanOwnerId) {
+    throw new ValidationError("Cursor belongs to a different filter", {
+      field: "cursor",
+      humanOwnerId,
+    });
+  }
+  return { actorType: cursor.actorType, actorId: cursor.actorId };
+}
+
+/**
+ * History cursors freeze one traversal. Call only after workspace read, activity
+ * read, and the object-exists check, so a bad cursor cannot precede `*NotFound`.
+ */
+export function readRecordHistoryCursor(
+  token: string | undefined,
+  workspaceId: string,
+  objectType: HistoryObjectType,
+  objectId: string,
+): { tip: number; beforePosition: number } | undefined {
+  if (token === undefined) return undefined;
+  const cursor = decodeContextCursor(token);
+  assertCursorWorkspace(cursor, workspaceId);
+  if (cursor.kind !== "record-history") {
+    throw new ValidationError("Cursor is not a record-history cursor", { field: "cursor" });
+  }
+  if (cursor.objectType !== objectType || cursor.objectId !== objectId || cursor.order !== "append-position-desc") {
+    throw new ValidationError("Cursor belongs to a different record", {
+      field: "cursor",
+      objectType,
+      objectId,
+    });
+  }
+  return { tip: cursor.tip, beforePosition: cursor.beforePosition };
+}
+
 function isContextCursor(value: unknown): value is ContextCursor {
   if (typeof value !== "object" || value === null) return false;
   const cursor = value as Record<string, unknown>;
   if (cursor.v !== 1 || typeof cursor.workspaceId !== "string" || cursor.workspaceId.length === 0) return false;
+  if (cursor.kind === "participant") return isParticipantCursor(cursor);
+  if (cursor.kind === "record-history") return isRecordHistoryCursor(cursor);
   if (typeof cursor.id !== "string") return false;
   if (cursor.kind === "contribution") {
     if (typeof cursor.occurredAt !== "string") return false;

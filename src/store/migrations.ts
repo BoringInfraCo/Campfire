@@ -10,11 +10,13 @@ import type Database from "better-sqlite3";
 import { V5_SQL } from "./enrollment-schema.js";
 import { V6_ADD_COLUMN_SQL, V6_BACKFILL_SQL, V6_INDEX_SQL } from "./contribution-position-schema.js";
 import { V7_SQL } from "./correction-schema.js";
+import { V8_SQL } from "./record-history-schema.js";
 export { V5_SQL } from "./enrollment-schema.js";
 export { V6_SQL } from "./contribution-position-schema.js";
 export { V7_SQL } from "./correction-schema.js";
+export { V8_SQL } from "./record-history-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -156,6 +158,12 @@ const MIGRATIONS: readonly Migration[] = [
       if (!columns.some((column) => column.name === "currentness")) {
         db.exec(V7_SQL);
       }
+    },
+  },
+  {
+    version: 8,
+    up: (db) => {
+      db.exec(V8_SQL);
     },
   },
 ];

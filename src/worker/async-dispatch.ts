@@ -34,6 +34,8 @@ export const CAMPFIRE_HTTP_METHODS = [
   "get_task",
   "get_artifact",
   "get_activity",
+  "list_workspace_participants",
+  "get_record_history",
   "join_workspace",
   "invite_workspace",
   "issue_enrollment_invitation",
@@ -138,6 +140,50 @@ function optionalNum(params: Record<string, unknown>, field: string): number | u
 }
 
 const CONTEXT_BUDGET_KEYS = ["goals", "decisions", "findings", "tasks", "blockers", "artifacts", "recentChanges"] as const;
+
+const HISTORY_OBJECT_TYPES = ["task", "decision", "finding", "artifact"] as const;
+
+function participantsOption(params: Record<string, unknown>): "omit" | undefined {
+  if (!Object.prototype.hasOwnProperty.call(params, "participants") || params.participants === undefined) {
+    return undefined;
+  }
+  if (params.participants === "omit") return "omit";
+  throw new ValidationError("participants must be omit", { field: "participants", value: params.participants });
+}
+
+function passthroughLimit(params: Record<string, unknown>): number | undefined {
+  if (!Object.prototype.hasOwnProperty.call(params, "limit") || params.limit === undefined || params.limit === null) {
+    return undefined;
+  }
+  if (typeof params.limit !== "number" || !Number.isFinite(params.limit)) {
+    throw new ValidationError("limit must be a number", { field: "limit", value: params.limit });
+  }
+  return params.limit;
+}
+
+function passthroughCursor(params: Record<string, unknown>): string | undefined {
+  if (!Object.prototype.hasOwnProperty.call(params, "cursor") || params.cursor === undefined || params.cursor === null) {
+    return undefined;
+  }
+  if (typeof params.cursor !== "string") {
+    throw new ValidationError("cursor must be a string", { field: "cursor" });
+  }
+  return params.cursor;
+}
+
+function passthroughOwner(params: Record<string, unknown>): string | undefined {
+  if (
+    !Object.prototype.hasOwnProperty.call(params, "humanOwnerId") ||
+    params.humanOwnerId === undefined ||
+    params.humanOwnerId === null
+  ) {
+    return undefined;
+  }
+  if (typeof params.humanOwnerId !== "string") {
+    throw new ValidationError("humanOwnerId must be a string", { field: "humanOwnerId" });
+  }
+  return params.humanOwnerId;
+}
 
 function optionalContextBudget(params: Record<string, unknown>): Partial<ContextBudget> | undefined {
   if (params.budget === undefined) return undefined;
@@ -321,11 +367,13 @@ export async function dispatchCampfireMethodAsync(
     case "get_workspace":
       return await service.getWorkspace(ctx, str(params, "workspaceId"));
     case "get_workspace_context": {
-      const options: { since?: string; budget?: Partial<ContextBudget> } = {};
+      const options: { since?: string; budget?: Partial<ContextBudget>; participants?: "omit" } = {};
       const since = optionalStr(params, "since");
       if (since !== undefined) options.since = since;
       const budget = optionalContextBudget(params);
       if (budget !== undefined) options.budget = budget;
+      const participants = participantsOption(params);
+      if (participants !== undefined) options.participants = participants;
       return await service.getWorkspaceContext(ctx, str(params, "workspaceId"), options);
     }
     case "get_workspace_changes": {
@@ -376,6 +424,30 @@ export async function dispatchCampfireMethodAsync(
       const before = optionalStr(params, "before");
       if (before !== undefined) query.before = before;
       return await service.getActivity(ctx, query);
+    }
+    case "list_workspace_participants": {
+      const input: { workspaceId: string; limit?: number; cursor?: string; humanOwnerId?: string } = {
+        workspaceId: str(params, "workspaceId"),
+      };
+      const limit = passthroughLimit(params);
+      if (limit !== undefined) input.limit = limit;
+      const cursor = passthroughCursor(params);
+      if (cursor !== undefined) input.cursor = cursor;
+      const humanOwnerId = passthroughOwner(params);
+      if (humanOwnerId !== undefined) input.humanOwnerId = humanOwnerId;
+      return await service.listWorkspaceParticipants(ctx, input);
+    }
+    case "get_record_history": {
+      const input: { workspaceId: string; objectType: string; objectId: string; limit?: number; cursor?: string } = {
+        workspaceId: str(params, "workspaceId"),
+        objectType: requireEnum(str(params, "objectType"), HISTORY_OBJECT_TYPES, "objectType"),
+        objectId: str(params, "objectId"),
+      };
+      const limit = passthroughLimit(params);
+      if (limit !== undefined) input.limit = limit;
+      const cursor = passthroughCursor(params);
+      if (cursor !== undefined) input.cursor = cursor;
+      return await service.getRecordHistory(ctx, input);
     }
     case "join_workspace":
       // Role, if supplied, is ignored by the service; invite supplies the role.

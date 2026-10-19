@@ -6,8 +6,8 @@
  * as placeholders, never as raw text.
  */
 import { ValidationError } from "../domain/errors.js";
-import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
-import type { Contribution, DecisionStatus, FindingCurrentness, TaskStatus } from "../domain/types.js";
+import { MAX_PAGE_SIZE, MAX_RECORD_HISTORY_PAGE_SIZE, type HistoryObjectType } from "../domain/context-policy.js";
+import type { ActorType, Contribution, DecisionStatus, FindingCurrentness, ParticipantRole, TaskStatus } from "../domain/types.js";
 
 export const DECISION_RANK_SQL = "CASE status WHEN 'accepted' THEN 0 WHEN 'proposed' THEN 1 ELSE 2 END";
 export const TASK_RANK_SQL = "CASE status WHEN 'blocked' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'open' THEN 2 ELSE 3 END";
@@ -359,5 +359,172 @@ export function contributionsBeforeSql(
       LIMIT ?
     ) AS before_contributions ORDER BY created_at ASC, entry_rowid ASC`,
     params: [workspaceId, anchor.occurredAt, anchor.occurredAt, anchor.rowid, checked + 1],
+  };
+}
+
+export interface ListedParticipant {
+  actor: { actorId: string; actorType: ActorType };
+  name: string;
+  role: ParticipantRole;
+  harness?: string;
+  humanOwnerId?: string;
+  joinedAt: string;
+  /** Agents only. True when `humanOwnerId` is a human participant of this workspace. */
+  humanOwnerIsParticipant?: boolean;
+}
+
+export interface ParticipantPageQuery {
+  limit: number;
+  humanOwnerId?: string;
+  after?: { actorType: "human" | "agent"; actorId: string };
+}
+
+export interface ParticipantObjectPage {
+  items: ListedParticipant[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface RecordHistoryQuery {
+  limit: number;
+  objectType: HistoryObjectType;
+  objectId: string;
+  tip: number;
+  beforePosition?: number;
+}
+
+export interface ParticipantPageRow {
+  actor_id: string;
+  actor_type: string;
+  role: string;
+  joined_at: string;
+  name: string | null;
+  harness: string | null;
+  human_owner_id: string | null;
+  human_owner_is_participant: number | bigint | string | null;
+}
+
+const PARTICIPANT_SELECT = `
+  p.actor_id AS actor_id,
+  p.actor_type AS actor_type,
+  p.role AS role,
+  p.joined_at AS joined_at,
+  CASE WHEN p.actor_type = 'human' THEN h.display_name ELSE a.name END AS name,
+  a.harness AS harness,
+  a.human_id AS human_owner_id,
+  CASE
+    WHEN p.actor_type <> 'agent' THEN NULL
+    WHEN EXISTS (
+      SELECT 1 FROM workspace_participants AS owner
+      WHERE owner.workspace_id = p.workspace_id
+        AND owner.actor_type = 'human'
+        AND owner.actor_id = a.human_id
+    ) THEN 1
+    ELSE 0
+  END AS human_owner_is_participant`;
+
+function participantFilter(workspaceId: string, humanOwnerId: string | undefined): { where: string[]; params: unknown[] } {
+  const where = ["p.workspace_id = ?"];
+  const params: unknown[] = [workspaceId];
+  if (humanOwnerId !== undefined) {
+    where.push("p.actor_type = 'agent' AND a.human_id = ?");
+    params.push(humanOwnerId);
+  }
+  return { where, params };
+}
+
+export function pageParticipantsSql(workspaceId: string, query: ParticipantPageQuery): SqlStatement {
+  const limit = assertPageLimit(query.limit);
+  const filtered = participantFilter(workspaceId, query.humanOwnerId);
+  const params = [...filtered.params];
+  const where = [...filtered.where];
+  if (query.after !== undefined) {
+    where.push("(p.actor_type > ? OR (p.actor_type = ? AND p.actor_id > ?))");
+    params.push(query.after.actorType, query.after.actorType, query.after.actorId);
+  }
+  params.push(limit + 1);
+  return {
+    sql: `SELECT ${PARTICIPANT_SELECT}
+      FROM workspace_participants AS p
+      LEFT JOIN humans AS h ON p.actor_type = 'human' AND h.id = p.actor_id
+      LEFT JOIN agents AS a ON p.actor_type = 'agent' AND a.id = p.actor_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY p.actor_type ASC, p.actor_id ASC
+      LIMIT ?`,
+    params,
+  };
+}
+
+export function countParticipantsSql(workspaceId: string, humanOwnerId?: string): SqlStatement {
+  const filtered = participantFilter(workspaceId, humanOwnerId);
+  return {
+    sql: `SELECT COUNT(*) AS count
+      FROM workspace_participants AS p
+      LEFT JOIN agents AS a ON p.actor_type = 'agent' AND a.id = p.actor_id
+      WHERE ${filtered.where.join(" AND ")}`,
+    params: filtered.params,
+  };
+}
+
+export function mapListedParticipant(row: ParticipantPageRow): ListedParticipant {
+  const actorType: ActorType = row.actor_type === "agent" ? "agent" : "human";
+  const item: ListedParticipant = {
+    actor: { actorId: row.actor_id, actorType },
+    name: row.name !== null && row.name.length > 0 ? row.name : row.actor_id,
+    role: row.role as ParticipantRole,
+    joinedAt: row.joined_at,
+  };
+  if (actorType !== "agent") return item;
+  if (row.harness !== null && row.harness.length > 0) item.harness = row.harness;
+  if (row.human_owner_id !== null && row.human_owner_id.length > 0) item.humanOwnerId = row.human_owner_id;
+  item.humanOwnerIsParticipant = Number(row.human_owner_is_participant) === 1;
+  return item;
+}
+
+function assertHistoryObject(objectType: string): HistoryObjectType {
+  if (objectType === "task" || objectType === "decision" || objectType === "finding" || objectType === "artifact") {
+    return objectType;
+  }
+  throw new ValidationError("objectType must be task, decision, finding, or artifact", {
+    field: "objectType",
+    value: objectType,
+  });
+}
+
+export function assertHistoryPageLimit(limit: number): number {
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_RECORD_HISTORY_PAGE_SIZE) {
+    throw new ValidationError(`limit must be an integer from 1 to ${MAX_RECORD_HISTORY_PAGE_SIZE}`, {
+      field: "limit",
+      limit,
+    });
+  }
+  return limit;
+}
+
+export function pageRecordHistorySql(workspaceId: string, query: RecordHistoryQuery): SqlStatement {
+  const limit = assertHistoryPageLimit(query.limit);
+  const objectType = assertHistoryObject(query.objectType);
+  const params: unknown[] = [workspaceId, objectType, query.objectId, query.tip];
+  const where = ["workspace_id = ?", "object_type = ?", "object_id = ?", "append_position <= ?"];
+  if (query.beforePosition !== undefined) {
+    where.push("append_position < ?");
+    params.push(query.beforePosition);
+  }
+  params.push(limit + 1);
+  return {
+    sql: `SELECT * FROM contributions WHERE ${where.join(" AND ")} ORDER BY append_position DESC LIMIT ?`,
+    params,
+  };
+}
+
+export function countRecordHistorySql(
+  workspaceId: string,
+  query: Pick<RecordHistoryQuery, "objectType" | "objectId" | "tip">,
+): SqlStatement {
+  const objectType = assertHistoryObject(query.objectType);
+  return {
+    sql: `SELECT COUNT(*) AS count FROM contributions
+      WHERE workspace_id = ? AND object_type = ? AND object_id = ? AND append_position <= ?`,
+    params: [workspaceId, objectType, query.objectId, query.tip],
   };
 }

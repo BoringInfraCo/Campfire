@@ -8,11 +8,13 @@
  */
 import SCHEMA_SQL from "../store/schema.sql";
 import { V5_SQL } from "../store/enrollment-schema.js";
-import { V6_SQL } from "../store/contribution-position-schema.js";
+import { V6_BACKFILL_SQL, V6_INDEX_SQL } from "../store/contribution-position-schema.js";
 import { V7_SQL } from "../store/correction-schema.js";
+import { V8_SQL } from "../store/record-history-schema.js";
 export { V5_SQL } from "../store/enrollment-schema.js";
 export { V6_SQL } from "../store/contribution-position-schema.js";
 export { V7_SQL } from "../store/correction-schema.js";
+export { V8_SQL } from "../store/record-history-schema.js";
 
 /** v2 delta: actor tokens + workspace invites (mirrors migrations.ts v2). */
 export const V2_SQL = `
@@ -91,4 +93,11 @@ SET status = 'exhausted',
     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 WHERE config_fingerprint IS NULL AND status IN ('pending', 'delivering')`;
 
-export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n${V6_SQL};\n${V7_SQL};\n`;
+/**
+ * `schema.sql` creates `append_position` and the per-record history index.
+ * The v6 ALTER is therefore not repeated here; the backfill and the unique
+ * workspace position index still run. Production D1 applies `migrations/`
+ * in order, including `0005` on databases created before that column existed
+ * and `0007` for the history index.
+ */
+export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n${V6_BACKFILL_SQL};\n${V6_INDEX_SQL};\n${V7_SQL};\n${V8_SQL};\n`;

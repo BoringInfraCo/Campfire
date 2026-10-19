@@ -10,9 +10,10 @@ import {
   V5_SQL as sqliteV5Sql,
   V6_SQL as sqliteV6Sql,
   V7_SQL as sqliteV7Sql,
+  V8_SQL as sqliteV8Sql,
 } from "../../src/store/migrations.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
-import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql, V7_SQL as workerV7Sql } from "../../src/worker/schema.js";
+import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql, V7_SQL as workerV7Sql, V8_SQL as workerV8Sql } from "../../src/worker/schema.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const LATER = "2026-01-02T00:00:00.000Z";
@@ -65,6 +66,7 @@ describe("schema migrations", () => {
       { version: 5, applied_at: NOW },
       { version: 6, applied_at: NOW },
       { version: 7, applied_at: NOW },
+      { version: 8, applied_at: NOW },
     ]);
   });
 
@@ -128,6 +130,10 @@ describe("schema migrations", () => {
     const v7Body = v7.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
     expect(sqliteV7Sql).toBe(workerV7Sql);
     expect(v7Body).toBe(sqliteV7Sql);
+    const v8 = readFileSync(new URL("../../migrations/0007_contribution_object_position.sql", import.meta.url), "utf8");
+    const v8Body = v8.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
+    expect(sqliteV8Sql).toBe(workerV8Sql);
+    expect(v8Body).toBe(sqliteV8Sql);
   });
 
   it("keeps enrollment migrations identical and upgrades v4 without altering collaboration state", () => {
@@ -300,6 +306,10 @@ describe("schema migrations", () => {
     expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 6").get()).toEqual({ count: 1 });
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 7").get()).toEqual({ count: 1 });
+    expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 8").get()).toEqual({ count: 1 });
+    expect(
+      db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_contributions_object_position'").get(),
+    ).toEqual({ name: "idx_contributions_object_position" });
     expect(
       db.prepare("SELECT summary, currentness, correction_reason FROM findings WHERE id = 'find_old'").get(),
     ).toEqual({ summary: "kept assertion", currentness: "current", correction_reason: null });

@@ -17,7 +17,9 @@ import { assertFindingCurrentness } from "../store/context-queries.js";
 import {
   affectedObjectIds,
   assertCursorWorkspace,
+  assertHistoryObjectType,
   assembleCatchUp,
+  clampBoundedLimit,
   clampPageLimit,
   compareDecisionKeyset,
   CONTEXT_SCHEMA_VERSION,
@@ -26,13 +28,20 @@ import {
   decisionFetchLimits,
   decisionRank,
   DEFAULT_CONTEXT_BUDGET,
+  DEFAULT_PARTICIPANT_PAGE_SIZE,
+  DEFAULT_RECORD_HISTORY_PAGE_SIZE,
   encodeContextCursor,
   genesisContributionCursor,
+  MAX_PAGE_SIZE,
+  MAX_RECORD_HISTORY_PAGE_SIZE,
   objectCursor,
   ORIENTATION_CHANGE_LOOKAHEAD,
+  readParticipantCursor,
+  readRecordHistoryCursor,
   selectRecentChanges,
   toContextSlice,
   type ContextBudget,
+  type HistoryObjectType,
 } from "../domain/context-policy.js";
 import {
   deriveRecordedAlignment,
@@ -55,7 +64,10 @@ import {
   type CreateWorkspaceInput,
   type CurrentWork,
   type GetActivityInput,
+  type GetRecordHistoryInput,
   type GetWorkspaceChangesInput,
+  type GetWorkspaceContextOptions,
+  type ListWorkspaceParticipantsInput,
   type ProjectHandoffPacketInput,
   type RecallWorkspaceInput,
   type InviteToWorkspaceInput,
@@ -63,6 +75,7 @@ import {
   type JoinWorkspaceInput,
   type ParticipantView,
   type ReadinessStatus,
+  type RecordHistoryPage,
   type RegisterAgentSessionInput,
   type RemoveDecisionBasisInput,
   type RemoveFindingEvidenceInput,
@@ -76,6 +89,7 @@ import {
   type WorkspaceCatchUp,
   type WorkspaceContext,
   type WorkspaceObjectPage,
+  type WorkspaceParticipantPage,
   type WorkspaceSummary,
   type WorkspaceView,
 } from "../service/service.js";
@@ -159,11 +173,9 @@ export interface AsyncCampfireService {
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Promise<Workspace>;
   listWorkspaces(ctx: ActorContext): Promise<WorkspaceSummary[]>;
   getWorkspace(ctx: ActorContext, workspaceId: string): Promise<WorkspaceView>;
-  getWorkspaceContext(
-    ctx: ActorContext,
-    workspaceId: string,
-    options?: { since?: string; budget?: Partial<import("../domain/context-policy.js").ContextBudget> },
-  ): Promise<WorkspaceContext>;
+  getWorkspaceContext(ctx: ActorContext, workspaceId: string, options?: GetWorkspaceContextOptions): Promise<WorkspaceContext>;
+  listWorkspaceParticipants(ctx: ActorContext, input: ListWorkspaceParticipantsInput): Promise<WorkspaceParticipantPage>;
+  getRecordHistory(ctx: ActorContext, input: GetRecordHistoryInput): Promise<RecordHistoryPage>;
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp>;
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): Promise<WorkspaceRecall>;
   projectHandoffPacket(ctx: ActorContext, input: ProjectHandoffPacketInput): Promise<CampfireHandoffPacket>;
@@ -835,6 +847,22 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     return row;
   }
 
+  async function requireHistoryObject(workspaceId: string, objectType: HistoryObjectType, objectId: string): Promise<void> {
+    if (objectType === "task") {
+      readInWorkspace(await store.getTask(objectId), workspaceId, objectId, (id) => new TaskNotFound(id));
+      return;
+    }
+    if (objectType === "decision") {
+      readInWorkspace(await store.getDecision(objectId), workspaceId, objectId, (id) => new DecisionNotFound(id));
+      return;
+    }
+    if (objectType === "finding") {
+      readInWorkspace(await store.getFinding(objectId), workspaceId, objectId, (id) => new FindingNotFound(id));
+      return;
+    }
+    readInWorkspace(await store.getArtifact(objectId), workspaceId, objectId, (id) => new ArtifactNotFound(id));
+  }
+
   return {
     async issueEnrollmentInvitation(ctx, rawInput) {
       const input = normalizeIssueEnrollmentInput(rawInput);
@@ -1078,9 +1106,12 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     async getWorkspaceContext(
       ctx: ActorContext,
       workspaceId: string,
-      options?: { since?: string; budget?: Partial<ContextBudget> },
+      options?: GetWorkspaceContextOptions,
     ): Promise<WorkspaceContext> {
       const workspace = await requireReadableWorkspace(ctx, workspaceId);
+      if (options?.participants !== undefined && options.participants !== "omit") {
+        throw new ValidationError("participants must be omit", { field: "participants", value: options.participants });
+      }
       const budget = resolveContextBudget(options?.budget);
 
       const decisionCounts = await store.countObjectsByStatus("decisions", workspaceId);
@@ -1164,10 +1195,17 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
               }),
             );
 
-      const participantRows = await store.listParticipants(workspaceId);
+      const omitParticipants = options?.participants === "omit";
       const participants = [];
-      for (const participant of participantRows) {
-        participants.push(await resolveParticipant(participant));
+      let participantTotal = 0;
+      if (omitParticipants) {
+        participantTotal = await store.countParticipants(workspaceId);
+      } else {
+        const participantRows = await store.listParticipants(workspaceId);
+        for (const participant of participantRows) {
+          participants.push(await resolveParticipant(participant));
+        }
+        participantTotal = participants.length;
       }
       const goal = await store.getGoalForWorkspace(workspaceId);
       const orientation = await deriveOrientation(ctx, workspaceId, taskPage.items, decisionItems);
@@ -1201,6 +1239,16 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         workspace,
         ...(goal === undefined ? {} : { goal }),
         participants,
+        ...(omitParticipants
+          ? {
+              participantsCoverage: {
+                returned: 0 as const,
+                total: participantTotal,
+                truncated: participantTotal > 0,
+                omitted: true as const,
+              },
+            }
+          : {}),
         generatedAt: clock(),
         budget,
         orientationCursor,
@@ -1225,6 +1273,82 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         historicalCounts: { findings: historicalFindings, decisions: supersededCount },
         ...(since === undefined ? {} : { since }),
       });
+    },
+
+    async listWorkspaceParticipants(ctx: ActorContext, input: ListWorkspaceParticipantsInput): Promise<WorkspaceParticipantPage> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      if (input.humanOwnerId !== undefined && input.humanOwnerId.length === 0) {
+        throw new ValidationError("humanOwnerId must be a non-empty string", { field: "humanOwnerId" });
+      }
+      const limit = clampBoundedLimit(input.limit, DEFAULT_PARTICIPANT_PAGE_SIZE, MAX_PAGE_SIZE);
+      const humanOwnerId = input.humanOwnerId ?? null;
+      const after = readParticipantCursor(input.cursor, input.workspaceId, humanOwnerId);
+      const page = await store.pageParticipants(input.workspaceId, {
+        limit,
+        ...(input.humanOwnerId === undefined ? {} : { humanOwnerId: input.humanOwnerId }),
+        ...(after === undefined ? {} : { after }),
+      });
+      const last = page.items[page.items.length - 1];
+      const next =
+        page.hasMore && last !== undefined
+          ? encodeContextCursor({
+              v: 1,
+              kind: "participant",
+              workspaceId: input.workspaceId,
+              humanOwnerId,
+              actorType: last.actor.actorType,
+              actorId: last.actor.actorId,
+            })
+          : undefined;
+      return {
+        schemaVersion: CONTEXT_SCHEMA_VERSION,
+        workspaceId: input.workspaceId,
+        ...(input.humanOwnerId === undefined ? {} : { filter: { humanOwnerId: input.humanOwnerId } }),
+        ...toContextSlice(page.items, page.total, next),
+        truncated: page.hasMore,
+      };
+    },
+
+    async getRecordHistory(ctx: ActorContext, input: GetRecordHistoryInput): Promise<RecordHistoryPage> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      await authorizer.assertAllowed(ctx, "activity:read", input.workspaceId);
+      const objectType = assertHistoryObjectType(input.objectType);
+      if (typeof input.objectId !== "string" || input.objectId.length === 0) {
+        throw new ValidationError("Missing required objectId", { field: "objectId" });
+      }
+      await requireHistoryObject(input.workspaceId, objectType, input.objectId);
+      const limit = clampBoundedLimit(input.limit, DEFAULT_RECORD_HISTORY_PAGE_SIZE, MAX_RECORD_HISTORY_PAGE_SIZE);
+      const bound = readRecordHistoryCursor(input.cursor, input.workspaceId, objectType, input.objectId);
+      const tip = bound === undefined ? await store.maxAppendPosition(input.workspaceId) : bound.tip;
+      const page = await store.pageRecordHistory(input.workspaceId, {
+        limit,
+        objectType,
+        objectId: input.objectId,
+        tip,
+        ...(bound === undefined ? {} : { beforePosition: bound.beforePosition }),
+      });
+      const oldest = page.items[page.items.length - 1];
+      const next =
+        page.hasMore && oldest !== undefined
+          ? encodeContextCursor({
+              v: 1,
+              kind: "record-history",
+              workspaceId: input.workspaceId,
+              objectType,
+              objectId: input.objectId,
+              order: "append-position-desc",
+              tip,
+              beforePosition: oldest.appendPosition,
+            })
+          : undefined;
+      return {
+        schemaVersion: CONTEXT_SCHEMA_VERSION,
+        workspaceId: input.workspaceId,
+        objectType,
+        objectId: input.objectId,
+        ...toContextSlice(page.items, page.total, next),
+        truncated: page.hasMore,
+      };
     },
 
     async getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp> {

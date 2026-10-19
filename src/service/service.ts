@@ -210,6 +210,22 @@ export interface ParticipantView {
   joinedAt: string;
 }
 
+/** Agent rows also carry `humanOwnerIsParticipant`. Humans do not. */
+export interface ParticipantListItem extends ParticipantView {
+  humanOwnerIsParticipant?: boolean;
+}
+
+/**
+ * Present only when orientation was asked to omit the participant roster.
+ * `omitted` stops a caller from reading `participants: []` as an empty team.
+ */
+export interface ParticipantsCoverage {
+  returned: 0;
+  total: number;
+  truncated: boolean;
+  omitted: true;
+}
+
 /** Full current-state projection returned by `get_workspace`. */
 export interface WorkspaceView {
   workspace: Workspace;
@@ -354,6 +370,8 @@ export interface WorkspaceContext {
   workspace: Workspace;
   goal?: Goal;
   participants: ParticipantView[];
+  /** Absent unless the caller passed `participants: "omit"`. */
+  participantsCoverage?: ParticipantsCoverage;
   proposedDecisions: Decision[];
   acceptedDecisions: Decision[];
   supersededDecisions: SupersededDecisionSummary[];
@@ -455,6 +473,41 @@ export interface WorkspaceCatchUp {
   ordering: "material-then-chronological";
 }
 
+export interface GetWorkspaceContextOptions {
+  since?: string;
+  budget?: Partial<ContextBudget>;
+  participants?: "omit";
+}
+
+export interface ListWorkspaceParticipantsInput {
+  workspaceId: string;
+  limit?: number;
+  cursor?: string;
+  /** Restricts the page to workspace agent participants owned by this human. */
+  humanOwnerId?: string;
+}
+
+export interface WorkspaceParticipantPage extends ContextSlice<ParticipantListItem> {
+  schemaVersion: 1;
+  workspaceId: string;
+  filter?: { humanOwnerId: string };
+}
+
+export interface GetRecordHistoryInput {
+  workspaceId: string;
+  objectType: string;
+  objectId: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface RecordHistoryPage extends ContextSlice<Contribution> {
+  schemaVersion: 1;
+  workspaceId: string;
+  objectType: "task" | "decision" | "finding" | "artifact";
+  objectId: string;
+}
+
 export interface ListWorkspaceObjectsInput {
   workspaceId: string;
   limit?: number;
@@ -480,11 +533,9 @@ export interface CampfireService {
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;
   listWorkspaces(ctx: ActorContext): WorkspaceSummary[];
   getWorkspace(ctx: ActorContext, workspaceId: string): WorkspaceView;
-  getWorkspaceContext(
-    ctx: ActorContext,
-    workspaceId: string,
-    options?: { since?: string; budget?: Partial<ContextBudget> },
-  ): WorkspaceContext;
+  getWorkspaceContext(ctx: ActorContext, workspaceId: string, options?: GetWorkspaceContextOptions): WorkspaceContext;
+  listWorkspaceParticipants(ctx: ActorContext, input: ListWorkspaceParticipantsInput): WorkspaceParticipantPage;
+  getRecordHistory(ctx: ActorContext, input: GetRecordHistoryInput): RecordHistoryPage;
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): WorkspaceCatchUp;
   /** Authorized read. Does not write a contribution or a handoff file. */
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): WorkspaceRecall;
