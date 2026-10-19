@@ -419,10 +419,15 @@ passed and D6 pending, and the founder-directed v1.22.1 release-prep revision
 in a dated addendum: `pack:tarball` passes, the published v1.22.0 installer
 copy stays unchanged, and the guard was not weakened. The verdict is
 CONDITIONAL GO — engineering candidate; human comprehension is NOT OBSERVED.
-Publication (tag, snapshot, archives, channel pins, deployment) runs only
-after the release-gate reassessment. If a repair needs automatic harness
-reload, new enrollment semantics, or automatic workspace/session creation,
-re-scope it as a minor sprint instead of extending this patch.
+The founder-directed v1.22.1 release was published and deployed on
+October 18–19, 2026 (public snapshot `dfc3880` → annotated tag, GitHub Release
+`v1.22.1` with four checksummed archives, channel pins `828f51e`/`a7fe66e`,
+tap promotion `0e9efa3`, production Worker `12de3762`, and live installer
+checks recorded in `docs/RELEASE_V1_22_1_DECISION.md`); publication does not
+change the verdict or the NOT OBSERVED human outcome. If a repair needs
+automatic harness reload, new enrollment semantics, or automatic
+workspace/session creation, re-scope it as a minor sprint instead of
+extending this patch.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
