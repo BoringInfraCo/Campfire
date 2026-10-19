@@ -11,6 +11,7 @@ import type {
   AttentionCoverage,
   AttentionItem,
   CurrentWork,
+  ParticipantsCoverage,
   ParticipantView,
   RecordedAlignment,
   SinceProjection,
@@ -28,6 +29,7 @@ export interface OrientationAssembly {
   workspace: Workspace;
   goal?: Goal;
   participants: ParticipantView[];
+  participantsCoverage?: ParticipantsCoverage;
   generatedAt: string;
   budget: ContextBudget;
   orientationCursor: string;
@@ -102,5 +104,7 @@ export function assembleWorkspaceContext(parts: OrientationAssembly): WorkspaceC
   };
   if (parts.goal !== undefined) context.goal = parts.goal;
   if (parts.since !== undefined) context.since = parts.since;
+  // Only the omit option adds this key. Default orientation JSON must stay unchanged.
+  if (parts.participantsCoverage !== undefined) context.participantsCoverage = parts.participantsCoverage;
   return context;
 }

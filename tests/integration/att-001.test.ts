@@ -830,7 +830,7 @@ describe("ATT-001 D5 — surface parity and accessibility", () => {
 // ---------------------------------------------------------------------------
 
 describe("ATT-001 D6 — boundedness and compatibility", () => {
-  it("keeps the five Viewer read methods and the MCP tool set unchanged", async () => {
+  it("keeps the five Viewer read methods and adds only the NAV-002 MCP reads", async () => {
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
@@ -845,13 +845,22 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
     await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
     try {
       const names = (await client.listTools()).tools.map((tool) => tool.name);
-      expect(names).toHaveLength(36);
-      for (const name of ["get_workspace_context", "update_task", "list_decisions", "get_activity"]) {
+      // ATT-001 froze 36 tools. NAV-002 adds two read-only tools and does not
+      // remove any. The Viewer allowlist stays the original five.
+      expect(names).toHaveLength(38);
+      for (const name of [
+        "get_workspace_context",
+        "update_task",
+        "list_decisions",
+        "get_activity",
+        "list_workspace_participants",
+        "get_record_history",
+      ]) {
         expect(names).toContain(name);
       }
       const schema = (await client.listTools()).tools.find((tool) => tool.name === "get_workspace_context")
         ?.inputSchema as { properties?: Record<string, unknown> } | undefined;
-      expect(Object.keys(schema?.properties ?? {}).sort()).toEqual(["since", "workspaceId"]);
+      expect(Object.keys(schema?.properties ?? {}).sort()).toEqual(["participants", "since", "workspaceId"]);
     } finally {
       await client.close();
       await server.close();

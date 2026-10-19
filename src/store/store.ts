@@ -40,7 +40,15 @@ import type {
   DecisionStatus,
 } from "../domain/types.js";
 import type { EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
-import type { ContributionPageQuery, ContributionWindow, ObjectPage, ObjectPageQuery } from "./context-queries.js";
+import type {
+  ContributionPageQuery,
+  ContributionWindow,
+  ObjectPage,
+  ObjectPageQuery,
+  ParticipantObjectPage,
+  ParticipantPageQuery,
+  RecordHistoryQuery,
+} from "./context-queries.js";
 import type { RecallSectionName } from "../domain/recall.js";
 import type {
   RecallDecisionSetPage,
@@ -134,6 +142,9 @@ export interface CampfireStore {
   addParticipant(participant: WorkspaceParticipant): void;
   getParticipant(workspaceId: string, actor: ActorRef): WorkspaceParticipant | undefined;
   listParticipants(workspaceId: string): WorkspaceParticipant[];
+  /** Workspace-bounded keyset. Does not load `get_workspace`. */
+  pageParticipants(workspaceId: string, query: ParticipantPageQuery): ParticipantObjectPage;
+  countParticipants(workspaceId: string, humanOwnerId?: string): number;
   updateParticipantRole(workspaceId: string, actor: ActorRef, role: ParticipantRole): void;
 
   // --- contribution objects ---
@@ -286,6 +297,14 @@ export interface CampfireStore {
    */
   recallDecisionSet(workspaceId: string, query: RecallDecisionSetQuery): RecallDecisionSetPage;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
+  /**
+   * Matching contributions for one object, newest append position first, at or
+   * below `tip`. Does not scan the workspace activity list in memory.
+   */
+  pageRecordHistory(
+    workspaceId: string,
+    query: RecordHistoryQuery,
+  ): { items: Contribution[]; total: number; hasMore: boolean };
   /** Newest `limit` contributions in the workspace, chronological. `total` is the workspace count. */
   listRecentContributionWindow(workspaceId: string, limit: number): ObjectPage<Contribution>;
   /**

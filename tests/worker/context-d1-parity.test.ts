@@ -88,8 +88,63 @@ describe("context store D1 parity", () => {
     const second = sqlite.pageContributions("ws_1", reversePage);
     expect(second.items.map((item) => item.id)).toEqual(["con_a"]);
     await expectSamePage(second, remote.pageContributions("ws_1", reversePage));
+
+    expect(sqlite.countParticipants("ws_1")).toBe(5);
+    expect(await remote.countParticipants("ws_1")).toBe(5);
+    expect(sqlite.countParticipants("ws_1", "hum_1")).toBe(1);
+    expect(await remote.countParticipants("ws_1", "hum_1")).toBe(1);
+    const people = sqlite.pageParticipants("ws_1", { limit: 2 });
+    expect(people.items.map((item) => item.actor.actorId)).toEqual(["agt_a", "agt_b"]);
+    expect(people.total).toBe(5);
+    expect(people.hasMore).toBe(true);
+    expect(people.items.every((item) => item.humanOwnerIsParticipant === true)).toBe(true);
+    await expectSameValue(people, remote.pageParticipants("ws_1", { limit: 2 }));
+    const peopleNext = sqlite.pageParticipants("ws_1", {
+      limit: 2,
+      after: { actorType: "agent", actorId: "agt_b" },
+    });
+    expect(peopleNext.items.map((item) => item.actor.actorId)).toEqual(["agt_out", "hum_1"]);
+    expect(peopleNext.items[0]?.humanOwnerIsParticipant).toBe(false);
+    expect(peopleNext.items[1]).not.toHaveProperty("humanOwnerIsParticipant");
+    await expectSameValue(peopleNext, remote.pageParticipants("ws_1", {
+      limit: 2,
+      after: { actorType: "agent", actorId: "agt_b" },
+    }));
+    const owned = sqlite.pageParticipants("ws_1", { limit: 20, humanOwnerId: "hum_out" });
+    expect(owned.items.map((item) => item.actor.actorId)).toEqual(["agt_out"]);
+    expect(owned.total).toBe(1);
+    await expectSameValue(owned, remote.pageParticipants("ws_1", { limit: 20, humanOwnerId: "hum_out" }));
+    const none = sqlite.pageParticipants("ws_1", { limit: 20, humanOwnerId: "hum_none" });
+    expect(none).toEqual({ items: [], total: 0, hasMore: false });
+    await expectSameValue(none, remote.pageParticipants("ws_1", { limit: 20, humanOwnerId: "hum_none" }));
+
+    const tip = sqlite.maxAppendPosition("ws_1");
+    expect(tip).toBe(await remote.maxAppendPosition("ws_1"));
+    const historyQuery = { limit: 1, objectType: "decision" as const, objectId: "dec_b", tip };
+    const history = sqlite.pageRecordHistory("ws_1", historyQuery);
+    expect(history.items.map((item) => item.id)).toEqual(["con_dec_late"]);
+    expect(history.total).toBe(2);
+    expect(history.hasMore).toBe(true);
+    await expectSameValue(history, remote.pageRecordHistory("ws_1", historyQuery));
+    const older = {
+      limit: 10,
+      objectType: "decision" as const,
+      objectId: "dec_b",
+      tip,
+      beforePosition: history.items[0]!.appendPosition,
+    };
+    const historyNext = sqlite.pageRecordHistory("ws_1", older);
+    expect(historyNext.items.map((item) => item.id)).toEqual(["con_dec"]);
+    expect(historyNext.total).toBe(2);
+    expect(historyNext.hasMore).toBe(false);
+    expect(historyNext.items.some((item) => item.id === "con_other")).toBe(false);
+    await expectSameValue(historyNext, remote.pageRecordHistory("ws_1", older));
   });
 });
+
+async function expectSameValue<T>(local: T, remote: Promise<T>): Promise<void> {
+  expect(await remote).toEqual(local);
+}
 
 async function expectSamePage<T extends { id: string }>(
   local: ObjectPage<T>,
@@ -113,6 +168,32 @@ async function seed(store: CampfireStore | AsyncCampfireStore): Promise<void> {
   await store.createOrganization({ id: "org_1", name: "Boring Infra Co.", createdAt: NOW });
   await store.createTeam({ id: "team_1", organizationId: "org_1", name: "Engineering", createdAt: NOW });
   await store.createHuman({ id: "hum_1", teamId: "team_1", displayName: "Ada", createdAt: NOW });
+  await store.createHuman({ id: "hum_2", teamId: "team_1", displayName: "Bea", createdAt: NOW });
+  await store.createHuman({ id: "hum_out", teamId: "team_1", displayName: "Out", createdAt: NOW });
+  await store.createAgent({
+    id: "agt_a",
+    teamId: "team_1",
+    humanId: "hum_1",
+    name: "A",
+    harness: "codex",
+    createdAt: NOW,
+  });
+  await store.createAgent({
+    id: "agt_b",
+    teamId: "team_1",
+    humanId: "hum_2",
+    name: "B",
+    harness: "opencode",
+    createdAt: NOW,
+  });
+  await store.createAgent({
+    id: "agt_out",
+    teamId: "team_1",
+    humanId: "hum_out",
+    name: "Out",
+    harness: "codex",
+    createdAt: NOW,
+  });
   await store.createWorkspace({
     id: "ws_1",
     teamId: "team_1",
@@ -121,6 +202,31 @@ async function seed(store: CampfireStore | AsyncCampfireStore): Promise<void> {
     createdBy: HUMAN,
     createdAt: NOW,
     updatedAt: NOW,
+  });
+  await store.addParticipant({ workspaceId: "ws_1", actor: HUMAN, role: "owner", joinedAt: NOW });
+  await store.addParticipant({
+    workspaceId: "ws_1",
+    actor: { actorId: "hum_2", actorType: "human" },
+    role: "member",
+    joinedAt: "2026-01-02T00:00:00.000Z",
+  });
+  await store.addParticipant({
+    workspaceId: "ws_1",
+    actor: { actorId: "agt_a", actorType: "agent" },
+    role: "agent",
+    joinedAt: "2026-01-03T00:00:00.000Z",
+  });
+  await store.addParticipant({
+    workspaceId: "ws_1",
+    actor: { actorId: "agt_b", actorType: "agent" },
+    role: "agent",
+    joinedAt: "2026-01-04T00:00:00.000Z",
+  });
+  await store.addParticipant({
+    workspaceId: "ws_1",
+    actor: { actorId: "agt_out", actorType: "agent" },
+    role: "agent",
+    joinedAt: "2026-01-05T00:00:00.000Z",
   });
 
   const decisions: Array<{ id: string; status: DecisionStatus; updatedAt: string }> = [
@@ -204,6 +310,12 @@ async function seed(store: CampfireStore | AsyncCampfireStore): Promise<void> {
   const at = "2026-08-01T00:00:00.000Z";
   await store.createContribution(contribution("con_z", at, "create", "task", "task_z"));
   await store.createContribution(contribution("con_a", at, "create", "task", "task_a"));
+  await store.createContribution(
+    contribution("con_dec_late", "2026-09-01T00:00:00.000Z", "update", "decision", "dec_b", { status: "accepted" }),
+  );
+  await store.createContribution(
+    contribution("con_other", "2026-09-02T00:00:00.000Z", "update", "task", "task_open", { title: "later" }),
+  );
 }
 
 function contribution(

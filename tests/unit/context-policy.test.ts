@@ -362,7 +362,11 @@ describe("CTX-001 context policy", () => {
       appendPosition: 1,
     });
     const selected = selectRecentChanges([laterId, earlierId], 2, WORKSPACE);
-    expect(selected.map((item) => decodeContextCursor(item.cursor).id)).toEqual(["con_z", "con_a"]);
+    expect(selected.map((item) => {
+      const cursor = decodeContextCursor(item.cursor);
+      if (cursor.kind !== "contribution") throw new Error("expected a contribution cursor");
+      return cursor.id;
+    })).toEqual(["con_z", "con_a"]);
     const first = decodeContextCursor(selected[0]!.cursor);
     expect(first).toMatchObject({ kind: "contribution", position: 1, originPosition: 0, tip: 0 });
   });

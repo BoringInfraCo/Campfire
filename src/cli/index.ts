@@ -76,7 +76,13 @@ import {
   type TelemetryEndpoint,
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
-import { runDashboardSession } from "./dashboard.js";
+import {
+  DASHBOARD_HISTORY_PAGE_LIMIT,
+  DASHBOARD_PEOPLE_PAGE_LIMIT,
+  DASHBOARD_TASK_PAGE_LIMIT,
+  runDashboardSession,
+  type DashboardPageInput,
+} from "./dashboard.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
 import {
@@ -149,6 +155,7 @@ import type {
   AttentionCoverage,
   AttentionItem,
   GetActivityInput,
+  ParticipantListItem,
   SuggestedNextAction,
   WorkspaceCatchUp,
   WorkspaceContext,
@@ -1427,7 +1434,31 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
       actorId: actor.actorId,
       actorType: actor.actorType,
       load: async () =>
-        (await backend.call("get_workspace_context", { workspaceId })) as WorkspaceContext,
+        (await backend.call("get_workspace_context", {
+          workspaceId,
+          participants: "omit",
+        })) as WorkspaceContext,
+      loadTasks: async (cursor) => {
+        const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_TASK_PAGE_LIMIT };
+        if (cursor !== undefined) params.cursor = cursor;
+        return (await backend.call("list_tasks", params)) as WorkspaceObjectPage<Task>;
+      },
+      loadPeople: async (input) => {
+        const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_PEOPLE_PAGE_LIMIT };
+        if (input.cursor !== undefined) params.cursor = input.cursor;
+        if (input.humanOwnerId !== undefined) params.humanOwnerId = input.humanOwnerId;
+        return (await backend.call("list_workspace_participants", params)) as DashboardPageInput<ParticipantListItem>;
+      },
+      loadHistory: async (input) => {
+        const params: Record<string, unknown> = {
+          workspaceId,
+          objectType: input.objectType,
+          objectId: input.objectId,
+          limit: DASHBOARD_HISTORY_PAGE_LIMIT,
+        };
+        if (input.cursor !== undefined) params.cursor = input.cursor;
+        return (await backend.call("get_record_history", params)) as DashboardPageInput<Contribution>;
+      },
       inspect: (kind, id) => {
         const method =
           kind === "task"

@@ -373,7 +373,7 @@ describe("WCO-001 D5 — interface safety", () => {
     ]);
   });
 
-  it("adds and removes no MCP tool", async () => {
+  it("keeps every WCO-001 MCP tool and adds only the NAV-002 reads", async () => {
     const client = await connect({ ctx: { actor: HUMAN_A } });
     const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
     expect(names).toEqual(
@@ -390,6 +390,7 @@ describe("WCO-001 D5 — interface safety", () => {
         "create_workspace",
         "get_activity",
         "get_artifact",
+        "get_record_history",
         "get_decision",
         "get_finding",
         "get_task",
@@ -402,6 +403,7 @@ describe("WCO-001 D5 — interface safety", () => {
         "list_decisions",
         "list_findings",
         "list_tasks",
+        "list_workspace_participants",
         "list_workspaces",
         "preflight",
         "recall_workspace",

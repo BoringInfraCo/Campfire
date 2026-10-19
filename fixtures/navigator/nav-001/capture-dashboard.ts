@@ -16,16 +16,18 @@
  *   npx tsx fixtures/navigator/nav-001/capture-dashboard.ts \
  *     --db <campfire.db> --workspace <wsId> --actor <actorId> \
  *     [--actor-type human] [--out <dir>] [--label <name>] \
- *     [--keys "<k1,k2,...>"] [--sizes 80x24,120x36]
+ *     [--keys "<k1,k2,...>"] [--key-delay 0.15] [--sizes 80x24,120x36]
  *
  * `--root <worktree>` retargets the spawn so a v1.21.0 git worktree can be
  * captured without modifying the main checkout: argv becomes
  * `<root>/node_modules/.bin/tsx <root>/src/cli/index.ts dashboard ...` and the
  * process cwd becomes `<root>`.
  *
- * Named keys: tab, enter, esc (single control bytes). Every other token is
- * sent literally. With no --keys only the wake-up `q` is sent (the UIX-001
- * default). One file per size is written: `<label>-<columns>x<rows>.txt` plus
+ * Named keys: tab, enter, esc (single control bytes). A token `wait:<text>`
+ * pauses until that text is in the pty stream. Every other token is sent
+ * literally. `--until <text>` sends q only after that text appears. With no
+ * --keys only the wake-up `q` is sent (the UIX-001 default). One file per
+ * size is written: `<label>-<columns>x<rows>.txt` plus
  * `capture-summary.json` (method, sizes, key script, sha256 per file).
  *
  * REDACT + hard-fail: credential-shaped `cft_*` strings and absolute
@@ -111,9 +113,12 @@ proc = subprocess.Popen(
 buf = b""
 err = b""
 sent = False
+armed = False
 timed_out = False
 deadline = time.monotonic() + float(cfg["timeout"])
 expect = cfg["expect"].encode("utf-8")
+until = cfg.get("until") or ""
+until_bytes = until.encode("utf-8")
 
 def pull(fd):
     try:
@@ -142,11 +147,33 @@ try:
             sent = True
             try:
                 for key in cfg["keys"]:
+                    if key.startswith("wait:"):
+                        needle = key[5:].encode("utf-8")
+                        while needle not in buf and proc.poll() is None:
+                            if time.monotonic() >= deadline:
+                                timed_out = True
+                                break
+                            ready, _, _ = select.select([master], [], [], 0.1)
+                            if master in ready:
+                                chunk = pull(master)
+                                if chunk:
+                                    buf += chunk
+                        if timed_out or needle not in buf:
+                            break
+                        continue
                     os.write(master, key.encode("utf-8"))
                     time.sleep(float(cfg["keyDelay"]))
+                if until_bytes == b"" and not timed_out:
+                    os.write(master, b"q")
+                    armed = True
+            except OSError:
+                pass
+        if sent and (not armed) and until_bytes != b"" and until_bytes in buf:
+            try:
                 os.write(master, b"q")
             except OSError:
                 pass
+            armed = True
     if timed_out:
         try:
             os.killpg(proc.pid, signal.SIGKILL)
@@ -220,6 +247,8 @@ interface CaptureArgs {
   label: string;
   keys: string[];
   keysLiteral: boolean;
+  keyDelay: string;
+  until: string;
   sizes: Array<{ columns: number; rows: number }>;
   root: string;
 }
@@ -231,6 +260,8 @@ function parseArgs(argv: string[]): CaptureArgs {
     actorType: "human",
     out: resolve(process.cwd(), ".tmp", "dashboard-capture"),
     label: "capture",
+    keyDelay: "0.15",
+    until: "",
     sizes: [
       { columns: 80, rows: 24 },
       { columns: 120, rows: 36 },
@@ -252,6 +283,18 @@ function parseArgs(argv: string[]): CaptureArgs {
       else if (arg === "--label") parsed.label = value;
       else if (arg === "--root") parsed.root = isAbsolute(value) ? value : resolve(value);
       else parsed.workspaceId = value;
+      index += 1;
+      continue;
+    }
+    if (arg === "--until") {
+      if (value === undefined || value.startsWith("--")) fail("--until requires a marker that must appear before quit");
+      parsed.until = value;
+      index += 1;
+      continue;
+    }
+    if (arg === "--key-delay") {
+      if (value === undefined || !/^\d+(\.\d+)?$/.test(value)) fail("--key-delay requires a number of seconds");
+      parsed.keyDelay = value;
       index += 1;
       continue;
     }
@@ -335,6 +378,7 @@ function runDashboard(input: {
   expect: string;
   keys: string[];
   keyDelay: string;
+  until: string;
 }): PtyResult {
   const argv = [
     join(input.root, "node_modules/.bin/tsx"),
@@ -363,6 +407,7 @@ function runDashboard(input: {
         expect: input.expect,
         keys: input.keys,
         keyDelay: input.keyDelay,
+        until: input.until,
         timeout: 25,
       }),
     ],
@@ -467,7 +512,8 @@ try {
       configDir,
       expect: marker,
       keys: args.keysLiteral ? args.keys : [],
-      keyDelay: "0.15",
+      keyDelay: args.keyDelay,
+      until: args.until,
     });
     if (result.timedOut) fail(`dashboard never drew the marker ${JSON.stringify(marker)}; see summary notes`);
     if (!result.sent) fail("the key script was never sent (marker never appeared)");
@@ -527,6 +573,8 @@ try {
     actorType: args.actorType,
     marker,
     keys: args.keysLiteral ? args.keys : "default",
+    keyDelaySeconds: args.keyDelay,
+    until: args.until.length > 0 ? args.until : "quit immediately after keys",
     keyNote:
       "Named keys: tab, enter, esc (single control bytes); every other key is sent literally as its characters. The default key script is the wake-up q only, like the UIX-001 harness. SCRIPTED CAPTURES ARE NOT HUMAN OBSERVATION EVIDENCE.",
     sizes: args.sizes.map((size) => ({ columns: size.columns, rows: size.rows })),

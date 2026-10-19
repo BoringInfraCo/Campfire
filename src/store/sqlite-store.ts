@@ -70,15 +70,21 @@ import {
   countFindingsSql,
   countHistoricalFindingsSql,
   countRowsSql,
+  countParticipantsSql,
+  countRecordHistorySql,
   countTasksSql,
+  mapListedParticipant,
   pageArtifactsSql,
   pageContributionsSql,
   pageDecisionsSql,
   pageFindingsSql,
+  pageParticipantsSql,
+  pageRecordHistorySql,
   pageTasksSql,
   recentContributionsSql,
   takeLimitPlusOne,
   type ObjectPage,
+  type ParticipantPageRow,
 } from "./context-queries.js";
 import {
   countRecallDecisionSetSql,
@@ -845,6 +851,20 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       return rows.map(mapParticipant);
     },
 
+    pageParticipants(workspaceId, query) {
+      const listed = pageParticipantsSql(workspaceId, query);
+      const counted = countParticipantsSql(workspaceId, query.humanOwnerId);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ParticipantPageRow[];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapListedParticipant), total, hasMore: page.hasMore };
+    },
+
+    countParticipants(workspaceId, humanOwnerId) {
+      const statement = countParticipantsSql(workspaceId, humanOwnerId);
+      return readCount(db.prepare(statement.sql).get(...statement.params) as { count: number } | undefined);
+    },
+
     updateParticipantRole(workspaceId, actor, role) {
       db.prepare(
         "UPDATE workspace_participants SET role = ? WHERE workspace_id = ? AND actor_id = ? AND actor_type = ?",
@@ -1192,6 +1212,15 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
       const page = takeLimitPlusOne(rows, query.limit);
       return { members: page.items.map(mapRecallDecisionMemberRow), total, hasMore: page.hasMore };
+    },
+
+    pageRecordHistory(workspaceId, query) {
+      const listed = pageRecordHistorySql(workspaceId, query);
+      const counted = countRecordHistorySql(workspaceId, query);
+      const rows = db.prepare(listed.sql).all(...listed.params) as ContributionRow[];
+      const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapContribution), total, hasMore: page.hasMore };
     },
 
     pageContributions(workspaceId, query) {

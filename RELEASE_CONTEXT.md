@@ -1,6 +1,6 @@
-# Campfire 1.22.1 release context
+# Campfire 1.23.0 release context
 
-This public source snapshot was exported on 2026-10-19 from private canonical source commit `fd38eb20703167cbf9ea1c30b7b8cd92661a9b45` (dated 2026-10-18T18:14:09-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-19 from private canonical source commit `b97b47b08d09fd14af9e0aa09e242a074ffea989` (dated 2026-10-19T00:20:06-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -44,20 +44,21 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
 - The first-run and join surfaces now report actual preparation state instead of implying a live agent: a fresh interactive `campfire` (and local `campfire up`) names only successfully prepared harnesses as `Config prepared — restart <Harness> to load Campfire tools` and gives one next action (restart the named harness and describe the work); `--no-connect` is labeled as deliberately skipped; returning profiles route to `campfire up` or current authorized work without claiming service or presence state; and the join receipt distinguishes `Joined` membership from `Config prepared` configuration, never telling an unprepared harness to reload. The no-workspace Viewer names a truthful next action and stays read-only and actor-bound. Human comprehension of the new receipts is NOT OBSERVED; ONB-001 is a founder-directed engineering candidate for real-user testing and moves no gate.
+- The terminal Navigator now drills down with bounded authorized reads: paged Work (`n`/`b` over `list_tasks` pages with per-page counts and totals), an on-demand People section built only from workspace participants and recorded `humanOwnerId` links (an owner outside the workspace roster is labeled, never silently included), and recorded per-record history (`h`) showing exactly the matching contributions with `returned X of Y`, a more/complete heading, a per-page read time, and a frozen traversal high-water mark so later writes cannot enter an older page set. Two read-only MCP tools (`list_workspace_participants`, `get_record_history`) and one opt-in `participants: "omit"` orientation option back the views; cursors bind to workspace, selection, and traversal; the `/` filter stays local to the loaded page; and registration, role, and join time never become live presence or permission. Human comprehension of the drill-down surfaces is NOT OBSERVED; NAV-002 is a founder-directed engineering candidate for real-user testing and moves no gate.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.22.1.
+- The versioned installer source for v1.23.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.22.1 candidate passed type checking,
+At source preparation, the private 1.23.0 candidate passed type checking,
 build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. The full suite had 97 files / 1,214 tests with 1,212
+Worker deployment dry run. The full suite had 99 files / 1,235 tests with 1,233
 passing, one opt-in terminal capture skipped by default, and one expected
-install-channel assertion awaiting the four v1.22.1 release checksums;
+install-channel assertion awaiting the four v1.23.0 release checksums;
 that assertion was not loosened, and release hygiene (D6) closed in a dated
 result addendum after packaging passed on the release-prep revision. The
 public export audit, archive verification, channel pins, production

@@ -86,15 +86,21 @@ import {
   countFindingsSql,
   countHistoricalFindingsSql,
   countRowsSql,
+  countParticipantsSql,
+  countRecordHistorySql,
   countTasksSql,
+  mapListedParticipant,
   pageArtifactsSql,
   pageContributionsSql,
   pageDecisionsSql,
   pageFindingsSql,
+  pageParticipantsSql,
+  pageRecordHistorySql,
   pageTasksSql,
   recentContributionsSql,
   takeLimitPlusOne,
   type ObjectPage,
+  type ParticipantPageRow,
 } from "../store/context-queries.js";
 import {
   countRecallDecisionSetSql,
@@ -900,6 +906,20 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       return row ? mapParticipant(row) : undefined;
     },
 
+    async pageParticipants(workspaceId, query) {
+      const listed = pageParticipantsSql(workspaceId, query);
+      const counted = countParticipantsSql(workspaceId, query.humanOwnerId);
+      const rows = await all<ParticipantPageRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapListedParticipant), total, hasMore: page.hasMore };
+    },
+
+    async countParticipants(workspaceId, humanOwnerId) {
+      const statement = countParticipantsSql(workspaceId, humanOwnerId);
+      return readCount(await first<{ count: number }>(statement.sql, ...statement.params));
+    },
+
     async listParticipants(workspaceId) {
       return (await all<ParticipantRow>(
         "SELECT * FROM workspace_participants WHERE workspace_id = ? ORDER BY joined_at", workspaceId)).map(mapParticipant);
@@ -1166,6 +1186,15 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
       const page = takeLimitPlusOne(rows, query.limit);
       return { members: page.items.map(mapRecallDecisionMemberRow), total, hasMore: page.hasMore };
+    },
+
+    async pageRecordHistory(workspaceId, query) {
+      const listed = pageRecordHistorySql(workspaceId, query);
+      const counted = countRecordHistorySql(workspaceId, query);
+      const rows = await all<ContributionRow>(listed.sql, ...listed.params);
+      const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
+      const page = takeLimitPlusOne(rows, query.limit);
+      return { items: page.items.map(mapContribution), total, hasMore: page.hasMore };
     },
 
     async pageContributions(workspaceId, query) {

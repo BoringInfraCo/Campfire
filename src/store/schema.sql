@@ -152,11 +152,13 @@ CREATE TABLE IF NOT EXISTS contributions (
   object_type             TEXT NOT NULL,
   object_id               TEXT NOT NULL,
   payload                 TEXT,
+  append_position         INTEGER NOT NULL DEFAULT 0,
   created_at              TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_participants_workspace ON workspace_participants(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_contributions_workspace ON contributions(workspace_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_contributions_object_position ON contributions(workspace_id, object_type, object_id, append_position);
 CREATE INDEX IF NOT EXISTS idx_tasks_workspace ON tasks(workspace_id, status);
 CREATE INDEX IF NOT EXISTS idx_findings_workspace ON findings(workspace_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_decisions_workspace ON decisions(workspace_id, created_at);
