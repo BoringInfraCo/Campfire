@@ -1,0 +1,40 @@
+{
+  "provenance": "FIXTURE EVIDENCE — frames are engineering evidence, not human evidence; cannot establish Gate B, C, or E.",
+  "method": "pty",
+  "methodNote": "Real campfire dashboard in the repo's python3 pty harness (fixtures/navigator/nav-001/capture-dashboard.ts) against the extended nav-001 seed. Actor hum_nav001_ana, workspace ws_nav001_lab. CAMPFIRE_TELEMETRY=0. q is sent after the until marker is on the pty stream. Frames are the text after the last screen clear, with controls stripped. Paths and cft-shaped tokens are redacted. Scripted captures are not human observation evidence.",
+  "sizes": ["80x24", "120x36"],
+  "captures": [
+    {
+      "label": "opening",
+      "keys": "q after the goal id",
+      "files": {
+        "opening-80x24.txt": "bbc46c487480c72739ca9dfd542be81e247cbca5259fd8ae94d143c69dd09d3f",
+        "opening-120x36.txt": "2262c27f509f9c26701f4216fab0306be46fd3cd2380795f4ece342e439b8274"
+      }
+    },
+    {
+      "label": "work-page",
+      "keys": "tab, wait for page 1, n, quit after task_nav001_f051",
+      "files": {
+        "work-page-80x24.txt": "105ead60c45efcdf86feb6d6d2ab1818cd283fe89632e54d15c9eb34e0a8fcd9",
+        "work-page-120x36.txt": "48138c77cb384e618e2897332a5a3c63501b1eaa444a54e099918933c3564d01"
+      }
+    },
+    {
+      "label": "people-page",
+      "keys": "tab four times, quit after agt_nav001_01",
+      "files": {
+        "people-page-80x24.txt": "d3ff7ebab44c55ac09c3668bf6169187cc224c2d7cd027b898829eed8ae0825a",
+        "people-page-120x36.txt": "4ac284d788363009ee420741e485516ef8a49d766d4e493e91764990939c04d7"
+      }
+    },
+    {
+      "label": "history-review",
+      "keys": "tab, tab, /dec_nav001_review, enter, h, quit after con_nav001_0283",
+      "files": {
+        "history-review-80x24.txt": "64bea1330a4c017de286dbc4bb5db277202426ccf8cae891f0afa3e2041e893f",
+        "history-review-120x36.txt": "2d819908e9ef2dd44b483e705fe68e14f3d9808c7fd5ce4a7c33189de285f0d4"
+      }
+    }
+  ]
+}

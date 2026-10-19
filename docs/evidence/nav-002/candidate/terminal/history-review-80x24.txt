@@ -1,0 +1,24 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T02:57:20.845Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+57 workspace participants  human/agent split is not in this read
+RECORDED DECISIONS  decisions 5 of 5
+  Competing accepted decisions are not resolved here. needs review does not
+  revoke acceptance.
+  filter "dec_nav001_review"  filters shown records, not the workspace  matching
+  1  loaded 5  workspace total 5
+  > accepted  dec_nav001_review  The terminal screen lists every recorded task
+  because the read felt complete.  needs review  find_nav001_superseded
+SOURCE
+  get_workspace_context  dec_nav001_review
+  accepted  dec_nav001_review  The terminal screen lists every recorded task
+  because the read felt complete.  needs review  find_nav001_superseded
+RECORDED CHANGES FOR THIS RECORD  returned 3 of 3  page 1  complete for recorded
+contributions  read 2026-10-19T02:57:21.864Z
+  get_record_history  decision  dec_nav001_review
+  con_nav001_0283  update  human  hum_nav001_ana  2026-10-17T12:03:12.000Z 
+  {"summary":"cites
+tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit

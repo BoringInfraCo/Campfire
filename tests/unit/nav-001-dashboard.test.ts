@@ -22,8 +22,9 @@ import type { ContextSlice } from "../../src/domain/context-policy.js";
 import type { ActorRef, Artifact, Decision, Task } from "../../src/domain/types.js";
 import type { AttentionCoverage, AttentionItem, WorkspaceContext } from "../../src/service/service.js";
 
-const FULL_FOOTER = "p perspective   tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit";
-const COMPACT_FOOTER = "tab section   j/k move   / filter   enter inspect   r refresh   ? help   q quit";
+const FULL_FOOTER =
+  "p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit";
+const COMPACT_FOOTER = "tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
 const FILTER_SCOPE = "filters shown records, not the workspace";
 
 function slice<T>(items: T[] = [], extra?: { total?: number; returned?: number; truncated?: boolean }): ContextSlice<T> {
@@ -216,14 +217,14 @@ function flat(frame: string): string {
 }
 
 describe("NAV-001 focused navigator", () => {
-  it("cycles all five sections in order with tab and wraps to attention", () => {
+  it("cycles sections in order with tab and wraps to attention", () => {
     let state = stateFor(context());
     const order: string[] = [state.section];
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < 6; step += 1) {
       state = reduceDashboardKey(state, "tab");
       order.push(state.section);
     }
-    expect(order).toEqual(["attention", "work", "decisions", "references", "changes", "attention"]);
+    expect(order).toEqual(["attention", "work", "decisions", "references", "people", "changes", "attention"]);
   });
 
   it("renders only the active section: attention cues and SOURCE on the default frame", () => {
@@ -275,7 +276,7 @@ describe("NAV-001 focused navigator", () => {
     const frame = renderDashboard(state, 120, 36);
     expect(flat(frame)).toContain('filter "alpha"');
     expect(flat(frame)).toContain(FILTER_SCOPE);
-    expect(flat(frame)).toContain("showing 1 of 3 loaded rows");
+    expect(flat(frame)).toContain("matching 1 loaded 3 workspace total 5");
     expect(flat(frame)).toContain("(typing — enter confirms, esc clears, ctrl-c quits)");
     expect(frame).toContain("task_work_alpha");
     expect(frame).not.toContain("task_work_beta");
@@ -491,7 +492,9 @@ describe("NAV-001 chunked input", () => {
     expect(normalizeInputChunk("\u001b[A")).toEqual([]);
     expect(normalizeInputChunk("\u001b[Z")).toEqual([]); // shift-tab
     expect(normalizeInputChunk("\u001bq")).toEqual([]); // alt chord
-    expect(normalizeInputChunk("tab tab")).toEqual([]); // literal token text
+    // "b" is the page-back key, so the letters inside the word are recognized.
+    // The chunk is still not two tab keys.
+    expect(normalizeInputChunk("tab tab")).toEqual(["b", "b"]);
   });
 
   it("strips escape sequences without swallowing the bytes after them", () => {

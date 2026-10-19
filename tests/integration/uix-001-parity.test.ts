@@ -87,8 +87,8 @@ function tall(state: DashboardState): string {
 function framesIncludingSelection(initial: DashboardState): string[] {
   const frames: string[] = [];
   let state = initial;
-  // NAV-001 has five sections: attention, work, decisions, references, changes.
-  for (let section = 0; section < 5; section += 1) {
+  // NAV-002 sections: attention, work, decisions, references, people, changes.
+  for (let section = 0; section < 6; section += 1) {
     const count = sectionRows(state).length;
     const steps = Math.max(count, 1);
     for (let row = 0; row < steps; row += 1) {

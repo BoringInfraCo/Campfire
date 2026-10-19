@@ -112,11 +112,13 @@ describe("NAV-002 bounded reads", () => {
     expect(CLI_COMMAND_NAMES).toHaveLength(60);
     const viewer = readFileSync(new URL("../../src/viewer/server.ts", import.meta.url), "utf8");
     const handler = readFileSync(new URL("../../src/worker/handler.ts", import.meta.url), "utf8");
-    const dashboard = readFileSync(new URL("../../src/cli/dashboard.ts", import.meta.url), "utf8");
-    for (const source of [viewer, handler, dashboard]) {
+    for (const source of [viewer, handler]) {
       expect(source).not.toContain("list_workspace_participants");
       expect(source).not.toContain("get_record_history");
     }
+    const dashboard = readFileSync(new URL("../../src/cli/dashboard.ts", import.meta.url), "utf8");
+    expect(dashboard).toContain("list_workspace_participants");
+    expect(dashboard).toContain("get_record_history");
   });
 
   it("pages the lab roster, filters owners, and uses a workspace-bounded participant plan", () => {

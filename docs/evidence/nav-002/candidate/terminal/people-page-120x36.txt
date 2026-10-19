@@ -1,0 +1,36 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T02:57:19.223Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+57 workspace participants  human/agent split is not in this read
+PEOPLE  returned 20 of 57  page 1  another page  read 2026-10-19T02:57:20.042Z
+  This page is not the workspace human/agent split.
+  Recorded registration is not presence or permission to act.
+  > agent  Agent 01  agt_nav001_01  role agent  harness codex
+  agent  Agent 02  agt_nav001_02  role agent  harness opencode
+  agent  Agent 03  agt_nav001_03  role agent  harness codex
+  agent  Agent 04  agt_nav001_04  role agent  harness opencode
+  agent  Agent 05  agt_nav001_05  role agent  harness codex
+  agent  Agent 06  agt_nav001_06  role agent  harness opencode
+  agent  Agent 07  agt_nav001_07  role agent  harness codex
+  agent  Agent 08  agt_nav001_08  role agent  harness opencode
+  agent  Agent 09  agt_nav001_09  role agent  harness codex
+  agent  Agent 10  agt_nav001_10  role agent  harness opencode
+  agent  Agent 11  agt_nav001_11  role agent  harness codex
+  agent  Agent 12  agt_nav001_12  role agent  harness opencode
+  agent  Agent 13  agt_nav001_13  role agent  harness codex
+  agent  Agent 14  agt_nav001_14  role agent  harness opencode
+  agent  Agent 15  agt_nav001_15  role agent  harness codex
+  agent  Agent 16  agt_nav001_16  role agent  harness opencode
+  agent  Agent 17  agt_nav001_17  role agent  harness codex
+  agent  Agent 18  agt_nav001_18  role agent  harness opencode
+  agent  Agent 19  agt_nav001_19  role agent  harness codex
+  agent  Agent 20  agt_nav001_20  role agent  harness opencode
+SOURCE
+  list_workspace_participants  agt_nav001_01
+  role agent
+  humanOwnerId hum_nav001_ana
+  Recorded registration is not presence or permission to act.
+p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit
