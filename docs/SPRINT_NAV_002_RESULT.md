@@ -83,3 +83,31 @@ A separate read-only review of `02eed76` checked both the sync and async service
 ## 5. Human outcome
 
 **NOT OBSERVED.** No non-builder pair ran the five cold tasks. Scripted frames are not that comparison.
+
+## 6. October 18 narrow-history follow-up (not the scored candidate)
+
+The §4 80×24 limitation exposed a usability gap: the API returned all three
+contributions on one complete page, but two were cut from the frame and `n/b`
+had no further API page to request. The result above remains the record for
+`8552976`; this follow-up does not retroactively change that commit or its
+independent review.
+
+The follow-up repair focuses the open history panel. `j/k` moves among
+contributions **within** the loaded page; `n/b` continues to move between API
+pages; `h` or `esc` closes history. The panel shows one selected contribution,
+its payload summary, and `event N of M on this loaded page` while retaining the
+authorized `returned 3 of 3` heading and selected record ID. Three real 80×24
+PTY frames in `docs/evidence/nav-002/followup-history/` show
+`con_nav001_0283`, `con_nav001_0279`, and `con_nav001_0276` reachable in order.
+The original §4 frame remains in place as the pre-repair evidence.
+
+Local checks on this follow-up revision: focused NAV-001/NAV-002
+dashboard tests **31 passed** (including the new 80×24 traversal assertion);
+typecheck passed; full suite **99 files / 1234 passed / 1 skipped**; build
+passed. The full suite required the normal Node 22 environment outside the
+filesystem sandbox after an in-sandbox run made no progress; no remote action
+was taken. The read APIs, authorization, default JSON, package version, and
+Viewer allowlist were not changed by this repair. No new independent review,
+public-export audit, release decision, tag, publication, or deployment is
+claimed for this working-tree revision. The two-person comparison remains
+**NOT OBSERVED**.

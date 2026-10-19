@@ -298,7 +298,7 @@ describe("NAV-002 dashboard projection", () => {
     const opened = reduceDashboardKey(state, "h");
     expect(opened.history?.objectId).toBe("dec_old");
     const staleGeneration = opened.generation;
-    state = reduceDashboardKey(opened, "j");
+    state = reduceDashboardKey(reduceDashboardKey(opened, "esc"), "j");
     expect(state.history).toBeUndefined();
     expect(shownId(state)).toBe("dec_new");
     state = applyHistoryPage(
@@ -310,6 +310,41 @@ describe("NAV-002 dashboard projection", () => {
     expect(frame).not.toContain("con_old");
     expect(frame).not.toContain("old payload");
     expect(state.history).toBeUndefined();
+  });
+
+  it("lets an 80x24 terminal reach every contribution on a complete loaded history page", () => {
+    const value = context({
+      acceptedDecisions: [decision("dec_nav001_review", "Review the superseded finding")],
+      participantsCoverage: { returned: 0, total: 57, truncated: true, omitted: true },
+    });
+    const opened = reduceDashboardKey(stateFor(value, "decisions"), "h");
+    const entries = [
+      contribution("con_nav001_0283", "dec_nav001_review", { summary: "cites find_nav001_superseded" }),
+      contribution("con_nav001_0279", "dec_nav001_review", { status: "accepted" }),
+      contribution("con_nav001_0276", "dec_nav001_review", { status: "proposed" }),
+    ];
+    let state = applyHistoryPage(
+      opened,
+      { items: entries, total: 3, returned: 3, truncated: false },
+      { generation: opened.generation, readAt: READ_AT, pageNumber: 1, cursorStack: [], objectType: "decision", objectId: "dec_nav001_review" },
+    );
+    for (const [index, id] of entries.map((entry) => entry.id).entries()) {
+      const frame = renderDashboard(state, 80, 24);
+      expect(frame).toContain("returned 3 of 3");
+      expect(frame).toContain(`event ${index + 1} of 3`);
+      expect(frame).toContain(id);
+      expect(frame).toContain("dec_nav001_review");
+      expect(frame).toContain("j/k event");
+      expect(frame.split("\n").length).toBeLessThanOrEqual(24);
+      expect(state.historyRequest).toBeUndefined();
+      if (index < 2) state = reduceDashboardKey(state, "j");
+    }
+    expect(state.history?.row).toBe(2);
+    expect(reduceDashboardKey(state, "j").history?.row).toBe(2);
+    expect(reduceDashboardKey(state, "k").history?.row).toBe(1);
+    const closed = reduceDashboardKey(state, "esc");
+    expect(closed.history).toBeUndefined();
+    expect(shownId(closed)).toBe("dec_nav001_review");
   });
 
   it("uses the empty-history sentence and does not call a failed read complete", () => {

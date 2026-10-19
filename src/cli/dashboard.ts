@@ -109,6 +109,8 @@ export interface HistoryState {
   open: boolean;
   objectType: HistoryObjectType;
   objectId: string;
+  /** Selected contribution within the loaded API page. */
+  row: number;
   page?: LoadedPage<Contribution>;
   unavailable?: string;
 }
@@ -225,7 +227,7 @@ const COMPACT_FOOTER = "tab  j/k move  n/b page  h history  / filter  enter  r  
 const HELP_LINES = [
   "p switches My work and Team work. It does not change the workspace.",
   "tab moves among attention, work, decisions, references, people, and recent changes.",
-  "j and k move within the shown rows. enter opens a read-only detail.",
+  "j and k move within shown rows, or among loaded contributions while history is open. enter opens a read-only detail.",
   "n and b page Work, People, or an open history panel. Elsewhere they do not move the selection.",
   "h opens or closes recorded changes for the selected task, decision, finding, or artifact.",
   "esc closes history first. A later esc clears a committed filter. ctrl-c always quits.",
@@ -963,7 +965,7 @@ function toggleHistory(state: DashboardState): DashboardState {
     ...state,
     generation,
     statusNote: undefined,
-    history: { open: true, objectType: target.objectType, objectId: target.objectId },
+    history: { open: true, objectType: target.objectType, objectId: target.objectId, row: 0 },
     historyRequest: {
       generation,
       objectType: target.objectType,
@@ -1025,6 +1027,12 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
     return openSection(state, section);
   }
   if (action === "j" || action === "k") {
+    if (state.history?.open === true) {
+      const count = state.history.page?.items.length ?? 0;
+      const delta = action === "j" ? 1 : -1;
+      const row = count <= 0 ? 0 : Math.min(count - 1, Math.max(0, state.history.row + delta));
+      return { ...state, history: { ...state.history, row }, statusNote: undefined };
+    }
     const beforeId = selectedRow(state)?.id;
     const count = sectionCount(state);
     const delta = action === "j" ? 1 : -1;
@@ -1173,7 +1181,15 @@ export function applyHistoryPage(state: DashboardState, page: DashboardPageInput
     ...state,
     historyRequest: undefined,
     statusNote: undefined,
-    history: { open: true, objectType: stamp.objectType, objectId: stamp.objectId, page: toLoaded(page, stamp) },
+    history: {
+      open: true,
+      objectType: stamp.objectType,
+      objectId: stamp.objectId,
+      row: history.page?.pageNumber === stamp.pageNumber
+        ? Math.min(history.row, Math.max(0, page.items.length - 1))
+        : 0,
+      page: toLoaded(page, stamp),
+    },
   };
 }
 
@@ -1799,8 +1815,6 @@ function historyRowText(entry: Contribution): string {
   const parts = [clean(entry.id), clean(entry.action), clean(entry.actor.actorType), clean(entry.actor.actorId)];
   if (entry.agentSessionId !== undefined && entry.agentSessionId.length > 0) parts.push(`session ${clean(entry.agentSessionId)}`);
   parts.push(clean(entry.createdAt));
-  const summary = payloadSummary(entry.payload);
-  if (summary.length > 0) parts.push(summary);
   return parts.filter((part) => part.length > 0).join("  ");
 }
 
@@ -1824,12 +1838,23 @@ function buildHistory(state: DashboardState, columns: number): TaggedLine[] {
     return lines;
   }
   if (page.stale === true) lines.push(...record(`stale  last success ${clean(page.readAt)}`, columns, 0));
-  for (const entry of page.items) lines.push(...record(historyRowText(entry), columns, 1));
+  const selected = page.items[history.row];
+  if (selected !== undefined) {
+    lines.push(...record(`event ${history.row + 1} of ${page.items.length} on this loaded page  j/k event  n/b API page`, columns, 0));
+    lines.push(...record(`> ${historyRowText(selected)}`, columns, 0));
+    const payload = payloadSummary(selected.payload);
+    if (payload.length > 0) lines.push(...record(`payload ${payload}`, columns, 1));
+  }
   return lines;
 }
 
-function footerLines(columns: number): TaggedLine[] {
-  const lines = chrome(columns < 100 ? COMPACT_FOOTER : FOOTER, columns, 0);
+function footerLines(columns: number, historyOpen: boolean): TaggedLine[] {
+  const label = historyOpen
+    ? columns < 100
+      ? "j/k event  n/b API page  h/esc close  r refresh  q quit"
+      : "j/k event   n/b API page   h/esc close   r refresh   q quit"
+    : columns < 100 ? COMPACT_FOOTER : FOOTER;
+  const lines = chrome(label, columns, 0);
   if (lines.some((line) => line.text.includes("q quit"))) return lines;
   return [{ text: "q quit", rank: 0 }];
 }
@@ -1907,12 +1932,18 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
     for (const line of HELP_LINES) body.push(...record(line, size.columns, 1));
   }
   if (context !== undefined) {
-    // NAV-001: exactly one active section, then its selected-record source block.
-    body.push(...buildActiveSection(state, context, size.columns));
-    body.push(...buildSource(state, context, size.columns));
-    body.push(...buildHistory(state, size.columns));
+    if (state.history?.open === true) {
+      // A narrow terminal must offer every loaded contribution, even when the
+      // ordinary list and source block would consume the whole viewport.
+      body.push(...chrome(`SOURCE  ${clean(state.history.objectType)}  ${clean(state.history.objectId)}`, size.columns, 0));
+      body.push(...buildHistory(state, size.columns));
+    } else {
+      // NAV-001: exactly one active section, then its selected-record source block.
+      body.push(...buildActiveSection(state, context, size.columns));
+      body.push(...buildSource(state, context, size.columns));
+    }
   }
-  const footer = footerLines(size.columns);
+  const footer = footerLines(size.columns, state.history?.open === true);
   const footerKept = footer.length >= size.rows ? footer.slice(footer.length - size.rows) : footer;
   const fitted = fit([...header, ...body], size.rows - footerKept.length);
   const selected = context === undefined ? undefined : shownRows(state)[state.row];

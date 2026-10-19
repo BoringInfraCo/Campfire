@@ -1,0 +1,24 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T03:20:31.137Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+57 workspace participants  human/agent split is not in this read
+SOURCE  decision  dec_nav001_review
+RECORDED CHANGES FOR THIS RECORD  returned 3 of 3  page 1  complete for recorded
+contributions  read 2026-10-19T03:20:32.067Z
+  get_record_history  decision  dec_nav001_review
+  event 2 of 3 on this loaded page  j/k event  n/b API page
+  > con_nav001_0279  update  human  hum_nav001_ana  2026-10-17T12:03:11.000Z
+  payload {"status":"accepted"}
+j/k event  n/b API page  h/esc close  r refresh  q quit
+
+
+
+
+
+
+
+
+
