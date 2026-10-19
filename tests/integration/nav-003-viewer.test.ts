@@ -354,13 +354,9 @@ describe("NAV-003 viewer read boundary", () => {
 
   it("omits the roster on initial load and poll and does not call the inspector or on-demand reads", async () => {
     expect(APP_JS).not.toMatch(/api\("get_workspace"/);
-    expect(APP_JS).not.toMatch(/api\("list_tasks"/);
-    expect(APP_JS).not.toMatch(/api\("list_workspace_participants"/);
-    expect(APP_JS).not.toMatch(/api\("get_record_history"/);
-    expect(APP_JS).not.toMatch(/api\("get_task"/);
-    expect(APP_JS).not.toMatch(/api\("get_decision"/);
-    expect(APP_JS).not.toMatch(/api\("get_finding"/);
-    expect(APP_JS).not.toMatch(/api\("get_artifact"/);
+    expect(APP_JS).toContain('api("list_tasks"');
+    expect(APP_JS).toContain('api("list_workspace_participants"');
+    expect(APP_JS).toContain('api("get_record_history"');
     expect(APP_JS).toContain('participants: "omit"');
 
     const calls: Array<{ method: string; params: Record<string, unknown> }> = [];
@@ -473,3 +469,308 @@ describe("NAV-003 viewer read boundary", () => {
     }
   });
 });
+
+describe("NAV-003 viewer navigation", () => {
+  const INDEX_HTML = readFileSync(new URL("../../src/viewer/static/index.html", import.meta.url), "utf8");
+  const APP_CSS = readFileSync(new URL("../../src/viewer/static/app.css", import.meta.url), "utf8");
+
+  function loadNav(handler: (body: { method: string; params: Record<string, unknown> }) => Promise<unknown> | unknown) {
+    const calls: Array<{ method: string; params: Record<string, unknown> }> = [];
+    const elements: Record<string, { textContent: string; innerHTML: string; hidden: boolean; disabled: boolean; value: string }> = {};
+    const element = (id: string) => {
+      elements[id] ??= {
+        textContent: "",
+        innerHTML: "",
+        hidden: false,
+        disabled: false,
+        value: "",
+        setAttribute() {},
+        addEventListener() {},
+        focus() {},
+        getAttribute: () => null,
+      } as { textContent: string; innerHTML: string; hidden: boolean; disabled: boolean; value: string };
+      return elements[id];
+    };
+    const sandbox: Record<string, unknown> = {
+      document: {
+        documentElement: { dataset: {} as Record<string, string> },
+        getElementById: (id: string) => element(id),
+        addEventListener() {},
+        querySelectorAll: () => [],
+        activeElement: null,
+      },
+      localStorage: { getItem: () => null, setItem: () => {} },
+      sessionStorage: { getItem: () => null, setItem: () => {} },
+      fetch: async (_url: string, init: { body: string }) => {
+        const body = JSON.parse(init.body) as { method: string; params: Record<string, unknown> };
+        calls.push(body);
+        const result = await handler(body);
+        return { json: async () => ({ ok: true, result }) };
+      },
+      setInterval: () => 1,
+      CSS: { escape: (value: string) => value },
+      console,
+    };
+    sandbox.window = sandbox;
+    sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    const cut = APP_JS.lastIndexOf("async function boot()");
+    vm.runInContext(APP_JS.slice(0, cut), sandbox, { filename: "app.js" });
+    return { sandbox, calls, elements };
+  }
+
+  it("pages Work by 20 and reaches task_nav001_f051 without loading 64 tasks", async () => {
+    const page1 = {
+      items: [{ id: "task_nav001_blocked_agent", title: "blocked", status: "blocked", createdAt: "2026-10-17T12:00:00.000Z" }],
+      total: 64,
+      returned: 20,
+      truncated: true,
+      nextCursor: "cursor-page-2",
+    };
+    const page2 = {
+      items: [{ id: "task_nav001_f051", title: "Display-pressure filler task 51", status: "open", createdAt: "2026-10-17T12:04:09.000Z", createdBy: { actorType: "human", actorId: "hum_nav001_ana" } }],
+      total: 64,
+      returned: 20,
+      truncated: true,
+      nextCursor: "cursor-page-3",
+    };
+    const { sandbox, calls, elements } = loadNav((body) => {
+      if (body.method !== "list_tasks") return {};
+      return body.params.cursor === "cursor-page-2" ? page2 : page1;
+    });
+    vm.runInContext('state.workspaceId = "ws_nav001_lab"; state.section = "attention";', sandbox);
+    await vm.runInContext('setSection("work")', sandbox);
+    expect(calls.map((row) => row.method)).toEqual(["list_tasks"]);
+    expect(calls[0]?.params).toEqual({ workspaceId: "ws_nav001_lab", limit: 20 });
+    expect(elements["work-list"]?.innerHTML).toContain("task_nav001_blocked_agent");
+    expect(elements["work-list"]?.innerHTML).not.toContain("task_nav001_f051");
+    await vm.runInContext('pageWork("next")', sandbox);
+    expect(calls[1]?.params).toEqual({ workspaceId: "ws_nav001_lab", limit: 20, cursor: "cursor-page-2" });
+    expect(calls.every((row) => row.params.limit === 20)).toBe(true);
+    expect(elements["work-list"]?.innerHTML).toContain("task_nav001_f051");
+    expect(elements["work-coverage"]?.textContent).toContain("returned 20 of 64");
+    expect(elements["work-coverage"]?.textContent).toContain("page 2");
+    expect(elements["work-coverage"]?.textContent).toContain("another API page exists");
+  });
+
+  it("filters People by humanOwnerId and does not insert an owner who is outside the roster", async () => {
+    const agent03 = {
+      actor: { actorId: "agt_nav001_03", actorType: "agent" },
+      name: "Agent 03",
+      role: "agent",
+      harness: "codex",
+      joinedAt: "2026-10-17T12:01:45.000Z",
+      humanOwnerId: "hum_nav001_zed",
+      humanOwnerIsParticipant: false,
+    };
+    const anaAgents = [
+      {
+        actor: { actorId: "agt_nav001_01", actorType: "agent" },
+        name: "Agent 01",
+        role: "agent",
+        harness: "codex",
+        joinedAt: "2026-10-17T12:01:41.000Z",
+        humanOwnerId: "hum_nav001_ana",
+        humanOwnerIsParticipant: true,
+      },
+      {
+        actor: { actorId: "agt_nav001_21", actorType: "agent" },
+        name: "Agent 21",
+        role: "agent",
+        harness: "codex",
+        joinedAt: "2026-10-17T12:02:21.000Z",
+        humanOwnerId: "hum_nav001_ana",
+        humanOwnerIsParticipant: true,
+      },
+    ];
+    const { sandbox, calls, elements } = loadNav((body) => {
+      if (body.method !== "list_workspace_participants") return {};
+      if (body.params.humanOwnerId === "hum_nav001_ana") {
+        return { items: anaAgents, total: 2, returned: 2, truncated: false };
+      }
+      return { items: [agent03], total: 57, returned: 20, truncated: true, nextCursor: "people-2" };
+    });
+    vm.runInContext('state.workspaceId = "ws_nav001_lab";', sandbox);
+    await vm.runInContext('setSection("people")', sandbox);
+    expect(calls[0]?.params).toEqual({ workspaceId: "ws_nav001_lab", limit: 20 });
+    expect(calls[0]?.params).not.toHaveProperty("humanOwnerId");
+    await vm.runInContext('selectRecord("agent", "agt_nav001_03")', sandbox);
+    expect(elements["source-view"]?.innerHTML).toContain("hum_nav001_zed");
+    expect(elements["source-view"]?.innerHTML).toContain("owner is outside the roster");
+    expect(elements["people-list"]?.innerHTML).not.toContain('data-record-id="hum_nav001_zed"');
+    expect(elements["people-list"]?.innerHTML).not.toContain('data-record-kind="human"');
+    await vm.runInContext('openHumanAgents("hum_nav001_ana")', sandbox);
+    expect(calls.at(-1)?.params).toMatchObject({
+      workspaceId: "ws_nav001_lab",
+      limit: 20,
+      humanOwnerId: "hum_nav001_ana",
+    });
+    expect(elements["people-list"]?.innerHTML).toContain("agt_nav001_01");
+    expect(elements["people-list"]?.innerHTML).toContain("agt_nav001_21");
+    expect(elements["people-coverage"]?.textContent).toContain("returned 2 of 2");
+    expect(elements["people-list"]?.innerHTML).not.toContain('data-record-id="hum_nav001_zed"');
+    expect(elements["recorded-counts"]?.textContent ?? "").not.toContain("20 people");
+  });
+
+  it("shows dec_nav001_review history as returned 3 of 3, newest first", async () => {
+    const contributions = [
+      { id: "con_nav001_0283", action: "update", actor: { actorType: "human", actorId: "hum_nav001_ana" }, createdAt: "2026-10-17T12:08:00.000Z", payload: { note: "original observation" } },
+      { id: "con_nav001_0279", action: "update", actor: { actorType: "human", actorId: "hum_nav001_ana" }, createdAt: "2026-10-17T12:07:00.000Z", payload: { status: "accepted" } },
+      { id: "con_nav001_0276", action: "create", actor: { actorType: "human", actorId: "hum_nav001_ana" }, createdAt: "2026-10-17T12:06:00.000Z", payload: { status: "proposed" } },
+    ];
+    const { sandbox, calls, elements } = loadNav((body) => {
+      if (body.method !== "get_record_history") return {};
+      return { items: contributions, total: 3, returned: 3, truncated: false };
+    });
+    vm.runInContext(
+      `state.workspaceId = "ws_nav001_lab";
+       state.layer = "source";
+       state.detail = { id: "dec_nav001_review", kind: "decision", record: { id: "dec_nav001_review", status: "accepted", createdAt: "2026-10-17T12:05:00.000Z", rationale: "Assumed the default task page returned every recorded task." }, loading: false };`,
+      sandbox,
+    );
+    await vm.runInContext("openRecordedChanges()", sandbox);
+    expect(calls[0]?.params).toEqual({
+      workspaceId: "ws_nav001_lab",
+      objectType: "decision",
+      objectId: "dec_nav001_review",
+      limit: 10,
+    });
+    const heading = elements["history-heading"]?.textContent ?? "";
+    const list = elements["history-list"]?.innerHTML ?? "";
+    expect(heading).toContain("returned 3 of 3");
+    expect(heading).not.toMatch(/complete/i);
+    const order = ["con_nav001_0283", "con_nav001_0279", "con_nav001_0276"].map((id) => list.indexOf(id));
+    expect(order.every((index) => index >= 0)).toBe(true);
+    expect(order[0]).toBeLessThan(order[1] ?? 0);
+    expect(order[1]).toBeLessThan(order[2] ?? 0);
+  });
+
+  it("drops a late read for a record or history the person already left", async () => {
+    const pending: Array<{ id: string; method: string; resolve: (value: { json: () => Promise<{ ok: true; result: unknown }> }) => void }> = [];
+    const calls: Array<{ method: string; params: Record<string, unknown> }> = [];
+    const elements: Record<string, { textContent: string; innerHTML: string; hidden: boolean }> = {};
+    const element = (id: string) => {
+      elements[id] ??= { textContent: "", innerHTML: "", hidden: false, setAttribute() {}, addEventListener() {}, focus() {}, getAttribute: () => null } as {
+        textContent: string;
+        innerHTML: string;
+        hidden: boolean;
+      };
+      return elements[id];
+    };
+    const sandbox: Record<string, unknown> = {
+      document: {
+        documentElement: { dataset: {} },
+        getElementById: (id: string) => element(id),
+        addEventListener() {},
+        querySelectorAll: () => [],
+        activeElement: null,
+      },
+      localStorage: { getItem: () => null, setItem: () => {} },
+      sessionStorage: { getItem: () => null, setItem: () => {} },
+      fetch: (_url: string, init: { body: string }) => {
+        const body = JSON.parse(init.body) as { method: string; params: Record<string, unknown> };
+        calls.push(body);
+        return new Promise((resolve) => {
+          pending.push({
+            id: String(body.params.decisionId ?? body.params.objectId ?? ""),
+            method: body.method,
+            resolve,
+          });
+        });
+      },
+      setInterval: () => 1,
+      CSS: { escape: (value: string) => value },
+      console,
+    };
+    sandbox.window = sandbox;
+    sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    const cut = APP_JS.lastIndexOf("async function boot()");
+    vm.runInContext(APP_JS.slice(0, cut), sandbox, { filename: "app.js" });
+    vm.runInContext('state.workspaceId = "ws_nav001_lab"; state.section = "decisions"; state.context = { proposedDecisions: [], acceptedDecisions: [], supersededDecisions: [] };', sandbox);
+
+    const late = vm.runInContext('selectRecord("decision", "dec_closed")', sandbox) as Promise<unknown>;
+    await viWait(pending, 1);
+    const current = vm.runInContext('selectRecord("decision", "dec_open")', sandbox) as Promise<unknown>;
+    await viWait(pending, 2);
+    pending[0]?.resolve({
+      json: async () => ({ ok: true, result: { id: "dec_closed", status: "accepted", createdAt: "t", rationale: "LATE_RATIONALE" } }),
+    });
+    await late;
+    expect(vm.runInContext("state.detail.id", sandbox)).toBe("dec_open");
+    expect(elements["source-view"]?.innerHTML ?? "").not.toContain("LATE_RATIONALE");
+    pending[1]?.resolve({
+      json: async () => ({ ok: true, result: { id: "dec_open", status: "accepted", createdAt: "t", rationale: "OPEN_RATIONALE" } }),
+    });
+    await current;
+    expect(elements["source-view"]?.innerHTML).toContain("OPEN_RATIONALE");
+    expect(elements["source-view"]?.innerHTML).not.toContain("LATE_RATIONALE");
+
+    vm.runInContext(
+      'state.detail = { id: "dec_nav001_review", kind: "decision", record: { id: "dec_nav001_review", status: "accepted", createdAt: "t", rationale: "kept" }, loading: false }; state.layer = "source";',
+      sandbox,
+    );
+    const history = vm.runInContext("openRecordedChanges()", sandbox) as Promise<unknown>;
+    await viWait(pending, 3);
+    vm.runInContext('selectRecord("decision", "dec_other")', sandbox);
+    pending.find((row) => row.method === "get_record_history")?.resolve({
+      json: async () => ({
+        ok: true,
+        result: { items: [{ id: "con_late", action: "create", actor: { actorType: "human", actorId: "hum_nav001_ana" }, createdAt: "t" }], total: 1, returned: 1, truncated: false },
+      }),
+    });
+    await history;
+    expect(elements["history-list"]?.innerHTML ?? "").not.toContain("con_late");
+    expect(vm.runInContext("state.history", sandbox)).toBeNull();
+  });
+
+  it("renders hostile record text as inert text", () => {
+    const { sandbox } = loadNav(() => ({}));
+    const hostile = "nav-001 \u001b[31mhostile\u001b[0m\u0007 title <img src=x onerror=alert(1)>";
+    const html = vm.runInContext(
+      `workRowHtml(${JSON.stringify({ id: "task_nav001_hostile", title: hostile, status: "open" })})`,
+      sandbox,
+    ) as string;
+    expect(html).toContain("task_nav001_hostile");
+    expect(html).toContain("hostile");
+    expect(html).not.toContain("\u001b");
+    expect(html).not.toContain("\u0007");
+    expect(html).not.toContain("<img");
+    expect(html).toContain("&lt;img");
+    expect(html).not.toContain("onerror=alert(1)>");
+    const injected = vm.runInContext(
+      `workRowHtml(${JSON.stringify({ id: "task_quote", title: '"><button type="button" id="injected">', status: "open" })})`,
+      sandbox,
+    ) as string;
+    expect(injected).not.toContain('id="injected"');
+    expect(injected).toContain("&lt;button");
+  });
+
+  it("keeps a narrow Back control and does not clip record ids", () => {
+    expect(INDEX_HTML).toContain('id="panel-back"');
+    expect(INDEX_HTML).toContain(">Back<");
+    expect(INDEX_HTML).toContain('id="sections"');
+    expect(INDEX_HTML).toContain("Needs You");
+    expect(INDEX_HTML).toContain("Recent changes");
+    expect(INDEX_HTML).toContain("Workstream");
+    expect(INDEX_HTML).toContain('id="since-title"');
+    const narrow = APP_CSS.slice(APP_CSS.indexOf("@media (max-width: 719px)"));
+    expect(narrow).toContain('#stage[data-layer="source"] #list-pane');
+    expect(narrow).toContain('#stage[data-layer="history"] #list-pane');
+    expect(narrow).toContain("overflow-wrap: anywhere");
+    expect(narrow).toContain(".record-id");
+    expect(APP_CSS).toContain("grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr)");
+    expect(APP_CSS).toContain('#stage[data-section="attention"]');
+    expect(APP_CSS).toContain('#stage[data-section="changes"]');
+  });
+});
+
+async function viWait(
+  pending: unknown[],
+  count: number,
+): Promise<void> {
+  for (let attempt = 0; attempt < 20 && pending.length < count; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  if (pending.length < count) throw new Error(`expected ${count} pending reads, saw ${pending.length}`);
+}

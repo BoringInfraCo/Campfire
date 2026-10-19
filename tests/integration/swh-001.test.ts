@@ -603,11 +603,11 @@ describe("SWH-001 D3 — source parity", () => {
     );
     expect(teamHtml).not.toContain("none in workspace");
 
-    // No renderer created a control.
+    // Orientation prose is not a write form. A row button only selects a record.
     for (const html of [myHtml, teamHtml, sourcesHtml]) {
-      expect(html).not.toContain("<button");
       expect(html).not.toContain("<input");
       expect(html).not.toContain("<form");
+      expect(html).not.toMatch(/type="submit"|<textarea/i);
       expect(html).not.toContain("<a ");
       expect(html).not.toContain("href=");
     }
