@@ -1,0 +1,403 @@
+{
+  "label": "AUTOMATED BROWSER — served loopback Viewer. Not a human observation. No response bodies, cursors, or tokens.",
+  "viewerHost": "127.0.0.1",
+  "initialThrough": 4,
+  "pollThrough": 7,
+  "calls": [
+    {
+      "order": 1,
+      "phase": "initial",
+      "method": "whoami",
+      "httpElapsedMs": null,
+      "compactBytes": 58,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 2,
+      "phase": "initial",
+      "method": "list_workspaces",
+      "httpElapsedMs": null,
+      "compactBytes": 213,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 3,
+      "phase": "initial",
+      "method": "get_workspace_context",
+      "httpElapsedMs": null,
+      "compactBytes": 55806,
+      "paramKeys": [
+        "participants",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": "omit"
+    },
+    {
+      "order": 4,
+      "phase": "initial",
+      "method": "get_activity",
+      "httpElapsedMs": null,
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 50,
+      "participants": null
+    },
+    {
+      "order": 5,
+      "phase": "poll",
+      "method": "list_workspaces",
+      "httpElapsedMs": null,
+      "compactBytes": 213,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 6,
+      "phase": "poll",
+      "method": "get_workspace_context",
+      "httpElapsedMs": null,
+      "compactBytes": 55806,
+      "paramKeys": [
+        "participants",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": "omit"
+    },
+    {
+      "order": 7,
+      "phase": "poll",
+      "method": "get_activity",
+      "httpElapsedMs": null,
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 50,
+      "participants": null
+    },
+    {
+      "order": 8,
+      "phase": "interaction",
+      "method": "list_tasks",
+      "httpElapsedMs": null,
+      "compactBytes": 6496,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 20,
+      "participants": null
+    },
+    {
+      "order": 9,
+      "phase": "interaction",
+      "method": "list_tasks",
+      "httpElapsedMs": null,
+      "compactBytes": 6516,
+      "paramKeys": [
+        "cursor",
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": true,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 20,
+      "participants": null
+    },
+    {
+      "order": 10,
+      "phase": "interaction",
+      "method": "list_workspaces",
+      "httpElapsedMs": null,
+      "compactBytes": 213,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 11,
+      "phase": "interaction",
+      "method": "get_workspace_context",
+      "httpElapsedMs": null,
+      "compactBytes": 55806,
+      "paramKeys": [
+        "participants",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": "omit"
+    },
+    {
+      "order": 12,
+      "phase": "interaction",
+      "method": "get_activity",
+      "httpElapsedMs": null,
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 50,
+      "participants": null
+    },
+    {
+      "order": 13,
+      "phase": "interaction",
+      "method": "list_workspace_participants",
+      "httpElapsedMs": null,
+      "compactBytes": 4518,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 20,
+      "participants": null
+    },
+    {
+      "order": 14,
+      "phase": "interaction",
+      "method": "list_workspace_participants",
+      "httpElapsedMs": null,
+      "compactBytes": 4259,
+      "paramKeys": [
+        "cursor",
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": true,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 20,
+      "participants": null
+    },
+    {
+      "order": 15,
+      "phase": "interaction",
+      "method": "list_workspace_participants",
+      "httpElapsedMs": null,
+      "compactBytes": 563,
+      "paramKeys": [
+        "humanOwnerId",
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": "hum_nav001_ana",
+      "objectId": null,
+      "limit": 20,
+      "participants": null
+    },
+    {
+      "order": 16,
+      "phase": "interaction",
+      "method": "get_finding",
+      "httpElapsedMs": null,
+      "compactBytes": 593,
+      "paramKeys": [
+        "findingId",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": "find_nav001_superseded",
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 17,
+      "phase": "interaction",
+      "method": "get_record_history",
+      "httpElapsedMs": null,
+      "compactBytes": 1164,
+      "paramKeys": [
+        "limit",
+        "objectId",
+        "objectType",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": "dec_nav001_review",
+      "limit": 10,
+      "participants": null
+    },
+    {
+      "order": 18,
+      "phase": "interaction",
+      "method": "get_task",
+      "httpElapsedMs": null,
+      "compactBytes": 311,
+      "paramKeys": [
+        "taskId",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": "task_nav001_f027",
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 19,
+      "phase": "interaction",
+      "method": "list_workspaces",
+      "httpElapsedMs": null,
+      "compactBytes": 213,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 20,
+      "phase": "interaction",
+      "method": "get_workspace_context",
+      "httpElapsedMs": null,
+      "compactBytes": 55806,
+      "paramKeys": [
+        "participants",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": "omit"
+    },
+    {
+      "order": 21,
+      "phase": "interaction",
+      "method": "get_activity",
+      "httpElapsedMs": null,
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 50,
+      "participants": null
+    },
+    {
+      "order": 22,
+      "phase": "interaction",
+      "method": "list_workspaces",
+      "httpElapsedMs": null,
+      "compactBytes": 213,
+      "paramKeys": [],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": null
+    },
+    {
+      "order": 23,
+      "phase": "interaction",
+      "method": "get_workspace_context",
+      "httpElapsedMs": null,
+      "compactBytes": 55806,
+      "paramKeys": [
+        "participants",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": null,
+      "participants": "omit"
+    },
+    {
+      "order": 24,
+      "phase": "interaction",
+      "method": "get_activity",
+      "httpElapsedMs": null,
+      "compactBytes": 14648,
+      "paramKeys": [
+        "limit",
+        "workspaceId"
+      ],
+      "cursorPresent": false,
+      "sincePresent": false,
+      "humanOwnerId": null,
+      "objectId": null,
+      "limit": 50,
+      "participants": null
+    }
+  ]
+}

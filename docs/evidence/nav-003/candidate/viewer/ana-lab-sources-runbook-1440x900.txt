@@ -1,0 +1,93 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs Attention
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+SHARED SOURCES
+current findings
+find_nav001_current
+current
+The terminal read covers only the returned task page.
+id find_nav001_current · evidence: art_nav001_runbook (supports)
+findings
+showing 1 of 1
+artifact references
+art_nav001_notes
+document
+nav-001 working notes
+id art_nav001_notes · reference: nav-001/working-notes.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_hostile
+other
+nav-001 hostile markup reference
+id art_nav001_hostile · reference: https://example.com/nav-001/report"><img src=x onerror=alert(1)> (stored reference, not fetched) · class unparsed · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_runbook
+report
+nav-001 runbook reference
+id art_nav001_runbook · reference: https://example.com/nav-001/runbook.html (stored reference, not fetched) · class openable https · host example.com · cited by find_nav001_current (supports) · external and unverified by Campfire; workspace membership does not grant access · Open example.com (external, unverified)
+art_nav001_f09
+document
+Display-pressure filler reference 09
+id art_nav001_f09 · reference: nav-001/filler-reference-09.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f08
+document
+Display-pressure filler reference 08
+id art_nav001_f08 · reference: nav-001/filler-reference-08.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f07
+document
+Display-pressure filler reference 07
+id art_nav001_f07 · reference: nav-001/filler-reference-07.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f06
+document
+Display-pressure filler reference 06
+id art_nav001_f06 · reference: nav-001/filler-reference-06.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f05
+document
+Display-pressure filler reference 05
+id art_nav001_f05 · reference: nav-001/filler-reference-05.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f04
+document
+Display-pressure filler reference 04
+id art_nav001_f04 · reference: nav-001/filler-reference-04.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+art_nav001_f03
+document
+Display-pressure filler reference 03
+id art_nav001_f03 · reference: nav-001/filler-reference-03.md (stored reference, not fetched) · class local path · external and unverified by Campfire; workspace membership does not grant access
+artifacts
+showing 10 of 12 · more available — open the list for the rest
+Back
+
+id art_nav001_runbook
+
+type artifact
+
+nav-001 runbook reference
+
+recorded actor human hum_nav001_ana
+
+createdAt 2026-10-17T12:03:03.000Z
+
+art_nav001_runbook
+report
+nav-001 runbook reference
+id art_nav001_runbook · reference: https://example.com/nav-001/runbook.html (stored reference, not fetched) · class openable https · host example.com · cited by find_nav001_current (supports) · external and unverified by Campfire; workspace membership does not grant access · Open example.com (external, unverified)
+Recorded changes
+
+tab sections j/k in a focused list enter esc back p perspective

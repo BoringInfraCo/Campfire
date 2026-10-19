@@ -1,0 +1,70 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+PEOPLE
+
+returned 20 of 57 · page 1 · another API page exists
+
+Registration is a record, not presence or permission to act.
+
+Previous
+Next
+agt_nav001_01 Agent 01 registered agent · agt_nav001_01 · harness codex · owner hum_nav001_ana · owner is a workspace participant · registration is not presence
+agt_nav001_02 Agent 02 registered agent · agt_nav001_02 · harness opencode · owner hum_nav001_ben · owner is a workspace participant · registration is not presence
+agt_nav001_03 Agent 03 registered agent · agt_nav001_03 · harness codex · owner hum_nav001_zed · owner is outside the roster · registration is not presence
+agt_nav001_04 Agent 04 registered agent · agt_nav001_04 · harness opencode · owner hum_nav001_h04 · owner is a workspace participant · registration is not presence
+agt_nav001_05 Agent 05 registered agent · agt_nav001_05 · harness codex · owner hum_nav001_h05 · owner is a workspace participant · registration is not presence
+agt_nav001_06 Agent 06 registered agent · agt_nav001_06 · harness opencode · owner hum_nav001_h06 · owner is a workspace participant · registration is not presence
+agt_nav001_07 Agent 07 registered agent · agt_nav001_07 · harness codex · owner hum_nav001_h07 · owner is a workspace participant · registration is not presence
+agt_nav001_08 Agent 08 registered agent · agt_nav001_08 · harness opencode · owner hum_nav001_h08 · owner is a workspace participant · registration is not presence
+agt_nav001_09 Agent 09 registered agent · agt_nav001_09 · harness codex · owner hum_nav001_h09 · owner is a workspace participant · registration is not presence
+agt_nav001_10 Agent 10 registered agent · agt_nav001_10 · harness opencode · owner hum_nav001_h10 · owner is a workspace participant · registration is not presence
+agt_nav001_11 Agent 11 registered agent · agt_nav001_11 · harness codex · owner hum_nav001_h11 · owner is a workspace participant · registration is not presence
+agt_nav001_12 Agent 12 registered agent · agt_nav001_12 · harness opencode · owner hum_nav001_h12 · owner is a workspace participant · registration is not presence
+agt_nav001_13 Agent 13 registered agent · agt_nav001_13 · harness codex · owner hum_nav001_h13 · owner is a workspace participant · registration is not presence
+agt_nav001_14 Agent 14 registered agent · agt_nav001_14 · harness opencode · owner hum_nav001_h14 · owner is a workspace participant · registration is not presence
+agt_nav001_15 Agent 15 registered agent · agt_nav001_15 · harness codex · owner hum_nav001_h15 · owner is a workspace participant · registration is not presence
+agt_nav001_16 Agent 16 registered agent · agt_nav001_16 · harness opencode · owner hum_nav001_h16 · owner is a workspace participant · registration is not presence
+agt_nav001_17 Agent 17 registered agent · agt_nav001_17 · harness codex · owner hum_nav001_h17 · owner is a workspace participant · registration is not presence
+agt_nav001_18 Agent 18 registered agent · agt_nav001_18 · harness opencode · owner hum_nav001_h18 · owner is a workspace participant · registration is not presence
+agt_nav001_19 Agent 19 registered agent · agt_nav001_19 · harness codex · owner hum_nav001_h19 · owner is a workspace participant · registration is not presence
+agt_nav001_20 Agent 20 registered agent · agt_nav001_20 · harness opencode · owner hum_nav001_h20 · owner is a workspace participant · registration is not presence
+Back
+
+id agt_nav001_03
+
+type agent
+
+role agent
+
+harness codex
+
+joinedAt 2026-10-17T12:01:45.000Z
+
+owner hum_nav001_zed
+
+owner is outside the roster
+
+Registration is not presence.
+
+tab sections j/k in a focused list enter esc back p perspective

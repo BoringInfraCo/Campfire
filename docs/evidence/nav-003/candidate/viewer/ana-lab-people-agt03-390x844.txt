@@ -1,0 +1,38 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Back
+
+id agt_nav001_03
+
+type agent
+
+role agent
+
+harness codex
+
+joinedAt 2026-10-17T12:01:45.000Z
+
+owner hum_nav001_zed
+
+owner is outside the roster
+
+Registration is not presence.
+
+tab sections j/k in a focused list enter esc back p perspective

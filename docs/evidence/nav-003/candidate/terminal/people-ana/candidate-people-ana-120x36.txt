@@ -1,0 +1,36 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T20:36:43.184Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+57 workspace participants  human/agent split is not in this read
+WORKSPACE-PARTICIPATING AGENTS  hum_nav001_ana  total 2  returned 2 of 2  page 1  no further page  read
+2026-10-19T20:36:47.877Z
+  total counts this human's agents in this workspace. It is not the unfiltered page and not a presence count.
+  Recorded registration is not presence or permission to act.
+  > agent  Agent 01  agt_nav001_01  role agent  harness codex
+  agent  Agent 21  agt_nav001_21  role agent  harness codex
+SOURCE
+  list_workspace_participants  agt_nav001_01
+  role agent
+  joinedAt 2026-10-17T12:01:41.000Z
+  humanOwnerId hum_nav001_ana
+  owner is a workspace participant
+  harness codex
+  Recorded registration is not presence or permission to act.
+p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit
+
+
+
+
+
+
+
+
+
+
+
+
+
+

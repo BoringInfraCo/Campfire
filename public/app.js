@@ -2304,7 +2304,9 @@ function sourceRecordHtml(kind, record) {
   lines.push(actorLine("assignee", record.assignee));
   lines.push(actorLine("approved by", record.approvedBy));
   if (kind === "decision" && (record.needsReview === true || reviewFindingIds(record).length)) {
-    lines.push("<p>needs review — acceptance is unchanged</p>");
+    // needsReview is computed for any non-superseded decision that cites
+    // non-current evidence. Only an accepted decision has an acceptance to leave unchanged.
+    if (status === "accepted") lines.push("<p>needs review — acceptance is unchanged</p>");
     const reason = attentionReasonFor(strField(record.id));
     if (reason) lines.push(`<p>review reason ${esc(attentionReasonLabel(reason))}</p>`);
     const cited = reviewFindingIds(record);
@@ -2699,7 +2701,7 @@ function renderNavigation() {
   const workFailed = Boolean(state.workPage && state.workPage.error);
   if (els.workCoverage) {
     const page = state.workPage;
-    els.workCoverage.textContent = page ? coverageSentence(page, workFailed && !page.readAt) : "not loaded";
+    els.workCoverage.textContent = page ? coverageSentence(page, workFailed) : "not loaded";
   }
   if (els.workList) {
     const page = state.workPage;
@@ -2719,7 +2721,7 @@ function renderNavigation() {
     if (!people) els.peopleCoverage.textContent = "not loaded";
     else {
       const who = people.humanOwnerId ? `workspace-participating agents for ${people.humanOwnerId} · ` : "";
-      els.peopleCoverage.textContent = `${who}${coverageSentence(people, Boolean(people.error) && !people.readAt)}`;
+      els.peopleCoverage.textContent = `${who}${coverageSentence(people, Boolean(people.error))}`;
     }
   }
   if (els.peopleList) {

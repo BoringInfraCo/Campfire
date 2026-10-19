@@ -1,0 +1,44 @@
+{
+  "failures": [],
+  "terminal": {
+    "label": "FIXTURE / BUILDER REHEARSAL — scripted PTY. Not a human observation.",
+    "runs": [
+      {
+        "dir": "opening",
+        "status": 0,
+        "stdout": "candidate-ana-lab-80x24.txt: lines=24 widest=80 sha256=7bf048a626dfcc33724d254b61560e7e88f26a46ee02290ec12765deb1565e5e\ncandidate-ana-lab-120x36.txt: lines=36 widest=119 sha256=19a439edc04f1ce2cff675fee44ec9b67f0237f5fd5e7a9030929ff9ece58b63\n{\n  \"outDir\": \"[path]\n  \"captures\": 2\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      },
+      {
+        "dir": "work-f051",
+        "status": 0,
+        "stdout": "candidate-work-f051-80x24.txt: lines=24 widest=70 sha256=543213359d357667b1d15d5b1064f0e6714c9ca96ae801c650298086d70e8a75\ncandidate-work-f051-120x36.txt: lines=36 widest=116 sha256=8e80a2e320c75450783bc1007260d15bbcd214da0bceba868dc03fb78beecfe2\n{\n  \"outDir\": \"[path]\n  \"captures\": 2\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      },
+      {
+        "dir": "people-ana",
+        "status": 0,
+        "stdout": "candidate-people-ana-120x36.txt: lines=36 widest=116 sha256=88f45235629d5a0f33f8adcb4ab0c71b3c7ee529050b24b60155313affc33d08\n{\n  \"outDir\": \"[path]\n  \"captures\": 1\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      },
+      {
+        "dir": "history-review",
+        "status": 0,
+        "stdout": "candidate-history-review-80x24.txt: lines=24 widest=80 sha256=4eeabc977e56fdb3d781fd7d6a85195df22d6dfe194410287827b7c3d10116cf\ncandidate-history-review-120x36.txt: lines=36 widest=119 sha256=bc0b754857830cadd67e29a34ba732722baf31937af790e31cbc99c741901c65\n{\n  \"outDir\": \"[path]\n  \"captures\": 2\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      },
+      {
+        "dir": "history-review-j",
+        "status": 0,
+        "stdout": "candidate-history-review-j-80x24.txt: lines=24 widest=80 sha256=d9d3a774c82c9517d56573c90de16ede7feef2a3ca69589724770c0ca55d9f97\n{\n  \"outDir\": \"[path]\n  \"captures\": 1\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      },
+      {
+        "dir": "history-review-jj",
+        "status": 0,
+        "stdout": "candidate-history-review-jj-80x24.txt: lines=24 widest=80 sha256=5e0d9e2f86cef9cc07d711a3372d2de6009dfac7da46f3d13ea727c4890ff9bd\n{\n  \"outDir\": \"[path]\n  \"captures\": 1\n}\n",
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n"
+      }
+    ]
+  }
+}

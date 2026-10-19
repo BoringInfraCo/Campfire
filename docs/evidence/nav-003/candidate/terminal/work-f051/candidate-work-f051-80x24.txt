@@ -1,0 +1,24 @@
+Campfire  /  nav-001 display-pressure lab  ws_nav001_lab
+hum_nav001_ana human  ·  refreshed 2026-10-19T20:36:40.843Z
+GOAL
+  Give the terminal one focused screen over the recorded work.
+  goal_nav001_focus
+  20/64 truncated tasks · 5/5 decisions
+57 workspace participants  human/agent split is not in this read
+CURRENT WORK  returned 20 of 64  page 2  another page  read
+2026-10-19T20:36:41.253Z
+  This page is not an attention recomputation or an all-clear.
+  in_progress is a recorded task status, not a running process.
+  Pages are separate reads. This is not a consistent census.
+  The previous selection is no longer on this page.
+  > open  task_nav001_f051  Display-pressure filler task 51
+  open  task_nav001_f050  Display-pressure filler task 50
+  open  task_nav001_f049  Display-pressure filler task 49
+  open  task_nav001_f048  Display-pressure filler task 48
+  open  task_nav001_f047  Display-pressure filler task 47
+  open  task_nav001_f046  Display-pressure filler task 46
+  open  task_nav001_f044  Display-pressure filler task 44
+  open  task_nav001_f043  Display-pressure filler task 43
+SOURCE
+  list_tasks  task_nav001_f051
+tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit

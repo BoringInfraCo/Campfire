@@ -1,0 +1,77 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs Attention
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+historical findings 1 decisions 0
+NEEDS ATTENTION
+task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee
+task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_nav001_h15
+task · blockedtask_nav001_f026Display-pressure filler task 26blocked task assigned to another participantassignee: agt_nav001_08
+task · blockedtask_nav001_f039Display-pressure filler task 39blocked task assigned to another participantassignee: agt_nav001_21
+task · blockedtask_nav001_f052Display-pressure filler task 52blocked task assigned to another participantassignee: agt_nav001_34
+task · blockedtask_nav001_blocked_agentReproduce the eager-dump pressureblocked task assigned to another participantassignee: agt_nav001_01
+decision · accepteddec_nav001_reviewThe terminal screen lists every recorded task because the read felt complete.accepted decision cites non-current evidence — needs human reviewnon-current citations: find_nav001_superseded
+Attention coverage: tasks 20 of 64 (truncated), decisions 5 of 5. Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+Back
+
+id dec_nav001_review
+
+type decision
+
+status accepted · accepted
+
+The terminal screen lists every recorded task because the read felt complete.
+
+rationale Assumed the default task page returned every recorded task.
+
+recorded actor human hum_nav001_ana
+
+createdAt 2026-10-17T12:03:10.000Z
+
+updatedAt 2026-10-17T12:03:11.000Z
+
+approved by human hum_nav001_ana
+
+needs review — acceptance is unchanged
+
+review reason accepted decision cites non-current evidence — needs human review
+
+non-current citations: find_nav001_superseded
+
+cited finding find_nav001_superseded currentness superseded
+
+successor find_nav001_current
+
+citation cit_nav001_0282 finding find_nav001_superseded note original observation
+
+Recorded changes
+RECORDED CHANGES RETURNED 3 OF 3. NO FURTHER API PAGE.
+Previous history page
+Next history page
+con_nav001_0283 human hum_nav001_ana update 2026-10-17T12:03:12.000Z payload {"summary":"cites find_nav001_superseded","findingId":"find_nav001_superseded","note":"original observation"}
+con_nav001_0279 human hum_nav001_ana update 2026-10-17T12:03:11.000Z payload {"status":"accepted"}
+con_nav001_0276 human hum_nav001_ana create 2026-10-17T12:03:10.000Z payload {"summary":"The terminal screen lists every recorded task because the read felt complete.","status":"proposed"}
+
+tab sections j/k in a focused list enter esc back p perspective

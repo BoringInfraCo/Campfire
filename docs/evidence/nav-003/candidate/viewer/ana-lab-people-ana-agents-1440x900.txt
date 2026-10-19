@@ -1,0 +1,40 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+PEOPLE
+
+workspace-participating agents for hum_nav001_ana · returned 2 of 2 · page 1 · no further API page
+
+Registration is a record, not presence or permission to act.
+
+Previous
+Next
+agt_nav001_01 Agent 01 registered agent · agt_nav001_01 · harness codex · owner hum_nav001_ana · owner is a workspace participant · registration is not presence
+agt_nav001_21 Agent 21 registered agent · agt_nav001_21 · harness codex · owner hum_nav001_ana · owner is a workspace participant · registration is not presence
+Back
+
+Selection hum_nav001_ana is not in the loaded result.
+
+No selected record.
+
+tab sections j/k in a focused list enter esc back p perspective

@@ -1,0 +1,92 @@
+{
+  "provenance": "FIXTURE EVIDENCE — frames are engineering evidence, not human evidence; cannot establish Gate B, C, or E.",
+  "method": "pty",
+  "methodNote": "Real `campfire dashboard` spawned in a python3 pty at the stated winsize, CAMPFIRE_TELEMETRY=0 and an isolated CAMPFIRE_CONFIG_DIR/CAMPFIRE_DATA_DIR; waits for the workspace goal-id marker, applies the scripted key sequence when present, then sends q; the frame is the text after the last \\u001b[2J with controls stripped.",
+  "label": "candidate-work-f051",
+  "root": "[path]",
+  "db": "[path]",
+  "workspaceId": "ws_nav001_lab",
+  "actorId": "hum_nav001_ana",
+  "actorType": "human",
+  "marker": "goal_nav001_focus",
+  "keys": [
+    "\t",
+    "n"
+  ],
+  "keyDelaySeconds": "0.2",
+  "until": "task_nav001_f051",
+  "keyNote": "Named keys: tab, enter, esc (single control bytes); every other key is sent literally as its characters. The default key script is the wake-up q only, like the UIX-001 harness. SCRIPTED CAPTURES ARE NOT HUMAN OBSERVATION EVIDENCE.",
+  "sizes": [
+    {
+      "columns": 80,
+      "rows": 24
+    },
+    {
+      "columns": 120,
+      "rows": 36
+    }
+  ],
+  "captures": [
+    {
+      "file": "candidate-work-f051-80x24.txt",
+      "columns": 80,
+      "rows": 24,
+      "sha256": "543213359d357667b1d15d5b1064f0e6714c9ca96ae801c650298086d70e8a75",
+      "pty": {
+        "exitCode": 0,
+        "timedOut": false,
+        "sent": true,
+        "termiosRestored": true,
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n",
+        "enterAltScreen": true,
+        "leaveAltScreen": true,
+        "hideCursor": true,
+        "showCursor": true
+      },
+      "checks": {
+        "lineCount": 24,
+        "widestLine": 70,
+        "noEscapeControls": true,
+        "bellRemaining": false,
+        "noCredentialShape": true,
+        "noHomePath": true,
+        "noPrivatePath": true,
+        "noUnrelatedSentinel": true
+      },
+      "redactionsAppliedBeforeWrite": 0
+    },
+    {
+      "file": "candidate-work-f051-120x36.txt",
+      "columns": 120,
+      "rows": 36,
+      "sha256": "8e80a2e320c75450783bc1007260d15bbcd214da0bceba868dc03fb78beecfe2",
+      "pty": {
+        "exitCode": 0,
+        "timedOut": false,
+        "sent": true,
+        "termiosRestored": true,
+        "stderr": "{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n{\"event\":\"authz\",\"allow\":true,\"actorId\":\"hum_nav001_ana\",\"operation\":\"workspace:read\",\"workspaceId\":\"ws_nav001_lab\"}\n",
+        "enterAltScreen": true,
+        "leaveAltScreen": true,
+        "hideCursor": true,
+        "showCursor": true
+      },
+      "checks": {
+        "lineCount": 36,
+        "widestLine": 116,
+        "noEscapeControls": true,
+        "bellRemaining": false,
+        "noCredentialShape": true,
+        "noHomePath": true,
+        "noPrivatePath": true,
+        "noUnrelatedSentinel": true
+      },
+      "redactionsAppliedBeforeWrite": 0
+    }
+  ],
+  "notes": [
+    "Frames are engineering evidence, not human evidence. They cannot establish Gate B, C, or E.",
+    "Scripted captures are not human observation evidence; a scripted PTY run is a debugging rehearsal.",
+    "cft-shaped tokens and absolute home/system-temp paths are redacted before writing; both sprint sentinels must never appear and abort the capture instead."
+  ]
+}

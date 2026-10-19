@@ -1,0 +1,28 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs Attention
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Back
+RECORDED CHANGES RETURNED 3 OF 3. NO FURTHER API PAGE.
+Previous history page
+Next history page
+con_nav001_0283 human hum_nav001_ana update 2026-10-17T12:03:12.000Z payload {"summary":"cites find_nav001_superseded","findingId":"find_nav001_superseded","note":"original observation"}
+con_nav001_0279 human hum_nav001_ana update 2026-10-17T12:03:11.000Z payload {"status":"accepted"}
+con_nav001_0276 human hum_nav001_ana create 2026-10-17T12:03:10.000Z payload {"summary":"The terminal screen lists every recorded task because the read felt complete.","status":"proposed"}
+
+tab sections j/k in a focused list enter esc back p perspective

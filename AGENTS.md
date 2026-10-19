@@ -444,7 +444,11 @@ published and deployed on October 19, 2026 (private tag `7a466819` →
 tap promotion `483a8fd`, production Worker `da752833`, and live installer
 checks recorded in `docs/RELEASE_V1_23_DECISION.md`); publication does not
 change the verdict or the NOT OBSERVED human outcome. The Viewer allowlist
-is unchanged. NAV-003 retains Viewer alignment and its own human-use outcome.
+was unchanged by NAV-002. NAV-003 is implemented; the result is
+`docs/SPRINT_NAV_003_RESULT.md` (CONDITIONAL GO — engineering candidate,
+human outcome NOT OBSERVED). A v1.24.0 bump, tag, public snapshot, installer
+pin, or deployment still needs a separate recorded founder decision. Package
+stays 1.23.0.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,

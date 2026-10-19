@@ -1,0 +1,341 @@
+{
+  "label": "FIXTURE / AUTOMATED BROWSER — one sample on ws_nav001_lab at 2026-10-17T14:00:00.000Z. Not a claim of arbitrary team scale. Not a human observation.",
+  "clock": "2026-10-17T14:00:00.000Z",
+  "actor": "hum_nav001_ana",
+  "initial": {
+    "methodCounts": {
+      "whoami": 1,
+      "list_workspaces": 1,
+      "get_workspace_context": 1,
+      "get_activity": 1
+    },
+    "callCount": 4,
+    "compactBytes": 70725
+  },
+  "poll": {
+    "methodCounts": {
+      "list_workspaces": 1,
+      "get_workspace_context": 1,
+      "get_activity": 1
+    },
+    "callCount": 3,
+    "compactBytes": 70667
+  },
+  "onDemand": {
+    "listTasksPage1": {
+      "order": 8,
+      "method": "list_tasks",
+      "compactBytes": 6496,
+      "serverElapsedMs": 0.841,
+      "ok": true,
+      "params": {
+        "workspaceId": "ws_nav001_lab",
+        "limit": 20,
+        "cursorPresent": false,
+        "sincePresent": false
+      },
+      "shape": {
+        "total": 64,
+        "returned": 20,
+        "truncated": true,
+        "nextCursorPresent": true,
+        "ids": [
+          "task_nav001_blocked_agent",
+          "task_nav001_blocked_noassignee",
+          "task_nav001_assigned_blocked_ana",
+          "task_nav001_f052",
+          "task_nav001_f039",
+          "task_nav001_f026",
+          "task_nav001_f013",
+          "task_nav001_f058",
+          "task_nav001_f045",
+          "task_nav001_f032",
+          "task_nav001_f019",
+          "task_nav001_f006",
+          "task_nav001_hostile",
+          "task_nav001_open_noassignee",
+          "task_nav001_assigned_open_ana",
+          "task_nav001_f057",
+          "task_nav001_f056",
+          "task_nav001_f055",
+          "task_nav001_f054",
+          "task_nav001_f053"
+        ]
+      }
+    },
+    "listTasksPage2": {
+      "order": 9,
+      "method": "list_tasks",
+      "compactBytes": 6516,
+      "serverElapsedMs": 0.887,
+      "ok": true,
+      "params": {
+        "workspaceId": "ws_nav001_lab",
+        "limit": 20,
+        "cursorPresent": true,
+        "sincePresent": false
+      },
+      "shape": {
+        "total": 64,
+        "returned": 20,
+        "truncated": true,
+        "nextCursorPresent": true,
+        "ids": [
+          "task_nav001_f051",
+          "task_nav001_f050",
+          "task_nav001_f049",
+          "task_nav001_f048",
+          "task_nav001_f047",
+          "task_nav001_f046",
+          "task_nav001_f044",
+          "task_nav001_f043",
+          "task_nav001_f042",
+          "task_nav001_f041",
+          "task_nav001_f040",
+          "task_nav001_f038",
+          "task_nav001_f037",
+          "task_nav001_f036",
+          "task_nav001_f035",
+          "task_nav001_f034",
+          "task_nav001_f033",
+          "task_nav001_f031",
+          "task_nav001_f030",
+          "task_nav001_f029"
+        ]
+      }
+    },
+    "peoplePage": {
+      "order": 13,
+      "method": "list_workspace_participants",
+      "compactBytes": 4518,
+      "serverElapsedMs": 0.908,
+      "ok": true,
+      "params": {
+        "workspaceId": "ws_nav001_lab",
+        "limit": 20,
+        "cursorPresent": false,
+        "sincePresent": false
+      },
+      "shape": {
+        "total": 57,
+        "returned": 20,
+        "truncated": true,
+        "nextCursorPresent": true,
+        "ids": [
+          "agt_nav001_01",
+          "agt_nav001_02",
+          "agt_nav001_03",
+          "agt_nav001_04",
+          "agt_nav001_05",
+          "agt_nav001_06",
+          "agt_nav001_07",
+          "agt_nav001_08",
+          "agt_nav001_09",
+          "agt_nav001_10",
+          "agt_nav001_11",
+          "agt_nav001_12",
+          "agt_nav001_13",
+          "agt_nav001_14",
+          "agt_nav001_15",
+          "agt_nav001_16",
+          "agt_nav001_17",
+          "agt_nav001_18",
+          "agt_nav001_19",
+          "agt_nav001_20"
+        ],
+        "humanOwnerIsParticipant": [
+          true,
+          true,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "anaAgents": {
+      "order": 15,
+      "method": "list_workspace_participants",
+      "compactBytes": 563,
+      "serverElapsedMs": 0.689,
+      "ok": true,
+      "params": {
+        "workspaceId": "ws_nav001_lab",
+        "limit": 20,
+        "humanOwnerId": "hum_nav001_ana",
+        "cursorPresent": false,
+        "sincePresent": false
+      },
+      "shape": {
+        "total": 2,
+        "returned": 2,
+        "truncated": false,
+        "nextCursorPresent": false,
+        "ids": [
+          "agt_nav001_01",
+          "agt_nav001_21"
+        ],
+        "humanOwnerIsParticipant": [
+          true,
+          true
+        ]
+      }
+    },
+    "detail": [
+      {
+        "order": 16,
+        "method": "get_finding",
+        "compactBytes": 593,
+        "serverElapsedMs": 3.682,
+        "ok": true,
+        "params": {
+          "workspaceId": "ws_nav001_lab",
+          "findingId": "find_nav001_superseded",
+          "cursorPresent": false,
+          "sincePresent": false
+        },
+        "shape": {
+          "nextCursorPresent": false,
+          "id": "find_nav001_superseded",
+          "currentness": "superseded"
+        }
+      },
+      {
+        "order": 18,
+        "method": "get_task",
+        "compactBytes": 311,
+        "serverElapsedMs": 0.284,
+        "ok": true,
+        "params": {
+          "workspaceId": "ws_nav001_lab",
+          "taskId": "task_nav001_f027",
+          "cursorPresent": false,
+          "sincePresent": false
+        },
+        "shape": {
+          "nextCursorPresent": false,
+          "id": "task_nav001_f027",
+          "status": "open",
+          "title": "Display-pressure filler task 27"
+        }
+      }
+    ],
+    "history": {
+      "order": 17,
+      "method": "get_record_history",
+      "compactBytes": 1164,
+      "serverElapsedMs": 1.386,
+      "ok": true,
+      "params": {
+        "workspaceId": "ws_nav001_lab",
+        "limit": 10,
+        "objectType": "decision",
+        "objectId": "dec_nav001_review",
+        "cursorPresent": false,
+        "sincePresent": false
+      },
+      "shape": {
+        "total": 3,
+        "returned": 3,
+        "truncated": false,
+        "nextCursorPresent": false,
+        "ids": [
+          "con_nav001_0283",
+          "con_nav001_0279",
+          "con_nav001_0276"
+        ]
+      }
+    },
+    "browserDetail": [
+      {
+        "order": 16,
+        "phase": "interaction",
+        "method": "get_finding",
+        "httpElapsedMs": null,
+        "compactBytes": 593,
+        "paramKeys": [
+          "findingId",
+          "workspaceId"
+        ],
+        "cursorPresent": false,
+        "sincePresent": false,
+        "humanOwnerId": null,
+        "objectId": "find_nav001_superseded",
+        "limit": null,
+        "participants": null
+      },
+      {
+        "order": 18,
+        "phase": "interaction",
+        "method": "get_task",
+        "httpElapsedMs": null,
+        "compactBytes": 311,
+        "paramKeys": [
+          "taskId",
+          "workspaceId"
+        ],
+        "cursorPresent": false,
+        "sincePresent": false,
+        "humanOwnerId": null,
+        "objectId": "task_nav001_f027",
+        "limit": null,
+        "participants": null
+      }
+    ],
+    "detailTarget": {
+      "id": "task_nav001_f027",
+      "kind": "task"
+    },
+    "detailCallsBeforeChangesSection": 2
+  },
+  "orientationOmit": {
+    "order": 3,
+    "method": "get_workspace_context",
+    "compactBytes": 55806,
+    "serverElapsedMs": 3.359,
+    "ok": true,
+    "params": {
+      "workspaceId": "ws_nav001_lab",
+      "participants": "omit",
+      "cursorPresent": false,
+      "sincePresent": false
+    },
+    "shape": {
+      "participantsLength": 0,
+      "participantsCoverage": {
+        "returned": 0,
+        "total": 57,
+        "truncated": true,
+        "omitted": true
+      },
+      "goalId": "goal_nav001_focus"
+    }
+  },
+  "historyLimit1": {
+    "total": 3,
+    "returned": 1,
+    "firstId": "con_nav001_0283",
+    "tip": 217,
+    "note": "Served Viewer call with limit 1. The default history page has no next cursor, so the tip is this cursor, not a heading.",
+    "browserAlsoRequestedLimit1": false
+  },
+  "authorizedAgentHistoryIds": [
+    "con_nav001_0283",
+    "con_nav001_0279",
+    "con_nav001_0276"
+  ]
+}

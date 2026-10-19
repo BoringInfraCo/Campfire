@@ -612,6 +612,70 @@ describe("NAV-003 viewer navigation", () => {
     expect(elements["recorded-counts"]?.textContent ?? "").not.toContain("20 people");
   });
 
+  it("reserves the unchanged-acceptance sentence for an accepted decision", () => {
+    const { sandbox } = loadNav(() => ({}));
+    vm.runInContext("state.context = { proposedDecisions: [], acceptedDecisions: [], findings: [] };", sandbox);
+    const proposed = {
+      id: "dec_proposed_stale",
+      status: "proposed",
+      createdAt: "2026-10-17T12:00:00.000Z",
+      rationale: "Still a proposal.",
+      needsReview: true,
+      needsReviewFindingIds: ["find_old"],
+      citations: [{ id: "cit_1", findingId: "find_old", note: "old" }],
+    };
+    const accepted = {
+      id: "dec_nav001_review",
+      status: "accepted",
+      createdAt: "2026-10-17T12:05:00.000Z",
+      rationale: "Assumed the default task page returned every recorded task.",
+      needsReview: true,
+      needsReviewFindingIds: ["find_nav001_superseded"],
+    };
+    const proposedHtml = vm.runInContext(
+      `sourceRecordHtml("decision", ${JSON.stringify(proposed)})`,
+      sandbox,
+    ) as string;
+    const acceptedHtml = vm.runInContext(
+      `sourceRecordHtml("decision", ${JSON.stringify(accepted)})`,
+      sandbox,
+    ) as string;
+    const proposedRow = vm.runInContext(`decisionRowHtml(${JSON.stringify(proposed)})`, sandbox) as string;
+    expect(proposedHtml).toContain("proposed — not accepted, not an instruction");
+    expect(proposedHtml).toContain("find_old");
+    expect(proposedHtml).not.toContain("acceptance is unchanged");
+    expect(proposedRow).not.toContain("acceptance is unchanged");
+    expect(acceptedHtml).toContain("needs review — acceptance is unchanged");
+  });
+
+  it("says a failed Work or People refresh is not complete", () => {
+    const { sandbox, elements } = loadNav(() => ({}));
+    vm.runInContext(
+      `state.workPage = {
+         items: [{ id: "task_nav001_f051", title: "Display-pressure filler task 51", status: "open" }],
+         total: 64, returned: 20, truncated: true, nextCursor: "cursor-page-3",
+         pageNumber: 2, cursorStack: [], readAt: "2026-10-19T00:00:00.000Z",
+         error: "request failed", stale: true, loading: false,
+       };
+       state.peoplePage = {
+         items: [], total: 57, returned: 20, truncated: false, nextCursor: null,
+         pageNumber: 1, cursorStack: [], readAt: "2026-10-19T00:00:00.000Z",
+         error: "request failed", stale: true, loading: false,
+       };
+       renderNavigation();`,
+      sandbox,
+    );
+    const work = elements["work-coverage"]?.textContent ?? "";
+    const people = elements["people-coverage"]?.textContent ?? "";
+    expect(work).toContain("returned 20 of 64");
+    expect(work).toContain("not complete");
+    expect(work).not.toContain("another API page exists");
+    expect(work).not.toContain("no further API page");
+    expect(people).toContain("returned 20 of 57");
+    expect(people).toContain("not complete");
+    expect(people).not.toContain("no further API page");
+  });
+
   it("shows dec_nav001_review history as returned 3 of 3, newest first", async () => {
     const contributions = [
       { id: "con_nav001_0283", action: "update", actor: { actorType: "human", actorId: "hum_nav001_ana" }, createdAt: "2026-10-17T12:08:00.000Z", payload: { note: "original observation" } },

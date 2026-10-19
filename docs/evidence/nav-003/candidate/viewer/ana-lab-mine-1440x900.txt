@@ -1,0 +1,42 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:32.860Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+historical findings 1 decisions 0
+SUGGESTED NEXT — orientation hint, not an action
+Adopt the focused single-screen terminal layout.
+decision dec_nav001_proposed
+proposed_decision_actionable
+
+Owned-agent relationship is not loaded yet.
+
+NEEDS YOU
+decision · proposeddec_nav001_proposedAdopt the focused single-screen terminal layout.proposed decision — actionable by you, not accepted
+task · blockedtask_nav001_assigned_blocked_anaPackage the display-pressure baselineblocked task assigned to youassignee: hum_nav001_ana
+task · opentask_nav001_assigned_open_anaGive the terminal one focused screenopen task assigned to youassignee: hum_nav001_ana
+Attention coverage: tasks 20 of 64 (truncated), decisions 5 of 5. Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+No selected record.
+
+tab sections j/k in a focused list enter esc back p perspective

@@ -1,0 +1,107 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:32.860Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+WORK
+
+returned 20 of 64 · page 2 · another API page exists
+
+Previous
+Next
+task_nav001_f051 open Display-pressure filler task 51
+task_nav001_f050 open Display-pressure filler task 50
+task_nav001_f049 open Display-pressure filler task 49
+task_nav001_f048 open Display-pressure filler task 48
+task_nav001_f047 open Display-pressure filler task 47
+task_nav001_f046 open Display-pressure filler task 46
+task_nav001_f044 open Display-pressure filler task 44
+task_nav001_f043 open Display-pressure filler task 43
+task_nav001_f042 open Display-pressure filler task 42
+task_nav001_f041 open Display-pressure filler task 41
+task_nav001_f040 open Display-pressure filler task 40
+task_nav001_f038 open Display-pressure filler task 38
+task_nav001_f037 open Display-pressure filler task 37
+task_nav001_f036 open Display-pressure filler task 36
+task_nav001_f035 open Display-pressure filler task 35
+task_nav001_f034 open Display-pressure filler task 34
+task_nav001_f033 open Display-pressure filler task 33
+task_nav001_f031 open Display-pressure filler task 31
+task_nav001_f030 open Display-pressure filler task 30
+task_nav001_f029 open Display-pressure filler task 29
+MY WORK
+your agents
+Owned-agent relationship is not loaded yet.
+my tasks
+in progress
+no matching tasks in the returned 20 of 64; more may exist; owned-agent relationship is not loaded yet
+blocked
+blocked
+Package the display-pressure baseline
+id task_nav001_assigned_blocked_ana · assigned to (name not in this read) (human) hum_nav001_ana
+open
+open
+Give the terminal one focused screen
+id task_nav001_assigned_open_ana · assigned to (name not in this read) (human) hum_nav001_ana
+tasks
+showing 20 of 64 · more available — open the list for the rest
+accepted decisions
+accepted
+Order the screen by recorded assignment.
+accepted
+Order the screen by newest record.
+accepted
+Keep the workspace read-only during the baseline freeze.
+accepted decisions needing review
+accepted
+The terminal screen lists every recorded task because the read felt complete.
+needs review cites non-current finding find_nav001_superseded
+proposed decisions — not accepted, not permission to act
+proposed
+Adopt the focused single-screen terminal layout.
+id dec_nav001_proposed
+decisions
+showing 5 of 5
+historical
+Historical: 0 superseded decisions / 1 corrected findings recorded — inspect the workstream
+Back
+
+id task_nav001_f051
+
+type task
+
+status open · open
+
+lifecycle open. A status is not a running process.
+
+Display-pressure filler task 51
+
+recorded actor human hum_nav001_ana
+
+createdAt 2026-10-17T12:04:09.000Z
+
+updatedAt 2026-10-17T12:04:09.000Z
+
+assignee agent agt_nav001_33
+
+Recorded changes
+
+tab sections j/k in a focused list enter esc back p perspective

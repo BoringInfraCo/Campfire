@@ -1,0 +1,69 @@
+{
+  "label": "AUTOMATED BROWSER / SERVED VIEWER — not a human observation",
+  "actor": "hum_nav001_zed",
+  "workspaceAttempted": "ws_nav001_lab",
+  "pageContainedLabGoal": false,
+  "pageWorkspace": "not-recorded",
+  "denials": [
+    {
+      "method": "get_workspace",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_workspace_context",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_activity",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "list_tasks",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "list_workspace_participants",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_task",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_decision",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_finding",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_artifact",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    },
+    {
+      "method": "get_record_history",
+      "status": 403,
+      "leaked": [],
+      "bytes": 123
+    }
+  ]
+}

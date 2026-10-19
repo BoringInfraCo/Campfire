@@ -1,0 +1,148 @@
+{
+  "label": "AUTOMATED BROWSER — Playwright headless, deviceScaleFactor 1, fullPage false. Not a human observation.",
+  "shots": [
+    {
+      "name": "ana-lab-mine-1440x900",
+      "pngSha256": "109814f2d1b15db96416a06f12a7a32bf51914fbd2ff12750ff49b62c4ea6ca0",
+      "textSha256": "71a780f9d4ee0b52ff03adbcd74516d078a53fd9552c6b8bfcb7ca2fb52495f7",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-mine-390x844",
+      "pngSha256": "d7d80e64fe8854e32d280ca8980a984cb3631bdacbce825addcee2822a7b01f3",
+      "textSha256": "33075fb7e09525669a981135e97f9aef71ef7ba142c81157f731a0f70f7c48ad",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-team-1440x900",
+      "pngSha256": "2e01f7b187659bfa8999168906ef5ba299bbdfadbd1cce43495f4167154fa39d",
+      "textSha256": "473c5c6ff26107ec0ae98fc1bf780021c1ed2157c09a5a17d66ec443ae424c88",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-team-390x844",
+      "pngSha256": "ce57bb70a025addd7d667441bd7b280d2bfc9b2f4ad8244acb3fbc16a793fc9d",
+      "textSha256": "f123f68c14a16a8003499761f2e09b63b14e0f85ff3a4b7f97d4f1a40542ab39",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-work-f051-1440x900",
+      "pngSha256": "cd65ae16871155879be8a7496a886abbdb4f13c5e217fd2f4843865818079eb7",
+      "textSha256": "2bb865ef008e9d76757e807ea53ab33dd551f1284b691ebfbb3d061103b5bb79",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-work-f051-390x844",
+      "pngSha256": "6e678c29118d053a7bad1e22a866cc4e7271115540d7ea42874e1666af310729",
+      "textSha256": "eb0bc572eef736fdbb6dd9470f0278258ad34ddb2568f781877f9afbe314a1d3",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-people-agt03-1440x900",
+      "pngSha256": "e1d52d2b4c46d6fba3df5fe19f6942d45e553254fd67ea8959f256a779a109c1",
+      "textSha256": "48696e4a1fe2c3d6af2a43b9423ee18d984287cd3f0edf54f7260bb174f7fc84",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-people-agt03-390x844",
+      "pngSha256": "a2c4ed444e74ef6d21844466c6ac66e3b1ec60e68ddba0684dccd202265c0a04",
+      "textSha256": "384daf871e1393c80db9e4a8267738bc21320c2357a045f1f69a06d8d213bd8e",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-people-ana-agents-1440x900",
+      "pngSha256": "a170897d8daefa2f7ec936689cac3820986dcf547977ff378b962b174868e191",
+      "textSha256": "3007f750c760abb8517e374f76808fdee43e06d480c33210881e4c18ffa741ab",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-people-ana-agents-390x844",
+      "pngSha256": "cd196267c08de91dfa18716b61cbae57b9011fa6489a279ee37fcec54a812a8c",
+      "textSha256": "dc653ab34cbb4072dc58723e07a7c9a443ef157ea7889c96ca1b42bb06ebbc53",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-decision-review-1440x900",
+      "pngSha256": "46a772d98a6a3c21a921841d10155a993519bf505e4f1070119fd854fd283342",
+      "textSha256": "c3a1f208a1f6f4dbc3c7f2d32f4cfa443e92131376552b10b49cdcf715cf8a72",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-history-review-1440x900",
+      "pngSha256": "33178fb20ee90ab35663aa7eb12d213074a38dcf08780629534455b9075d4411",
+      "textSha256": "1228b6ac6b53b55e864432cde9bacab7a2f6847eb16580ea5c8f4abb2339d6e8",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-history-review-390x844",
+      "pngSha256": "df9aaee505e9e35b727cdd508f036d44faaa8a431396c663fd1c0acc66cf208f",
+      "textSha256": "3e79ea2e2132023d530a24adf000a0855a7622418da8d8025f62a51f6b032d55",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "bodyClientWidth": 390,
+      "clipped": []
+    },
+    {
+      "name": "ana-lab-keyboard-1440x900",
+      "pngSha256": "0c4b7b846878d7a2b03e36206feef864b806bac2f606fe304bd3e6ed67c47d74",
+      "textSha256": "76554cf64ec60b731c2cd528be57bc23ad6d6b81a57efa50722b44f9f99f94fc",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "bodyClientWidth": 1440,
+      "clipped": []
+    }
+  ],
+  "traceCalls": 24,
+  "getWorkspaceCallCount": 0,
+  "failures": []
+}

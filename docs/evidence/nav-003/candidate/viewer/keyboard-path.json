@@ -1,0 +1,515 @@
+{
+  "label": "AUTOMATED BROWSER — scripted keyboard path. Not a human observation.",
+  "landedRecordId": "task_nav001_blocked_noassignee",
+  "focusAfterEscape": {
+    "tag": "BUTTON",
+    "id": null,
+    "recordId": "task_nav001_blocked_noassignee",
+    "historyId": null,
+    "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+  },
+  "layerAfterEscape": "source",
+  "focusAfterFurtherTab": {
+    "tag": "BUTTON",
+    "id": null,
+    "recordId": "task_nav001_f013",
+    "historyId": null,
+    "text": "task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_n"
+  },
+  "steps": [
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BODY",
+        "id": null,
+        "recordId": null,
+        "historyId": null,
+        "text": "\n    \n      \n        \n      \n      hum_nav001_ana  human\n      \n      \n        Density\n        \n          workspace\n    "
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "density",
+        "recordId": null,
+        "historyId": null,
+        "text": "Density"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "density",
+        "recordId": null,
+        "historyId": null,
+        "text": "Density"
+      },
+      "after": {
+        "tag": "SELECT",
+        "id": "workspace",
+        "recordId": null,
+        "historyId": null,
+        "text": "nav-001 display-pressure lab"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "SELECT",
+        "id": "workspace",
+        "recordId": null,
+        "historyId": null,
+        "text": "nav-001 display-pressure lab"
+      },
+      "after": {
+        "tag": "A",
+        "id": "generated-view-link",
+        "recordId": null,
+        "historyId": null,
+        "text": "Workspace view ↗"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "A",
+        "id": "generated-view-link",
+        "recordId": null,
+        "historyId": null,
+        "text": "Workspace view ↗"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "perspective-mine",
+        "recordId": null,
+        "historyId": null,
+        "text": "My work"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "perspective-mine",
+        "recordId": null,
+        "historyId": null,
+        "text": "My work"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "perspective-team",
+        "recordId": null,
+        "historyId": null,
+        "text": "Team work"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "perspective-team",
+        "recordId": null,
+        "historyId": null,
+        "text": "Team work"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-attention",
+        "recordId": null,
+        "historyId": null,
+        "text": "Needs Attention"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-attention",
+        "recordId": null,
+        "historyId": null,
+        "text": "Needs Attention"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-work",
+        "recordId": null,
+        "historyId": null,
+        "text": "Work"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-work",
+        "recordId": null,
+        "historyId": null,
+        "text": "Work"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-decisions",
+        "recordId": null,
+        "historyId": null,
+        "text": "Decisions"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-decisions",
+        "recordId": null,
+        "historyId": null,
+        "text": "Decisions"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-sources",
+        "recordId": null,
+        "historyId": null,
+        "text": "Sources"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-sources",
+        "recordId": null,
+        "historyId": null,
+        "text": "Sources"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-people",
+        "recordId": null,
+        "historyId": null,
+        "text": "People"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-people",
+        "recordId": null,
+        "historyId": null,
+        "text": "People"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "section-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recent changes"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "section-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recent changes"
+      },
+      "after": {
+        "tag": "INPUT",
+        "id": "row-filter",
+        "recordId": null,
+        "historyId": null,
+        "text": ""
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "INPUT",
+        "id": "row-filter",
+        "recordId": null,
+        "historyId": null,
+        "text": ""
+      },
+      "after": {
+        "tag": "DIV",
+        "id": "needs-attention",
+        "recordId": null,
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "DIV",
+        "id": "needs-attention",
+        "recordId": null,
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "layer": "list",
+      "section": "attention"
+    },
+    {
+      "key": "Space",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f013",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_n"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f013",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_n"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f026",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f026Display-pressure filler task 26blocked task assigned to another participantassignee: agt_n"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f026",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f026Display-pressure filler task 26blocked task assigned to another participantassignee: agt_n"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f039",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f039Display-pressure filler task 39blocked task assigned to another participantassignee: agt_n"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f039",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f039Display-pressure filler task 39blocked task assigned to another participantassignee: agt_n"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f052",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f052Display-pressure filler task 52blocked task assigned to another participantassignee: agt_n"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f052",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f052Display-pressure filler task 52blocked task assigned to another participantassignee: agt_n"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_agent",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_agentReproduce the eager-dump pressureblocked task assigned to another participantassi"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_agent",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_agentReproduce the eager-dump pressureblocked task assigned to another participantassi"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "dec_nav001_review",
+        "historyId": null,
+        "text": "decision · accepteddec_nav001_reviewThe terminal screen lists every recorded task because the read felt complete.accepte"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "dec_nav001_review",
+        "historyId": null,
+        "text": "decision · accepteddec_nav001_reviewThe terminal screen lists every recorded task because the read felt complete.accepte"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "panel-back",
+        "recordId": null,
+        "historyId": null,
+        "text": "Back"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": "panel-back",
+        "recordId": null,
+        "historyId": null,
+        "text": "Back"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "recorded-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recorded changes"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Enter",
+      "before": {
+        "tag": "BUTTON",
+        "id": "recorded-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recorded changes"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": "recorded-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recorded changes"
+      },
+      "layer": "history",
+      "section": "attention"
+    },
+    {
+      "key": "Escape",
+      "before": {
+        "tag": "BUTTON",
+        "id": "recorded-changes",
+        "recordId": null,
+        "historyId": null,
+        "text": "Recorded changes"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "layer": "source",
+      "section": "attention"
+    },
+    {
+      "key": "Tab",
+      "before": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_blocked_noassignee",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee"
+      },
+      "after": {
+        "tag": "BUTTON",
+        "id": null,
+        "recordId": "task_nav001_f013",
+        "historyId": null,
+        "text": "task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_n"
+      },
+      "layer": "source",
+      "section": "attention"
+    }
+  ]
+}

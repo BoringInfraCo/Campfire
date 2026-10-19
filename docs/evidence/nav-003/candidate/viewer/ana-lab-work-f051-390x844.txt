@@ -1,0 +1,42 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs You
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:34.864Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Back
+
+id task_nav001_f051
+
+type task
+
+status open · open
+
+lifecycle open. A status is not a running process.
+
+Display-pressure filler task 51
+
+recorded actor human hum_nav001_ana
+
+createdAt 2026-10-17T12:04:09.000Z
+
+updatedAt 2026-10-17T12:04:09.000Z
+
+assignee agent agt_nav001_33
+
+Recorded changes
+
+tab sections j/k in a focused list enter esc back p perspective

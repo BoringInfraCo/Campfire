@@ -1,0 +1,62 @@
+hum_nav001_ana human
+Density
+workspace
+nav-001 display-pressure lab
+Workspace view ↗
+My work
+Team work
+Needs Attention
+Work
+Decisions
+Sources
+People
+Recent changes
+57 workspace participants
+
+Last successful read 2026-10-19T20:36:37.067Z
+
+Participant roster is not in this read.
+GOAL Give the terminal one focused screen over the recorded work. goal_nav001_focus
+Filter loaded rows
+
+Filter matches loaded rows only.
+
+historical findings 1 decisions 0
+NEEDS ATTENTION
+task · blockedtask_nav001_blocked_noassigneeDecide what counts as a focused screenblocked task with no recorded assignee
+task · blockedtask_nav001_f013Display-pressure filler task 13blocked task assigned to another participantassignee: hum_nav001_h15
+task · blockedtask_nav001_f026Display-pressure filler task 26blocked task assigned to another participantassignee: agt_nav001_08
+task · blockedtask_nav001_f039Display-pressure filler task 39blocked task assigned to another participantassignee: agt_nav001_21
+task · blockedtask_nav001_f052Display-pressure filler task 52blocked task assigned to another participantassignee: agt_nav001_34
+task · blockedtask_nav001_blocked_agentReproduce the eager-dump pressureblocked task assigned to another participantassignee: agt_nav001_01
+decision · accepteddec_nav001_reviewThe terminal screen lists every recorded task because the read felt complete.accepted decision cites non-current evidence — needs human reviewnon-current citations: find_nav001_superseded
+Attention coverage: tasks 20 of 64 (truncated), decisions 5 of 5. Cues beyond the returned pages may exist.
+
+Recorded assignment is a record, not a permission: it does not grant or deny a write; workspace authorization still decides what a participant may update.
+
+Back
+
+id task_nav001_blocked_noassignee
+
+type task
+
+status blocked · blocked
+
+lifecycle blocked. A status is not a running process.
+
+Decide what counts as a focused screen
+
+recorded actor human hum_nav001_ana
+
+createdAt 2026-10-17T12:04:21.000Z
+
+updatedAt 2026-10-17T12:04:33.000Z
+
+Recorded changes
+RECORDED CHANGES RETURNED 2 OF 2. NO FURTHER API PAGE.
+Previous history page
+Next history page
+con_nav001_0396 human hum_nav001_ana update 2026-10-17T12:04:33.000Z payload {"status":"blocked"}
+con_nav001_0364 human hum_nav001_ana create 2026-10-17T12:04:21.000Z payload {"title":"Decide what counts as a focused screen"}
+
+tab sections j/k in a focused list enter esc back p perspective
