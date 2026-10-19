@@ -606,13 +606,20 @@ describe("ARH-001 artifact-reference surfaces", () => {
       }
     });
 
-    it("keeps the five Viewer read methods, the static shell, and the synced public copies (D6)", () => {
+    it("keeps the NAV-003 Viewer read methods, the static shell, and the synced public copies (D6)", () => {
       expect([...VIEWER_READ_METHODS]).toEqual([
         "whoami",
         "list_workspaces",
         "get_workspace",
         "get_workspace_context",
         "get_activity",
+        "list_tasks",
+        "list_workspace_participants",
+        "get_task",
+        "get_decision",
+        "get_finding",
+        "get_artifact",
+        "get_record_history",
       ]);
       expect(PUBLIC_APP_JS).toBe(APP_JS);
       expect(PUBLIC_APP_CSS).toBe(APP_CSS);

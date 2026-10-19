@@ -368,6 +368,13 @@ describe("viewer 003 read-only boundary", () => {
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
     for (const method of VIEWER_READ_METHODS) {
       expect(isViewerReadMethod(method)).toBe(true);

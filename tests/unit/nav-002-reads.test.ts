@@ -97,8 +97,9 @@ function explain(database: Database.Database, sql: string, params: readonly unkn
 }
 
 describe("NAV-002 bounded reads", () => {
-  it("keeps viewer and CLI catalogs unchanged and publishes the reads on HTTP only", () => {
+  it("keeps HTTP and CLI catalogs unchanged while the Viewer allowlist adds the seven NAV-003 reads", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(47);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(
       expect.arrayContaining(["list_workspace_participants", "get_record_history"]),
     );
@@ -108,14 +109,28 @@ describe("NAV-002 bounded reads", () => {
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
     expect(CLI_COMMAND_NAMES).toHaveLength(60);
+    const listed = (source: string): string[] => {
+      const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);
+      expect(match).not.toBeNull();
+      return [...match![1]!.matchAll(/"([a-z_]+)"/g)].map((item) => item[1]!);
+    };
     const viewer = readFileSync(new URL("../../src/viewer/server.ts", import.meta.url), "utf8");
     const handler = readFileSync(new URL("../../src/worker/handler.ts", import.meta.url), "utf8");
-    for (const source of [viewer, handler]) {
-      expect(source).not.toContain("list_workspace_participants");
-      expect(source).not.toContain("get_record_history");
-    }
+    expect(listed(viewer)).toEqual([...VIEWER_READ_METHODS]);
+    expect(listed(handler)).toEqual([...VIEWER_READ_METHODS]);
+    // NAV-002 service default is unchanged: omitting `participants` still returns the roster.
+    const defaults = service.getWorkspaceContext(ana, LAB);
+    expect(defaults.participants).toHaveLength(57);
+    expect(defaults).not.toHaveProperty("participantsCoverage");
     const dashboard = readFileSync(new URL("../../src/cli/dashboard.ts", import.meta.url), "utf8");
     expect(dashboard).toContain("list_workspace_participants");
     expect(dashboard).toContain("get_record_history");

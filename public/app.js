@@ -774,14 +774,32 @@ function recordedCountText(list) {
   return `${people} people · ${agents} registered agents`;
 }
 
+// `participants: []` with omitted coverage is not an empty roster. The total
+// is the authorized count; the human/agent split was not loaded.
+function omittedParticipantCoverage(context) {
+  const coverage = isRecord(context) ? context.participantsCoverage : null;
+  if (!isRecord(coverage) || coverage.omitted !== true) return null;
+  return { total: typeof coverage.total === "number" ? coverage.total : null };
+}
+
 function renderMast() {
+  const coverage = omittedParticipantCoverage(state.context);
   if (els.recordedCounts) {
-    const list = state.context && Array.isArray(state.context.participants) ? state.context.participants : null;
-    els.recordedCounts.textContent = list ? recordedCountText(list) : "";
+    if (coverage) {
+      els.recordedCounts.textContent =
+        coverage.total === null
+          ? "Workspace participant count is not in this read."
+          : `${coverage.total} workspace participants`;
+    } else {
+      const list = state.context && Array.isArray(state.context.participants) ? state.context.participants : null;
+      els.recordedCounts.textContent = list ? recordedCountText(list) : "";
+    }
   }
   if (els.people) {
     if (!state.workspaces.length) {
       els.people.innerHTML = "";
+    } else if (coverage) {
+      els.people.textContent = "Participant roster is not in this read.";
     } else {
       els.people.innerHTML = participants()
         .map((p) => {
@@ -1228,22 +1246,25 @@ function completenessRowHtml(name, totals) {
 
 // Assignee identity is the recorded actor, matched on id and type. An unknown
 // name is stated as unknown; it is never guessed from another record.
-function assigneeIdentity(participants, assignee) {
+function assigneeIdentity(participants, assignee, rosterOmitted) {
   const id = strField(assignee.actorId);
   const type = strField(assignee.actorType, "unknown");
   const match = refByKey(participants, assignee);
   const name = match ? strField(match.name) : "";
+  // A missing roster is not proof the name was never recorded.
+  if (!name && rosterOmitted) return `(name not in this read) (${type}) ${id}`;
   return `${name || "(name not recorded)"} (${type}) ${id}`;
 }
 
 function homeTaskRowHtml(context, task) {
   const participants = isRecord(context) ? context.participants : [];
+  const rosterOmitted = omittedParticipantCoverage(context) !== null;
   const status = strField(task.status);
   const title = strField(task.title, task.summary, task.id);
   const id = strField(task.id);
   const assignee = isRecord(task.assignee) ? task.assignee : null;
   const assigned = assignee
-    ? `assigned to ${esc(assigneeIdentity(participants, assignee))}`
+    ? `assigned to ${esc(assigneeIdentity(participants, assignee, rosterOmitted))}`
     : "unassigned";
   return `<li class="oitem"><span class="ometa">${esc(status)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · ${assigned}</span></li>`;
 }
@@ -1271,6 +1292,11 @@ function ownedAgentsSectionHtml(context, who, groups) {
   }
   if (!who) {
     return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">No caller identity recorded; owned agents cannot be derived</span></li></ul></div>`;
+  }
+  // Ownership is a participant field. The omit read does not carry it, so an
+  // empty participants array is not "no owned agents".
+  if (omittedParticipantCoverage(context)) {
+    return `<div class="ogroup"><div class="ogroup-label">your agents</div><ul class="olist"><li class="oitem"><span class="osentence">Owned-agent relationship is not loaded yet.</span></li></ul></div>`;
   }
   const rows = [];
   for (const id of groups.ownedAgentIds) {
@@ -1330,11 +1356,17 @@ function decisionBoundaryHtml(work, context) {
   );
 }
 
+function myTaskEmptyNote(context, totals) {
+  const base = taskGroupEmptyNote(totals);
+  if (!omittedParticipantCoverage(context)) return base;
+  return `${base}; owned-agent relationship is not loaded yet`;
+}
+
 function renderMyWork(el, context, who) {
   if (!el) return;
   const groups = myWorkGroups(context, who);
   const totals = sliceTotals(context);
-  const emptyNote = taskGroupEmptyNote(totals);
+  const emptyNote = myTaskEmptyNote(context, totals);
   const parts = [];
   parts.push(ownedAgentsSectionHtml(context, who, groups));
   parts.push(`<div class="ogroup"><div class="ogroup-label">my tasks</div>`);
@@ -1347,9 +1379,23 @@ function renderMyWork(el, context, who) {
 
 function renderTeamWork(el, context, who) {
   if (!el) return;
-  const groups = teamWorkGroups(context);
   const totals = sliceTotals(context);
   const emptyNote = taskGroupEmptyNote(totals);
+  // Grouping by person needs the roster. Do not turn the omitted array into
+  // an empty team or "name not recorded" for every assignee.
+  if (omittedParticipantCoverage(context)) {
+    const tasks = collectOpenTasks(context);
+    const parts = [];
+    parts.push(
+      `<div class="ogroup"><div class="ogroup-label">participants</div><ul class="olist"><li class="oitem"><span class="osentence">Participant roster is not in this read.</span></li></ul></div>`,
+    );
+    parts.push(`<div class="ogroup"><div class="ogroup-label">tasks in this read</div>${groupTasksHtml(context, tasks, emptyNote)}</div>`);
+    parts.push(completenessRowHtml("tasks", totals.tasks));
+    parts.push(decisionBoundaryHtml(deriveCurrentWork(context), context));
+    el.innerHTML = parts.join("");
+    return;
+  }
+  const groups = teamWorkGroups(context);
   const parts = [];
   for (const human of groups.humans) {
     const name = strField(human.participant.name, human.participant.actor.actorId);
@@ -1927,7 +1973,9 @@ async function refresh() {
 
     const cursor = readCursor(id);
     const useSince = Boolean(cursor) && state.sincePending;
-    const contextParams = { workspaceId: id };
+    // Normal orientation omits the roster. get_workspace stays allowlisted
+    // and is not requested on this path, including the poll.
+    const contextParams = { workspaceId: id, participants: "omit" };
     if (useSince) contextParams.since = cursor;
 
     const [context, activity] = await Promise.all([
@@ -1936,6 +1984,10 @@ async function refresh() {
     ]);
     if (g !== gen || state.workspaceId !== id) return;
     state.context = context;
+    // The full inspector is not part of this refresh. Drop a leftover view
+    // only after the orientation read succeeds, so a failure keeps the last
+    // good state instead of a false empty roster.
+    state.view = null;
     if (state.sincePending) {
       // Snapshot the diff only on the first context fetch for this workspace;
       // polling afterwards keeps the frozen "since you were here" view.
@@ -1966,15 +2018,6 @@ async function refresh() {
     state.activity = activity;
     state.error = null;
     render();
-
-    api("get_workspace", { workspaceId: id }).then(
-      (view) => {
-        if (g !== gen || state.workspaceId !== id) return;
-        state.view = view;
-        render();
-      },
-      () => {},
-    );
   } catch (err) {
     if (g !== gen) return;
     state.error = err.message || String(err);

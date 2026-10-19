@@ -363,13 +363,20 @@ describe("WCO-001 D4 — boundary parity", () => {
 });
 
 describe("WCO-001 D5 — interface safety", () => {
-  it("keeps the Viewer read allowlist closed and unchanged", () => {
+  it("keeps the Viewer read allowlist closed at the twelve NAV-003 methods", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
   });
 

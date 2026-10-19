@@ -30,12 +30,23 @@ export function resolveViewerTheme(value: unknown): ViewerTheme {
   return typeof value === "string" && isViewerTheme(value) ? value : DEFAULT_VIEWER_THEME;
 }
 
+/**
+ * NAV-003 adds seven existing reads. They are on demand only.
+ * `get_workspace` stays for compatibility and is not the normal refresh.
+ */
 export const VIEWER_READ_METHODS = [
   "whoami",
   "list_workspaces",
   "get_workspace",
   "get_workspace_context",
   "get_activity",
+  "list_tasks",
+  "list_workspace_participants",
+  "get_task",
+  "get_decision",
+  "get_finding",
+  "get_artifact",
+  "get_record_history",
 ] as const;
 
 export type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];

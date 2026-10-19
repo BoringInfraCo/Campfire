@@ -58,6 +58,13 @@ const VIEWER_READ_METHODS = [
   "get_workspace",
   "get_workspace_context",
   "get_activity",
+  "list_tasks",
+  "list_workspace_participants",
+  "get_task",
+  "get_decision",
+  "get_finding",
+  "get_artifact",
+  "get_record_history",
 ] as const;
 
 type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];

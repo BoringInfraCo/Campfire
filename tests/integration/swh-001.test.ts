@@ -615,7 +615,7 @@ describe("SWH-001 D3 — source parity", () => {
 });
 
 describe("SWH-001 D4 — read boundary", () => {
-  it("keeps the five-method allowlist, writes nothing, and holds no browser token", async () => {
+  it("keeps the NAV-003 read allowlist, writes nothing, and holds no browser token", async () => {
     const viewer = await startViewer(SERGIO);
 
     expect([...VIEWER_READ_METHODS]).toEqual([
@@ -624,6 +624,13 @@ describe("SWH-001 D4 — read boundary", () => {
       "get_workspace",
       "get_workspace_context",
       "get_activity",
+      "list_tasks",
+      "list_workspace_participants",
+      "get_task",
+      "get_decision",
+      "get_finding",
+      "get_artifact",
+      "get_record_history",
     ]);
 
     const before = runtime.store.countObjects("contributions", FIXTURE.workspaces.billing);
@@ -970,7 +977,7 @@ describe("SWH-001 D7 — bounded work", () => {
     evalIn(sandbox, 'setPerspective("mine")');
     expect(fetchCalls()).toBe(0);
 
-    // Every client call is one of the five allowlisted reads.
+    // Every client call is one of the allowlisted reads.
     const methods = new Set([...APP_JS.matchAll(/api\("([a-z_]+)"/g)].map((match) => match[1]!));
     expect([...methods].every((method) => (VIEWER_READ_METHODS as readonly string[]).includes(method))).toBe(true);
 
