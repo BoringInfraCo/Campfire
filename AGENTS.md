@@ -446,9 +446,15 @@ checks recorded in `docs/RELEASE_V1_23_DECISION.md`); publication does not
 change the verdict or the NOT OBSERVED human outcome. The Viewer allowlist
 was unchanged by NAV-002. NAV-003 is implemented; the result is
 `docs/SPRINT_NAV_003_RESULT.md` (CONDITIONAL GO — engineering candidate,
-human outcome NOT OBSERVED). A v1.24.0 bump, tag, public snapshot, installer
-pin, or deployment still needs a separate recorded founder decision. Package
-stays 1.23.0.
+human outcome NOT OBSERVED). The founder-directed v1.24.0 release was
+published and deployed on October 19, 2026 (private tag `c888c795` →
+`e2a39ed`, public snapshot `c08619b` with annotated tag, GitHub Release
+`v1.24.0` with four checksummed archives, channel pins `c2d3f1d`/`c397714`,
+tap promotion `f2e95c7`, production Worker `990f18ad`, and live installer
+checks recorded in `docs/RELEASE_V1_24_DECISION.md`); publication does not
+change the verdict or the NOT OBSERVED human outcome. The Viewer allowlist
+now contains exactly the previous five reads plus the seven NAV-003 reads;
+`get_workspace` remains for compatibility but is not the normal refresh.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
