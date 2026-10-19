@@ -436,9 +436,15 @@ Sprint NAV-002 — Source and People Drill-down has its v1.23 contract at
 named the pre-NAV-002 MCP tool set were updated in `b2321e9`. The verdict is
 **CONDITIONAL GO — engineering candidate**. D1–D7 pass on the recorded
 candidate. The §7 two-person comparison is **NOT OBSERVED**. Package version
-stays `1.22.1`. No v1.23 release, tag, or deployment is authorized by this
-result. The Viewer allowlist is unchanged. NAV-003 retains Viewer alignment
-and its own human-use outcome.
+stays `1.22.1` in the result record; no release, tag, or deployment is
+authorized by the result itself. The founder-directed v1.23.0 release was
+published and deployed on October 19, 2026 (private tag `7a466819` →
+`b97b47b`, public snapshot `8c14621` with annotated tag, GitHub Release
+`v1.23.0` with four checksummed archives, channel pins `8c2a546`/`65fff4a`,
+tap promotion `483a8fd`, production Worker `da752833`, and live installer
+checks recorded in `docs/RELEASE_V1_23_DECISION.md`); publication does not
+change the verdict or the NOT OBSERVED human outcome. The Viewer allowlist
+is unchanged. NAV-003 retains Viewer alignment and its own human-use outcome.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,

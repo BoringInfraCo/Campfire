@@ -2,7 +2,7 @@
 
 **Date:** October 18, 2026 (local; capture timestamps cross October 19 UTC)
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass on the recorded candidate. The contract §7 two-person comparison is **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. A `v1.23.0` bump, tag, snapshot, channel pin, or deployment requires a separate recorded founder decision. This record does not claim human comprehension, live presence, a transitive history graph, Gate B/C/E/F, or a rescore of any earlier sprint.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass on the recorded candidate. The contract §7 two-person comparison is **NOT OBSERVED**. No version bump, tag, public snapshot, installer pin, release decision, or deployment is part of this result. A `v1.23.0` bump, tag, snapshot, channel pin, or deployment requires a separate recorded founder decision — recorded October 19, 2026 in `docs/RELEASE_V1_23_DECISION.md`; v1.23.0 was published and deployed that day. Publication does not change this verdict or the NOT OBSERVED human outcome. This record does not claim human comprehension, live presence, a transitive history graph, Gate B/C/E/F, or a rescore of any earlier sprint.
 
 **Contract:** `docs/Campfire-v1.23-NAV-002-Source-and-People-Drill-down.md`
 **Evidence:** `docs/evidence/nav-002/` — Step 0 freeze, v1.22.1 baseline frames and JSON, candidate PTY frames
