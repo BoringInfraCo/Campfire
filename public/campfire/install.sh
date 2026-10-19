@@ -87,7 +87,9 @@ print_next_steps() {
   if [ -n "$SERVER_URL" ]; then
     log "This install will talk to $SERVER_URL."
   fi
-  log "Run  campfire  to create your first workspace."
+  log "Joining a teammate's existing work? On a fresh or isolated profile, before any local first run:"
+  log "  campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode"
+  log "Starting locally? Run  campfire  in a terminal. That records you and starts the local API and Viewer. It does not create a workspace."
 }
 
 # ---- anonymous install_completed report (TEL-001D) ----

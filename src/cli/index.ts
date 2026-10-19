@@ -17,6 +17,7 @@ import {
   assertConnectionCompatible,
   detectInstalledHarnesses,
   prepareConnection,
+  type SupportedHarness,
 } from "../bootstrap/connect.js";
 import { beginHuman, connectInstalledHarnesses } from "../bootstrap/listen.js";
 import { startLocalWorkspace, openLoopbackUrl, shouldOpenBrowser } from "../bootstrap/local-workspace.js";
@@ -78,6 +79,12 @@ import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./re
 import { runDashboardSession } from "./dashboard.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
+import {
+  DASHBOARD_AWAITING_WORKSPACE,
+  formatJoinReceipt,
+  formatLocalUpReceipt,
+  formatRemoteUpReceipt,
+} from "../presentation/receipts.js";
 import { getPlaybook, listPlaybooks, type PlaybookDefinition } from "../playbooks/index.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
@@ -1410,7 +1417,7 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
   await withBackend(argv, async (backend) => {
     const selection = await resolveReadWorkspace(backend, explicit, { allowAwaiting: true });
     if ("awaiting" in selection) {
-      console.log("Waiting for an agent to start work.");
+      console.log(DASHBOARD_AWAITING_WORKSPACE);
       return;
     }
     const workspaceId = selection.workspaceId;
@@ -2099,7 +2106,16 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
     // the invitation variant reaches it; background so a committed join is
     // never failed by measurement.
     telemetryInBackground(reportActivated("cli", { env: process.env }));
-    emitResult(receipt,commandOutput(parsed),value=>`Joined ${value.workspace.name} as ${value.human.name}.\nCompleted: ${value.stages.join(", ")}.\nConnected ${value.agents.map(agent=>agent.harness).join(" and ")}. Reload the harness and approve Campfire tools.\nNext: campfire up`);
+    emitResult(receipt,commandOutput(parsed),value=>formatJoinReceipt({
+      workspaceName: value.workspace.name,
+      humanName: value.human.name,
+      agents: value.agents.map((agent) => agent.harness),
+      // A joined membership is not a written config: only name harnesses the
+      // local run actually prepared.
+      prepared: value.stages.includes("connection_prepared")
+        ? value.agents.map((agent) => agent.harness)
+        : [],
+    }));
     return;
   }
   const workspaceId = requirePositional(parsed, "workspaceId");
@@ -2159,7 +2175,14 @@ async function cmdView(parsed: ParsedArgs, argv: string[]): Promise<void> {
   }
   const theme = requireEnum(optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME, VIEWER_THEMES, "theme");
   await withBackend(argv, async (backend) => {
-    const running = await startCampfireViewer({ call: backend.call, host, port, allowRemote, theme });
+    const running = await startCampfireViewer({
+      call: backend.call,
+      host,
+      port,
+      allowRemote,
+      theme,
+      workspaceHint: loadRemoteProfile() === undefined ? "local" : "joined",
+    });
     console.error(`[campfire] viewer listening on ${running.url}`);
     await new Promise<void>((resolve) => {
       const shutdown = (signal: NodeJS.Signals): void => {
@@ -2273,7 +2296,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
       throw new ValidationError("Remote Viewer requires the recipient's human credential", { field: "credentials", nextAction: "use_recipient_human_credential" });
     }
     const workspaces = await call("list_workspaces") as WorkspaceSummary[];
-    const connected: string[] = [];
+    const prepared: SupportedHarness[] = [];
     if (connect) {
       const selected = optionalFlag(parsed.flags, "harness");
       const installed = detectInstalledHarnesses();
@@ -2293,10 +2316,10 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         assertConnectionCompatible(input);
         return input;
       });
-      for (const input of plans) connected.push(prepareConnection(input).harness);
+      for (const input of plans) prepared.push(prepareConnection(input).harness);
     }
     const viewer = await startCampfireViewer({ call, host: DEFAULT_VIEWER_HOST, port: viewerPort,
-      theme: optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME });
+      theme: optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME, workspaceHint: "joined" });
     try {
       const openBrowser = parsed.flags["no-open"] !== true && shouldOpenBrowser();
       if (openBrowser) {
@@ -2305,14 +2328,19 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
       if (commandOutput(parsed) === "json") {
         printJson({ mode: "remote", human: profile.humanName, workspaceId: profile.workspaceId,
           workspaces: workspaces.map((workspace) => ({ id: workspace.id, name: workspace.name, goal: workspace.goalTitle })),
-          agents: connected, connectionPrepared: connected.length > 0, reloadRequired: connected.length > 0,
+          agents: prepared, connectionPrepared: prepared.length > 0, reloadRequired: prepared.length > 0,
           sessionRegistered: false, apiUrl: access.url, viewerUrl: viewer.url, openedBrowser: openBrowser, pastSessionsImported: false });
       } else {
-        console.log([wordmark(false), `  You        ${profile.humanName}`,
-          connected.length === 0 ? "  Agents     no connection prepared" : `  Agents     ${connected.join(", ")}`,
-          ...workspaces.map((workspace) => `  Workspace  ${workspace.name}`), "",
-          `  Viewer     ${viewer.url}`, ...(connected.length === 0 ? [] : ["  Agent      reload the harness, then continue in that session"]),
-          "  The Viewer is read-only; an agent registers its own session before contributing.", ""].join("\n"));
+        console.log(formatRemoteUpReceipt({
+          wordmark: wordmark(false),
+          humanName: profile.humanName,
+          workspaces: workspaces.map((workspace) => ({ id: workspace.id, name: workspace.name })),
+          joinedWorkspaceId: profile.workspaceId,
+          ...(profile.workspaceName === undefined ? {} : { joinedWorkspaceName: profile.workspaceName }),
+          viewerUrl: viewer.url,
+          connect,
+          prepared,
+        }));
       }
       console.error(`[campfire] remote workspace  viewer ${viewer.url}`);
       await new Promise<void>((resolve) => {
@@ -2346,8 +2374,13 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
     }
     const connect = parsed.flags["no-connect"] !== true;
     let connected: string[] = [];
+    // Detection and preparation results, so the receipt can name prepared
+    // configs separately from detected-but-unprepared harnesses.
+    let detected: SupportedHarness[] = [];
+    let prepared: SupportedHarness[] = [];
     if (connect) {
       const harnesses = detectInstalledHarnesses();
+      detected = harnesses;
       const known: Record<string, string | undefined> = {};
       const stored = loadCredentials();
       for (const harness of harnesses) {
@@ -2370,6 +2403,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         onMintedToken: (harness, token) => rememberAgentCredential(harness, token),
       });
       connected = result.connected;
+      prepared = result.prepared;
       if (result.agents.length > 0) {
         rememberProfileAgents(
           result.agents.map((agent) => ({ id: agent.agentId, name: agent.name, harness: agent.harness })),
@@ -2418,26 +2452,18 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         pastSessionsImported: false,
       });
     } else {
-      const workspaceLines =
-        workspaces.length === 0
-          ? ["  Waiting for an agent to start work."]
-          : workspaces.map(
-              (workspace) =>
-                `  Workspace  ${workspace.name}${workspace.goalTitle === undefined ? "" : `  ${workspace.goalTitle}`}`,
-            );
-      const lines = [
-        wordmark(false),
-        connected.length === 0 ? "  Agents     none connected yet" : `  Agents     ${connected.join(", ")}`,
-        ...workspaceLines,
-        "  Past sessions are not imported.",
-        "",
-        `  You        ${running.viewerUrl}`,
-      ];
-      if (connected.length > 0) {
-        lines.push("  Agent      reload the harness, then continue in that session");
-      }
-      lines.push("");
-      console.log(lines.join("\n"));
+      console.log(formatLocalUpReceipt({
+        wordmark: wordmark(false),
+        humanName: profile.humanName,
+        workspaces: workspaces.map((workspace) => ({
+          name: workspace.name,
+          ...(workspace.goalTitle === undefined ? {} : { goalTitle: workspace.goalTitle }),
+        })),
+        viewerUrl: running.viewerUrl,
+        connect,
+        detected,
+        prepared,
+      }));
     }
     console.error(`[campfire] HTTP ${running.apiUrl}  viewer ${running.viewerUrl}`);
     const session = running;

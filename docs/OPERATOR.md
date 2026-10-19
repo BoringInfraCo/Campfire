@@ -139,11 +139,19 @@ The suggested name comes from `git config user.name` or the login. It does
 not ask for an agent, a workspace, or a goal. Credentials are stored under
 `$CAMPFIRE_CONFIG_DIR` or `~/.config/campfire` (credentials mode 0600).
 That first interactive `campfire` run calls `up` itself: it starts the local
-API and Viewer in this process and connects each installed Codex or OpenCode
-as an agent that human owns. It says plainly
+API and Viewer in this process and prepares a Campfire MCP config for each
+detected Codex or OpenCode. Once the API and Viewer bind, the receipt names
+only the harness configs it prepared and says a harness reload is required;
+a written config is not a live agent, and the receipt never claims a
+workspace was created. It says plainly
 that past sessions are not imported. It does not register an agent session
 and does not provision Cloudflare. The agent creates the workspace and goal
 when work starts. A second workspace is a normal `create_workspace`.
+
+To join an existing teammate's work instead, do not run a local first run: use
+`campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`
+on a fresh or isolated profile before any local profile exists, then continue
+with "Enroll a new teammate into existing work" below.
 
 Once a workspace exists, `campfire status` prints the live, authorized
 overview: goal, work counts, decisions, participants, attention, and the
@@ -186,16 +194,21 @@ exactly one harness process. Do not put an actor id in hosted auth.
 `campfire up` writes a Codex or OpenCode MCP block for each harness it
 finds. A second harness is another connection, not another wizard. Tokens
 are stored locally and are not printed. Reload the harness so tools appear.
+The receipt names only the harness configs it prepared: it says a harness
+reload is required, and Campfire cannot confirm that a harness reloaded or
+that its tools were approved.
 The session instructions tell the agent to call `list_workspaces` and
 `get_workspace_context` before it builds, and to call
 `register_agent_session` before a goal, finding, decision, task, artifact,
 or workspace update. Process start does not register a session. The Viewer
-lists workspaces that exist. With none yet, it says it is waiting for an
-agent to start work. When the harness MCP block points at loopback and
-nothing is listening, that session starts the same API and Viewer as
-`campfire up` and leaves that process owning the database. A later session
-reuses it. A reboot clears it. A non-loopback URL is not started from the
-session.
+lists workspaces that exist. With none yet, a local Viewer says it has no
+workspace to show yet and points the person at describing the work to their
+agent; the agent creates the workspace and goal. A Viewer opened for a joined
+remote profile does not suggest creating a local workspace. When the harness
+MCP block points at loopback and nothing is listening, that session starts the
+same API and Viewer as `campfire up` and leaves that process owning the
+database. A later session reuses it. A reboot clears it. A non-loopback URL
+is not started from the session.
 
 A second onboard refuses when humans or workspaces already exist and points at
 `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
@@ -223,12 +236,12 @@ channel of your choice. Campfire sends no message or email. Possession grants
 one new-person enrollment; a display name is not verified email/account identity.
 The receipt reports safe metadata, not the secret, in both human and JSON output.
 
-On the teammate's machine:
+On the teammate's machine, using a fresh or isolated Campfire profile that
+has not run a local first run:
 
 ```bash
 campfire join --invitation-file ./alice.invitation.json \
   --human-name "Alice" --harness opencode
-campfire status
 campfire up
 ```
 
@@ -248,8 +261,9 @@ created. Each harness configuration contains only its own agent token.
 The saved remote profile makes normal CLI reads use the shared backend without
 exported environment variables. Remote `up` prepares the enrolled connections
 and serves the read-only Viewer on local loopback; it does not open SQLite,
-run another shared API, or start a process on the owner's machine. Reload or
-restart each harness and approve its normal tool access. Preparing configuration
+run another shared API, or start a process on the owner's machine. After
+`campfire up`, reload the named harness and approve Campfire tools if asked,
+then begin from the joined workspace. Preparing configuration
 does not prove that a harness has retrieved context. Incoming agents read before
 acting and explicitly register their own sessions before contributing.
 
@@ -619,7 +633,11 @@ past the first 50 is silently hidden.
 ## First-run bootstrap
 
 The installed interactive first run is `campfire` (see "First shared
-workspace"); `campfire onboard` is the separate scripted path. `init` creates
+workspace"); `campfire onboard` is the scripted alternative to it. A teammate
+joining existing work uses
+`campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`
+on a fresh or isolated profile instead (see "Enroll a new teammate into
+existing work"). `init` creates
 an empty database. `seed --reset` loads the deterministic demo/evaluation
 fixture; it is not how a new operator creates
 their workspace. There is no onboard reset flag. The first human may still

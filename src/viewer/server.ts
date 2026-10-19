@@ -67,6 +67,12 @@ export interface ViewerServerOptions {
    * intent would expose that authority to the network.
    */
   allowRemote?: boolean;
+  /**
+   * ONB-001: a joined remote Viewer must not suggest creating a local
+   * workspace. Local first-run keeps the create-with-your-agent hint.
+   * Omitted means local.
+   */
+  workspaceHint?: "local" | "joined";
 }
 
 export interface RunningViewer {
@@ -324,10 +330,16 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
       if (route.file === "index.html") {
         const theme = resolveViewerTheme(options.theme);
         let html = data.toString("utf8");
+        const workspaceHint = options.workspaceHint === "joined" ? "joined" : "local";
         if (html.includes("data-theme=")) {
           html = html.replace(/data-theme="[^"]*"/, `data-theme="${theme}"`);
         } else {
           html = html.replace('<html lang="en"', `<html lang="en" data-theme="${theme}"`);
+        }
+        if (html.includes("data-workspace-hint=")) {
+          html = html.replace(/data-workspace-hint="[^"]*"/, `data-workspace-hint="${workspaceHint}"`);
+        } else {
+          html = html.replace("<html ", `<html data-workspace-hint="${workspaceHint}" `);
         }
         data = Buffer.from(html, "utf8");
       }

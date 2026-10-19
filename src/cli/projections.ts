@@ -28,6 +28,11 @@ import {
   type CliGroup,
   type CliOutputMode,
 } from "./catalog.js";
+import {
+  awaitingWorkspaceNextLines,
+  NO_WORKSPACE_YET,
+  PAST_SESSIONS_SENTENCE,
+} from "../presentation/receipts.js";
 
 export const PROJECTION_VERSION = 1 as const;
 
@@ -276,10 +281,11 @@ function formatAwaitingWorkspace(result: AwaitingWorkspaceResult): string {
   if (result.human !== undefined) {
     lines.push(labeled("You", result.human.name));
   }
-  lines.push("Waiting for an agent to start work.", "Past sessions are not imported.");
+  lines.push(NO_WORKSPACE_YET, PAST_SESSIONS_SENTENCE);
   for (const step of result.next) {
     lines.push(joinFields(step.command.padEnd(HEADER_LABEL_WIDTH), step.when));
   }
+  lines.push(...awaitingWorkspaceNextLines());
   return lines.join("\n");
 }
 

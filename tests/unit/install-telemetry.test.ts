@@ -365,7 +365,7 @@ describe("install.sh install_completed report", () => {
     expect(closed.stdout).toContain("Installed campfire 1.9.1");
   });
 
-  it("keeps the human-visible installer output unchanged", async () => {
+  it("keeps the human-visible installer output free of measurement chatter", async () => {
     acceptAll();
     const tarball = makeTarball("1.9.1");
     const result = await run(["--prefix", join(root, "prefix")], {
@@ -375,7 +375,12 @@ describe("install.sh install_completed report", () => {
     });
 
     expect(result.stdout).toContain("Installed campfire 1.9.1");
-    expect(result.stdout).toContain("Run  campfire  to create your first workspace.");
+    expect(result.stdout).toContain("It does not create a workspace.");
+    expect(result.stdout).not.toContain("create your first workspace");
+    expect(result.stdout).toContain("Joining a teammate's existing work?");
+    expect(result.stdout).toContain(
+      "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode",
+    );
     // No measurement chatter: no event name, no dimension, no endpoint, no
     // mention of the reporting itself.
     for (const noise of ["install_completed", "installationId", "telemetry", "TARBALL"]) {

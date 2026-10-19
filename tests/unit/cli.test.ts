@@ -245,7 +245,7 @@ describe("runCli", () => {
     await cli(["onboard", "--help"]);
     const output = stdout();
     expect(output).toContain("campfire onboard --human-name");
-    expect(output).toContain("First-run path: one human, one agent they own, one workspace, and one goal.");
+    expect(output).toContain("Scripted alternative to the interactive first run: one human, one agent they own, one workspace, and one goal.");
     expect(output).toContain("--output json prints each one-time token once, then never again.");
     expect(output).not.toContain("campfire create-task");
     expect(output).not.toContain("Understand the workspace:");

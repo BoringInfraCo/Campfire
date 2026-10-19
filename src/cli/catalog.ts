@@ -178,10 +178,10 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
   onboard: spec(
     "onboard",
     "start",
-    "First-run path: one human, one agent they own, one workspace, and one goal.",
+    "Scripted alternative to the interactive first run: one human, one agent they own, one workspace, and one goal.",
     "campfire onboard --human-name <name> --agent-name <name> --harness <name> --workspace-name <name> --goal <title> [--output auto|human|json]",
     { ...WRITE, workspaceScoped: false, credentials: true, related: ["up", "connect"], notes: [
-      "First-run path: one human, one agent they own, one workspace, and one goal.",
+      "Scripted alternative to the interactive first run: one human, one agent they own, one workspace, and one goal.",
       "Does not start the server or register an agent session.",
       "Credential-bearing: without --json or --output json this always renders",
       "the token-free human receipt, even when piped, so a pipe cannot capture tokens.",
@@ -230,13 +230,14 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
   up: spec(
     "up",
     "start",
-    "Start the local API and Viewer, connect installed harnesses, then listen.",
+    "Start the local API and Viewer, prepare harness configs, then listen.",
     "campfire up [--no-connect] [--no-open] [--port 9414] [--viewer-port 9415] [--output auto|human|json]",
     { ...WRITE, workspaceScoped: false, related: ["status", "connect"], notes: [
-      "Starts serve and view, connects each installed Codex or OpenCode,",
-      "and opens the loopback Viewer. Does not import past sessions.",
+      "Starts serve and view, prepares a Campfire MCP config for each detected",
+      "Codex or OpenCode, and opens the loopback Viewer. Does not import past sessions.",
       "A later loopback harness session reuses this listener, or starts it when it is down.",
       "Session registration stays an explicit agent step.",
+      "The receipt names only the harness configs it prepared; Campfire cannot confirm a harness reloaded or that tools were approved.",
     ] },
   ),
   status: spec(
@@ -822,12 +823,17 @@ const GLOBAL_NOTES = [
   "",
   "campfire with no args records the human once and starts up on an interactive",
   "first run; later it prints status. It does not ask for agents, workspaces,",
-  "or goals. campfire up starts serve and view,",
-  "connects each installed Codex or OpenCode as an agent that human owns, and",
+  "or goals. campfire up starts serve and view, prepares a Campfire MCP config",
+  "for each detected Codex or OpenCode, and",
   "opens the loopback Viewer. A later loopback session reuses that listener or",
   "starts it when it is down. It does not import past sessions. The agent reads",
-  "the workspace before it builds. Session registration stays explicit. onboard",
-  "remains the one-shot script path and does not start",
+  "the workspace before it builds. Session registration stays explicit. Joining",
+  "existing work instead uses campfire join --invitation-file <private-file>",
+  "--human-name <name> --harness codex|opencode on a fresh or isolated profile",
+  "before creating a local one. A written harness config is configuration",
+  "prepared: it requires a harness reload, and Campfire cannot confirm that a",
+  "harness reloaded or that its tools were approved. onboard remains the",
+  "scripted alternative to the interactive first run and does not start",
   "the server. seed --reset remains the deterministic demo fixture. setup",
   "prints the agent-readable contract and creates no state.",
   "connect writes only the named harness config and requires a reload or new",
@@ -857,7 +863,7 @@ const GLOBAL_NOTES = [
 function groupLines(group: CliGroup): string[] {
   const lines: string[] = [`${GROUP_TITLES[group]}:`];
   if (group === "start") {
-    lines.push("  campfire                        Record you, then listen. Agents appear when a harness connects");
+    lines.push("  campfire                        Record you, then start the local API and Viewer; reload a prepared harness to load Campfire tools");
   }
   for (const name of discoverableCommandNames()) {
     const entry = CLI_CATALOG[name];
@@ -876,7 +882,7 @@ export function formatUsage(): string {
     "Campfire",
     "",
     "Usage:",
-    "  campfire [--human-name <name>]  Record you, then listen. Agents appear when a harness connects",
+    "  campfire [--human-name <name>]  Record you, then start the local API and Viewer; reload a prepared harness to load Campfire tools",
     "  campfire <command> --help       Usage for one command",
     "",
     ...sections,
@@ -910,7 +916,7 @@ export function formatCommandUsage(command: CliCommand): string {
 /** Variants preserve the legacy JSON-only join contract. */
 export function commandSpecForArgs(name: CliCommand, flags: Record<string, string | boolean>): CliCommandSpec {
   const base = commandSpec(name);
-  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Join existing work as a new teammate and connect selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Join existing work as a new teammate and prepare configs for selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
   if (name === "connect" && flags.enroll === true) return { ...base, mutates: true, usage: "campfire connect --harness codex|opencode --enroll", description: "Enroll an additional recipient-owned harness and connect it." };
   return base;
 }

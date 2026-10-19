@@ -199,7 +199,13 @@ describe("install.sh regressions", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed campfire 1.2.0");
-    expect(result.stdout).toContain("Run  campfire  to create your first workspace.");
+    expect(result.stdout).toContain("Joining a teammate's existing work?");
+    expect(result.stdout).toContain("fresh or isolated profile, before any local first run");
+    expect(result.stdout).toContain("It does not create a workspace.");
+    expect(result.stdout).not.toContain("create your first workspace");
+    expect(result.stdout).toContain(
+      "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode",
+    );
     expect(result.stdout).not.toContain("Next steps:");
     expect(result.stdout).not.toContain("mcpServers");
     const help = spawnSync(join(prefix, "bin", "campfire"), ["--help"], { encoding: "utf8" });
@@ -272,7 +278,8 @@ exit 0
     expect(result.status).toBe(0);
     expect(existsSync(join(prefix, "bin", "campfire"))).toBe(true);
     expect(result.stdout).toContain(url);
-    expect(result.stdout).toContain("Run  campfire  to create your first workspace.");
+    expect(result.stdout).toContain("It does not create a workspace.");
+    expect(result.stdout).not.toContain("create your first workspace");
     expect(result.stdout).not.toContain("export CAMPFIRE_URL");
     expect(result.stdout).not.toContain("issue-token");
     expect(result.stdout).not.toContain("mcpServers");

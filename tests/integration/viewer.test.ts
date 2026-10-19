@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import vm from "node:vm";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
 import { dispatchCampfireMethod } from "../../src/http/dispatch.js";
 import { createRuntimeFromPath } from "../../src/runtime.js";
@@ -26,6 +27,29 @@ async function call(
     body: JSON.stringify({ method, params }),
   });
   return { status: response.status, body: (await response.json()) as CallOutcome["body"] };
+}
+
+const EMPTY_STATE_SENTENCE =
+  "No workspace to show yet. After your agent has the Campfire tools loaded, describe the work you want to do; your agent can create the workspace and goal.";
+
+/** Boot the served app.js in a vm sandbox with the boot() tail cut. */
+function loadAppSandbox(source: string) {
+  const sandbox: Record<string, unknown> = {
+    document: { getElementById: () => null, addEventListener: () => {} },
+    sessionStorage: { getItem: () => null, setItem: () => {} },
+    fetch: async () => {
+      throw new Error("no fetch in sandbox");
+    },
+    setInterval: () => 0,
+    CSS: { escape: (value: string) => value },
+    console,
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  const cut = source.lastIndexOf("async function boot()");
+  vm.runInContext(cut === -1 ? source : source.slice(0, cut), sandbox, { filename: "app.js" });
+  return sandbox;
 }
 
 let dir: string;
@@ -155,5 +179,73 @@ describe("Campfire Viewer", () => {
     } finally {
       await legacy.close();
     }
+  });
+});
+
+describe("Campfire Viewer no-workspace empty state (ONB-001)", () => {
+  it("serves the truthful next action and no longer the bare waiting text", async () => {
+    const appJs = await (await fetch(`${running.url}/app.js`)).text();
+    const html = await (await fetch(`${running.url}/`)).text();
+
+    expect(html).toContain('/app.js');
+    expect(html).toContain('data-workspace-hint="local"');
+    expect(appJs).toContain(EMPTY_STATE_SENTENCE);
+    expect(appJs).toContain("This Viewer is for work you joined. It does not create a local workspace.");
+    expect(appJs).not.toContain("Waiting for an agent to start work.");
+    expect(html).not.toContain("Waiting for an agent to start work.");
+    // The workspace <select> placeholder while the actor has no workspace.
+    expect(appJs).toContain('<option value="">No workspace yet</option>');
+  });
+
+  it("renders the empty div for a workspace-less actor and keeps escaping workspace names", async () => {
+    const appJs = await (await fetch(`${running.url}/app.js`)).text();
+    const sandbox = loadAppSandbox(appJs);
+
+    const stream = vm.runInContext(
+      `els.stream = { innerHTML: "", scrollTop: 0, scrollHeight: 0, clientHeight: 0, querySelector: () => null };
+       state.workspaces = [];
+       state.activity = null;
+       renderStream();
+       els.stream.innerHTML`,
+      sandbox,
+      { filename: "app.js" },
+    ) as string;
+    expect(stream).toBe(`<div class="empty">${EMPTY_STATE_SENTENCE}</div>`);
+
+    const joined = vm.runInContext(
+      `document.documentElement = { getAttribute: (name) => name === "data-workspace-hint" ? "joined" : null };
+       state.workspaces = [];
+       renderStream();
+       els.stream.innerHTML`,
+      sandbox,
+      { filename: "app.js" },
+    ) as string;
+    expect(joined).toBe(
+      '<div class="empty">No workspace to show yet. This Viewer is for work you joined. It does not create a local workspace.</div>',
+    );
+    expect(joined).not.toContain("create the workspace");
+
+    // The same render path still escapes listed workspace names: if a listed
+    // workspace later empties, the select shows the placeholder, not markup.
+    const select = vm.runInContext(
+      `els.whoami = { textContent: "" };
+       els.error = { hidden: true, textContent: "" };
+       els.workspace = { innerHTML: "", value: "" };
+       els.generatedViewLink = { hidden: true, href: "" };
+       state.whoami = null;
+       state.error = null;
+       state.workspaces = [{ id: "ws_1", name: "<img src=x onerror=alert(1)>" }];
+       renderHeader();
+       const withName = els.workspace.innerHTML;
+       state.workspaces = [];
+       renderHeader();
+       JSON.stringify({ withName, empty: els.workspace.innerHTML });`,
+      sandbox,
+      { filename: "app.js" },
+    ) as string;
+    const parsed = JSON.parse(select) as { withName: string; empty: string };
+    expect(parsed.withName).toContain("&lt;img src=x onerror=alert(1)&gt;");
+    expect(parsed.withName).not.toContain("<img");
+    expect(parsed.empty).toBe('<option value="">No workspace yet</option>');
   });
 });
