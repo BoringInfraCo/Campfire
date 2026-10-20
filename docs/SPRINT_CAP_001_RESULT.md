@@ -6,7 +6,7 @@
 
 **Contract:** `docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md`
 **Step 0:** `1b212fe60e519bc344c91400ee7f5c2f297c3be0` (`docs/evidence/cap-001/step-0/`)
-**Implementation revision:** `PENDING_SHA`
+**Implementation revision:** `910736848c3be2635c606b8301a8a6fc9718903a`
 **Baseline:** published `v1.24.1`, package `1.24.1`. Private tag object `b662c5a4` → `a013d4f`.
 
 ## 0. Verdict and what it does not claim
