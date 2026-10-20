@@ -35,6 +35,14 @@ const els = {
   hint: document.getElementById("hint"),
   recordNotes: document.getElementById("record-notes"),
   stage: document.getElementById("stage"),
+  sectionHeading: document.getElementById("section-heading"),
+  sectionCount: document.getElementById("section-count"),
+  sectionSubtitle: document.getElementById("section-subtitle"),
+  detailPane: document.getElementById("detail-pane"),
+  detailHeading: document.getElementById("detail-heading"),
+  detailTabs: document.getElementById("detail-tabs"),
+  detailOverview: document.getElementById("detail-overview"),
+  detailSources: document.getElementById("detail-sources"),
   lastRead: document.getElementById("last-read"),
   staleNote: document.getElementById("stale-note"),
   retryRefresh: document.getElementById("retry-refresh"),
@@ -86,6 +94,7 @@ const state = {
   // NAV-003 navigation. Perspective is emphasis, not authorization.
   section: "attention",
   layer: "list",
+  detailTab: "overview",
   rowFilter: "",
   lastReadAt: null,
   stale: false,
@@ -338,6 +347,7 @@ function renderPerspective() {
 function setPerspective(value) {
   state.perspective = value === "team" ? "team" : "mine";
   persistPerspective(state.perspective);
+  if (state.layer === "preview") state.layer = "list";
   renderPerspective();
   reconcileSelection("attention");
   render();
@@ -754,6 +764,7 @@ function resetSelection() {
   state.sinceView = null;
   streamPinned = true;
   state.layer = "list";
+  state.detailTab = "overview";
   state.selectionLost = null;
   state.focusOriginId = null;
   state.sectionSelection = {
@@ -893,7 +904,13 @@ function renderMast() {
     }
   }
   if (els.lastRead) {
-    els.lastRead.textContent = state.lastReadAt ? `Last successful read ${state.lastReadAt}` : "";
+    if (state.lastReadAt) {
+      const time = new Date(state.lastReadAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      els.lastRead.textContent = `Read snapshot ${time} · workspace records, not live sessions`;
+      if (els.lastRead.setAttribute) els.lastRead.setAttribute("title", `Last successful read ${state.lastReadAt}`);
+    } else {
+      els.lastRead.textContent = "";
+    }
   }
   if (els.staleNote) {
     const show = state.stale === true && Boolean(state.lastReadAt);
@@ -987,34 +1004,26 @@ function attentionEmptyText(coverage) {
 function attentionItemHtml(item) {
   const kind = esc(strField(item.kind));
   const id = esc(strField(item.id));
-  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${id}" data-record-kind="${kind}">${attentionItemBodyHtml(item)}</button></li>`;
+  const current = state.sectionSelection.attention === strField(item.id) ? ` aria-current="true"` : "";
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${id}" data-record-kind="${kind}"${current}>${attentionItemBodyHtml(item)}</button></li>`;
 }
 
 function attentionItemBodyHtml(item) {
-  const meta = [item.kind, item.status].filter(Boolean).join(" · ");
-  const metaHtml = meta ? `<span class="ometa">${esc(meta)}</span>` : "";
   const sentence = item.summary || item.id || "";
-  // SWH-001: the source id stays visible even when a summary exists, so an
-  // attention cue can always be tied back to its recorded object.
-  const sourceHtml = item.id ? `<span class="osource">${esc(item.id)}</span>` : "";
+  const sourceHtml = item.id ? `<span class="record-id">${esc(item.id)}</span>` : "";
   // ATT-001: the raw code stays in data-reason for drill-down; the visible
   // text is plain language.
   const reason = strField(item.reason);
-  const reasonHtml = reason
-    ? `<span class="oreason" data-reason="${esc(reason)}">${esc(attentionReasonLabel(reason))}</span>`
-    : "";
+  const reasonHtml = reason ? `<span data-reason="${esc(reason)}">${esc(attentionReasonLabel(reason))}</span>` : "";
   // The cited non-current findings come from the returned decorated decision.
   // They are shown only when the service set them; nothing is invented.
   const cited = reviewFindingIds(item);
-  const citedHtml = cited.length
-    ? `<span class="ocited">${esc(`non-current citations: ${cited.join(", ")}`)}</span>`
-    : "";
+  const citedHtml = cited.length ? `<span>${esc(`non-current citations: ${cited.join(", ")}`)}</span>` : "";
   // Recorded assignment, stated as a record. It is never a permission claim.
   const assigneeId = isRecord(item.assignee) ? strField(item.assignee.actorId) : "";
-  const assigneeHtml = assigneeId
-    ? `<span class="oassignee">${esc(`assignee: ${assigneeId}`)}</span>`
-    : "";
-  return `${metaHtml}${sourceHtml}<span class="osentence">${esc(sentence)}</span>${reasonHtml}${citedHtml}${assigneeHtml}`;
+  const assigneeHtml = assigneeId ? `<span>${esc(`assignee: ${assigneeId}`)}</span>` : "";
+  const symbol = item.kind === "decision" ? "◇" : item.kind === "task" ? "▣" : "○";
+  return `<span class="row-main"><span class="row-symbol" aria-hidden="true">${symbol}</span><span class="row-title">${esc(visibleText(sentence))}</span></span><span class="row-meta">${[sourceHtml, reasonHtml, citedHtml, assigneeHtml].filter(Boolean).join(" · ")}</span>`;
 }
 
 function renderAttentionList(el, items, emptyText, coverageText) {
@@ -1529,7 +1538,8 @@ function findingSourceHtml(finding) {
     })
     .filter((text) => text);
   const evidenceText = evidence.length ? `evidence: ${evidence.join(", ")}` : "evidence: none recorded";
-  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="finding"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(currentness)}</span><span class="osentence">${esc(summary)}</span><span class="oreason">id ${esc(id)} · ${esc(evidenceText)}</span></li>`;
+  const current = state.sectionSelection.sources === id ? ` aria-current="true"` : "";
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="finding"${current}><span class="row-main"><span class="row-symbol" aria-hidden="true">○</span><span class="row-title">${esc(visibleText(summary))}</span></span><span class="row-meta"><span class="record-id">${esc(id)}</span> · ${esc(currentness)} · ${esc(evidenceText)}</span></button></li>`;
 }
 
 /**
@@ -1575,13 +1585,15 @@ function artifactSourceHtml(artifact, findings) {
   // The stored reference is text. It is never fetched or previewed, and
   // listing it does not claim the target exists or is accessible.
   const reference = strField(artifact.uriOrPath);
+  const current = state.sectionSelection.sources === id ? ` aria-current="true"` : "";
+  const main = `<span class="row-main"><span class="row-symbol" aria-hidden="true">◫</span><span class="row-title">${esc(visibleText(title))}</span></span>`;
   if (!reference) {
     // No reference recorded: nothing beyond the existing label renders —
     // no class, host, caveat, or open control is invented.
-    return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">id ${esc(id)} · no reference recorded</span></li>`;
+    return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"${current}>${main}<span class="row-meta"><span class="record-id">${esc(id)}</span> · ${esc(type)} · no reference recorded</span></button></li>`;
   }
   const classification = classifyArtifactReference(reference);
-  const parts = [`id ${esc(id)}`, `reference: <code>${esc(reference)}</code> (stored reference, not fetched)`];
+  const parts = [`reference: <code>${esc(reference)}</code> (stored reference, not fetched)`];
   // Class, host, and the open control describe the reference, so a missing
   // reference renders none of them; cited-by is a fact about the artifact
   // record, so it stays independent of the class. This mirrors the terminal
@@ -1596,9 +1608,11 @@ function artifactSourceHtml(artifact, findings) {
   if (classification.class !== "none") {
     parts.push(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL);
     if (classification.unsafe) parts.push(ARTIFACT_UNSAFE_CONTROL_LABEL);
-    if (classification.openable) parts.push(artifactOpenControlHtml(reference, classification.host));
+    // The external link remains outside the row button; a button cannot contain a link.
   }
-  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"><span class="record-id">${esc(id)}</span></button><span class="ometa">${esc(type)}</span><span class="osentence">${esc(title)}</span><span class="oreason">${parts.join(" · ")}</span></li>`;
+  let open = "";
+  if (classification.openable) open = artifactOpenControlHtml(reference, classification.host);
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="artifact"${current}>${main}<span class="row-meta"><span class="record-id">${esc(id)}</span> · ${esc(type)}</span></button><details class="artifact-reference"><summary>Reference details</summary><div>${parts.join(" · ")}</div>${open}</details></li>`;
 }
 
 function sourceListHtml(rows, name, totals) {
@@ -2068,7 +2082,9 @@ function workRowHtml(task) {
   const id = strField(task.id);
   const title = visibleText(strField(task.title, task.summary, id));
   const status = visibleText(strField(task.status));
-  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="task"><span class="record-id">${esc(id)}</span> <span>${esc(status)}</span> <span>${esc(title)}</span></button>`;
+  const current = state.sectionSelection.work === id ? ` aria-current="true"` : "";
+  const symbol = status === "blocked" ? "■" : "○";
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="task" data-status="${esc(status)}"${current}><span class="row-main"><span class="row-symbol" aria-hidden="true">${symbol}</span><span class="row-title">${esc(title)}</span></span><span class="row-meta"><span class="record-id">${esc(id)}</span> · ${esc(status || "status unrecorded")} · recorded task</span></button>`;
 }
 
 function peopleRowHtml(item) {
@@ -2077,17 +2093,16 @@ function peopleRowHtml(item) {
   const id = strField(actor.actorId);
   const name = visibleText(strField(item.name, id));
   const kind = type === "human" ? "human" : "agent";
-  const bits = [type === "human" ? "human" : "registered agent", id];
+  const bits = [id, type === "human" ? "human participant" : "registered agent"];
   const harness = strField(item.harness);
   if (harness) bits.push(`harness ${harness}`);
   if (type === "agent") {
     const owner = strField(item.humanOwnerId);
     bits.push(owner ? `owner ${owner}` : "no recorded owner");
     if (item.humanOwnerIsParticipant === false) bits.push("owner is outside the roster");
-    else if (item.humanOwnerIsParticipant === true) bits.push("owner is a workspace participant");
   }
-  bits.push("registration is not presence");
-  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="${esc(kind)}"><span class="record-id">${esc(id)}</span> <span>${esc(name)}</span> <span>${esc(bits.join(" · "))}</span></button>`;
+  const current = state.sectionSelection.people === id ? ` aria-current="true"` : "";
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="${esc(kind)}"${current}><span class="row-main"><span class="row-symbol" aria-hidden="true">${type === "human" ? "●" : "◇"}</span><span class="row-title">${esc(name)}</span></span><span class="row-meta">${esc(bits.join(" · "))}</span></button>`;
 }
 
 function decisionSectionRows(context) {
@@ -2124,7 +2139,8 @@ function decisionRowHtml(decision) {
   }
   const transitions = decisionTransitionParts(decision);
   if (transitions.length) parts.push(transitions.join(" · "));
-  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="decision"><span class="record-id">${esc(id)}</span> <span>${esc(summary)}</span> <span>${esc(parts.join(" · "))}</span></button>`;
+  const current = state.sectionSelection.decisions === id ? ` aria-current="true"` : "";
+  return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="decision" data-review="${review}"${current}><span class="row-main"><span class="row-symbol" aria-hidden="true">◇</span><span class="row-title">${esc(summary)}</span></span><span class="row-meta"><span class="record-id">${esc(id)}</span> · ${esc(parts.join(" · "))}</span></button>`;
 }
 
 function idsInSection(section) {
@@ -2237,85 +2253,114 @@ function attentionReasonFor(id) {
   return "";
 }
 
-function sourceRecordHtml(kind, record) {
+function sourceFactHtml(label, value) {
+  if (!value) return "";
+  return `<div class="source-fact"><span class="fact-label">${esc(label)}</span><span class="fact-value">${esc(visibleText(value))}</span></div>`;
+}
+
+function sourceDateFactHtml(label, value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return sourceFactHtml(label, value);
+  const shown = date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return `<div class="source-fact"><span class="fact-label">${esc(label)}</span><time class="fact-value" datetime="${esc(value)}" title="${esc(value)}">${esc(shown)}</time></div>`;
+}
+
+function actorFactHtml(label, actor) {
+  if (!isRecord(actor)) return "";
+  const type = strField(actor.actorType);
+  const id = strField(actor.actorId);
+  return type || id ? sourceFactHtml(label, `${type} ${id}`.trim()) : "";
+}
+
+function sourceHeadingHtml(kind, record, fallbackId) {
+  if (!isRecord(record)) return `<div class="detail-identity"><span class="record-id">${esc(fallbackId || "")}</span></div><h2>Selected record</h2>`;
+  const actor = isRecord(record.actor) ? record.actor : {};
+  const id = strField(record.id, actor.actorId, fallbackId);
+  const title = visibleText(strField(record.title, record.summary, record.name, id));
+  const status = strField(record.status, record.currentness);
+  const review = kind === "decision" && needsReview(record) && status === "accepted";
+  const badge = review ? "Needs review" : status || (kind === "agent" ? "Registered agent" : kind);
+  const summary = kind === "decision" ? strField(record.rationale) : kind === "task" ? strField(record.description) : "";
+  return `<div class="detail-identity"><span class="record-id">${esc(kind.toUpperCase())} ${esc(id)}</span><span class="detail-state${review ? " review" : ""}">${esc(badge)}</span></div><h2>${esc(title)}</h2>${summary ? `<p class="detail-summary">${esc(visibleText(summary))}</p>` : ""}`;
+}
+
+function sourceRecordHtml(kind, record, findings = []) {
   if (!isRecord(record)) return `<p>This read did not include the record.</p>`;
+  const overview = [];
+  const sources = [];
   if (kind === "human" || kind === "agent" || kind === "participant") {
     const actor = isRecord(record.actor) ? record.actor : {};
-    const lines = [
-      `<p class="record-id">id ${esc(strField(actor.actorId))}</p>`,
-      `<p>type ${esc(strField(actor.actorType))}</p>`,
-      `<p>role ${esc(visibleText(strField(record.role)))}</p>`,
-    ];
-    if (strField(record.harness)) lines.push(`<p>harness ${esc(visibleText(record.harness))}</p>`);
-    if (strField(record.joinedAt)) lines.push(`<p>joinedAt ${esc(record.joinedAt)}</p>`);
+    overview.push(sourceFactHtml("Record", actor.actorType === "agent" ? "Registered agent" : "Human participant"));
+    overview.push(sourceDateFactHtml("Joined", strField(record.joinedAt)));
+    overview.push(sourceFactHtml("Harness", strField(record.harness)));
     if (actor.actorType === "agent") {
-      const owner = strField(record.humanOwnerId);
-      lines.push(`<p>owner ${esc(owner || "no recorded owner")}</p>`);
-      if (record.humanOwnerIsParticipant === false) lines.push("<p>owner is outside the roster</p>");
-      else if (record.humanOwnerIsParticipant === true) lines.push("<p>owner is a workspace participant</p>");
-      lines.push("<p>Registration is not presence.</p>");
+      overview.push(sourceFactHtml("Owner", strField(record.humanOwnerId, "no recorded owner")));
+      const owner = record.humanOwnerIsParticipant === false
+        ? "owner is outside the roster. "
+        : record.humanOwnerIsParticipant === true
+          ? "owner is a workspace participant. "
+          : "";
+      overview.push(`<p class="source-note">${owner}Registration is not presence.</p>`);
     } else {
-      lines.push("<p>Membership is not presence or permission to act.</p>");
+      overview.push(`<p class="source-note">Membership is not presence or permission to act.</p>`);
     }
-    return lines.join("");
-  }
-  const lines = [`<p class="record-id">id ${esc(strField(record.id))}</p>`, `<p>type ${esc(kind)}</p>`];
-  const status = strField(record.status);
-  if (status) lines.push(`<p>status ${esc(status)} · ${esc(decisionStatusText(kind === "decision" ? status : status))}</p>`);
-  if (kind === "task" && status) lines.push(`<p>lifecycle ${esc(visibleText(status))}. A status is not a running process.</p>`);
-  const currentness = strField(record.currentness);
-  if (currentness) lines.push(`<p>currentness ${esc(visibleText(currentness))}</p>`);
-  const title = strField(record.title, record.summary);
-  if (title) lines.push(`<p>${esc(visibleText(title))}</p>`);
-  const rationale = strField(record.rationale);
-  if (rationale) lines.push(`<p>rationale ${esc(visibleText(rationale))}</p>`);
-  lines.push(actorLine("recorded actor", record.createdBy) || actorLine("recorded actor", record.actor));
-  if (strField(record.createdAt)) lines.push(`<p>createdAt ${esc(record.createdAt)}</p>`);
-  if (strField(record.updatedAt)) lines.push(`<p>updatedAt ${esc(record.updatedAt)}</p>`);
-  lines.push(actorLine("assignee", record.assignee));
-  lines.push(actorLine("approved by", record.approvedBy));
-  if (kind === "decision" && (record.needsReview === true || reviewFindingIds(record).length)) {
-    // needsReview is computed for any non-superseded decision that cites
-    // non-current evidence. Only an accepted decision has an acceptance to leave unchanged.
-    if (status === "accepted") lines.push("<p>needs review — acceptance is unchanged</p>");
-    const reason = attentionReasonFor(strField(record.id));
-    if (reason) lines.push(`<p>review reason ${esc(attentionReasonLabel(reason))}</p>`);
-    const cited = reviewFindingIds(record);
-    if (cited.length) lines.push(`<p>non-current citations: ${esc(cited.join(", "))}</p>`);
-    for (const findingId of cited) {
-      const finding = findingById(findingId);
-      if (!finding) {
-        lines.push(`<p>cited finding ${esc(findingId)} currentness is not in this read</p>`);
-        continue;
+    sources.push(`<p class="empty">No linked sources were returned for this participant in this read.</p>`);
+  } else {
+    const status = strField(record.status);
+    const statusLabel = status ? decisionStatusText(status) : "";
+    overview.push(sourceFactHtml("Record state", status ? statusLabel : strField(record.currentness)));
+    if (kind === "task" && status) overview.push(`<p class="source-note">Lifecycle ${esc(visibleText(status))}. A status is not a running process.</p>`);
+    overview.push(actorFactHtml("Recorded by", record.createdBy || record.actor));
+    overview.push(sourceDateFactHtml("Created", strField(record.createdAt)));
+    overview.push(sourceDateFactHtml("Last change", strField(record.updatedAt)));
+    overview.push(actorFactHtml("Assignee", record.assignee));
+    overview.push(actorFactHtml("Approved by", record.approvedBy));
+    const rationale = strField(record.rationale);
+    if (rationale) overview.push(sourceFactHtml("Rationale", rationale));
+    if (kind === "decision" && status === "proposed") {
+      overview.push(`<p class="source-note">This proposal is recorded for review. It is not an accepted instruction.</p>`);
+    }
+    const transitions = decisionTransitionParts(record);
+    if (transitions.length) overview.push(sourceFactHtml("Transition", transitions.join(" · ")));
+    if (kind === "decision" && (record.needsReview === true || reviewFindingIds(record).length)) {
+      if (status === "accepted") overview.push(`<p class="source-note">needs review — acceptance is unchanged</p>`);
+      const reason = attentionReasonFor(strField(record.id));
+      if (reason) overview.push(sourceFactHtml("Review reason", attentionReasonLabel(reason)));
+      const cited = reviewFindingIds(record);
+      if (cited.length) overview.push(sourceFactHtml("Non-current citations", cited.join(", ")));
+      for (const findingId of cited) {
+        const finding = findingById(findingId);
+        sources.push(`<div class="source-relation"><strong>cited finding ${esc(findingId)}</strong><span>${finding ? `currentness ${esc(visibleText(strField(finding.currentness, "unrecorded")))}` : "currentness is not in this read"}${finding && strField(finding.successorId) ? ` · successor ${esc(finding.successorId)}` : ""}</span></div>`);
       }
-      lines.push(
-        `<p>cited finding ${esc(findingId)} currentness ${esc(visibleText(strField(finding.currentness, "unrecorded")))}</p>`,
-      );
-      if (strField(finding.successorId)) lines.push(`<p>successor ${esc(finding.successorId)}</p>`);
     }
+    for (const row of asArray(record.citations).filter(isRecord)) {
+      const citeId = strField(row.id);
+      const findingId = strField(row.findingId);
+      if (!citeId && !findingId) continue;
+      sources.push(`<div class="source-relation"><strong>citation ${esc(citeId)} finding ${esc(findingId)}</strong>${strField(row.note) ? `<span>note ${esc(visibleText(row.note))}</span>` : ""}</div>`);
+    }
+    for (const row of asArray(record.evidence).filter(isRecord)) {
+      const artifactId = strField(row.artifactId);
+      if (!artifactId && !strField(row.id)) continue;
+      sources.push(`<div class="source-relation"><strong>evidence ${esc(strField(row.id))} artifact ${esc(artifactId)}</strong><span>relation ${esc(visibleText(strField(row.relation)))}</span></div>`);
+    }
+    if (kind === "artifact") {
+      const reference = strField(record.uriOrPath);
+      sources.push(sourceFactHtml("Reference", reference ? `${reference} (stored reference, not fetched)` : "no reference recorded"));
+      const citedBy = artifactCitedByText(findings, strField(record.id));
+      if (citedBy.length) sources.push(sourceFactHtml("Cited by (returned findings)", citedBy.join(", ")));
+      if (reference) {
+        const classification = classifyArtifactReference(reference);
+        sources.push(sourceFactHtml("Class", classification.class));
+        if (classification.host !== null) sources.push(sourceFactHtml("Host", classification.host));
+        sources.push(`<p class="source-note">${esc(ARTIFACT_EXTERNAL_UNVERIFIED_LABEL)}${classification.unsafe ? ` ${esc(ARTIFACT_UNSAFE_CONTROL_LABEL)}` : ""}</p>`);
+        if (classification.openable) sources.push(artifactOpenControlHtml(reference, classification.host));
+      }
+    }
+    if (!sources.length) sources.push(`<p class="empty">No linked sources were returned for this record in this read.</p>`);
   }
-  for (const row of asArray(record.citations).filter(isRecord)) {
-    const citeId = strField(row.id);
-    const findingId = strField(row.findingId);
-    const note = strField(row.note);
-    if (!citeId && !findingId) continue;
-    lines.push(
-      `<p>citation ${esc(citeId)} finding ${esc(findingId)}${note ? ` note ${esc(visibleText(note))}` : ""}</p>`,
-    );
-  }
-  for (const row of asArray(record.evidence).filter(isRecord)) {
-    const artifactId = strField(row.artifactId);
-    const relation = strField(row.relation);
-    if (!artifactId && !strField(row.id)) continue;
-    lines.push(`<p>evidence ${esc(strField(row.id))} artifact ${esc(artifactId)} relation ${esc(visibleText(relation))}</p>`);
-  }
-  const transitions = decisionTransitionParts(record);
-  if (transitions.length) lines.push(`<p>${esc(transitions.join(" · "))}</p>`);
-  if (kind === "artifact") {
-    const findings = isRecord(state.context) ? asArray(state.context.findings) : [];
-    lines.push(artifactSourceHtml(record, findings));
-  }
-  return lines.filter(Boolean).join("");
+  return `<section class="detail-panel" data-detail-panel="overview"><h3>Record at a glance</h3>${overview.filter(Boolean).join("")}</section><section class="detail-panel" data-detail-panel="sources"><h3>Recorded sources</h3>${sources.filter(Boolean).join("")}</section>`;
 }
 
 function actorLine(label, actor) {
@@ -2532,11 +2577,13 @@ async function selectRecord(kind, id) {
   state.historyGen += 1;
   state.history = null;
   state.layer = "source";
+  state.detailTab = "overview";
   const local = findLocalRecord(kind, id);
   const full = recordIsFull(kind, local);
   state.detail = { id, kind, record: local, loading: !full, error: null, method: full ? "loaded" : null };
   state.citedFindings = Object.create(null);
   render();
+  focusDetailOnNarrow();
   if (!state.workspaceId) return;
   if (full) {
     if (kind === "decision" && local) void loadMissingFindings(gen, state.workspaceId, local);
@@ -2590,6 +2637,7 @@ function openRecordedChanges() {
   const detail = state.detail;
   if (!detail || RECORD_KINDS.indexOf(detail.kind) === -1) return null;
   state.layer = "history";
+  state.detailTab = "history";
   state.history = {
     open: true,
     objectType: detail.kind,
@@ -2650,7 +2698,7 @@ function historyRowHtml(entry) {
   const session = strField(entry.agentSessionId);
   const summary = historyPayloadSummary(entry);
   const current = state.history && state.history.selectedId === entry.id ? ` aria-current="true"` : "";
-  return `<button type="button" class="row-btn" data-history-id="${esc(strField(entry.id))}"${current}><span class="record-id">${esc(strField(entry.id))}</span> <span>${esc(strField(actor.actorType))} ${esc(strField(actor.actorId))}</span>${session ? ` <span>agent session ${esc(session)}</span>` : ""} <span>${esc(visibleText(strField(entry.action)))}</span> <span>${esc(strField(entry.createdAt))}</span>${summary ? ` <span>payload ${esc(summary)}</span>` : ""}</button>`;
+  return `<button type="button" class="row-btn" data-history-id="${esc(strField(entry.id))}"${current}><span class="row-main"><span class="row-title">${esc(visibleText(strField(entry.action)))}</span></span><span class="row-meta"><span class="record-id">${esc(strField(entry.id))}</span> · ${esc(strField(actor.actorType))} ${esc(strField(actor.actorId))} · ${esc(strField(entry.createdAt))}${session ? ` · agent session ${esc(session)}` : ""}${summary ? ` · payload ${esc(summary)}` : ""}</span></button>`;
 }
 
 function historyRecordedEmpty(page, errored) {
@@ -2677,6 +2725,74 @@ function filteredPageItems(items, textOf) {
   return asArray(items).filter((row) => matchesRowFilter(textOf(row)));
 }
 
+// A selected local preview fills the detail pane without issuing a read.
+// Entering a row still opens the full source path, including its history read.
+function seedSectionPreview() {
+  if (state.layer !== "list" && state.layer !== "preview") return;
+  const selectedId = state.sectionSelection[state.section];
+  const pick = (rows, match, idOf = (row) => strField(row.id)) =>
+    rows.find((row) => idOf(row) === selectedId && match(row)) || rows.find(match) || null;
+  let kind = "";
+  let id = "";
+  let record = null;
+  if (state.section === "attention") {
+    const rows = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+    const first = pick(rows, (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.summary)} ${strField(row.reason)}`));
+    if (first) {
+      kind = strField(first.kind);
+      id = strField(first.id);
+      record = findLocalRecord(kind, id);
+    }
+  } else if (state.section === "work") {
+    record = pick(asArray(state.workPage && state.workPage.items), (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.title)} ${strField(row.status)}`));
+    kind = "task";
+    id = strField(record && record.id);
+  } else if (state.section === "decisions") {
+    record = pick(decisionSectionRows(state.context), (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.summary)} ${strField(row.status)}`));
+    kind = "decision";
+    id = strField(record && record.id);
+  } else if (state.section === "sources") {
+    const context = isRecord(state.context) ? state.context : {};
+    const slices = isRecord(context.slices) ? context.slices : {};
+    const findings = asArray(isRecord(slices.findings) ? slices.findings.items : context.findings);
+    const artifacts = asArray(isRecord(slices.artifacts) ? slices.artifacts.items : context.artifacts);
+    const findingMatch = (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.summary)}`);
+    const artifactMatch = (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.title)} ${strField(row.uriOrPath)}`);
+    record = findings.find((row) => strField(row.id) === selectedId && findingMatch(row)) || null;
+    kind = "finding";
+    if (!record) {
+      record = artifacts.find((row) => strField(row.id) === selectedId && artifactMatch(row)) || null;
+      if (record) kind = "artifact";
+    }
+    if (!record) record = findings.find(findingMatch) || null;
+    if (!record) {
+      record = artifacts.find(artifactMatch) || null;
+      kind = "artifact";
+    }
+    id = strField(record && record.id);
+  } else if (state.section === "people") {
+    const people = asArray(state.peoplePage && state.peoplePage.items);
+    const matchPerson = (row) => {
+      const actor = isRecord(row.actor) ? row.actor : {};
+      return matchesRowFilter(`${strField(actor.actorId)} ${strField(row.name)} ${strField(actor.actorType)} ${strField(row.humanOwnerId)}`);
+    };
+    record = pick(people, matchPerson, (row) => strField(row.actor && row.actor.actorId));
+    const actor = isRecord(record) && isRecord(record.actor) ? record.actor : {};
+    kind = strField(actor.actorType);
+    id = strField(actor.actorId);
+  }
+  if (!record || !id) {
+    state.detail = null;
+    state.sectionSelection[state.section] = null;
+    state.layer = "list";
+    return;
+  }
+  state.sectionSelection[state.section] = id;
+  state.detail = { id, kind, record, loading: false, error: null, method: "loaded preview" };
+  state.detailTab = "overview";
+  state.layer = "preview";
+}
+
 function listHtml(rows, emptyText) {
   if (!rows.length) {
     const query = String(state.rowFilter || "").trim();
@@ -2697,6 +2813,45 @@ function renderNavigation() {
       if (button && button.setAttribute) button.setAttribute("aria-pressed", state.section === name ? "true" : "false");
     }
   }
+  const sectionCopy = {
+    attention: state.perspective === "team"
+      ? ["Needs attention", "Recorded changes that may need a team response"]
+      : ["Needs you", "Recorded changes that may need your response"],
+    work: ["Work", "Tasks recorded in this workspace"],
+    decisions: ["Decisions", "Recorded decisions and their state"],
+    sources: ["Sources", "Findings and artifact references in this read"],
+    people: ["People", "Registered workspace participants"],
+    changes: ["Recent changes", "Recorded activity since your last visit"],
+  };
+  if (els.sectionHeading) els.sectionHeading.textContent = sectionCopy[state.section][0];
+  if (els.sectionSubtitle) els.sectionSubtitle.textContent = sectionCopy[state.section][1];
+  const navCount = (name, count, qualified) => {
+    const button = typeof document !== "undefined" ? document.getElementById(`section-${name}`) : null;
+    if (!button || !button.setAttribute) return;
+    if (count === null || count === undefined) {
+      if (button.removeAttribute) button.removeAttribute("data-count");
+    }
+    else button.setAttribute("data-count", `${count}${qualified ? "+" : ""}`);
+  };
+  const attentionItems = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+  const attentionCoverage = attentionCoverageFrom(state.context);
+  const participantCoverage = omittedParticipantCoverage(state.context);
+  if (els.sectionCount) {
+    const count = state.section === "attention" && state.context
+      ? `${attentionItems.length} shown`
+      : state.section === "work" && state.workPage && typeof state.workPage.total === "number"
+        ? `${state.workPage.total} recorded`
+        : state.section === "people" && participantCoverage && participantCoverage.total !== null
+          ? `${participantCoverage.total} registered`
+          : "";
+    els.sectionCount.textContent = count;
+  }
+  navCount("attention", state.context ? attentionItems.length : null, !attentionCoverage || attentionCoverage.completeUnderRules !== true);
+  navCount("work", state.workPage && typeof state.workPage.total === "number" ? state.workPage.total : null, false);
+  navCount("people", participantCoverage ? participantCoverage.total : null, false);
+  navCount("decisions", null, false);
+  navCount("sources", null, false);
+  navCount("changes", null, false);
   const workFailed = Boolean(state.workPage && state.workPage.error);
   if (els.workCoverage) {
     const page = state.workPage;
@@ -2762,16 +2917,29 @@ function renderNavigation() {
   if (els.sourceView) {
     const detail = state.detail;
     if (!detail || state.layer === "list") {
-      els.sourceView.innerHTML = `<p>No selected record.</p>`;
+      els.sourceView.innerHTML = `<p>Select a shown record to inspect it.</p>`;
     } else if (detail.loading && !detail.record) {
       els.sourceView.innerHTML = `<p class="record-id">id ${esc(detail.id)}</p><p>Loading this record.</p>`;
     } else {
       const failed = detail.error ? `<p>${esc(detail.error)} This read is not complete.</p>` : "";
-      els.sourceView.innerHTML = sourceRecordHtml(detail.kind, detail.record) + failed;
+      const slices = isRecord(state.context && state.context.slices) ? state.context.slices : {};
+      const returnedFindings = asArray(isRecord(slices.findings) ? slices.findings.items : undefined).filter(isRecord);
+      els.sourceView.innerHTML = sourceRecordHtml(detail.kind, detail.record, returnedFindings) + failed;
     }
   }
   const historyOpen = Boolean(state.history && state.history.open && state.layer === "history");
   const canHistory = Boolean(state.detail && RECORD_KINDS.indexOf(state.detail.kind) !== -1 && state.layer !== "list");
+  const hasDetail = Boolean(state.detail && state.layer !== "list");
+  if (els.detailPane && els.detailPane.setAttribute) els.detailPane.setAttribute("data-detail-tab", historyOpen ? "history" : state.detailTab);
+  if (els.detailHeading) {
+    els.detailHeading.innerHTML = hasDetail
+      ? sourceHeadingHtml(state.detail.kind, state.detail.record, state.detail.id)
+      : "";
+  }
+  if (els.detailTabs) els.detailTabs.hidden = !hasDetail;
+  if (els.detailOverview) els.detailOverview.setAttribute("aria-pressed", !historyOpen && state.detailTab === "overview" ? "true" : "false");
+  if (els.detailSources) els.detailSources.setAttribute("aria-pressed", !historyOpen && state.detailTab === "sources" ? "true" : "false");
+  if (els.recordedChanges) els.recordedChanges.setAttribute("aria-pressed", historyOpen ? "true" : "false");
   if (els.recordedChanges) els.recordedChanges.hidden = !canHistory;
   if (els.historyView) els.historyView.hidden = !historyOpen;
   if (els.historyHeading) els.historyHeading.textContent = historyHeadingText(state.history);
@@ -2796,7 +2964,7 @@ function renderNavigation() {
   if (els.historyNext) els.historyNext.disabled = !canPageNext(state.history && state.history.page);
   if (els.panelBack) {
     const peopleBack = Boolean(state.section === "people" && people && people.cursorStack.length);
-    els.panelBack.hidden = state.layer === "list" && !peopleBack;
+    els.panelBack.hidden = (state.layer === "list" || state.layer === "preview") && !peopleBack;
   }
 }
 
@@ -2804,6 +2972,7 @@ function setSection(name) {
   if (NAV_SECTIONS.indexOf(name) === -1 || name === state.section) return null;
   state.section = name;
   state.layer = "list";
+  state.detailTab = "overview";
   state.historyGen += 1;
   state.history = null;
   const pending = name === "work" ? ensureWorkPage() : name === "people" ? ensurePeoplePage() : null;
@@ -2820,6 +2989,11 @@ function focusRecordButton(id) {
       return;
     }
   }
+}
+
+function focusDetailOnNarrow() {
+  if (typeof window === "undefined" || !window.matchMedia || !window.matchMedia("(max-width: 719px)").matches) return;
+  if (els.panelBack && !els.panelBack.hidden && els.panelBack.focus) els.panelBack.focus();
 }
 
 function captureFocus() {
@@ -2852,14 +3026,19 @@ function closeTopLayer() {
   const origin = state.focusOriginId;
   if (state.layer === "history") {
     state.layer = "source";
+    state.detailTab = "overview";
     state.historyGen += 1;
     if (state.history) state.history.open = false;
     render();
-    focusRecordButton(origin);
+    if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 719px)").matches) {
+      focusDetailOnNarrow();
+    } else {
+      focusRecordButton(origin);
+    }
     return;
   }
   if (state.layer === "source") {
-    state.layer = "list";
+    state.layer = "preview";
     state.detailGen += 1;
     render();
     focusRecordButton(origin);
@@ -2877,6 +3056,7 @@ function panelBack() {
 function render() {
   const savedFocus = captureFocus();
   rebuildNames();
+  seedSectionPreview();
   renderHeader();
   renderMast();
   renderPerspective();
@@ -3131,6 +3311,7 @@ if (els.density) {
 if (els.rowFilter) {
   els.rowFilter.addEventListener("input", (event) => {
     state.rowFilter = event.target && event.target.value ? event.target.value : "";
+    if (state.layer === "preview") state.layer = "list";
     render();
   });
 }
@@ -3141,6 +3322,26 @@ if (els.peopleNext) els.peopleNext.addEventListener("click", () => pagePeople("n
 if (els.historyPrev) els.historyPrev.addEventListener("click", () => pageHistory("prev"));
 if (els.historyNext) els.historyNext.addEventListener("click", () => pageHistory("next"));
 if (els.panelBack) els.panelBack.addEventListener("click", () => panelBack());
+if (els.detailOverview) els.detailOverview.addEventListener("click", () => {
+  if (!state.detail) return;
+  if (state.layer === "history") {
+    state.historyGen += 1;
+    if (state.history) state.history.open = false;
+  }
+  state.layer = "source";
+  state.detailTab = "overview";
+  render();
+});
+if (els.detailSources) els.detailSources.addEventListener("click", () => {
+  if (!state.detail) return;
+  if (state.layer === "history") {
+    state.historyGen += 1;
+    if (state.history) state.history.open = false;
+  }
+  state.layer = "source";
+  state.detailTab = "sources";
+  render();
+});
 if (els.recordedChanges) els.recordedChanges.addEventListener("click", () => openRecordedChanges());
 if (els.retryRefresh) els.retryRefresh.addEventListener("click", () => { void refresh(); });
 
@@ -3251,7 +3452,7 @@ document.addEventListener("keydown", (event) => {
 
   if (event.key === "Escape") {
     if (inField) return;
-    if (state.layer === "list" && !(state.section === "people" && state.peoplePage && state.peoplePage.cursorStack.length)) return;
+    if ((state.layer === "list" || state.layer === "preview") && !(state.section === "people" && state.peoplePage && state.peoplePage.cursorStack.length)) return;
     event.preventDefault();
     panelBack();
     return;

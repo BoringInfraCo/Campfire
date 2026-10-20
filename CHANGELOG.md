@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.24.1 — 2026-10-19
+
+- Give the read-only browser Viewer the focused Navigator composition selected in the roadmap mockup: a workspace rail, one record list, and a structured selected-record pane on wide screens; compact list → source → history navigation on narrow screens. The mockup's sample counts and green palette are illustrative; displayed records and coverage come from authorized reads.
+- Keep the selected preview aligned with keyboard row movement, preserve recorded artifact reverse citations in selected detail, return focus to a visible control on narrow-screen drill-down, and improve selected source-ID contrast. Secondary summaries are collapsed so the first screen is easier to scan.
+- Preserve the released bounded read model, Viewer allowlist and actor boundary, read-only behavior, source and decision meanings, provenance, artifact-reference safety, and CLI/API shapes. No schema or migration changes. The visual follow-up passed typecheck, build, independent review, and the full pre-bump suite (1,256 passed, one opt-in skip); release-prep verification is recorded in the private release decision.
+- NAV-003's two-person human comparison remains **NOT OBSERVED**. This presentation release makes no human-comprehension or team-value claim and moves no gate.
+
 ## 1.24.0 — 2026-10-19
 
 - Align the read-only browser Viewer with the terminal Navigator: top-level Needs You / Needs Attention, Work, Decisions, Sources, People, and Recent changes, with My work / Team work as a visible perspective control over the same authorized workspace. The first screen keeps the workspace goal, acting identity, last successful read time, and a truthful participant total visible without fetching the roster.

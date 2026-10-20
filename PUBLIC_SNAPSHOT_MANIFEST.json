@@ -1,10 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "1.24.0",
-  "sourceCommit": "e2a39ed506e1ce6fe882860e9ae86fd64f0e4db1",
-  "installChannelsCommit": "c2d3f1d7ec39c220b08ddea3affd7b63fb8838ca",
-  "sourceDate": "2026-10-19T18:34:26-04:00",
-  "exportedAt": "2026-10-19T00:00:00.000Z",
+  "version": "1.24.1",
+  "sourceCommit": "a013d4f1055f56686f5cb9fc3e67e87a41a99364",
+  "sourceDate": "2026-10-19T21:51:58-04:00",
+  "exportedAt": "2026-10-20T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
     ".github/workflows/release-tarball.yml",
@@ -98,6 +97,7 @@
     "public/campfire/v1.22.1/install.sh",
     "public/campfire/v1.23.0/install.sh",
     "public/campfire/v1.24.0/install.sh",
+    "public/campfire/v1.24.1/install.sh",
     "public/campfire/v1.3.0/install.sh",
     "public/campfire/v1.4.0/install.sh",
     "public/campfire/v1.5.0/install.sh",
