@@ -44,7 +44,8 @@ Darwin and Linux archives for ARM64 and x64, with SHA-256 checksum files, are pr
 | --- | --- |
 | Candidate commit and private push | `9a3abf5` on private `main`, pushed after a clean source/public asset parity check. |
 | Release-prep verification at 1.24.1 | Node 22 typecheck and build pass; source/public Viewer assets match byte-for-byte. Full suite: **100 files, 1,255 passed, one failed, one opt-in skip**; the only failure is the pre-recorded `install-channels.test.ts` expectation for `/v1.24.1/` while the formula and flake correctly remain pinned to published v1.24.0 archives. `deploy:dry-run` exits 0 with 73 public assets and the expected D1, telemetry, rate limiter, and asset bindings. `pack:tarball` exits 0; Darwin ARM64 archive SHA-256 is `983a5a5bbb3d0cdea76cb7dbd0199c79256e5261e62d8e8cc59acec618dd839b` and its package metadata extracts as `1.24.1`. The new installer equals the current installer byte-for-byte; the tracked v1.24.0 installer digest remains `2256bccb…`. No assertion or immutable guard was changed. |
-| Private annotated tag | Pending. |
+| Private annotated tag | `v1.24.1` object `b662c5a4e84d49539981bb0faa589c3205178cf8` points to release-prep commit `a013d4f1055f56686f5cb9fc3e67e87a41a99364`; both were pushed. The tag will not move. |
+| Public export metadata correction | The first tag export exposed an inherited hardcoded v1.24.0 test count in the public `RELEASE_CONTEXT.md` template. No product source changed: a post-tag private main commit corrects the template to **1,255 passed / one expected pre-pin failure / one skip** and adds the scoped visual finding. The exporter intentionally reads public templates from current private `HEAD` while preserving `sourceCommit: a013d4f…` from the immutable tag. The final audited export uses that corrected template. |
 | Audited public snapshot and tag | Pending. |
 | GitHub Release and four checksummed archives | Pending. |
 | Homebrew/Nix pins and tap | Pending. |
