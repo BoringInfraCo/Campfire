@@ -1,8 +1,8 @@
 # Campfire — Architecture
 
-**Status:** Revised after `v1.13.0`
+**Status:** Revised for the planned v1.25 CAP-001 interface boundary
 **Version:** 0.2
-**Date:** October 3, 2026; projection boundary revised October 9, 2026
+**Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001 boundary planned October 20, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -775,6 +775,50 @@ SQLite
 MCP handlers should remain thin.
 
 They should not contain Campfire's core collaboration semantics.
+
+### Planned v1.25 CAP-001 discovery boundary
+
+The CAP-001 contract (`docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md`)
+adds interface discovery over operations Campfire already exposes. A shared
+semantic catalog may describe an operation's purpose, input shape, read/write
+effect, session precondition, and actual CLI/MCP invocation. CLI and MCP project
+the same bounded search result from that catalog. CLI-only and MCP-only paths
+remain explicit; describing an installed operation does not add a new Core
+method or make every operation available on both surfaces. The existing
+`cli_command_manifest` remains a compatible CLI inventory.
+
+```text
+Installed operation metadata (no workspace data)
+       |                         |
+       v                         v
+CLI capability search       MCP discovery read
+       |                         |
+       +-----------+-------------+
+                   |
+         client selects an existing call
+                   |
+         application service authorizes it
+```
+
+The catalog is not a Capability domain object, a grant, an actor-specific
+permission verdict, or an authorization oracle. `whoami`, `list_workspaces`,
+and applicable `preflight` reads remain separate from direct-call authorization.
+No workspace name, membership, token, session identifier, or record content is
+returned by static discovery. A discovered write still requires its existing
+role and agent-session checks. Catalog reads do not count as workspace
+activation or activity telemetry.
+
+Versioned read recipes describe a small ordered path through existing
+authorized reads, including cursor, truncation, currentness, and stop rules.
+They are static interface navigation instructions, distinct from WOW-001's
+opt-in incident recording playbook. The harness performs every call and may
+compose or filter its own results; Campfire neither executes generated code
+nor stores recipe runs or handoffs as a new canonical object. There is no new
+workspace store, migration, `/v1/call` discovery method, external tool
+integration, or change to the Viewer read allowlist in CAP-001. The planned
+v1.26 action proposal/event boundaries require a separate architecture
+amendment before that sprint's implementation; this section grants none of
+their authority.
 
 WOW-001 adds one opt-in read, `get_playbook`, and the matching CLI command
 `campfire playbook`. Both stay off unless the process is explicitly enabled.

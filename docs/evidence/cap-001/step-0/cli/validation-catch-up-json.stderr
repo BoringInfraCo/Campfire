@@ -1,0 +1,1 @@
+{"error":{"code":"ValidationError","message":"Missing required --after argument","details":{"field":"after"}},"next":[{"command":"campfire catch-up --help","when":"See required arguments for this command"}]}

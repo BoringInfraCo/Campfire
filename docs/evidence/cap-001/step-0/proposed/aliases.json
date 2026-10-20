@@ -1,0 +1,10 @@
+{
+  "catalogVersion": 1,
+  "note": "Small frozen alias map for search only. An alias is not a grant. Do not add aliases for grants or authorized. Each alias string is attached to the named operations; a query token matches when it is a substring of that string.",
+  "aliases": {
+    "blocked": ["list_tasks", "get_task"],
+    "history": ["get_record_history"],
+    "decision": ["list_decisions", "get_decision"],
+    "context": ["get_workspace_context"]
+  }
+}

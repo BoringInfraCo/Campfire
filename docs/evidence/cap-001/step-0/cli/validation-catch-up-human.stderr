@@ -1,0 +1,3 @@
+[ValidationError] Missing required --after argument
+Next:
+  campfire catch-up --help

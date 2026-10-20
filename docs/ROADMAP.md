@@ -6,7 +6,7 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
-**Next planning step:** v1.24.1 is published and deployed under the recorded founder release decision (`docs/RELEASE_V1_24_1_DECISION.md`). Its Viewer presentation matches the linked Navigator mockup's three-zone composition and reading hierarchy; the mockup's example data and green palette remain illustrative. NAV-003 is CONDITIONAL GO — engineering candidate and its two-person comparison remains NOT OBSERVED. No new sprint is frozen; the open human observations under NAV-001, NAV-002, NAV-003, ONB-001, UIX-001, ATT-001, SWH-001, WCO-001, ARH-001, and VIS-001 condition 4 keep their own rubrics, and missing observations are not PASS.
+**Next planning step:** v1.24.1 is published and deployed under the recorded founder release decision (`docs/RELEASE_V1_24_1_DECISION.md`). Its Viewer presentation matches the linked Navigator mockup's three-zone composition and reading hierarchy; the mockup's example data and green palette remain illustrative. The founder-selected next two sprint cycles are [v1.25 capability discovery and composable reads](Campfire-v1.25-CAP-001-Discover-and-Compose.md), followed by v1.26 action proposals and event-driven follow-up. The v1.25 proposed contract is written; its Step 0 baseline is frozen at docs/evidence/cap-001/step-0/, and implementation is not a release decision. The v1.26 slot is not a release decision. NAV-003 is CONDITIONAL GO — engineering candidate and its two-person comparison remains NOT OBSERVED. The open human observations under NAV-001, NAV-002, NAV-003, ONB-001, UIX-001, ATT-001, SWH-001, WCO-001, ARH-001, and VIS-001 condition 4 keep their own rubrics; missing observations are not PASS.
 
 ---
 
@@ -694,6 +694,13 @@ This phase should occur only after identity, authorization, provenance, and coll
 - action outcomes
 - retries and recovery
 - policy evaluation
+
+The planned v1.25 CAP-001 slice is discovery of **installed interface
+operations**, not capability registration, delegation, or Phase 8 action
+authority. Its [proposed sprint contract](Campfire-v1.25-CAP-001-Discover-and-Compose.md)
+keeps authorization on each existing call. The planned v1.26 ACT-001 pilot is
+the separate narrow probe of proposals and event-driven follow-up; its action
+and inbound-event boundaries require a later architecture amendment.
 
 ### Model
 
@@ -1480,6 +1487,10 @@ v1.23.0 — NAV-002 Source and People Drill-down   minor-scoped, paged Work, on-
 v1.24.0 — NAV-003 Viewer Alignment and Human Use   minor-scoped, Viewer Needs You/Needs Attention, Work, Decisions, Sources, People, and Recent changes; bounded Work/People pages, selected Source, and recorded per-record history over seven added existing reads; normal refresh no longer requests the full inspector; CONDITIONAL GO — engineering candidate (D1–D8 pass, D4 repaired); founder release decision recorded in docs/RELEASE_V1_24_DECISION.md; published and deployed October 19, 2026 (snapshot c08619b, four checksummed archives, pins c2d3f1d/c397714, tap f2e95c7, Worker 990f18ad); human outcome NOT OBSERVED
         ↓
 v1.24.1 — Focused Viewer Navigator presentation   patch-scoped visual alignment to the three-zone mockup with a compact mobile path; founder release decision recorded in docs/RELEASE_V1_24_1_DECISION.md; published and deployed October 19, 2026 (snapshot 9f91fc9, four checksummed archives, pins f0c5828/e1d8777, tap 445fd1e, Worker f6f96125); NAV-003 human outcome remains NOT OBSERVED
+        ↓
+v1.25 — CAP-001 Discover and Compose   proposed sprint contract in docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md; discoverable installed operations and two composable read recipes through CLI/MCP; Step 0 frozen at docs/evidence/cap-001/step-0/; implementation is not a release decision; no Campfire code runner
+        ↓
+v1.26 — ACT-001 Propose and Follow Up   planned following sprint cycle; bounded action proposals/outcome receipts and event-driven follow-up; external harness executes, with explicit authority and provenance
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1895,11 +1906,34 @@ boundary. Each requires its own result and release decision; an engineering
 pass may support an accurately labeled release while human use remains
 NOT OBSERVED, but it does not close Gate B/C/E/F or an earlier sprint's trace.
 
-After ordinary teams show repeated value, one production event may be tested
-as a cited, reviewable finding or proposed task. It cannot silently become an
-accepted decision or controlled action. Agent-facing discovery through the
-existing CLI/MCP path and hosted-team economics follow measured return use
-and team continuation, not an interview's adoption claims.
+### Post-v1.24.1 two-cycle capability sequence
+
+The founder selected two consecutive implementation cycles after v1.24.1,
+informed by the October 12 *Next Token* discussion of searchable tool catalogs,
+scripted tool calls, and durable execution. This is a Campfire product decision,
+not evidence that another product's adoption claims apply here. The first cycle
+contains the two **Priority next** capabilities; the second contains the other
+two capabilities from that assessment. The work keeps Campfire's mission of
+durable, authorized team state across people, agents, and harnesses.
+
+| Cycle | Priority and paired capabilities | Bounded implementation | Exit evidence to freeze in its sprint contract |
+| --- | --- | --- | --- |
+| [**v1.25 candidate — CAP-001, Discover and Compose**](Campfire-v1.25-CAP-001-Discover-and-Compose.md) | **Priority next:** discoverable workspace capabilities **and** composable read recipes, implemented together in one sprint. | Add a compact, typed, searchable description of installed CLI/MCP operations and their input/effect/session preconditions, with explicit CLI-only and MCP-only paths. Discovery is not an actor-specific grant; existing identity, workspace, and direct-call authorization remain authoritative. Provide exactly two versioned navigation recipes over existing reads: blocked-work continuation and decision-basis review. The client performs each call; Campfire adds no code runner, new workspace object, or cross-workspace search. Preserve bounded pages, source IDs, provenance, currentness, and explicit truncation. | Freeze the released v1.24.1 manifest/tool baseline and task answer key before code. In Codex and OpenCode, test whether an authorized agent can discover and complete the same continuation task without a pasted tool list. A denied actor receives no workspace data. Compare time to correct source, failed calls, and output bytes with baseline; prove catalog parity, recipe versioning, and unchanged write authorization. Record human usefulness separately. Step 0 is frozen at docs/evidence/cap-001/step-0/. Implementation is not a release decision. |
+| **v1.26 candidate — ACT-001, Propose and Follow Up** | **Following cycle:** action proposals and outcome receipts **and** event-driven follow-up, implemented together in one sprint. | Pilot one named external action class and one allowlisted signed event source. An authenticated actor records a proposed action with workspace, target, intended effect, principal, and supporting evidence; an authorized human can approve or reject it. An external harness or integration performs an approved action and records a bounded outcome receipt with identity, time, status, and artifact/evidence reference. A verified, deduplicated event may create a cited, reviewable finding or proposed task. It cannot silently accept a decision, approve an action, or claim a running agent. Define retries and idempotency for the pilot; keep credentials and execution outside Campfire. | Freeze the action/event pair and authority matrix before code. Demonstrate proposed → approved/rejected → externally executed/failed → recorded outcome, plus duplicate, replayed, forged, and unauthorized event/action cases. Show that two different harnesses can inspect the same provenance and continue work. Measure whether a real team wants this controlled-action path (Gate F); record missing observation honestly and use a separate release decision for publication. Do not broaden capability policy, action types, event sources, or autonomous execution from a fixture-only pass. |
+
+CAP-001 should reuse the existing `campfire capabilities` catalog and thin MCP
+handlers; it is a discoverability and composition improvement over Campfire's
+current domain methods. ACT-001 is a narrow probe of Phase 8's coordination
+model, not a generalized agent runtime, workflow engine, or second skills
+platform. The client/harness owns code execution. Campfire owns authorized
+workspace state, proposals, provenance, and recorded outcomes. A sprint contract
+must pin the released baseline and exact checks before implementation; a version
+slot does not authorize a tag, release, or deployment. Existing Gate B/C/E/F
+results and earlier sprint verdicts do not change through this planning entry.
+
+After these bounded cycles, broader production-event integrations, action
+classes, and hosted-team economics follow measured return use, team
+continuation, and controlled-action demand, not an interview's adoption claims.
 
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |

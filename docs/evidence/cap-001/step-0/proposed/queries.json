@@ -1,0 +1,270 @@
+{
+  "label": "FIXTURE EVIDENCE — expected ids from the proposed catalog, not live workspace data",
+  "catalog": "docs/evidence/cap-001/step-0/proposed/catalog.json",
+  "aliases": "docs/evidence/cap-001/step-0/proposed/aliases.json",
+  "recipeOrder": ["continue-blocked-work", "review-decision-basis"],
+  "recipePurposeField": "goal",
+  "rules": "docs/evidence/cap-001/step-0/proposed/search-schema.md",
+  "cases": [
+    {
+      "id": "orientation",
+      "query": "orientation",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "orientation",
+      "returned": 1,
+      "totalMatches": 1,
+      "truncated": false,
+      "entryIds": ["get_workspace_context"],
+      "recipeIds": []
+    },
+    {
+      "id": "blocked-work",
+      "query": "blocked work",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "blocked work",
+      "returned": 2,
+      "totalMatches": 2,
+      "truncated": false,
+      "entryIds": ["get_task", "list_tasks"],
+      "recipeIds": ["continue-blocked-work"]
+    },
+    {
+      "id": "blocked-work-normalized",
+      "query": "  Blocked   Work  ",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "blocked work",
+      "returned": 2,
+      "totalMatches": 2,
+      "truncated": false,
+      "entryIds": ["get_task", "list_tasks"],
+      "recipeIds": ["continue-blocked-work"]
+    },
+    {
+      "id": "decision-basis",
+      "query": "decision basis",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "decision basis",
+      "returned": 1,
+      "totalMatches": 1,
+      "truncated": false,
+      "entryIds": ["get_decision"],
+      "recipeIds": ["review-decision-basis"]
+    },
+    {
+      "id": "history",
+      "query": "HISTORY",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "history",
+      "returned": 2,
+      "totalMatches": 2,
+      "truncated": false,
+      "entryIds": ["get_activity", "get_record_history"],
+      "recipeIds": [],
+      "note": "Both match. get_activity is not a substitute for get_record_history. Neither recipe goal contains history, so no recipe summary is returned."
+    },
+    {
+      "id": "both-recipes",
+      "query": "recorded",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "recorded",
+      "returned": 1,
+      "totalMatches": 1,
+      "truncated": false,
+      "entryIds": ["get_decision"],
+      "recipeIds": ["continue-blocked-work", "review-decision-basis"]
+    },
+    {
+      "id": "unknown-operation",
+      "query": "unknown operation",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "unknown operation",
+      "returned": 0,
+      "totalMatches": 0,
+      "truncated": false,
+      "entryIds": [],
+      "recipeIds": []
+    },
+    {
+      "id": "zero-matches",
+      "query": "zzzznotanoperation",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "zzzznotanoperation",
+      "returned": 0,
+      "totalMatches": 0,
+      "truncated": false,
+      "entryIds": [],
+      "recipeIds": []
+    },
+    {
+      "id": "hostile-regex-like",
+      "query": "(blocked|history)",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "(blocked|history)",
+      "returned": 0,
+      "totalMatches": 0,
+      "truncated": false,
+      "entryIds": [],
+      "recipeIds": [],
+      "note": "Literal substring. The characters are not a regular expression."
+    },
+    {
+      "id": "recipe-only",
+      "query": "continue-blocked-work",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "continue-blocked-work",
+      "returned": 0,
+      "totalMatches": 0,
+      "truncated": false,
+      "entryIds": [],
+      "recipeIds": ["continue-blocked-work"],
+      "note": "A recipe-only match still returns that summary. totalMatches stays 0 because it counts operations."
+    },
+    {
+      "id": "limit-default",
+      "query": "workspace",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQuery": "workspace",
+      "returned": 8,
+      "totalMatches": 11,
+      "truncated": true,
+      "entryIds": ["dashboard", "get_activity", "get_artifact", "get_decision", "get_finding", "get_task", "get_workspace_context", "list_decisions"],
+      "recipeIds": []
+    },
+    {
+      "id": "limit-explicit-default",
+      "query": "workspace",
+      "limit": 8,
+      "expect": "projection",
+      "normalizedQuery": "workspace",
+      "returned": 8,
+      "totalMatches": 11,
+      "truncated": true,
+      "entryIds": ["dashboard", "get_activity", "get_artifact", "get_decision", "get_finding", "get_task", "get_workspace_context", "list_decisions"],
+      "recipeIds": []
+    },
+    {
+      "id": "limit-max",
+      "query": "workspace",
+      "limit": 10,
+      "expect": "projection",
+      "normalizedQuery": "workspace",
+      "returned": 10,
+      "totalMatches": 11,
+      "truncated": true,
+      "entryIds": ["dashboard", "get_activity", "get_artifact", "get_decision", "get_finding", "get_task", "get_workspace_context", "list_decisions", "list_tasks", "list_workspaces"],
+      "recipeIds": [],
+      "withheldEntryIds": ["preflight"]
+    },
+    {
+      "id": "limit-exact-120",
+      "query": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "limit": null,
+      "expect": "projection",
+      "normalizedQueryLength": 120,
+      "returned": 0,
+      "totalMatches": 0,
+      "truncated": false,
+      "entryIds": [],
+      "recipeIds": []
+    },
+    {
+      "id": "empty",
+      "query": "",
+      "limit": null,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query"
+    },
+    {
+      "id": "whitespace",
+      "query": "   ",
+      "limit": null,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query"
+    },
+    {
+      "id": "control-newline",
+      "query": "blocked\nwork",
+      "limit": null,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query"
+    },
+    {
+      "id": "control-tab",
+      "query": "blocked\twork",
+      "limit": null,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query"
+    },
+    {
+      "id": "empty-wins-over-bad-limit",
+      "query": "",
+      "limit": 99,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query"
+    },
+    {
+      "id": "overlong",
+      "query": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "limit": null,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "query",
+      "normalizedQueryLength": 121
+    },
+    {
+      "id": "limit-zero",
+      "query": "workspace",
+      "limit": 0,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "limit"
+    },
+    {
+      "id": "limit-above-max",
+      "query": "workspace",
+      "limit": 11,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "limit"
+    },
+    {
+      "id": "limit-negative",
+      "query": "workspace",
+      "limit": -1,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "limit"
+    },
+    {
+      "id": "limit-fraction",
+      "query": "workspace",
+      "limit": 1.5,
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "limit"
+    },
+    {
+      "id": "unknown-recipe",
+      "recipeId": "no-such-recipe",
+      "expect": "error",
+      "code": "ValidationError",
+      "field": "id"
+    }
+  ]
+}

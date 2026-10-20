@@ -1,0 +1,19 @@
+{
+  "note": "fail() serializes CampfireError as {error, message, details} with isError. SDK input-schema rejection is a different shape and is not the CAP-001 envelope.",
+  "emptyObjectId": {
+    "threw": false,
+    "isError": true,
+    "body": {
+      "error": "ValidationError",
+      "message": "Missing required objectId",
+      "details": {
+        "field": "objectId"
+      }
+    }
+  },
+  "missingWorkspaceId": {
+    "threw": false,
+    "isError": true,
+    "body": "MCP error -32602: Input validation error: Invalid arguments for tool list_tasks: Invalid input: expected string, received undefined at workspaceId"
+  }
+}
