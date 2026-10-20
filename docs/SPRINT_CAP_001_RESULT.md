@@ -2,7 +2,7 @@
 
 **Date:** October 20, 2026
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass, including the export audit in §5. A later smoke ran both harnesses: OpenCode named the fixture ids; Codex stopped on the truncated orientation and did not. Neither called `discover_capabilities`. The human comparison remains **NOT OBSERVED**. Package version stays `1.24.1`. This result does not bump a version, tag, publish a snapshot, pin an installer, or deploy. No release decision is recorded. §5 supersedes the original "both harnesses unavailable" sentence.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass, including the export audit in §5. A targeted smoke in §6 asked each harness to use capability discovery and a read recipe without naming tools, commands, recipe ids, or fixture ids. Both did, and both named the required ids. The earlier unprompted smoke did not exercise discovery. Automatic adoption and improved continuation remain unproven. The human comparison remains **NOT OBSERVED**. Package version stays `1.24.1`. This result does not bump a version, tag, publish a snapshot, pin an installer, or deploy. No release decision is recorded. §5 and §6 supersede the original "both harnesses unavailable" sentence.
 
 **Contract:** `docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md`
 **Step 0:** `1b212fe60e519bc344c91400ee7f5c2f297c3be0` (`docs/evidence/cap-001/step-0/`)
@@ -16,7 +16,8 @@ Contract §7: **CONDITIONAL GO — engineering candidate** applies when D1–D7 
 - **Recorded reason:** this closeout did not launch Codex or OpenCode. The continuation proof is `tests/unit/cap-001-continuation.test.ts`, an engineering fixture over `fixtures/cap-001/seed.ts`. It is not a harness transcript and not a human observation.
 - The optional non-builder human comparison was not run. That absence is **NOT OBSERVED**. It does not change the engineering verdict.
 - This record does not claim a cross-harness improvement, Gate B, Gate C, Gate E, Gate F, or a rescore of NAV-001, NAV-002, NAV-003, or earlier sprints.
-- Publishing `v1.25.0` needs a separate founder release decision.
+- Publishing `v1.25.0` needs a separate founder release decision. §6 shows the selected discovery path can finish the fixture. It does not by itself record that decision.
+- §6 supersedes "both supported harness paths are unavailable" for the question of whether an agent can use discovery and the read recipes when asked to select them. The unprompted smoke in §5 still stands: neither harness called discovery on its own.
 
 ## 1. What landed
 
@@ -50,7 +51,7 @@ The one skip is the existing opt-in Playwright test in `tests/unit/uix-001-dashb
 | **D3** | PASS on the frozen query cases: controls before trim, query before limit, token AND, ascending ids, recipe summaries from id and goal only (max 2, frozen order), returned / totalMatches / truncated, and the 16 KiB budget. The largest frozen projection is within 16384 bytes. Search JSON for those queries contains none of the answer-key fixture ids. Queries are not evaluated as regular expressions. |
 | **D4** | PASS on the engineering fixture and the static catalog. Discovery and recipe fetch take no store. A denied actor (`hum_cap001_zed`) cannot read `ws_cap001_lab`. Omission text says listing a command or tool is not a grant. Search does not read `outputCaveat`, preconditions, input names, or unavailable text (`whoami` does not match `workspace`; `get_record_history` does not match `workspace` through an input name). |
 | **D5** | PASS. Both frozen recipes parse equal from `getReadRecipe` and from CLI/MCP JSON. Each `JSON.stringify` is under 8192 bytes. Unknown id throws `ValidationError` field `id`, message `Unknown read recipe id.` The continuation walk shows `task_cap001_blocked_later` on page 2 only, status `blocked`, assignee absent, first page truncated, and `dec_cap001_selected` accepted with `needsReview` only because `find_cap001_stale` is non-current. `find_cap001_current` stays current. `needsReview` is not treated as revocation or permission. |
-| **D6** | The engineering fixture passes. The later live smoke is in §5. OpenCode named the required ids. Codex did not name the later blocked task. Neither used the new discovery tools. No comparison against the v1.24.1 path is claimed. |
+| **D6** | The engineering fixture passes. The unprompted smoke is in §5: OpenCode named the required ids, Codex did not, and neither used the new discovery tools. The targeted smoke in §6 asked for discovery and a read recipe and both harnesses then finished with the required ids. No comparison against the v1.24.1 path is claimed. |
 | **D7** | PASS for typecheck, the full suite, build, isolated `pack:tarball`, `deploy:dry-run`, Viewer asset parity, and the public-copy audit in §5. The installer guard did not reject the unbumped tree. Version stays `1.24.1`. No channel promotion. |
 
 ## 3. Deviations
@@ -85,3 +86,26 @@ Neither session called `discover_capabilities`, `get_read_recipe`, or `campfire 
 ### Export audit
 
 `node scripts/export-public-release.mjs --ref 59e48e1455afbc6c894c3a692bf13dd393375da7 --output /tmp/cap-001-public-export` exited 0 from a detached worktree. Printed version `v1.24.1`, 349 files, forbidden-path and secret-content scan passed. `src/catalog/capability-search.ts` is in the snapshot. `docs/evidence` is not. The four served Viewer assets match `src/viewer/static/`. `fixtures/cap-001/` is included because `fixtures/` is an allowlisted prefix and that directory is not in the private-prefix list. The seed contains synthetic ids, not a credential. The snapshot was not published.
+
+## 6. Addendum — targeted discovery smoke
+
+**Date:** October 20, 2026. Evidence: `docs/evidence/cap-001/candidate/TARGETED_CODEX.md` and `docs/evidence/cap-001/candidate/TARGETED_OPENCODE.md`. This addendum does not change the engineering verdict to GO and does not record a release decision. The human comparison remains **NOT OBSERVED**. Spontaneous discovery and a continuation improvement over v1.24.1 remain unproven.
+
+The prompt told each harness to use Campfire's capability discovery before reading workspace records, then to fetch the read recipe for continuing blocked work and the read recipe for reviewing a decision's basis, and to follow the tools those recipes name. It supplied no tool name, command line, recipe id, or fixture id. Each session used its own seeded copy of `fixtures/cap-001` through local `campfire mcp`. `CAMPFIRE_URL` and `CAMPFIRE_TOKEN` were unset. Real Codex and OpenCode configs were not modified. `campfire up` was not run. Port 9414 stayed down. Preflight `tools/list` returned 40 tools, including `discover_capabilities` and `get_read_recipe`. Neither database gained a contribution (55 before and after).
+
+| Harness | Model | Duration | Discovery | Recipes | Result |
+| --- | --- | --- | --- | --- | --- |
+| Codex CLI 0.163.0 | `gpt-6.1-sol` | 36.20 s | `discover_capabilities` (one limit-12 validation error, then successful queries) | `continue-blocked-work`, `review-decision-basis` | **Pass.** Named `task_cap001_blocked_later` as blocked and off the truncated first page, and `dec_cap001_selected` as accepted with `needsReview` because `find_cap001_stale` is superseded while `find_cap001_current` stays current. No write. |
+| OpenCode 2.1.1 | `opencode/big-pickle` | 84.45 s | `discover_capabilities` (one limit-20 validation error; `"read recipe"` returned no matches) | same two, via `get_read_recipe` | **Pass.** Same ids and currentness. No write. A harness tool-index search also ran; it did not replace the Campfire discovery calls. |
+
+A supported release claim after this smoke, still requiring a separate founder decision, is: shared capability search and two read recipes shipped; automatic adoption and improved continuation remain unproven.
+
+### Why the first Codex session stopped
+
+The unprompted Codex session called only `list_workspaces` and `get_workspace_context`. It reported 20 of 21 tasks, `truncated: true`, and refused to invent the later task id. It named the decision and did not read `find_cap001_stale`.
+
+The `get_workspace_context` tool description says each slice carries `total`, `returned`, and `truncated`, that a truncated source page can hide a matching cue, and to pass `orientationCursor` to `get_workspace_changes` to catch up. It does not say to call `list_tasks` when the task slice is truncated. `list_tasks` says to pass the returned cursor, but that session never called it. The server session instructions name `list_tasks` among drill-down reads. They do not state the truncated-task stop rule.
+
+That stop rule is in `continue-blocked-work`: if `slices.tasks.truncated` is true, or the selected task id is absent from `slices.tasks.items`, continue to `list_tasks`. The first session never fetched the recipe, so it never received that sentence. In this targeted run both harnesses fetched it. The returned text told them to continue to `list_tasks`, and both did: first page, then the cursor page that contains `task_cap001_blocked_later`. Page 2 is `truncated: true` with no `nextCursor`; both treated that as the end.
+
+Search does not list `get_read_recipe`. A query whose tokens include "read recipe" returned zero matches for both harnesses. Narrower queries (`blocked`, `blocked task`, `basis`, `decision basis review`) returned the operation entries and the recipe summaries. Each model then called `get_read_recipe` with the summary id. The selected path works. Finding the recipe tool from search text alone does not.
