@@ -91,7 +91,15 @@ import {
   formatLocalUpReceipt,
   formatRemoteUpReceipt,
 } from "../presentation/receipts.js";
-import { getPlaybook, listPlaybooks, type PlaybookDefinition } from "../playbooks/index.js";
+import {
+  CAPABILITY_QUERY_ERROR,
+  CAPABILITY_RECIPE_ERROR,
+  getReadRecipe,
+  searchCapabilities,
+  type CapabilitySearch,
+  type ReadRecipe,
+} from "../catalog/capability-search.js";
+import { getPlaybook, listPlaybooks, playbookEnabled, type PlaybookDefinition } from "../playbooks/index.js";
 import { diagnoseHosted, diagnoseLocal } from "../bootstrap/doctor.js";
 import type { DoctorReport } from "../bootstrap/doctor.js";
 import { buildHandoff, formatHandoff } from "../bootstrap/handoff.js";
@@ -1922,9 +1930,50 @@ async function cmdPlaybook(parsed: ParsedArgs): Promise<void> {
   emitResult(getPlaybook(selector), mode, formatPlaybook);
 }
 
+function formatCapabilitySearch(result: CapabilitySearch): string {
+  const lines = result.entries.map((entry) => `${entry.id} — ${entry.purpose}`);
+  for (const recipe of result.recipeSummaries) {
+    lines.push(`${recipe.id} — ${recipe.purpose}`);
+  }
+  return lines.join("\n");
+}
+
+function formatReadRecipe(recipe: ReadRecipe): string {
+  return [recipe.id, recipe.goal, ...recipe.steps.map((step) => step.operationId)].join("\n");
+}
+
+function capabilityLimit(flags: ParsedArgs["flags"]): number | undefined {
+  const raw = flags.limit;
+  if (raw === undefined) return undefined;
+  if (typeof raw === "string" && /^-?\d+$/.test(raw)) return Number(raw);
+  return Number.NaN;
+}
+
 async function cmdCapabilities(parsed: ParsedArgs): Promise<void> {
   const mode = commandOutput(parsed);
-  emitResult(buildCommandManifest(installedCampfireVersion()), mode, formatCommandManifest);
+  const search = parsed.flags.search;
+  const recipe = parsed.flags.recipe;
+  if (search === undefined && recipe === undefined) {
+    emitResult(buildCommandManifest(installedCampfireVersion()), mode, formatCommandManifest);
+    return;
+  }
+  if (search !== undefined && recipe !== undefined) {
+    throw new ValidationError("Pass only one of --search or --recipe.", { field: "query" });
+  }
+  if (search !== undefined) {
+    if (typeof search !== "string") {
+      throw new ValidationError(CAPABILITY_QUERY_ERROR, { field: "query" });
+    }
+    const result = searchCapabilities(search, capabilityLimit(parsed.flags), {
+      playbookEnabled: playbookEnabled(),
+    });
+    emitResult(result, mode, formatCapabilitySearch);
+    return;
+  }
+  if (typeof recipe !== "string" || recipe.length === 0) {
+    throw new ValidationError(CAPABILITY_RECIPE_ERROR, { field: "id" });
+  }
+  emitResult(getReadRecipe(recipe), mode, formatReadRecipe);
 }
 
 async function cmdCreateWorkspace(parsed: ParsedArgs, argv: string[]): Promise<void> {

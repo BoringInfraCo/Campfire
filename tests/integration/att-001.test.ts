@@ -853,8 +853,11 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
     try {
       const names = (await client.listTools()).tools.map((tool) => tool.name);
       // ATT-001 froze 36 tools. NAV-002 adds two read-only tools and does not
-      // remove any. NAV-003 extends the Viewer allowlist only.
-      expect(names).toHaveLength(38);
+      // remove any. NAV-003 extends the Viewer allowlist only. CAP-001 adds
+      // discover_capabilities and get_read_recipe. Those two project the local
+      // catalog; they are not workspace reads and they are not on the Viewer
+      // allowlist.
+      expect(names).toHaveLength(40);
       for (const name of [
         "get_workspace_context",
         "update_task",
@@ -862,6 +865,8 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
         "get_activity",
         "list_workspace_participants",
         "get_record_history",
+        "discover_capabilities",
+        "get_read_recipe",
       ]) {
         expect(names).toContain(name);
       }

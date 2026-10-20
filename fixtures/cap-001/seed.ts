@@ -15,6 +15,7 @@
  */
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { CampfireError } from "../../src/domain/errors.js";
 import { ID_PREFIXES, type IdKind, type IdSource } from "../../src/domain/ids.js";
 import type { ActorContext } from "../../src/service/authorization.js";
@@ -133,6 +134,10 @@ function historyFacts(service: CampfireService, actor: ActorContext, objectType:
       actorType: item.actor.actorType,
     })),
   };
+}
+
+export function seedCap001Database(databasePath: string): Record<string, unknown> {
+  return seedAt(databasePath);
 }
 
 function seedAt(databasePath: string): Record<string, unknown> {
@@ -464,14 +469,17 @@ function parseArgs(argv: string[]): { out: string; force: boolean } {
   return { out, force };
 }
 
-const args = parseArgs(process.argv.slice(2));
-const databasePath = resolve(args.out, "campfire.db");
-if (!args.force && existsSync(databasePath)) {
-  fail(`seed already exists at ${args.out}; pass --force to replace it`);
+const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  const args = parseArgs(process.argv.slice(2));
+  const databasePath = resolve(args.out, "campfire.db");
+  if (!args.force && existsSync(databasePath)) {
+    fail(`seed already exists at ${args.out}; pass --force to replace it`);
+  }
+  mkdirSync(args.out, { recursive: true });
+  for (const path of [databasePath, `${databasePath}-wal`, `${databasePath}-shm`]) {
+    if (existsSync(path)) rmSync(path);
+  }
+  const answer = seedCap001Database(databasePath);
+  process.stdout.write(`${JSON.stringify(answer, null, 2)}\n`);
 }
-mkdirSync(args.out, { recursive: true });
-for (const path of [databasePath, `${databasePath}-wal`, `${databasePath}-shm`]) {
-  if (existsSync(path)) rmSync(path);
-}
-const answer = seedAt(databasePath);
-process.stdout.write(`${JSON.stringify(answer, null, 2)}\n`);

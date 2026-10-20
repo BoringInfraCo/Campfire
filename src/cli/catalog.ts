@@ -394,7 +394,20 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "discover",
     "Describe the installed Campfire CLI commands.",
     "campfire capabilities [--output json]",
-    { ...READ, workspaceScoped: false, related: ["help"], notes: [
+    { ...READ, workspaceScoped: false, related: ["help"], variants: [
+      {
+        selector: "--search",
+        usage: "campfire capabilities --search <query> [--limit <1..10>] [--output auto|human|json]",
+        mutates: false,
+        outputModes: DUAL,
+      },
+      {
+        selector: "--recipe",
+        usage: "campfire capabilities --recipe <id> [--output auto|human|json]",
+        mutates: false,
+        outputModes: DUAL,
+      },
+    ], notes: [
       "Command discovery only. This is not the future Campfire Capability domain object.",
       "The manifest kind is cli_command_manifest and lists installed CLI operations.",
       "An installed command is not a grant; authorization still happens in Campfire Core.",

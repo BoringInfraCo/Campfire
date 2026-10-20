@@ -383,6 +383,8 @@ describe("WCO-001 D5 — interface safety", () => {
   it("keeps every WCO-001 MCP tool and adds only the NAV-002 reads", async () => {
     const client = await connect({ ctx: { actor: HUMAN_A } });
     const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
+    // These names plus the two CAP-001 local catalog tools. They are not
+    // workspace reads and they do not change the Viewer allowlist above.
     expect(names).toEqual(
       [
         "accept_decision",
@@ -395,8 +397,10 @@ describe("WCO-001 D5 — interface safety", () => {
         "create_goal",
         "create_task",
         "create_workspace",
+        "discover_capabilities",
         "get_activity",
         "get_artifact",
+        "get_read_recipe",
         "get_record_history",
         "get_decision",
         "get_finding",

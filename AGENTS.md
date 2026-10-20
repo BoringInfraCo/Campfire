@@ -464,6 +464,15 @@ reports 1.24.1 and contains the matching Viewer assets. This presentation
 release leaves NAV-003's CONDITIONAL GO verdict and NOT OBSERVED human outcome
 unchanged; the Viewer remains a loopback-only local page.
 
+Sprint CAP-001 — Discover and Compose is an engineering candidate on package
+`1.24.1` (version not bumped). The result is `docs/SPRINT_CAP_001_RESULT.md`:
+**CONDITIONAL GO — engineering candidate**. D1–D7 pass on the local checks.
+Codex and OpenCode remain **NOT OBSERVED**. The human comparison is
+**NOT OBSERVED**. No release decision, tag, or deployment is recorded. The
+search corpus is the frozen Step 0 operation set plus explicit omissions. It
+does not add a code runner, a domain object, a migration, or a Viewer
+allowlist entry.
+
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
 accurately described release while multi-person observations remain open.
