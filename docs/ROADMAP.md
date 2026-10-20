@@ -6,7 +6,7 @@
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
-**Next planning step:** v1.24.0 is published and deployed under the recorded founder release decision (`docs/RELEASE_V1_24_DECISION.md`); NAV-003 is CONDITIONAL GO — engineering candidate and its two-person comparison remains NOT OBSERVED. No new sprint is frozen; the open human observations under NAV-001, NAV-002, NAV-003, ONB-001, UIX-001, ATT-001, SWH-001, WCO-001, ARH-001, and VIS-001 condition 4 keep their own rubrics, and missing observations are not PASS.
+**Next planning step:** v1.24.1 is published and deployed under the recorded founder release decision (`docs/RELEASE_V1_24_1_DECISION.md`). Its Viewer presentation matches the linked Navigator mockup's three-zone composition and reading hierarchy; the mockup's example data and green palette remain illustrative. NAV-003 is CONDITIONAL GO — engineering candidate and its two-person comparison remains NOT OBSERVED. No new sprint is frozen; the open human observations under NAV-001, NAV-002, NAV-003, ONB-001, UIX-001, ATT-001, SWH-001, WCO-001, ARH-001, and VIS-001 condition 4 keep their own rubrics, and missing observations are not PASS.
 
 ---
 
@@ -1478,6 +1478,8 @@ v1.22.1 — ONB-001 First-Run Handoff   patch-scoped, truthful CLI and empty-Vie
 v1.23.0 — NAV-002 Source and People Drill-down   minor-scoped, paged Work, on-demand People, and recorded per-record history over two bounded authorized reads; CONDITIONAL GO — engineering candidate (D1–D7 pass with an independent read-only review; narrow-history follow-up recorded); founder release decision recorded in docs/RELEASE_V1_23_DECISION.md; published and deployed October 19, 2026 (snapshot 8c14621, four checksummed archives, pins 8c2a546/65fff4a, tap 483a8fd, Worker da752833); human outcome NOT OBSERVED
         ↓
 v1.24.0 — NAV-003 Viewer Alignment and Human Use   minor-scoped, Viewer Needs You/Needs Attention, Work, Decisions, Sources, People, and Recent changes; bounded Work/People pages, selected Source, and recorded per-record history over seven added existing reads; normal refresh no longer requests the full inspector; CONDITIONAL GO — engineering candidate (D1–D8 pass, D4 repaired); founder release decision recorded in docs/RELEASE_V1_24_DECISION.md; published and deployed October 19, 2026 (snapshot c08619b, four checksummed archives, pins c2d3f1d/c397714, tap f2e95c7, Worker 990f18ad); human outcome NOT OBSERVED
+        ↓
+v1.24.1 — Focused Viewer Navigator presentation   patch-scoped visual alignment to the three-zone mockup with a compact mobile path; founder release decision recorded in docs/RELEASE_V1_24_1_DECISION.md; published and deployed October 19, 2026 (snapshot 9f91fc9, four checksummed archives, pins f0c5828/e1d8777, tap 445fd1e, Worker f6f96125); NAV-003 human outcome remains NOT OBSERVED
 ```
 
 The sequence adopted on October 3, revised on October 9 after `v1.14.0`, and extended on October 10 with the implemented-candidate v1.16 sprint is:
@@ -1866,20 +1868,20 @@ slot does not authorize publication.
 | [**NAV-002 — Source and People Drill-down**](Campfire-v1.23-NAV-002-Source-and-People-Drill-down.md) (v1.23.0 published under the recorded founder release decision; [result](SPRINT_NAV_002_RESULT.md)) | On-demand People with recorded human–agent relationships, paged Work, and selected source/history. Authorized `list_tasks`, a bounded participant read, a selected-record contribution read, and an opt-in orientation omission for participants. Exact loaded coverage. Terminal stays inspect-only. | D1–D7 pass on the 20-human/37-agent/64-task fixture. Verdict CONDITIONAL GO — engineering candidate. Human comparison NOT OBSERVED. Published and deployed as v1.23.0 on October 19, 2026 (snapshot `8c14621`, four checksummed archives, pins `8c2a546`/`65fff4a`, tap `483a8fd`, Worker `da752833`). Viewer allowlist was not expanded. |
 | [**NAV-003 — Viewer Alignment and Human Use**](Campfire-v1.24-NAV-003-Viewer-Alignment-and-Human-Use.md) (v1.24.0 published under the recorded founder release decision; [result](SPRINT_NAV_003_RESULT.md)) | Give the existing read-only Viewer work-first navigation, bounded Work/People pages, selected Source and record history, and desktop/narrow-screen paths. Replace its normal full-inspector refresh with bounded orientation and on-demand reads. Keep My work/Team work, decision boundaries, source IDs, provenance, coverage, and approved artifact-reference behavior in parity with the terminal. Expand the exact Viewer read allowlist only through the contract's security and compatibility review. | D1–D8 pass on the repaired candidate (`docs/SPRINT_NAV_003_RESULT.md`). D4 failed on `6ed7a6b` for a non-accepted needs-review source sentence and was repaired before this verdict. Human tasks remain NOT OBSERVED. Published and deployed as v1.24.0 on October 19, 2026 (snapshot `c08619b`, four checksummed archives, pins `c2d3f1d`/`c397714`, tap `f2e95c7`, Worker `990f18ad`). Earlier sprint observations keep their own rubrics. |
 
-**Open visual alignment after v1.24.0 (October 19):** NAV-003 delivered the
-bounded reads and navigation paths, but its acceptance checks did not require
-the mockup's three-zone composition or reading hierarchy. The released Viewer
-still has horizontal navigation, a dense list, and raw-field detail. That is a
-real product gap against the founder-selected visual target, not a completed
-mockup implementation. A local, unreleased Viewer candidate now puts the
-workspace rail, focused record list, and structured detail pane on one screen
-with Campfire's neutral palette; it collapses secondary summaries and preserves
-the read-only, bounded, provenance, and mobile paths. The local candidate passed
-typecheck, build, and 1,256 tests (one opt-in skip); an independent review found
-and the candidate fixed selected-row/detail alignment, artifact reverse citations,
-narrow focus, and source-ID contrast. The served desktop and 390px list were
-visually checked. Before a release, record the decision separately; this note
-assigns no release version. Candidate captures: [desktop Needs You](evidence/nav-visual-candidate/desktop-needs-you.jpg)
+**Visual alignment closed by v1.24.1 (October 19):** NAV-003 delivered the
+bounded reads and navigation paths, while its acceptance checks did not require
+the mockup's three-zone composition or reading hierarchy. The founder-directed
+v1.24.1 presentation follow-up now puts a workspace rail, focused record list,
+and structured selected-record pane on one wide screen with Campfire's neutral
+palette. It collapses secondary summaries and preserves the read-only, bounded,
+provenance, and mobile paths. The candidate passed typecheck, build, and 1,256
+tests (one opt-in skip); review found and the candidate fixed selected-row/detail
+alignment, artifact reverse citations, narrow focus, and source-ID contrast.
+The served desktop and 390px list were visually checked. The separately
+authorized release is recorded in [the v1.24.1 decision](RELEASE_V1_24_1_DECISION.md):
+four checksummed archives, verified channel pins, green private/public CI,
+Homebrew tap promotion, production Worker `f6f96125`, and a clean isolated
+install containing the matching Viewer assets. Candidate captures: [desktop Needs You](evidence/nav-visual-candidate/desktop-needs-you.jpg)
 and [initial 390px narrow list](evidence/nav-visual-candidate/narrow-list.jpg)
 (the later mobile compression puts the first record higher than that capture).
 

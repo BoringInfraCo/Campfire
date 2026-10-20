@@ -455,6 +455,14 @@ checks recorded in `docs/RELEASE_V1_24_DECISION.md`); publication does not
 change the verdict or the NOT OBSERVED human outcome. The Viewer allowlist
 now contains exactly the previous five reads plus the seven NAV-003 reads;
 `get_workspace` remains for compatibility but is not the normal refresh.
+The founder-directed v1.24.1 Viewer presentation follow-up is published and
+deployed under `docs/RELEASE_V1_24_1_DECISION.md`: private tag `b662c5a4` →
+`a013d4f`, public snapshot `9f91fc9` and annotated tag, GitHub Release with
+four verified checksummed archives, channel pins `f0c5828`/`e1d8777`, tap
+promotion `445fd1e`, and production Worker `f6f96125`. A clean isolated install
+reports 1.24.1 and contains the matching Viewer assets. This presentation
+release leaves NAV-003's CONDITIONAL GO verdict and NOT OBSERVED human outcome
+unchanged; the Viewer remains a loopback-only local page.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
