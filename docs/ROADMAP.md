@@ -1866,6 +1866,23 @@ slot does not authorize publication.
 | [**NAV-002 — Source and People Drill-down**](Campfire-v1.23-NAV-002-Source-and-People-Drill-down.md) (v1.23.0 published under the recorded founder release decision; [result](SPRINT_NAV_002_RESULT.md)) | On-demand People with recorded human–agent relationships, paged Work, and selected source/history. Authorized `list_tasks`, a bounded participant read, a selected-record contribution read, and an opt-in orientation omission for participants. Exact loaded coverage. Terminal stays inspect-only. | D1–D7 pass on the 20-human/37-agent/64-task fixture. Verdict CONDITIONAL GO — engineering candidate. Human comparison NOT OBSERVED. Published and deployed as v1.23.0 on October 19, 2026 (snapshot `8c14621`, four checksummed archives, pins `8c2a546`/`65fff4a`, tap `483a8fd`, Worker `da752833`). Viewer allowlist was not expanded. |
 | [**NAV-003 — Viewer Alignment and Human Use**](Campfire-v1.24-NAV-003-Viewer-Alignment-and-Human-Use.md) (v1.24.0 published under the recorded founder release decision; [result](SPRINT_NAV_003_RESULT.md)) | Give the existing read-only Viewer work-first navigation, bounded Work/People pages, selected Source and record history, and desktop/narrow-screen paths. Replace its normal full-inspector refresh with bounded orientation and on-demand reads. Keep My work/Team work, decision boundaries, source IDs, provenance, coverage, and approved artifact-reference behavior in parity with the terminal. Expand the exact Viewer read allowlist only through the contract's security and compatibility review. | D1–D8 pass on the repaired candidate (`docs/SPRINT_NAV_003_RESULT.md`). D4 failed on `6ed7a6b` for a non-accepted needs-review source sentence and was repaired before this verdict. Human tasks remain NOT OBSERVED. Published and deployed as v1.24.0 on October 19, 2026 (snapshot `c08619b`, four checksummed archives, pins `c2d3f1d`/`c397714`, tap `f2e95c7`, Worker `990f18ad`). Earlier sprint observations keep their own rubrics. |
 
+**Open visual alignment after v1.24.0 (October 19):** NAV-003 delivered the
+bounded reads and navigation paths, but its acceptance checks did not require
+the mockup's three-zone composition or reading hierarchy. The released Viewer
+still has horizontal navigation, a dense list, and raw-field detail. That is a
+real product gap against the founder-selected visual target, not a completed
+mockup implementation. A local, unreleased Viewer candidate now puts the
+workspace rail, focused record list, and structured detail pane on one screen
+with Campfire's neutral palette; it collapses secondary summaries and preserves
+the read-only, bounded, provenance, and mobile paths. The local candidate passed
+typecheck, build, and 1,256 tests (one opt-in skip); an independent review found
+and the candidate fixed selected-row/detail alignment, artifact reverse citations,
+narrow focus, and source-ID contrast. The served desktop and 390px list were
+visually checked. Before a release, record the decision separately; this note
+assigns no release version. Candidate captures: [desktop Needs You](evidence/nav-visual-candidate/desktop-needs-you.jpg)
+and [initial 390px narrow list](evidence/nav-visual-candidate/narrow-list.jpg)
+(the later mobile compression puts the first record higher than that capture).
+
 The mockup's `8/64` work and `8/20` people counts are fictional; production
 counts must come from authorized reads. Its artifact example under **Needs
 You** is also illustrative: the current attention model produces task and

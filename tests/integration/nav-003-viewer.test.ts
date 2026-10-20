@@ -1027,9 +1027,71 @@ describe("NAV-003 viewer navigation", () => {
     expect(narrow).toContain('#stage[data-layer="history"] #list-pane');
     expect(narrow).toContain("overflow-wrap: anywhere");
     expect(narrow).toContain(".record-id");
-    expect(APP_CSS).toContain("grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr)");
+    expect(INDEX_HTML).toContain('id="navigator-rail"');
+    expect(INDEX_HTML).toContain('id="list-pane"');
+    expect(INDEX_HTML).toContain('id="detail-pane"');
+    expect(INDEX_HTML).toContain('id="detail-tabs"');
+    expect(APP_CSS).toContain("grid-template-columns: minmax(180px, 210px) minmax(0, 1fr)");
+    expect(APP_CSS).toContain("grid-template-columns: minmax(320px, 41%) minmax(0, 1fr)");
+    expect(APP_CSS).toContain('#stage[data-layer="preview"] #detail-pane');
     expect(APP_CSS).toContain('#stage[data-section="attention"]');
     expect(APP_CSS).toContain('#stage[data-section="changes"]');
+  });
+
+  it("fills the wide detail pane from the loaded orientation without another read", () => {
+    const { sandbox, calls, elements } = loadNav(() => ({}));
+    vm.runInContext(
+      `state.context = {
+        proposedDecisions: [{ id: "dec_local", status: "proposed", summary: "Review the plan", rationale: "Evidence is still being checked.", createdAt: "2026-10-17T12:00:00Z" }],
+        needsYou: [{ id: "dec_local", kind: "decision", summary: "Review the plan", reason: "proposed_decision_actionable" }]
+      };
+      state.layer = "list";
+      render();`,
+      sandbox,
+    );
+    expect(calls).toHaveLength(0);
+    expect(vm.runInContext("state.layer", sandbox)).toBe("preview");
+    expect(elements["detail-heading"]?.innerHTML).toContain("Review the plan");
+    expect(elements["source-view"]?.innerHTML).toContain("Evidence is still being checked.");
+  });
+
+  it("keeps the loaded preview aligned with keyboard row selection", () => {
+    const { sandbox, calls, elements } = loadNav(() => ({}));
+    vm.runInContext(`state.section = "work"; state.layer = "list"; state.workPage = {
+      items: [
+        { id: "task_one", title: "First task", status: "open", createdAt: "2026-10-17T12:00:00Z" },
+        { id: "task_two", title: "Second task", status: "open", createdAt: "2026-10-17T12:01:00Z" }
+    ], total: 2, returned: 2, truncated: false, cursorStack: [], nextCursor: null
+    }; render();`, sandbox);
+    expect(vm.runInContext("state.detail.id", sandbox)).toBe("task_one");
+    const buttons = ["task_one", "task_two"].map((id) => ({ getAttribute: () => id }));
+    const list = { getAttribute: () => "work", querySelectorAll: () => buttons };
+    sandbox.testList = list;
+    vm.runInContext("moveWithinList(testList, 1)", sandbox);
+    expect(vm.runInContext("state.detail.id", sandbox)).toBe("task_two");
+    expect(elements["detail-heading"]?.innerHTML).toContain("Second task");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("keeps returned artifact citations in the selected Sources tab", () => {
+    const { sandbox } = loadNav(() => ({}));
+    const html = vm.runInContext(`sourceRecordHtml("artifact",
+      { id: "art_runbook", title: "Runbook", type: "document", uriOrPath: "https://example.com/runbook" },
+      [{ id: "find_1", evidence: [{ artifactId: "art_runbook", relation: "supports" }] }])`, sandbox) as string;
+    expect(html).toContain("Cited by (returned findings)");
+    expect(html).toContain("find_1 (supports)");
+  });
+
+  it("moves focus into a visible detail on a narrow screen", async () => {
+    const { sandbox, elements } = loadNav(() => ({}));
+    let focused = false;
+    sandbox.matchMedia = () => ({ matches: true });
+    (elements["panel-back"] as { focus?: () => void }).focus = () => { focused = true; };
+    vm.runInContext(`state.context = { proposedDecisions: [
+      { id: "dec_local", status: "proposed", summary: "Review the plan", rationale: "Evidence", createdAt: "2026-10-17T12:00:00Z" }
+    ] }; state.section = "decisions"; state.layer = "list"; render();`, sandbox);
+    await vm.runInContext('selectRecord("decision", "dec_local")', sandbox);
+    expect(focused).toBe(true);
   });
 });
 

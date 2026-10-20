@@ -7,48 +7,68 @@
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
-    <header>
-      <span class="brand" aria-label="Campfire">
-        <img class="brand-mark" src="/campfire-mark.svg" alt="Campfire" width="18" height="20" />
-      </span>
-      <span id="whoami"></span>
-      <span id="error" hidden></span>
-      <div class="header-tools">
-        <button type="button" id="density" aria-pressed="false">Density</button>
-        <label class="ws">
-          <span class="ws-label">workspace</span>
-          <select id="workspace" aria-label="Workspace"></select>
-        </label>
-        <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Workspace view ↗</a>
-      </div>
-    </header>
-    <!-- SWH-001: one home, two perspectives. Both buttons are native controls;
-         the other perspective is always one visible control away. -->
-    <nav id="perspective" class="perspective" aria-label="Perspectives">
-      <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
-      <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
-    </nav>
-    <nav id="sections" class="sections" aria-label="Sections">
-      <button type="button" id="section-attention" class="section-btn" data-section="attention" aria-pressed="true">Needs You</button>
-      <button type="button" id="section-work" class="section-btn" data-section="work" aria-pressed="false">Work</button>
-      <button type="button" id="section-decisions" class="section-btn" data-section="decisions" aria-pressed="false">Decisions</button>
-      <button type="button" id="section-sources" class="section-btn" data-section="sources" aria-pressed="false">Sources</button>
-      <button type="button" id="section-people" class="section-btn" data-section="people" aria-pressed="false">People</button>
-      <button type="button" id="section-changes" class="section-btn" data-section="changes" aria-pressed="false">Recent changes</button>
-    </nav>
-    <section id="mast" aria-label="Workspace now">
-      <div id="recorded-counts"></div>
-      <p id="last-read"></p>
-      <p id="stale-note" hidden></p>
-      <button type="button" id="retry-refresh" hidden>Retry</button>
-      <div id="people"></div>
-      <div id="goal"></div>
-    </section>
-    <main id="stage" data-section="attention" data-layer="list">
+    <div id="app-shell">
+      <header>
+        <div class="header-identity">
+          <span class="brand" aria-label="Campfire">
+            <img class="brand-mark" src="/campfire-mark.svg" alt="" width="18" height="20" />
+            <span>CAMPFIRE</span>
+          </span>
+          <span class="path-separator" aria-hidden="true">/</span>
+          <label class="ws">
+            <span class="visually-hidden">Workspace</span>
+            <select id="workspace" aria-label="Workspace"></select>
+          </label>
+        </div>
+        <div class="header-tools">
+          <span id="whoami"></span>
+          <button type="button" id="density" aria-pressed="false">Density</button>
+          <a id="generated-view-link" class="generated-view-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Open workspace snapshot ↗</a>
+        </div>
+        <span id="error" role="alert" hidden></span>
+      </header>
+      <section id="mast" aria-label="Workspace goal">
+        <div id="goal"></div>
+        <div class="mast-meta">
+          <p id="last-read"></p>
+          <p id="stale-note" hidden></p>
+          <button type="button" id="retry-refresh" hidden>Retry</button>
+        </div>
+      </section>
+      <div id="workspace-shell">
+        <aside id="navigator-rail" aria-label="Workspace navigation">
+          <div class="rail-top">
+            <p class="rail-label">Navigate</p>
+            <!-- SWH-001: perspectives emphasize the same authorized workspace. -->
+            <nav id="perspective" class="perspective" aria-label="Perspectives">
+              <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
+              <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
+            </nav>
+            <nav id="sections" class="sections" aria-label="Sections">
+              <button type="button" id="section-attention" class="section-btn" data-section="attention" aria-pressed="true">Needs You</button>
+              <button type="button" id="section-work" class="section-btn" data-section="work" aria-pressed="false">Work</button>
+              <button type="button" id="section-decisions" class="section-btn" data-section="decisions" aria-pressed="false">Decisions</button>
+              <button type="button" id="section-sources" class="section-btn" data-section="sources" aria-pressed="false">Sources</button>
+              <button type="button" id="section-people" class="section-btn" data-section="people" aria-pressed="false">People</button>
+              <button type="button" id="section-changes" class="section-btn" data-section="changes" aria-pressed="false">Recent changes</button>
+            </nav>
+          </div>
+          <div class="rail-bottom">
+            <div id="recorded-counts"></div>
+            <div id="people"></div>
+            <p class="rail-caveat">Registered relationships only. Presence and running sessions are not inferred.</p>
+          </div>
+        </aside>
+        <main id="stage" data-section="attention" data-layer="list">
       <div id="list-pane">
-        <label class="row-filter" id="row-filter-label" for="row-filter">Filter loaded rows</label>
-        <input id="row-filter" type="search" autocomplete="off" aria-describedby="filter-note" />
-        <p id="filter-note" class="panel-note">Filter matches loaded rows only.</p>
+        <div class="list-head">
+          <div class="list-title-line"><h1 id="section-heading">Needs you</h1><span id="section-count"></span></div>
+          <p id="section-subtitle">Recorded changes that may need a human response</p>
+          <label class="row-filter" id="row-filter-label" for="row-filter">Filter loaded rows</label>
+          <input id="row-filter" type="search" autocomplete="off" aria-describedby="filter-note" placeholder="Filter these shown records" />
+          <p id="filter-note" class="panel-note">Filter matches loaded rows only.</p>
+        </div>
+        <div class="list-content">
         <div class="section-body" data-section-body="attention">
           <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
             <div id="record-notes" class="panel-body" hidden></div>
@@ -76,16 +96,22 @@
             </div>
             <div id="work-list" data-key-list="work" tabindex="0"></div>
           </section>
-          <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
-            <h2 class="panel-title" id="current-work-title">Current Work</h2>
-            <div id="current-work" class="panel-body"></div>
-          </section>
+          <details class="secondary-disclosure">
+            <summary>My work summary</summary>
+            <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
+              <h2 class="panel-title" id="current-work-title">Current Work</h2>
+              <div id="current-work" class="panel-body"></div>
+            </section>
+          </details>
         </div>
         <div class="section-body" data-section-body="decisions">
-          <section class="panel alignment" aria-labelledby="alignment-title">
-            <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
-            <div id="alignment" class="panel-body"></div>
-          </section>
+          <details class="secondary-disclosure">
+            <summary>Recorded alignment</summary>
+            <section class="panel alignment" aria-labelledby="alignment-title">
+              <h2 class="panel-title" id="alignment-title">Recorded alignment</h2>
+              <div id="alignment" class="panel-body"></div>
+            </section>
+          </details>
           <section class="panel" id="decisions-panel" aria-labelledby="decisions-title">
             <h2 class="panel-title" id="decisions-title">Decisions</h2>
             <p class="panel-note">Accepted decisions stay distinct. This view does not select an operative instruction, and a suggested next action is not permission.</p>
@@ -117,12 +143,21 @@
           </section>
           <section id="stream" class="stream" aria-label="Workstream" data-key-list="changes" tabindex="0"></section>
         </div>
+        </div>
       </div>
       <aside id="detail-pane" aria-label="Selected record">
-        <button type="button" id="panel-back">Back</button>
+        <div class="detail-top">
+          <span class="detail-kicker">Selected source</span>
+          <button type="button" id="panel-back">Back</button>
+        </div>
         <p id="selection-lost" hidden></p>
+        <div id="detail-heading"></div>
+        <nav id="detail-tabs" aria-label="Selected record views" hidden>
+          <button type="button" id="detail-overview" aria-pressed="true">Overview</button>
+          <button type="button" id="detail-sources" aria-pressed="false">Sources</button>
+          <button type="button" id="recorded-changes" hidden>History</button>
+        </nav>
         <div id="source-view"></div>
-        <button type="button" id="recorded-changes" hidden>Recorded changes</button>
         <div id="history-view" hidden>
           <h2 class="panel-title" id="history-heading">Recorded changes</h2>
           <div class="pager">
@@ -132,8 +167,10 @@
           <div id="history-list" data-key-list="history" tabindex="0"></div>
         </div>
       </aside>
-    </main>
-    <p id="hint">tab sections   j/k in a focused list   enter   esc back   p perspective</p>
+        </main>
+      </div>
+      <p id="hint"><span>tab sections</span><span>j/k select shown row</span><span>/ filter</span><span>esc back</span><span>p perspective</span></p>
+    </div>
     <script>
       try {
         var t = new URLSearchParams(window.location.search).get("theme");
