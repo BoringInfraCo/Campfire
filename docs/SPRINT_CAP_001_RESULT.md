@@ -2,7 +2,7 @@
 
 **Date:** October 20, 2026
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass on the local checks recorded below. Codex and OpenCode remain **NOT OBSERVED**. The human comparison is **NOT OBSERVED**. Package version stays `1.24.1`. This result does not bump a version, tag, publish a snapshot, pin an installer, or deploy. No release decision is recorded.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D7 pass, including the export audit in §5. A later smoke ran both harnesses: OpenCode named the fixture ids; Codex stopped on the truncated orientation and did not. Neither called `discover_capabilities`. The human comparison remains **NOT OBSERVED**. Package version stays `1.24.1`. This result does not bump a version, tag, publish a snapshot, pin an installer, or deploy. No release decision is recorded. §5 supersedes the original "both harnesses unavailable" sentence.
 
 **Contract:** `docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md`
 **Step 0:** `1b212fe60e519bc344c91400ee7f5c2f297c3be0` (`docs/evidence/cap-001/step-0/`)
@@ -37,8 +37,9 @@ macOS, this worktree, package `1.24.1`.
 | `npm run build` | pass |
 | `npm run deploy:dry-run` | pass. Wrangler 4.149.0 stopped at `--dry-run: exiting now`. No remote deploy |
 | `npm run pack:tarball` in `/tmp/cap-001-pack` | pass. Darwin ARM64 archive SHA-256 `d7857cbdfc9154ccc3e1d27767caefa912d1cf751787148580784ae94e198f62`. Package metadata `1.24.1`. The main-repo `release/` archive was not overwritten |
+| `node scripts/export-public-release.mjs` from a detached worktree of `59e48e1` | pass. See §5. `docs/evidence/cap-001/candidate/EXPORT_AUDIT.md` |
 
-The isolated pack used an rsync of `node_modules`. A first attempt with `node_modules` as a symlink failed `npm ls --omit=dev` before the installer guard. The immutable installer comparison then passed against `public/campfire/v1.24.1/install.sh` inside that copy. `scripts/package.sh` and `public/campfire/v1.22.0/install.sh` were not edited. `npm run export:public` was not run in this closeout.
+The isolated pack used an rsync of `node_modules`. A first attempt with `node_modules` as a symlink failed `npm ls --omit=dev` before the installer guard. The immutable installer comparison then passed against `public/campfire/v1.24.1/install.sh` inside that copy. `scripts/package.sh` and `public/campfire/v1.22.0/install.sh` were not edited. The export audit was run later and is recorded in §5.
 
 The one skip is the existing opt-in Playwright test in `tests/unit/uix-001-dashboard-pty.test.ts`.
 
@@ -49,8 +50,8 @@ The one skip is the existing opt-in Playwright test in `tests/unit/uix-001-dashb
 | **D3** | PASS on the frozen query cases: controls before trim, query before limit, token AND, ascending ids, recipe summaries from id and goal only (max 2, frozen order), returned / totalMatches / truncated, and the 16 KiB budget. The largest frozen projection is within 16384 bytes. Search JSON for those queries contains none of the answer-key fixture ids. Queries are not evaluated as regular expressions. |
 | **D4** | PASS on the engineering fixture and the static catalog. Discovery and recipe fetch take no store. A denied actor (`hum_cap001_zed`) cannot read `ws_cap001_lab`. Omission text says listing a command or tool is not a grant. Search does not read `outputCaveat`, preconditions, input names, or unavailable text (`whoami` does not match `workspace`; `get_record_history` does not match `workspace` through an input name). |
 | **D5** | PASS. Both frozen recipes parse equal from `getReadRecipe` and from CLI/MCP JSON. Each `JSON.stringify` is under 8192 bytes. Unknown id throws `ValidationError` field `id`, message `Unknown read recipe id.` The continuation walk shows `task_cap001_blocked_later` on page 2 only, status `blocked`, assignee absent, first page truncated, and `dec_cap001_selected` accepted with `needsReview` only because `find_cap001_stale` is non-current. `find_cap001_current` stays current. `needsReview` is not treated as revocation or permission. |
-| **D6** | PASS for the engineering fixture only. Codex is **NOT OBSERVED**. OpenCode is **NOT OBSERVED**. No harness time, call count, or output-byte comparison against the v1.24.1 path is claimed. |
-| **D7** | PASS for typecheck, the full suite, build, isolated `pack:tarball`, and `deploy:dry-run`. The installer guard did not reject the unbumped tree. Public export was not re-run. Version stays `1.24.1`. No channel promotion. |
+| **D6** | The engineering fixture passes. The later live smoke is in §5. OpenCode named the required ids. Codex did not name the later blocked task. Neither used the new discovery tools. No comparison against the v1.24.1 path is claimed. |
+| **D7** | PASS for typecheck, the full suite, build, isolated `pack:tarball`, `deploy:dry-run`, Viewer asset parity, and the public-copy audit in §5. The installer guard did not reject the unbumped tree. Version stays `1.24.1`. No channel promotion. |
 
 ## 3. Deviations
 
@@ -64,4 +65,23 @@ The one skip is the existing opt-in Playwright test in `tests/unit/uix-001-dashb
 
 ## 4. Release boundary
 
-No release decision. No tag, push, or production deploy. The `/tmp` tarball is a packaging check, not a published archive.
+No release decision. No tag, push, or production deploy. The `/tmp` tarball and the `/tmp/cap-001-public-export` snapshot are local checks, not published artifacts.
+
+## 5. Addendum — harness smoke and export audit
+
+**Date:** October 20, 2026. Evidence: `docs/evidence/cap-001/candidate/HARNESS_SMOKE.md` and `docs/evidence/cap-001/candidate/EXPORT_AUDIT.md`. This addendum does not change the engineering verdict to GO and does not record a release decision. The human comparison remains **NOT OBSERVED**.
+
+### Harness smoke
+
+One cold read-only session per harness, same prompt, no pasted tool list, no fixture ids in the prompt. Each session used its own seeded copy of `fixtures/cap-001` through local `campfire mcp`. `CAMPFIRE_URL` was unset. Real `~/.codex` and OpenCode configs were not modified. `campfire up` was not run. Port 9414 stayed down. Preflight `tools/list` returned 40 tools, including `discover_capabilities` and `get_read_recipe`. Neither database gained a contribution.
+
+| Harness | Model | Duration | Discovery tool | Result |
+| --- | --- | --- | --- | --- |
+| Codex CLI 0.163.0 | `gpt-6.1-sol` | 37.95 s | not called | **Incomplete.** `list_workspaces` and `get_workspace_context` only. It reported the task slice as 20 of 21, `truncated: true`, and refused to name the later task. It named `dec_cap001_selected` as accepted with `needsReview` true, and did not read `find_cap001_stale`. It did not treat `needsReview` as revocation. |
+| OpenCode 2.1.1 | `opencode/big-pickle` | 36.35 s | harness tool search, not `discover_capabilities` | **Ids correct.** `task_cap001_blocked_later` is `blocked` and was absent from the truncated first page. `dec_cap001_selected` is accepted and needs review because `find_cap001_stale` is superseded. `find_cap001_current` stays current. No write. |
+
+Neither session called `discover_capabilities`, `get_read_recipe`, or `campfire capabilities --search`. OpenCode found the connected Campfire tools through its own tool index, then paged `list_tasks` and read the decision and findings. That is a correct fixture answer. It is not evidence that the new catalog is what the agent used. Codex's stop was honest about truncation and still failed the blocked-task identification. The GO bar — both live harnesses finish with the correct cited ids — is not met. This is not an authorization or source-corruption failure, so it does not by itself move the engineering verdict to NO-GO.
+
+### Export audit
+
+`node scripts/export-public-release.mjs --ref 59e48e1455afbc6c894c3a692bf13dd393375da7 --output /tmp/cap-001-public-export` exited 0 from a detached worktree. Printed version `v1.24.1`, 349 files, forbidden-path and secret-content scan passed. `src/catalog/capability-search.ts` is in the snapshot. `docs/evidence` is not. The four served Viewer assets match `src/viewer/static/`. `fixtures/cap-001/` is included because `fixtures/` is an allowlisted prefix and that directory is not in the private-prefix list. The seed contains synthetic ids, not a credential. The snapshot was not published.

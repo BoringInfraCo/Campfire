@@ -466,9 +466,12 @@ unchanged; the Viewer remains a loopback-only local page.
 
 Sprint CAP-001 — Discover and Compose is an engineering candidate on package
 `1.24.1` (version not bumped). The result is `docs/SPRINT_CAP_001_RESULT.md`:
-**CONDITIONAL GO — engineering candidate**. D1–D7 pass on the local checks.
-Codex and OpenCode remain **NOT OBSERVED**. The human comparison is
-**NOT OBSERVED**. No release decision, tag, or deployment is recorded. The
+**CONDITIONAL GO — engineering candidate**. D1–D7 pass, including the
+public-copy audit. A later smoke
+(`docs/evidence/cap-001/candidate/HARNESS_SMOKE.md`) ran both harnesses:
+OpenCode named the fixture ids; Codex stopped on the truncated orientation
+and did not. Neither called `discover_capabilities`. The human comparison
+is **NOT OBSERVED**. No release decision, tag, or deployment is recorded. The
 search corpus is the frozen Step 0 operation set plus explicit omissions. It
 does not add a code runner, a domain object, a migration, or a Viewer
 allowlist entry.
