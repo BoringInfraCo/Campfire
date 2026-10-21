@@ -1,0 +1,89 @@
+{
+  "kind": "read_recipe",
+  "recipeVersion": 1,
+  "id": "continue-blocked-work",
+  "goal": "Follow existing authorized reads until a selected task and its recorded evidence are identified, including a task that is not on the first bounded page.",
+  "steps": [
+    {
+      "operationId": "list_workspaces",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]" },
+        "mcp": { "tool": "list_workspaces" }
+      },
+      "stopWhen": "Stop if the list is empty or the client has not selected one returned workspace id. This method is not a cursor page.",
+      "coverageCaveat": "The list is this actor's memberships from this call, not every workspace on the instance."
+    },
+    {
+      "operationId": "get_workspace_context",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire context [workspace] [--since <contributionId>] [--output auto|human|json]" },
+        "mcp": { "tool": "get_workspace_context" }
+      },
+      "stopWhen": "If slices.tasks.truncated is true or the selected task id is absent from slices.tasks.items, continue to list_tasks. Do not treat suggestedNextAction as the selected task or as permission.",
+      "coverageCaveat": "Default task budget is 20 and blocker budget is 10. returned, total, and truncated describe the slice. Orientation findings are the current page only. attentionCoverage.completeUnderRules is false when the task or decision slice is truncated. needsReview is not revocation."
+    },
+    {
+      "operationId": "list_tasks",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire tasks [workspace] [--status open|in_progress|blocked|completed] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]" },
+        "mcp": { "tool": "list_tasks" }
+      },
+      "stopWhen": "Page only while nextCursor is present, and only for this actor and workspace. Stop when the selected task id appears or nextCursor is absent. truncated true with no nextCursor is the end of this traversal, not another page, and not proof the first page was complete.",
+      "coverageCaveat": "Default limit is 20. A cursor from this page must not be reused for another actor or workspace."
+    },
+    {
+      "operationId": "get_task",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect task <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_task" }
+      },
+      "stopWhen": "Stop if the read is denied or the task is missing. Record status, recorded assignee if any, and provenance. Do not change status and do not infer that an assignee is live.",
+      "coverageCaveat": "One task. Not a workspace page."
+    },
+    {
+      "operationId": "get_decision",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect decision <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_decision" }
+      },
+      "stopWhen": "Run only for a decision id already present on an authorized read in this sequence. If none was recorded, skip and label the gap. Do not search for a likely decision.",
+      "coverageCaveat": "One decision. Report proposed, accepted, or accepted-and-needsReview from the record. needsReview is not revocation."
+    },
+    {
+      "operationId": "get_finding",
+      "inputsFrom": "citations[].findingId",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect finding <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_finding" }
+      },
+      "stopWhen": "Read only finding ids on the recorded citations. If a citation is missing or denied, label that gap and do not substitute orientation text.",
+      "coverageCaveat": "One finding per call. Keep current and non-current findings distinct."
+    },
+    {
+      "operationId": "get_artifact",
+      "inputsFrom": "evidence[].artifactId",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect artifact <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_artifact" }
+      },
+      "stopWhen": "Run only when a finding in this sequence records an evidence artifact id. Otherwise skip. Do not open external bytes.",
+      "coverageCaveat": "Stored reference only."
+    },
+    {
+      "operationId": "get_record_history",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "unavailable": "MCP-only read. campfire activity is workspace-wide and is not this record history." },
+        "mcp": { "tool": "get_record_history" }
+      },
+      "stopWhen": "Run when the change sequence for the selected task or a cited decision matters. A CLI client stops and labels the record-history gap. Do not call campfire activity as a substitute and do not fabricate contribution ids.",
+      "coverageCaveat": "Default page is 10 and maximum is 50, for that object only. Pass nextCursor only for this same object, actor, and workspace. No nextCursor means this traversal has no further row."
+    }
+  ],
+  "resultContract": "The handoff names the selected record ids, lifecycle state, provenance, currentness of cited findings, coverage (returned, total, truncated, and whether nextCursor was present), and unresolved gaps. It does not claim a truncated page was complete, does not treat needsReview as revocation or permission, does not infer a live assignee, and does not change task status."
+}

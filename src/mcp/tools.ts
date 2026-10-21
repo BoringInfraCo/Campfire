@@ -14,6 +14,7 @@ import { CampfireError, ValidationError } from "../domain/errors.js";
 import { FINDING_EVIDENCE_RELATIONS } from "../domain/types.js";
 import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
+import { getReadRecipe, searchCapabilities } from "../catalog/capability-search.js";
 import { getPlaybook } from "../playbooks/index.js";
 import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService } from "../service/service.js";
@@ -736,6 +737,41 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       },
     },
     (args) => run("add_artifact", () => invoke("add_artifact", args)),
+  );
+
+  function catalogResult(fn: () => unknown): CallToolResult {
+    try {
+      return ok(fn());
+    } catch (error) {
+      if (error instanceof CampfireError) {
+        return fail(error.code, error.message, error.details);
+      }
+      console.error("[campfire-mcp] unexpected tool error:", error);
+      return fail("InternalError", error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  server.registerTool(
+    "discover_capabilities",
+    {
+      description:
+        "Search the local installed-operation catalog. This is not a workspace read, not a grant, and not an authorization result. Returns matching operation entries and at most two recipe summaries.",
+      inputSchema: { query: z.string(), limit: z.number().optional() },
+    },
+    (args) =>
+      catalogResult(() =>
+        searchCapabilities(args.query, args.limit, { playbookEnabled: options.playbookEnabled === true }),
+      ),
+  );
+
+  server.registerTool(
+    "get_read_recipe",
+    {
+      description:
+        "Return one static read recipe by id. Navigation guidance only. It does not read a workspace, run the steps, or grant access.",
+      inputSchema: { id: z.string() },
+    },
+    (args) => catalogResult(() => getReadRecipe(args.id)),
   );
 
   if (options.playbookEnabled === true) {

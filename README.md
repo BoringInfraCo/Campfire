@@ -40,7 +40,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.24.1/install.sh | sh -s -- --version 1.24.1
+curl -fsSL https://boringinfra.company/campfire/v1.25.0/install.sh | sh -s -- --version 1.25.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
@@ -76,6 +76,32 @@ CAMPFIRE_PLAYBOOK=1 campfire playbook incident-investigation --output json
 tool for that MCP session. Reading it does not change a workspace or run a
 workflow. The synthetic pilot and its limits are summarized in
 `CHANGELOG.md`.
+
+### Capability discovery and read recipes
+
+v1.25 adds a bounded, deterministic description of the installed interface and
+two static read recipes:
+
+```bash
+campfire capabilities --search "blocked work" --output json
+campfire capabilities --recipe continue-blocked-work --output json
+campfire capabilities --recipe review-decision-basis --output human
+```
+
+MCP exposes the read-only `discover_capabilities` and `get_read_recipe` tools.
+The unqualified `campfire capabilities --output json` manifest and its
+version-1 envelope are unchanged.
+
+A search result names a candidate operation; it is not a verified plan, an
+authorization result, or a grant. Search opens no workspace store and exposes
+no workspace name, id, row count, membership verdict, token, secret, or
+credential receipt. A recipe is a sequence of references to existing
+authorized reads, not a server transaction: the client supplies workspace ids
+and cursors from prior authorized results, and the invoked read enforces
+authorization. Recipes do not write, run code, or store workspace data. Both
+targeted harness smoke runs used discovery and the recipes and named the
+required ids; automatic adoption and improved continuation remain unproven,
+and the human comparison is NOT OBSERVED. See `CHANGELOG.md`.
 
 ### Experimental Recall and handoff packet
 

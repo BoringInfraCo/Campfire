@@ -1,6 +1,6 @@
-# Campfire 1.24.1 release context
+# Campfire 1.25.0 release context
 
-This public source snapshot was exported on 2026-10-20 from private canonical source commit `a013d4f1055f56686f5cb9fc3e67e87a41a99364` (dated 2026-10-19T21:51:58-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-21 from private canonical source commit `4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f` (dated 2026-10-20T21:06:01-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -47,21 +47,24 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - The terminal Navigator now drills down with bounded authorized reads: paged Work (`n`/`b` over `list_tasks` pages with per-page counts and totals), an on-demand People section built only from workspace participants and recorded `humanOwnerId` links (an owner outside the workspace roster is labeled, never silently included), and recorded per-record history (`h`) showing exactly the matching contributions with `returned X of Y`, a more/complete heading, a per-page read time, and a frozen traversal high-water mark so later writes cannot enter an older page set. Two read-only MCP tools (`list_workspace_participants`, `get_record_history`) and one opt-in `participants: "omit"` orientation option back the views; cursors bind to workspace, selection, and traversal; the `/` filter stays local to the loaded page; and registration, role, and join time never become live presence or permission. Human comprehension of the drill-down surfaces is NOT OBSERVED; NAV-002 is a founder-directed engineering candidate for real-user testing and moves no gate.
 - The read-only browser Viewer now offers the same focused navigation path as the terminal Navigator: top-level Needs You / Needs Attention, Work, Decisions, Sources, People, and Recent changes, with My work / Team work as a perspective control over the same authorized workspace; on-demand `list_tasks` and `list_workspace_participants` pages (20 rows, `returned X of Y`, opaque cursors, bounded local back stack, and a server-side `humanOwnerId` filter for a selected human's participating agents); a selected Source view over `get_task`/`get_decision`/`get_finding`/`get_artifact`; and recorded per-record history over `get_record_history` (default 10 rows, frozen traversal tip). The normal refresh no longer requests the full `get_workspace` inspector: orientation uses `get_workspace_context` with `participants: "omit"` plus bounded `get_activity`. The Viewer allowlist is exactly the previous five reads plus seven existing reads; writes and unknown methods are rejected before dispatch. The browser-facing history result omits the raw contribution `payload` and returns only a bounded `payloadSummary` (HTTP, MCP, and the CLI keep their existing shapes). At 390×844 the path becomes a list → source → history stack with an explicit Back control; at 1440×900 list and detail sit side by side; Tab/Enter/Space/Escape and focus restoration use native controls. Needs-review and competing accepted decisions stay distinct, the external-open control for the approved HTTPS class keeps its host label, `noopener noreferrer`, and unverified caveat, and recorded relationships are never rendered as live presence or permission. Human comprehension of the Viewer navigation is NOT OBSERVED; NAV-003 is a founder-directed engineering candidate for real-user testing and moves no gate.
 - The v1.24.1 presentation follow-up gives that read model the focused Navigator layout: a workspace rail, one record list, and a structured selected-record pane on wide screens, with a compact list → source → history path on narrow screens. Keyboard row selection and detail remain aligned; selected artifacts keep returned finding citations, narrow drill-down moves focus to a visible control, and selected source IDs retain readable contrast. The underlying reads, authorization, provenance, and reference safety do not change. The roadmap mockup's counts and green palette remain illustrative.
+- Capability discovery describes the installed interface through one bounded, versioned search projection shared by the CLI and MCP, and two static read recipes compose existing authorized reads for continuing blocked work and reviewing a decision's basis. Discovery reads no workspace and grants nothing; recipes run no server work and write nothing. Both targeted harness runs used discovery and the recipes and named the required ids. Automatic adoption and improved continuation over v1.24.1 remain unproven, and the optional non-builder human comparison is NOT OBSERVED.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.24.1.
+- The versioned installer source for v1.25.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.24.1 candidate passed type checking,
+At source preparation, the private 1.25.0 candidate passed type checking,
 build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. The full suite had 100 files / 1,257 tests with 1,255
+Worker deployment dry run. The full suite had 103 files / 1,300 tests with 1,298
 passing, one opt-in terminal capture skipped by default, and one expected
-install-channel assertion awaiting the four v1.24.1 release checksums;
-that assertion was not loosened. The public export audit, archive
+install-channel assertion awaiting the four v1.25.0 release checksums;
+that assertion was not loosened. The audited public snapshot also ran its
+exported CAP-001 tests (36 passed) against the copied frozen contract data,
+without exporting `docs/evidence/`. The public export audit, archive
 verification, channel pins, production deployment, and live installer check are
 separate promotion steps and are recorded only when performed. This source
 snapshot does not establish a human comprehension result, Gate E/B/C, or a
