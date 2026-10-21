@@ -341,7 +341,12 @@ function utcMonday(column) {
  * `src/telemetry/contract.ts` as a literal list so this file stays
  * dependency-free and importable from another repository for parity checks.
  */
-const TELEMETRY_TEST_INSTALLATION_IDS = ["11111111-2222-4333-8444-555555555555"];
+const TELEMETRY_TEST_INSTALLATION_IDS = [
+  "3f6b0e2a-1c4d-4a7e-9b8f-0d2e5c7a91b3",
+  "11111111-2222-4333-8444-555555555555",
+  // 2026-10-21 deploy verification of the brew/nix bootstrap path. Synthetic.
+  "10000000-0000-4000-8000-000000000000",
+];
 
 /**
  * SQL predicate excluding test installation ids. `NOT IN` keeps the predicate
