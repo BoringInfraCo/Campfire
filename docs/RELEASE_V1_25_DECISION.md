@@ -93,7 +93,7 @@ Each step is recorded with its evidence as it completes; no check is loosened. P
 | Step | Evidence |
 | --- | --- |
 | Founder direction and release-prep revision | This document and release-prep commit on `main`; `package.json` and `package-lock.json` at `1.25.0`; tracked `public/campfire/v1.25.0/install.sh`; prior installer copies verified untouched. |
-| Release-prep verification battery | Pending. |
+| Release-prep verification battery | PASS at `a8a7186`: `npm run typecheck`; full `npm test` 103 files / 1,298 passed / 1 pre-recorded install-channel failure / 1 opt-in skip (1,300); `npm run build`; `npm run deploy:dry-run` (75 assets); `npm run pack:tarball` (extracted package `1.25.0`); audited public export at the same commit wrote 357 files and its exported CAP-001 tests passed 36/36. The install-channel failure remains the expected pre-pin assertion and was not loosened. |
 | Private annotated `v1.25.0` tag | Pending. |
 | Audited public source snapshot and tag | Pending. |
 | Public GitHub Release and four checked archives | Pending. |
