@@ -92,7 +92,7 @@ export function resolveTelemetryTarget(
  */
 export async function reportTelemetryEvent(
   event: TelemetryEventName,
-  extra: { installMethod?: "curl"; surface?: TelemetrySurface },
+  extra: { installMethod?: string; surface?: TelemetrySurface },
   options: TelemetryReportOptions = {},
 ): Promise<{ ok: boolean; error?: string } | undefined> {
   const target = resolveTelemetryTarget(options);
@@ -147,15 +147,19 @@ export async function reportActive(
  * A successful local install. The official curl installer performs its own
  * best-effort POST from `install.sh`; this is the equivalent for a CLI-side
  * completion, and both are locally claimed so one installation reports once.
+ *
+ * The `installMethod` override is how package-manager installs (brew/nix,
+ * detected by `detectInstallMethod` and wired in `runCli`) report their own
+ * channel; the default stays `curl` for the shell installer path.
  */
 export async function reportInstallCompleted(
-  options: TelemetryReportOptions = {},
+  options: TelemetryReportOptions & { installMethod?: string } = {},
 ): Promise<void> {
   const env = options.env ?? process.env;
   if (!isTelemetryEnabled(env)) return;
   const installationId = claimInstallCompleted(env);
   if (installationId === "") return;
-  await reportTelemetryEvent("install_completed", { installMethod: "curl" }, { ...options, env });
+  await reportTelemetryEvent("install_completed", { installMethod: options.installMethod ?? "curl" }, { ...options, env });
 }
 
 /**

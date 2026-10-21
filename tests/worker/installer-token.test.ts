@@ -72,6 +72,9 @@ function fakeGuard(onIssue: (call: IssuedCall) => "issued" | "error" = () => "is
     async completeInstall() {
       return "error";
     },
+    async claimInstallDirect() {
+      return "error";
+    },
     async claimActivation() {
       return "error";
     },

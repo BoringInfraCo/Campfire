@@ -128,6 +128,12 @@ function fakeGuard(state: FakeGuardState): TelemetryGuard {
       state.installs.add(installationId);
       return "accepted";
     },
+    async claimInstallDirect({ installationId }) {
+      if (state.broken) return "error";
+      if (state.installs.has(installationId)) return "duplicate";
+      state.installs.add(installationId);
+      return "claimed";
+    },
     async claimActivation({ installationId }) {
       if (state.broken) return "error";
       if (!state.installs.has(installationId)) return "no_install";
@@ -507,5 +513,163 @@ describe("gated ingestion with a fake guard", () => {
     expect(ops.points).toEqual([
       { indexes: ["ingest_outcome"], blobs: ["accepted", "ok", "activated"], doubles: [1] },
     ]);
+  });
+});
+
+describe("package-manager bootstrap installs (brew/nix)", () => {
+  function bootstrapOptions(
+    guardState: FakeGuardState,
+    extra: Partial<TelemetryIngestOptions> = {},
+  ): { options: TelemetryIngestOptions; main: DataPoint[]; ops: DataPoint[] } {
+    const main = fakeDataset();
+    const ops = fakeDataset();
+    return {
+      options: {
+        dataset: main.dataset,
+        opsDataset: ops.dataset,
+        guard: fakeGuard(guardState),
+        now: () => NOW_AFTER,
+        gateMode: "enforce",
+        ...extra,
+      },
+      main: main.points,
+      ops: ops.points,
+    };
+  }
+
+  function installCompletedBody(overrides: Record<string, unknown> = {}): string {
+    return JSON.stringify({
+      schemaVersion: 1,
+      event: "install_completed",
+      installationId: ID_A,
+      campfireVersion: "1.25.0",
+      os: "darwin",
+      arch: "arm64",
+      ...overrides,
+    });
+  }
+
+  it("accepts a tokenless brew install once via the direct claim", async () => {
+    const { options: opts, main, ops } = bootstrapOptions(fakeGuardState());
+    const response = await handleTelemetryEvent(opts, post(installCompletedBody({ installMethod: "brew" })));
+    expect(await response.json()).toEqual({ ok: true, result: { recorded: true } });
+    expect(main).toHaveLength(1);
+    expect(main[0]?.blobs?.[5]).toBe("brew");
+    expect(ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["accepted", "bootstrap_brew", "install_completed"], doubles: [1] },
+    ]);
+  });
+
+  it("accepts a tokenless nix install once via the direct claim", async () => {
+    const { options: opts, main, ops } = bootstrapOptions(fakeGuardState());
+    const response = await handleTelemetryEvent(opts, post(installCompletedBody({ installMethod: "nix" })));
+    expect(await response.json()).toEqual({ ok: true, result: { recorded: true } });
+    expect(main).toHaveLength(1);
+    expect(main[0]?.blobs?.[5]).toBe("nix");
+    expect(ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["accepted", "bootstrap_nix", "install_completed"], doubles: [1] },
+    ]);
+  });
+
+  it("deduplicates a replayed brew install", async () => {
+    const state = fakeGuardState();
+    const first = bootstrapOptions(state);
+    await handleTelemetryEvent(first.options, post(installCompletedBody({ installMethod: "brew" })));
+    expect(first.main).toHaveLength(1);
+
+    const second = bootstrapOptions(state);
+    const replay = await handleTelemetryEvent(second.options, post(installCompletedBody({ installMethod: "brew" })));
+    expect(await replay.json()).toEqual({ ok: true, result: { recorded: false } });
+    expect(second.main).toHaveLength(0);
+    expect(second.ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["deduplicated", "duplicate_install", "install_completed"], doubles: [1] },
+    ]);
+  });
+
+  it("rejects an absent-method tokenless install in enforce (curl channel)", async () => {
+    const { options: opts, main, ops } = bootstrapOptions(fakeGuardState());
+    const response = await handleTelemetryEvent(opts, post(installCompletedBody()));
+    expect(await response.json()).toEqual({ ok: true, result: { recorded: false } });
+    expect(main).toHaveLength(0);
+    expect(ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["rejected", "invalid_token", "install_completed"], doubles: [1] },
+    ]);
+  });
+
+  it("rejects an explicit curl tokenless install in enforce", async () => {
+    const { options: opts, main, ops } = bootstrapOptions(fakeGuardState());
+    const response = await handleTelemetryEvent(opts, post(installCompletedBody({ installMethod: "curl" })));
+    expect(await response.json()).toEqual({ ok: true, result: { recorded: false } });
+    expect(main).toHaveLength(0);
+    expect(ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["rejected", "invalid_token", "install_completed"], doubles: [1] },
+    ]);
+  });
+
+  it("accepts a brew install carrying a token without consuming it", async () => {
+    const state = fakeGuardState();
+    state.tokens.add(TOKEN_A);
+    const { options: opts, main, ops } = bootstrapOptions(state);
+    const response = await handleTelemetryEvent(
+      opts,
+      post(installCompletedBody({ installMethod: "brew", installToken: TOKEN_A })),
+    );
+    expect(await response.json()).toEqual({ ok: true, result: { recorded: true } });
+    expect(main).toHaveLength(1);
+    expect(ops).toEqual([
+      { indexes: ["ingest_outcome"], blobs: ["accepted", "bootstrap_brew", "install_completed"], doubles: [1] },
+    ]);
+    // The token survives: a package-manager client has no legitimate way to
+    // hold one, so consuming it would let token theft burn installer tokens.
+    expect(state.tokens.has(TOKEN_A)).toBe(true);
+
+    // And it is still valid for a later curl-channel use.
+    const curl = bootstrapOptions(state);
+    const curlResponse = await handleTelemetryEvent(
+      curl.options,
+      post(installCompletedBody({ installationId: ID_B, installMethod: "curl", installToken: TOKEN_A })),
+    );
+    expect(await curlResponse.json()).toEqual({ ok: true, result: { recorded: true } });
+    expect(state.tokens.has(TOKEN_A)).toBe(false);
+  });
+
+  it("claims a direct install once over real SQL and stores digests only", async () => {
+    const state = sqliteD1();
+    state.database.exec(V9_SQL);
+    const guard = createD1TelemetryGuard(state.binding);
+    expect(await guard.claimInstallDirect({ installationId: ID_A, now: NOW_AFTER_ISO })).toBe("claimed");
+    expect(await guard.claimInstallDirect({ installationId: ID_A, now: NOW_AFTER_ISO })).toBe("duplicate");
+    // The direct claim satisfies the later activation gate like a token claim.
+    expect(await guard.claimActivation({ installationId: ID_A })).toBe("claimed");
+    const dump = await tableDump(state.database);
+    expect(dump).not.toContain(ID_A);
+  });
+
+  it("fails the direct claim open when d1 throws", async () => {
+    const guard = createD1TelemetryGuard(throwingGuardDb());
+    expect(await guard.claimInstallDirect({ installationId: ID_A, now: NOW_AFTER_ISO })).toBe("error");
+  });
+
+  it("keeps ids and addresses out of bootstrap ops points", async () => {
+    const { options: opts, main, ops } = bootstrapOptions(fakeGuardState());
+    await handleTelemetryEvent(
+      opts,
+      post(installCompletedBody({ installMethod: "brew" }), { "CF-Connecting-IP": "203.0.113.7" }),
+    );
+    await handleTelemetryEvent(
+      opts,
+      post(installCompletedBody({ installationId: ID_B, installMethod: "nix" }), { "CF-Connecting-IP": "203.0.113.7" }),
+    );
+    expect(main).toHaveLength(2);
+    expect(ops).toHaveLength(2);
+    const leaked = ops.map((point) => JSON.stringify(point)).join("\n");
+    for (const secret of [ID_A, ID_B, "203.0.113.7"]) {
+      expect(leaked, secret).not.toContain(secret);
+    }
+    for (const point of ops) {
+      expect(point.indexes).toEqual(["ingest_outcome"]);
+      expect(point.blobs).toHaveLength(3);
+      expect(point.doubles).toEqual([1]);
+    }
   });
 });

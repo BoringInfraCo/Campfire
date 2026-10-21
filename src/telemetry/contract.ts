@@ -42,8 +42,16 @@ export function isTelemetryEventName(value: unknown): value is TelemetryEventNam
   return typeof value === "string" && TELEMETRY_EVENT_SET.has(value);
 }
 
-/** The only install method Campfire ships. */
-export const TELEMETRY_INSTALL_METHODS = ["curl"] as const;
+/** The install channels Campfire admits.
+ *
+ * - `curl` is the official shell installer (`install.sh`): the Worker bakes a
+ *   single-use token into the served bytes, so the claim is token-proven.
+ * - `brew`/`nix` are package-manager bootstraps (Homebrew formula, Nix flake):
+ *   they install the same release archives but never fetch the installer, so
+ *   they hold no token. Their claims are self-reported, never token-proven,
+ *   and the dashboard must label them as unverified rather than proven.
+ */
+export const TELEMETRY_INSTALL_METHODS = ["curl", "brew", "nix"] as const;
 export type TelemetryInstallMethod = (typeof TELEMETRY_INSTALL_METHODS)[number];
 
 /**

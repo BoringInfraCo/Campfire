@@ -142,6 +142,7 @@ import {
   reportActive,
   telemetryInBackground,
 } from "../telemetry/report.js";
+import { maybeReportPackageManagerInstall } from "../telemetry/install-method.js";
 import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
@@ -2743,6 +2744,22 @@ export async function runCli(argv: string[]): Promise<void> {
   if (parsed.flags.help === true) {
     printHelp(parsed.command);
     return;
+  }
+
+  // Package-manager installs (brew/nix) never fetch install.sh, so the shell
+  // installer never reports for them. Claim install_completed here on the
+  // first CLI run instead. Curl installs report from install.sh, and
+  // detectInstallMethod returns undefined for them, so this stays silent for
+  // that channel and cannot double-report it. `telemetry` is excluded because
+  // `status` must stay a pure read that mints no installation id; `help` and
+  // unknown commands report nothing because no install ran.
+  if (
+    parsed.command === undefined ||
+    (isKnownCommand(parsed.command) &&
+      parsed.command !== "telemetry" &&
+      parsed.command !== "help")
+  ) {
+    maybeReportPackageManagerInstall({ env: process.env });
   }
 
   if (parsed.command === undefined) {

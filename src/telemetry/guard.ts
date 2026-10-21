@@ -49,6 +49,14 @@ export interface TelemetryGuard {
   }): Promise<InstallCompletion>;
   /** Claim the one activation for an installation that completed install. */
   claimActivation(input: { installationId: string }): Promise<IdempotencyClaim>;
+  /**
+   * Claim an install without touching any token: the package-manager
+   * bootstrap path (`brew`/`nix`). Homebrew/Nix users never fetch the
+   * installer, so they hold no single-use token; this INSERTs the install
+   * claim directly (`INSERT OR IGNORE` semantics via `insertClaim`) and never
+   * reads, writes, or consumes the token table.
+   */
+  claimInstallDirect(input: { installationId: string; now: string }): Promise<"claimed" | "duplicate" | "error">;
   /** Claim one active day (`YYYY-MM-DD` UTC) for an installed installation. */
   claimActive(input: { installationId: string; date: string }): Promise<IdempotencyClaim>;
 }
@@ -152,6 +160,15 @@ export function createD1TelemetryGuard(db: GuardD1Database): TelemetryGuard {
         if (inserted === "claimed") return "accepted";
         if (inserted === "duplicate") return "duplicate";
         return "error";
+      } catch {
+        return "error";
+      }
+    },
+
+    async claimInstallDirect(input): Promise<"claimed" | "duplicate" | "error"> {
+      try {
+        const digest = await telemetryClaimHash(input.installationId);
+        return insertClaim(INSTALL_KIND, installClaimKey(digest), input.now);
       } catch {
         return "error";
       }

@@ -38,7 +38,7 @@ Every payload carries these seven dimensions:
 | `campfireVersion` | for example `1.8.0`, or `unknown` | the installed release |
 | `os` | `darwin`, `linux`, `win32`, or `unknown` | normalized platform |
 | `arch` | `arm64`, `x64`, or `unknown` | normalized architecture |
-| `installMethod` | `curl`, or absent | how Campfire was installed |
+| `installMethod` | `curl`, `brew`, `nix`, or absent | how Campfire was installed |
 | `surface` | `cli`, `agent`, `mcp`, or absent | where the event came from |
 
 plus `installationId`: a random UUIDv4 created on your machine, described below.
@@ -66,8 +66,11 @@ The contract additionally accepts one optional field, `installToken`, on
 installer bytes. The guard consumes it once and forgets it. It is not a
 dimension — it never reaches Analytics Engine storage — and a token on any
 other event is malformed. Because every served installer carries a token,
-`enforce` mode treats a tokenless `install_completed` as a forgery, a replay,
-or an unmeasured fetch rather than as honest traffic.
+`enforce` mode treats a tokenless `install_completed` on the `curl` channel
+(explicit `curl`, or an absent/unknown method) as a forgery, a replay,
+or an unmeasured fetch rather than as honest traffic. The closed rule is:
+a tokenless install is accepted IFF the method is `brew` or `nix`
+(see "Package-manager bootstrap" below).
 
 Payloads are hard-capped at 2 KB by the receiving endpoint. A larger body is
 refused rather than stored.
@@ -102,6 +105,52 @@ budget the Worker serves the bytes unchanged (no token, still one
 its telemetry proof is deferred to a retry. Limiter errors fail open, minting
 as today. No address is stored anywhere; only an opaque derived key reaches
 the binding.
+
+### Package-manager bootstrap (brew/nix)
+
+Homebrew and Nix install the same release archives as the curl installer,
+but they never fetch `install.sh`, so they never receive a single-use
+install token. Without a bootstrap path the live `enforce` gate would reject
+their `activated`/`active` events as `no_install` forever.
+
+Channel trust levels:
+
+- `curl` — **token-proven.** The Worker baked a single-use token into the
+  served installer bytes; the guard consumed it exactly once. This is the
+  official shell installer channel.
+- `brew` / `nix` — **labeled, unverified.** The claim is self-reported: the
+  server records the install (`INSERT OR IGNORE`, no token touched) so the
+  later `activated`/`active` gate passes, and stores the declared method in
+  `blob6` so dashboards can label the channel. It is never presented as
+  token-proven.
+
+Rules:
+
+- A tokenless `install_completed` is accepted IFF the method is `brew` or
+  `nix`. Absent/unknown method follows the `curl` channel and still requires
+  a valid token in `enforce`.
+- A token riding a `brew`/`nix` payload is ignored and deliberately NOT
+  consumed: a package-manager client has no legitimate way to hold one, and
+  consuming it would let token theft burn installer tokens.
+- A duplicated bootstrap install is deduplicated (`recorded: false`), never
+  an error. A guard outage fails open.
+- Ops outcomes record `accepted` with reason `bootstrap_brew` or
+  `bootstrap_nix` (no id, no address, no token). Queries that need
+  token-proven installs only must filter `blob6 = 'curl'`; counts over all
+  three methods include the self-reported bootstrap channel.
+
+Which client reports which method: `curl` installs report from `install.sh`
+itself, on every successful install, and the CLI never reports for that
+channel. `brew`/`nix` installs never fetch `install.sh`, so the first CLI run
+claims `install_completed` instead (`detectInstallMethod` in
+`src/telemetry/install-method.ts`, hooked in `runCli` for every command except
+`telemetry` and `help`): `brew` for a Homebrew prefix (`/Cellar/`,
+`/Homebrew/`, `/homebrew/` in the executable path), `nix` for `/nix/store`,
+and nothing for anything else. Both writers share the one
+`installCompletedReported` claim in the same `telemetry.json` (the shell
+writes it when it creates the file; the CLI claims it via
+`claimInstallCompleted`), so whichever runs second sends nothing locally, and
+the server deduplicates any replayed id regardless.
 
 ### Where a recorded event is stored
 
@@ -237,8 +286,11 @@ shape as the floor, for the same reason.
 - **Gate modes.** `TELEMETRY_GATE_MODE` selects `enforce`, `shadow`, or `off`
   (see [docs/OPERATOR.md](OPERATOR.md#ingestion-rate-limit)). Production runs
   `enforce`: the installer bakes a token into every served script, so a
-  tokenless install is a forgery, a replay, or an unmeasured fetch — not
-  honest traffic waiting for issuance. `shadow` was the rollout mode and
+  tokenless install on the `curl` channel (explicit `curl`, or an
+  absent/unknown method) is a forgery, a replay, or an unmeasured fetch — not
+  honest traffic waiting for issuance. Tokenless `brew`/`nix` installs are
+  the admitted bootstrap exception (see "Package-manager bootstrap" above).
+  `shadow` was the rollout mode and
   remains the code default when the var is unset: violations are measured but
   the event still flows. Duplicates are deduplicated in every mode —
   idempotency is not a policy decision. A guard outage fails open in every
@@ -250,7 +302,7 @@ Gate decisions are measured in a second Analytics Engine dataset,
 `deduplicated`, `dropped`, `rejected`, `would_reject`, `error`), `blob2` the
 reason (`ok`, `unknown_release`, `floor`, `version_not_released`,
 `duplicate_install`, `duplicate_activation`, `duplicate_active`,
-`invalid_token`, `no_install`, `missing_dataset`, `write_error`,
+`invalid_token`, `bootstrap_brew`, `bootstrap_nix`, `no_install`, `missing_dataset`, `write_error`,
 `rate_limited_id`), and `blob3` the event name. Like the main dataset it
 carries no installation id, no address, and no token.
 

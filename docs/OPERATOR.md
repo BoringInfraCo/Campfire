@@ -484,8 +484,13 @@ idempotency guard is configured (the Worker builds it from `env.DB`), else
 `off`. Shadow was the rollout mode — every violation measured in the ops
 dataset as `would_reject` while counts stayed unchanged. Enforce is correct
 now because the Worker bakes a single-use token into every served installer
-script: with issuance live, a tokenless `install_completed` is a forgery, a
-replay, or an unmeasured fetch, not honest traffic. Enforce answers integrity
+script: with issuance live, a tokenless `install_completed` on the `curl`
+channel (explicit `curl`, or an absent/unknown method) is a forgery, a
+replay, or an unmeasured fetch, not honest traffic. Tokenless `brew`/`nix`
+installs are the admitted bootstrap exception: self-reported, never
+token-proven, recorded as `accepted` with reason `bootstrap_brew` /
+`bootstrap_nix`, and labeled by `blob6` on the dashboard — filter
+`blob6 = 'curl'` for token-proven installs only. Enforce answers integrity
 drops as `200 {"ok":true,"result":{"recorded":false}}`. Duplicates are
 deduplicated in every mode. The guard reads and writes two D1 tables
 (`telemetry_claims`, `telemetry_install_tokens`) that migrate with the rest

@@ -387,6 +387,30 @@ export async function handleTelemetryEvent(
     const guard = options.guard;
     const nowIso = new Date(nowMs).toISOString();
     if (parsed.event.event === "install_completed") {
+      // Closed rule: a tokenless install is accepted IFF the method is `brew`
+      // or `nix`. The `curl` channel (including an absent or unknown method,
+      // which normalizes to `undefined`) must present a valid single-use
+      // token; anything else is a forgery, a replay, or an unmeasured fetch.
+      const method = parsed.event.installMethod;
+      if (method === "brew" || method === "nix") {
+        // Package-manager bootstrap: self-reported, never token-proven. Any
+        // token present is ignored and deliberately NOT consumed — a brew/nix
+        // client has no legitimate way to hold one, so consuming it would let
+        // token theft burn installer tokens. The claim lands directly, with
+        // no read or write to the token table.
+        const bootstrapReason = method === "brew" ? "bootstrap_brew" : "bootstrap_nix";
+        const direct = await guard.claimInstallDirect({
+          installationId: parsed.event.installationId,
+          now: nowIso,
+        });
+        if (direct === "duplicate") {
+          recordTelemetryOutcome(ops, "deduplicated", "duplicate_install", parsed.event.event);
+          return json(200, { ok: true, result: { recorded: false } });
+        }
+        // `error` fails open like every other guard outage: measurement must
+        // never become a new way for an install to fail.
+        return await writeTelemetryPoint(options, parsed.event, ops, "accepted", bootstrapReason);
+      }
       const completed = await guard.completeInstall({
         installationId: parsed.event.installationId,
         ...(parsed.event.installToken !== undefined ? { installToken: parsed.event.installToken } : {}),
