@@ -464,10 +464,10 @@ reports 1.24.1 and contains the matching Viewer assets. This presentation
 release leaves NAV-003's CONDITIONAL GO verdict and NOT OBSERVED human outcome
 unchanged; the Viewer remains a loopback-only local page.
 
-Sprint CAP-001 — Discover and Compose is an engineering candidate on package
-`1.24.1` (version not bumped). The result is `docs/SPRINT_CAP_001_RESULT.md`:
-**CONDITIONAL GO — engineering candidate**. D1–D7 pass, including the
-public-copy audit. An unprompted smoke
+Sprint CAP-001 — Discover and Compose is published and deployed as `v1.25.0`
+under `docs/RELEASE_V1_25_DECISION.md`. The result is
+`docs/SPRINT_CAP_001_RESULT.md`: **CONDITIONAL GO — engineering candidate**.
+D1–D7 pass, including the public-copy audit. An unprompted smoke
 (`docs/evidence/cap-001/candidate/HARNESS_SMOKE.md`) ran both harnesses:
 OpenCode named the fixture ids; Codex stopped on the truncated orientation
 and did not. Neither called `discover_capabilities`. A later targeted smoke
@@ -476,10 +476,14 @@ and did not. Neither called `discover_capabilities`. A later targeted smoke
 to use discovery and a read recipe without naming tools or fixture ids.
 Both did, and both named the required ids. Automatic adoption and improved
 continuation remain unproven. The human comparison is **NOT OBSERVED**.
-No release decision, tag, or deployment is recorded. The
-search corpus is the frozen Step 0 operation set plus explicit omissions. It
-does not add a code runner, a domain object, a migration, or a Viewer
-allowlist entry.
+The release is published and deployed on October 20, 2026 (private tag
+`de4d447d` → `4e6b7e7`, public snapshot `749cb08` and annotated tag `b8f67fe`,
+GitHub Release `v1.25.0` with four verified checksummed archives, channel pins
+`69096cb`/`08a492d`, tap promotion `6cceba0`, production Worker `d7704a14`, and
+a clean isolated install reporting `1.25.0`). Publication does not change the
+verdict or the NOT OBSERVED human outcome. The search corpus is the frozen
+Step 0 operation set plus explicit omissions. It does not add a code runner, a
+domain object, a migration, or a Viewer allowlist entry.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,

@@ -135,3 +135,7 @@ Search does not list `get_read_recipe`. A query whose tokens include "read recip
 | `npm run deploy:dry-run` | pass; Wrangler 4.149.0 read 75 public assets and stopped at `--dry-run: exiting now` |
 | `npm run pack:tarball` | pass; Darwin ARM64 archive SHA-256 `1ddab9f28ad6c97b6840ddb4f3fe1ff0e7a0bd1a47717d863d8115d5b0a7f9e3`; extracted package `1.25.0` |
 | Installer immutability | `public/campfire/v1.25.0/install.sh` equals the current installer (`2256bccb…`); `v1.24.1` and older copies remain unchanged |
+
+### Publication
+
+The founder release decision is `docs/RELEASE_V1_25_DECISION.md`. `v1.25.0` was published and deployed on October 20, 2026: private tag `de4d447d` → `4e6b7e7`; public snapshot `749cb08` with annotated tag `b8f67fe`; GitHub Release `v1.25.0` with four checksummed archives; channel pins `69096cb`/`08a492d`; Homebrew tap `6cceba0`; production Worker `d7704a14`; and a clean isolated install reporting `1.25.0`. The post-pin suite passed 103 files / 1,299 tests with one opt-in skip, closing the expected pre-pin assertion. Publication does not change this result's CONDITIONAL GO verdict, the unproven adoption/continuation claim, the NOT OBSERVED human comparison, or any gate.
