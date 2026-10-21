@@ -1,7 +1,7 @@
 # CAP-001 harness smoke
 
 **Date:** 2026-10-20  
-**Label: FIXTURE EVIDENCE — usability check only.** Not a human observation, not a sprint verdict, and not a release. No product source was edited. Nothing was committed or pushed. No version was bumped. `campfire up` was not run. Port 9414 was down before the runs and was still down after them.
+**Label: FIXTURE EVIDENCE — usability check only.** Not a human observation, not a sprint verdict, and not a release. No product source was edited. This evidence file was committed later; no version was bumped during the smoke. `campfire up` was not run. Port 9414 was down before the runs and was still down after them.
 
 The prompt was the same for both harnesses. It named no fixture id and included no tool inventory. Each harness had its own seeded database. Local `campfire mcp` was started with `CAMPFIRE_URL` and `CAMPFIRE_TOKEN` unset. A direct SQLite read confirmed `hum_cap001_ada` and `ws_cap001_lab` in each database before the model calls.
 
@@ -44,7 +44,7 @@ Quoted coverage from the final answer:
 
 Wrong inference / gap: the session treated the truncated orientation as a stop, which the prompt allows, and so it never identified `task_cap001_blocked_later`. It also did not show that `needsReview` is specifically because `find_cap001_stale` is not current. It did not treat `needsReview` as revocation.
 
-## OpenCode — pass
+## OpenCode — ids pass; discovery requirement not met
 
 | | |
 | --- | --- |

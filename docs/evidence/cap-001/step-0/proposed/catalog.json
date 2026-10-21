@@ -42,7 +42,7 @@
       "outputCaveat": "Unqualified JSON stays kind cli_command_manifest. This entry is not a grant. Search and recipe are separate projections.",
       "surfaces": {
         "cli": { "usage": "campfire capabilities [--output json]" },
-        "mcp": { "unavailable": "CLI manifest only; tools/list is the MCP inventory until discover_capabilities exists" }
+        "mcp": { "unavailable": "CLI manifest only; MCP provides tools/list and discover_capabilities" }
       }
     },
     {

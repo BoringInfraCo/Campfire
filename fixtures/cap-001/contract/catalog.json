@@ -1,0 +1,247 @@
+{
+  "catalogVersion": 1,
+  "kind": "proposed_operation_catalog",
+  "label": "FIXTURE EVIDENCE — not a grant and not a finished parity map",
+  "parityRule": "Implementation must map every discoverable CLI command (playbook only when CAMPFIRE_PLAYBOOK=1) and every registered MCP tool (get_playbook only when the server is constructed with playbookEnabled) to exactly one operation id or an explicit omission reason. This file lists the paired reads plus the CLI-only and MCP-only examples the parity test must include. It is not that finished map.",
+  "playbook": {
+    "operationId": "get_playbook",
+    "included": false,
+    "reason": "Omitted unless the existing playbook gate is on. A disabled definition must not appear in search."
+  },
+  "discoveryExcludes": [
+    "workspace names",
+    "workspace ids",
+    "row counts",
+    "membership verdicts",
+    "tokens",
+    "secrets",
+    "environment values",
+    "one-time credential receipts"
+  ],
+  "operations": [
+    {
+      "id": "bridge",
+      "purpose": "Inspect outbound webhook delivery state.",
+      "effect": "read",
+      "scope": "installed",
+      "requiredInputs": [],
+      "preconditions": ["Hosted inspection uses the operator bridge credential, not an actor token."],
+      "outputCaveat": "Origin only. Path, query credentials, and the signing secret are never printed. Not an authorization result.",
+      "surfaces": {
+        "cli": { "usage": "campfire bridge [--output auto|human|json] [--db <path>] [--token <operator-token>]" },
+        "mcp": { "unavailable": "operator CLI only; not an agent MCP tool" }
+      }
+    },
+    {
+      "id": "capabilities",
+      "purpose": "Describe the installed Campfire CLI commands.",
+      "effect": "local-operation",
+      "scope": "installed",
+      "requiredInputs": [],
+      "preconditions": [],
+      "outputCaveat": "Unqualified JSON stays kind cli_command_manifest. This entry is not a grant. Search and recipe are separate projections.",
+      "surfaces": {
+        "cli": { "usage": "campfire capabilities [--output json]" },
+        "mcp": { "unavailable": "CLI manifest only; MCP provides tools/list and discover_capabilities" }
+      }
+    },
+    {
+      "id": "dashboard",
+      "purpose": "Read-only interactive terminal console for one workspace.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [],
+      "preconditions": ["Interactive TTY. Non-TTY does not draw the console."],
+      "outputCaveat": "Projects an authorized read. Registered agents are not live presence. Attention cues are not permission.",
+      "surfaces": {
+        "cli": { "usage": "campfire dashboard [workspace]" },
+        "mcp": { "unavailable": "interactive terminal command; not an MCP tool" }
+      }
+    },
+    {
+      "id": "get_activity",
+      "purpose": "List the append-only contribution history for a workspace.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [{ "name": "workspaceId", "type": "string" }],
+      "preconditions": [],
+      "outputCaveat": "Workspace-wide contribution page. Not a substitute for get_record_history.",
+      "surfaces": {
+        "cli": { "usage": "campfire activity [workspace] [--limit N] [--before <contributionId>] [--output auto|human|json]" },
+        "mcp": { "tool": "get_activity" }
+      }
+    },
+    {
+      "id": "get_artifact",
+      "purpose": "Read one artifact in a workspace.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [
+        { "name": "workspaceId", "type": "string" },
+        { "name": "artifactId", "type": "string" }
+      ],
+      "preconditions": [],
+      "outputCaveat": "One stored reference. A reference is not permission to open the external bytes.",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect artifact <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_artifact" }
+      }
+    },
+    {
+      "id": "get_decision",
+      "purpose": "Read one decision, including its recorded basis and currentness.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [
+        { "name": "workspaceId", "type": "string" },
+        { "name": "decisionId", "type": "string" }
+      ],
+      "preconditions": [],
+      "outputCaveat": "needsReview is computed at read time. It is not stored revocation and it is not permission to act.",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect decision <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_decision" }
+      }
+    },
+    {
+      "id": "get_finding",
+      "purpose": "Read one finding in a workspace.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [
+        { "name": "workspaceId", "type": "string" },
+        { "name": "findingId", "type": "string" }
+      ],
+      "preconditions": [],
+      "outputCaveat": "Returns that finding's currentness. Orientation's finding slice is not this read.",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect finding <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_finding" }
+      }
+    },
+    {
+      "id": "get_record_history",
+      "purpose": "Read bounded contributions for one selected task, decision, finding, or artifact.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [
+        { "name": "workspaceId", "type": "string" },
+        { "name": "objectType", "type": "string" },
+        { "name": "objectId", "type": "string" }
+      ],
+      "preconditions": [],
+      "outputCaveat": "Matching contributions for that object only. Default page 10, maximum 50. Not workspace-wide activity.",
+      "surfaces": {
+        "cli": { "unavailable": "MCP-only read. campfire activity is workspace-wide and is not this record history." },
+        "mcp": { "tool": "get_record_history" }
+      }
+    },
+    {
+      "id": "get_task",
+      "purpose": "Read one shared work task by id.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [
+        { "name": "workspaceId", "type": "string" },
+        { "name": "taskId", "type": "string" }
+      ],
+      "preconditions": [],
+      "outputCaveat": "One task. Status and assignee are recorded facts. An assignee is not a live presence, and this read does not change status.",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect task <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_task" }
+      }
+    },
+    {
+      "id": "get_workspace_context",
+      "purpose": "Show the bounded orientation projection for a workspace.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [{ "name": "workspaceId", "type": "string" }],
+      "preconditions": [],
+      "outputCaveat": "Each slice reports total, returned, and truncated. Default task budget is 20. A truncated slice is not the whole workspace. needsReview is not revocation.",
+      "surfaces": {
+        "cli": { "usage": "campfire context [workspace] [--since <contributionId>] [--output auto|human|json]" },
+        "mcp": { "tool": "get_workspace_context" }
+      }
+    },
+    {
+      "id": "help",
+      "purpose": "Print the grouped help menu or one command's usage.",
+      "effect": "local-operation",
+      "scope": "installed",
+      "requiredInputs": [],
+      "preconditions": [],
+      "outputCaveat": "Help stays text. It does not read a workspace and it is not a grant.",
+      "surfaces": {
+        "cli": { "usage": "campfire help [command]" },
+        "mcp": { "unavailable": "CLI help text; not an MCP tool" }
+      }
+    },
+    {
+      "id": "list_decisions",
+      "purpose": "List a bounded page of decisions.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [{ "name": "workspaceId", "type": "string" }],
+      "preconditions": [],
+      "outputCaveat": "Page fields are total, returned, truncated, and nextCursor when another row exists. Acceptance is not permission for an external action.",
+      "surfaces": {
+        "cli": { "usage": "campfire decisions [workspace] [--status proposed|accepted|superseded] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]" },
+        "mcp": { "tool": "list_decisions" }
+      }
+    },
+    {
+      "id": "list_tasks",
+      "purpose": "List a bounded page of shared work tasks.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [{ "name": "workspaceId", "type": "string" }],
+      "preconditions": [],
+      "outputCaveat": "Default page is 20, ranked blocked first, then newest. truncated true with no nextCursor is not another page. Do not claim the first page is complete.",
+      "surfaces": {
+        "cli": { "usage": "campfire tasks [workspace] [--status open|in_progress|blocked|completed] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]" },
+        "mcp": { "tool": "list_tasks" }
+      }
+    },
+    {
+      "id": "list_workspaces",
+      "purpose": "List the workspaces the acting actor participates in.",
+      "effect": "read",
+      "scope": "installed",
+      "requiredInputs": [],
+      "preconditions": [],
+      "outputCaveat": "Membership list for this actor. Not a cursor page and not a directory of every workspace.",
+      "surfaces": {
+        "cli": { "usage": "campfire list [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]" },
+        "mcp": { "tool": "list_workspaces" }
+      }
+    },
+    {
+      "id": "preflight",
+      "purpose": "Check endpoint, authenticated identity, and agent-session readiness without changing state.",
+      "effect": "read",
+      "scope": "workspace",
+      "requiredInputs": [{ "name": "workspaceId", "type": "string" }],
+      "preconditions": ["Hosted endpoint. The CLI does not fall back to the local database."],
+      "outputCaveat": "Readiness is not a grant to skip later authorization, and a missing session is not a workspace dump.",
+      "surfaces": {
+        "cli": { "usage": "campfire preflight <workspaceId> [--session <id>] [--harness <name>] [--token <token>] [--output auto|human|json]" },
+        "mcp": { "tool": "preflight" }
+      }
+    },
+    {
+      "id": "whoami",
+      "purpose": "Report the actor identity bound to this client.",
+      "effect": "read",
+      "scope": "installed",
+      "requiredInputs": [],
+      "preconditions": [],
+      "outputCaveat": "Identity only. No workspace names, membership verdict, or token.",
+      "surfaces": {
+        "cli": { "usage": "campfire whoami [--actor <id>] [--type human|agent] [--db <path>] [--token <token>]" },
+        "mcp": { "tool": "whoami" }
+      }
+    }
+  ]
+}

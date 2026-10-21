@@ -11,13 +11,14 @@
 
 ## 0. Verdict and what it does not claim
 
-Contract §7: **CONDITIONAL GO — engineering candidate** applies when D1–D7 pass and a real harness path is unavailable for a recorded reason. Both supported harness paths are unavailable.
+Contract §7 defines **CONDITIONAL GO — engineering candidate** as D1–D7 passing with a real harness path unavailable for a recorded reason. This record retains that verdict for a narrower reason supported by the later evidence: the contract's §0 improvement claim was not measured, so the GO bar is not met even though both targeted harness paths finished.
 
-- **Recorded reason:** this closeout did not launch Codex or OpenCode. The continuation proof is `tests/unit/cap-001-continuation.test.ts`, an engineering fixture over `fixtures/cap-001/seed.ts`. It is not a harness transcript and not a human observation.
+- **Recorded reason:** the unprompted smoke did not observe spontaneous discovery, and no v1.24.1 baseline comparison was run. The targeted §6 smoke later showed both harnesses can finish when asked to use discovery and a recipe. That is not evidence of automatic adoption, fewer failed discovery calls, or improved continuation. The contract has no fourth label; retaining CONDITIONAL GO is the conservative choice.
+- The continuation fixture is `tests/unit/cap-001-continuation.test.ts`, an engineering fixture over `fixtures/cap-001/seed.ts`. It is not a harness transcript and not a human observation.
 - The optional non-builder human comparison was not run. That absence is **NOT OBSERVED**. It does not change the engineering verdict.
 - This record does not claim a cross-harness improvement, Gate B, Gate C, Gate E, Gate F, or a rescore of NAV-001, NAV-002, NAV-003, or earlier sprints.
 - Publishing `v1.25.0` needs a separate founder release decision. §6 shows the selected discovery path can finish the fixture. It does not by itself record that decision.
-- §6 supersedes "both supported harness paths are unavailable" for the question of whether an agent can use discovery and the read recipes when asked to select them. The unprompted smoke in §5 still stands: neither harness called discovery on its own.
+- §5 and §6 record the later runs. They do not retroactively convert the unprompted stop into GO or establish the §0 improvement.
 
 ## 1. What landed
 
@@ -51,14 +52,15 @@ The one skip is the existing opt-in Playwright test in `tests/unit/uix-001-dashb
 | **D3** | PASS on the frozen query cases: controls before trim, query before limit, token AND, ascending ids, recipe summaries from id and goal only (max 2, frozen order), returned / totalMatches / truncated, and the 16 KiB budget. The largest frozen projection is within 16384 bytes. Search JSON for those queries contains none of the answer-key fixture ids. Queries are not evaluated as regular expressions. |
 | **D4** | PASS on the engineering fixture and the static catalog. Discovery and recipe fetch take no store. A denied actor (`hum_cap001_zed`) cannot read `ws_cap001_lab`. Omission text says listing a command or tool is not a grant. Search does not read `outputCaveat`, preconditions, input names, or unavailable text (`whoami` does not match `workspace`; `get_record_history` does not match `workspace` through an input name). |
 | **D5** | PASS. Both frozen recipes parse equal from `getReadRecipe` and from CLI/MCP JSON. Each `JSON.stringify` is under 8192 bytes. Unknown id throws `ValidationError` field `id`, message `Unknown read recipe id.` The continuation walk shows `task_cap001_blocked_later` on page 2 only, status `blocked`, assignee absent, first page truncated, and `dec_cap001_selected` accepted with `needsReview` only because `find_cap001_stale` is non-current. `find_cap001_current` stays current. `needsReview` is not treated as revocation or permission. |
-| **D6** | The engineering fixture passes. The unprompted smoke is in §5: OpenCode named the required ids, Codex did not, and neither used the new discovery tools. The targeted smoke in §6 asked for discovery and a read recipe and both harnesses then finished with the required ids. No comparison against the v1.24.1 path is claimed. |
+| **D6** | **FIXTURE PASS; LIVE TARGETED PASS; ADOPTION/IMPROVEMENT NOT OBSERVED.** The engineering fixture passes. The unprompted smoke in §5 is mixed: OpenCode named the required ids, Codex did not, and neither called the new discovery tools. The targeted smoke in §6 asked for discovery and a read recipe and both harnesses then finished with the required ids. No comparison against the v1.24.1 path is claimed. |
 | **D7** | PASS for typecheck, the full suite, build, isolated `pack:tarball`, `deploy:dry-run`, Viewer asset parity, and the public-copy audit in §5. The installer guard did not reject the unbumped tree. Version stays `1.24.1`. No channel promotion. |
 
 ## 3. Deviations
 
 - The searchable corpus is the frozen 16 operations, plus `get_playbook` only when the gate is on. Other installed commands and tools stay installed and are listed in `CAPABILITY_OMISSIONS`. Listing them is not a grant.
 - Step 0 said exactly one operation per command. `inspect` is one command with selectors for `get_task`, `get_decision`, `get_finding`, and `get_artifact`. A command is covered when any operation usage starts with `campfire <name>`.
-- Those four frozen `inspect` usages stay selector-specific. They differ from `commandSpec("inspect").usage`. Pointing them at the generic usage would overstate each operation. Other frozen usages with a command word match `commandSpec`. The capabilities MCP unavailable string stays `CLI manifest only; tools/list is the MCP inventory until discover_capabilities exists`.
+- Those four frozen `inspect` usages stay selector-specific. They differ from `commandSpec("inspect").usage`. Pointing them at the generic usage would overstate each operation. Other frozen usages with a command word match `commandSpec`. The capabilities MCP unavailable string was corrected to `CLI manifest only; MCP provides tools/list and discover_capabilities` under Step 0 Amendment 1.
+- Step 0 Amendment 1 (`docs/evidence/cap-001/step-0/AMENDMENT-1.md`) copies the frozen JSON and schema files byte-for-byte to `fixtures/cap-001/contract/` so the public snapshot can run the CAP-001 tests without exporting `docs/evidence/`. A private parity test keeps the copies equal. No query case, entry id, recipe step, answer-key fact, cursor, or limit changed.
 - Validation failures use code `ValidationError`. The contract's word `VALIDATION_ERROR` means that existing code string.
 - Page 2 of the fixture returns one task, `truncated: true`, and no `nextCursor`. The seed and the frozen answer key already record that shape.
 - The gate-on query `recorded` matches `get_decision` only. The playbook purpose contains `recording`, and `recording` does not contain the substring `recorded`. Gate-on `recording` matches `get_playbook`. `queries.json` was not edited.

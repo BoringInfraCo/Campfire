@@ -1,0 +1,59 @@
+{
+  "kind": "read_recipe",
+  "recipeVersion": 1,
+  "id": "review-decision-basis",
+  "goal": "Read one selected decision and the currentness of its recorded basis without treating a review cue as revocation or permission.",
+  "steps": [
+    {
+      "operationId": "get_workspace_context",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire context [workspace] [--since <contributionId>] [--output auto|human|json]" },
+        "mcp": { "tool": "get_workspace_context" }
+      },
+      "stopWhen": "If the selected decision id is in slices.decisions.items, continue to get_decision. If that slice is truncated or the id is absent, page list_decisions. Do not choose an operative decision when more than one accepted decision is returned.",
+      "coverageCaveat": "The decision slice is bounded. Orientation findings are current rows only, so a non-current cited finding can be absent here. needsReview on a returned accepted decision is a review cue, not revocation."
+    },
+    {
+      "operationId": "list_decisions",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire decisions [workspace] [--status proposed|accepted|superseded] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]" },
+        "mcp": { "tool": "list_decisions" }
+      },
+      "stopWhen": "Skip if the selected id was already returned on a decision slice whose truncated is false. Otherwise page while nextCursor is present. If the id never appears, stop and label the gap.",
+      "coverageCaveat": "Pass nextCursor only for this actor and workspace. Do not treat a short page as the full decision set when nextCursor is present. The CLI sends limit 100 when --limit is omitted (MAX_PAGE_SIZE). An MCP call that omits limit uses the service default 10 (DEFAULT_CONTEXT_BUDGET.decisions). Those defaults are not the same page."
+    },
+    {
+      "operationId": "get_decision",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect decision <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_decision" }
+      },
+      "stopWhen": "Stop if the read is denied or the decision is missing. Record status, needsReview, needsReviewFindingIds, and citation ids before reading findings.",
+      "coverageCaveat": "One decision. Accepted plus needsReview stays accepted. The flag is computed at read time from cited findings that are no longer current."
+    },
+    {
+      "operationId": "get_finding",
+      "inputsFrom": "citations[].findingId",
+      "surfaces": {
+        "cli": { "usage": "campfire inspect finding <id> --workspace <workspaceId> [--output auto|human|json]" },
+        "mcp": { "tool": "get_finding" }
+      },
+      "stopWhen": "Read only finding ids on the decision's recorded citations. Report each currentness. Do not drop a non-current citation and do not describe needsReview as revoked.",
+      "coverageCaveat": "One finding per call. A superseded or withdrawn finding remains the cited text; currentness says it is not the current assertion."
+    },
+    {
+      "operationId": "get_record_history",
+      "inputsFrom": "client selection",
+      "surfaces": {
+        "cli": { "unavailable": "MCP-only read. campfire activity is workspace-wide and is not this record history." },
+        "mcp": { "tool": "get_record_history" }
+      },
+      "stopWhen": "Run if replacement or currentness is unclear from get_decision. A CLI client stops and labels the record-history gap. Do not call campfire activity as a substitute.",
+      "coverageCaveat": "Contributions for this decision only. No nextCursor means this traversal has no further row."
+    }
+  ],
+  "resultContract": "The handoff names the decision id, its status, whether needsReview is true, the cited finding ids and their currentness, provenance, coverage, and unresolved gaps. It reports proposed versus accepted versus accepted-needing-review accurately. It does not treat a review cue as revocation or as permission to act, and it does not invent a replacement that was not recorded."
+}

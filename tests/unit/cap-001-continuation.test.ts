@@ -18,7 +18,7 @@ import { createCampfireService } from "../../src/service/campfire-service.js";
 import * as sqlite from "../../src/store/sqlite-store.js";
 
 const ANSWER_KEY_PATH = fileURLToPath(
-  new URL("../../docs/evidence/cap-001/step-0/answer-key.json", import.meta.url),
+  new URL("../../fixtures/cap-001/contract/answer-key.json", import.meta.url),
 );
 const SOURCE_PATH = fileURLToPath(new URL("../../src/catalog/capability-search.ts", import.meta.url));
 

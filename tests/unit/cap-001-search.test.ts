@@ -2,6 +2,8 @@
  * CAP-001 catalog search and read recipes.
  *
  * Engineering checks against the frozen Step 0 query and recipe files.
+ * The contract copies under fixtures/cap-001/contract/ are byte-identical to
+ * the private Step 0 evidence so this file can run in the public snapshot.
  * Not a harness trace and not a release decision.
  */
 import { readFileSync } from "node:fs";
@@ -35,8 +37,8 @@ import { createCampfireService } from "../../src/service/campfire-service.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const PROPOSED = join(ROOT, "docs/evidence/cap-001/step-0/proposed");
-const ANSWER_KEY = join(ROOT, "docs/evidence/cap-001/step-0/answer-key.json");
+const PROPOSED = join(ROOT, "fixtures/cap-001/contract");
+const ANSWER_KEY = join(PROPOSED, "answer-key.json");
 
 interface QueryCase {
   id: string;
@@ -245,7 +247,7 @@ describe("parity", () => {
     });
     expect(bridge?.surfaces.mcp).toEqual({ unavailable: "operator CLI only; not an agent MCP tool" });
     expect(capabilities?.surfaces.mcp).toEqual({
-      unavailable: "CLI manifest only; tools/list is the MCP inventory until discover_capabilities exists",
+      unavailable: "CLI manifest only; MCP provides tools/list and discover_capabilities",
     });
   });
 
