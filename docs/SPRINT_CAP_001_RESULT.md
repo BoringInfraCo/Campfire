@@ -111,3 +111,27 @@ The `get_workspace_context` tool description says each slice carries `total`, `r
 That stop rule is in `continue-blocked-work`: if `slices.tasks.truncated` is true, or the selected task id is absent from `slices.tasks.items`, continue to `list_tasks`. The first session never fetched the recipe, so it never received that sentence. In this targeted run both harnesses fetched it. The returned text told them to continue to `list_tasks`, and both did: first page, then the cursor page that contains `task_cap001_blocked_later`. Page 2 is `truncated: true` with no `nextCursor`; both treated that as the end.
 
 Search does not list `get_read_recipe`. A query whose tokens include "read recipe" returned zero matches for both harnesses. Narrower queries (`blocked`, `blocked task`, `basis`, `decision basis review`) returned the operation entries and the recipe summaries. Each model then called `get_read_recipe` with the summary id. The selected path works. Finding the recipe tool from search text alone does not.
+
+## 7. Addendum — release-prep corrections and versioned checks
+
+**Date:** October 20, 2026. Release-prep correction commit `fd75753`; versioned release-prep checks at package `1.25.0`. This addendum does not change the engineering verdict, the bounded claim, or the human comparison. The separate founder release decision is `docs/RELEASE_V1_25_DECISION.md`.
+
+### Corrections
+
+- The public exporter includes `tests/`, not `docs/evidence/`. The new CAP-001 tests originally read the frozen Step 0 files from `docs/evidence/`, so the public snapshot would have failed at collection. Step 0 Amendment 1 copies the frozen JSON and schema byte-for-byte to `fixtures/cap-001/contract/`; the exported tests read those copies, and the private `tests/unit/cap-001-step0-parity.test.ts` fails if they drift.
+- The frozen catalog and inline corpus now say `CLI manifest only; MCP provides tools/list and discover_capabilities` instead of the now-false `until discover_capabilities exists`. The unavailable text is not part of search matching, so no frozen query result changed.
+- The result record no longer says both harness paths are unavailable, and the D6 row labels the fixture pass, targeted live pass, and unobserved adoption/improvement separately. `HARNESS_SMOKE.md` now records that its evidence file was committed later and labels the unprompted OpenCode run by its actual discovery gap.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `npx vitest run` on CAP-001 search, continuation, and Step 0 parity | **43 passed** |
+| Public snapshot export at `fd75753` | 356 files; `docs/evidence` absent; `fixtures/cap-001/contract` present |
+| CAP-001 tests in the exported snapshot | **36 passed** (2 files) |
+| `npm run typecheck` | pass |
+| `npm test` at package `1.25.0` | **103 files / 1,298 passed / 1 expected failure / 1 opt-in skip** (1,300). The only failure is the pre-recorded `tests/unit/install-channels.test.ts` assertion awaiting the four published `v1.25.0` archives. Not loosened |
+| `npm run build` | pass; all four served Viewer assets match `src/viewer/static/` |
+| `npm run deploy:dry-run` | pass; Wrangler 4.149.0 read 75 public assets and stopped at `--dry-run: exiting now` |
+| `npm run pack:tarball` | pass; Darwin ARM64 archive SHA-256 `1ddab9f28ad6c97b6840ddb4f3fe1ff0e7a0bd1a47717d863d8115d5b0a7f9e3`; extracted package `1.25.0` |
+| Installer immutability | `public/campfire/v1.25.0/install.sh` equals the current installer (`2256bccb…`); `v1.24.1` and older copies remain unchanged |

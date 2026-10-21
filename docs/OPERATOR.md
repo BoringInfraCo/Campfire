@@ -558,6 +558,14 @@ Do not put `CAMPFIRE_ACTOR_ID` on the hosted adapter.
 
 OpenCode uses the same server with its own token and `CAMPFIRE_HARNESS=opencode`.
 
+The MCP list also includes two read-only local-catalog tools added in v1.25:
+`discover_capabilities({query, limit?})` and `get_read_recipe({id})`. They
+return the same versioned search projection and recipe bodies as
+`campfire capabilities --search <query>` and `campfire capabilities --recipe
+<id>`. They open no workspace store and grant no authority. A listing or a
+recipe step never replaces the authorization check performed by the read or
+write it names. The unqualified CLI `capabilities` manifest is unchanged.
+
 ## Agent-led connection and handoff
 
 `campfire setup` prints the installed setup contract. It creates no rows and includes no credential. After `campfire onboard`, prepare one harness:
