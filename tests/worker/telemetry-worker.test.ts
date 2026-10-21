@@ -164,7 +164,7 @@ describe("measured installer route", () => {
     expect(points[0]?.indexes?.[0]).toBe("install_requested");
   });
 
-  it("records nothing for the pre-existing installer asset route", async () => {
+  it("records one install_requested for the asset route and versioned snapshots", async () => {
     for (const path of ["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]) {
       const response = await get(path);
       await flush();
@@ -172,9 +172,11 @@ describe("measured installer route", () => {
       expect(await response.text()).toBe(INSTALLER_BODY);
     }
     expect(fetched).toEqual(["/campfire/install.sh", "/campfire/v1.1.0/install.sh"]);
-    // Fetching the script itself is not an installer request: it is a route that
-    // already existed, and counting it would inflate the top of the funnel.
-    expect(points).toEqual([]);
+    // Every installer route is measured: each served 2xx records one
+    // anonymous install_requested (see tests/worker/installer-token.test.ts
+    // for the token half of the same serving path).
+    expect(points).toHaveLength(2);
+    expect(points.every((point) => point.indexes?.[0] === "install_requested")).toBe(true);
   });
 
   it("records nothing when the asset fetch fails with 404 or 502", async () => {

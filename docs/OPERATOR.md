@@ -414,33 +414,140 @@ binding name and query `campfire_telemetry` after the first controlled event.
 ### Ingestion rate limit
 
 `POST /campfire/v1/telemetry` carries no bearer by design, so it is open to
-anyone who learns the URL. The Worker applies a per-source budget through a
-Workers Rate Limiting binding:
+anyone who learns the URL. The Worker applies two budgets through Workers
+Rate Limiting bindings:
 
 ```toml
 [[ratelimits]]
 name = "TELEMETRY_RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 120, period = 60 }
+
+[[ratelimits]]
+name = "TELEMETRY_ID_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
 ```
 
 `namespace_id` is any stable integer you choose; it is a label, not a remote
-resource to create. Two properties matter when tuning it:
+resource to create. The two budgets differ in key, generosity, and purpose:
 
-- **The key is an opaque hash of Cloudflare's `CF-Connecting-IP`.** The address
-  is used only as a rate-limit key. It is never stored, never logged, and never
-  written to a data point, and `ip` remains a prohibited payload field.
-- **The limiter fails open.** No binding, no address header, or a binding that
-  throws all mean "not limited". A measurement path must never become a new way
-  for a Campfire operation to fail, and a limiter that errors must not be able
-  to silence telemetry for everyone.
+- **Per source** (`1001`, generous). The key is an opaque hash of
+  Cloudflare's `CF-Connecting-IP`.
+- **Per installation** (`1002`, tight). The key is an opaque hash of the
+  payload's installation id, prefixed with `id:`. An honest installation sends
+  each bounded event rarely — `install_completed` and `activated` once each,
+  `active` at most once per UTC day — so ten writes a minute is headroom, not
+  a constraint. `install_requested` carries no id and skips this limiter.
 
-Keep the limit generous. `install_completed` and `activated` are each claimed
-once per installation, and `active` at most once per UTC day, so an honest
-installation sends a handful of events across its whole life. CI runners and
-corporate NAT put many
+In both cases the raw value — address or installation id — never reaches the
+binding. It is used only as a rate-limit key. It is never stored, never
+logged, and never written to a data point, and `ip` remains a prohibited
+payload field. Both limiters fail open. No binding, no address header, no
+installation id, or a binding that throws all mean "not limited". A
+measurement path must never become a new way for a Campfire operation to fail,
+and a limiter that errors must not be able to silence telemetry for everyone.
+
+Keep the source limit generous. CI runners and corporate NAT put many
 real installations behind one address; a tight limit would drop honest traffic
-to punish a flood.
+to punish a flood. A refused request answers `429` either way.
+
+The same `1001` binding also budgets installer token minting: each served
+installer consumes one mint unit under a distinct `install-token:` key prefix,
+so mints share the 120/min per-source budget without consuming the ingestion
+key and vice versa. Farming tokens therefore costs one installer fetch per
+fake id and at most 120 mints per minute per source address (NAT-shared, hence
+generous). Over budget the Worker serves the installer bytes unchanged — no
+token, still one `install_requested`, no `no-store` — so a flood cannot mint
+unbounded tokens and a legit fetch is never broken; only its telemetry proof
+is deferred to a retry. Limiter errors fail open and mint as today. No new
+binding is provisioned for this and no route shape changes.
+
+### Integrity gate mode
+
+Production runs `enforce` (set in `wrangler.toml`):
+
+```toml
+[vars]
+TELEMETRY_GATE_MODE = "enforce"
+```
+
+`TELEMETRY_GATE_MODE` is a plain var, not a secret. The remaining modes are:
+
+```toml
+# TELEMETRY_GATE_MODE = "shadow"     # rollout: measure, do not reject
+# TELEMETRY_GATE_MODE = "off"        # pre-integrity behavior
+```
+
+Unset or unknown values fall back to the code default: `shadow` whenever the
+idempotency guard is configured (the Worker builds it from `env.DB`), else
+`off`. Shadow was the rollout mode — every violation measured in the ops
+dataset as `would_reject` while counts stayed unchanged. Enforce is correct
+now because the Worker bakes a single-use token into every served installer
+script: with issuance live, a tokenless `install_completed` is a forgery, a
+replay, or an unmeasured fetch, not honest traffic. Enforce answers integrity
+drops as `200 {"ok":true,"result":{"recorded":false}}`. Duplicates are
+deduplicated in every mode. The guard reads and writes two D1 tables
+(`telemetry_claims`, `telemetry_install_tokens`) that migrate with the rest
+of the schema — run `npm run db:migrate` as usual; a guard outage fails open.
+
+### Installer tokens
+
+Every served installer script (short route, asset path, versioned snapshots)
+carries a baked-in single-use install token: the Worker mints it, stores only
+its SHA-256 digest with a fifteen-minute expiry, and rewrites the completion
+body in the served bytes. The stored scripts are never modified, so current
+and versioned snapshots are covered without republishing them. Tokenized
+responses carry `cache-control: no-store`; mint failures, scripts without the
+marker, and 404/502s serve bytes (or the failure) unchanged, and a stale
+token only loses its measurement — the install itself never depends on
+telemetry.
+
+Minting is bounded per source (see the rate-limit section above): one fetch
+can mint at most one token, over-budget fetches are served unchanged and still
+counted, and limiter errors fail open.
+
+### Prior-install backfill (one-time)
+
+Installations whose `install_completed` predates the D1 guard have no
+`telemetry_claims` row, so the prior-install gate would treat their later
+`activated`/`active` events as `no_install`. Backfill them once:
+
+```bash
+# 1. Export floor-passing install_completed installation ids from Analytics
+#    Engine (blob8, version >= 1.9.1) to ids.json — an array or { "ids": [...] }.
+# 2. Generate idempotent SQL (hashes only — raw ids appear in neither stream):
+node scripts/backfill-telemetry-claims.mjs --from-json ids.json --execute-sql > backfill.sql
+# 3. Apply via wrangler d1 execute (the script never executes wrangler itself):
+npx wrangler d1 execute campfire --remote --file backfill.sql
+```
+
+The script validates UUID format, hashes each id with SHA-256, and emits one
+`INSERT OR IGNORE INTO telemetry_claims (kind, claim_key, claimed_at)
+VALUES ('install', 'install:<hex>', '<now>');` per id — the same
+`install:<sha256hex>` claim key the guard checks, so the backfill is
+idempotent and re-running it is safe. Stdout carries only SQL (digests, no raw
+ids); stderr carries only the count summary and the printed wrangler
+invocation. The output file therefore contains hashes only and is safe to
+handle as such.
+
+### Integrity outcome measurement
+
+Gate decisions are measured in a second Analytics Engine dataset:
+
+```toml
+[[analytics_engine_datasets]]
+binding = "TELEMETRY_OPS"
+dataset = "campfire_telemetry_ops"
+```
+
+Same provisioning as `TELEMETRY`: the platform creates the dataset on the
+first write. One point per ingestion decision: `index1` is `ingest_outcome`
+(the sampling key, not a dimension), `blob1` the outcome, `blob2` the reason,
+`blob3` the event name, `double1` always `1`. No installation id, no address,
+no token, no version. Query it to watch the gate — for example, `rejected`
+with reason `invalid_token` (forgeries or unmeasured fetches under enforce),
+or `deduplicated` counts during a suspected replay.
 
 Client-side controls are operator/environment configuration:
 

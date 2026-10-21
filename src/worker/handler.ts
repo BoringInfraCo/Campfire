@@ -16,8 +16,11 @@ import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
  * - `POST /v1/telemetry` — anonymous telemetry ingestion (TEL-001F). No
  *   bearer: it authenticates no Campfire state and writes only Analytics
  *   Engine data points.
- * - `GET /campfire/install.sh` and versioned installer paths — the installer
- *   assets served through `env.ASSETS.fetch`. The journal itself is
+ * - `GET /campfire/install.sh` and versioned installer paths — the same
+ *   measured, tokenized serving path: one anonymous `install_requested` per
+ *   served 2xx plus a baked-in single-use install token, with minting bounded
+ *   per source by the shared IP limiter under a distinct key prefix.
+ *   The journal itself is
  *   served by the loopback Viewer process, where the bearer stays server-side.
  *
  * `createD1WorkerHandler` is the production entry: same routes over
@@ -38,11 +41,14 @@ import { createAsyncCampfireService, type AsyncCampfireService } from "./async-s
 import type { AsyncCampfireStore } from "./d1-store.js";
 import {
   handleTelemetryEvent,
+  isInstallTokenRateLimited,
   recordInstallRequested,
   TELEMETRY_PATH,
   type AnalyticsEngineDataset,
   type RateLimiterBinding,
+  type TelemetryGateMode,
 } from "./telemetry.js";
+import type { TelemetryGuard } from "../telemetry/guard.js";
 import type { IdSource } from "../domain/ids.js";
 import { projectViewerRecordHistory } from "../viewer/history-view.js";
 
@@ -72,7 +78,11 @@ type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];
 
 const VIEWER_READ_SET: ReadonlySet<string> = new Set(VIEWER_READ_METHODS);
 
-/** The one installer asset. `/campfire/install` serves this file under a shorter path. */
+/**
+ * Worker-served installer scripts (TEL-001D): the asset path, the short
+ * route's asset, and versioned snapshots. All are measured and tokenized on
+ * 2xx through the same serving path; a 404 or 502 records nothing.
+ */
 const INSTALLER_ASSET_PATH = "/campfire/install.sh";
 
 function isInstallerPath(path: string): boolean {
@@ -81,12 +91,13 @@ function isInstallerPath(path: string): boolean {
 }
 
 /**
- * The measured installer route (TEL-001D). Deliberately not an
- * `isInstallerPath` case: those `.sh` paths serve an asset unchanged and stay
- * unmeasured, while this one additionally records `install_requested`. Both
- * spellings are matched — the zone-prefixed original and the prefix-stripped
- * one — so the route behaves the same on the production zone and on a custom
- * domain.
+ * The short measured installer route (TEL-001D). It serves the same asset as
+ * `INSTALLER_ASSET_PATH` under a shorter path. Both spellings are matched —
+ * the zone-prefixed original and the prefix-stripped one — so the route
+ * behaves the same on the production zone and on a custom domain. Every
+ * installer route (`/install`, `/campfire/install`, the asset path, and
+ * versioned snapshots) is measured: each records one `install_requested` per
+ * served 2xx.
  */
 function isInstallRequestPath(path: string): boolean {
   return path === "/campfire/install" || apiPath(path) === "/install";
@@ -279,24 +290,55 @@ function agentSessionIdOf(params: Record<string, unknown>): string | undefined {
   return typeof v === "string" && v.trim().length > 0 ? v : undefined;
 }
 
-export interface SyncWorkerHandlerOptions {
-  service: CampfireService;
-  assetsFetch?: AssetsFetch;
+/** Shared telemetry options for both handlers; see `TelemetryIngestOptions`. */
+interface TelemetryHandlerOptions {
   /** Optional Analytics Engine dataset. Absent means telemetry is not provisioned. */
   telemetryDataset?: AnalyticsEngineDataset;
   /** Optional per-source budget for the anonymous ingestion route. */
   telemetryRateLimiter?: RateLimiterBinding;
+  /** Optional integrity outcome measurement. */
+  telemetryOpsDataset?: AnalyticsEngineDataset;
+  /** Optional per-installation budget for the ingestion route. */
+  telemetryIdRateLimiter?: RateLimiterBinding;
+  /** Optional server-side idempotency guard (D1). Absent means the gate is off. */
+  telemetryGuard?: TelemetryGuard;
+  /** Defaults to `shadow` when a guard is present, else `off`. */
+  telemetryGateMode?: TelemetryGateMode;
+  /** Milliseconds since epoch, for release-time checks. Defaults to `Date.now`. */
+  telemetryNow?: () => number;
 }
 
-export interface D1WorkerHandlerOptions {
+function telemetryOptions(options: TelemetryHandlerOptions): {
+  dataset?: AnalyticsEngineDataset;
+  rateLimiter?: RateLimiterBinding;
+  opsDataset?: AnalyticsEngineDataset;
+  idRateLimiter?: RateLimiterBinding;
+  guard?: TelemetryGuard;
+  gateMode?: TelemetryGateMode;
+  now?: () => number;
+} {
+  return {
+    ...(options.telemetryDataset !== undefined ? { dataset: options.telemetryDataset } : {}),
+    ...(options.telemetryRateLimiter !== undefined ? { rateLimiter: options.telemetryRateLimiter } : {}),
+    ...(options.telemetryOpsDataset !== undefined ? { opsDataset: options.telemetryOpsDataset } : {}),
+    ...(options.telemetryIdRateLimiter !== undefined ? { idRateLimiter: options.telemetryIdRateLimiter } : {}),
+    ...(options.telemetryGuard !== undefined ? { guard: options.telemetryGuard } : {}),
+    ...(options.telemetryGateMode !== undefined ? { gateMode: options.telemetryGateMode } : {}),
+    ...(options.telemetryNow !== undefined ? { now: options.telemetryNow } : {}),
+  };
+}
+
+export interface SyncWorkerHandlerOptions extends TelemetryHandlerOptions {
+  service: CampfireService;
+  assetsFetch?: AssetsFetch;
+}
+
+export interface D1WorkerHandlerOptions extends TelemetryHandlerOptions {
   store: AsyncCampfireStore;
   assetsFetch?: AssetsFetch;
   idSource?: IdSource;
   clock?: () => string;
   webhookEnv?: Record<string, string | undefined>;
-  telemetryDataset?: AnalyticsEngineDataset;
-  /** Optional per-source budget for the anonymous ingestion route. */
-  telemetryRateLimiter?: RateLimiterBinding;
   /**
    * Called once a mutation that can enqueue a delivery has committed
    * (PSA-001 / P1). The Worker entrypoint uses it to schedule a delivery sweep
@@ -337,10 +379,124 @@ async function fetchInstallerAsset(
 async function handleInstaller(
   request: Request,
   assetsFetch: AssetsFetch | undefined,
+  installer: InstallerServeOptions,
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
   if (!isInstallerPath(path)) return undefined;
-  return fetchInstallerAsset(request, assetsFetch, path);
+  return serveInstallerBytes(request, assetsFetch, path, installer);
+}
+
+/**
+ * Token baked into served installer bytes: a single-use install claim.
+ *
+ * Fifteen minutes is headroom, not a session: the token only has to survive
+ * the gap between fetching the script and the script's own completion POST on
+ * the same machine. A stale token fails closed at the guard (`invalid_token`)
+ * and the install still succeeds — only its measurement is lost.
+ */
+export const INSTALL_TOKEN_TTL_MS = 900_000;
+
+/**
+ * The exact bytes every telemetry-era installer script (v1.9.1 and later)
+ * sends as its completion body. Replacing the first occurrence bakes the
+ * token into the script's own POST without touching any stored script —
+ * current and versioned snapshots are all covered by the same replacement.
+ */
+export const INSTALL_TOKEN_MARKER = `"installMethod":"curl"}`;
+
+/** What the installer needs from the Worker to serve measured bytes. */
+export interface InstallerServeOptions {
+  telemetryDataset?: AnalyticsEngineDataset;
+  guard?: TelemetryGuard;
+  now?: () => number;
+  /**
+   * Optional per-source token-mint budget (TEL-001D): the same IP rate-limiter
+   * binding the ingestion route uses, checked under a distinct
+   * `install-token:` key prefix. Absent means minting is unbounded, exactly as
+   * before the budget existed. Never stored; only an opaque derived key
+   * reaches the binding.
+   */
+  rateLimiter?: RateLimiterBinding;
+}
+
+/**
+ * Bake one single-use install token into served installer bytes.
+ *
+ * Anything unexpected — no guard, no token from the platform, an unreadable
+ * body, a missing marker, a refused mint — serves the bytes unchanged. A
+ * tokenized response carries `cache-control: no-store` so a shared cache can
+ * never hand one installation's single-use token to another machine.
+ * Content type and status are preserved either way. Per-source mint budgeting
+ * lives one layer up in `serveInstallerBytes`, which skips this bake entirely
+ * when the source is over budget.
+ */
+export async function withInstallToken(
+  response: Response,
+  guard: TelemetryGuard | undefined,
+  nowMs: number,
+): Promise<Response> {
+  if (guard === undefined) return response;
+  let token: string;
+  try {
+    token = crypto.randomUUID();
+  } catch {
+    return response;
+  }
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    return response;
+  }
+  // The body is consumed above, so every path below rebuilds it: the bytes
+  // served are identical either way.
+  const passthrough = (): Response =>
+    new Response(text, { status: response.status, headers: response.headers });
+  if (!text.includes(INSTALL_TOKEN_MARKER)) return passthrough();
+  const issuedAt = new Date(nowMs).toISOString();
+  const issued = await guard.issueInstallToken({
+    token,
+    issuedAt,
+    expiresAt: new Date(nowMs + INSTALL_TOKEN_TTL_MS).toISOString(),
+  });
+  if (issued !== "issued") return passthrough();
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "no-store");
+  return new Response(text.replace(INSTALL_TOKEN_MARKER, `"installMethod":"curl","installToken":"${token}"}`), {
+    status: response.status,
+    headers,
+  });
+}
+
+/**
+ * Serve installer bytes for one route: measured and tokenized on 2xx only.
+ *
+ * A 404 or 502 is a routing failure, not an installer fetch, and the bytes
+ * pass through untouched — no measurement, no token — so a failure can never
+ * inflate the top of the funnel or mint a claim for a download that failed.
+ *
+ * Token farming bound (TEL-001D): token minting consumes one unit of the
+ * per-source budget under a distinct `install-token:` key prefix sharing the
+ * 120/min binding budget. Over budget the bytes are served UNCHANGED — no
+ * token, still one `install_requested` on 2xx, existing cache behavior for
+ * untokenized bytes (no `no-store`) — so a flood cannot mint unbounded tokens
+ * and a legit fetch is never broken; only its telemetry proof is deferred to
+ * a retry. Limiter errors fail open (mint as today). No IP is stored anywhere;
+ * only an opaque derived key reaches the binding.
+ */
+async function serveInstallerBytes(
+  request: Request,
+  assetsFetch: AssetsFetch | undefined,
+  assetPath: string,
+  installer: InstallerServeOptions,
+): Promise<Response> {
+  const response = await fetchInstallerAsset(request, assetsFetch, assetPath);
+  if (response.status < 200 || response.status >= 300) return response;
+  // Deferred so measurement can never delay or fail the download; the token
+  // bake awaits the bytes because it rewrites them.
+  void recordInstallRequested(installer.telemetryDataset).catch(() => undefined);
+  if (await isInstallTokenRateLimited(installer.rateLimiter, request)) return response;
+  return withInstallToken(response, installer.guard, (installer.now ?? Date.now)());
 }
 
 /**
@@ -349,21 +505,19 @@ async function handleInstaller(
  * The request is recorded only after the installer response has been produced,
  * and only when an installer body was actually served: a 404 or 502 is a
  * routing failure, not an installer request, and counting it would inflate the
- * top of the funnel against nothing. The write is deferred so measurement can
+ * top of the funnel against nothing. The record is deferred so measurement can
  * never delay or fail the download.
  */
 async function handleInstallRequest(
   request: Request,
   assetsFetch: AssetsFetch | undefined,
-  telemetryDataset: AnalyticsEngineDataset | undefined,
+  installer: InstallerServeOptions,
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
   if (!isInstallRequestPath(path)) return undefined;
-  const response = await fetchInstallerAsset(request, assetsFetch, INSTALLER_ASSET_PATH);
-  if (response.status >= 200 && response.status < 300) {
-    void recordInstallRequested(telemetryDataset).catch(() => undefined);
-  }
-  return response;
+  // The short route serves the same asset, so it shares the measured,
+  // tokenized serving path — one record per served 2xx either way.
+  return serveInstallerBytes(request, assetsFetch, INSTALLER_ASSET_PATH, installer);
 }
 
 /**
@@ -371,7 +525,7 @@ async function handleInstallRequest(
  * `dispatchCampfireMethod` directly (local SQLite path, Vitest).
  */
 export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request: Request) => Promise<Response> {
-  const { service, assetsFetch, telemetryDataset, telemetryRateLimiter } = options;
+  const { service, assetsFetch } = options;
 
   return async function handle(request: Request): Promise<Response> {
     try {
@@ -383,12 +537,23 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       // answers 405 from the adapter rather than falling through to the 404 the
       // GET branch produces for unknown paths. A 404 here would hide that the
       // route exists and that it requires POST.
-      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset, rateLimiter: telemetryRateLimiter }, request);
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent(telemetryOptions(options), request);
 
       if (request.method === "GET") {
-        const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
+        // Every installer route is measured and tokenized through the same
+        // serving path: the short route, the asset route, and versioned
+        // snapshots each record one install_requested per served 2xx.
+        const installer: InstallerServeOptions = {
+          ...(options.telemetryDataset !== undefined ? { telemetryDataset: options.telemetryDataset } : {}),
+          ...(options.telemetryGuard !== undefined ? { guard: options.telemetryGuard } : {}),
+          ...(options.telemetryNow !== undefined ? { now: options.telemetryNow } : {}),
+          // Token-mint budget reuses the ingestion IP limiter binding under a
+          // distinct key prefix; no new binding, no route-shape change.
+          ...(options.telemetryRateLimiter !== undefined ? { rateLimiter: options.telemetryRateLimiter } : {}),
+        };
+        const installRequest = await handleInstallRequest(request, assetsFetch, installer);
         if (installRequest !== undefined) return installRequest;
-        const installerResponse = await handleInstaller(request, assetsFetch);
+        const installerResponse = await handleInstaller(request, assetsFetch, installer);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleSyncViewerGet(service, request, url);
@@ -424,8 +589,6 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
     ...(options.webhookEnv !== undefined ? { webhookEnv: options.webhookEnv } : {}),
   });
   const assetsFetch = options.assetsFetch;
-  const telemetryDataset = options.telemetryDataset;
-  const telemetryRateLimiter = options.telemetryRateLimiter;
   const notifyWrite = (): void => {
     try {
       options.onWriteCommitted?.();
@@ -448,12 +611,19 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
       // Matched ahead of the method split so a non-POST to the ingestion route
       // answers 405 rather than the 404 the GET branch produces (see the sync
       // handler above).
-      if (path === TELEMETRY_PATH) return await handleTelemetryEvent({ dataset: telemetryDataset, rateLimiter: telemetryRateLimiter }, request);
+      if (path === TELEMETRY_PATH) return await handleTelemetryEvent(telemetryOptions(options), request);
 
       if (request.method === "GET") {
-        const installRequest = await handleInstallRequest(request, assetsFetch, telemetryDataset);
+        const installer: InstallerServeOptions = {
+          ...(options.telemetryDataset !== undefined ? { telemetryDataset: options.telemetryDataset } : {}),
+          ...(options.telemetryGuard !== undefined ? { guard: options.telemetryGuard } : {}),
+          ...(options.telemetryNow !== undefined ? { now: options.telemetryNow } : {}),
+          // Same token-mint budget wiring as the sync handler above.
+          ...(options.telemetryRateLimiter !== undefined ? { rateLimiter: options.telemetryRateLimiter } : {}),
+        };
+        const installRequest = await handleInstallRequest(request, assetsFetch, installer);
         if (installRequest !== undefined) return installRequest;
-        const installerResponse = await handleInstaller(request, assetsFetch);
+        const installerResponse = await handleInstaller(request, assetsFetch, installer);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
           return await handleAsyncViewerGet(service, request, url);

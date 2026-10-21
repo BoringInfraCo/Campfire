@@ -22,7 +22,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const installer = fileURLToPath(new URL("../../public/campfire/install.sh", import.meta.url));
 
-/** Exactly the keys `serializeTelemetryEvent` in src/telemetry/contract.ts writes. */
+/** Keys `serializeTelemetryEvent` in src/telemetry/contract.ts may write, including the server-baked token. */
 const ALLOWED_KEYS = [
   "schemaVersion",
   "event",
@@ -31,7 +31,11 @@ const ALLOWED_KEYS = [
   "os",
   "arch",
   "installMethod",
+  "installToken",
 ];
+
+/** Keys an unmodified installer script sends: no installToken until the Worker bakes one in. */
+const UNTOKENIZED_KEYS = ALLOWED_KEYS.filter((key) => key !== "installToken");
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -156,7 +160,12 @@ describe("install.sh install_completed report", () => {
     expect(requests[0]?.contentType).toContain("application/json");
 
     const payload = JSON.parse(requests[0]!.body) as Record<string, unknown>;
-    expect(Object.keys(payload).sort()).toEqual([...ALLOWED_KEYS].sort());
+    // Allow-listed, not exact: the Worker may bake a single-use installToken
+    // into the served bytes, and that token must still be an allowed key.
+    for (const key of Object.keys(payload)) {
+      expect(ALLOWED_KEYS).toContain(key);
+    }
+    expect(Object.keys(payload).sort()).toEqual([...UNTOKENIZED_KEYS].sort());
     expect(payload.schemaVersion).toBe(1);
     expect(payload.event).toBe("install_completed");
     expect(payload.campfireVersion).toBe("1.9.1");
@@ -164,6 +173,50 @@ describe("install.sh install_completed report", () => {
     expect(payload.os).toBe(process.platform);
     expect(payload.arch).toBe(process.arch);
     expect(String(payload.installationId)).toMatch(UUID_PATTERN);
+  });
+
+  it("sends a server-baked installToken with only allow-listed keys", async () => {
+    // The Worker injects `"installToken":"<uuid>"` into the served bytes.
+    // Simulate those bytes with a temp copy and prove the token rides a body
+    // the server still accepts: every key allow-listed, the token UUID-shaped.
+    acceptAll();
+    const tokenized = join(root, "install-token.sh");
+    writeFileSync(
+      tokenized,
+      readFileSync(installer, "utf8").replace(
+        `"installMethod":"curl"}`,
+        `"installMethod":"curl","installToken":"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"}`,
+      ),
+    );
+    const child: ChildProcess = spawn("sh", [tokenized, "--prefix", join(root, "prefix")], {
+      env: {
+        ...process.env,
+        CAMPFIRE_TARBALL: makeTarball("1.9.1"),
+        CAMPFIRE_CONFIG_DIR: join(root, "config"),
+        CAMPFIRE_TELEMETRY_URL: endpoint(),
+      },
+    });
+    const result = await new Promise<RunResult>((resolve, reject) => {
+      let stdout = "";
+      let stderr = "";
+      child.stdout?.on("data", (chunk: Buffer) => {
+        stdout += chunk.toString("utf8");
+      });
+      child.stderr?.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString("utf8");
+      });
+      child.on("error", reject);
+      child.on("close", (code) => resolve({ status: code, stdout, stderr }));
+    });
+
+    expect(result.status).toBe(0);
+    expect(requests.length).toBe(1);
+    const payload = JSON.parse(requests[0]!.body) as Record<string, unknown>;
+    for (const key of Object.keys(payload)) {
+      expect(ALLOWED_KEYS).toContain(key);
+    }
+    expect(payload.event).toBe("install_completed");
+    expect(String(payload.installToken)).toMatch(UUID_PATTERN);
   });
 
   it("never puts machine or operator identity in the body", async () => {

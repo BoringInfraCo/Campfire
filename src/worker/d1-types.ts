@@ -52,6 +52,24 @@ export interface CampfireWorkerEnv {
    * route is still open, exactly as it was before the limit existed.
    */
   TELEMETRY_RATE_LIMITER?: RateLimiterBinding;
+  /**
+   * Integrity outcome measurement (`[[analytics_engine_datasets]]`).
+   * Records only the outcome, reason, and event name — never an id, address,
+   * or token. Optional like `TELEMETRY`.
+   */
+  TELEMETRY_OPS?: AnalyticsEngineDataset;
+  /**
+   * Per-installation budget for the ingestion route (`[[ratelimits]]`).
+   * Keyed by an opaque hash of the installation id; the raw id never reaches
+   * the binding. Optional; absent means no per-installation limit.
+   */
+  TELEMETRY_ID_RATE_LIMITER?: RateLimiterBinding;
+  /**
+   * Integrity gate mode: `enforce`, `shadow`, or `off`. Empty or unset
+   * defaults to `shadow` (the guard measures but does not reject). Unknown
+   * values are ignored and fall back to the default.
+   */
+  TELEMETRY_GATE_MODE?: string;
   CAMPFIRE_WEBHOOK_ID?: string;
   CAMPFIRE_WEBHOOK_URL?: string;
   CAMPFIRE_WEBHOOK_SECRET?: string;
