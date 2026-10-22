@@ -488,9 +488,10 @@ domain object, a migration, or a Viewer allowlist entry.
 Sprint ACT-001 — Propose and Follow Up is published and deployed as `v1.26.1`
 at source commit `3fa3516`; its contract is
 `docs/Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md` and its result is
-`docs/SPRINT_ACT_001_RESULT.md`. D1–D9 deterministic checks pass, including an
-audited public export from the committed source. The Step 0 pre-code freeze
-sequencing deviation is recorded. Live Codex/OpenCode paths and real-provider
+`docs/SPRINT_ACT_001_RESULT.md`. D1–D9 deterministic checks pass, including a
+clean build and test run of the exported snapshot on the repaired release
+source; the result carries a dated D9 amendment after the v1.26.0 export
+failure. The Step 0 pre-code freeze sequencing deviation is recorded. Live Codex/OpenCode paths and real-provider
 interoperability are not observed. The v1.26.0 candidate failed to build because
 the export allowlist omitted a telemetry script; it produced no archives, was
 marked as a failed prerelease, and was repaired and re-cut as `v1.26.1`

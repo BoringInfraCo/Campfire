@@ -109,8 +109,9 @@ was produced and no install channel pinned it.
   usefulness.
 
 Darwin and Linux archives for ARM64 and x64, with SHA-256 checksum files, are
-produced by the release workflow. The versioned installer at
-`campfire/v1.26.1/install.sh` pins this release.
+produced by the release workflow. The installer is served at
+`campfire/v1.26.1/install.sh`; because the script resolves the latest release
+by default, pass `--version 1.26.1` to pin the download.
 ```
 
 ## What users should know
