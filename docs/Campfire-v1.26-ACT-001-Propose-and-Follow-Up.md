@@ -1,7 +1,7 @@
 # Campfire v1.26 — ACT-001: Propose and Follow Up
 
 **Date:** October 21, 2026
-**Status:** Proposed sprint contract; Step 0 is not frozen. Documentation only, with no implementation or release decision recorded.
+**Status:** Frozen sprint contract with a local engineering candidate. The [result](SPRINT_ACT_001_RESULT.md) records D1–D9, the Step 0 sequencing deviation, and open live observations. No release decision is recorded.
 **Baseline:** Published and deployed `v1.25.0`. Private annotated tag `de4d447d243356d0c7ebdb8258803e8d167f7689` → release source `4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f`. See [release record](RELEASE_V1_25_DECISION.md). CAP-001 remains CONDITIONAL GO; automatic adoption and improved continuation remain unproven.
 **Direction:** [Roadmap](ROADMAP.md), Phase 8 and the two-cycle capability sequence; [Architecture](ARCHITECTURE.md), planned ACT-001 boundary.
 **Release shape:** Candidate minor `v1.26.0`. Implementation keeps the current package version until separate release preparation is authorized. Planning this sprint does not authorize an external CI rerun, webhook installation, version bump, tag, publication, migration of production, or deployment.

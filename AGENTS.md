@@ -485,6 +485,16 @@ verdict or the NOT OBSERVED human outcome. The search corpus is the frozen
 Step 0 operation set plus explicit omissions. It does not add a code runner, a
 domain object, a migration, or a Viewer allowlist entry.
 
+Sprint ACT-001 — Propose and Follow Up has a local `v1.26.0` engineering
+candidate at source commit `932af8a`; its contract is
+`docs/Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md` and its result is
+`docs/SPRINT_ACT_001_RESULT.md`. D1–D9 deterministic checks pass, including an
+audited public export from the committed source. The Step 0 pre-code freeze
+sequencing deviation is recorded. Live Codex/OpenCode paths and real-provider
+interoperability are not observed; no version bump, tag, push, release decision,
+publication, production migration, or deployment has occurred. The package
+remains `1.25.0`.
+
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
 accurately described release while multi-person observations remain open.
