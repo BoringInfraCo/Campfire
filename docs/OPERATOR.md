@@ -678,6 +678,12 @@ return the same versioned search projection and recipe bodies as
 recipe step never replaces the authorization check performed by the read or
 write it names. The unqualified CLI `capabilities` manifest is unchanged.
 
+v1.26 adds six action tools: `propose_action`, `reserve_action_execution`,
+`record_action_outcome`, `get_action_proposal`, `list_action_proposals`, and
+`list_action_receipts`. `review_action` and `cancel_action` are deliberately
+absent: human approval, rejection, and cancellation are CLI actions only. An
+agent token cannot approve through MCP, the CLI, or direct `/v1/call`.
+
 ## Agent-led connection and handoff
 
 `campfire setup` prints the installed setup contract. It creates no rows and includes no credential. After `campfire onboard`, prepare one harness:
@@ -869,6 +875,88 @@ installer stays at `/campfire/install.sh`.
 On Workers, set the webhook secret and `CAMPFIRE_BRIDGE_TOKEN` with
 `wrangler secret put`, and the five non-secret names as vars. Do not put secrets
 in `wrangler.toml`.
+
+## Action proposals and signed verification ingress
+
+Campfire records a human-approved verification retry through the ordinary
+actor-authorized `campfire actions` path, then accepts the provider's completion
+event through a separate inbound HTTP ingress. The ingress creates evidence; it
+does not approve, dispatch, or rerun anything.
+
+The ingress is disabled unless one complete source binding is present. All nine
+values are operator configuration from the process environment (Worker vars and
+secrets), never an MCP tool, a workspace setting, a request body, or a catalog
+result:
+
+```bash
+export CAMPFIRE_GITHUB_SOURCE_ID=gh_verification
+export CAMPFIRE_GITHUB_SOURCE_WORKSPACE_ID=ws_billing_deploy
+export CAMPFIRE_GITHUB_SOURCE_REPOSITORY_ID=123456789
+export CAMPFIRE_GITHUB_SOURCE_REPOSITORY_NAME=boringinfraco/example
+export CAMPFIRE_GITHUB_SOURCE_WORKFLOW_ID=987654321
+export CAMPFIRE_GITHUB_SOURCE_KIND=ci.retry_verification
+export CAMPFIRE_GITHUB_SOURCE_SECRET=...    # inbound secret; never a file in the repo
+export CAMPFIRE_GITHUB_SOURCE_AGENT_ID=agent_...
+export CAMPFIRE_GITHUB_SOURCE_SESSION_ID=ses_...
+```
+
+All nine values must be set. When none are set the ingress is off; when any are
+blank or malformed, when the kind is not `ci.retry_verification`, or when the
+inbound secret equals `CAMPFIRE_WEBHOOK_SECRET`, the binding is incomplete and
+the ingress stays off rather than partially enabling. Inbound signature
+authority and the outbound webhook bridge are separate: one secret never serves
+both directions.
+
+The bound integration agent must already be a non-viewer participant in that
+workspace with an explicitly registered, still-valid session. Campfire does not
+register the session, invent a `system` human, or fall back to another
+participant when the configured one is missing, expired, or revoked. Provision
+it with the existing identity and session methods before enabling the source.
+
+Once a source id has been used, its binding is immutable: the workspace,
+repository id and name, workflow id, action kind, and integration agent cannot
+change. Rotating the secret or renewing the session keeps the binding; a changed
+authority needs a new source id and fresh approval for new actions. The first
+verified delivery persists a non-secret authority fingerprint, and secret
+rotation never clears event deduplication.
+
+The route is `POST /v1/integrations/github/:sourceId` on both the local serve
+path and the Worker path. It is outside `/v1/call`, MCP, the Viewer proxy, and
+the outbound webhook bridge. HTTPS is required except for explicit loopback
+tests. Configure the GitHub webhook with `application/json` content type,
+`X-GitHub-Event: workflow_run`, a delivery id, and the SHA-256 signature header.
+Campfire verifies `X-Hub-Signature-256` over the exact raw bytes with HMAC-SHA256
+and a timing-safe comparison before parsing, streams at most 256 KiB, enforces a
+ten-second body-read deadline, and accepts only completed runs for the configured
+repository and workflow that correlate to one reserved proposal with the
+matching run id, commit SHA, and attempt. A native `ping` may be acknowledged
+without creating records. No request body, provider text, or secret is logged.
+
+Bounded outcomes:
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Accepted, duplicate, or deliberately ignored (for example an unrelated event or `ping`). |
+| `400` | Malformed JSON, inadmissible timestamp, or non-loopback HTTP transport. |
+| `401` | Missing or invalid signature. |
+| `408` | Body-read deadline exceeded. |
+| `409` | Conflicting delivery identity, source rebinding, or completion conclusion. |
+| `413` | Body exceeds 256 KiB. |
+| `415` | Unsupported content type or content/transfer encoding. |
+| `503` | Store or integration authority unavailable. |
+| `404` | Unknown source id (also `405` for a non-POST request). |
+
+Responses expose no workspace or record content. Retriable failures create no
+partial state. One accepted completion atomically creates one cited Finding and
+one Artifact reference in the configured workspace; it creates no task,
+approval, decision, automatic rerun, task completion, or next dispatch. Every
+terminal provider conclusion stays explicit, and only provider `success` is
+reported as verification success.
+
+Campfire stores no GitHub credential and never calls GitHub. The external client
+owns its credential and performs the retry; GitHub authorization is independent
+of Campfire approval. A submission receipt means the request was accepted, not
+that the tests passed.
 
 ## Upgrade notes
 
