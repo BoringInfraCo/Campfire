@@ -2,7 +2,7 @@
 
 **Date:** October 21, 2026
 
-**Status:** Founder-directed release preparation recorded; publication steps tracked below as they complete. This revision claims no tag, public snapshot, GitHub Release, channel pin, or deployment.
+**Status:** **ABANDONED RELEASE CANDIDATE — do not install.** This `v1.26.0` snapshot and tag were promoted before the export review executed a clean public build. Public CI (`39718638147`, `39718640348`) and all four archive jobs (`39718658102`) failed at `npm ci`: the export allowlist omitted `scripts/backfill-telemetry-claims.mjs`, which an exported test imports. No archives were attached and no install channel was pinned. The tag and snapshot remain as provenance and are not retargeted; the repaired release is `docs/RELEASE_V1_26_1_DECISION.md`.
 **Package target:** `1.26.0`
 **Contract:** `docs/Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md` (§9 D1–D9, §10, §11)
 **Sprint result:** `docs/SPRINT_ACT_001_RESULT.md` — **CONDITIONAL GO — engineering candidate**: D1–D9 pass on the recorded candidate `932af8afca52b8921636ffd69a572d6240ba74d7`; the live Codex path, the live OpenCode path, and the real-provider round trip are unrun.

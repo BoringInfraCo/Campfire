@@ -27,6 +27,8 @@ const EXACT_SOURCE_PATHS = new Set([
   "package.json",
   "packaging/homebrew/campfire.rb",
   "scripts/package.sh",
+  "scripts/backfill-telemetry-claims.mjs",
+  "scripts/backfill-telemetry-claims.d.mts",
   "scripts/sync-install-channels.d.mts",
   "scripts/sync-install-channels.mjs",
   "scripts/run-acceptance-002.ts",
