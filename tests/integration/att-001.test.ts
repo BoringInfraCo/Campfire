@@ -857,7 +857,7 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
       // discover_capabilities and get_read_recipe. Those two project the local
       // catalog; they are not workspace reads and they are not on the Viewer
       // allowlist.
-      expect(names).toHaveLength(40);
+      expect(names).toHaveLength(46);
       for (const name of [
         "get_workspace_context",
         "update_task",

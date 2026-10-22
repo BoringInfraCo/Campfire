@@ -39,6 +39,33 @@ import type {
 } from "../domain/events.js";
 import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
 import {
+  ACTION_MUTATION_RECEIPT_INSERT_SQL,
+  ACTION_PROPOSAL_INSERT_SQL,
+  ACTION_RECEIPT_INSERT_SQL,
+  GITHUB_INGRESS_DELIVERY_INSERT_SQL,
+  GITHUB_INGRESS_RECEIPT_INSERT_SQL,
+  GITHUB_SOURCE_BINDING_INSERT_SQL,
+  actionMutationReceiptParams,
+  actionProposalInsertParams,
+  actionProposalUpdateStatement,
+  actionReceiptInsertParams,
+  githubIngressDeliveryParams,
+  githubIngressReceiptParams,
+  githubSourceBindingParams,
+  mapActionMutationReceipt,
+  mapActionProposal,
+  mapActionReceipt,
+  mapGithubIngressDelivery,
+  mapGithubIngressReceipt,
+  mapGithubSourceBinding,
+  type ActionMutationReceiptRow,
+  type ActionProposalRow,
+  type ActionReceiptRow,
+  type GithubIngressDeliveryRow,
+  type GithubIngressReceiptRow,
+  type GithubSourceBindingRow,
+} from "./action-proposal-records.js";
+import {
   asCorrectionConflict,
   citationInsertParams,
   decisionClaimStatements,
@@ -1086,6 +1113,235 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         .prepare("SELECT * FROM artifacts WHERE workspace_id = ? ORDER BY created_at, rowid")
         .all(workspaceId) as ArtifactRow[];
       return rows.map(mapArtifact);
+    },
+
+    // --- action proposals (ACT-001) ---
+    createActionProposal(proposal, intentJson, targetKey) {
+      try {
+        db.prepare(ACTION_PROPOSAL_INSERT_SQL).run(...actionProposalInsertParams(proposal, intentJson, targetKey));
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    getActionProposal(id) {
+      const row = db.prepare("SELECT * FROM action_proposals WHERE id = ?").get(id) as
+        | ActionProposalRow
+        | undefined;
+      return row ? mapActionProposal(row) : undefined;
+    },
+
+    countActionProposals(workspaceId) {
+      const row = db
+        .prepare("SELECT COUNT(*) AS count FROM action_proposals WHERE workspace_id = ?")
+        .get(workspaceId) as { count: number | bigint } | undefined;
+      return Number(row?.count ?? 0);
+    },
+
+    pageActionProposals(workspaceId, query) {
+      const params: unknown[] = [workspaceId];
+      let afterSql = "";
+      if (query.after !== undefined) {
+        afterSql = "AND (updated_at < ? OR (updated_at = ? AND id > ?))";
+        params.push(query.after.at, query.after.at, query.after.id);
+      }
+      const rows = db
+        .prepare(
+          `SELECT * FROM action_proposals WHERE workspace_id = ? ${afterSql}
+           ORDER BY updated_at DESC, id ASC LIMIT ?`,
+        )
+        .all(...params, query.limit + 1) as ActionProposalRow[];
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapActionProposal),
+        total: this.countActionProposals(workspaceId),
+        hasMore: page.hasMore,
+        ...(page.hasMore && last
+          ? { next: { at: last.updated_at, id: last.id } }
+          : {}),
+      };
+    },
+
+    updateActionProposal(id, patch, expected) {
+      const statement = actionProposalUpdateStatement(id, patch, expected);
+      try {
+        const info = db.prepare(statement.sql).run(...statement.params);
+        return info.changes === 1;
+      } catch (error) {
+        throw asCorrectionConflict(error);
+      }
+    },
+
+    createActionTargetReservation(input) {
+      try {
+        db.prepare(
+          "INSERT INTO action_target_reservations (workspace_id, target_key, proposal_id, reservation_id, reserved_at) VALUES (?, ?, ?, ?, ?)",
+        ).run(input.workspaceId, input.targetKey, input.proposalId, input.reservationId, input.reservedAt);
+      } catch (error) {
+        throw new Conflict(
+          `Provider target ${input.targetKey} in workspace ${input.workspaceId} is already reserved`,
+          { recoveryCode: "target_already_reserved", workspaceId: input.workspaceId },
+        );
+      }
+    },
+
+    getActionTargetReservation(workspaceId, targetKey) {
+      const row = db
+        .prepare("SELECT proposal_id, reservation_id FROM action_target_reservations WHERE workspace_id = ? AND target_key = ?")
+        .get(workspaceId, targetKey) as { proposal_id: string; reservation_id: string } | undefined;
+      return row ? { proposalId: row.proposal_id, reservationId: row.reservation_id } : undefined;
+    },
+
+    createActionReceipt(receipt) {
+      try {
+        db.prepare(ACTION_RECEIPT_INSERT_SQL).run(...actionReceiptInsertParams(receipt));
+      } catch (error) {
+        throw new Conflict(`Duplicate action receipt for proposal ${receipt.proposalId}`, {
+          recoveryCode: "receipt_already_recorded",
+          proposalId: receipt.proposalId,
+        });
+      }
+    },
+
+    getActionReceipt(id) {
+      const row = db.prepare("SELECT * FROM action_receipts WHERE id = ?").get(id) as
+        | ActionReceiptRow
+        | undefined;
+      return row ? mapActionReceipt(row) : undefined;
+    },
+
+    getActionReceiptByRequestKey(proposalId, actor, requestKey) {
+      const row = db
+        .prepare("SELECT * FROM action_receipts WHERE proposal_id = ? AND recorded_by_actor_id = ? AND recorded_by_actor_type = ? AND request_key = ?")
+        .get(proposalId, actor.actorId, actor.actorType, requestKey) as ActionReceiptRow | undefined;
+      return row ? mapActionReceipt(row) : undefined;
+    },
+
+    countActionReceipts(workspaceId, proposalId) {
+      const row = db
+        .prepare("SELECT COUNT(*) AS count FROM action_receipts WHERE workspace_id = ? AND proposal_id = ?")
+        .get(workspaceId, proposalId) as { count: number | bigint } | undefined;
+      return Number(row?.count ?? 0);
+    },
+
+    pageActionReceipts(workspaceId, proposalId, query) {
+      const params: unknown[] = [workspaceId, proposalId];
+      let afterSql = "";
+      if (query.after !== undefined) {
+        // Newest-first with insertion-order tiebreak: receipts committed under
+        // the same recorded_at (frozen clocks, fast reconciliations) must page
+        // in commit order, not random-UUID order. The cursor keeps carrying the
+        // receipt id; its rowid is resolved inline so old cursors stay valid.
+        afterSql =
+          "AND (recorded_at < ? OR (recorded_at = ? AND rowid < (SELECT rowid FROM action_receipts WHERE id = ?)))";
+        params.push(query.after.at, query.after.at, query.after.id);
+      }
+      const rows = db
+        .prepare(
+          `SELECT * FROM action_receipts WHERE workspace_id = ? AND proposal_id = ? ${afterSql}
+           ORDER BY recorded_at DESC, rowid DESC LIMIT ?`,
+        )
+        .all(...params, query.limit + 1) as ActionReceiptRow[];
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapActionReceipt),
+        total: this.countActionReceipts(workspaceId, proposalId),
+        hasMore: page.hasMore,
+        ...(page.hasMore && last
+          ? { next: { at: last.recorded_at, id: last.id } }
+          : {}),
+      };
+    },
+
+    getActionMutationReceipt(workspaceId, actorId, actorType, method, requestKey) {
+      const row = db
+        .prepare(
+          "SELECT * FROM action_mutation_receipts WHERE workspace_id = ? AND actor_id = ? AND actor_type = ? AND method = ? AND request_key = ?",
+        )
+        .get(workspaceId, actorId, actorType, method, requestKey) as ActionMutationReceiptRow | undefined;
+      return row ? mapActionMutationReceipt(row) : undefined;
+    },
+
+    putActionMutationReceipt(receipt) {
+      db.prepare(ACTION_MUTATION_RECEIPT_INSERT_SQL).run(...actionMutationReceiptParams(receipt));
+    },
+
+    getGithubSourceBinding(sourceId) {
+      const row = db.prepare("SELECT * FROM github_source_bindings WHERE source_id = ?").get(sourceId) as
+        | GithubSourceBindingRow
+        | undefined;
+      return row ? mapGithubSourceBinding(row) : undefined;
+    },
+
+    createGithubSourceBinding(binding) {
+      try {
+        db.prepare(GITHUB_SOURCE_BINDING_INSERT_SQL).run(...githubSourceBindingParams(binding));
+      } catch (error) {
+        throw new Conflict(`GitHub source ${binding.sourceId} is already bound`, {
+          recoveryCode: "source_already_bound",
+        });
+      }
+    },
+
+    listGithubSourceBindings(workspaceId) {
+      const rows = db
+        .prepare("SELECT * FROM github_source_bindings WHERE workspace_id = ? ORDER BY first_used_at, source_id")
+        .all(workspaceId) as GithubSourceBindingRow[];
+      return rows.map(mapGithubSourceBinding);
+    },
+
+    updateGithubSourceBindingFingerprint(sourceId, authorityFingerprint) {
+      db.prepare("UPDATE github_source_bindings SET authority_fingerprint = ? WHERE source_id = ?").run(
+        authorityFingerprint,
+        sourceId,
+      );
+    },
+
+    getGithubIngressDelivery(sourceId, deliveryId) {
+      const row = db
+        .prepare("SELECT * FROM github_ingress_deliveries WHERE source_id = ? AND delivery_id = ?")
+        .get(sourceId, deliveryId) as GithubIngressDeliveryRow | undefined;
+      return row ? mapGithubIngressDelivery(row) : undefined;
+    },
+
+    createGithubIngressDelivery(delivery) {
+      try {
+        db.prepare(GITHUB_INGRESS_DELIVERY_INSERT_SQL).run(...githubIngressDeliveryParams(delivery));
+      } catch {
+        throw new Conflict("GitHub delivery identity already recorded", {
+          recoveryCode: "delivery_conflict",
+        });
+      }
+    },
+
+    getGithubIngressReceiptByAttempt(workspaceId, attemptKey) {
+      const row = db
+        .prepare("SELECT * FROM github_ingress_receipts WHERE workspace_id = ? AND attempt_key = ?")
+        .get(workspaceId, attemptKey) as GithubIngressReceiptRow | undefined;
+      return row ? mapGithubIngressReceipt(row) : undefined;
+    },
+
+    listGithubIngressReceiptsForProposal(workspaceId, proposalId) {
+      const rows = db
+        .prepare(
+          `SELECT * FROM github_ingress_receipts
+           WHERE workspace_id = ? AND proposal_id = ?
+           ORDER BY received_at DESC, finding_id ASC`,
+        )
+        .all(workspaceId, proposalId) as GithubIngressReceiptRow[];
+      return rows.map(mapGithubIngressReceipt);
+    },
+
+    createGithubIngressReceipt(receipt) {
+      try {
+        db.prepare(GITHUB_INGRESS_RECEIPT_INSERT_SQL).run(...githubIngressReceiptParams(receipt));
+      } catch {
+        throw new Conflict("GitHub completion receipt already recorded", {
+          recoveryCode: "semantic_conflict",
+        });
+      }
     },
 
     // --- activity / provenance ---

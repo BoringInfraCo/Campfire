@@ -16,7 +16,13 @@ export { V6_SQL } from "./contribution-position-schema.js";
 export { V7_SQL } from "./correction-schema.js";
 export { V8_SQL } from "./record-history-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 8;
+import { V9_SQL } from "./telemetry-integrity-schema.js";
+export { V9_SQL } from "./telemetry-integrity-schema.js";
+
+import { V10_SQL } from "./action-proposal-schema.js";
+export { V10_SQL } from "./action-proposal-schema.js";
+
+export const CURRENT_SCHEMA_VERSION = 10;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -164,6 +170,18 @@ const MIGRATIONS: readonly Migration[] = [
     version: 8,
     up: (db) => {
       db.exec(V8_SQL);
+    },
+  },
+  {
+    version: 9,
+    up: (db) => {
+      db.exec(V9_SQL);
+    },
+  },
+  {
+    version: 10,
+    up: (db) => {
+      db.exec(V10_SQL);
     },
   },
 ];

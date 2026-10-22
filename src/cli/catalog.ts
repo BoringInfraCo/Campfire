@@ -27,6 +27,7 @@ export const CLI_COMMAND_NAMES = [
   "findings",
   "tasks",
   "artifacts",
+  "actions",
   "changes",
   "inspect",
   "capabilities",
@@ -365,6 +366,28 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "campfire artifacts [workspace] [--limit <n>] [--cursor <opaque>] [--output auto|human|json]",
     { ...READ, workspaceScoped: true, related: ["context", "inspect"], notes: [
       "Bounded page. Pass the returned cursor to continue the list.",
+    ] },
+  ),
+  actions: spec(
+    "actions",
+    "workspace",
+    "Propose, review, reserve, and inspect verification action proposals.",
+    "campfire actions propose|approve|reject|cancel|reserve|receipt|inspect|list|receipts [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: true, related: ["inspect", "context"], variants: [
+      { selector: "propose", usage: "campfire actions propose --workspace <id> --input <json-file> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "approve", usage: "campfire actions approve <id> --workspace <id> --revision <n> --digest <sha256> --request-key <key> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "reject", usage: "campfire actions reject <id> --workspace <id> --revision <n> --digest <sha256> --request-key <key> --reason <text> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "cancel", usage: "campfire actions cancel <id> --workspace <id> --revision <n> --digest <sha256> --request-key <key> --reason <text> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "reserve", usage: "campfire actions reserve <id> --workspace <id> --revision <n> --digest <sha256> --request-key <key> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "receipt", usage: "campfire actions receipt <id> --workspace <id> --input <json-file> [--output auto|human|json]", mutates: true, outputModes: DUAL },
+      { selector: "inspect", usage: "campfire actions inspect <id> --workspace <id> [--output auto|human|json]", mutates: false, outputModes: DUAL },
+      { selector: "list", usage: "campfire actions list --workspace <id> [--limit <n>] [--cursor <cursor>] [--output auto|human|json]", mutates: false, outputModes: DUAL },
+      { selector: "receipts", usage: "campfire actions receipts <id> --workspace <id> [--limit <n>] [--cursor <cursor>] [--output auto|human|json]", mutates: false, outputModes: DUAL },
+    ], notes: [
+      "Input files are bounded structured JSON and are never executed.",
+      "Approve, reject, and cancel are human operator CLI only. An agent token cannot approve.",
+      "A submission receipt is not proof the verification passed.",
+      "No approval prompt. Actor identity comes from credentials, not the JSON file.",
     ] },
   ),
   changes: spec(

@@ -50,6 +50,7 @@ import type {
   WebhookDeliveryRecord,
   WebhookDeliveryStatus,
 } from "../domain/events.js";
+import { Conflict } from "../domain/errors.js";
 import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
@@ -76,6 +77,33 @@ import {
   type CitationRow,
   type EvidenceRow,
 } from "../store/correction-records.js";
+import {
+  ACTION_MUTATION_RECEIPT_INSERT_SQL,
+  ACTION_PROPOSAL_INSERT_SQL,
+  ACTION_RECEIPT_INSERT_SQL,
+  GITHUB_INGRESS_DELIVERY_INSERT_SQL,
+  GITHUB_INGRESS_RECEIPT_INSERT_SQL,
+  GITHUB_SOURCE_BINDING_INSERT_SQL,
+  actionMutationReceiptParams,
+  actionProposalInsertParams,
+  actionProposalUpdateStatement,
+  actionReceiptInsertParams,
+  githubIngressDeliveryParams,
+  githubIngressReceiptParams,
+  githubSourceBindingParams,
+  mapActionMutationReceipt,
+  mapActionProposal,
+  mapActionReceipt,
+  mapGithubIngressDelivery,
+  mapGithubIngressReceipt,
+  mapGithubSourceBinding,
+  type ActionMutationReceiptRow,
+  type ActionProposalRow,
+  type ActionReceiptRow,
+  type GithubIngressDeliveryRow,
+  type GithubIngressReceiptRow,
+  type GithubSourceBindingRow,
+} from "../store/action-proposal-records.js";
 import {
   contributionsBeforeSql,
   contributionsSinceSql,
@@ -112,6 +140,47 @@ import {
   recallGoalSql,
   recallSectionSql,
 } from "../store/recall-queries.js";
+
+function asBufferedWriteConflict(error: unknown): unknown {
+  const mapped = asCorrectionConflict(error);
+  if (mapped instanceof Conflict) return mapped;
+  const message =
+    typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+      ? error.message
+      : "";
+  // claimOne/deleteOne CHECK guard: the buffered UPDATE matched no row.
+  if (/campfire_delete_guard/i.test(message)) {
+    return new Conflict("The record changed before this write could commit", { recoveryCode: "revision_mismatch" });
+  }
+  // ACT-001 parity with the SQLite store, which maps these writes to typed
+  // conflicts: the service replays equal mutation input from the stored
+  // receipt and surfaces the typed conflict otherwise.
+  const constraint = /unique constraint failed/i.test(message) ||
+    /primary key/i.test(message) ||
+    /already exists/i.test(message);
+  if (constraint) {
+    // `action_receipts` is a substring of `action_mutation_receipts`: match
+    // the longer table name first.
+    if (/action_mutation_receipts/i.test(message)) {
+      return new Conflict("This requestKey was already used with different input; use a new requestKey", {
+        recoveryCode: "request_key_conflict",
+        recovery: "Retry with a fresh requestKey, or replay the exact original input.",
+      });
+    }
+    if (/action_target_reservations/i.test(message)) {
+      return new Conflict("A provider target in this workspace is already reserved", {
+        recoveryCode: "target_already_reserved",
+        recovery: "A new provider run/attempt needs a new proposal and approval.",
+      });
+    }
+    if (/action_receipts/i.test(message)) {
+      return new Conflict("Duplicate action receipt for this proposal", {
+        recoveryCode: "receipt_already_recorded",
+      });
+    }
+  }
+  return mapped;
+}
 
 /** Async mirror of `CampfireStore`: identical shape, Promise returns. */
 export type AsyncCampfireStore = Omit<
@@ -726,6 +795,25 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
   // The guard insert fails the whole batch when that delete matched no row,
   // so a following contribution cannot commit on its own.
   async function deleteOne(sql: string, ...params: unknown[]): Promise<boolean> {
+    if (txnDepth > 0) {
+      await runNow(
+        `CREATE TEMP TABLE IF NOT EXISTS _campfire_delete_guard (
+           n INTEGER NOT NULL CONSTRAINT campfire_delete_guard_one_row CHECK (n = 1)
+         )`,
+      );
+      await run("DELETE FROM _campfire_delete_guard");
+      await run(sql, ...params);
+      await run("INSERT INTO _campfire_delete_guard (n) SELECT changes()");
+      return true;
+    }
+    const result = await run(sql, ...params);
+    return result.meta?.changes === 1;
+  }
+
+  // Guarded conditional write for buffered D1 transactions. The `changes()`
+  // guard fails the whole batch when the UPDATE matched no row, so a lost
+  // revision/status race cannot commit a following write on its own.
+  async function claimOne(sql: string, ...params: unknown[]): Promise<boolean> {
     if (txnDepth > 0) {
       await runNow(
         `CREATE TEMP TABLE IF NOT EXISTS _campfire_delete_guard (
@@ -1510,6 +1598,219 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       await applyClaim(decisionClaimStatements(claim));
     },
 
+    // --- action proposals (ACT-001) ---
+    async createActionProposal(proposal, intentJson, targetKey) {
+      await run(ACTION_PROPOSAL_INSERT_SQL, ...actionProposalInsertParams(proposal, intentJson, targetKey));
+    },
+
+    async getActionProposal(id) {
+      const row = await first<ActionProposalRow>("SELECT * FROM action_proposals WHERE id = ?", id);
+      return row === undefined ? undefined : mapActionProposal(row);
+    },
+
+    async countActionProposals(workspaceId) {
+      return readCount(
+        await first<{ count: number }>("SELECT COUNT(*) AS count FROM action_proposals WHERE workspace_id = ?", workspaceId),
+      );
+    },
+
+    async pageActionProposals(workspaceId, query) {
+      const params: unknown[] = [workspaceId];
+      let afterSql = "";
+      if (query.after !== undefined) {
+        afterSql = "AND (updated_at < ? OR (updated_at = ? AND id > ?))";
+        params.push(query.after.at, query.after.at, query.after.id);
+      }
+      const rows = await all<ActionProposalRow>(
+        `SELECT * FROM action_proposals WHERE workspace_id = ? ${afterSql} ORDER BY updated_at DESC, id ASC LIMIT ?`,
+        ...params,
+        query.limit + 1,
+      );
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapActionProposal),
+        total: await this.countActionProposals(workspaceId),
+        hasMore: page.hasMore,
+        ...(page.hasMore && last ? { next: { at: last.updated_at, id: last.id } } : {}),
+      };
+    },
+
+    async updateActionProposal(id, patch, expected) {
+      const statement = actionProposalUpdateStatement(id, patch, expected);
+      return claimOne(statement.sql, ...statement.params);
+    },
+
+    async createActionTargetReservation(input) {
+      await run(
+        "INSERT INTO action_target_reservations (workspace_id, target_key, proposal_id, reservation_id, reserved_at) VALUES (?, ?, ?, ?, ?)",
+        input.workspaceId,
+        input.targetKey,
+        input.proposalId,
+        input.reservationId,
+        input.reservedAt,
+      );
+    },
+
+    async getActionTargetReservation(workspaceId, targetKey) {
+      const row = await first<{ proposal_id: string; reservation_id: string }>(
+        "SELECT proposal_id, reservation_id FROM action_target_reservations WHERE workspace_id = ? AND target_key = ?",
+        workspaceId,
+        targetKey,
+      );
+      return row === undefined ? undefined : { proposalId: row.proposal_id, reservationId: row.reservation_id };
+    },
+
+    async createActionReceipt(receipt) {
+      await run(ACTION_RECEIPT_INSERT_SQL, ...actionReceiptInsertParams(receipt));
+    },
+
+    async getActionReceipt(id) {
+      const row = await first<ActionReceiptRow>("SELECT * FROM action_receipts WHERE id = ?", id);
+      return row === undefined ? undefined : mapActionReceipt(row);
+    },
+
+    async getActionReceiptByRequestKey(proposalId, actor, requestKey) {
+      const row = await first<ActionReceiptRow>(
+        "SELECT * FROM action_receipts WHERE proposal_id = ? AND recorded_by_actor_id = ? AND recorded_by_actor_type = ? AND request_key = ?",
+        proposalId,
+        actor.actorId,
+        actor.actorType,
+        requestKey,
+      );
+      return row === undefined ? undefined : mapActionReceipt(row);
+    },
+
+    async countActionReceipts(workspaceId, proposalId) {
+      return readCount(
+        await first<{ count: number }>(
+          "SELECT COUNT(*) AS count FROM action_receipts WHERE workspace_id = ? AND proposal_id = ?",
+          workspaceId,
+          proposalId,
+        ),
+      );
+    },
+
+    async pageActionReceipts(workspaceId, proposalId, query) {
+      const params: unknown[] = [workspaceId, proposalId];
+      let afterSql = "";
+      if (query.after !== undefined) {
+        // Keep newest-first/insertion-order in sync with the SQLite store:
+        // same-timestamp receipts page in commit order, cursor format unchanged.
+        afterSql =
+          "AND (recorded_at < ? OR (recorded_at = ? AND rowid < (SELECT rowid FROM action_receipts WHERE id = ?)))";
+        params.push(query.after.at, query.after.at, query.after.id);
+      }
+      const rows = await all<ActionReceiptRow>(
+        `SELECT * FROM action_receipts WHERE workspace_id = ? AND proposal_id = ? ${afterSql} ORDER BY recorded_at DESC, rowid DESC LIMIT ?`,
+        ...params,
+        query.limit + 1,
+      );
+      const page = takeLimitPlusOne(rows, query.limit);
+      const last = page.items[page.items.length - 1];
+      return {
+        items: page.items.map(mapActionReceipt),
+        total: await this.countActionReceipts(workspaceId, proposalId),
+        hasMore: page.hasMore,
+        ...(page.hasMore && last ? { next: { at: last.recorded_at, id: last.id } } : {}),
+      };
+    },
+
+    async getActionMutationReceipt(workspaceId, actorId, actorType, method, requestKey) {
+      const row = await first<ActionMutationReceiptRow>(
+        "SELECT * FROM action_mutation_receipts WHERE workspace_id = ? AND actor_id = ? AND actor_type = ? AND method = ? AND request_key = ?",
+        workspaceId,
+        actorId,
+        actorType,
+        method,
+        requestKey,
+      );
+      return row === undefined ? undefined : mapActionMutationReceipt(row);
+    },
+
+    async putActionMutationReceipt(receipt) {
+      await run(ACTION_MUTATION_RECEIPT_INSERT_SQL, ...actionMutationReceiptParams(receipt));
+    },
+
+    async getGithubSourceBinding(sourceId) {
+      const row = await first<GithubSourceBindingRow>(
+        "SELECT * FROM github_source_bindings WHERE source_id = ?",
+        sourceId,
+      );
+      return row === undefined ? undefined : mapGithubSourceBinding(row);
+    },
+
+    async createGithubSourceBinding(binding) {
+      try {
+        await run(GITHUB_SOURCE_BINDING_INSERT_SQL, ...githubSourceBindingParams(binding));
+      } catch {
+        throw new Conflict(`GitHub source ${binding.sourceId} is already bound`, {
+          recoveryCode: "source_already_bound",
+        });
+      }
+    },
+
+    async updateGithubSourceBindingFingerprint(sourceId, authorityFingerprint) {
+      await run("UPDATE github_source_bindings SET authority_fingerprint = ? WHERE source_id = ?", authorityFingerprint, sourceId);
+    },
+
+    async listGithubSourceBindings(workspaceId) {
+      const rows = await all<GithubSourceBindingRow>(
+        "SELECT * FROM github_source_bindings WHERE workspace_id = ? ORDER BY first_used_at, source_id",
+        workspaceId,
+      );
+      return rows.map(mapGithubSourceBinding);
+    },
+
+    async getGithubIngressDelivery(sourceId, deliveryId) {
+      const row = await first<GithubIngressDeliveryRow>(
+        "SELECT * FROM github_ingress_deliveries WHERE source_id = ? AND delivery_id = ?",
+        sourceId,
+        deliveryId,
+      );
+      return row === undefined ? undefined : mapGithubIngressDelivery(row);
+    },
+
+    async createGithubIngressDelivery(delivery) {
+      try {
+        await run(GITHUB_INGRESS_DELIVERY_INSERT_SQL, ...githubIngressDeliveryParams(delivery));
+      } catch {
+        throw new Conflict("GitHub delivery identity already recorded", {
+          recoveryCode: "delivery_conflict",
+        });
+      }
+    },
+
+    async getGithubIngressReceiptByAttempt(workspaceId, attemptKey) {
+      const row = await first<GithubIngressReceiptRow>(
+        "SELECT * FROM github_ingress_receipts WHERE workspace_id = ? AND attempt_key = ?",
+        workspaceId,
+        attemptKey,
+      );
+      return row === undefined ? undefined : mapGithubIngressReceipt(row);
+    },
+
+    async listGithubIngressReceiptsForProposal(workspaceId, proposalId) {
+      const rows = await all<GithubIngressReceiptRow>(
+        `SELECT * FROM github_ingress_receipts
+         WHERE workspace_id = ? AND proposal_id = ?
+         ORDER BY received_at DESC, finding_id ASC`,
+        workspaceId,
+        proposalId,
+      );
+      return rows.map(mapGithubIngressReceipt);
+    },
+
+    async createGithubIngressReceipt(receipt) {
+      try {
+        await run(GITHUB_INGRESS_RECEIPT_INSERT_SQL, ...githubIngressReceiptParams(receipt));
+      } catch {
+        throw new Conflict("GitHub completion receipt already recorded", {
+          recoveryCode: "semantic_conflict",
+        });
+      }
+    },
+
     async transaction<T>(fn: () => Promise<T>): Promise<T> {
       const outer = txnDepth === 0;
       txnDepth += 1;
@@ -1526,7 +1827,7 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
               break;
             } catch (error) {
               if (!isAppendPositionConflict(error) || attempt === APPEND_POSITION_ATTEMPTS - 1) {
-                throw asCorrectionConflict(error);
+                throw asBufferedWriteConflict(error);
               }
             }
           }
@@ -1535,7 +1836,7 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       } catch (error) {
         buffered.length = 0;
         dirty = false;
-        throw asCorrectionConflict(error);
+        throw asBufferedWriteConflict(error);
       } finally {
         txnDepth -= 1;
       }

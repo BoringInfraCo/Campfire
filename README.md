@@ -40,7 +40,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.25.0/install.sh | sh -s -- --version 1.25.0
+curl -fsSL https://boringinfra.company/campfire/v1.26.0/install.sh | sh -s -- --version 1.26.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
@@ -102,6 +102,53 @@ authorization. Recipes do not write, run code, or store workspace data. Both
 targeted harness smoke runs used discovery and the recipes and named the
 required ids; automatic adoption and improved continuation remain unproven,
 and the human comparison is NOT OBSERVED. See `CHANGELOG.md`.
+
+### Action proposals and verification follow-up
+
+v1.26 adds one bounded action proposal: an authorized agent or human can propose
+retrying the failed jobs of a configured GitHub Actions verification workflow,
+and a human workspace owner can approve that exact intent. The commands are:
+
+```bash
+campfire actions propose --workspace <id> --input ./proposal.json
+campfire actions approve <proposalId> --workspace <id> --revision <n> \
+  --digest <sha256> --request-key <key>
+campfire actions reserve <proposalId> --workspace <id> --revision <n> \
+  --digest <sha256> --request-key <key>
+campfire actions receipt <proposalId> --workspace <id> --input ./receipt.json
+campfire actions inspect <proposalId> --workspace <id> --output json
+campfire actions list --workspace <id> --output json
+campfire actions receipts <proposalId> --workspace <id> --output json
+```
+
+`reject` and `cancel` are also available. Approve, reject, and cancel are
+human-only CLI actions; an agent token cannot approve, including through direct
+`/v1/call`. MCP exposes only `propose_action`, `reserve_action_execution`,
+`record_action_outcome`, `get_action_proposal`, `list_action_proposals`, and
+`list_action_receipts` — there is no MCP approval or cancellation tool.
+
+An approved proposal has exactly one dispatch reservation for one provider
+target and attempt. The external client verifies the target, uses its own GitHub
+credential, and records accepted, definite failure before submission, or
+unknown. **Campfire stores no GitHub credential and calls no GitHub API.** A
+submission receipt is not proof the tests passed, a lost response is never
+retried automatically, and a failed or cancelled run is never reported as
+success.
+
+Completion evidence arrives through the operator-configured signed ingress
+`POST /v1/integrations/github/:sourceId`, which is disabled unless one complete
+source binding is set. It verifies the raw-body HMAC signature, correlates a
+signed `workflow_run` event to one reserved proposal, and creates one cited
+Finding and one Artifact reference atomically. Campfire logs no request bodies
+and stores no provider payload.
+
+The result is bounded: **CONDITIONAL GO — engineering candidate.** D1–D9 pass
+on the recorded candidate, including 19 frozen fixture checks and a 391-file
+audited public export, but the live Codex and OpenCode paths are **NOT
+OBSERVED**, the real-provider round trip is **NOT AUTHORIZED**, and Step 0 was
+captured with partial product code already uncommitted. This release claims no provider interoperability, live
+cross-harness continuation, human demand, or usefulness. See `CHANGELOG.md` and
+`docs/OPERATOR.md`.
 
 ### Experimental Recall and handoff packet
 

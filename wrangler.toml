@@ -47,6 +47,13 @@ migrations_dir = "migrations"
 binding = "TELEMETRY"
 dataset = "campfire_telemetry"
 
+# Integrity outcome measurement: one data point per ingestion decision
+# (outcome, reason, event name only — never an installation id, address, or
+# token). Same provisioning as TELEMETRY: created on first write.
+[[analytics_engine_datasets]]
+binding = "TELEMETRY_OPS"
+dataset = "campfire_telemetry_ops"
+
 # Per-source budget for POST /v1/telemetry. That route carries no bearer by
 # design, so it is open to anyone who learns the URL; this bounds the cost of a
 # flood. `namespace_id` is any stable integer you choose — it is a label, not a
@@ -57,6 +64,32 @@ dataset = "campfire_telemetry"
 name = "TELEMETRY_RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 120, period = 60 }
+
+# Per-installation budget for POST /v1/telemetry. The key is an opaque hash of
+# the installation id (`id:` plus hash) — the raw id never reaches the
+# binding, is never stored, and never appears in a data point. `namespace_id`
+# is a second stable label (1002) so the two budgets do not share counters.
+# The limit is tight because an honest installation sends each bounded event
+# rarely (`activated` once, `active` once per UTC day); like the source budget
+# it fails open. Integrity drops unrelated to budgets answer 200, not 429.
+[[ratelimits]]
+name = "TELEMETRY_ID_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+# Integrity gate mode (optional plain var, not a secret). Production runs
+# enforce: the installer bakes a single-use token into every served script, so
+# tokenless installs are forgeries, replays, or unmeasured fetches — not honest
+# traffic waiting for issuance. Local dev keeps the code default (shadow when a
+# guard is present, off otherwise) by leaving this unset.
+[vars]
+TELEMETRY_GATE_MODE = "enforce"
+#
+#   TELEMETRY_GATE_MODE = "shadow"     # measure, do not reject (rollout mode)
+#   TELEMETRY_GATE_MODE = "enforce"    # reject forgeries, replays, and tokenless installs
+#   TELEMETRY_GATE_MODE = "off"        # pre-integrity behavior
+#
+# Unset or unknown values fall back to the default. See docs/OPERATOR.md.
 
 [assets]
 # The release installer shares ./public with locally packaged Viewer files.

@@ -11,10 +11,14 @@ import { V5_SQL } from "../store/enrollment-schema.js";
 import { V6_BACKFILL_SQL, V6_INDEX_SQL } from "../store/contribution-position-schema.js";
 import { V7_SQL } from "../store/correction-schema.js";
 import { V8_SQL } from "../store/record-history-schema.js";
+import { V9_SQL } from "../store/telemetry-integrity-schema.js";
+import { V10_SQL } from "../store/action-proposal-schema.js";
 export { V5_SQL } from "../store/enrollment-schema.js";
 export { V6_SQL } from "../store/contribution-position-schema.js";
 export { V7_SQL } from "../store/correction-schema.js";
 export { V8_SQL } from "../store/record-history-schema.js";
+export { V9_SQL } from "../store/telemetry-integrity-schema.js";
+export { V10_SQL } from "../store/action-proposal-schema.js";
 
 /** v2 delta: actor tokens + workspace invites (mirrors migrations.ts v2). */
 export const V2_SQL = `
@@ -100,4 +104,4 @@ WHERE config_fingerprint IS NULL AND status IN ('pending', 'delivering')`;
  * in order, including `0005` on databases created before that column existed
  * and `0007` for the history index.
  */
-export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n${V6_BACKFILL_SQL};\n${V6_INDEX_SQL};\n${V7_SQL};\n${V8_SQL};\n`;
+export const CAMPFIRE_D1_SCHEMA_SQL: string = `${SCHEMA_SQL}\n${V2_SQL}\n${V3_SQL}\n${V4_SQL};\n${V5_SQL}\n${V6_BACKFILL_SQL};\n${V6_INDEX_SQL};\n${V7_SQL};\n${V8_SQL};\n${V9_SQL};\n${V10_SQL};\n`;

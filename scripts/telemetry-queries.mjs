@@ -333,10 +333,35 @@ function utcMonday(column) {
   return `toDateTime(toUnixTimestamp(${column}) - (toDayOfWeek(${column}) - 1) * 86400)`;
 }
 
+/**
+ * Installation ids that are test fixtures, never real installations: the
+ * shared Vitest fixture id. Rows under these ids are synthetic by
+ * construction; founder counts must exclude them rather than count them.
+ * This mirrors `TELEMETRY_TEST_INSTALLATION_IDS` in
+ * `src/telemetry/contract.ts` as a literal list so this file stays
+ * dependency-free and importable from another repository for parity checks.
+ */
+const TELEMETRY_TEST_INSTALLATION_IDS = [
+  "3f6b0e2a-1c4d-4a7e-9b8f-0d2e5c7a91b3",
+  "11111111-2222-4333-8444-555555555555",
+  // 2026-10-21 deploy verification of the brew/nix bootstrap path. Synthetic.
+  "10000000-0000-4000-8000-000000000000",
+];
+
+/**
+ * SQL predicate excluding test installation ids. `NOT IN` keeps the predicate
+ * valid where `blob8` is empty: `install_requested` rows carry no
+ * installation id by contract, and `'' NOT IN (...)` is true, so the
+ * predicate is applied uniformly instead of being carved out per event.
+ */
+function testInstallationPredicate(column) {
+  return `${column} NOT IN (${TELEMETRY_TEST_INSTALLATION_IDS.map((id) => `'${id}'`).join(", ")})`;
+}
+
 /** `blob1` filter, plus the version floor for client-emitted events. */
 function eventWhere(event, windowSql) {
   const versionGate = CLIENT_EVENTS.has(event) ? `\n  AND NOT ${versionBelowReportingFloor("blob3")}` : "";
-  return `blob1 = '${event}'${versionGate}\n  AND ${windowSql}`;
+  return `blob1 = '${event}'${versionGate}\n  AND ${testInstallationPredicate("blob8")}\n  AND ${windowSql}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -359,6 +384,7 @@ function installerRequestsWindow(id, title, purpose, windowKey) {
   max(_sample_interval) AS max_sample_interval
 FROM ${DATASET}
 WHERE blob1 = 'install_requested'
+  AND ${testInstallationPredicate("blob8")}
   AND ${windowClause(window[windowKey], window.untilExclusive)}`,
   };
 }
@@ -479,6 +505,7 @@ const QUERIES = [
 FROM ${DATASET}
 WHERE blob1 = 'install_completed'
   AND ${versionBelowReportingFloor("blob3")}
+  AND ${testInstallationPredicate("blob8")}
   AND ${windowClause(window.since, window.untilExclusive)}
 GROUP BY campfire_version
 ORDER BY anonymous_installations DESC, campfire_version ASC
@@ -598,6 +625,7 @@ const FIRST_OBSERVED_QUERY = {
   formatDateTime(min(timestamp), '%Y-%m-%d') AS first_observed_install_request_day
 FROM ${DATASET}
 WHERE blob1 = 'install_requested'
+  AND ${testInstallationPredicate("blob8")}
   AND ${windowClause(EARLIEST_POSSIBLE_DAY, window.untilExclusive)}`,
 };
 
@@ -1135,6 +1163,18 @@ async function main() {
   emit(opts.output === "json" ? `${JSON.stringify(report, null, 2)}\n` : `${renderText(report)}\n`);
 }
 
-main().catch((error) => {
-  fail(sanitizeDiagnostic(error instanceof Error ? error.message : String(error), token()));
-});
+/**
+ * Importable metric definitions for cross-repo parity checks
+ * (`campfire-analytics/tests/parity.test.ts`). Importing this module has no
+ * side effects: the CLI entry below only runs when the file is executed
+ * directly, never when it is imported.
+ */
+export { QUERIES, FIRST_OBSERVED_QUERY, versionBelowReportingFloor, buildWindow, TELEMETRY_TEST_INSTALLATION_IDS, testInstallationPredicate };
+
+const invokedDirectly =
+  process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1];
+if (invokedDirectly) {
+  main().catch((error) => {
+    fail(sanitizeDiagnostic(error instanceof Error ? error.message : String(error), token()));
+  });
+}

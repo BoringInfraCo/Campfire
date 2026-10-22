@@ -1,6 +1,6 @@
-# Campfire 1.25.0 release context
+# Campfire 1.26.0 release context
 
-This public source snapshot was exported on 2026-10-21 from private canonical source commit `4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f` (dated 2026-10-20T21:06:01-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-22 from private canonical source commit `79f20384dc6a51769a66f8d02270101c90ff1d79` (dated 2026-10-21T23:45:02-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -48,26 +48,30 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - The read-only browser Viewer now offers the same focused navigation path as the terminal Navigator: top-level Needs You / Needs Attention, Work, Decisions, Sources, People, and Recent changes, with My work / Team work as a perspective control over the same authorized workspace; on-demand `list_tasks` and `list_workspace_participants` pages (20 rows, `returned X of Y`, opaque cursors, bounded local back stack, and a server-side `humanOwnerId` filter for a selected human's participating agents); a selected Source view over `get_task`/`get_decision`/`get_finding`/`get_artifact`; and recorded per-record history over `get_record_history` (default 10 rows, frozen traversal tip). The normal refresh no longer requests the full `get_workspace` inspector: orientation uses `get_workspace_context` with `participants: "omit"` plus bounded `get_activity`. The Viewer allowlist is exactly the previous five reads plus seven existing reads; writes and unknown methods are rejected before dispatch. The browser-facing history result omits the raw contribution `payload` and returns only a bounded `payloadSummary` (HTTP, MCP, and the CLI keep their existing shapes). At 390×844 the path becomes a list → source → history stack with an explicit Back control; at 1440×900 list and detail sit side by side; Tab/Enter/Space/Escape and focus restoration use native controls. Needs-review and competing accepted decisions stay distinct, the external-open control for the approved HTTPS class keeps its host label, `noopener noreferrer`, and unverified caveat, and recorded relationships are never rendered as live presence or permission. Human comprehension of the Viewer navigation is NOT OBSERVED; NAV-003 is a founder-directed engineering candidate for real-user testing and moves no gate.
 - The v1.24.1 presentation follow-up gives that read model the focused Navigator layout: a workspace rail, one record list, and a structured selected-record pane on wide screens, with a compact list → source → history path on narrow screens. Keyboard row selection and detail remain aligned; selected artifacts keep returned finding citations, narrow drill-down moves focus to a visible control, and selected source IDs retain readable contrast. The underlying reads, authorization, provenance, and reference safety do not change. The roadmap mockup's counts and green palette remain illustrative.
 - Capability discovery describes the installed interface through one bounded, versioned search projection shared by the CLI and MCP, and two static read recipes compose existing authorized reads for continuing blocked work and reviewing a decision's basis. Discovery reads no workspace and grants nothing; recipes run no server work and write nothing. Both targeted harness runs used discovery and the recipes and named the required ids. Automatic adoption and improved continuation over v1.24.1 remain unproven, and the optional non-builder human comparison is NOT OBSERVED.
+- One workspace-owned action proposal records an immutable intent for retrying the failed jobs of one configured GitHub Actions verification workflow, with cited local evidence and a designated executor. A human workspace owner approves or rejects that exact intent through the CLI; an agent token cannot approve, and review and cancellation have no MCP tool. An approved proposal has one dispatch reservation for one provider target and attempt. Submission receipts distinguish accepted, definite failure before submission, and unknown, and a receipt is not proof the tests passed. The operator-configured `POST /v1/integrations/github/:sourceId` ingress verifies a raw-body HMAC signature, correlates a signed `workflow_run` completion to one reserved proposal, and creates one cited Finding and one Artifact reference atomically. Campfire stores no GitHub credential, calls no GitHub API, adds no execute endpoint, no new Viewer tab, and no new outbound event. The ACT-001 result is CONDITIONAL GO — engineering candidate: the live Codex and OpenCode paths are NOT OBSERVED, the real-provider round trip is NOT AUTHORIZED, and Step 0 was captured with partial product code already uncommitted. Provider interoperability, live cross-harness continuation, and ordinary team demand are not claimed.
 
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.25.0.
+- The versioned installer source for v1.26.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.25.0 candidate passed type checking,
+At source preparation, the private 1.26.0 candidate passed type checking,
 build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. The full suite had 103 files / 1,300 tests with 1,298
-passing, one opt-in terminal capture skipped by default, and one expected
-install-channel assertion awaiting the four v1.25.0 release checksums;
-that assertion was not loosened. The audited public snapshot also ran its
-exported CAP-001 tests (36 passed) against the copied frozen contract data,
-without exporting `docs/evidence/`. The public export audit, archive
-verification, channel pins, production deployment, and live installer check are
-separate promotion steps and are recorded only when performed. This source
-snapshot does not establish a human comprehension result, Gate E/B/C, or a
+Worker deployment dry run. On the recorded ACT-001 candidate the full suite had
+118 files / 1,482 tests with 1,482 passing and one opt-in terminal capture
+skipped by default; the release-prep battery on this revision and the
+post-publication pin are recorded in the private release decision, and the
+pre-pin install-channel assertion is not loosened. The candidate also passes 19
+frozen ACT-001 fixture checks and an audited public export of 391 files that
+includes source, migration `0009`, and the synthetic ACT-001 tests while
+excluding `docs/evidence/`, private configuration, and secrets. The public
+export audit, archive verification, channel pins, production deployment, and
+live installer check are separate promotion steps and are recorded only when
+performed. This source snapshot does not establish provider interoperability,
+live cross-harness continuation, human comprehension, Gate E/B/C, or a
 production performance claim.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

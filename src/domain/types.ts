@@ -232,7 +232,9 @@ export type ContributionObjectType =
   | "participant"
   | "agent_session"
   | "enrollment_invitation"
-  | "invite";
+  | "invite"
+  | "action_proposal"
+  | "action_receipt";
 
 /** SHA-256 hash of a raw actor token. The secret itself is never persisted. */
 export interface ActorToken {

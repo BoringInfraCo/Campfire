@@ -739,6 +739,117 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     (args) => run("add_artifact", () => invoke("add_artifact", args)),
   );
 
+  const actionTargetSchema = z.object({
+    repositoryId: z.string(),
+    repositoryName: z.string(),
+    workflowId: z.string(),
+    runId: z.string(),
+    commitSha: z.string(),
+    expectedAttempt: z.number().int().positive(),
+  });
+  const actionProviderRefSchema = z.object({
+    repositoryId: z.string(),
+    workflowId: z.string(),
+    runId: z.string(),
+    attempt: z.number().int().positive().optional(),
+    conclusion: z.string().optional(),
+  });
+
+  server.registerTool(
+    "propose_action",
+    {
+      description:
+        "Propose one concrete verification retry. Records immutable intent, cited evidence, and a designated executor. Does not approve, dispatch, or contact GitHub. Actor identity comes from this session, not from input.",
+      inputSchema: {
+        workspaceId: z.string(),
+        target: actionTargetSchema,
+        executor: actorRefSchema,
+        reason: z.string(),
+        taskId: z.string(),
+        requestKey: z.string().min(1),
+        findingIds: z.array(z.string()).optional(),
+        artifactIds: z.array(z.string()).optional(),
+        expiresAt: z.string().optional(),
+        sourceAuthorityRevision: z.string().optional(),
+      },
+    },
+    (args) => run("propose_action", () => invoke("propose_action", args)),
+  );
+
+  server.registerTool(
+    "reserve_action_execution",
+    {
+      description:
+        "Reserve the one dispatch slot for an approved action proposal. Returns the approved intent, not a GitHub credential or an executable script. Only the designated executor may call this.",
+      inputSchema: {
+        workspaceId: z.string(),
+        proposalId: z.string(),
+        revision: z.number().int(),
+        intentDigest: z.string(),
+        requestKey: z.string().min(1),
+      },
+    },
+    (args) => run("reserve_action_execution", () => invoke("reserve_action_execution", args)),
+  );
+
+  server.registerTool(
+    "record_action_outcome",
+    {
+      description:
+        "Record a bounded execution receipt after the executor submits the retry with its own credential. A receipt is not proof the tests passed.",
+      inputSchema: {
+        workspaceId: z.string(),
+        proposalId: z.string(),
+        revision: z.number().int(),
+        intentDigest: z.string(),
+        outcome: z.enum(["accepted", "definite_failure", "unknown", "reconciled_accepted", "reconciled_failure"]),
+        providerRef: actionProviderRefSchema,
+        requestKey: z.string().min(1),
+        resolvesReceiptId: z.string().optional(),
+      },
+    },
+    (args) => run("record_action_outcome", () => invoke("record_action_outcome", args)),
+  );
+
+  server.registerTool(
+    "get_action_proposal",
+    {
+      description:
+        "Read one action proposal, including human review, reservation, and the latest submission receipt. Does not flatten requested versus observed outcomes.",
+      inputSchema: { workspaceId: z.string(), proposalId: z.string() },
+    },
+    (args) => run("get_action_proposal", () => invoke("get_action_proposal", args)),
+  );
+
+  server.registerTool(
+    "list_action_proposals",
+    {
+      description:
+        "List a bounded page of action proposals in a workspace. The result is bounded; pass the returned cursor to continue the list.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("list_action_proposals", () => invoke("list_action_proposals", args)),
+  );
+
+  server.registerTool(
+    "list_action_receipts",
+    {
+      description:
+        "List a bounded page of review, reservation, and submission receipts for one action proposal. Pass the returned cursor to continue.",
+      inputSchema: {
+        workspaceId: z.string(),
+        proposalId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("list_action_receipts", () => invoke("list_action_receipts", args)),
+  );
+
   function catalogResult(fn: () => unknown): CallToolResult {
     try {
       return ok(fn());

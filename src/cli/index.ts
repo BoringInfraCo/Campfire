@@ -8,7 +8,7 @@ import type { EnrollmentHarness, IssuedEnrollmentInvitation } from "../domain/en
  * and the MCP stdio entrypoint. It exists so the local proof can be driven
  * without a harness (AGENTS.md "Observability").
  */
-import { mkdirSync, realpathSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
@@ -121,6 +121,7 @@ import {
   WorkspaceNotFound,
 } from "../domain/errors.js";
 import { installedCampfireVersion } from "../bootstrap/version.js";
+import type { ActionProposal, ActionReceipt } from "../domain/action-proposal.js";
 import type {
   ActorRef,
   Artifact,
@@ -142,6 +143,7 @@ import {
   reportActive,
   telemetryInBackground,
 } from "../telemetry/report.js";
+import { maybeReportPackageManagerInstall } from "../telemetry/install-method.js";
 import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
@@ -160,6 +162,9 @@ import { collectBridgeReport, formatBridgeReport, type BridgeReport } from "../b
 import { createRuntime } from "../runtime.js";
 import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
+  ActionProposalPage,
+  ActionProposalView,
+  ActionReceiptPage,
   AttentionCoverage,
   AttentionItem,
   GetActivityInput,
@@ -2666,6 +2671,254 @@ function printHelp(command?: string): void {
   console.log(formatCommandUsage(command));
 }
 
+const ACTION_SUBCOMMANDS = [
+  "propose",
+  "approve",
+  "reject",
+  "cancel",
+  "reserve",
+  "receipt",
+  "inspect",
+  "list",
+  "receipts",
+] as const;
+type ActionSubcommand = (typeof ACTION_SUBCOMMANDS)[number];
+const ACTION_INPUT_MAX_BYTES = 64 * 1024;
+
+function requireIntFlag(flags: Record<string, string | boolean>, name: string): number {
+  const raw = requireFlag(flags, name);
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed)) {
+    throw new ValidationError(`--${name} must be an integer`, { field: name, value: raw });
+  }
+  return parsed;
+}
+
+function readStructuredJsonFile(path: string): Record<string, unknown> {
+  let text: string;
+  try {
+    text = readFileSync(path, "utf8");
+  } catch {
+    throw new ValidationError("Cannot read --input file", { field: "input", path });
+  }
+  if (Buffer.byteLength(text, "utf8") > ACTION_INPUT_MAX_BYTES) {
+    throw new ValidationError("--input file exceeds 64 KiB", { field: "input" });
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new ValidationError("--input must be bounded structured JSON and is never executed", { field: "input" });
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new ValidationError("--input must be a JSON object", { field: "input" });
+  }
+  const record = { ...(parsed as Record<string, unknown>) };
+  delete record.proposedBy;
+  delete record.recordedBy;
+  delete record.actor;
+  delete record.actorId;
+  delete record.actorType;
+  return record;
+}
+
+function formatActionProposal(proposal: ActionProposal): string {
+  return [
+    labeled("Proposal", proposal.id),
+    labeled("Status", proposal.status),
+    labeled("Workspace", proposal.workspaceId),
+    labeled("Repo", proposal.target.repositoryName, proposal.target.repositoryId),
+    labeled("Workflow", proposal.target.workflowId),
+    labeled("Run", proposal.target.runId, `attempt ${String(proposal.target.expectedAttempt)}`),
+    labeled("Commit", proposal.target.commitSha),
+    labeled("Executor", `${proposal.executor.actorType}:${proposal.executor.actorId}`),
+    labeled("Expires", proposal.expiresAt),
+    labeled("Digest", proposal.intentDigest),
+    labeled("Revision", String(proposal.revision)),
+    labeled("Task", proposal.taskId),
+    labeled("Findings", proposal.findingIds.join(", ") || "(none)"),
+    labeled("Artifacts", proposal.artifactIds.join(", ") || "(none)"),
+    labeled("Reason", proposal.reason),
+    ...(proposal.review === undefined
+      ? []
+      : [
+          labeled(
+            "Review",
+            proposal.review.decision,
+            `${proposal.review.actor.actorType}:${proposal.review.actor.actorId}`,
+          ),
+        ]),
+    ...(proposal.reservation === undefined
+      ? []
+      : [labeled("Reserved", proposal.reservation.reservationId, `${proposal.reservation.actor.actorType}:${proposal.reservation.actor.actorId}`)]),
+  ].join("\n");
+}
+
+function formatActionProposalView(view: ActionProposalView): string {
+  const lines = [formatActionProposal(view.proposal)];
+  if (view.latestReceipt !== undefined) {
+    lines.push(
+      labeled(
+        "Receipt",
+        view.latestReceipt.id,
+        view.latestReceipt.outcome,
+        view.latestReceipt.providerRef.runId,
+      ),
+    );
+  }
+  return lines.join("\n");
+}
+
+function formatActionProposalPage(page: ActionProposalPage): string {
+  return formatObjectPage(page, (proposal) =>
+    joinFields(proposal.id, `[${proposal.status}]`, proposal.target.repositoryName, proposal.target.runId, proposal.intentDigest),
+  );
+}
+
+function formatActionReceiptPage(page: ActionReceiptPage): string {
+  const header = [
+    labeled("Workspace", page.workspaceId),
+    labeled("Proposal", page.proposalId),
+    ...page.items.map(
+      (receipt: ActionReceipt) =>
+        `  ${joinFields(receipt.id, receipt.outcome, receipt.recordedAt, receipt.providerRef.runId)}`,
+    ),
+  ];
+  if (page.truncated) header.push(`Showing ${page.returned} of ${page.total}`);
+  return header.join("\n");
+}
+
+function formatActionReceipt(receipt: ActionReceipt): string {
+  return [
+    labeled("Receipt", receipt.id),
+    labeled("Proposal", receipt.proposalId),
+    labeled("Outcome", receipt.outcome),
+    labeled("Run", receipt.providerRef.runId),
+    labeled("Recorded", receipt.recordedAt, `${receipt.recordedBy.actorType}:${receipt.recordedBy.actorId}`),
+  ].join("\n");
+}
+
+async function cmdActions(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const requested = parsed.positionals[0];
+  const subcommand = ACTION_SUBCOMMANDS.find((name) => name === requested);
+  if (subcommand === undefined) {
+    throw new ValidationError(
+      `Unknown actions subcommand: ${requested === undefined ? "(none)" : requested}. Run campfire actions --help.`,
+      { field: "actions" },
+    );
+  }
+  const workspaceId = requireFlag(parsed.flags, "workspace");
+  await withBackend(argv, async (backend) => {
+    switch (subcommand) {
+      case "propose": {
+        const input = readStructuredJsonFile(requireFlag(parsed.flags, "input"));
+        const result = (await backend.call("propose_action", { ...input, workspaceId })) as ActionProposalView;
+        emitResult(result, mode, formatActionProposalView);
+        return;
+      }
+      case "approve":
+      case "reject":
+      case "cancel": {
+        const proposalId = parsed.positionals[1];
+        if (proposalId === undefined || proposalId.trim().length === 0) {
+          throw new ValidationError(`Missing required <id> argument`, { field: "id" });
+        }
+        const revision = requireIntFlag(parsed.flags, "revision");
+        const intentDigest = requireFlag(parsed.flags, "digest");
+        const requestKey = requireFlag(parsed.flags, "request-key");
+        const reason = optionalFlag(parsed.flags, "reason");
+        if ((subcommand === "reject" || subcommand === "cancel") && reason === undefined) {
+          throw new ValidationError(`--reason is required for ${subcommand}`, { field: "reason" });
+        }
+        const method = subcommand === "cancel" ? "cancel_action" : "review_action";
+        const params: Record<string, unknown> = {
+          workspaceId,
+          proposalId,
+          revision,
+          intentDigest,
+          requestKey,
+        };
+        if (subcommand === "cancel") {
+          params.reason = reason;
+        } else {
+          params.decision = subcommand === "approve" ? "approve" : "reject";
+          if (reason !== undefined) params.reason = reason;
+        }
+        const result = (await backend.call(method, params)) as ActionProposalView;
+        emitResult(result, mode, formatActionProposalView);
+        return;
+      }
+      case "reserve": {
+        const proposalId = parsed.positionals[1];
+        if (proposalId === undefined || proposalId.trim().length === 0) {
+          throw new ValidationError(`Missing required <id> argument`, { field: "id" });
+        }
+        const result = (await backend.call("reserve_action_execution", {
+          workspaceId,
+          proposalId,
+          revision: requireIntFlag(parsed.flags, "revision"),
+          intentDigest: requireFlag(parsed.flags, "digest"),
+          requestKey: requireFlag(parsed.flags, "request-key"),
+        })) as ActionProposalView;
+        emitResult(result, mode, formatActionProposalView);
+        return;
+      }
+      case "receipt": {
+        const proposalId = parsed.positionals[1];
+        if (proposalId === undefined || proposalId.trim().length === 0) {
+          throw new ValidationError(`Missing required <id> argument`, { field: "id" });
+        }
+        const input = readStructuredJsonFile(requireFlag(parsed.flags, "input"));
+        const result = (await backend.call("record_action_outcome", {
+          ...input,
+          workspaceId,
+          proposalId,
+        })) as ActionReceipt;
+        emitResult(result, mode, formatActionReceipt);
+        return;
+      }
+      case "inspect": {
+        const proposalId = parsed.positionals[1];
+        if (proposalId === undefined || proposalId.trim().length === 0) {
+          throw new ValidationError(`Missing required <id> argument`, { field: "id" });
+        }
+        const result = (await backend.call("get_action_proposal", { workspaceId, proposalId })) as ActionProposalView;
+        emitResult(result, mode, formatActionProposalView);
+        return;
+      }
+      case "list": {
+        const params: Record<string, unknown> = { workspaceId };
+        const limit = optionalPositiveInt(parsed.flags, "limit");
+        const cursor = optionalFlag(parsed.flags, "cursor");
+        if (limit !== undefined) params.limit = limit;
+        if (cursor !== undefined) params.cursor = cursor;
+        const page = (await backend.call("list_action_proposals", params)) as ActionProposalPage;
+        emitResult(page, mode, formatActionProposalPage);
+        return;
+      }
+      case "receipts": {
+        const proposalId = parsed.positionals[1];
+        if (proposalId === undefined || proposalId.trim().length === 0) {
+          throw new ValidationError(`Missing required <id> argument`, { field: "id" });
+        }
+        const params: Record<string, unknown> = { workspaceId, proposalId };
+        const limit = optionalPositiveInt(parsed.flags, "limit");
+        const cursor = optionalFlag(parsed.flags, "cursor");
+        if (limit !== undefined) params.limit = limit;
+        if (cursor !== undefined) params.cursor = cursor;
+        const page = (await backend.call("list_action_receipts", params)) as ActionReceiptPage;
+        emitResult(page, mode, formatActionReceiptPage);
+        return;
+      }
+      default: {
+        const exhaustive: never = subcommand;
+        throw new ValidationError(`Unknown actions subcommand: ${exhaustive}`, { field: "actions" });
+      }
+    }
+  });
+}
+
 type CliHandler = (parsed: ParsedArgs, argv: string[]) => Promise<void> | void;
 
 /**
@@ -2691,6 +2944,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   findings: (parsed, argv) => cmdFindings(parsed, argv),
   tasks: (parsed, argv) => cmdTasks(parsed, argv),
   artifacts: (parsed, argv) => cmdArtifacts(parsed, argv),
+  actions: (parsed, argv) => cmdActions(parsed, argv),
   changes: (parsed, argv) => cmdChanges(parsed, argv),
   inspect: (parsed, argv) => cmdInspect(parsed, argv),
   capabilities: (parsed) => cmdCapabilities(parsed),
@@ -2743,6 +2997,22 @@ export async function runCli(argv: string[]): Promise<void> {
   if (parsed.flags.help === true) {
     printHelp(parsed.command);
     return;
+  }
+
+  // Package-manager installs (brew/nix) never fetch install.sh, so the shell
+  // installer never reports for them. Claim install_completed here on the
+  // first CLI run instead. Curl installs report from install.sh, and
+  // detectInstallMethod returns undefined for them, so this stays silent for
+  // that channel and cannot double-report it. `telemetry` is excluded because
+  // `status` must stay a pure read that mints no installation id; `help` and
+  // unknown commands report nothing because no install ran.
+  if (
+    parsed.command === undefined ||
+    (isKnownCommand(parsed.command) &&
+      parsed.command !== "telemetry" &&
+      parsed.command !== "help")
+  ) {
+    maybeReportPackageManagerInstall({ env: process.env });
   }
 
   if (parsed.command === undefined) {

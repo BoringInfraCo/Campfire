@@ -61,6 +61,14 @@ export const CAMPFIRE_HTTP_METHODS = [
   "issue_token",
   "revoke_token",
   "end_agent_session",
+  "propose_action",
+  "review_action",
+  "cancel_action",
+  "reserve_action_execution",
+  "record_action_outcome",
+  "get_action_proposal",
+  "list_action_proposals",
+  "list_action_receipts",
 ] as const;
 
 export type CampfireHttpMethod = (typeof CAMPFIRE_HTTP_METHODS)[number];
@@ -352,6 +360,99 @@ function recallReadInput(params: Record<string, unknown>): {
   return input;
 }
 
+const ACTION_REVIEW_DECISIONS = ["approve", "reject"] as const;
+const ACTION_SUBMISSION_OUTCOMES = [
+  "accepted",
+  "definite_failure",
+  "unknown",
+  "reconciled_accepted",
+  "reconciled_failure",
+] as const;
+
+function requireInt(params: Record<string, unknown>, field: string): number {
+  const value = optionalInt(params, field);
+  if (value === undefined) {
+    throw new ValidationError(`Missing required ${field}`, { field });
+  }
+  return value;
+}
+
+function requireRecord(params: Record<string, unknown>, field: string): Record<string, unknown> {
+  const value = params[field];
+  if (!isRecord(value)) {
+    throw new ValidationError(`${field} must be an object`, { field });
+  }
+  return value;
+}
+
+function optionalStringList(params: Record<string, unknown>, field: string): string[] | undefined {
+  if (!Object.prototype.hasOwnProperty.call(params, field) || params[field] === undefined || params[field] === null) {
+    return undefined;
+  }
+  if (!Array.isArray(params[field])) {
+    throw new ValidationError(`${field} must be an array of strings`, { field });
+  }
+  return params[field].map((item, index) => {
+    if (typeof item !== "string" || item.trim().length === 0) {
+      throw new ValidationError(`${field} must be an array of strings`, { field, index });
+    }
+    return item;
+  });
+}
+
+function actionTargetFrom(params: Record<string, unknown>): {
+  repositoryId: string;
+  repositoryName: string;
+  workflowId: string;
+  runId: string;
+  commitSha: string;
+  expectedAttempt: number;
+} {
+  const target = requireRecord(params, "target");
+  return {
+    repositoryId: str(target, "repositoryId"),
+    repositoryName: str(target, "repositoryName"),
+    workflowId: str(target, "workflowId"),
+    runId: str(target, "runId"),
+    commitSha: str(target, "commitSha"),
+    expectedAttempt: requireInt(target, "expectedAttempt"),
+  };
+}
+
+function actionExecutorFrom(params: Record<string, unknown>): ActorRef {
+  const nested = requireRecord(params, "executor");
+  return {
+    actorId: str(nested, "actorId"),
+    actorType: requireEnum(str(nested, "actorType"), ACTOR_TYPES, "executor.actorType"),
+  };
+}
+
+function actionProviderRefFrom(params: Record<string, unknown>): {
+  repositoryId: string;
+  workflowId: string;
+  runId: string;
+  attempt?: number;
+  conclusion?: string;
+} {
+  const raw = requireRecord(params, "providerRef");
+  const ref: {
+    repositoryId: string;
+    workflowId: string;
+    runId: string;
+    attempt?: number;
+    conclusion?: string;
+  } = {
+    repositoryId: str(raw, "repositoryId"),
+    workflowId: str(raw, "workflowId"),
+    runId: str(raw, "runId"),
+  };
+  const attempt = optionalInt(raw, "attempt");
+  if (attempt !== undefined) ref.attempt = attempt;
+  const conclusion = optionalStr(raw, "conclusion");
+  if (conclusion !== undefined) ref.conclusion = conclusion;
+  return ref;
+}
+
 /** Dispatch a short-name method. `ctx.actor` is the authenticated principal. */
 export function dispatchCampfireMethod(
   service: CampfireService,
@@ -630,6 +731,123 @@ export function dispatchCampfireMethod(
     case "end_agent_session":
       service.endAgentSession(ctx, str(params, "sessionId"));
       return { ok: true };
+    case "propose_action": {
+      const input: {
+        workspaceId: string;
+        target: ReturnType<typeof actionTargetFrom>;
+        executor: ActorRef;
+        expiresAt?: string;
+        reason: string;
+        taskId: string;
+        findingIds?: string[];
+        artifactIds?: string[];
+        sourceAuthorityRevision?: string;
+        requestKey: string;
+      } = {
+        workspaceId: str(params, "workspaceId"),
+        target: actionTargetFrom(params),
+        executor: actionExecutorFrom(params),
+        reason: str(params, "reason"),
+        taskId: str(params, "taskId"),
+        requestKey: str(params, "requestKey"),
+      };
+      const expiresAt = optionalStr(params, "expiresAt");
+      if (expiresAt !== undefined) input.expiresAt = expiresAt;
+      const findingIds = optionalStringList(params, "findingIds");
+      if (findingIds !== undefined) input.findingIds = findingIds;
+      const artifactIds = optionalStringList(params, "artifactIds");
+      if (artifactIds !== undefined) input.artifactIds = artifactIds;
+      const sourceAuthorityRevision = optionalStr(params, "sourceAuthorityRevision");
+      if (sourceAuthorityRevision !== undefined) input.sourceAuthorityRevision = sourceAuthorityRevision;
+      return service.propose_action(ctx, input);
+    }
+    case "review_action": {
+      const input: {
+        workspaceId: string;
+        proposalId: string;
+        revision: number;
+        intentDigest: string;
+        decision: "approve" | "reject";
+        reason?: string;
+        requestKey: string;
+      } = {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+        revision: requireInt(params, "revision"),
+        intentDigest: str(params, "intentDigest"),
+        decision: requireEnum(str(params, "decision"), ACTION_REVIEW_DECISIONS, "decision"),
+        requestKey: str(params, "requestKey"),
+      };
+      const reason = optionalStr(params, "reason");
+      if (reason !== undefined) input.reason = reason;
+      return service.review_action(ctx, input);
+    }
+    case "cancel_action":
+      return service.cancel_action(ctx, {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+        revision: requireInt(params, "revision"),
+        intentDigest: str(params, "intentDigest"),
+        reason: str(params, "reason"),
+        requestKey: str(params, "requestKey"),
+      });
+    case "reserve_action_execution":
+      return service.reserve_action_execution(ctx, {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+        revision: requireInt(params, "revision"),
+        intentDigest: str(params, "intentDigest"),
+        requestKey: str(params, "requestKey"),
+      });
+    case "record_action_outcome": {
+      const input: {
+        workspaceId: string;
+        proposalId: string;
+        revision: number;
+        intentDigest: string;
+        outcome: (typeof ACTION_SUBMISSION_OUTCOMES)[number];
+        providerRef: ReturnType<typeof actionProviderRefFrom>;
+        resolvesReceiptId?: string;
+        requestKey: string;
+      } = {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+        revision: requireInt(params, "revision"),
+        intentDigest: str(params, "intentDigest"),
+        outcome: requireEnum(str(params, "outcome"), ACTION_SUBMISSION_OUTCOMES, "outcome"),
+        providerRef: actionProviderRefFrom(params),
+        requestKey: str(params, "requestKey"),
+      };
+      const resolvesReceiptId = optionalStr(params, "resolvesReceiptId");
+      if (resolvesReceiptId !== undefined) input.resolvesReceiptId = resolvesReceiptId;
+      return service.record_action_outcome(ctx, input);
+    }
+    case "get_action_proposal":
+      return service.get_action_proposal(ctx, {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+      });
+    case "list_action_proposals": {
+      const input: { workspaceId: string; limit?: number; cursor?: string } = {
+        workspaceId: str(params, "workspaceId"),
+      };
+      const limit = optionalInt(params, "limit");
+      if (limit !== undefined) input.limit = limit;
+      const cursor = optionalStr(params, "cursor");
+      if (cursor !== undefined) input.cursor = cursor;
+      return service.list_action_proposals(ctx, input);
+    }
+    case "list_action_receipts": {
+      const input: { workspaceId: string; proposalId: string; limit?: number; cursor?: string } = {
+        workspaceId: str(params, "workspaceId"),
+        proposalId: str(params, "proposalId"),
+      };
+      const limit = optionalInt(params, "limit");
+      if (limit !== undefined) input.limit = limit;
+      const cursor = optionalStr(params, "cursor");
+      if (cursor !== undefined) input.cursor = cursor;
+      return service.list_action_receipts(ctx, input);
+    }
     default: {
       const exhaustive: never = method;
       throw new ValidationError(`Unknown method: ${exhaustive}`, { field: "method" });

@@ -42,8 +42,16 @@ export function isTelemetryEventName(value: unknown): value is TelemetryEventNam
   return typeof value === "string" && TELEMETRY_EVENT_SET.has(value);
 }
 
-/** The only install method Campfire ships. */
-export const TELEMETRY_INSTALL_METHODS = ["curl"] as const;
+/** The install channels Campfire admits.
+ *
+ * - `curl` is the official shell installer (`install.sh`): the Worker bakes a
+ *   single-use token into the served bytes, so the claim is token-proven.
+ * - `brew`/`nix` are package-manager bootstraps (Homebrew formula, Nix flake):
+ *   they install the same release archives but never fetch the installer, so
+ *   they hold no token. Their claims are self-reported, never token-proven,
+ *   and the dashboard must label them as unverified rather than proven.
+ */
+export const TELEMETRY_INSTALL_METHODS = ["curl", "brew", "nix"] as const;
 export type TelemetryInstallMethod = (typeof TELEMETRY_INSTALL_METHODS)[number];
 
 /**
@@ -132,7 +140,39 @@ export interface TelemetryEventV1 {
   arch: string;
   installMethod?: TelemetryInstallMethod;
   surface?: TelemetrySurface;
+  /**
+   * Single-use install claim, `install_completed` only. Consumed once by the
+   * server-side guard, then useless: it authenticates one funnel step, not a
+   * person or a machine. Never a dimension — it is accepted on the wire but
+   * kept out of `telemetryDataPoint` blobs, so it can never reach storage.
+   * Token issuance to clients ships after server-side integrity; until then
+   * payloads carry no token and the guard treats them accordingly.
+   */
+  installToken?: string;
 }
+
+/**
+ * Installation ids that are documentation or test fixtures, never real
+ * installations: the worked example in `docs/TELEMETRY.md` and the shared
+ * Vitest fixture id. Rows under these ids are synthetic by construction;
+ * founder queries must treat them as such rather than as installations.
+ */
+export const TELEMETRY_TEST_INSTALLATION_IDS: readonly string[] = [
+  "3f6b0e2a-1c4d-4a7e-9b8f-0d2e5c7a91b3",
+  "11111111-2222-4333-8444-555555555555",
+  // 2026-10-21 deploy verification of the brew/nix bootstrap path: one
+  // install_completed + one activated, recorded:true by design. Synthetic.
+  "10000000-0000-4000-8000-000000000000",
+];
+
+/**
+ * Event names that never shipped and must stay rejected: probes and old
+ * drafts try them, and accepting one would invent a funnel step the contract
+ * does not define. The parser already rejects anything outside
+ * `TELEMETRY_EVENTS`; this list names the known attempts so tests can assert
+ * they stay rejected.
+ */
+export const TELEMETRY_LEGACY_EVENTS: readonly string[] = ["contributed", "teammate_joined"];
 
 /**
  * Machine-readable prohibited content. This list is asserted disjoint from
@@ -206,6 +246,9 @@ export const PROHIBITED_FIELD_NAMES = [
  * The complete allow-list. Nothing else is ever serialized. This is the payload
  * vocabulary, not Analytics Engine indexes: AE allows one sampling index, and
  * the stored positions are the blobs in `telemetryDataPoint`.
+ *
+ * `installToken` is deliberately absent: it is a single-use claim consumed by
+ * the guard, not a dimension, and `telemetryDataPoint` must never carry it.
  */
 export const TELEMETRY_FIELDS = [
   "schemaVersion",
@@ -252,6 +295,7 @@ export function buildTelemetryEvent(input: {
   arch?: string;
   installMethod?: string;
   surface?: string;
+  installToken?: string;
 }): TelemetryEventV1 {
   const event: TelemetryEventV1 = {
     schemaVersion: TELEMETRY_SCHEMA_VERSION,
@@ -265,6 +309,7 @@ export function buildTelemetryEvent(input: {
   if (installMethod !== undefined) event.installMethod = installMethod;
   const surface = normalizedEnum(input.surface, TELEMETRY_SURFACES);
   if (surface !== undefined) event.surface = surface;
+  if (isTelemetryInstallationId(input.installToken)) event.installToken = input.installToken;
   return event;
 }
 
@@ -283,6 +328,9 @@ export function serializeTelemetryEvent(event: TelemetryEventV1): string {
   };
   if (event.installMethod !== undefined) payload.installMethod = event.installMethod;
   if (event.surface !== undefined) payload.surface = event.surface;
+  // The token rides the wire so the guard can consume it. It is not a
+  // TELEMETRY_FIELDS dimension and never reaches `telemetryDataPoint`.
+  if (event.installToken !== undefined) payload.installToken = event.installToken;
   return JSON.stringify(payload);
 }
 
@@ -299,6 +347,7 @@ const ALLOWED_KEY_SET: ReadonlySet<string> = new Set([
   "arch",
   "installMethod",
   "surface",
+  "installToken",
 ]);
 
 /**
@@ -349,6 +398,15 @@ export function parseTelemetryEventV1(raw: unknown): TelemetryParseResult {
   if (installMethod !== undefined) event.installMethod = installMethod;
   const surface = normalizedEnum(source.surface, TELEMETRY_SURFACES);
   if (surface !== undefined) event.surface = surface;
+  // A single-use install claim: UUID-shaped, and only on install_completed.
+  // Anywhere else it is malformed — a token must never ride an event whose
+  // funnel step it cannot authenticate.
+  if (source.installToken !== undefined) {
+    if (source.event !== "install_completed" || !isTelemetryInstallationId(source.installToken)) {
+      return { ok: false, reason: "invalid" };
+    }
+    event.installToken = source.installToken;
+  }
   return { ok: true, event };
 }
 

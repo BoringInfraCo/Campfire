@@ -22,7 +22,10 @@ import {
   parseTelemetryEventV1,
   TELEMETRY_MAX_PAYLOAD_BYTES,
   telemetryDataPoint,
+  type TelemetryEventV1,
 } from "../telemetry/contract.js";
+import { telemetryReleaseAt } from "../telemetry/releases.js";
+import { activeClaimDate, type TelemetryGuard } from "../telemetry/guard.js";
 
 /**
  * Optional Analytics Engine dataset binding
@@ -53,10 +56,44 @@ export interface RateLimiterBinding {
   limit(input: { key: string }): Promise<{ success: boolean }>;
 }
 
+/**
+ * How the integrity guard disposes of a failing event.
+ *
+ * - `enforce`: violations are rejected (`recorded: false`); duplicates are
+ *   deduplicated. Counts stay clean at the cost of dropping shadow-phase
+ *   traffic that carries no token yet.
+ * - `shadow`: violations are measured (`would_reject` in the ops dataset) but
+ *   the event still flows through, so counts are unchanged while the funnel
+ *   is observed. Duplicates are still deduplicated in shadow: idempotency is
+ *   not a policy decision.
+ * - `off`: the pre-integrity behavior — floor, IP limiter, and the write
+ *   only. Used when no guard is configured.
+ */
+export type TelemetryGateMode = "enforce" | "shadow" | "off";
+
 export interface TelemetryIngestOptions {
   dataset?: AnalyticsEngineDataset;
   rateLimiter?: RateLimiterBinding;
+  /** Integrity outcome measurement. Absent means outcomes are not measured. */
+  opsDataset?: AnalyticsEngineDataset;
+  /** Optional per-installation budget, keyed by an opaque hash of the id. */
+  idRateLimiter?: RateLimiterBinding;
+  /** Optional idempotency guard. Absent means the gate is off. */
+  guard?: TelemetryGuard;
+  /** Defaults to `shadow` when a guard is present, else `off`. */
+  gateMode?: TelemetryGateMode;
+  /** Milliseconds since epoch. Injected in tests for release-time checks. */
+  now?: () => number;
 }
+
+/** Outcome vocabulary for the ops dataset. Never carries an id or address. */
+export type TelemetryIngestOutcome =
+  | "accepted"
+  | "deduplicated"
+  | "dropped"
+  | "rejected"
+  | "would_reject"
+  | "error";
 
 /** Same envelope as `handler.ts`; duplicated rather than imported to avoid an adapter cycle. */
 function json(status: number, body: unknown): Response {
@@ -124,6 +161,13 @@ async function readBoundedJson(request: Request): Promise<
  * real installations behind one address, so a tight limit would silently drop
  * honest traffic to punish a flood. Failing open when the binding errors keeps
  * telemetry a measurement rather than a new way for Campfire to fail.
+ *
+ * The same binding also budgets installer token minting (TEL-001D), under a
+ * distinct `install-token:` key prefix so a mint never consumes the
+ * ingestion-budget key and vice versa. Both share the 120/min binding budget
+ * per source: one installer fetch can mint at most one token, so farming
+ * tokens costs one fetch per fake id and at most 120 mints per minute per
+ * source address (NAT-shared, hence generous).
  */
 export const TELEMETRY_RATE_LIMIT_PER_MINUTE = 120;
 
@@ -149,6 +193,26 @@ function opaqueKey(value: string): string {
 }
 
 /**
+ * Consume one unit of a budget keyed by an explicit opaque key.
+ *
+ * Fails open in every ambiguous case — no binding, or a binding that throws.
+ * Shared by the per-source limiter (keyed by address hash) and the
+ * per-installation limiter (keyed by id hash).
+ */
+async function isRateLimitedKey(
+  rateLimiter: RateLimiterBinding | undefined,
+  key: string | undefined,
+): Promise<boolean> {
+  if (rateLimiter === undefined || key === undefined) return false;
+  try {
+    const verdict = await rateLimiter.limit({ key });
+    return !verdict.success;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Consume one unit of the caller's budget.
  *
  * Fails open in every ambiguous case — no binding, no address header, or a
@@ -160,15 +224,69 @@ async function isRateLimited(
   rateLimiter: RateLimiterBinding | undefined,
   request: Request,
 ): Promise<boolean> {
-  if (rateLimiter === undefined) return false;
   const address = clientAddress(request);
   if (address === undefined) return false;
+  return isRateLimitedKey(rateLimiter, opaqueKey(address));
+}
+
+/**
+ * Distinct key prefix for the installer token-mint budget (TEL-001D).
+ *
+ * Token minting reuses the existing per-source IP limiter binding, so no new
+ * binding is provisioned and no route shape changes. The prefix keeps mint
+ * keys disjoint from ingestion keys: a token mint never consumes the
+ * ingestion-budget key for the same source, and ingestion traffic never
+ * consumes the mint budget. The raw address never reaches the binding — only
+ * this opaque derived key — and nothing is stored, logged, or written to a
+ * data point.
+ */
+export const INSTALL_TOKEN_RATE_LIMIT_PREFIX = "install-token:";
+
+/**
+ * Consume one unit of the installer's per-source token-mint budget.
+ *
+ * Over budget means the installer is still served, unchanged and unmeasured
+ * except for the usual `install_requested`: a flood can never mint unbounded
+ * tokens, and a legit fetch is never broken (its telemetry proof degrades to
+ * a retry). Fails open in every ambiguous case — no binding, no address
+ * header, or a binding that throws — so the limiter can never break installs.
+ */
+export async function isInstallTokenRateLimited(
+  rateLimiter: RateLimiterBinding | undefined,
+  request: Request,
+): Promise<boolean> {
+  const address = clientAddress(request);
+  if (address === undefined) return false;
+  return isRateLimitedKey(rateLimiter, `${INSTALL_TOKEN_RATE_LIMIT_PREFIX}${opaqueKey(address)}`);
+}
+
+/**
+ * Record one ingestion outcome in the ops dataset.
+ *
+ * The point carries only the outcome, the reason, and the event name —
+ * `indexes: ["ingest_outcome"]`, `blobs: [outcome, reason, event]`,
+ * `doubles: [1]`. No installation id, no address, no token, no version: the
+ * ops dataset measures the gate, not the installations. A failed write is
+ * swallowed: outcome measurement must never change the caller's response.
+ */
+export function recordTelemetryOutcome(
+  opsDataset: AnalyticsEngineDataset | undefined,
+  outcome: TelemetryIngestOutcome,
+  reason: string,
+  event: string,
+): void {
+  if (opsDataset === undefined) return;
   try {
-    const verdict = await rateLimiter.limit({ key: opaqueKey(address) });
-    return !verdict.success;
+    opsDataset.writeDataPoint({ indexes: ["ingest_outcome"], blobs: [outcome, reason, event], doubles: [1] });
   } catch {
-    return false;
+    // Outcome measurement is best-effort, like the measurement itself.
   }
+}
+
+/** The gate that actually applies: explicit mode wins, else guard ⇒ shadow. */
+export function effectiveGateMode(options: Pick<TelemetryIngestOptions, "guard" | "gateMode">): TelemetryGateMode {
+  if (options.gateMode !== undefined) return options.gateMode;
+  return options.guard !== undefined ? "shadow" : "off";
 }
 
 /**
@@ -198,6 +316,8 @@ export async function handleTelemetryEvent(
   // than a buffered parse per request. The caller is told honestly that it was
   // throttled: the client posts fire-and-forget and surfaces a 429 as
   // `HTTP 429` without affecting the Campfire operation that triggered it.
+  // No outcome is recorded here: nothing has been parsed yet, so there is no
+  // trustworthy event name to record.
   const throttled = await isRateLimited(options.rateLimiter, request);
   if (throttled) {
     return fail(429, "RateLimited", "Telemetry ingestion is rate limited for this source");
@@ -213,26 +333,153 @@ export async function handleTelemetryEvent(
       : fail(400, "ValidationError", "Telemetry payload does not match schema version 1");
   }
 
+  const ops = options.opsDataset;
+  const gateMode = effectiveGateMode(options);
+  const gated = gateMode !== "off";
+  const nowMs = (options.now ?? Date.now)();
+
   // A version below the release that introduced telemetry cannot emit an event
   // by any code path, so the payload is fabricated. It is dropped silently —
   // reported as `recorded: false` rather than an error — because a rejection
   // here would teach a prober exactly which field gave it away.
   if (isTelemetryVersionBelowFloor(parsed.event.campfireVersion)) {
+    recordTelemetryOutcome(ops, "dropped", "floor", parsed.event.event);
     return json(200, { ok: true, result: { recorded: false } });
   }
 
+  // A known version whose release instant is still in the future cannot have
+  // been emitted by a real binary either. An unknown version is allowed
+  // through: `unknown`, a build string, or a release newer than the static
+  // table is an honest possibility, recorded under `unknown_release`.
+  const releaseAt = telemetryReleaseAt(parsed.event.campfireVersion);
+  let releaseReason = "ok";
+  if (releaseAt !== undefined) {
+    if (gated && nowMs < Date.parse(releaseAt)) {
+      if (gateMode === "enforce") {
+        recordTelemetryOutcome(ops, "rejected", "version_not_released", parsed.event.event);
+        return json(200, { ok: true, result: { recorded: false } });
+      }
+      return await writeTelemetryPoint(options, parsed.event, ops, "would_reject", "version_not_released");
+    }
+  } else if (gated) {
+    releaseReason = "unknown_release";
+  }
+
+  // Per-installation budget, keyed by `id:` plus the opaque id hash — the raw
+  // id never reaches the binding. `install_requested` carries no id and
+  // skips this limiter. Fails open; a 429 tells the client it was throttled.
+  if (gated && parsed.event.installationId.length > 0) {
+    const idThrottled = await isRateLimitedKey(
+      options.idRateLimiter,
+      `id:${opaqueKey(parsed.event.installationId)}`,
+    );
+    if (idThrottled) {
+      recordTelemetryOutcome(ops, "rejected", "rate_limited_id", parsed.event.event);
+      return fail(429, "RateLimited", "Telemetry ingestion is rate limited for this installation");
+    }
+  }
+
+  // Server-side idempotency. Duplicates are deduplicated in every mode —
+  // idempotency is not a policy decision. Other guard verdicts reject in
+  // enforce mode and measure-and-continue in shadow mode; a guard outage
+  // fails open.
+  if (gated && options.guard !== undefined) {
+    const guard = options.guard;
+    const nowIso = new Date(nowMs).toISOString();
+    if (parsed.event.event === "install_completed") {
+      // Closed rule: a tokenless install is accepted IFF the method is `brew`
+      // or `nix`. The `curl` channel (including an absent or unknown method,
+      // which normalizes to `undefined`) must present a valid single-use
+      // token; anything else is a forgery, a replay, or an unmeasured fetch.
+      const method = parsed.event.installMethod;
+      if (method === "brew" || method === "nix") {
+        // Package-manager bootstrap: self-reported, never token-proven. Any
+        // token present is ignored and deliberately NOT consumed — a brew/nix
+        // client has no legitimate way to hold one, so consuming it would let
+        // token theft burn installer tokens. The claim lands directly, with
+        // no read or write to the token table.
+        const bootstrapReason = method === "brew" ? "bootstrap_brew" : "bootstrap_nix";
+        const direct = await guard.claimInstallDirect({
+          installationId: parsed.event.installationId,
+          now: nowIso,
+        });
+        if (direct === "duplicate") {
+          recordTelemetryOutcome(ops, "deduplicated", "duplicate_install", parsed.event.event);
+          return json(200, { ok: true, result: { recorded: false } });
+        }
+        // `error` fails open like every other guard outage: measurement must
+        // never become a new way for an install to fail.
+        return await writeTelemetryPoint(options, parsed.event, ops, "accepted", bootstrapReason);
+      }
+      const completed = await guard.completeInstall({
+        installationId: parsed.event.installationId,
+        ...(parsed.event.installToken !== undefined ? { installToken: parsed.event.installToken } : {}),
+        now: nowIso,
+      });
+      if (completed === "duplicate") {
+        recordTelemetryOutcome(ops, "deduplicated", "duplicate_install", parsed.event.event);
+        return json(200, { ok: true, result: { recorded: false } });
+      }
+      if (completed === "invalid_token") {
+        if (gateMode === "enforce") {
+          recordTelemetryOutcome(ops, "rejected", "invalid_token", parsed.event.event);
+          return json(200, { ok: true, result: { recorded: false } });
+        }
+        return await writeTelemetryPoint(options, parsed.event, ops, "would_reject", "invalid_token");
+      }
+    } else if (parsed.event.event === "activated" || parsed.event.event === "active") {
+      const claim =
+        parsed.event.event === "activated"
+          ? await guard.claimActivation({ installationId: parsed.event.installationId })
+          : await guard.claimActive({
+              installationId: parsed.event.installationId,
+              date: activeClaimDate(new Date(nowMs)),
+            });
+      if (claim === "duplicate") {
+        const reason = parsed.event.event === "activated" ? "duplicate_activation" : "duplicate_active";
+        recordTelemetryOutcome(ops, "deduplicated", reason, parsed.event.event);
+        return json(200, { ok: true, result: { recorded: false } });
+      }
+      if (claim === "no_install") {
+        if (gateMode === "enforce") {
+          recordTelemetryOutcome(ops, "rejected", "no_install", parsed.event.event);
+          return json(200, { ok: true, result: { recorded: false } });
+        }
+        return await writeTelemetryPoint(options, parsed.event, ops, "would_reject", "no_install");
+      }
+    }
+  }
+
+  return await writeTelemetryPoint(options, parsed.event, ops, "accepted", releaseReason);
+}
+
+/**
+ * The terminal write: missing dataset and write failures are honest
+ * `recorded: false` successes, never client errors. `outcome`/`reason`
+ * carry the shadow verdict when the gate measured one instead of rejecting.
+ */
+async function writeTelemetryPoint(
+  options: TelemetryIngestOptions,
+  event: TelemetryEventV1,
+  ops: AnalyticsEngineDataset | undefined,
+  outcome: TelemetryIngestOutcome,
+  reason: string,
+): Promise<Response> {
   if (options.dataset === undefined) {
+    recordTelemetryOutcome(ops, "dropped", "missing_dataset", event.event);
     return json(200, { ok: true, result: { recorded: false } });
   }
 
   try {
-    options.dataset.writeDataPoint(telemetryDataPoint(parsed.event));
+    options.dataset.writeDataPoint(telemetryDataPoint(event));
   } catch {
     // A measurement write must not become a client error: the caller has
     // nothing to fix, and a 500 here would make a successful install look
     // broken. Still report honestly that no data point was recorded.
+    recordTelemetryOutcome(ops, "error", "write_error", event.event);
     return json(200, { ok: true, result: { recorded: false } });
   }
+  recordTelemetryOutcome(ops, outcome, reason, event.event);
   return json(200, { ok: true, result: { recorded: true } });
 }
 

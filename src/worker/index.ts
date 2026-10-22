@@ -18,6 +18,8 @@ import { bridgeFromEnv } from "../service/outbox.js";
 import { createD1Store } from "./d1-store.js";
 import type { CampfireWorkerEnv } from "./d1-types.js";
 import { createD1WorkerHandler } from "./handler.js";
+import { createD1TelemetryGuard } from "../telemetry/guard.js";
+import type { TelemetryGateMode } from "./telemetry.js";
 
 interface WorkerContext {
   waitUntil(promise: Promise<unknown>): void;
@@ -31,7 +33,27 @@ function webhookEnv(env: CampfireWorkerEnv): Record<string, string | undefined> 
     CAMPFIRE_WEBHOOK_EVENTS: env.CAMPFIRE_WEBHOOK_EVENTS,
     CAMPFIRE_WEBHOOK_WORKSPACES: env.CAMPFIRE_WEBHOOK_WORKSPACES,
     CAMPFIRE_BRIDGE_TOKEN: env.CAMPFIRE_BRIDGE_TOKEN,
+    CAMPFIRE_GITHUB_SOURCE_ID: env.CAMPFIRE_GITHUB_SOURCE_ID,
+    CAMPFIRE_GITHUB_SOURCE_WORKSPACE_ID: env.CAMPFIRE_GITHUB_SOURCE_WORKSPACE_ID,
+    CAMPFIRE_GITHUB_SOURCE_REPOSITORY_ID: env.CAMPFIRE_GITHUB_SOURCE_REPOSITORY_ID,
+    CAMPFIRE_GITHUB_SOURCE_REPOSITORY_NAME: env.CAMPFIRE_GITHUB_SOURCE_REPOSITORY_NAME,
+    CAMPFIRE_GITHUB_SOURCE_WORKFLOW_ID: env.CAMPFIRE_GITHUB_SOURCE_WORKFLOW_ID,
+    CAMPFIRE_GITHUB_SOURCE_KIND: env.CAMPFIRE_GITHUB_SOURCE_KIND,
+    CAMPFIRE_GITHUB_SOURCE_SECRET: env.CAMPFIRE_GITHUB_SOURCE_SECRET,
+    CAMPFIRE_GITHUB_SOURCE_AGENT_ID: env.CAMPFIRE_GITHUB_SOURCE_AGENT_ID,
+    CAMPFIRE_GITHUB_SOURCE_SESSION_ID: env.CAMPFIRE_GITHUB_SOURCE_SESSION_ID,
   };
+}
+
+/**
+ * Integrity gate mode from the environment. Empty, unset, or unknown falls
+ * back to the adapter default: `shadow` when a guard is present (the Worker
+ * always builds one from `env.DB`), so production measures without rejecting.
+ */
+function telemetryGateMode(env: CampfireWorkerEnv): TelemetryGateMode | undefined {
+  const raw = (env.TELEMETRY_GATE_MODE ?? "").trim().toLowerCase();
+  if (raw === "enforce" || raw === "shadow" || raw === "off") return raw;
+  return undefined;
 }
 
 async function deliverPending(env: CampfireWorkerEnv): Promise<void> {
@@ -55,6 +77,7 @@ export default {
       store,
       assetsFetch: (req) => env.ASSETS.fetch(req),
       webhookEnv: webhookEnv(env),
+      sourceEnv: webhookEnv(env),
       onWriteCommitted: () => {
         deliveryEnqueued = true;
       },
@@ -64,6 +87,15 @@ export default {
       // Same for the limiter: absent binding means the ingestion route is
       // unbounded, which is exactly how it behaved before the binding existed.
       telemetryRateLimiter: env.TELEMETRY_RATE_LIMITER,
+      // Integrity: outcome measurement and the per-installation budget are
+      // optional bindings like the ones above. The guard is built from the
+      // Worker's own D1 so claims land in the same database the migrations
+      // provision; with no explicit TELEMETRY_GATE_MODE the adapter defaults
+      // to shadow (measure, do not reject).
+      telemetryOpsDataset: env.TELEMETRY_OPS,
+      telemetryIdRateLimiter: env.TELEMETRY_ID_RATE_LIMITER,
+      telemetryGuard: createD1TelemetryGuard(env.DB),
+      telemetryGateMode: telemetryGateMode(env),
     });
     const response = await handle(request);
     // Immediate delivery is retained for writes, so a freshly enqueued delivery

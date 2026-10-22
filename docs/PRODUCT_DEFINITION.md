@@ -295,6 +295,16 @@ Which human or agent is participating in the workspace?
 What is a participant permitted to access or execute?
 *(Future — Era II coordination. v1.0 has roles + invite membership only.)*
 
+### Planned ActionProposal — bounded v1.26 pilot
+What exact external verification retry is proposed, which human approved it,
+and what was submitted or observed? The [ACT-001 proposed sprint](Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md)
+adds this workspace-owned record and attributed receipts for one action class.
+An external client performs the action with its own provider credential; a
+configured signed completion may contribute cited evidence. Approval is specific
+to the intent, evidence, and executor. It is not a general capability grant,
+an accepted team Decision, or proof of external success. This planned pilot
+does not establish controlled-action demand or expand Campfire into a runtime.
+
 ### Checkpoint
 What is the current recoverable state of the work?
 *(Future — Era II, not in v1.0.)*

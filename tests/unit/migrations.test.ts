@@ -11,9 +11,11 @@ import {
   V6_SQL as sqliteV6Sql,
   V7_SQL as sqliteV7Sql,
   V8_SQL as sqliteV8Sql,
+  V9_SQL as sqliteV9Sql,
+  V10_SQL as sqliteV10Sql,
 } from "../../src/store/migrations.js";
 import { openInMemoryStore } from "../../src/store/sqlite-store.js";
-import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql, V7_SQL as workerV7Sql, V8_SQL as workerV8Sql } from "../../src/worker/schema.js";
+import { V2_SQL as workerV2Sql, V3_SQL as workerV3Sql, V4_SQL as workerV4Sql, V5_SQL as workerV5Sql, V6_SQL as workerV6Sql, V7_SQL as workerV7Sql, V8_SQL as workerV8Sql, V9_SQL as workerV9Sql, V10_SQL as workerV10Sql } from "../../src/worker/schema.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const LATER = "2026-01-02T00:00:00.000Z";
@@ -49,6 +51,9 @@ describe("schema migrations", () => {
         "workspace_invites",
         "domain_events",
         "webhook_deliveries",
+        "github_source_bindings",
+        "github_ingress_deliveries",
+        "github_ingress_receipts",
       ]),
     );
   });
@@ -67,6 +72,8 @@ describe("schema migrations", () => {
       { version: 6, applied_at: NOW },
       { version: 7, applied_at: NOW },
       { version: 8, applied_at: NOW },
+      { version: 9, applied_at: NOW },
+      { version: 10, applied_at: NOW },
     ]);
   });
 
@@ -134,6 +141,14 @@ describe("schema migrations", () => {
     const v8Body = v8.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
     expect(sqliteV8Sql).toBe(workerV8Sql);
     expect(v8Body).toBe(sqliteV8Sql);
+    const v9 = readFileSync(new URL("../../migrations/0008_telemetry_integrity.sql", import.meta.url), "utf8");
+    const v9Body = v9.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
+    expect(sqliteV9Sql).toBe(workerV9Sql);
+    expect(v9Body).toBe(sqliteV9Sql);
+    const v10 = readFileSync(new URL("../../migrations/0009_action_proposals.sql", import.meta.url), "utf8");
+    const v10Body = v10.replace(/^--[^\n]*\n+/, "").trim().replace(/;$/, "");
+    expect(sqliteV10Sql).toBe(workerV10Sql);
+    expect(v10Body).toBe(sqliteV10Sql);
   });
 
   it("keeps enrollment migrations identical and upgrades v4 without altering collaboration state", () => {
@@ -307,6 +322,7 @@ describe("schema migrations", () => {
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 6").get()).toEqual({ count: 1 });
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 7").get()).toEqual({ count: 1 });
     expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 8").get()).toEqual({ count: 1 });
+    expect(db.prepare("SELECT COUNT(*) AS count FROM schema_migrations WHERE version = 9").get()).toEqual({ count: 1 });
     expect(
       db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_contributions_object_position'").get(),
     ).toEqual({ name: "idx_contributions_object_position" });

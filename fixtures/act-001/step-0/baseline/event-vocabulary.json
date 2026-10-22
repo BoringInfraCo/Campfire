@@ -1,0 +1,29 @@
+{
+  "label": "FIXTURE EVIDENCE",
+  "source": "src/domain/events.ts @ v1.25.0 tag",
+  "outboundEventVocabulary": [
+    "finding.recorded",
+    "decision.proposed",
+    "decision.accepted",
+    "task.blocked",
+    "task.completed",
+    "goal.completed",
+    "artifact.attached",
+    "workspace.completed"
+  ],
+  "outboundEventCount": 8,
+  "contributionActions": ["create", "update", "join", "register_session", "read"],
+  "contributionObjectTypes": [
+    "workspace",
+    "goal",
+    "task",
+    "finding",
+    "decision",
+    "artifact",
+    "participant",
+    "agent_session",
+    "enrollment_invitation",
+    "invite"
+  ],
+  "act001Note": "ACT-001 adds NO new outbound DomainEvent. Proposal transitions record Contributions under an explicit new object type and are read through the new bounded receipt/history reads, never through get_record_history expansion or the Viewer allowlist."
+}

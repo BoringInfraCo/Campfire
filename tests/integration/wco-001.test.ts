@@ -398,6 +398,7 @@ describe("WCO-001 D5 — interface safety", () => {
         "create_task",
         "create_workspace",
         "discover_capabilities",
+        "get_action_proposal",
         "get_activity",
         "get_artifact",
         "get_read_recipe",
@@ -410,6 +411,8 @@ describe("WCO-001 D5 — interface safety", () => {
         "get_workspace_context",
         "invite_workspace",
         "join_workspace",
+        "list_action_proposals",
+        "list_action_receipts",
         "list_artifacts",
         "list_decisions",
         "list_findings",
@@ -417,10 +420,13 @@ describe("WCO-001 D5 — interface safety", () => {
         "list_workspace_participants",
         "list_workspaces",
         "preflight",
+        "propose_action",
         "recall_workspace",
+        "record_action_outcome",
         "register_agent_session",
         "remove_decision_basis",
         "remove_finding_evidence",
+        "reserve_action_execution",
         "retire_decision",
         "update_goal",
         "update_task",
@@ -483,7 +489,7 @@ describe("WCO-001 D6 — compatibility", () => {
 
   it("keeps the CLI command catalog unchanged for continuation commands", () => {
     const commands = [...CLI_COMMAND_NAMES];
-    expect(commands).toHaveLength(60);
+    expect(commands).toHaveLength(61);
     for (const command of ["status", "context", "catch-up", "tasks", "update-task", "cite-evidence", "inspect"]) {
       expect(commands).toContain(command);
     }

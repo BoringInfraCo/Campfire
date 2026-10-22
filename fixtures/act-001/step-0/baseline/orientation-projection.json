@@ -1,0 +1,202 @@
+{
+  "topKeys": [
+    "acceptedDecisions",
+    "alignment",
+    "artifacts",
+    "attentionCoverage",
+    "budget",
+    "completeness",
+    "currentWork",
+    "findings",
+    "generatedAt",
+    "goal",
+    "historicalCounts",
+    "needsAttention",
+    "needsYou",
+    "openTasks",
+    "orientationCursor",
+    "participants",
+    "proposedDecisions",
+    "provenance",
+    "provenanceSummary",
+    "provenanceTotal",
+    "provenanceTruncated",
+    "schemaVersion",
+    "slices",
+    "suggestedNextAction",
+    "supersededDecisions",
+    "workspace"
+  ],
+  "shape": {
+    "acceptedDecisions": [],
+    "alignment": {
+      "acceptedDecisionIds": [],
+      "proposedDecisionIds": [],
+      "status": "string",
+      "unresolvedBlockedTaskIds": []
+    },
+    "artifacts": [],
+    "attentionCoverage": {
+      "completeUnderRules": "boolean",
+      "decisions": {
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "tasks": {
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      }
+    },
+    "budget": {
+      "artifacts": "number",
+      "blockers": "number",
+      "decisions": "number",
+      "findings": "number",
+      "goals": "number",
+      "recentChanges": "number",
+      "tasks": "number"
+    },
+    "completeness": {
+      "drillDownAvailable": "boolean",
+      "fullHistoryIncluded": "boolean"
+    },
+    "currentWork": {
+      "acceptedDecisions": [],
+      "blockedTasks": [],
+      "inProgressTasks": []
+    },
+    "findings": [],
+    "generatedAt": "string",
+    "goal": {
+      "agentSessionId": "undefined",
+      "createdAt": "string",
+      "createdBy": {
+        "actorId": "string",
+        "actorType": "string"
+      },
+      "description": "undefined",
+      "id": "string",
+      "status": "string",
+      "title": "string",
+      "updatedAt": "string",
+      "workspaceId": "string"
+    },
+    "historicalCounts": {
+      "decisions": "number",
+      "findings": "number"
+    },
+    "needsAttention": [],
+    "needsYou": [],
+    "openTasks": [],
+    "orientationCursor": "string",
+    "participants": [
+      {
+        "actor": {
+          "actorId": "string",
+          "actorType": "string"
+        },
+        "joinedAt": "string",
+        "name": "string",
+        "role": "string"
+      }
+    ],
+    "proposedDecisions": [],
+    "provenance": [
+      {
+        "action": "string",
+        "actor": {
+          "actorId": "string",
+          "actorType": "string"
+        },
+        "agentSessionId": "undefined",
+        "appendPosition": "number",
+        "createdAt": "string",
+        "id": "string",
+        "objectId": "string",
+        "objectType": "string",
+        "payload": {
+          "name": "string"
+        },
+        "workspaceId": "string"
+      }
+    ],
+    "provenanceSummary": [
+      "string"
+    ],
+    "provenanceTotal": "number",
+    "provenanceTruncated": "boolean",
+    "schemaVersion": "number",
+    "slices": {
+      "artifacts": {
+        "items": [],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "blockers": {
+        "items": [],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "decisions": {
+        "items": [],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "findings": {
+        "items": [],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "recentChanges": {
+        "items": [
+          {
+            "actorId": "string",
+            "actorType": "string",
+            "changeType": "string",
+            "cursor": "string",
+            "materiality": "string",
+            "objectId": "string",
+            "objectType": "string",
+            "occurredAt": "string",
+            "summary": "string"
+          }
+        ],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      },
+      "tasks": {
+        "items": [],
+        "returned": "number",
+        "total": "number",
+        "truncated": "boolean"
+      }
+    },
+    "suggestedNextAction": {
+      "kind": "string",
+      "orientationHint": "boolean",
+      "reason": "string",
+      "summary": "string"
+    },
+    "supersededDecisions": [],
+    "workspace": {
+      "createdAt": "string",
+      "createdBy": {
+        "actorId": "string",
+        "actorType": "string"
+      },
+      "description": "undefined",
+      "id": "string",
+      "name": "string",
+      "status": "string",
+      "teamId": "string",
+      "updatedAt": "string"
+    }
+  }
+}

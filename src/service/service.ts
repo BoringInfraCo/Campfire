@@ -5,6 +5,13 @@
  * Handlers stay thin: validate, call the service, serialize the result.
  */
 import type { ActorContext } from "./authorization.js";
+import type {
+  ActionProposal,
+  ActionProviderRef,
+  ActionReceipt,
+  ActionSubmissionOutcome,
+  SignedObservationRef,
+} from "../domain/action-proposal.js";
 import type { EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
 import type { CampfireHandoffPacket, WorkspaceRecall } from "../domain/recall.js";
@@ -522,6 +529,113 @@ export interface WorkspaceObjectPage<T> extends ContextSlice<T> {
   workspaceId: string;
 }
 
+/**
+ * ACT-001 action proposal inputs. `requestKey` scopes idempotency to
+ * workspace, actor, and method: equal normalized input replays the prior
+ * result, unequal input conflicts. `revision`/`intentDigest` bind the caller
+ * to the exact approved effect they inspected.
+ */
+export interface ProposeActionInput {
+  workspaceId: string;
+  target: {
+    repositoryId: string;
+    repositoryName: string;
+    workflowId: string;
+    runId: string;
+    commitSha: string;
+    expectedAttempt: number;
+  };
+  executor: ActorRef;
+  /** Server-clock deadline; defaults to 24h after creation. Never later. */
+  expiresAt?: string;
+  reason: string;
+  taskId: string;
+  findingIds?: string[];
+  artifactIds?: string[];
+  /** Authority revision of the operator-bound source. Defaults to `none`. */
+  sourceAuthorityRevision?: string;
+  requestKey: string;
+}
+
+export interface ReviewActionInput {
+  workspaceId: string;
+  proposalId: string;
+  revision: number;
+  intentDigest: string;
+  decision: "approve" | "reject";
+  /** Required when rejecting. */
+  reason?: string;
+  requestKey: string;
+}
+
+export interface CancelActionInput {
+  workspaceId: string;
+  proposalId: string;
+  revision: number;
+  intentDigest: string;
+  reason: string;
+  requestKey: string;
+}
+
+export interface ReserveActionInput {
+  workspaceId: string;
+  proposalId: string;
+  revision: number;
+  intentDigest: string;
+  requestKey: string;
+}
+
+export interface RecordActionOutcomeInput {
+  workspaceId: string;
+  proposalId: string;
+  revision: number;
+  intentDigest: string;
+  outcome: ActionSubmissionOutcome;
+  providerRef: ActionProviderRef;
+  /** Required for reconciled outcomes: the unknown receipt being resolved. */
+  resolvesReceiptId?: string;
+  requestKey: string;
+}
+
+export interface GetActionProposalInput {
+  workspaceId: string;
+  proposalId: string;
+}
+
+export interface ListActionProposalsInput {
+  workspaceId: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ListActionReceiptsInput {
+  workspaceId: string;
+  proposalId: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface ActionProposalView {
+  proposal: ActionProposal;
+  /** Newest submission/reconciliation receipt, when one exists. */
+  latestReceipt?: ActionReceipt;
+  /** Bounded latest signed provider observation (finding/artifact ids). */
+  signedObservation?: SignedObservationRef;
+}
+
+export interface ActionProposalPage extends ContextSlice<ActionProposal> {
+  schemaVersion: 1;
+  workspaceId: string;
+}
+
+export interface ActionReceiptPage extends ContextSlice<ActionReceipt> {
+  schemaVersion: 1;
+  workspaceId: string;
+  proposalId: string;
+  /** Linked signed provider observations; never a flattened success boolean. */
+  linkedObservations?: SignedObservationRef[];
+}
+
 export interface CampfireService {
   issueEnrollmentInvitation(ctx: ActorContext, input: IssueEnrollmentInvitationInput): IssuedEnrollmentInvitation;
   getEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentInvitationView;
@@ -581,6 +695,15 @@ export interface CampfireService {
   createTask(ctx: ActorContext, input: CreateTaskInput): Task;
   updateTask(ctx: ActorContext, input: UpdateTaskInput): Task;
   addArtifact(ctx: ActorContext, input: AddArtifactInput): Artifact;
+
+  propose_action(ctx: ActorContext, input: ProposeActionInput): ActionProposalView;
+  review_action(ctx: ActorContext, input: ReviewActionInput): ActionProposalView;
+  cancel_action(ctx: ActorContext, input: CancelActionInput): ActionProposalView;
+  reserve_action_execution(ctx: ActorContext, input: ReserveActionInput): ActionProposalView;
+  record_action_outcome(ctx: ActorContext, input: RecordActionOutcomeInput): ActionReceipt;
+  get_action_proposal(ctx: ActorContext, input: GetActionProposalInput): ActionProposalView;
+  list_action_proposals(ctx: ActorContext, input: ListActionProposalsInput): ActionProposalPage;
+  list_action_receipts(ctx: ActorContext, input: ListActionReceiptsInput): ActionReceiptPage;
 
   close(): void;
 }

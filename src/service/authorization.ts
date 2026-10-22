@@ -26,7 +26,11 @@ export type Operation =
   | "activity:read"
   | "session:register"
   | "session:end"
-  | "invite:create";
+  | "invite:create"
+  | "action:propose"
+  | "action:review"
+  | "action:reserve"
+  | "action:report";
 
 /** The acting participant for a single request. */
 export interface ActorContext {

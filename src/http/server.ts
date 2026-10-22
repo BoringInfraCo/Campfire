@@ -15,8 +15,18 @@ import {
 } from "../bridge/config.js";
 import { collectBridgeReport } from "../bridge/report.js";
 import { CampfireError, Unauthorized, type CampfireErrorCode } from "../domain/errors.js";
+import { createId, nowIso } from "../domain/ids.js";
 import type { ActorContext } from "../service/authorization.js";
+import { githubIngressPathSourceId, ingestGithubWorkflowRun } from "../service/github-ingress.js";
 import { bridgeFromEnv } from "../service/outbox.js";
+import { readGithubSourceConfig } from "../integrations/github-source-config.js";
+import {
+  GITHUB_INGRESS_BODY_DEADLINE_MS,
+  GITHUB_INGRESS_MAX_BODY_BYTES,
+  ingressContentTypeAllowed,
+  ingressEncodingAllowed,
+  ingressTransportAllowed,
+} from "../integrations/github-workflow-run.js";
 import type { CampfireRuntime } from "../runtime.js";
 import type { CampfireStore } from "../store/store.js";
 import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod } from "./dispatch.js";
@@ -30,6 +40,9 @@ export interface HttpServerOptions {
   runtime: CampfireRuntime;
   host?: string;
   port?: number;
+  sourceEnv?: Record<string, string | undefined>;
+  clock?: () => string;
+  ingressBodyTimeoutMs?: number;
 }
 
 export interface RunningHttpServer {
@@ -133,6 +146,47 @@ async function readBody(req: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
+class GithubIngressReadError extends Error {
+  constructor(readonly kind: "too_large" | "timeout") {
+    super(kind);
+    this.name = "GithubIngressReadError";
+  }
+}
+
+async function readGithubIngressBody(
+  req: IncomingMessage,
+  maxBytes: number,
+  timeoutMs: number,
+): Promise<Uint8Array> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    req.destroy(new GithubIngressReadError("timeout"));
+  }, timeoutMs);
+  try {
+    for await (const chunk of req) {
+      if (timedOut) throw new GithubIngressReadError("timeout");
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += buf.length;
+      if (size > maxBytes) {
+        req.destroy();
+        throw new GithubIngressReadError("too_large");
+      }
+      chunks.push(buf);
+    }
+  } catch (error) {
+    if (error instanceof GithubIngressReadError) throw error;
+    if (timedOut) throw new GithubIngressReadError("timeout");
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (timedOut) throw new GithubIngressReadError("timeout");
+  return Buffer.concat(chunks);
+}
+
 function fail(
   res: ServerResponse,
   status: number,
@@ -191,6 +245,83 @@ async function handleBridgeReport(
   writeJson(res, 200, { ok: true, result: report });
 }
 
+async function handleGithubIngress(
+  req: IncomingMessage,
+  res: ServerResponse,
+  sourceId: string,
+  options: HttpServerOptions,
+): Promise<void> {
+  if (req.method !== "POST") {
+    fail(res, 405, "ValidationError", `Method not allowed: ${req.method ?? "unknown"}`, {});
+    return;
+  }
+  const config = readGithubSourceConfig(options.sourceEnv ?? process.env);
+  if (!config.configured || config.source.sourceId !== sourceId) {
+    fail(res, 404, "ValidationError", "Unknown source", {});
+    return;
+  }
+  const hostHeader = typeof req.headers.host === "string" ? req.headers.host : "127.0.0.1";
+  const requestUrl = new URL(`http://${hostHeader}${req.url ?? "/"}`);
+  if (!ingressTransportAllowed(requestUrl)) {
+    fail(res, 400, "ValidationError", "HTTPS required", {});
+    return;
+  }
+  const contentType = typeof req.headers["content-type"] === "string" ? req.headers["content-type"] : undefined;
+  if (!ingressContentTypeAllowed(contentType)) {
+    fail(res, 415, "ValidationError", "Unsupported media type", {});
+    return;
+  }
+  const contentEncoding = typeof req.headers["content-encoding"] === "string" ? req.headers["content-encoding"] : undefined;
+  const transferEncoding = typeof req.headers["transfer-encoding"] === "string" ? req.headers["transfer-encoding"] : undefined;
+  if (!ingressEncodingAllowed(contentEncoding, transferEncoding)) {
+    fail(res, 415, "ValidationError", "Unsupported encoding", {});
+    return;
+  }
+  let raw: Uint8Array;
+  try {
+    raw = await readGithubIngressBody(
+      req,
+      GITHUB_INGRESS_MAX_BODY_BYTES,
+      options.ingressBodyTimeoutMs ?? GITHUB_INGRESS_BODY_DEADLINE_MS,
+    );
+  } catch (error) {
+    if (error instanceof GithubIngressReadError && error.kind === "too_large") {
+      fail(res, 413, "ValidationError", "Payload too large", {});
+      return;
+    }
+    if (error instanceof GithubIngressReadError && error.kind === "timeout") {
+      fail(res, 408, "ValidationError", "Request timeout", {});
+      return;
+    }
+    throw error;
+  }
+  const signature = req.headers["x-hub-signature-256"];
+  const eventName = req.headers["x-github-event"];
+  const delivery = req.headers["x-github-delivery"];
+  const result = await ingestGithubWorkflowRun(
+    options.runtime.store,
+    config.source,
+    {
+      sourceId,
+      eventName: typeof eventName === "string" ? eventName : undefined,
+      deliveryId: typeof delivery === "string" ? delivery : undefined,
+      signatureHeader: typeof signature === "string" ? signature : undefined,
+      rawBody: raw,
+    },
+    {
+      clock: options.clock ?? nowIso,
+      idSource: createId,
+      webhookEnv: options.sourceEnv ?? process.env,
+    },
+  );
+  logAccess({
+    allow: result.status < 400,
+    route: "/v1/integrations/github",
+    error: result.body.ok ? undefined : result.body.error,
+  });
+  writeJson(res, result.status, result.body);
+}
+
 export async function startCampfireHttpServer(options: HttpServerOptions): Promise<RunningHttpServer> {
   const host = options.host ?? DEFAULT_HTTP_HOST;
   const requestedPort = options.port ?? DEFAULT_HTTP_PORT;
@@ -226,9 +357,14 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
 
   async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = req.url ?? "/";
-    const path = url.split("?")[0];
+    const path = url.split("?")[0] ?? "/";
     if (path === "/v1/bridge") {
       await handleBridgeReport(req, res, options.runtime.store);
+      return;
+    }
+    const githubSourceId = githubIngressPathSourceId(path);
+    if (githubSourceId !== undefined) {
+      await handleGithubIngress(req, res, githubSourceId, options);
       return;
     }
     if (path === "/v1/enrollment/redeem") {

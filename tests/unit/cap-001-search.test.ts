@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import {
+  ACT001_OPERATION_IDS,
   CAPABILITY_LIMIT_ERROR,
   CAPABILITY_OMISSIONS,
   CAPABILITY_QUERY_ERROR,
@@ -27,6 +28,7 @@ import {
   capabilityOperations,
   getReadRecipe,
   searchCapabilities,
+  type CapabilityOperation,
   type CapabilitySearch,
 } from "../../src/catalog/capability-search.js";
 import { commandDiscoverable, commandSpec, type CliCommand } from "../../src/cli/catalog.js";
@@ -59,7 +61,10 @@ interface QueryCase {
 
 const queries = JSON.parse(readFileSync(join(PROPOSED, "queries.json"), "utf8")) as { cases: QueryCase[] };
 const frozenCatalog = JSON.parse(readFileSync(join(PROPOSED, "catalog.json"), "utf8")) as {
-  operations: unknown[];
+  operations: CapabilityOperation[];
+};
+const frozenAliases = JSON.parse(readFileSync(join(PROPOSED, "aliases.json"), "utf8")) as {
+  aliases: Record<string, string[]>;
 };
 const answerKey = JSON.parse(readFileSync(ANSWER_KEY, "utf8")) as {
   actors: { authorized: string; denied: string };
@@ -93,6 +98,53 @@ function readJson<T>(name: string): T {
 
 function projectionCases(): QueryCase[] {
   return queries.cases.filter((entry) => entry.expect === "projection");
+}
+
+function frozenHaystack(operation: CapabilityOperation): string {
+  const aliases: string[] = [];
+  for (const [alias, ids] of Object.entries(frozenAliases.aliases)) {
+    if (ids.includes(operation.id)) aliases.push(alias);
+  }
+  const parts = [operation.id, operation.purpose, ...aliases];
+  const cli = operation.surfaces.cli;
+  if ("usage" in cli) parts.push(cli.usage);
+  const mcp = operation.surfaces.mcp;
+  if ("tool" in mcp) parts.push(mcp.tool);
+  return parts.join("\n").toLowerCase();
+}
+
+function jsonBytes(value: unknown): number {
+  return Buffer.byteLength(JSON.stringify(value), "utf8");
+}
+
+/** Frozen CAP-001 query cases compare against the v1 corpus, not ACT-001 appends. */
+function searchFrozenCorpus(query: string, limit: number | undefined): CapabilitySearch {
+  const live = searchCapabilities(query, limit);
+  const tokens = live.query.split(" ");
+  const matched = frozenCatalog.operations
+    .filter((operation) => tokens.every((token) => frozenHaystack(operation).includes(token)))
+    .slice()
+    .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+  const resolvedLimit = limit === undefined ? 8 : limit;
+  let entries = matched.slice(0, resolvedLimit).map((operation) => structuredClone(operation));
+  let truncated = matched.length > entries.length;
+  const project = (): CapabilitySearch => ({
+    kind: "capability_search",
+    catalogVersion: 1,
+    query: live.query,
+    returned: entries.length,
+    totalMatches: matched.length,
+    truncated,
+    entries,
+    recipeSummaries: live.recipeSummaries,
+  });
+  let result = project();
+  while (entries.length > 0 && jsonBytes(result) > CAPABILITY_SEARCH_MAX_BYTES) {
+    entries = entries.slice(0, -1);
+    truncated = true;
+    result = project();
+  }
+  return result;
 }
 
 beforeEach(() => {
@@ -149,7 +201,7 @@ describe("frozen query cases", () => {
       }
       return;
     }
-    const result = searchCapabilities(entry.query ?? "", limit);
+    const result = searchFrozenCorpus(entry.query ?? "", limit);
     expect(result.kind).toBe("capability_search");
     expect(result.catalogVersion).toBe(1);
     if (entry.normalizedQuery !== undefined) expect(result.query).toBe(entry.normalizedQuery);
@@ -180,13 +232,15 @@ describe("recipes and corpus bounds", () => {
   });
 
   it("copies the frozen gate-off operations and keeps the playbook out", () => {
-    expect(capabilityOperations()).toEqual(frozenCatalog.operations);
-    const blob = JSON.stringify(capabilityOperations());
+    const cap001 = capabilityOperations().filter((entry) => !ACT001_OPERATION_IDS.has(entry.id));
+    expect(cap001).toEqual(frozenCatalog.operations);
+    expect(capabilityOperations()).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size);
+    const blob = JSON.stringify(cap001);
     expect(blob).not.toContain("get_playbook");
     expect(blob).not.toContain("incident-investigation");
     const enabled = capabilityOperations({ playbookEnabled: true });
     expect(enabled.map((entry) => entry.id)).toContain("get_playbook");
-    expect(enabled).toHaveLength(frozenCatalog.operations.length + 1);
+    expect(enabled).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size + 1);
   });
 
   it("adds get_playbook only when the gate is on and the query is a real substring", () => {
@@ -212,7 +266,7 @@ describe("recipes and corpus bounds", () => {
     let largest = 0;
     for (const entry of projectionCases()) {
       const limit = entry.limit === null || entry.limit === undefined ? undefined : entry.limit;
-      const result = searchCapabilities(entry.query ?? "", limit);
+      const result = searchFrozenCorpus(entry.query ?? "", limit);
       const encoded = JSON.stringify(result);
       largest = Math.max(largest, Buffer.byteLength(encoded, "utf8"));
       for (const marker of FIXTURE_MARKERS) {
@@ -453,5 +507,40 @@ describe("CLI and MCP adapters", () => {
       message: CAPABILITY_RECIPE_ERROR,
       details: { field: "id" },
     });
+  });
+});
+
+describe("ACT-001 catalog mappings", () => {
+  it("resolves action proposal, approve action, execution receipt, and verification follow up", () => {
+    const proposal = searchCapabilities("action proposal", undefined);
+    expect(proposal.entries.map((entry) => entry.id)).toContain("propose_action");
+
+    const approve = searchCapabilities("approve action", undefined);
+    const review = approve.entries.find((entry) => entry.id === "review_action");
+    expect(review).toBeDefined();
+    expect(review?.surfaces.mcp).toEqual({
+      unavailable: "human operator CLI only; approval never passes through an agent MCP tool",
+    });
+
+    const receipt = searchCapabilities("execution receipt", undefined);
+    expect(receipt.entries.map((entry) => entry.id)).toEqual(
+      expect.arrayContaining(["record_action_outcome", "list_action_receipts"]),
+    );
+
+    const followUp = searchCapabilities("verification follow up", undefined);
+    const follow = followUp.entries.find((entry) => entry.id === "verification_follow_up");
+    expect(follow).toBeDefined();
+    expect(follow?.surfaces.mcp).toMatchObject({
+      unavailable: expect.stringMatching(/operator HTTP ingress/),
+    });
+    expect(JSON.stringify(follow?.surfaces.mcp)).toMatch(/not an MCP tool/);
+    expect(follow?.surfaces.cli).toEqual({ usage: commandSpec("actions").usage });
+  });
+
+  it("keeps live search distinct from the frozen CAP-001 corpus", () => {
+    const live = searchCapabilities("action proposal", undefined);
+    expect(live.entries.some((entry) => ACT001_OPERATION_IDS.has(entry.id))).toBe(true);
+    const frozen = searchFrozenCorpus("action proposal", undefined);
+    expect(frozen.entries).toEqual([]);
   });
 });
