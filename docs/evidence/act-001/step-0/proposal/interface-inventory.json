@@ -1,0 +1,28 @@
+{
+  "label": "FIXTURE EVIDENCE — proposed (not implemented) interface inventory. Additive to v1.25.0 only.",
+  "serviceMethods": [
+    "propose_action",
+    "review_action",
+    "cancel_action",
+    "reserve_action_execution",
+    "record_action_outcome",
+    "get_action_proposal",
+    "list_action_proposals",
+    "list_action_receipts"
+  ],
+  "serviceMethodCount": 8,
+  "mcpTools": [
+    "propose_action",
+    "reserve_action_execution",
+    "record_action_outcome",
+    "get_action_proposal",
+    "list_action_proposals",
+    "list_action_receipts"
+  ],
+  "mcpToolCount": 6,
+  "mcpUnavailable": "review_action/cancel_action: human operator CLI only; approval never passes through any agent path including direct /v1/call",
+  "cliFamily": "campfire actions propose|approve|reject|cancel|reserve|receipt|inspect|list|receipts",
+  "httpIngress": "POST /v1/integrations/github/:sourceId (local serve + Worker; outside /v1/call, MCP, Viewer proxy, outbound bridge)",
+  "catalogAdditions": "truthful shared-semantic-catalog entries for the installed paths, including human-only review and source-configuration preconditions; queries 'action proposal', 'approve action', 'execution receipt', 'verification follow up' resolve; absent MCP approval paths marked explicitly unavailable",
+  "notAdded": "no new Viewer tab, no dashboard attention selector, no orientation keys, no per-command telemetry, no outbound bridge vocabulary, no CAP-001 recipe change"
+}

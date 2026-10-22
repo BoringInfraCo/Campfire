@@ -1,0 +1,30 @@
+{
+  "label": "FIXTURE EVIDENCE — frozen digest test vectors. Recompute with fixtures/act-001/verify.mjs.",
+  "intentVectors": [
+    {
+      "id": "V1-minimal",
+      "description": "one current finding, no artifacts, agent executor",
+      "sha256": "1b940e4d27b382180cb6a38ba33331118af8911f235be1bed27e6e9929ac5cba"
+    },
+    {
+      "id": "V2-multi",
+      "description": "two current findings (lexicographic order), one artifact, human executor",
+      "sha256": "37bd64f01f05fcf8320caf21f938946097124b3893c001cb36165e718a407d6c"
+    },
+    {
+      "id": "V3-tamper",
+      "description": "V1 with one reason character changed (logs -> logz); MUST differ from V1",
+      "sha256": "6fec0002ec064ecac35c9371720bfffc653432c66036a49472b8decf3f1cf009",
+      "differsFromV1": true
+    }
+  ],
+  "sourceAuthorityFingerprint": {
+    "encoding": "fixed-order key=value lines: ACT001-SOURCE-V1, sourceId, workspaceId, repoId, repoName, workflowId, actionKind, integrationAgent(actorType:actorId:sessionId). Excludes all secret material so secret/session renewal keeps the binding.",
+    "sourceId": "src_act001_github",
+    "sha256": "276838dc667b60baf44eb908fb9c60e670116cb53e1704c27266328b589b7898"
+  },
+  "semanticDedupKey": {
+    "encoding": "act001:github:{repoId}:{workflowId}:{runId}:{attempt}:{conclusion}",
+    "example": "act001:github:123456789:9876543:11223344:2:failure"
+  }
+}

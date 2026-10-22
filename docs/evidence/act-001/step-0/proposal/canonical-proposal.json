@@ -1,0 +1,33 @@
+{
+  "label": "FIXTURE EVIDENCE — proposed (not implemented) canonical approval envelope. Freezes the §3 binding before code.",
+  "intentVersion": 1,
+  "encoding": {
+    "name": "ACT001-INTENT-V1",
+    "rule": "fixed-order key=value lines joined by U+000A, no trailing newline, UTF-8 bytes; SHA-256 hex of those bytes is intentDigest",
+    "lineOrder": ["ACT001-INTENT-V1", "intentVersion", "kind", "repoId", "repoName", "workflowId", "runId", "sha", "expectedAttempt", "executor", "expiresAt", "reason", "task", "findings", "artifacts", "sourceAuthorityRev"],
+    "multiValue": "findings sorted lexicographically as id:currentness; artifacts sorted lexicographically; empty artifacts line is bare key with empty value",
+    "taskBinding": "taskId@updatedAt (state/version at approval time)",
+    "executorBinding": "actorType:actorId, exactly one existing participant"
+  },
+  "canonicalExampleV1": {
+    "intentVersion": 1,
+    "kind": "ci.retry_verification",
+    "target": {
+      "repoId": "123456789",
+      "repoName": "example-org/verification-sandbox",
+      "workflowId": "9876543",
+      "runId": 11223344,
+      "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      "expectedAttempt": 2
+    },
+    "executor": { "actorType": "agent", "actorId": "agt_act001_opencode_ben" },
+    "expiresAt": "2026-10-22T12:00:00.000Z",
+    "reason": "Retry the failed verification run after inspecting the failed job logs",
+    "taskId": "task_act001_verify",
+    "findingIds": ["find_act001_logs"],
+    "artifactIds": [],
+    "sourceAuthorityRev": "src_act001_github#1"
+  },
+  "sizeCheckBytes": { "V1": 524, "V2": 571, "limit": 4096 },
+  "forbidden": ["executable command", "credential", "free-form URL", "script", "provider token", "request headers", "response bodies", "logs", "shell text"]
+}

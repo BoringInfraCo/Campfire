@@ -1,0 +1,127 @@
+{
+  "label": "FIXTURE EVIDENCE — synthetic workspace. No real humans, agents, or transcripts.",
+  "clockBase": "2026-10-21T12:00:00.000Z",
+  "workspace": {
+    "id": "ws_act001_lab",
+    "status": "active",
+    "goal": { "id": "goal_act001_verify", "title": "Retry one failed verification run under human approval" },
+    "task": {
+      "id": "task_act001_verify",
+      "status": "in_progress",
+      "title": "Inspect the failed verify run and propose a retry",
+      "updatedAt": "2026-10-21T12:00:40.000Z"
+    },
+    "findings": [
+      {
+        "id": "find_act001_logs",
+        "currentness": "current",
+        "summary": "Jobs verify-unit and verify-build failed on the pinned SHA; no deploy step exists at that revision."
+      },
+      {
+        "id": "find_act001_stale",
+        "currentness": "superseded",
+        "successorId": "find_act001_baseline",
+        "summary": "The failure looked environmental."
+      },
+      {
+        "id": "find_act001_baseline",
+        "currentness": "current",
+        "predecessorId": "find_act001_stale",
+        "summary": "The failure reproduces on the pinned SHA; a retry is meaningful."
+      }
+    ],
+    "artifact": {
+      "id": "art_act001_runref",
+      "type": "pull_request",
+      "title": "Failed verification run 11223344 attempt 1",
+      "uri": "https://github.com/example-org/verification-sandbox/actions/runs/11223344"
+    }
+  },
+  "humans": {
+    "owner": { "id": "hum_act001_ada", "role": "owner" },
+    "member": { "id": "hum_act001_ben", "role": "member" },
+    "viewer": { "id": "hum_act001_val", "role": "viewer" },
+    "nonParticipant": { "id": "hum_act001_zed", "role": "none" }
+  },
+  "agents": {
+    "proposing": {
+      "id": "agt_act001_codex_ada",
+      "harness": "codex",
+      "ownerHuman": "hum_act001_ada",
+      "role": "member",
+      "session": "ses_act001_codex_01",
+      "sessionStatus": "valid"
+    },
+    "executing": {
+      "id": "agt_act001_opencode_ben",
+      "harness": "opencode",
+      "ownerHuman": "hum_act001_ben",
+      "role": "member",
+      "session": "ses_act001_opencode_01",
+      "sessionStatus": "valid"
+    },
+    "expired": {
+      "id": "agt_act001_old_codex",
+      "harness": "codex",
+      "ownerHuman": "hum_act001_ada",
+      "role": "member",
+      "session": "ses_act001_expired_01",
+      "sessionStatus": "expired"
+    },
+    "unregistered": {
+      "id": "agt_act001_ghost",
+      "harness": "opencode",
+      "ownerHuman": "hum_act001_ben",
+      "role": "member",
+      "session": null,
+      "sessionStatus": "none"
+    },
+    "integration": {
+      "id": "agt_act001_integration",
+      "harness": "campfire-integration",
+      "ownerHuman": null,
+      "role": "member",
+      "session": "ses_act001_integration_01",
+      "sessionStatus": "valid",
+      "note": "operator-provisioned via existing identity/session methods; never silently registered"
+    }
+  },
+  "secondWorkspace": {
+    "id": "ws_act001_other",
+    "participants": ["hum_act001_zed"],
+    "note": "hum_act001_ada and all ws_act001_lab agents are non-participants here; cross-workspace reads deny"
+  },
+  "providerAttempts": {
+    "conflicting": {
+      "runId": 11223344,
+      "attempt": 3,
+      "note": "attempt 3 exists without a reservation: conflicting external rerun; matching completion stays ambiguous and claims no sole causation"
+    },
+    "delayed": {
+      "runId": 11223344,
+      "attempt": 2,
+      "deliveryDelay": "event arrives before the executor records submission",
+      "note": "reservation correlation is sufficient; submission and observation stay separate facts"
+    }
+  },
+  "expectedContributionCounts": {
+    "ws_act001_lab": 14,
+    "ws_act001_other": 1
+  },
+  "contributions": [
+    { "id": "con_act001_0001", "action": "create", "objectType": "workspace", "objectId": "ws_act001_lab", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0002", "action": "join", "objectType": "participant", "objectId": "hum_act001_ben", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0003", "action": "join", "objectType": "participant", "objectId": "hum_act001_val", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0004", "action": "join", "objectType": "participant", "objectId": "agt_act001_codex_ada", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0005", "action": "join", "objectType": "participant", "objectId": "agt_act001_opencode_ben", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0006", "action": "join", "objectType": "participant", "objectId": "agt_act001_integration", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0007", "action": "create", "objectType": "goal", "objectId": "goal_act001_verify", "actorId": "hum_act001_ada" },
+    { "id": "con_act001_0008", "action": "create", "objectType": "finding", "objectId": "find_act001_stale", "actorId": "agt_act001_codex_ada" },
+    { "id": "con_act001_0009", "action": "create", "objectType": "finding", "objectId": "find_act001_baseline", "actorId": "agt_act001_codex_ada" },
+    { "id": "con_act001_0010", "action": "create", "objectType": "artifact", "objectId": "art_act001_runref", "actorId": "agt_act001_codex_ada" },
+    { "id": "con_act001_0011", "action": "create", "objectType": "task", "objectId": "task_act001_verify", "actorId": "hum_act001_ben" },
+    { "id": "con_act001_0012", "action": "update", "objectType": "task", "objectId": "task_act001_verify", "actorId": "hum_act001_ben" },
+    { "id": "con_act001_0013", "action": "create", "objectType": "finding", "objectId": "find_act001_logs", "actorId": "agt_act001_codex_ada" },
+    { "id": "con_act001_0014", "action": "register_session", "objectType": "agent_session", "objectId": "ses_act001_integration_01", "actorId": "hum_act001_ada" }
+  ]
+}

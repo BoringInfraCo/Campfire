@@ -1,0 +1,52 @@
+{
+  "label": "FIXTURE EVIDENCE",
+  "baseline": "v1.25.0",
+  "packageVersion": "1.25.0",
+  "annotatedTagObject": "de4d447d243356d0c7ebdb8258803e8d167f7689",
+  "tagPointsToCommit": "4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f",
+  "worktreeStatus": "post-tag commits exist (telemetry hardening); working tree additionally holds uncommitted ACT-001 product files that Step 0 does not authorize (see STEP0.md open mismatches). Baseline captures below were taken from an isolated worktree of the tag commit, not from HEAD.",
+  "sourceCleanVsTag": "git diff --exit-code 4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f -- src package.json package-lock.json is NON-EMPTY at HEAD (post-release telemetry work). Step 0 pins the tag source.",
+  "installedCliManifest": {
+    "playbookOff": "baseline/cli-manifest-playbook-off.json",
+    "playbookOn": "baseline/cli-manifest-playbook-on.json",
+    "kind": "cli_command_manifest",
+    "version": 1,
+    "manifestVersion": 1,
+    "campfireVersion": "1.25.0",
+    "commandCountOff": 59,
+    "commandCountOn": 60,
+    "delta": "playbook command inserted at index 20 only"
+  },
+  "mcpInventory": {
+    "playbookOff": "baseline/mcp-tools-playbook-off.json",
+    "playbookOn": "baseline/mcp-tools-playbook-on.json",
+    "toolCountOff": 40,
+    "toolCountOn": 41,
+    "gated": "get_playbook (opt-in only; default list unchanged)"
+  },
+  "httpMethods": {
+    "file": "baseline/http-methods.json",
+    "source": "src/http/dispatch.ts @ tag (case labels)",
+    "count": 47
+  },
+  "viewerAllowlist": {
+    "file": "baseline/viewer-allowlist.json",
+    "source": "src/viewer/server.ts VIEWER_READ_METHODS @ tag",
+    "count": 12
+  },
+  "orientationProjection": {
+    "file": "baseline/orientation-projection.json",
+    "topLevelKeyCount": 26
+  },
+  "contributionEventVocabulary": {
+    "file": "baseline/event-vocabulary.json",
+    "outboundEventCount": 8
+  },
+  "schemaSnapshots": {
+    "localBase": "baseline/local-schema-base.sql",
+    "localDeltas": "baseline/local-schema-deltas.sql",
+    "d1Composition": "baseline/d1-schema-composition.ts.txt",
+    "latestD1MigrationAtTag": "0007_contribution_object_position.sql",
+    "note": "0008_telemetry_integrity.sql exists only post-tag at HEAD; ACT-001 reserves 0009 (see STEP0.md open mismatches: an untracked 0009 file already exists in the working tree and is NOT part of Step 0)"
+  }
+}

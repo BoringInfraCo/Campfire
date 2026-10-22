@@ -1,0 +1,42 @@
+{
+  "label": "FIXTURE EVIDENCE — all values synthetic. No real repository, workflow, run, or credential.",
+  "provider": "github",
+  "repositoryNumericIdDecimalString": "123456789",
+  "repositoryOwner": "example-org",
+  "repositoryName": "verification-sandbox",
+  "repositoryFullName": "example-org/verification-sandbox",
+  "workflowNumericIdDecimalString": "9876543",
+  "workflowPath": ".github/workflows/verify.yml",
+  "workflowName": "verify",
+  "allowedOriginatingEvent": "workflow_run",
+  "pinVerificationOnlyEffect": true,
+  "frozenTarget": {
+    "runId": 11223344,
+    "observedFailedAttempt": 1,
+    "expectedAttempt": 2,
+    "headSha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+    "headBranch": "ci/verify-pin",
+    "conclusion": "failure"
+  },
+  "workflowInspection": {
+    "inspectedAtRevision": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+    "jobs": [
+      {
+        "id": "verify-unit",
+        "runs": "npm run typecheck && npm test",
+        "effect": "verification only"
+      },
+      {
+        "id": "verify-build",
+        "runs": "npm run build",
+        "effect": "verification only"
+      }
+    ],
+    "forbiddenEffectsObserved": "none: no deploy, publication, release, downstream privileged workflow, or production mutation step present in the inspected revision",
+    "filenameAloneInsufficient": true
+  },
+  "dedicatedTestRepositoryForExternalMutation": "example-org/verification-sandbox (this synthetic allowlist entry IS the dedicated test target)",
+  "productionMutation": "FORBIDDEN — no production repository is allowlisted",
+  "realProviderRun": "NOT AUTHORIZED — no operator authorization recorded; the only permitted live target would be this dedicated synthetic test repository with explicit operator approval",
+  "apiVersionPin": "GitHub REST API v2022-11-28; endpoint POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs"
+}

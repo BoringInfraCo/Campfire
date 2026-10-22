@@ -1,0 +1,81 @@
+{
+  "label": "FIXTURE EVIDENCE",
+  "step0Date": "2026-10-21",
+  "baseline": {
+    "package": "1.25.0",
+    "tagObject": "de4d447d243356d0c7ebdb8258803e8d167f7689",
+    "sourceCommit": "4e6b7e714960f90cf5d78ee43a8f7e95bf8fe12f",
+    "cliCommandsOff": 59,
+    "cliCommandsOn": 60,
+    "mcpToolsOff": 40,
+    "mcpToolsOn": 41,
+    "mcpGated": "get_playbook",
+    "httpMethods": 47,
+    "viewerReads": 12,
+    "orientationTopKeys": 26,
+    "outboundEvents": 8,
+    "latestD1MigrationAtTag": "0007_contribution_object_position.sql"
+  },
+  "pilot": {
+    "repoId": "123456789",
+    "repoFullName": "example-org/verification-sandbox",
+    "workflowId": "9876543",
+    "workflowPath": ".github/workflows/verify.yml",
+    "originatingEvent": "workflow_run",
+    "runId": 11223344,
+    "expectedAttempt": 2,
+    "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+    "realProviderRun": "NOT AUTHORIZED"
+  },
+  "workspace": "ws_act001_lab",
+  "secondWorkspace": "ws_act001_other",
+  "goal": "goal_act001_verify",
+  "task": {
+    "id": "task_act001_verify",
+    "status": "in_progress",
+    "updatedAt": "2026-10-21T12:00:40.000Z"
+  },
+  "currentFindings": ["find_act001_baseline", "find_act001_logs"],
+  "supersededFinding": {
+    "id": "find_act001_stale",
+    "successorId": "find_act001_baseline"
+  },
+  "citedArtifact": "art_act001_runref",
+  "owner": "hum_act001_ada",
+  "member": "hum_act001_ben",
+  "viewer": "hum_act001_val",
+  "nonParticipant": "hum_act001_zed",
+  "proposingAgent": "agt_act001_codex_ada",
+  "executingAgent": "agt_act001_opencode_ben",
+  "expiredAgentSession": "ses_act001_expired_01",
+  "unregisteredAgent": "agt_act001_ghost",
+  "integrationAgent": "agt_act001_integration",
+  "integrationSession": "ses_act001_integration_01",
+  "contributionCounts": {
+    "ws_act001_lab": 14,
+    "ws_act001_other": 1
+  },
+  "intentDigestV1": "1b940e4d27b382180cb6a38ba33331118af8911f235be1bed27e6e9929ac5cba",
+  "intentDigestV2": "37bd64f01f05fcf8320caf21f938946097124b3893c001cb36165e718a407d6c",
+  "intentTamperDigest": "6fec0002ec064ecac35c9371720bfffc653432c66036a49472b8decf3f1cf009",
+  "sourceAuthorityFingerprint": "276838dc667b60baf44eb908fb9c60e670116cb53e1704c27266328b589b7898",
+  "semanticDedupExample": "act001:github:123456789:9876543:11223344:2:failure",
+  "requestKeyRule": "^[\\x20-\\x7E]{1,128}$",
+  "bounds": {
+    "intentMaxBytes": 4096,
+    "reasonMaxChars": 500,
+    "receiptMaxBytes": 2048,
+    "projectionMaxBytes": 16384,
+    "pageDefault": 20,
+    "pageMax": 100,
+    "pageMaxBytes": 65536
+  },
+  "interfaces": {
+    "serviceMethods": 8,
+    "mcpTools": 6,
+    "cliFamily": "campfire actions",
+    "ingress": "POST /v1/integrations/github/:sourceId"
+  },
+  "harness": "NOT OBSERVED",
+  "continuationBaseline": "v1.25 CAN read existing records and report the approval/receipt/observation gap; CANNOT name proposals or verify the run; fabrication is a harness failure"
+}
