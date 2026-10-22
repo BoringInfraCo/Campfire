@@ -11,23 +11,23 @@ class Campfire < Formula
   # not start a service and does not report telemetry.
   on_macos do
     on_arm do
-      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.25.0/campfire-darwin-arm64.tar.gz"
-      sha256 "5e86769758a952bf8489fa1755f7c654c223ad8402cc2f2e8bf98215429d770f"
+      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.26.1/campfire-darwin-arm64.tar.gz"
+      sha256 "93ae6aff467203a58ca3b8c8a42fd7c7a7cc56ebae36ab01418fb998ea22b23b"
     end
     on_intel do
-      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.25.0/campfire-darwin-x64.tar.gz"
-      sha256 "d9f5155d9b389a6f7a587da229498ada54436ebcd8fc4fe412ec38667d0f1429"
+      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.26.1/campfire-darwin-x64.tar.gz"
+      sha256 "1d6213bb2438b8af878b3ac410f1227e065fad728f9ddaf96bd113b672933a33"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.25.0/campfire-linux-arm64.tar.gz"
-      sha256 "367e3163361cab65598229724a738626af0ddf2c6f3c12a20f3f6408187cbd20"
+      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.26.1/campfire-linux-arm64.tar.gz"
+      sha256 "ab3909b6ea9b6d10f4da43848e2e2b1b5b9b6c9e636bd6a3f9aad5024d775dd5"
     end
     on_intel do
-      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.25.0/campfire-linux-x64.tar.gz"
-      sha256 "1cb949cbd7b83e61b7a841c765bbc77349a97fdacae774149838e896cb9d1504"
+      url "https://github.com/BoringInfraCo/Campfire/releases/download/v1.26.1/campfire-linux-x64.tar.gz"
+      sha256 "7c6bdd83716475bf9a54216003ba8bb9da444d98706b2c92af4dcb6e6baa3a39"
     end
   end
 
