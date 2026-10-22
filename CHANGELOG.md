@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.1 — 2026-10-21
+
+- Repair the public export allowlist so the published snapshot builds. The v1.26.0 snapshot omitted `scripts/backfill-telemetry-claims.mjs`, which an exported telemetry test imports and `docs/OPERATOR.md` documents; public CI and all four archive jobs failed at `npm ci`. v1.26.0 produced no archives and pinned no install channel; its tag and snapshot remain as provenance and are not retargeted.
+- Add a clean-export build check to release preparation: export the release commit, run `npm ci` in the exported directory, and run the exported ACT-001 tests there. This is the check that v1.26.0 lacked.
+- No product behavior, schema, migration, CLI, MCP, HTTP, Viewer, or event change. The ACT-001 surface and its **CONDITIONAL GO — engineering candidate** verdict are unchanged, including the **NOT OBSERVED** live harness paths and the **NOT AUTHORIZED** real-provider round trip.
+
 ## 1.26.0 — 2026-10-21
 
 - Add one workspace-owned action proposal for a concrete external verification retry. A proposal records an immutable canonical intent (repository, workflow, run, commit SHA, expected attempt, designated executor, expiry, reason, and cited local evidence) and its SHA-256 digest. A human workspace owner approves or rejects that exact intent through the CLI; approval binds the normalized intent, evidence, and executor, and edits require a new proposal. An approved proposal has exactly one dispatch reservation for its provider target and attempt, and submission receipts distinguish accepted, definite failure before submission, and unknown. A submission receipt is not proof the tests passed, a lost response is never retried automatically, and failure/cancelled outcomes never appear as success.

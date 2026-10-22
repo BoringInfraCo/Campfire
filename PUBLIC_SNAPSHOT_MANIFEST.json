@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "1.26.0",
-  "sourceCommit": "79f20384dc6a51769a66f8d02270101c90ff1d79",
-  "sourceDate": "2026-10-21T23:45:02-04:00",
+  "version": "1.26.1",
+  "sourceCommit": "3fa35163c8a2c86d92732fd4cc0d4051c3be481d",
+  "sourceDate": "2026-10-21T23:51:45-04:00",
   "exportedAt": "2026-10-22T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
@@ -126,6 +126,7 @@
     "public/campfire/v1.24.1/install.sh",
     "public/campfire/v1.25.0/install.sh",
     "public/campfire/v1.26.0/install.sh",
+    "public/campfire/v1.26.1/install.sh",
     "public/campfire/v1.3.0/install.sh",
     "public/campfire/v1.4.0/install.sh",
     "public/campfire/v1.5.0/install.sh",
@@ -138,6 +139,8 @@
     "public/campfire/v1.9.2/install.sh",
     "public/campfire/v1.9.3/install.sh",
     "public/index.html",
+    "scripts/backfill-telemetry-claims.d.mts",
+    "scripts/backfill-telemetry-claims.mjs",
     "scripts/package.sh",
     "scripts/run-acceptance-002.ts",
     "scripts/run-acceptance.ts",
