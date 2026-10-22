@@ -38,7 +38,8 @@ The published v1.25.0 surface gains exactly the ACT-001 candidate plus release-p
 - **No new outbound event.** The eight existing outbound event names are unchanged; an inbound provider event is neither an outbound DomainEvent nor an approval.
 - **No provider credential in Campfire.** Campfire makes no GitHub API call, stores no token, and exposes no `execute`, `run`, or GitHub dispatch endpoint.
 - **Compatibility preserved**: existing v1.25.0 CLI JSON shapes, MCP tool names and schemas, HTTP `/v1/call` methods, Viewer allowlist, orientation and attention selection, session instructions, playbook gate, CAP-001 recipe content, and outbound event vocabulary remain unchanged except for the explicit additive entries above.
-- **Versioned installer**: a `public/campfire/v1.26.0/install.sh` copy is required during promotion and is recorded when created; published installer copies for earlier versions remain immutable.
+- **Versioned installer**: `public/campfire/v1.26.0/install.sh` is tracked from the current installer; published installer copies for earlier versions remain immutable.
+- **Release-prep fixture copies**: the public export excludes `docs/evidence/`, so the frozen Step 0 `answer-key.json`, baseline comparison files, and proposal signing vectors needed by the exported ACT-001 tests are copied to `fixtures/act-001/step-0/`. A private-only parity test (`tests/unit/act-001-step0-parity.test.ts`) keeps every copy byte-equal to the canonical evidence and is excluded from the public snapshot.
 
 ## Evidence status in this release
 

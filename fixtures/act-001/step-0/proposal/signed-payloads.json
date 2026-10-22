@@ -1,0 +1,61 @@
+{
+  "label": "FIXTURE EVIDENCE — synthetic signed payloads. Secret is test-only and authorizes nothing.",
+  "testOnlySecret": "act001-synthetic-test-secret-0001",
+  "secretWarning": "SYNTHETIC-TEST-ONLY. Never a production credential; production secret is operator configuration, never committed.",
+  "headers": {
+    "event": "X-GitHub-Event: workflow_run",
+    "delivery": "X-GitHub-Delivery: act001-delivery-0001 (synthetic)",
+    "signature": "X-Hub-Signature-256 over exact raw bytes, HMAC-SHA256, timing-safe compare"
+  },
+  "cases": [
+    {
+      "id": "completed-matching",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "sha256=bb91cb77ac9c3a5209cfa21323e493bb10959c22faed23825b5410653cd12316",
+      "expected": "200 accepted first-seen: 1 Artifact + 1 Finding + Contributions in one atomic commit; Finding summary Verification attempt 2 completed: failure"
+    },
+    {
+      "id": "ping",
+      "body": "{\"zen\":\"synthetic-ping\",\"hook_id\":1001,\"hook\":{\"type\":\"Repository\",\"id\":1001,\"active\":true,\"events\":[\"workflow_run\"]}}",
+      "signature": "sha256=512c9aee056ae14478bed50b98e955cbc504c7e1c4c1738fd2dfc4fccf1f70d9",
+      "expected": "200 bounded acknowledgement, no state"
+    },
+    {
+      "id": "tampered",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"success\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "sha256=bb91cb77ac9c3a5209cfa21323e493bb10959c22faed23825b5410653cd12316",
+      "expected": "401 signature failure, no state"
+    },
+    {
+      "id": "replay-same-delivery",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223345,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "reuse delivery act001-delivery-0001 with different bytes",
+      "expected": "409 conflicting identity"
+    },
+    {
+      "id": "replay-new-delivery",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "sha256=bb91cb77ac9c3a5209cfa21323e493bb10959c22faed23825b5410653cd12316",
+      "delivery": "act001-delivery-0002",
+      "expected": "200 duplicate: existing receipt returned, no new records"
+    },
+    {
+      "id": "wrong-repo",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":999999999,\"full_name\":\"example-org/other\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "sha256=58bbfe98681d18f7847ecb4147828519f2f5be7a63b3ad3a58a36597a05f1198",
+      "expected": "200 ignored: no matching reserved proposal, no records"
+    },
+    {
+      "id": "wrong-attempt",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":3,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-21T12:09:30.000Z\"}}",
+      "signature": "sha256=f119e409010a4bd3e3db8018f0e7680062cc62d6068931444690ac3f6f5de688",
+      "expected": "200 ignored: attempt 3 unreserved (conflicting external rerun stays ambiguous)"
+    },
+    {
+      "id": "stale-timestamp",
+      "body": "{\"zen\":\"synthetic\",\"hook_id\":1001,\"action\":\"completed\",\"workflow_run\":{\"id\":11223344,\"run_attempt\":2,\"head_sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"conclusion\":\"failure\",\"head_branch\":\"ci/verify-pin\",\"event\":\"push\",\"repository\":{\"id\":123456789,\"full_name\":\"example-org/verification-sandbox\"},\"workflow_id\":9876543,\"created_at\":\"2026-10-21T12:05:00.000Z\",\"updated_at\":\"2026-10-19T12:09:30.000Z\"}}",
+      "signature": "sha256=24e38591b4c6639fced7068738a07ff7b98c06cc5a958e4a28c555c312df0641",
+      "expected": "400 inadmissible timestamp (>24h old)"
+    }
+  ]
+}

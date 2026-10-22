@@ -35,13 +35,13 @@ import { ingestGithubWorkflowRunAsync } from "../../src/service/github-ingress.j
 import { createAsyncCampfireService } from "../../src/worker/async-service.js";
 
 const FIXTURE = JSON.parse(
-  readFileSync(new URL("../../docs/evidence/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../fixtures/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
 ) as {
   testOnlySecret: string;
   cases: Array<{ id: string; body: string; signature: string; delivery?: string; expected: string }>;
 };
 const DIGESTS = JSON.parse(
-  readFileSync(new URL("../../docs/evidence/act-001/step-0/proposal/digest-vectors.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../fixtures/act-001/step-0/proposal/digest-vectors.json", import.meta.url), "utf8"),
 ) as { sourceAuthorityFingerprint: { sha256: string } };
 
 const SECRET = FIXTURE.testOnlySecret;

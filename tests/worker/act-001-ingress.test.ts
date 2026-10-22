@@ -12,7 +12,7 @@ import type { CampfireService } from "../../src/service/service.js";
 import type { ActorRef } from "../../src/domain/types.js";
 
 const FIXTURE = JSON.parse(
-  readFileSync(new URL("../../docs/evidence/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../fixtures/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
 ) as { testOnlySecret: string; cases: Array<{ id: string; body: string; signature: string }> };
 
 const NOW = "2026-10-21T12:10:00.000Z";

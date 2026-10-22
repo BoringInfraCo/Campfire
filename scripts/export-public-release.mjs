@@ -61,6 +61,7 @@ const PRIVATE_SOURCE_PATHS = new Set([
   "tests/unit/wow-001-preparation.test.ts",
   // The Step 0 parity check reads docs/evidence, which is not exported.
   "tests/unit/cap-001-step0-parity.test.ts",
+  "tests/unit/act-001-step0-parity.test.ts",
   // Gate E evidence tooling is private; its adversarial path fixtures are not
   // product tests and must not enter the public release snapshot.
   "tests/unit/gate-e-packet-evidence.test.ts",

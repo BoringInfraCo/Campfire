@@ -28,9 +28,12 @@ import { schemaVersion } from "../../src/store/migrations.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
 import { ACT001, seedAct001Database } from "../../fixtures/act-001/seed.js";
 
-const BASELINE = new URL("../../docs/evidence/act-001/step-0/baseline/", import.meta.url);
+// Public copies of the frozen Step 0 baseline, kept byte-equal to
+// docs/evidence/act-001/step-0/ by act-001-step0-parity.test.ts. The public
+// export excludes docs/evidence, so the exported tests read these copies.
+const BASELINE = new URL("../../fixtures/act-001/step-0/baseline/", import.meta.url);
 const ANSWER_KEY = JSON.parse(
-  readFileSync(new URL("../../docs/evidence/act-001/step-0/answer-key.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../fixtures/act-001/step-0/answer-key.json", import.meta.url), "utf8"),
 ) as {
   baseline: {
     package: string;

@@ -18,7 +18,7 @@ import { ingestGithubWorkflowRunAsync, type GithubIngressRequest } from "../../s
 import { readGithubSourceConfig, type GithubSourceBinding } from "../../src/integrations/github-source-config.js";
 
 const SIGNED = JSON.parse(
-  readFileSync(new URL("../../docs/evidence/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../fixtures/act-001/step-0/proposal/signed-payloads.json", import.meta.url), "utf8"),
 ) as { testOnlySecret: string; cases: Array<{ id: string; body: string; signature: string }> };
 
 const NOW = "2026-10-21T12:10:00.000Z";
