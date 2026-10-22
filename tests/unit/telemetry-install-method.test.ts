@@ -85,7 +85,7 @@ describe("detectInstallMethod", () => {
   it.each([
     ["/usr/local/bin/campfire"],
     ["/opt/campfire/bin/campfire"],
-    ["/Users/sergio/.local/bin/campfire"],
+    ["/home/example/.local/bin/campfire"],
     ["campfire"],
     [""],
     ["/opt/nixbackup/campfire"],
