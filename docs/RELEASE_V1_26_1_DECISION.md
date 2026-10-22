@@ -131,7 +131,7 @@ produced by the release workflow. The versioned installer at
 | --- | --- |
 | v1.26.0 failure and freeze | Public CI `39718638147`/`39718640348` and release workflow `39718658102` failed at `npm ci`; no archives attached; `docs/RELEASE_V1_26_DECISION.md` carries the abandonment notice. |
 | Founder repair direction | The founder's release instruction remains the v1.26 decision; this document records the packaging repair and keeps the same bounded claim. |
-| Release-prep verification battery | **PENDING.** To record `PASS at <commit>`: typecheck; full suite; build; deploy dry run; `pack:tarball`; audited export; **clean exported `npm ci` + build + exported ACT-001 tests**. The pre-pin install-channel assertion is expected until the v1.26.1 assets are pinned. |
+| Release-prep verification battery | PASS at `9a359ca`: `npm run typecheck`; full `npm test` 119 files / 1,492 tests with 1,490 passed, 1 pre-recorded pre-pin install-channel failure, 1 opt-in skip; `npm run build`; `npm run deploy:dry-run` (75 assets, stopped at `--dry-run: exiting now`); `npm run pack:tarball` (package `1.26.1`, Darwin ARM64); audited public export wrote **404 files** including `scripts/backfill-telemetry-claims.mjs`; clean `npm ci` in the export passed and the exported ACT-001 tests passed **105/105**. The pre-pin install-channel assertion is expected and was not loosened. |
 | Private annotated `v1.26.1` tag | **PENDING.** |
 | Audited public source snapshot and tag | **PENDING.** |
 | Public GitHub Release and four checked archives | **PENDING.** |
