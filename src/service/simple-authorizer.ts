@@ -29,6 +29,10 @@ const VIEWER_WRITE_OPERATIONS: ReadonlySet<Operation> = new Set<Operation>([
   "task:update",
   "artifact:attach",
   "participant:add",
+  "action:propose",
+  "action:review",
+  "action:reserve",
+  "action:report",
 ]);
 
 function logAuthz(entry: {

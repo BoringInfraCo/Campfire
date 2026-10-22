@@ -6,6 +6,15 @@
  * leaking storage details into collaboration semantics (AGENTS.md invariant 7).
  */
 import type {
+  ActionProposal,
+  ActionReceipt,
+} from "../domain/action-proposal.js";
+import type {
+  GithubIngressDeliveryRecord,
+  GithubIngressReceiptRecord,
+  GithubSourceBindingRecord,
+} from "./action-proposal-records.js";
+import type {
   DomainEventRecord,
   WebhookDeliveryCounts,
   WebhookDeliveryRecord,
@@ -107,6 +116,61 @@ export interface DecisionTransitionClaim {
   reason: string;
   actor: ActorRef;
   agentSessionId?: string;
+  createdAt: string;
+}
+
+export interface ActionProposalPatch {
+  status: ActionProposal["status"];
+  revision: number;
+  updatedAt: string;
+  reviewActorId?: string | null;
+  reviewActorType?: string | null;
+  reviewSessionId?: string | null;
+  reviewAt?: string | null;
+  reviewReason?: string | null;
+  reviewRevision?: number | null;
+  reservationActorId?: string | null;
+  reservationActorType?: string | null;
+  reservationSessionId?: string | null;
+  reservedAt?: string | null;
+  reservationId?: string | null;
+  reservationRevision?: number | null;
+  evidenceSnapshotJson?: string | null;
+}
+
+export interface ActionProposalPageQuery {
+  limit: number;
+  after?: { at: string; id: string };
+}
+
+export interface ActionProposalPageResult {
+  items: ActionProposal[];
+  total: number;
+  hasMore: boolean;
+  next?: { at: string; id: string };
+}
+
+export interface ActionReceiptPageQuery {
+  limit: number;
+  after?: { at: string; id: string };
+}
+
+export interface ActionReceiptPageResult {
+  items: ActionReceipt[];
+  total: number;
+  hasMore: boolean;
+  next?: { at: string; id: string };
+}
+
+export interface ActionMutationReceipt {
+  workspaceId: string;
+  actorId: string;
+  actorType: "human" | "agent";
+  method: string;
+  requestKey: string;
+  inputDigest: string;
+  /** JSON-serialized successful result returned for equal-input replays. */
+  resultJson: string;
   createdAt: string;
 }
 
@@ -297,6 +361,75 @@ export interface CampfireStore {
    */
   recallDecisionSet(workspaceId: string, query: RecallDecisionSetQuery): RecallDecisionSetPage;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
+  /**
+   * ACT-001 action proposals. `updateActionProposal` is a guarded claim: it
+   * applies only when the row still carries `expectedRevision` (and, when
+   * given, `expectedStatus`), returning whether this caller won the claim.
+   * Concurrent SQLite writers serialize in the transaction; concurrent D1
+   * batches fail the whole batch when the guard matches no row.
+   */
+  createActionProposal(proposal: ActionProposal, intentJson: string, targetKey: string): void;
+  getActionProposal(id: string): ActionProposal | undefined;
+  countActionProposals(workspaceId: string): number;
+  pageActionProposals(workspaceId: string, query: ActionProposalPageQuery): ActionProposalPageResult;
+  updateActionProposal(
+    id: string,
+    patch: ActionProposalPatch,
+    expected: { revision: number; status?: ActionProposal["status"] },
+  ): boolean;
+  /**
+   * Workspace-wide unique provider target key. Never deleted: the key
+   * survives terminal receipts and crashes. Throws `Conflict` on duplicates.
+   */
+  createActionTargetReservation(input: {
+    workspaceId: string;
+    targetKey: string;
+    proposalId: string;
+    reservationId: string;
+    reservedAt: string;
+  }): void;
+  getActionTargetReservation(
+    workspaceId: string,
+    targetKey: string,
+  ): { proposalId: string; reservationId: string } | undefined;
+  /** Append-only submission/reconciliation receipts. Duplicate keys conflict per recorder. */
+  createActionReceipt(receipt: ActionReceipt): void;
+  getActionReceipt(id: string): ActionReceipt | undefined;
+  getActionReceiptByRequestKey(proposalId: string, actor: ActorRef, requestKey: string): ActionReceipt | undefined;
+  countActionReceipts(workspaceId: string, proposalId: string): number;
+  pageActionReceipts(
+    workspaceId: string,
+    proposalId: string,
+    query: ActionReceiptPageQuery,
+  ): ActionReceiptPageResult;
+  /** Mutation idempotency scoped to workspace, actor, method, and requestKey. */
+  getActionMutationReceipt(
+    workspaceId: string,
+    actorId: string,
+    actorType: "human" | "agent",
+    method: string,
+    requestKey: string,
+  ): ActionMutationReceipt | undefined;
+  putActionMutationReceipt(receipt: ActionMutationReceipt): void;
+  /**
+   * ACT-001 signed GitHub ingress. Binding is persisted on first use.
+   * Delivery identity and semantic attempt keys survive secret rotation.
+   */
+  getGithubSourceBinding(sourceId: string): GithubSourceBindingRecord | undefined;
+  createGithubSourceBinding(binding: GithubSourceBindingRecord): void;
+  listGithubSourceBindings(workspaceId: string): GithubSourceBindingRecord[];
+  updateGithubSourceBindingFingerprint(sourceId: string, authorityFingerprint: string): void;
+  getGithubIngressDelivery(sourceId: string, deliveryId: string): GithubIngressDeliveryRecord | undefined;
+  createGithubIngressDelivery(delivery: GithubIngressDeliveryRecord): void;
+  getGithubIngressReceiptByAttempt(
+    workspaceId: string,
+    attemptKey: string,
+  ): GithubIngressReceiptRecord | undefined;
+  listGithubIngressReceiptsForProposal(
+    workspaceId: string,
+    proposalId: string,
+  ): GithubIngressReceiptRecord[];
+  createGithubIngressReceipt(receipt: GithubIngressReceiptRecord): void;
   /**
    * Matching contributions for one object, newest append position first, at or
    * below `tip`. Does not scan the workspace activity list in memory.

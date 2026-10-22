@@ -99,7 +99,7 @@ function explain(database: Database.Database, sql: string, params: readonly unkn
 describe("NAV-002 bounded reads", () => {
   it("keeps HTTP and CLI catalogs unchanged while the Viewer allowlist adds the seven NAV-003 reads", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(47);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(55);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(
       expect.arrayContaining(["list_workspace_participants", "get_record_history"]),
     );
@@ -117,7 +117,7 @@ describe("NAV-002 bounded reads", () => {
       "get_artifact",
       "get_record_history",
     ]);
-    expect(CLI_COMMAND_NAMES).toHaveLength(60);
+    expect(CLI_COMMAND_NAMES).toHaveLength(61);
     const listed = (source: string): string[] => {
       const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);
       expect(match).not.toBeNull();

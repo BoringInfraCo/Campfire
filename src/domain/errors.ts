@@ -21,6 +21,8 @@ export type CampfireErrorCode =
   | "DecisionNotFound"
   | "CrossWorkspaceReference"
   | "Conflict"
+  | "ActionProposalNotFound"
+  | "ActionReceiptNotFound"
   | "RecallRestart";
 
 export class CampfireError extends Error {
@@ -128,6 +130,18 @@ export class CrossWorkspaceReference extends CampfireError {
 export class Conflict extends CampfireError {
   constructor(message: string, details?: Record<string, unknown>) {
     super("Conflict", message, details);
+  }
+}
+
+export class ActionProposalNotFound extends CampfireError {
+  constructor(proposalId: string) {
+    super("ActionProposalNotFound", `Action proposal not found: ${proposalId}`, { proposalId });
+  }
+}
+
+export class ActionReceiptNotFound extends CampfireError {
+  constructor(receiptId: string) {
+    super("ActionReceiptNotFound", `Action receipt not found: ${receiptId}`, { receiptId });
   }
 }
 

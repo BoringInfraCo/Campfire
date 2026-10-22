@@ -1,8 +1,8 @@
 # Campfire — Architecture
 
-**Status:** Revised for the planned v1.25 CAP-001 interface boundary
+**Status:** Revised for published CAP-001 and the planned v1.26 ACT-001 pilot boundary
 **Version:** 0.2
-**Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001 boundary planned October 20, 2026
+**Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001 boundary October 20, 2026; ACT-001 pilot planned October 21, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -511,6 +511,30 @@ Agent-authored HTML is untrusted. Any future preview needs sandboxing, a content
 
 ---
 
+### Planned v1.26 ActionProposal and submission receipts
+
+[ACT-001 — Propose and Follow Up](Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md)
+plans one workspace-owned ActionProposal aggregate for a verification retry.
+It records immutable intent and evidence, a designated executor, human review,
+a single dispatch reservation, and append-only submission/reconciliation
+receipts. It is distinct from a Task, Decision, Finding, Capability grant,
+and outbound DomainEvent. Approval binds an exact intent digest and revision;
+only a human workspace owner may approve, reject, or cancel before reservation.
+An agent owner role does not satisfy that human check.
+
+Core authorizes and persists the record; the external client executes against
+GitHub with its own provider credential. Provider-specific validation stays in
+the integration adapter. A reservation prevents a second dispatch under the
+same approval and is never automatically reassigned after a timeout. Unknown
+submission requires reconciliation. Campfire cannot guarantee exactly-once
+external effects or recall a request already sent. A submitted retry is not a
+successful verification, and a signed completion is evidence rather than
+permission to merge, deploy, accept a decision, or complete a task.
+
+This is a proposed narrow Phase 8 probe. Its contract and Step 0 freeze govern
+implementation; this amendment does not claim Gate F demand or authorize a
+general policy, grant, workflow, or execution system.
+
 ## 9. Contribution and Provenance Model
 
 Every meaningful mutation should generate a contribution record.
@@ -594,6 +618,39 @@ Each queued delivery is bound to a non-secret fingerprint of the bridge id, URL,
 Core does not import or branch on Slack, Linear, GitHub, email, or any other destination. A future bridge that creates or changes external work needs its own action proposal and approval record. A DomainEvent is not that approval. Decision acceptance remains a Campfire lifecycle transition.
 
 The closed vocabulary is `finding.recorded`, `decision.proposed`, `decision.accepted`, `task.blocked`, `task.completed`, `goal.completed`, `artifact.attached`, and `workspace.completed`. Other mutations still write their Contribution and write no DomainEvent.
+
+### Planned v1.26 inbound completion evidence
+
+ACT-001 adds a separate, operator-bound native GitHub webhook ingress on the
+local server and Worker. One configured source maps to one workspace,
+repository, verification workflow, and explicitly provisioned integration
+agent/session. Verify the signature over bounded raw bytes before processing;
+revalidate that agent's current workspace/session authority before writing.
+The provider sender never becomes the human approver or the executor identity.
+
+```text
+Signed provider completion
+    -> integration adapter: limits, signature, normalization
+    -> service: source authority + reserved-proposal correlation
+    -> atomic semantic dedup receipt + Artifact + Finding + Contributions
+    -> existing authorized reads and explicit human/agent next action
+```
+
+The ingress retains normalized provenance and a body digest, not raw webhook
+content or provider logs. Persistent delivery and semantic event uniqueness
+prevent redelivery or changed delivery headers from creating duplicate work.
+The exact reserved run, commit, and next attempt must match. Arrival before a
+submission receipt does not lose the observation or fabricate causation.
+The adapter creates one cited Finding and reference Artifact; it approves
+nothing and executes nothing. Invalid/unmatched events change no workspace.
+
+Proposal transitions, receipts, and idempotency records require matching local
+SQLite and D1 schema/migration paths with atomic guarded writes. No database
+transaction spans a provider call. Inbound receipt state is separate from the
+existing outbound delivery queue and eight-event vocabulary. No new public
+system identity, generic event bus, scheduler, browser credential, Viewer write
+or expanded Viewer read allowlist is implied. The detailed authority, limits,
+replay, lifecycle and live-evidence contract is in the ACT-001 sprint document.
 
 ---
 
@@ -776,7 +833,7 @@ MCP handlers should remain thin.
 
 They should not contain Campfire's core collaboration semantics.
 
-### Planned v1.25 CAP-001 discovery boundary
+### v1.25 CAP-001 discovery boundary
 
 The CAP-001 contract (`docs/Campfire-v1.25-CAP-001-Discover-and-Compose.md`)
 adds interface discovery over operations Campfire already exposes. A shared
@@ -816,9 +873,8 @@ compose or filter its own results; Campfire neither executes generated code
 nor stores recipe runs or handoffs as a new canonical object. There is no new
 workspace store, migration, `/v1/call` discovery method, external tool
 integration, or change to the Viewer read allowlist in CAP-001. The planned
-v1.26 action proposal/event boundaries require a separate architecture
-amendment before that sprint's implementation; this section grants none of
-their authority.
+v1.26 action proposal/event boundary is defined separately in §§8–9 and the
+ACT-001 sprint contract. Static discovery itself grants none of that authority.
 
 WOW-001 adds one opt-in read, `get_playbook`, and the matching CLI command
 `campfire playbook`. Both stay off unless the process is explicitly enabled.

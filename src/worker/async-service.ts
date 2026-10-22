@@ -12,6 +12,7 @@ import type { EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwned
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
 import { assembleWorkspaceContext } from "../service/context-assembly.js";
 import { createAsyncCorrectionActions } from "../service/async-correction-actions.js";
+import { createAsyncActionProposalActions } from "../service/async-action-proposal-actions.js";
 import { attachCitations, attachEvidence } from "../service/correction-read.js";
 import { assertFindingCurrentness } from "../store/context-queries.js";
 import {
@@ -48,9 +49,13 @@ import {
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
   type AcceptDecisionOptions,
+  type ActionProposalPage,
+  type ActionProposalView,
+  type ActionReceiptPage,
   type AddArtifactInput,
   type AddDecisionInput,
   type AddFindingInput,
+  type CancelActionInput,
   type CiteDecisionBasisInput,
   type CiteFindingEvidenceInput,
   type CorrectFindingInput,
@@ -63,6 +68,7 @@ import {
   type CreateTaskInput,
   type CreateWorkspaceInput,
   type CurrentWork,
+  type GetActionProposalInput,
   type GetActivityInput,
   type GetRecordHistoryInput,
   type GetWorkspaceChangesInput,
@@ -71,15 +77,21 @@ import {
   type ProjectHandoffPacketInput,
   type RecallWorkspaceInput,
   type InviteToWorkspaceInput,
+  type ListActionProposalsInput,
+  type ListActionReceiptsInput,
   type ListWorkspaceObjectsInput,
   type JoinWorkspaceInput,
   type ParticipantView,
+  type ProposeActionInput,
   type ReadinessStatus,
+  type RecordActionOutcomeInput,
   type RecordHistoryPage,
   type RegisterAgentSessionInput,
   type RemoveDecisionBasisInput,
   type RemoveFindingEvidenceInput,
+  type ReserveActionInput,
   type RetireDecisionInput,
+  type ReviewActionInput,
   type SinceProjection,
   type SuggestedNextAction,
   type UpdateGoalInput,
@@ -115,6 +127,7 @@ import type {
   WorkspaceParticipant,
 } from "../domain/types.js";
 import { generateRawTokenWeb as generateRawToken, hashTokenWeb as hashTokenAsync } from "./crypto.js";
+import type { ActionReceipt } from "../domain/action-proposal.js";
 import { createId, nowIso } from "../domain/ids.js";
 import type { IdSource } from "../domain/ids.js";
 import {
@@ -212,6 +225,14 @@ export interface AsyncCampfireService {
   createTask(ctx: ActorContext, input: CreateTaskInput): Promise<Task>;
   updateTask(ctx: ActorContext, input: UpdateTaskInput): Promise<Task>;
   addArtifact(ctx: ActorContext, input: AddArtifactInput): Promise<Artifact>;
+  propose_action(ctx: ActorContext, input: ProposeActionInput): Promise<ActionProposalView>;
+  review_action(ctx: ActorContext, input: ReviewActionInput): Promise<ActionProposalView>;
+  cancel_action(ctx: ActorContext, input: CancelActionInput): Promise<ActionProposalView>;
+  reserve_action_execution(ctx: ActorContext, input: ReserveActionInput): Promise<ActionProposalView>;
+  record_action_outcome(ctx: ActorContext, input: RecordActionOutcomeInput): Promise<ActionReceipt>;
+  get_action_proposal(ctx: ActorContext, input: GetActionProposalInput): Promise<ActionProposalView>;
+  list_action_proposals(ctx: ActorContext, input: ListActionProposalsInput): Promise<ActionProposalPage>;
+  list_action_receipts(ctx: ActorContext, input: ListActionReceiptsInput): Promise<ActionReceiptPage>;
   close(): void;
 }
 
@@ -835,6 +856,15 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     writeOutbox,
     decorateFinding,
     decorateDecision,
+  });
+
+  const actionProposals = createAsyncActionProposalActions({
+    store,
+    authorizer,
+    idSource,
+    clock,
+    requireAgentSession,
+    record,
   });
 
   function readInWorkspace<T extends { workspaceId: string }>(
@@ -2266,6 +2296,38 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         });
       });
       return artifact;
+    },
+
+    async propose_action(ctx, input) {
+      return actionProposals.propose_action(ctx, input);
+    },
+
+    async review_action(ctx, input) {
+      return actionProposals.review_action(ctx, input);
+    },
+
+    async cancel_action(ctx, input) {
+      return actionProposals.cancel_action(ctx, input);
+    },
+
+    async reserve_action_execution(ctx, input) {
+      return actionProposals.reserve_action_execution(ctx, input);
+    },
+
+    async record_action_outcome(ctx, input) {
+      return actionProposals.record_action_outcome(ctx, input);
+    },
+
+    async get_action_proposal(ctx, input) {
+      return actionProposals.get_action_proposal(ctx, input);
+    },
+
+    async list_action_proposals(ctx, input) {
+      return actionProposals.list_action_proposals(ctx, input);
+    },
+
+    async list_action_receipts(ctx, input) {
+      return actionProposals.list_action_receipts(ctx, input);
     },
 
     close(): void {

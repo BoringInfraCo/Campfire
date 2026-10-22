@@ -27,6 +27,20 @@ import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
  * `AsyncCampfireService` (D1). Same validation, same status mapping.
  */
 import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
+import { createId, nowIso, type IdSource } from "../domain/ids.js";
+import { readGithubSourceConfig } from "../integrations/github-source-config.js";
+import {
+  GITHUB_INGRESS_BODY_DEADLINE_MS,
+  GITHUB_INGRESS_MAX_BODY_BYTES,
+  ingressContentTypeAllowed,
+  ingressEncodingAllowed,
+  ingressTransportAllowed,
+} from "../integrations/github-workflow-run.js";
+import {
+  githubIngressPathSourceId,
+  ingestGithubWorkflowRun,
+  ingestGithubWorkflowRunAsync,
+} from "../service/github-ingress.js";
 import { collectBridgeReport } from "../bridge/report.js";
 import {
   bridgeOperatorTokenMatches,
@@ -49,7 +63,6 @@ import {
   type TelemetryGateMode,
 } from "./telemetry.js";
 import type { TelemetryGuard } from "../telemetry/guard.js";
-import type { IdSource } from "../domain/ids.js";
 import { projectViewerRecordHistory } from "../viewer/history-view.js";
 
 const MAX_BODY_BYTES = 1_048_576;
@@ -331,6 +344,11 @@ function telemetryOptions(options: TelemetryHandlerOptions): {
 export interface SyncWorkerHandlerOptions extends TelemetryHandlerOptions {
   service: CampfireService;
   assetsFetch?: AssetsFetch;
+  store?: import("../store/store.js").CampfireStore;
+  sourceEnv?: Record<string, string | undefined>;
+  clock?: () => string;
+  idSource?: IdSource;
+  ingressBodyTimeoutMs?: number;
 }
 
 export interface D1WorkerHandlerOptions extends TelemetryHandlerOptions {
@@ -339,6 +357,8 @@ export interface D1WorkerHandlerOptions extends TelemetryHandlerOptions {
   idSource?: IdSource;
   clock?: () => string;
   webhookEnv?: Record<string, string | undefined>;
+  sourceEnv?: Record<string, string | undefined>;
+  ingressBodyTimeoutMs?: number;
   /**
    * Called once a mutation that can enqueue a delivery has committed
    * (PSA-001 / P1). The Worker entrypoint uses it to schedule a delivery sweep
@@ -538,6 +558,17 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
       // GET branch produces for unknown paths. A 404 here would hide that the
       // route exists and that it requires POST.
       if (path === TELEMETRY_PATH) return await handleTelemetryEvent(telemetryOptions(options), request);
+      const githubSourceId = githubIngressPathSourceId(path);
+      if (githubSourceId !== undefined) {
+        return await handleWorkerGithubIngress(request, githubSourceId, {
+          mode: "sync",
+          store: options.store,
+          sourceEnv: options.sourceEnv,
+          clock: options.clock,
+          idSource: options.idSource,
+          ingressBodyTimeoutMs: options.ingressBodyTimeoutMs,
+        });
+      }
 
       if (request.method === "GET") {
         // Every installer route is measured and tokenized through the same
@@ -612,6 +643,17 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
       // answers 405 rather than the 404 the GET branch produces (see the sync
       // handler above).
       if (path === TELEMETRY_PATH) return await handleTelemetryEvent(telemetryOptions(options), request);
+      const githubSourceId = githubIngressPathSourceId(path);
+      if (githubSourceId !== undefined) {
+        return await handleWorkerGithubIngress(request, githubSourceId, {
+          mode: "d1",
+          store: options.store,
+          sourceEnv: options.sourceEnv ?? options.webhookEnv,
+          clock: options.clock,
+          idSource: options.idSource,
+          ingressBodyTimeoutMs: options.ingressBodyTimeoutMs,
+        });
+      }
 
       if (request.method === "GET") {
         const installer: InstallerServeOptions = {
@@ -904,6 +946,131 @@ async function handleAsyncBridgeReport(
   }
   const report = await collectBridgeReport(readWebhookBridgeConfig(webhookEnv), store);
   return json(200, { ok: true, result: report });
+}
+
+class GithubIngressReadTimeout extends Error {
+  constructor() {
+    super("github-ingress-read-timeout");
+    this.name = "GithubIngressReadTimeout";
+  }
+}
+
+async function readGithubIngressBytes(
+  request: Request,
+  maxBytes: number,
+  timeoutMs: number,
+): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; reason: "too_large" | "unreadable" | "timeout" }> {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null && Number(contentLength) > maxBytes) {
+    return { ok: false, reason: "too_large" };
+  }
+  const reader = request.body?.getReader();
+  if (reader === undefined) return { ok: true, bytes: new Uint8Array(0) };
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      await reader.cancel().catch(() => undefined);
+      return { ok: false, reason: "timeout" };
+    }
+    // Race each read against the remaining deadline so a hung chunk cannot
+    // exceed the 10s budget (mirrors the Node `server.ts` destroy timer).
+    // The deadline is checked between reads AND enforced during a read.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let item: { done?: boolean; value?: Uint8Array };
+    try {
+      item = await Promise.race([
+        reader.read(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new GithubIngressReadTimeout()), remaining);
+        }),
+      ]);
+    } catch (error) {
+      await reader.cancel().catch(() => undefined);
+      if (error instanceof GithubIngressReadTimeout) return { ok: false, reason: "timeout" };
+      return { ok: false, reason: "unreadable" };
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+    }
+    if (item.done === true || item.value === undefined) break;
+    length += item.value.byteLength;
+    if (length > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      return { ok: false, reason: "too_large" };
+    }
+    chunks.push(item.value);
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, bytes };
+}
+
+async function handleWorkerGithubIngress(
+  request: Request,
+  sourceId: string,
+  options: {
+    mode: "sync" | "d1";
+    store?: import("../store/store.js").CampfireStore | AsyncCampfireStore;
+    sourceEnv?: Record<string, string | undefined>;
+    clock?: () => string;
+    idSource?: IdSource;
+    ingressBodyTimeoutMs?: number;
+  },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
+  }
+  const config = readGithubSourceConfig(options.sourceEnv ?? {});
+  if (!config.configured || config.source.sourceId !== sourceId) {
+    return fail(404, "ValidationError", "Unknown source");
+  }
+  if (!ingressTransportAllowed(new URL(request.url))) {
+    return fail(400, "ValidationError", "HTTPS required");
+  }
+  if (!ingressContentTypeAllowed(request.headers.get("content-type") ?? undefined)) {
+    return fail(415, "ValidationError", "Unsupported media type");
+  }
+  if (!ingressEncodingAllowed(
+    request.headers.get("content-encoding") ?? undefined,
+    request.headers.get("transfer-encoding") ?? undefined,
+  )) {
+    return fail(415, "ValidationError", "Unsupported encoding");
+  }
+  if (options.store === undefined) {
+    return fail(503, "Unauthorized", "Integration unavailable");
+  }
+  const body = await readGithubIngressBytes(
+    request,
+    GITHUB_INGRESS_MAX_BODY_BYTES,
+    options.ingressBodyTimeoutMs ?? GITHUB_INGRESS_BODY_DEADLINE_MS,
+  );
+  if (!body.ok) {
+    if (body.reason === "too_large") return fail(413, "ValidationError", "Payload too large");
+    if (body.reason === "timeout") return fail(408, "ValidationError", "Request timeout");
+    return fail(400, "ValidationError", "Request body could not be read");
+  }
+  const ingressRequest = {
+    sourceId,
+    eventName: request.headers.get("x-github-event") ?? undefined,
+    deliveryId: request.headers.get("x-github-delivery") ?? undefined,
+    signatureHeader: request.headers.get("x-hub-signature-256") ?? undefined,
+    rawBody: body.bytes,
+  };
+  const deps = {
+    clock: options.clock ?? nowIso,
+    idSource: options.idSource ?? createId,
+    webhookEnv: options.sourceEnv,
+  };
+  const result = options.mode === "d1"
+    ? await ingestGithubWorkflowRunAsync(options.store as AsyncCampfireStore, config.source, ingressRequest, deps)
+    : await ingestGithubWorkflowRun(options.store as import("../store/store.js").CampfireStore, config.source, ingressRequest, deps);
+  return json(result.status, result.body);
 }
 
 async function handleEnrollmentRedeem(

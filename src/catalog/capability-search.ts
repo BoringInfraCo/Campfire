@@ -46,6 +46,7 @@ export const MCP_TOOL_NAMES = [
   "create_task",
   "create_workspace",
   "discover_capabilities",
+  "get_action_proposal",
   "get_activity",
   "get_artifact",
   "get_decision",
@@ -58,6 +59,8 @@ export const MCP_TOOL_NAMES = [
   "get_workspace_context",
   "invite_workspace",
   "join_workspace",
+  "list_action_proposals",
+  "list_action_receipts",
   "list_artifacts",
   "list_decisions",
   "list_findings",
@@ -65,10 +68,13 @@ export const MCP_TOOL_NAMES = [
   "list_workspace_participants",
   "list_workspaces",
   "preflight",
+  "propose_action",
   "recall_workspace",
+  "record_action_outcome",
   "register_agent_session",
   "remove_decision_basis",
   "remove_finding_evidence",
+  "reserve_action_execution",
   "retire_decision",
   "update_goal",
   "update_task",
@@ -166,6 +172,10 @@ const ALIASES: Readonly<Record<string, readonly string[]>> = {
   history: ["get_record_history"],
   decision: ["list_decisions", "get_decision"],
   context: ["get_workspace_context"],
+  "action proposal": ["propose_action"],
+  "approve action": ["review_action"],
+  "execution receipt": ["record_action_outcome", "list_action_receipts"],
+  "verification follow up": ["verification_follow_up"],
 };
 
 const RECIPE_ORDER = ["continue-blocked-work", "review-decision-basis"] as const;
@@ -179,6 +189,176 @@ const RECIPES = [
   JSON.parse(CONTINUE_RECIPE_JSON) as ReadRecipe,
   JSON.parse(REVIEW_RECIPE_JSON) as ReadRecipe,
 ];
+
+const ACTIONS_CLI_USAGE =
+  "campfire actions propose|approve|reject|cancel|reserve|receipt|inspect|list|receipts [--output auto|human|json]";
+
+const ACT001_OPERATIONS: readonly CapabilityOperation[] = [
+  {
+    id: "propose_action",
+    purpose: "Propose one concrete verification retry action for later human approval.",
+    effect: "write",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "target", type: "object" },
+      { name: "executor", type: "object" },
+      { name: "reason", type: "string" },
+      { name: "taskId", type: "string" },
+      { name: "requestKey", type: "string" },
+    ],
+    preconditions: ["Caller is a non-viewer participant. Input JSON is structured data and is never executed."],
+    outputCaveat: "Records intent only. It is not approval, dispatch, or a GitHub credential.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "propose_action" },
+    },
+  },
+  {
+    id: "review_action",
+    purpose: "Approve or reject an action proposal as a human workspace owner.",
+    effect: "write",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+      { name: "revision", type: "number" },
+      { name: "intentDigest", type: "string" },
+      { name: "requestKey", type: "string" },
+    ],
+    preconditions: ["Human workspace owner credential. An agent owner role never passes this check."],
+    outputCaveat: "Binds the exact inspected effect. An accepted Decision does not grant dispatch.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { unavailable: "human operator CLI only; approval never passes through an agent MCP tool" },
+    },
+  },
+  {
+    id: "cancel_action",
+    purpose: "Cancel an action proposal before reservation.",
+    effect: "write",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+      { name: "revision", type: "number" },
+      { name: "intentDigest", type: "string" },
+      { name: "reason", type: "string" },
+      { name: "requestKey", type: "string" },
+    ],
+    preconditions: ["Human workspace owner credential. Cancellation after reservation cannot stop an external request."],
+    outputCaveat: "Terminal. A cancelled proposal cannot reopen.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { unavailable: "human operator CLI only; cancellation never passes through an agent MCP tool" },
+    },
+  },
+  {
+    id: "reserve_action_execution",
+    purpose: "Reserve the one dispatch slot for an approved action.",
+    effect: "write",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+      { name: "revision", type: "number" },
+      { name: "intentDigest", type: "string" },
+      { name: "requestKey", type: "string" },
+    ],
+    preconditions: ["Caller is the designated executor. Rechecks current authority, digest, and evidence snapshot."],
+    outputCaveat: "Returns the approved intent. Not a GitHub credential and not an executable script.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "reserve_action_execution" },
+    },
+  },
+  {
+    id: "record_action_outcome",
+    purpose: "Record a bounded execution receipt after submitting the retry.",
+    effect: "write",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+      { name: "revision", type: "number" },
+      { name: "intentDigest", type: "string" },
+      { name: "outcome", type: "string" },
+      { name: "providerRef", type: "object" },
+      { name: "requestKey", type: "string" },
+    ],
+    preconditions: ["Caller is the designated executor. Uses the executor's own provider credential."],
+    outputCaveat: "A receipt is not proof the tests passed and is not permission to merge or release.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "record_action_outcome" },
+    },
+  },
+  {
+    id: "get_action_proposal",
+    purpose: "Inspect one action proposal, its review, reservation, and latest receipt.",
+    effect: "read",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+    ],
+    preconditions: [],
+    outputCaveat: "Does not flatten requested versus observed outcomes into one success boolean.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "get_action_proposal" },
+    },
+  },
+  {
+    id: "list_action_proposals",
+    purpose: "List a bounded page of action proposals.",
+    effect: "read",
+    scope: "workspace",
+    requiredInputs: [{ name: "workspaceId", type: "string" }],
+    preconditions: [],
+    outputCaveat: "Page fields are total, returned, truncated, and nextCursor when another row exists.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "list_action_proposals" },
+    },
+  },
+  {
+    id: "list_action_receipts",
+    purpose: "List a bounded page of receipts for one action proposal.",
+    effect: "read",
+    scope: "workspace",
+    requiredInputs: [
+      { name: "workspaceId", type: "string" },
+      { name: "proposalId", type: "string" },
+    ],
+    preconditions: [],
+    outputCaveat: "Review, reservation, submission, and reconciliation remain distinct authorities.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: { tool: "list_action_receipts" },
+    },
+  },
+  {
+    id: "verification_follow_up",
+    purpose: "Inspect signed verification follow-up evidence after a reserved retry.",
+    effect: "read",
+    scope: "workspace",
+    requiredInputs: [{ name: "workspaceId", type: "string" }],
+    preconditions: [
+      "Operator-bound GitHub source must be configured. Ingress is POST /v1/integrations/github/:sourceId, not MCP.",
+    ],
+    outputCaveat: "Signed completion is provider evidence, not an executor assertion. Inspect via actions inspect|list|receipts.",
+    surfaces: {
+      cli: { usage: ACTIONS_CLI_USAGE },
+      mcp: {
+        unavailable:
+          "operator HTTP ingress; not an MCP tool. Inspect via campfire actions inspect|list|receipts",
+      },
+    },
+  },
+];
+
+export const ACT001_OPERATION_IDS: ReadonlySet<string> = new Set(ACT001_OPERATIONS.map((operation) => operation.id));
 
 function jsonBytes(value: unknown): number {
   return Buffer.byteLength(JSON.stringify(value), "utf8");
@@ -240,7 +420,8 @@ function playbookOperation(): CapabilityOperation {
 }
 
 function operationsFor(playbookEnabled: boolean): readonly CapabilityOperation[] {
-  return playbookEnabled ? [...BASE_OPERATIONS, playbookOperation()] : BASE_OPERATIONS;
+  const operations = playbookEnabled ? [...BASE_OPERATIONS, playbookOperation()] : [...BASE_OPERATIONS];
+  return [...operations, ...ACT001_OPERATIONS];
 }
 
 function aliasesFor(id: string): readonly string[] {
@@ -440,5 +621,6 @@ export function getReadRecipe(id: string): ReadRecipe {
 }
 
 for (const operation of BASE_OPERATIONS) assertOperationBounds(operation);
+for (const operation of ACT001_OPERATIONS) assertOperationBounds(operation);
 assertOperationBounds(playbookOperation());
 for (const recipe of RECIPES) assertRecipeBounds(recipe);

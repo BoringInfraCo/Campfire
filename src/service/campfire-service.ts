@@ -12,6 +12,7 @@ import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitat
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import { assembleWorkspaceContext } from "./context-assembly.js";
 import { createCorrectionActions } from "./correction-actions.js";
+import { createActionProposalActions } from "./action-proposal-actions.js";
 import { attachCitations, attachEvidence } from "./correction-read.js";
 import {
   affectedObjectIds,
@@ -46,12 +47,16 @@ import {
   deriveRecordedAlignment,
   ORIENTATION_PROVENANCE_LIMIT,
   type ActivityPage,
+  type ActionProposalPage,
+  type ActionProposalView,
+  type ActionReceiptPage,
   type AddArtifactInput,
   type AddDecisionInput,
   type AddFindingInput,
   type AttentionItem,
   type AttentionReason,
   type CampfireService,
+  type CancelActionInput,
   type CheckReadinessInput,
   type CreateAgentInput,
   type CreateGoalInput,
@@ -59,6 +64,7 @@ import {
   type CreateTaskInput,
   type CreateWorkspaceInput,
   type CurrentWork,
+  type GetActionProposalInput,
   type GetActivityInput,
   type GetRecordHistoryInput,
   type GetWorkspaceChangesInput,
@@ -68,11 +74,17 @@ import {
   type RecallWorkspaceInput,
   type InviteToWorkspaceInput,
   type JoinWorkspaceInput,
+  type ListActionProposalsInput,
+  type ListActionReceiptsInput,
   type ListWorkspaceObjectsInput,
   type ParticipantView,
+  type ProposeActionInput,
   type ReadinessStatus,
+  type RecordActionOutcomeInput,
   type RecordHistoryPage,
   type RegisterAgentSessionInput,
+  type ReserveActionInput,
+  type ReviewActionInput,
   type SinceProjection,
   type SuggestedNextAction,
   type UpdateGoalInput,
@@ -768,6 +780,15 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     writeOutbox,
     decorateFinding,
     decorateDecision,
+  });
+
+  const actionProposals = createActionProposalActions({
+    store,
+    authorizer,
+    idSource,
+    clock,
+    requireAgentSession,
+    record,
   });
 
   function readInWorkspace<T extends { workspaceId: string }>(
@@ -2163,8 +2184,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       return updated;
     },
 
-    addArtifact(ctx: ActorContext, input: AddArtifactInput): Artifact {
-      authorizer.assertAllowed(ctx, "artifact:attach", input.workspaceId);
+    addArtifact(ctx: ActorContext, input: AddArtifactInput): Artifact {      authorizer.assertAllowed(ctx, "artifact:attach", input.workspaceId);
       requireAgentSession(ctx);
       assertNonEmpty(input.title, "Artifact title");
       const uriOrPath = normalizeArtifactUri(input.uriOrPath);
@@ -2203,6 +2223,38 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         });
       });
       return artifact;
+    },
+
+    propose_action(ctx: ActorContext, input: ProposeActionInput): ActionProposalView {
+      return actionProposals.propose_action(ctx, input);
+    },
+
+    review_action(ctx: ActorContext, input: ReviewActionInput): ActionProposalView {
+      return actionProposals.review_action(ctx, input);
+    },
+
+    cancel_action(ctx: ActorContext, input: CancelActionInput): ActionProposalView {
+      return actionProposals.cancel_action(ctx, input);
+    },
+
+    reserve_action_execution(ctx: ActorContext, input: ReserveActionInput): ActionProposalView {
+      return actionProposals.reserve_action_execution(ctx, input);
+    },
+
+    record_action_outcome(ctx: ActorContext, input: RecordActionOutcomeInput) {
+      return actionProposals.record_action_outcome(ctx, input);
+    },
+
+    get_action_proposal(ctx: ActorContext, input: GetActionProposalInput): ActionProposalView {
+      return actionProposals.get_action_proposal(ctx, input);
+    },
+
+    list_action_proposals(ctx: ActorContext, input: ListActionProposalsInput): ActionProposalPage {
+      return actionProposals.list_action_proposals(ctx, input);
+    },
+
+    list_action_receipts(ctx: ActorContext, input: ListActionReceiptsInput): ActionReceiptPage {
+      return actionProposals.list_action_receipts(ctx, input);
     },
 
     close(): void {
