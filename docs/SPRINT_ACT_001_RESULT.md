@@ -2,7 +2,7 @@
 
 **Date:** October 21, 2026
 
-**Status:** **CONDITIONAL GO — engineering candidate.** D1–D9 pass on recorded candidate `932af8afca52b8921636ffd69a572d6240ba74d7`. Package version stays `1.25.0`. This result does not bump a version, tag, publish a snapshot, or deploy. No release decision is recorded. No live harness path and no real-provider round trip was run.
+**Status:** **CONDITIONAL GO — engineering candidate.** D1–D9 pass on recorded candidate `932af8afca52b8921636ffd69a572d6240ba74d7`, with a dated D9 correction. **Amended October 22, 2026:** the original D9 export audit proved the selected files were safe to publish; it did not prove the selection could build on its own. The v1.26.0 release exposed that gap. The repaired release adds a clean-export build check and passes D9 at `9a359ca`. See §7. The CONDITIONAL GO verdict, the **NOT OBSERVED** live harness paths, and the **NOT AUTHORIZED** real-provider round trip are unchanged. Package version at the scored candidate was `1.25.0`; the separate release decision shipped `v1.26.1`.
 
 **Contract:** `docs/Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md` (§9 D1–D9, §10, §11)
 **Step 0:** `docs/evidence/act-001/step-0/` (`STEP0.md`, committed as `3080907`; baseline HEAD `1fb4d79`, tag/source pin `de4d447d` → `4e6b7e7`). The capture began while partial product code was already uncommitted; this was not a clean pre-code freeze (§3).
@@ -14,7 +14,7 @@
 Contract §10 defines **CONDITIONAL GO — engineering candidate** as D1–D9 passing with a live harness or real-provider path unrun. That is this record: all deterministic checks pass; the live Codex path, the live OpenCode path, and the dedicated real-provider retry are unrun.
 
 - This record claims no GO, no provider interoperability, and no human demand or usefulness. The synthetic stub (`fixtures/act-001/github-rerun-stub.ts`) exercises the client procedure only; it is not a live GitHub observation and not human evidence.
-- This record authorizes no release, version bump, tag, publication, migration of production, or deployment. D9's audited export is complete on the recorded candidate; publication still needs a separate release decision.
+- This record authorizes no release, version bump, tag, publication, migration of production, or deployment. D9's export audit passed on the recorded candidate but was later found insufficient as a distribution check (§7); publication still required a separate release decision.
 - Step 0 mismatches 1, 2 and 4 were resolved in the committed implementation. The pre-code freeze sequencing deviation remains visible (§3); no prior sprint or gate result is rescored.
 
 ## 1. What landed
@@ -60,7 +60,7 @@ Verification environment notes: a sandboxed focused run could not bind its local
 | **D6** | PASS. Second actor identifies proposal, human reviewer, executor, submission receipt, and signed observation from record ids alone. Actor/session/principal, uncertainty, and provider conclusion preserved. Long action/receipt histories page with cursor misuse failing. No raw payload, log, token, CLI output, public asset, or Viewer read leaks. Failure/cancelled runs never appear as success |
 | **D7** | PASS (fixture). `tests/unit/act-001-continuation.test.ts` over `fixtures/act-001/seed.ts` completes propose → human review → external-stub submission → signed completion → second-client inspection without a transcript, including reject, no-dispatch, unknown-submission, and failed-verification branches. The stub's only simulated authority is labeled; fixtures are not live GitHub or human demand |
 | **D8** | PASS. Fresh and upgraded local and D1 stores preserve v1.25.0 content and run identical action, event, and race answer keys (`tests/unit/migrations.test.ts` plus ACT-001 D1 suites). No provider request runs in a DB transaction. Disabled integration accepts no event writes; enabling grants no other source/action/workspace. No new background process or outbound event |
-| **D9** | PASS on `932af8a`. Focused tests (127 passed), full suite (118 files, 1482 passed / 1 skipped), typecheck, build, source/public asset parity, isolated `pack:tarball`, audited 391-file public export, and `deploy:dry-run` pass. Export includes source, migration, and synthetic tests and excludes private evidence/config/secrets by allowlist. No live migration or deploy occurred |
+| **D9** | **PASS on the repaired revision (`9a359ca`), corrected after v1.26.0.** The original check at `932af8a` passed focused tests (127), full suite (118 files, 1,482 passed / 1 skipped), typecheck, build, source/public asset parity, isolated `pack:tarball`, a 391-file export audit, and `deploy:dry-run`. That export audit was necessary but not sufficient: the allowlist at `932af8a` omitted `scripts/backfill-telemetry-claims.mjs` and `.d.mts`, which an exported test imports, so the snapshot was not self-buildable. v1.26.0 exposed the defect and produced no archives. The repaired battery at `9a359ca` adds a clean `npm ci` + build + exported ACT-001 test run inside the export and passes. See §7. No live migration or deploy occurred at the scored candidate |
 
 ## 3. Deviations
 
@@ -83,8 +83,64 @@ Review inspected human-approval bypasses, provider effect drift, actor/session a
 
 ## 6. Release boundary, deliverables, and stop
 
-No release decision. No version bump (package `1.25.0`), no tag, no push, no production migration or deploy. The `/tmp` tarball is a local check, not a published artifact.
+This section records the October 21 point-in-time boundary and is **superseded** by the separate founder release decision. At the scored candidate: no release decision, no version bump (package `1.25.0`), no tag, no push, no production migration or deploy; the `/tmp` tarball was a local check, not a published artifact. The separate release subsequently shipped and deployed `v1.26.1`; see `docs/RELEASE_V1_26_1_DECISION.md`. That release does not change this verdict or the open observations.
 
 Contract §11 deliverables: Step 0 bundle (`3080907`) plus recorded implementation source (`932af8a`); one proposal/receipt aggregate and migration `0009`; eight service methods / six MCP tools and the CLI family; catalog mappings; one configured native signed source and atomic cited Finding follow-up; isolated fixtures and client procedure; D1–D9 evidence above; named gaps; this result record.
 
 Stop after this pilot. Broader action classes, deployment/merge/release operations, arbitrary shell/code execution, agent approval, automatic reruns, provider polling, generic plugins, task automation, organization-wide discovery, Viewer writes, and a capability/grant engine require another scoped decision. Implementation does not authorize production operation or publication.
+
+## 7. Dated D9 amendment — October 22, 2026
+
+**Trigger:** the v1.26.0 release exposed a distribution defect that the D9
+sign-off above did not catch. This amendment corrects the D9 claim; it does not
+rescore D1–D8, the product verdict, or any earlier sprint.
+
+### What the original check proved, and what it did not
+
+The D9 export audit at `932af8a` proved that the files the exporter selected
+were safe: manifest parity, no forbidden path, no secret or machine-path
+pattern. It did **not** prove that the selected set was complete or that a
+clean checkout could build. The private suite passed because the omitted files
+were present in the private repository; only a clean build of the exported
+snapshot exposes a missing import.
+
+Specifically, the allowlist at `932af8a` omitted
+`scripts/backfill-telemetry-claims.mjs` and
+`scripts/backfill-telemetry-claims.d.mts`. An exported test imports the script,
+and `docs/OPERATOR.md` (also exported) documents it. The 391-file export
+therefore could not build on its own.
+
+### What happened at v1.26.0
+
+- Public CI `39718638147` and `39718640348` failed at `npm ci` with
+  `TS2307: Cannot find module '../../scripts/backfill-telemetry-claims.mjs'`.
+- Release workflow `39718658102` failed all four platform jobs for the same
+  reason. No archives were attached and no install channel was pinned.
+- The v1.26.0 tag and snapshot were preserved as provenance and are not
+  retargeted. The GitHub Release is marked a failed prerelease with a
+  do-not-install banner.
+
+### The repair and the corrected check
+
+- `scripts/export-public-release.mjs` now includes both telemetry-backfill
+  files.
+- The release-prep battery now exports the release commit, runs a clean
+  `npm ci` (which runs the build), and runs the exported ACT-001 tests inside
+  the exported directory. This is the missing check.
+- The corrected battery at `9a359ca` wrote a 404-file export, `npm ci` passed,
+  and the exported ACT-001 tests passed 105/105. `v1.26.1` was cut from that
+  revision, published, pinned, migrated, and deployed; see
+  `docs/RELEASE_V1_26_1_DECISION.md`.
+
+### Effect on this record
+
+- D9 now passes on the repaired revision. The original `932af8a` export is
+  **not** a distribution pass; the D9 row above and the status line say so.
+- D1–D8, the CONDITIONAL GO verdict, the **NOT OBSERVED** live Codex/OpenCode
+  paths, the **NOT AUTHORIZED** real-provider round trip, and the Step 0
+  sequencing deviation are unchanged.
+- No gate is moved and no earlier result is rescored.
+
+**Standing rule for later sprints:** an export audit proves selection safety,
+not buildability. Every release candidate must build and run its exported tests
+from the exported snapshot before it is tagged.
