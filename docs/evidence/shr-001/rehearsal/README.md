@@ -45,6 +45,11 @@ The raw rehearsal code is stored only in the private mode-0600 file
 - `campfire status --output json` selected `ws_df6794f33efc459b`.
 - `campfire up --no-open` smoke served `127.0.0.1:9414`; no session was
   registered by starting it. It was stopped after the smoke.
+- An installed-candidate `publish --dry-run` against the isolated endpoint,
+  using a temporary profile symlinked to the real credentials, reported
+  `not_started`, workspace `ws_df6794f33efc459b`, tip 8, and candidate digest
+  `4c8496e92290db32d1efe21411686e87bb6c0e26e4706dfaf9bf0091e5bba757`. It made no
+  network request and wrote only the temporary preflight receipt.
 
 The stale default `~/.config/campfire` Ada profile was not used. The released
 `~/.local/bin/campfire` (`1.26.1`) was not overwritten.
