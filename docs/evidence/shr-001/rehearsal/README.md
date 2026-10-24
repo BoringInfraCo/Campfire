@@ -9,11 +9,11 @@
 | Fact | Value |
 | --- | --- |
 | Candidate | `1.26.2` (unreleased) |
-| Source commit | `b68b93c44de6965a3940dd713ef36dc5d7dfc750` |
-| Archive checksum | `439f51dfff899bd8fdaaa0a1213a0e895b5c7c0fb5a47459a88361b49cf90283` |
+| Source commit | `0c10c9f71576ee96b40b0a16d9988eecba6a59c2` |
+| Archive checksum | `67134e78716ca111a98c044bbf09bf5e9f2994f0f229e1543c7539e57e53ab5a` |
 | Worker | `campfire-shr001-rehearsal` |
 | Endpoint | `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev` |
-| Worker version | `faf8edce-425f-4927-84c8-4f66633cfa58` |
+| Worker version | `04ad33fb-1051-4132-ad72-efd608a35e81` |
 | D1 | `campfire_shr001_rehearsal` (id in gitignored config) |
 | Migrations | 10 applied through `0010_workspace_publication.sql` |
 | Route | none; `workers.dev` only |
@@ -32,7 +32,7 @@
 | `/` | `404` |
 | Production Worker version | unchanged `785c8415-5d58-4cd9-9a57-97aef22b78ad` |
 
-D1 after the gate probe: `publication_enrollments = 0`; admission attempts = 10.
+D1 after the gate probe: `publication_enrollments = 0`; admission attempts = 12.
 The raw rehearsal code is stored only in the private mode-0600 file
 `~/campfire-rehearsal/v1.26.2/rehearsal.env`; the Worker stores only its SHA-256.
 
