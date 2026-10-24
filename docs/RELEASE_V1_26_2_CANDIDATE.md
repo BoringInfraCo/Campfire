@@ -54,6 +54,7 @@ a completed two-Mac rehearsal.
 | Installed archive version | **PASS** — `1.26.2`, candidate status |
 | Installed `campfire status` with pinned profile | **PASS** — workspace `ws_df6794f33efc459b` |
 | Installed `campfire up --no-open` smoke | **PASS** — local API on `127.0.0.1:9414`; no registration was performed |
+| Installed-candidate `publish --dry-run` | **PASS** — tip 8, candidate digest `4c8496e9…a757`; no network, temporary receipt only |
 | Production Worker unchanged | **PASS** — live production version remains `785c8415-5d58-4cd9-9a57-97aef22b78ad` |
 
 ## Isolated hosted target
