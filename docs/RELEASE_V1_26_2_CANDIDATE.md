@@ -67,7 +67,7 @@ a completed two-Mac rehearsal.
 | D1 database | `campfire_shr001_rehearsal` (id retained only in gitignored `wrangler.rehearsal.local.toml`) |
 | D1 migration | 10 applied through `0010_workspace_publication.sql` |
 | Publication tables | `publication_enrollments`, `publication_admission_attempts`, `workspace_publications` present |
-| Initial publication rows | `enrollments = 0`, `attempts = 1` after the gate probe |
+| Initial publication rows | `enrollments = 0`, admission attempts = 4 after the gate probe |
 | Assets binding | omitted; API-only rehearsal surface |
 
 The deploy and migration commands were run only with
