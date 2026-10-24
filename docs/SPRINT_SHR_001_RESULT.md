@@ -31,6 +31,9 @@ The candidate adds one local-to-hosted publication path:
 - D1 migration `0010_workspace_publication.sql` and the matching bundled schema.
 - Canon amendment in `docs/PRODUCT_DEFINITION.md` and `docs/ARCHITECTURE.md`.
 - CLI catalog/help, README, operator recovery guidance, and Step 0 evidence.
+- Candidate record, source position, checksum, isolated endpoint, and gate
+  matrix in `docs/RELEASE_V1_26_2_CANDIDATE.md`. The record is labelled
+  candidate/unreleased.
 
 ## 2. Dated evidence matrix
 
@@ -55,7 +58,9 @@ The candidate adds one local-to-hosted publication path:
 | CLI supported path | **PASS** | `tests/integration/shr-001-publish-cli.test.ts` |
 | Full existing suite | **PASS** | 127 files, 1518 tests (1517 passed, 1 skipped) after repair and catalog updates |
 | Installed Arbora snapshot import | **PASS** | `tests/worker/shr-001-installed-capture.test.ts` re-reads the captured database and imports the same finding into an isolated D1 handler |
-| Clean installed v1.26.2 candidate → isolated Worker | **PENDING** | Candidate archive and isolated deployment are prepared only after the repair battery; see the candidate record |
+| Clean installed v1.26.2 candidate → isolated Worker | **PASS** | Candidate record: source `1fa4e4d`, Darwin ARM64 checksum `ad3d74c…19c9`, isolated endpoint and Worker version recorded |
+| Isolated D1 migration `0010` and schema | **PASS** | 10 migrations applied; publication tables present; initial enrollments 0 |
+| Rehearsal admission gate remotely | **PASS** | Alpha off / no hash / missing code / wrong code all 403; correct code + invalid body 400; no rows created |
 | Two physical Macs, MacBook service offline | **NOT OBSERVED** | Requires the operator’s MacBook/iMac rehearsal |
 | Hosted Arbora copy | **NOT CREATED** | The isolated rehearsal is the next step; no production copy |
 | Production D1 migration `0010`, Worker deployment | **NOT DONE** | The candidate uses a distinctly named test Worker/D1 only |
