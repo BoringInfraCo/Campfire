@@ -115,6 +115,7 @@ describe("SHR-001 local snapshot", () => {
     ["https://host/report?auth=secret", /credential-bearing URL/],
     ["https://host/report?private_key=secret", /credential-bearing URL/],
     ["https://host/report?session_token=secret", /credential-bearing URL/],
+    ["https://host/report?sessionid=secret", /credential-bearing URL/],
     ["https://host/report?X-Goog-Signature=demo", /credential-bearing URL/],
     ["https://host/report?AWSAccessKeyId=demo", /credential-bearing URL/],
     ["//user:password@example.invalid/x", /credential-bearing URL/],
@@ -215,6 +216,7 @@ describe("SHR-001 local snapshot", () => {
     ["https://example.invalid/report#access_token=abcdef", /credential-bearing URL|fragment/],
     ["https://example.invalid/report?auth=secret", /credential-bearing URL|credentials/],
     ["https://example.invalid/report?private_key=secret", /credential-bearing URL|credentials/],
+    ["https://example.invalid/report?sessionid=secret", /credential-bearing URL|credentials/],
     ["https://example.invalid/report?X-Goog-Signature=demo", /credential-bearing URL|credentials/],
     ["https://example.invalid/report?AWSAccessKeyId=demo", /credential-bearing URL|credentials/],
   ])("refuses a credential-bearing artifact URL %s", (uri, expected) => {

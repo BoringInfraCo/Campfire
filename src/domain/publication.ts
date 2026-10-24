@@ -421,7 +421,7 @@ const FORBIDDEN_PATH_TEXT_RES: readonly RegExp[] = [
   /~[\\/]/i,
 ];
 const URL_SECRET_KEY_RE =
-  /token|secret|password|credential|authorization|api[-_]?key|webhook|cookie|private[-_]?key|(?:^|[-_])(?:auth|session|sig|signature|accesskey|awsaccesskeyid|googleaccessid|x-goog[-_]?(?:signature|credential))(?:$|[-_])/i;
+  /token|secret|password|credential|authorization|api[-_]?key|webhook|cookie|private[-_]?key|(?:^|[-_])(?:auth|session|sessionid|sig|signature|accesskey|awsaccesskeyid|googleaccessid|x-goog[-_]?(?:signature|credential))(?:$|[-_])/i;
 const FORBIDDEN_URL_USERINFO_RE = /(?:\b[a-z][a-z0-9+.-]*:)?\/\/[^/\s@]+@/i;
 
 function hasCredentialBearingQuery(value: string): boolean {
