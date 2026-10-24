@@ -39,7 +39,7 @@ boundary. It does not claim public self-service safety.
 | Lost owner token | `campfire publish-recover` uses the private `cfr_` secret and the admission code, revokes the old human token, verifies the replacement, and updates local state and remote credentials without printing a token. |
 | Rollback/abandonment confusion | Receipt states are monotonic and explicit. A committed hosted copy is never silently deleted. Recovery requires an operator decision recorded outside the receipt. The local database becomes a read-only backup after cutover unless the operator explicitly removes `publication.cutover`. |
 | Credential leak in logs/output | Tokens are never printed by publish, publish-status, human receipts, JSON receipts, invitations, or the Viewer. The receipt file is `0600`. |
-| Credential leak in imported content | Secret-like keys, token-shaped values, private-key headers, filesystem paths, and credential-bearing artifact URL queries are refused. |
+| Credential leak in imported content | Secret-like keys, token-shaped values, private-key headers, filesystem paths, URL userinfo, and credential-bearing artifact URL query/fragment keys are refused. |
 | Rate/abuse exhaustion | Alpha gate, 512 KiB import cap, 256 KiB / 500-row snapshot cap, 5 enrollments/source/day, one workspace per owner, bounded timeouts. |
 | Recovery becomes account takeover | Recovery requires both the request id and the privately stored `cfr_` secret; it revokes the prior human token and returns no token. |
 | Operator overclaim | No production deployment, two-Mac pass, or public self-service is claimed. The alpha flag is not a public launch gate. |

@@ -245,6 +245,7 @@ retry_publish
 resolve_source_change
 inspect_publication_state
 recover_publication_credentials
+restore_publication_receipt
 wait_or_resume_publish
 resume_or_abandon_publication
 ```

@@ -410,8 +410,20 @@ const DIGEST_RE = /^[0-9a-f]{64}$/;
 const TOKEN_HASH_RE = /^[0-9a-f]{64}$/;
 const FORBIDDEN_CREDENTIAL_TEXT_RE =
   /\b(?:cft|cfe|cfr)_[a-f0-9]{24,}\b|\bcfrh_[A-Za-z0-9_-]{24,128}\b|\b(?:sk-|gh[pousr]_|github_pat_)[A-Za-z0-9_-]{20,}\b|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
-const FORBIDDEN_PATH_TEXT_RE =
-  /(?:^|[\s"'`<>(=,:;\[\]{}|])\/?file:\/\/?|(?:^|[\s"'`<>(=,:;\[\]{}|])\/(?=[A-Za-z0-9._~-])|\/(?:Users|home|private|tmp|var|opt|etc|Volumes|root|srv|Library|data|mnt|workspace|usr|bin|dev|proc|sys|run|media|boot|snap)\/|[A-Za-z]:[\\/](?:Users|Documents|Desktop)\\|~[\\/]/i;
+const FORBIDDEN_PATH_TEXT_RES: readonly RegExp[] = [
+  /(?:^|[\s"'`<>(=,:;\[\]{}|])\/?file:\/\/?/i,
+  /(?:^|[\s"'`<>(=,:;\[\]{}|])\/(?=[A-Za-z0-9._~-])/i,
+  /\/(?:Users|home|private|tmp|var|opt|etc|Volumes|root|srv|Library|data|mnt|workspace|usr|bin|dev|proc|sys|run|media|boot|snap)\//i,
+  /(?:^|[\s"'`<>(=,:;\[\]{}|])[A-Za-z]:[\\/]/i,
+  /(?:^|[\s"'`<>(=,:;\[\]{}|])\\\\[A-Za-z0-9._-]+\\/i,
+  /(?<!:)\/\/[A-Za-z0-9._-]+\//i,
+  /~[\\/]/i,
+];
+const URL_SECRET_KEY_RE =
+  /^(?:token|access_token|id_token|refresh_token|sig|signature|session|sessionid|session_id|x-amz-signature|x-amz-credential|x-amz-security-token|api_key|apikey|key|secret|password|credential|authorization|code)$/i;
+const FORBIDDEN_URL_USERINFO_RE = /\b[a-z][a-z0-9+.-]*:\/\/[^/\s@]+@/i;
+const FORBIDDEN_QUERY_TEXT_RE =
+  /[?&#](?:token|access_token|id_token|refresh_token|sig|signature|session|sessionid|session_id|x-amz-signature|x-amz-credential|x-amz-security-token|api_key|apikey|key|secret|password|credential|authorization|code)=/i;
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -528,8 +540,11 @@ function assertNoForbiddenFreeText(value: unknown, field: string): void {
     if (FORBIDDEN_CREDENTIAL_TEXT_RE.test(value)) {
       fail("Snapshot free text contains credential-shaped material", `${field}.credentials`, "remove_unsupported_state");
     }
-    if (FORBIDDEN_PATH_TEXT_RE.test(value)) {
+    if (FORBIDDEN_PATH_TEXT_RES.some((pattern) => pattern.test(value))) {
       fail("Snapshot free text contains an absolute filesystem path", `${field}.path`, "remove_unsupported_state");
+    }
+    if (FORBIDDEN_URL_USERINFO_RE.test(value) || FORBIDDEN_QUERY_TEXT_RE.test(value)) {
+      fail("Snapshot free text contains a credential-bearing URL", `${field}.credentials`, "remove_unsupported_state");
     }
     return;
   }
@@ -746,10 +761,18 @@ export function parsePublicationSnapshot(value: unknown): PublicationSnapshot {
       }
       let parsedUri: URL;
       try { parsedUri = new URL(uri); } catch { fail("Invalid artifact URL", "artifact.uriOrPath"); }
+      if (parsedUri.username.length > 0 || parsedUri.password.length > 0) {
+        fail("Artifact URL must not carry userinfo credentials", "artifact.uriOrPath", "remove_unsupported_state");
+      }
       for (const [key, value] of parsedUri.searchParams) {
-        if (SECRET_KEY_RE.test(key) || SECRET_VALUE_RE.test(value)) {
+        if (URL_SECRET_KEY_RE.test(key) || SECRET_VALUE_RE.test(value)) {
           fail("Artifact URL must not carry credentials", "artifact.uriOrPath", "remove_unsupported_state");
         }
+      }
+      if (parsedUri.hash.length > 1 &&
+          (FORBIDDEN_CREDENTIAL_TEXT_RE.test(parsedUri.hash) || FORBIDDEN_QUERY_TEXT_RE.test(parsedUri.hash) ||
+           FORBIDDEN_URL_USERINFO_RE.test(parsedUri.hash))) {
+        fail("Artifact URL fragment must not carry credentials", "artifact.uriOrPath", "remove_unsupported_state");
       }
       return {
         id: identifier(r.id, "artifact.id"),

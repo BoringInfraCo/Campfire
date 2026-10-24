@@ -100,6 +100,8 @@ describe("SHR-001 local snapshot", () => {
     ["<file:///Users/sergio/private/notes.md>", /absolute filesystem path/],
     ["`/Users/sergio/private/notes.md`", /absolute filesystem path/],
     ["[/Library/Application Support/secret]", /absolute filesystem path/],
+    ["C:\\secret\\report.txt", /absolute filesystem path/],
+    ["//server/share/secret.txt", /absolute filesystem path/],
     ["cfrh_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345", /credential-shaped material/],
     ["cfe_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
     ["cfr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
@@ -108,6 +110,8 @@ describe("SHR-001 local snapshot", () => {
     ["github_pat_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
     ["Bearer abcdefghijklmnopqrstuvwxyz012345", /credential-shaped material/],
     ["-----BEGIN PRIVATE KEY-----", /credential-shaped material/],
+    ["postgres://user:password@db.example/app", /credential-bearing URL/],
+    ["https://host/report?signature=abcdef", /credential-bearing URL/],
   ])("refuses free text %s", (text, expected) => {
     const databasePath = setup();
     const store = openSqliteStore(databasePath);
@@ -196,6 +200,32 @@ describe("SHR-001 local snapshot", () => {
     expect(encoded).toContain('"__proto__"');
     expect(encoded).toContain('"polluted":true');
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it.each([
+    ["https://user:password@example.invalid/report", /credential-bearing URL|userinfo/],
+    ["https://example.invalid/report?signature=abcdef", /credential-bearing URL|credentials/],
+    ["https://example.invalid/report#access_token=abcdef", /credential-bearing URL|fragment/],
+  ])("refuses a credential-bearing artifact URL %s", (uri, expected) => {
+    const databasePath = setup();
+    const store = openSqliteStore(databasePath);
+    store.createArtifact({
+      id: "art_credential_url",
+      workspaceId: SHR.workspaceId,
+      type: "report",
+      title: "Report",
+      uriOrPath: uri,
+      createdBy: { actorId: SHR.humanId, actorType: "human" },
+      createdAt: "2026-10-23T12:20:00.000Z",
+    });
+    store.close();
+    expect(() => readWorkspaceSnapshot({
+      databasePath,
+      workspaceId: SHR.workspaceId,
+      ownerHumanId: SHR.humanId,
+      packageVersion: "1.26.2-test",
+      exportedAt: "2026-10-23T12:30:00.000Z",
+    })).toThrow(expected);
   });
 
   it("refuses a filesystem artifact reference at the publication boundary", () => {

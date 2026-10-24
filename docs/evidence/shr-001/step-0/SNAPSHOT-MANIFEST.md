@@ -74,8 +74,9 @@ through `src/domain/publication.ts`; neither side may infer extra columns.
 - **Every string in the snapshot** is scanned, including finding summaries and
   details, decision rationales, task descriptions, notes, workspace names, and
   external identities. Credential-shaped strings (`cft_`, `cfe_`, `cfr_`, `sk-`,
-  GitHub token prefixes, `Bearer ...`, private-key headers) and absolute
-  filesystem paths are refused.
+  GitHub token prefixes, `Bearer ...`, private-key headers) absolute
+  filesystem paths, URL userinfo, and credential-bearing URL query/fragment keys
+  are refused.
 - `externalIdentity` is preserved as structured identity; it is not a verified
   account or an invitation authority.
 - The snapshot workspace id and name must equal the source workspace recorded at
