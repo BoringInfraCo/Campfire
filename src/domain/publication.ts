@@ -417,13 +417,19 @@ const FORBIDDEN_PATH_TEXT_RES: readonly RegExp[] = [
   /(?:^|[\s"'`<>(=,:;\[\]{}|])[A-Za-z]:[\\/]/i,
   /(?:^|[\s"'`<>(=,:;\[\]{}|])\\\\[A-Za-z0-9._-]+\\/i,
   /(?<!:)\/\/[A-Za-z0-9._-]+\//i,
+  /\\\\\?\\[A-Za-z]:[\\/]/i,
   /~[\\/]/i,
 ];
 const URL_SECRET_KEY_RE =
-  /^(?:token|access_token|id_token|refresh_token|sig|signature|session|sessionid|session_id|x-amz-signature|x-amz-credential|x-amz-security-token|api_key|apikey|key|secret|password|credential|authorization|code)$/i;
-const FORBIDDEN_URL_USERINFO_RE = /\b[a-z][a-z0-9+.-]*:\/\/[^/\s@]+@/i;
-const FORBIDDEN_QUERY_TEXT_RE =
-  /[?&#](?:token|access_token|id_token|refresh_token|sig|signature|session|sessionid|session_id|x-amz-signature|x-amz-credential|x-amz-security-token|api_key|apikey|key|secret|password|credential|authorization|code)=/i;
+  /token|secret|password|credential|authorization|api[-_]?key|webhook|cookie|private[-_]?key|(?:^|[-_])(?:auth|session|sig|signature|accesskey|awsaccesskeyid|googleaccessid|x-goog[-_]?(?:signature|credential))(?:$|[-_])/i;
+const FORBIDDEN_URL_USERINFO_RE = /(?:\b[a-z][a-z0-9+.-]*:)?\/\/[^/\s@]+@/i;
+
+function hasCredentialBearingQuery(value: string): boolean {
+  for (const match of value.matchAll(/[?&#]([A-Za-z0-9_.~-]+)=/g)) {
+    if (URL_SECRET_KEY_RE.test(match[1] ?? "")) return true;
+  }
+  return false;
+}
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -543,7 +549,7 @@ function assertNoForbiddenFreeText(value: unknown, field: string): void {
     if (FORBIDDEN_PATH_TEXT_RES.some((pattern) => pattern.test(value))) {
       fail("Snapshot free text contains an absolute filesystem path", `${field}.path`, "remove_unsupported_state");
     }
-    if (FORBIDDEN_URL_USERINFO_RE.test(value) || FORBIDDEN_QUERY_TEXT_RE.test(value)) {
+    if (FORBIDDEN_URL_USERINFO_RE.test(value) || hasCredentialBearingQuery(value)) {
       fail("Snapshot free text contains a credential-bearing URL", `${field}.credentials`, "remove_unsupported_state");
     }
     return;
@@ -770,7 +776,7 @@ export function parsePublicationSnapshot(value: unknown): PublicationSnapshot {
         }
       }
       if (parsedUri.hash.length > 1 &&
-          (FORBIDDEN_CREDENTIAL_TEXT_RE.test(parsedUri.hash) || FORBIDDEN_QUERY_TEXT_RE.test(parsedUri.hash) ||
+          (FORBIDDEN_CREDENTIAL_TEXT_RE.test(parsedUri.hash) || hasCredentialBearingQuery(parsedUri.hash) ||
            FORBIDDEN_URL_USERINFO_RE.test(parsedUri.hash))) {
         fail("Artifact URL fragment must not carry credentials", "artifact.uriOrPath", "remove_unsupported_state");
       }
