@@ -48,7 +48,7 @@ a completed two-Mac rehearsal.
 | Full suite | **PASS** — 127 files / 1,551 tests (1,550 passed, 1 opt-in skip) |
 | Typecheck | **PASS** |
 | Build | **PASS** |
-| Isolated Worker deployment dry run | **PASS** — 595.12 KiB, D1 `campfire_shr001_rehearsal`, no assets binding |
+| Isolated Worker deployment dry run | **PASS** — 597.13 KiB, D1 `campfire_shr001_rehearsal`, no assets binding |
 | `pack:tarball` | **PASS** — Darwin ARM64, package `1.26.2` |
 | Archive checksum | **PASS** — `269aac014c39037e037a41b50bc77f9e202cc7c8f0ace7de9c4dd61ed6c8fcbc` |
 | Installed archive version | **PASS** — `1.26.2`, candidate status |
