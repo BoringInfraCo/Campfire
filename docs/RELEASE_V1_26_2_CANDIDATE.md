@@ -3,9 +3,9 @@
 **Date:** October 24, 2026  
 **Status:** **CANDIDATE / UNRELEASED / ISOLATED REHEARSAL ONLY**  
 **Package:** `1.26.2`  
-**Source position:** `3cf87530311ef041bb3e3c72a7e89447621d4b15`  
+**Source position:** `f85fc550130d0d2a83b28ab574b103191d495403`  
 **Archive:** `~/campfire-rehearsal/v1.26.2/artifacts/campfire-1.26.2-darwin-arm64.tar.gz`  
-**SHA-256:** `2a3ecb8344f3ea8411bc10141f5b15faf19de09fe2248997a86756ee61db3588`  
+**SHA-256:** `90acb5c3f4394c987351936d7367ad7f88098a14dbbeea66bf7431c2dd81e7c0`  
 **Isolated endpoint:** `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev`
 
 No public tag, GitHub Release, installer-channel update, or production
@@ -15,7 +15,7 @@ a completed two-Mac rehearsal.
 ## Source and archive
 
 - The source commit was created before packaging. The archive was built in a clean
-  worktree at `3cf8753`; it contains no untracked billing-capture scripts and
+  worktree at `f85fc55`; it contains no untracked billing-capture scripts and
   no ` 2.js` duplicate files from the development tree.
 - `npm run pack:tarball` built Darwin ARM64 from `1.26.2` in that worktree.
 - The archive was checksum-verified against its `.sha256` after being copied to
@@ -33,8 +33,9 @@ a completed two-Mac rehearsal.
 - `src/telemetry/releases.ts` remains at the last released versions. An
   unreleased candidate is allowed through telemetry as `unknown_release`.
 - Homebrew and Nix channel files remain pinned to the last released `1.26.1`.
-  The pre-release install-channel guard treats a candidate as a non-release and
-  does not loosen the released-version guard.
+  The install-channel **test** treats a candidate as a non-release and does not
+  loosen the released-version guard. The channel sync script itself has no
+  candidate branch; channel files remain at `1.26.1` and were not updated.
 - The Arbora snapshot digest was recomputed because the package version is part
   of the digest:
   - v1.26.1 capture: `4bb1b5fac9e284dd55fa8d185860aa771719993b420853424690ed9ecf7a477d`
@@ -44,12 +45,12 @@ a completed two-Mac rehearsal.
 
 | Check | Result |
 | --- | --- |
-| Full suite | **PASS** — 127 files / 1,523 tests (1,522 passed, 1 opt-in skip) |
+| Full suite | **PASS** — 127 files / 1,531 tests (1,530 passed, 1 opt-in skip) |
 | Typecheck | **PASS** |
 | Build | **PASS** |
 | Isolated Worker deployment dry run | **PASS** — 595.12 KiB, D1 `campfire_shr001_rehearsal`, no assets binding |
 | `pack:tarball` | **PASS** — Darwin ARM64, package `1.26.2` |
-| Archive checksum | **PASS** — `2a3ecb8344f3ea8411bc10141f5b15faf19de09fe2248997a86756ee61db3588` |
+| Archive checksum | **PASS** — `90acb5c3f4394c987351936d7367ad7f88098a14dbbeea66bf7431c2dd81e7c0` |
 | Installed archive version | **PASS** — `1.26.2`, candidate status |
 | Installed `campfire status` with pinned profile | **PASS** — workspace `ws_df6794f33efc459b` |
 | Installed `campfire up --no-open` smoke | **PASS** — local API on `127.0.0.1:9414`; no registration was performed |
@@ -62,12 +63,12 @@ a completed two-Mac rehearsal.
 | --- | --- |
 | Worker name | `campfire-shr001-rehearsal` |
 | Worker URL | `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev` |
-| Current Worker version | `ee3777bc-2a2b-44e1-af9f-abb979b856ce` |
+| Current Worker version | `ef33c9fa-d4cd-4041-9b3d-7e968df742a2` |
 | Route | none; `workers.dev` only, `preview_urls = false` |
 | D1 database | `campfire_shr001_rehearsal` (id retained only in gitignored `wrangler.rehearsal.local.toml`) |
 | D1 migration | 10 applied through `0010_workspace_publication.sql` |
 | Publication tables | `publication_enrollments`, `publication_admission_attempts`, `workspace_publications` present |
-| Initial publication rows | `enrollments = 0`, admission attempts = 6 after the gate probe |
+| Initial publication rows | `enrollments = 0`, admission attempts = 8 after the gate probe |
 | Assets binding | omitted; API-only rehearsal surface |
 
 The deploy and migration commands were run only with
@@ -120,10 +121,10 @@ The same Darwin ARM64 archive is available privately at
 `~/campfire-rehearsal/v1.26.2/artifacts/`. Transfer it privately (AirDrop,
 USB, or an access-controlled share), verify the SHA-256 above, and extract it
 outside the source checkout. If the iMac is not ARM64, build from source commit
-`3cf87530311ef041bb3e3c72a7e89447621d4b15`:
+`f85fc550130d0d2a83b28ab574b103191d495403`:
 
 ```bash
-git worktree add /tmp/campfire-1.26.2 3cf87530311ef041bb3e3c72a7e89447621d4b15
+git worktree add /tmp/campfire-1.26.2 f85fc550130d0d2a83b28ab574b103191d495403
 cd /tmp/campfire-1.26.2
 npm ci
 npm run typecheck
