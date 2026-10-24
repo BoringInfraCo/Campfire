@@ -262,6 +262,9 @@ Recovery:
 - Lost receipt after enrollment: the hosted enrollment is idempotent only with
   the original request id and token hashes. Restore the private receipt from
   backup. There is no email-based account reset.
+- Missing prepared credentials inside an existing receipt: `publish-recover`
+  cannot reconstruct the recovery secret or owner token. Restore the original
+  private receipt/backup; do not start a second publication request.
 - Compromised owner token: use the supported `revoke_token` path from an
   authenticated owner session, then recover with the `cfr_` secret if needed.
 - Hosted copy must be rolled back: it is not automatically deleted. Record an

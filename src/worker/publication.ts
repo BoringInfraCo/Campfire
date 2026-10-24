@@ -317,7 +317,7 @@ export async function handlePublicationEnroll(
       return json(200, { ok: true, result: enrollmentReceipt(existingByRequest) });
     }
     const existingByHuman = await first<Row>(options.db, "SELECT * FROM publication_enrollments WHERE human_id = ?", input.humanId);
-    if (existingByHuman !== undefined) throw new Conflict("This human identity is already enrolled for hosted publication", { nextAction: "recover_publication_credentials" });
+    if (existingByHuman !== undefined) throw new Conflict("This human identity is already enrolled for hosted publication", { nextAction: "inspect_publication_state" });
     await rateLimit(options.db, source, options.maxEnrollmentsPerSourcePerDay ?? PUBLICATION_LIMITS.maxEnrollmentsPerSourcePerDay, at);
 
     const organizationId = id(options, "organization");

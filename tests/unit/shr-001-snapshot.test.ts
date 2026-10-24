@@ -98,8 +98,16 @@ describe("SHR-001 local snapshot", () => {
   it.each([
     ["/srv/secret/report.json", /absolute filesystem path/],
     ["<file:///Users/sergio/private/notes.md>", /absolute filesystem path/],
-    ["cfrh_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["`/Users/sergio/private/notes.md`", /absolute filesystem path/],
+    ["[/Library/Application Support/secret]", /absolute filesystem path/],
+    ["cfrh_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345", /credential-shaped material/],
+    ["cfe_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["cfr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
     ["github_pat_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["Bearer abcdefghijklmnopqrstuvwxyz012345", /credential-shaped material/],
+    ["-----BEGIN PRIVATE KEY-----", /credential-shaped material/],
   ])("refuses free text %s", (text, expected) => {
     const databasePath = setup();
     const store = openSqliteStore(databasePath);

@@ -362,7 +362,7 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
     if (frozen?.credentials === undefined) {
       throw new Conflict("Hosted publication is verified but its prepared credentials are missing; restore the private publication receipt", {
         field: "publication.credentials",
-        nextAction: "recover_publication_credentials",
+        nextAction: "restore_publication_receipt",
       });
     }
     persistPublishedProfile({
@@ -524,7 +524,7 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
         (receipt.state === "staged" || receipt.state === "committed" || receipt.state === "verified")) {
       throw new Conflict("Hosted publication already exists but its prepared credentials are missing; restore the original private publication receipt", {
         field: "publication.credentials",
-        nextAction: "recover_publication_credentials",
+        nextAction: "restore_publication_receipt",
       });
     }
     if (humanToken === undefined || recoverySecret === undefined) {

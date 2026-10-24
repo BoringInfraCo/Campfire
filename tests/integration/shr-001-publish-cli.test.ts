@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCliEntry } from "../../src/cli/index.js";
 import { createCounterIdSource } from "../../src/domain/ids.js";
 import { hashToken } from "../../src/service/tokens.js";
-import { acquirePublicationLock, readPublicationState, releasePublicationLock } from "../../src/publication/state.js";
+import { acquirePublicationLock, readPublicationCutover, readPublicationState, releasePublicationLock } from "../../src/publication/state.js";
 import { createD1Store, migrateD1 } from "../../src/worker/d1-store.js";
 import { createD1WorkerHandler } from "../../src/worker/handler.js";
 import { sqliteD1 } from "../helpers/sqlite-d1.js";
@@ -87,6 +87,13 @@ describe("SHR-001 CLI", () => {
     const state = readPublicationState(env);
     expect(state?.receipt.state).toBe("cut_over");
     expect(state?.receipt.workspaceId).toBe(SHR.workspaceId);
+
+    rmSync(join(env.CAMPFIRE_CONFIG_DIR!, "publication.cutover"), { force: true });
+    expect(readPublicationCutover(env)).toBeUndefined();
+    const repairLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await runCliEntry(["publish", "--allow-loopback", "--json"])).toBe(0);
+    repairLog.mockRestore();
+    expect(readPublicationCutover(env)?.workspaceId).toBe(SHR.workspaceId);
 
     const statusLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await runCliEntry(["publish-status", "--json"])).toBe(0);

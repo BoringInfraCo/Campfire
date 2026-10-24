@@ -97,6 +97,8 @@ export function commandForNextAction(
       return "campfire publish --help";
     case "recover_publication_credentials":
       return "campfire publish-recover";
+    case "restore_publication_receipt":
+      return "campfire publish-status";
     case "resolve_source_change":
     case "inspect_publication_state":
     case "resume_or_abandon_publication":

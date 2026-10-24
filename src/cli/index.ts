@@ -2200,10 +2200,6 @@ async function cmdPublish(parsed: ParsedArgs, argv: string[]): Promise<void> {
   let localUrl = profile.mode !== "remote" ? profile.url : "";
   if (profile.mode === "remote") {
     const state = readPublicationState();
-    if (state?.receipt.state === "cut_over" && state.receipt.workspaceId === profile.workspaceId && state.receipt.endpoint === profile.url) {
-      emitResult(publicationReceiptView(state.receipt), commandOutput(parsed), formatPublicationReceipt);
-      return;
-    }
     if (state === undefined || state.receipt.workspaceId !== profile.workspaceId || state.receipt.endpoint !== profile.url) {
       throw new ValidationError("This installation already uses a remote profile without a matching publication receipt.", {
         field: "profile",

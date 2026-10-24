@@ -409,9 +409,9 @@ const ID_RE = /^[a-zA-Z0-9_.-]{1,128}$/;
 const DIGEST_RE = /^[0-9a-f]{64}$/;
 const TOKEN_HASH_RE = /^[0-9a-f]{64}$/;
 const FORBIDDEN_CREDENTIAL_TEXT_RE =
-  /\b(?:cft|cfe|cfr|cfrh)_[a-f0-9]{24,}\b|\b(?:sk-|gh[pousr]_|github_pat_)[A-Za-z0-9_-]{20,}\b|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+  /\b(?:cft|cfe|cfr)_[a-f0-9]{24,}\b|\bcfrh_[A-Za-z0-9_-]{24,128}\b|\b(?:sk-|gh[pousr]_|github_pat_)[A-Za-z0-9_-]{20,}\b|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 const FORBIDDEN_PATH_TEXT_RE =
-  /(?:^|[\s"'<>(=,:;])(?:file:\/\/?|\/(?=[A-Za-z0-9._~-])|[A-Za-z]:[\\/](?:Users|Documents|Desktop)\\|~[\\/])/i;
+  /(?:^|[\s"'`<>(=,:;\[\]{}|])\/?file:\/\/?|(?:^|[\s"'`<>(=,:;\[\]{}|])\/(?=[A-Za-z0-9._~-])|\/(?:Users|home|private|tmp|var|opt|etc|Volumes|root|srv|Library|data|mnt|workspace|usr|bin|dev|proc|sys|run|media|boot|snap)\/|[A-Za-z]:[\\/](?:Users|Documents|Desktop)\\|~[\\/]/i;
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
