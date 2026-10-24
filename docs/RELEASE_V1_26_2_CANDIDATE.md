@@ -3,9 +3,9 @@
 **Date:** October 24, 2026  
 **Status:** **CANDIDATE / UNRELEASED / ISOLATED REHEARSAL ONLY**  
 **Package:** `1.26.2`  
-**Source position:** `1fa4e4d11f29629cd65a57e7ab6f2162c846783b`  
+**Source position:** `3cf87530311ef041bb3e3c72a7e89447621d4b15`  
 **Archive:** `~/campfire-rehearsal/v1.26.2/artifacts/campfire-1.26.2-darwin-arm64.tar.gz`  
-**SHA-256:** `ad3d74c134042e641467109db9689edeacdc72479242d921dd8566ee279e19c9`  
+**SHA-256:** `2a3ecb8344f3ea8411bc10141f5b15faf19de09fe2248997a86756ee61db3588`  
 **Isolated endpoint:** `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev`
 
 No public tag, GitHub Release, installer-channel update, or production
@@ -14,13 +14,12 @@ a completed two-Mac rehearsal.
 
 ## Source and archive
 
-- The source commit was created before packaging. `git diff` from that commit
-  for `src/`, `migrations/`, `package.json`, `package-lock.json`, `wrangler.toml`,
-  `tests/`, and `public-release/` was empty at packaging time.
-- `npm run pack:tarball` built Darwin ARM64 from `1.26.2`.
+- The source commit was created before packaging. The archive was built in a clean
+  worktree at `3cf8753`; it contains no untracked billing-capture scripts and
+  no ` 2.js` duplicate files from the development tree.
+- `npm run pack:tarball` built Darwin ARM64 from `1.26.2` in that worktree.
 - The archive was checksum-verified against its `.sha256` after being copied to
-  the private rehearsal directory. The checksum file names the original
-  `campfire-darwin-arm64.tar.gz`; the rehearsal copy retains that checksum.
+  the private rehearsal directory and after extraction.
 - The archive contains `1.26.2` with `campfire.releaseStatus = "candidate"` and
   includes `publish`, `publish-status`, and `publish-recover`.
 - The archive contains no `.env`, credentials, publication receipt, SQLite
@@ -45,12 +44,12 @@ a completed two-Mac rehearsal.
 
 | Check | Result |
 | --- | --- |
-| Full suite | **PASS** — 127 files / 1,518 tests (1,517 passed, 1 opt-in skip) |
+| Full suite | **PASS** — 127 files / 1,523 tests (1,522 passed, 1 opt-in skip) |
 | Typecheck | **PASS** |
 | Build | **PASS** |
 | Isolated Worker deployment dry run | **PASS** — 595.12 KiB, D1 `campfire_shr001_rehearsal`, no assets binding |
 | `pack:tarball` | **PASS** — Darwin ARM64, package `1.26.2` |
-| Archive checksum | **PASS** — `ad3d74c134042e641467109db9689edeacdc72479242d921dd8566ee279e19c9` |
+| Archive checksum | **PASS** — `2a3ecb8344f3ea8411bc10141f5b15faf19de09fe2248997a86756ee61db3588` |
 | Installed archive version | **PASS** — `1.26.2`, candidate status |
 | Installed `campfire status` with pinned profile | **PASS** — workspace `ws_df6794f33efc459b` |
 | Installed `campfire up --no-open` smoke | **PASS** — local API on `127.0.0.1:9414`; no registration was performed |
@@ -63,12 +62,12 @@ a completed two-Mac rehearsal.
 | --- | --- |
 | Worker name | `campfire-shr001-rehearsal` |
 | Worker URL | `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev` |
-| Current Worker version | `0d552dd5-4c6f-443d-80ab-b6eadbe01b04` |
+| Current Worker version | `ee3777bc-2a2b-44e1-af9f-abb979b856ce` |
 | Route | none; `workers.dev` only, `preview_urls = false` |
 | D1 database | `campfire_shr001_rehearsal` (id retained only in gitignored `wrangler.rehearsal.local.toml`) |
 | D1 migration | 10 applied through `0010_workspace_publication.sql` |
 | Publication tables | `publication_enrollments`, `publication_admission_attempts`, `workspace_publications` present |
-| Initial publication rows | `enrollments = 0`, admission attempts = 4 after the gate probe |
+| Initial publication rows | `enrollments = 0`, admission attempts = 6 after the gate probe |
 | Assets binding | omitted; API-only rehearsal surface |
 
 The deploy and migration commands were run only with
@@ -121,10 +120,10 @@ The same Darwin ARM64 archive is available privately at
 `~/campfire-rehearsal/v1.26.2/artifacts/`. Transfer it privately (AirDrop,
 USB, or an access-controlled share), verify the SHA-256 above, and extract it
 outside the source checkout. If the iMac is not ARM64, build from source commit
-`1fa4e4d11f29629cd65a57e7ab6f2162c846783b`:
+`3cf87530311ef041bb3e3c72a7e89447621d4b15`:
 
 ```bash
-git worktree add /tmp/campfire-1.26.2 1fa4e4d11f29629cd65a57e7ab6f2162c846783b
+git worktree add /tmp/campfire-1.26.2 3cf87530311ef041bb3e3c72a7e89447621d4b15
 cd /tmp/campfire-1.26.2
 npm ci
 npm run typecheck
