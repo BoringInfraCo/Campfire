@@ -113,10 +113,63 @@ at `create-human`, `create-agent`, `create-workspace`, `create-goal`,
 available as a deterministic demo/evaluation fixture. It is not how a new
 operator creates their workspace.
 
+## Publish a local workspace
+
+The ordinary first run is local SQLite. To make that existing work reachable
+from another computer, the local human owner publishes it to a hosted Campfire
+endpoint:
+
+```bash
+# Read-only preflight: destination, workspace, counts, unsupported state.
+campfire publish --url https://campfire.example.com --dry-run
+
+# Publish, verify, and cut this profile over. The rehearsal code is
+# operator-held; it is not an owner token and is never printed.
+campfire publish --url https://campfire.example.com \
+  --rehearsal-code "$CAMPFIRE_PUBLICATION_REHEARSAL_CODE"
+
+# Same operator, later:
+campfire publish-status
+campfire publish-recover   # only when the owner credential must be replaced
+```
+
+For the MacBook rehearsal, pin `CAMPFIRE_CONFIG_DIR=~/.config/campfire-arbora`
+for every command and harness process; verify `campfire status --output json`
+reports workspace `ws_df6794f33efc459b`. Do not use the stale default
+`~/.config/campfire` Ada profile.
+
+`publish` requires the local human owner credential. It refuses an agent-only
+identity, an ambiguous workspace, unsupported state, a workspace above the
+bounded single-batch limit, or a conflicting publication. It takes one snapshot
+at a local append tip, enrolls a fresh hosted owner identity and fresh
+endpoint-bound agent tokens, imports one atomic allow-listed graph, verifies
+counts/ids/currentness/edges/contribution order as the owner and agents, then
+writes the remote profile. The local database is kept as a recoverable backup;
+the local profile is no longer a second writable authority.
+
+The local write lock covers finalization. Supported local CLI, HTTP, and MCP
+writes fail with `wait_or_resume_publish` until cutover. After cutover the local
+database is marked as a read-only backup; it is retained and inspectable but is
+not a second writable authority. A lost response or crash resumes the same
+request from `publication.json` (mode 0600); re-running the command does not
+create a second hosted workspace. The receipt states are `not_started`, `staged`,
+`committed`, `verified`, and `cut_over`. Human and JSON output never print
+credentials.
+
+This is a private-alpha foundation, not public self-service. It does not
+configure DNS, TLS, a tunnel, Cloudflare, D1, or a second profile for you. The
+hosted endpoint must already be deployed with migration `0010`,
+`CAMPFIRE_PUBLICATION_ALPHA=1`, and a Worker secret containing the SHA-256 of the
+operator-held rehearsal code. If the alpha is on and that hash is absent, every
+publication write route fails closed. The enrollment and admission routes are
+rate-limited. A local-only invitation still fails with `publish_workspace`;
+supplying a URL does not publish anything.
+
 ## Join existing team work
 
-Use an already provisioned, reachable Campfire instance. An authenticated human
-workspace owner creates a private invitation for one new teammate:
+Use a published local workspace or an already provisioned, reachable Campfire
+instance. An authenticated human workspace owner creates a private invitation
+for one new teammate:
 
 ```bash
 campfire invite-teammate <workspaceId> --out ./alice.invitation.json

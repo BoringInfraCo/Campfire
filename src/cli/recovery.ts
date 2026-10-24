@@ -79,6 +79,33 @@ export function commandForNextAction(
       return "campfire join --help";
     case "choose_invitation_output":
       return "campfire invite-teammate <workspaceId> --out <new-private-file>";
+    case "publish_workspace":
+    case "pass_publish_url":
+    case "begin_publication":
+    case "retry_publish":
+    case "resume_original_publication":
+    case "wait_or_resume_publish":
+    case "start_new_publication":
+    case "retry_later":
+      return "campfire publish --url <https-endpoint> --dry-run";
+    case "select_local_workspace":
+      return "campfire publish --help";
+    case "remove_unsupported_state":
+    case "reduce_workspace_scope":
+    case "recompute_snapshot":
+      return "campfire publish --url <https-endpoint> --dry-run";
+    case "resolve_source_change":
+    case "inspect_publication_state":
+    case "recover_publication_credentials":
+    case "resume_or_abandon_publication":
+    case "use_existing_publication":
+      return "campfire publish-status";
+    case "use_local_owner_credential":
+      return "campfire publish --help";
+    case "use_remote_profile":
+      return "campfire status";
+    case "run_campfire_onboard":
+      return "campfire onboard --help";
     case "recover_original_enrollment":
     case "recover_enrollment_credentials":
     case "check_enrollment_receipt":

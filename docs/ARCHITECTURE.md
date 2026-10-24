@@ -148,6 +148,51 @@ local collaboration database or another shared API. Existing v1 local profiles
 and listener behavior remain compatible. This is an engineering candidate;
 independent two-human/two-machine acceptance remains pending.
 
+### SHR-001 local-workspace publication (v1.26.2 candidate)
+
+SHR-001 adds the missing bridge between ordinary local first run and Sprint 020
+enrollment. It is a founder-directed, private-alpha vertical slice, not a
+general hosted control plane. The trust model is frozen as follows:
+
+- The active local human owner is the only actor who may initiate publication.
+  The local owner credential is checked locally; an agent session cannot grant
+  hosted ownership.
+- `campfire publish` enrolls a fresh hosted owner identity and a private
+  organization/team, then imports one allow-listed workspace graph over HTTPS.
+  The enrollment route is closed unless `CAMPFIRE_PUBLICATION_ALPHA=1`; it is
+  rate-limited per source and never accepts a workspace or arbitrary rows.
+- The import route requires the newly minted owner token, is bound to the
+  enrolled human and one workspace id, and writes one complete graph in one D1
+  batch. Same request plus same digest is inert; changed content conflicts. A
+  failed batch exposes no partial workspace. The bounded single-batch size is
+  refused above the documented limit rather than chunked or truncated.
+- Snapshot export is an explicit table/column allowlist. It excludes credentials,
+  invitation authority, install/telemetry state, domain events, webhook state,
+  action proposals, GitHub ingress state, raw transcripts, and unrecognized
+  tables. Unsupported workspace state fails closed with a recovery reason.
+- Fresh endpoint-bound owner and agent credentials are generated locally and
+  stored only as hashes on the hosted side. Local bearer tokens and token hashes
+  are never transferred. Invitation files keep their existing narrow capability
+  and `0600` handling.
+- During finalization supported local writes are frozen by a private lock.
+  Import commits before cutover; the client verifies counts, ids, currentness,
+  evidence, citations, contribution order, and the source tip as the owner and
+  the owner agents. The remote profile is written before credentials so a crash
+  is repairable from the saved receipt. The local database is never deleted and
+  remains the recoverable backup.
+- The hosted Worker remains one actor-token API over one D1 database. Tenant
+  isolation is enforced by workspace participation and by globally unique
+  imported ids; client-supplied ids are never authority. A second owner cannot
+  read, overwrite, or invite into the published workspace.
+- This slice does not add SSO, verified email identity, organization search,
+  billing, a hosted browser Viewer, transcript sync, arbitrary file upload,
+  chunked large-workspace import, or account administration. Public self-service
+  remains blocked on an explicit abuse and cost review.
+
+The implementation is an engineering candidate. No production deployment,
+two-Mac acceptance pass, or v1.26.2 release is claimed by the presence of this
+section.
+
 ### Scoped teammate enrollment
 
 New-person enrollment is a capability distinct from actor authentication and
@@ -188,12 +233,18 @@ is not a global uniqueness rule on existing Agents.
 Enrollment history uses the existing Contribution log and never invents an agent
 session. It contains no invitation secret, actor credential, token hash or raw
 pending request. Administrative enrollment does not extend Sprint 019's closed
-webhook event vocabulary. No new hosting, identity provider, daemon, public
-browser journal, orchestration or general account recovery service is introduced.
+webhook event vocabulary. Outside the SHR-001 private-alpha publication boundary
+described above, no new hosting, identity provider, daemon, public browser
+journal, orchestration or general account recovery service is introduced.
 
-The architecture should not require a cloud control plane to prove the product thesis.
+The architecture still does not require a cloud control plane to prove the
+product thesis. SHR-001 is the narrow exception required by an observed
+first-run-to-sharing failure; local first run and local-only operation remain
+supported.
 
-Future deployments may introduce remote/team-hosted services, but those concerns should not distort the first domain model.
+Future deployments may introduce broader remote/team-hosted services, but those
+concerns should not distort the first domain model. The SHR-001 slice is the only
+current hosted-tenancy claim.
 
 ---
 
@@ -1254,7 +1305,12 @@ Future cloud/team architecture should assume:
 - revocation,
 - approval boundaries.
 
-Those are future implementation concerns, but the domain model should not contradict them.
+Those are future implementation concerns, but the domain model should not
+contradict them. SHR-001 currently pulls only a narrow subset into the candidate:
+tenant isolation by workspace participation and unique ids, encrypted transport,
+scoped endpoint-bound credentials, auditable authorization, secret isolation,
+explicit capability grants, and revocation. Identity integration, broad approval
+workflows, and a general policy engine remain future.
 
 ---
 
@@ -1296,8 +1352,13 @@ prohibited fields, and the ingestion boundary are documented in
 
 **Status note (Sep 2026):** the smallest Stage B slice is done — a
 team-hosted process with actor tokens and invite-only membership
-(Sprint 005: `campfire serve` + `POST /v1/call` with bearer token). Everything
-below remains future; no other Stage C/D item is claimed.
+(Sprint 005: `campfire serve` + `POST /v1/call` with bearer token).
+
+**Status note (Oct 2026):** SHR-001 adds one narrow, private-alpha Stage C/D
+engineering slice: local owner publication, private import, and remote
+continuation. It is not a general control plane and is not deployed or accepted
+as a v1.26.2 release. Everything else below remains future; no other Stage C/D
+item is claimed.
 
 If the Sprint 001 thesis holds, Campfire can grow toward:
 
@@ -1339,7 +1400,7 @@ Potential future capabilities include:
 - workspace templates,
 - external system synchronization,
 - notification/subscription models,
-- remote team hosting,
+- remote team hosting (SHR-001 is a narrow private-alpha slice; general remote hosting remains future),
 - audit controls,
 - policy engines,
 - autonomous organization-owned agents.
@@ -1471,7 +1532,9 @@ cloud tenancy
 generalized graph databases
 ```
 
-unless evidence from the sprint makes one unavoidable.
+unless evidence from the sprint makes one unavoidable. SHR-001 makes exactly
+one narrow cloud-tenancy slice unavoidable: one private hosted namespace per
+local owner, with a bounded import and no general account administration.
 
 The first architecture only needs to prove that Campfire can become a **durable collaboration boundary between different human-agent relationships**.
 

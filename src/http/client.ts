@@ -25,6 +25,9 @@ const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
   "DecisionNotFound",
   "CrossWorkspaceReference",
   "Conflict",
+  "ActionProposalNotFound",
+  "ActionReceiptNotFound",
+  "RateLimited",
   "RecallRestart",
 ]);
 
@@ -116,7 +119,7 @@ export function hostedIdentityError(error: CampfireError): CampfireError {
   }
 }
 
-async function readCampfireResponse<T>(response: Response): Promise<T> {
+export async function readCampfireResponse<T>(response: Response): Promise<T> {
   let payload: unknown;
   try {
     payload = await response.json();

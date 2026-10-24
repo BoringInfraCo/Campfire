@@ -12,7 +12,14 @@ const root = resolve(import.meta.dirname, "../..");
 const formula = readFileSync(resolve(root, "packaging/homebrew/campfire.rb"), "utf8");
 const flake = readFileSync(resolve(root, "flake.nix"), "utf8");
 const exporterPath = resolve(root, "scripts/export-public-release.mjs");
-const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version as string;
+const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")) as {
+  version: string;
+  campfire?: { releaseStatus?: string };
+};
+const packageVersion = packageJson.version;
+// A candidate archive is not a channel release. The formula/flake stay at the
+// last released version until a separate release decision pins the new one.
+const pinnedVersion = packageJson.campfire?.releaseStatus === "candidate" ? "1.26.1" : packageVersion;
 
 function digestsFromFormula(text: string): Record<string, string> {
   const digests: Record<string, string> = {};
@@ -28,9 +35,9 @@ function digestsFromFormula(text: string): Record<string, string> {
 
 describe("install channels", () => {
   it("pins the Homebrew formula and Nix flake to the same release archives", () => {
-    expect(formula).toContain(`/v${packageVersion}/`);
+    expect(formula).toContain(`/v${pinnedVersion}/`);
     expect(formula).not.toMatch(/^\s*version "/m);
-    expect(flake).toMatch(`version = "${packageVersion}";`);
+    expect(flake).toMatch(`version = "${pinnedVersion}";`);
     expect(formula).toContain('depends_on "node@22"');
     expect(flake).toContain("pkgs.nodejs-slim_22");
     expect(formula).not.toContain("boringinfra.company/campfire/v1/telemetry");
@@ -42,9 +49,9 @@ describe("install channels", () => {
       expect(digest, archive).toBeDefined();
       expect(flake).toContain(`${hexToSri(digest ?? "")}"; # ${archive}`);
       expect(flake).toContain('url = "https://github.com/BoringInfraCo/Campfire/releases/download/v${version}/${archive.name}";');
-      expect(formula).toContain(`/v${packageVersion}/${archive}`);
+      expect(formula).toContain(`/v${pinnedVersion}/${archive}`);
     }
-    expect(applyChannelPins(formula, flake, { version: packageVersion, digests })).toEqual({
+    expect(applyChannelPins(formula, flake, { version: pinnedVersion, digests })).toEqual({
       formula,
       flake,
     });
@@ -57,7 +64,7 @@ describe("install channels", () => {
     expect(next.formula).toContain(`/v9.9.9/campfire-darwin-arm64.tar.gz`);
     expect(next.formula).toContain(`sha256 "${"a".repeat(64)}"`);
     expect(next.formula).toContain(`sha256 "${digests["campfire-linux-x64.tar.gz"]}"`);
-    expect(next.formula).not.toContain(`/v${packageVersion}/`);
+    expect(next.formula).not.toContain(`/v${pinnedVersion}/`);
     expect(next.flake).toContain('version = "9.9.9";');
     expect(next.flake).toContain("v${version}");
     expect(next.flake).not.toContain("/v9.9.9/");

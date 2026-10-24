@@ -84,6 +84,12 @@ simple = { limit = 10, period = 60 }
 # guard is present, off otherwise) by leaving this unset.
 [vars]
 TELEMETRY_GATE_MODE = "enforce"
+# SHR-001 private alpha. The publication enrollment/import routes are closed
+# unless this is exactly "1". Leave it "0" until the deployment has migration
+# 0010, the abuse/cost review, and a deliberate operator decision.
+CAMPFIRE_PUBLICATION_ALPHA = "0"
+# Optional per-source enrollment budget per rolling 24 hours. Default 5.
+# CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY = "5"
 #
 #   TELEMETRY_GATE_MODE = "shadow"     # measure, do not reject (rollout mode)
 #   TELEMETRY_GATE_MODE = "enforce"    # reject forgeries, replays, and tokenless installs

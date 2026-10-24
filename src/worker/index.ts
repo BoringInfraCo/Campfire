@@ -73,9 +73,25 @@ export default {
     // mutation. Kept out of the handler's return type deliberately: the sweep is
     // an operational side effect, not part of the client's response contract.
     let deliveryEnqueued = false;
+    const enrollmentsPerDay = Number(env.CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY);
+    const admissionAttempts = Number(env.CAMPFIRE_PUBLICATION_ADMISSION_ATTEMPTS_PER_HOUR);
     const handle = createD1WorkerHandler({
       store,
-      assetsFetch: (req) => env.ASSETS.fetch(req),
+      // An API-only isolated deployment may omit the Assets binding.
+      assetsFetch: env.ASSETS === undefined ? undefined : (req) => env.ASSETS!.fetch(req),
+      publication: {
+        db: env.DB,
+        enabled: (env.CAMPFIRE_PUBLICATION_ALPHA ?? "").trim() === "1",
+        ...(env.CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH === undefined
+          ? {}
+          : { rehearsalCodeHash: env.CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH.trim() }),
+        ...(Number.isInteger(enrollmentsPerDay) && enrollmentsPerDay > 0
+          ? { maxEnrollmentsPerSourcePerDay: enrollmentsPerDay }
+          : {}),
+        ...(Number.isInteger(admissionAttempts) && admissionAttempts > 0
+          ? { maxAdmissionAttemptsPerHour: admissionAttempts }
+          : {}),
+      },
       webhookEnv: webhookEnv(env),
       sourceEnv: webhookEnv(env),
       onWriteCommitted: () => {

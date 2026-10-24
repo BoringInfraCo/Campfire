@@ -32,6 +32,7 @@ import {
   readOperatorHumanToken,
   rememberAgentCredential,
   rememberProfileAgents,
+  saveCredentials,
 } from "../bootstrap/profile.js";
 import { canonicalEndpoint, loadRemoteProfile, resolveRemoteAccess, recipientHandoffNames } from "../bootstrap/remote-profile.js";
 import { enrollRemoteAgent } from "../bootstrap/enrollment-client.js";
@@ -146,6 +147,11 @@ import {
 import { maybeReportPackageManagerInstall } from "../telemetry/install-method.js";
 import { loadTelemetryState, resolveTelemetryPreference, setTelemetryEnabled } from "../telemetry/state.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
+import { assertLocalWritesAllowed, formatPublicationReceipt, isPublicationBlockedMethod, readPublicationState, savePublicationState } from "../publication/state.js";
+import { publicationReceiptView, publishWorkspace } from "../publication/publish.js";
+import { recoverPublication } from "../publication/client.js";
+import { PUBLICATION_REHEARSAL_CODE_ENV } from "../domain/publication.js";
+import { generateRawToken, hashToken } from "../service/tokens.js";
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startCampfireHttpServer } from "../http/server.js";
 import { DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT, DEFAULT_VIEWER_THEME, VIEWER_THEMES, startCampfireViewer } from "../viewer/server.js";
 import {
@@ -339,9 +345,10 @@ async function withBackend<T>(
     const backend: CliBackend = {
       identity: bound,
       store: runtime.store,
-      call: measuredCall((method, params) =>
-        Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {})),
-      ),
+      call: measuredCall((method, params) => {
+        if (isPublicationBlockedMethod(method)) assertLocalWritesAllowed(config.databasePath);
+        return Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {}));
+      }),
     };
     return await fn(backend);
   } finally {
@@ -849,6 +856,7 @@ async function cmdBridge(parsed: ParsedArgs): Promise<void> {
 
 async function cmdInit(): Promise<void> {
   const config = loadConfig();
+  assertLocalWritesAllowed(config.databasePath);
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
   try {
@@ -860,6 +868,7 @@ async function cmdInit(): Promise<void> {
 
 async function cmdSeed(flags: Record<string, string | boolean>): Promise<void> {
   const config = loadConfig();
+  assertLocalWritesAllowed(config.databasePath);
   if (flags.reset === true) {
     removeDatabaseFiles(config.databasePath);
   }
@@ -1192,6 +1201,7 @@ async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
   const workspaceName = requireFlag(flags, "workspace-name");
   const goal = requireFlag(flags, "goal");
   const config = loadConfig();
+  assertLocalWritesAllowed(config.databasePath);
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
   // Kept outside the try so the report cannot be reached before the workspace,
@@ -1236,6 +1246,7 @@ async function cmdOnboard(parsed: ParsedArgs): Promise<void> {
 
 async function cmdBootstrap(flags: Record<string, string | boolean>): Promise<void> {
   const config = loadConfig();
+  assertLocalWritesAllowed(config.databasePath);
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
   try {
@@ -2155,9 +2166,16 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
   const workspaceId=requirePositional(parsed,"workspaceId"); const path=requireFlag(parsed.flags,"out");
   const remote=loadRemoteProfile();
   const access=remote===undefined?undefined:resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
-  const endpoint=canonicalEndpoint(access?.url ?? optionalFlag(parsed.flags,"url") ?? readCampfireUrl() ?? "",{allowLoopbackHttp:parsed.flags["allow-loopback"]===true});
+  const requestedUrl=access?.url ?? optionalFlag(parsed.flags,"url") ?? readCampfireUrl();
   const token=access?.token ?? readCampfireToken(process.env,argv);
-  if(token===undefined) throw new ValidationError("Invitation issuance requires a credential for this shared endpoint; pass --token or CAMPFIRE_TOKEN",{field:"token"});
+  if (remote === undefined && token === undefined && requestedUrl === undefined) {
+    throw new ValidationError("A local-only workspace cannot issue a teammate invitation. Publish it first with campfire publish.", {
+      field: "workspace",
+      nextAction: "publish_workspace",
+    });
+  }
+  const endpoint=canonicalEndpoint(requestedUrl ?? "",{allowLoopbackHttp:parsed.flags["allow-loopback"]===true});
+  if(token===undefined) throw new ValidationError("Invitation issuance requires a credential for this shared endpoint; pass --token or CAMPFIRE_TOKEN",{field:"token",nextAction:"publish_workspace"});
   const call=(method:string,params:Record<string,unknown>)=>campfireHttpCall({baseUrl:endpoint,token,method,params});
   const hours=optionalFlag(parsed.flags,"expires-in-hours");
   const invitation=await call("issue_enrollment_invitation",{workspaceId,...(hours===undefined?{}:{expiresInHours:Number(hours)})}) as IssuedEnrollmentInvitation;
@@ -2166,6 +2184,172 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
   catch(error) { try { await call("revoke_enrollment_invitation",{workspaceId,invitationId:invitation.invitationId}); } catch {} throw error; }
   emitResult(receipt,commandOutput(parsed),value=>`Private invitation saved to ${value.path}.\nExpires ${value.expiresAt}. Transfer this file privately to your teammate.\nAnyone holding this file can claim its enrollment authority; it does not verify their identity.\nThey run: campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`);
 }
+async function cmdPublish(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const profile = loadAnyProfile();
+  if (profile === undefined) {
+    throw new ValidationError("No Campfire profile yet. Create a local workspace with campfire before publishing.", {
+      field: "profile",
+      nextAction: "run_campfire_onboard",
+    });
+  }
+  let resumeDatabasePath: string | undefined;
+  let resumeWorkspaceId: string | undefined;
+  let resumeEndpoint: string | undefined;
+  let ownerHumanId = profile.humanId;
+  let ownerHumanName = profile.humanName;
+  let localUrl = profile.mode !== "remote" ? profile.url : "";
+  if (profile.mode === "remote") {
+    const state = readPublicationState();
+    if (state?.receipt.state === "cut_over" && state.receipt.workspaceId === profile.workspaceId && state.receipt.endpoint === profile.url) {
+      emitResult(publicationReceiptView(state.receipt), commandOutput(parsed), formatPublicationReceipt);
+      return;
+    }
+    if (state === undefined || state.receipt.workspaceId !== profile.workspaceId || state.receipt.endpoint !== profile.url) {
+      throw new ValidationError("This installation already uses a remote profile without a matching publication receipt.", {
+        field: "profile",
+        nextAction: "use_remote_profile",
+      });
+    }
+    // A profile write may have succeeded before the receipt advanced. Resume
+    // the same publication from the saved local backup path.
+    resumeDatabasePath = state.receipt.sourceDatabasePath;
+    resumeWorkspaceId = state.receipt.workspaceId;
+    resumeEndpoint = state.receipt.endpoint;
+    ownerHumanId = state.receipt.owner.humanId;
+    ownerHumanName = state.receipt.owner.displayName;
+    localUrl = profile.url;
+  }
+  const url = resumeEndpoint ?? optionalFlag(parsed.flags, "url") ?? readCampfireUrl();
+  if (url === undefined) {
+    throw new ValidationError("Publishing requires the hosted Campfire API URL", {
+      field: "url",
+      nextAction: "pass_publish_url",
+    });
+  }
+  if (profile.mode !== "remote") {
+    const credentials = loadCredentials();
+    if (credentials?.humanToken === undefined) {
+      throw new ValidationError("Publishing requires the local human owner credential", {
+        field: "credentials",
+        nextAction: "run_campfire_onboard",
+      });
+    }
+    const config = loadConfig();
+    ensureParentDir(config.databasePath);
+    const runtime = createRuntime({ ...config, databasePath: profile.databasePath });
+    try {
+      const actor = runtime.service.resolveToken(credentials.humanToken);
+      if (actor.actorType !== "human" || actor.actorId !== profile.humanId) {
+        throw new ValidationError("Only the current local human owner can publish this workspace", {
+          field: "credentials",
+          nextAction: "use_local_owner_credential",
+        });
+      }
+    } finally {
+      runtime.close();
+    }
+  }
+  const selectedWorkspaceId = resumeWorkspaceId ?? optionalFlag(parsed.flags, "workspace") ?? profile.workspaceId;
+  const result = await publishWorkspace({
+    endpoint: url,
+    databasePath: resumeDatabasePath ?? (profile.mode !== "remote" ? profile.databasePath : ""),
+    localUrl,
+    ownerHumanId,
+    ownerHumanName,
+    packageVersion: installedCampfireVersion(),
+    ...(selectedWorkspaceId === undefined ? {} : { workspaceId: selectedWorkspaceId }),
+    allowLoopbackHttp: parsed.flags["allow-loopback"] === true,
+    connect: parsed.flags["no-connect"] !== true,
+    dryRun: parsed.flags["dry-run"] === true,
+    rehearsalCode: optionalFlag(parsed.flags, "rehearsal-code") ?? process.env[PUBLICATION_REHEARSAL_CODE_ENV],
+    mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire",
+  });
+  const view = publicationReceiptView(result.receipt);
+  emitResult({ ...view, warnings: result.warnings, ...(result.alreadyPublished === true ? { alreadyPublished: true } : {}) }, commandOutput(parsed), (value) => {
+    const counts = result.receipt.counts as Record<string, number>;
+    const countLine = [
+      ["goals", counts.goals], ["tasks", counts.tasks], ["findings", counts.findings],
+      ["decisions", counts.decisions], ["artifacts", counts.artifacts], ["contributions", counts.contributions],
+    ].filter(([, count]) => typeof count === "number")
+      .map(([name, count]) => `${count} ${name}`).join(", ");
+    return [
+      formatPublicationReceipt(result.receipt),
+      countLine.length === 0 ? "" : `Objects: ${countLine}.`,
+      ...(result.warnings.length === 0 ? [] : ["", ...result.warnings.map((warning) => `Warning: ${warning}`)]),
+      "",
+    ].filter((line) => line !== "").join("\n");
+  });
+}
+
+async function cmdPublishStatus(parsed: ParsedArgs): Promise<void> {
+  const state = readPublicationState();
+  if (state === undefined) {
+    emitResult({ state: "not_started", receipt: null }, commandOutput(parsed), () =>
+      "No publication has been started for this Campfire profile.");
+    return;
+  }
+  emitResult(publicationReceiptView(state.receipt), commandOutput(parsed), formatPublicationReceipt);
+}
+
+async function cmdPublishRecover(parsed: ParsedArgs): Promise<void> {
+  const state = readPublicationState();
+  if (state === undefined || state.credentials === undefined) {
+    throw new ValidationError("No recoverable publication state exists for this Campfire profile.", {
+      field: "publication.credentials",
+      nextAction: "inspect_publication_state",
+    });
+  }
+  const rehearsalCode = optionalFlag(parsed.flags, "rehearsal-code") ??
+    process.env[PUBLICATION_REHEARSAL_CODE_ENV] ?? state.credentials.rehearsalCode;
+  const humanToken = generateRawToken();
+  const receipt = await recoverPublication({
+    endpoint: state.receipt.endpoint,
+    body: {
+      requestId: state.receipt.publicationId,
+      humanId: state.receipt.owner.humanId,
+      recoverySecret: state.credentials.recoverySecret,
+      humanTokenHash: hashToken(humanToken),
+    },
+    ...(rehearsalCode === undefined ? {} : { rehearsalCode }),
+  });
+  const who = await campfireHttpCall<{ actor: { actorId: string; actorType: string } }>({
+    baseUrl: state.receipt.endpoint,
+    token: humanToken,
+    method: "whoami",
+  });
+  if (who.actor.actorType !== "human" || who.actor.actorId !== state.receipt.owner.humanId) {
+    throw new ValidationError("Recovered hosted credential did not resolve to the publication owner.", {
+      field: "publication.credentials",
+      nextAction: "inspect_publication_state",
+    });
+  }
+  const nextState = {
+    ...state,
+    credentials: {
+      ...state.credentials,
+      humanToken,
+      ...(rehearsalCode === undefined ? {} : { rehearsalCode }),
+    },
+  };
+  savePublicationState(nextState);
+  const remote = loadRemoteProfile();
+  const credentials = loadCredentials();
+  if (remote !== undefined && credentials !== undefined &&
+      remote.url === state.receipt.endpoint && remote.humanId === state.receipt.owner.humanId &&
+      remote.workspaceId === state.receipt.workspaceId) {
+    saveCredentials({ ...credentials, humanToken });
+  }
+  emitResult(receipt, commandOutput(parsed), (value) =>
+    [
+      "Publication owner credential recovered.",
+      `  Workspace  ${state.receipt.workspaceName} (${state.receipt.workspaceId})`,
+      `  Hosted at  ${state.receipt.endpoint}`,
+      `  Owner      ${state.receipt.owner.displayName}`,
+      "",
+      "No token was printed. Retry campfire publish if the publication is not yet cut over.",
+    ].join("\n"));
+}
+
 async function cmdRevokeInvitation(parsed:ParsedArgs,argv:string[]):Promise<void> {
   const invitationId=requirePositional(parsed,"invitationId"); const workspaceId=requireFlag(parsed.flags,"workspace");
   await withBackend(argv,async backend=>emitResult(await backend.call("revoke_enrollment_invitation",{workspaceId,invitationId}),commandOutput(parsed),(value:any)=>value.revokedAuthority==="consumed_receipt_replay"
@@ -2595,6 +2779,7 @@ function printStatus(asJson: boolean): void {
 
 function startHuman(humanName: string): void {
   const config = loadConfig();
+  assertLocalWritesAllowed(config.databasePath);
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
   try {
@@ -2979,6 +3164,9 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   invite: (parsed, argv) => cmdInvite(parsed, argv),
   join: (parsed, argv) => cmdJoin(parsed, argv),
   "invite-teammate": (parsed, argv) => cmdInviteTeammate(parsed, argv),
+  publish: (parsed, argv) => cmdPublish(parsed, argv),
+  "publish-status": (parsed) => cmdPublishStatus(parsed),
+  "publish-recover": (parsed) => cmdPublishRecover(parsed),
   "revoke-invitation": (parsed, argv) => cmdRevokeInvitation(parsed, argv),
   serve: (parsed) => cmdServe(parsed),
   view: (parsed, argv) => cmdView(parsed, argv),

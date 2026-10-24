@@ -198,6 +198,11 @@ public contract. Do not maintain parallel journeys.
 An owner operates on an already provisioned shared Campfire instance. This
 sprint does not provision hosting, DNS, TLS, Cloudflare accounts, or databases.
 
+**SHR-001 note (Oct 2026):** this sprint's prerequisite is unchanged. SHR-001
+adds a separate, optional local-owner publication path that creates the first
+private hosted namespace before this invitation path is used. Do not treat the
+Sprint 020 enrollment endpoint as a workspace migration endpoint.
+
 An enrollment invitation is a narrowly scoped administrative capability,
 distinct from an existing-actor WorkspaceInvite. It authorizes **one new human**
 to join one workspace and bring bounded supported agent identities.

@@ -39,7 +39,8 @@ export interface AssetsFetcher {
 
 export interface CampfireWorkerEnv {
   DB: D1Database;
-  ASSETS: AssetsFetcher;
+  /** Optional for API-only isolated deployments. */
+  ASSETS?: AssetsFetcher;
   /**
    * Anonymous product telemetry (TEL-001). Optional by design: a deployment
    * without the binding still serves the installer and accepts ingestion,
@@ -86,4 +87,19 @@ export interface CampfireWorkerEnv {
   CAMPFIRE_GITHUB_SOURCE_SECRET?: string;
   CAMPFIRE_GITHUB_SOURCE_AGENT_ID?: string;
   CAMPFIRE_GITHUB_SOURCE_SESSION_ID?: string;
+  /**
+   * SHR-001 private-alpha gate. Enrollment creates a new hosted owner
+   * namespace, so the write route stays closed unless this is exactly "1".
+   * Public self-service requires the recorded abuse and cost review.
+   */
+  CAMPFIRE_PUBLICATION_ALPHA?: string;
+  /** Per-source enrollment budget per rolling 24 hours. Defaults to 5. */
+  CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY?: string;
+  /**
+   * SHA-256 of the operator-held rehearsal admission code. Required when the
+   * alpha flag is on; store it as a Worker secret, never in wrangler.toml.
+   */
+  CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH?: string;
+  /** Max admission attempts per source per UTC hour. Defaults to 30. */
+  CAMPFIRE_PUBLICATION_ADMISSION_ATTEMPTS_PER_HOUR?: string;
 }

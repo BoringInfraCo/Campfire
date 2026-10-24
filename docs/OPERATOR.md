@@ -218,11 +218,71 @@ A second onboard refuses when humans or workspaces already exist and points at
 `create-human`, `create-agent`, `create-workspace`, `create-goal`, `invite`,
 and `join`. There is no reset flag.
 
+## Publish a local workspace to a hosted instance
+
+SHR-001 adds the local-to-hosted bridge. The hosted Worker must already be
+deployed with D1 migration `0010_workspace_publication.sql`. Enrollment is
+closed unless the deployment sets `CAMPFIRE_PUBLICATION_ALPHA=1`; this is a
+private alpha, not public signup. Keep it off until the abuse and cost review is
+recorded. Optionally set `CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY` (default 5).
+
+For the MacBook rehearsal, pin the Arbora profile for every Campfire command and
+harness process. The default `~/.config/campfire` profile is a stale Ada profile
+with no workspace and must not be used:
+
+```bash
+export CAMPFIRE_CONFIG_DIR="$HOME/.config/campfire-arbora"
+export CAMPFIRE_TELEMETRY=0
+campfire status --output json   # workspaceId must be ws_df6794f33efc459b
+
+campfire publish --url https://your-host.example/campfire --dry-run
+campfire publish --url https://your-host.example/campfire \
+  --rehearsal-code "$CAMPFIRE_PUBLICATION_REHEARSAL_CODE"
+campfire publish-status
+```
+
+When the local service is down, start it in a continuing terminal with
+`campfire up --no-open`, verify `campfire status --output json` again, and reload
+the harness. Starting the service does not register an agent session; the agent
+must call `register_agent_session` explicitly.
+
+The command prints a token-free receipt. It stores credentials in the Campfire
+config directory: `publication.json`, mode 0600, and a `publication.lock` while
+finalizing. If a run is interrupted, repeat the same command; it resumes the
+saved request. Do not edit the receipt or delete the lock while a process is
+alive. A committed workspace is not silently deleted on failure.
+
+Recovery:
+
+- Lost owner token, same machine and receipt: `campfire publish-recover` uses
+  the saved `cfr_` secret, revokes the old human token, verifies the replacement,
+  and updates the private receipt and remote credentials without printing it.
+- Lost receipt before enrollment: the hosted side has no workspace; start a new
+  publication request.
+- Lost receipt after enrollment: the hosted enrollment is idempotent only with
+  the original request id and token hashes. Restore the private receipt from
+  backup. There is no email-based account reset.
+- Compromised owner token: use the supported `revoke_token` path from an
+  authenticated owner session, then recover with the `cfr_` secret if needed.
+- Hosted copy must be rolled back: it is not automatically deleted. Record an
+  operator decision, keep the local database as the backup, and do not point the
+  local profile at two writable authorities.
+
+The publication boundary never transfers local bearer tokens, token hashes,
+invitation secrets, installer tokens, raw transcripts, filesystem paths,
+webhook secrets, or provider credentials. Every exported string is scanned for
+credential-shaped values and absolute paths. Unsupported state fails closed,
+including action receipts/reservations/mutation receipts and GitHub ingress rows.
+After cutover, `publication.cutover` marks the local database as a read-only
+backup; remove it only as an explicit recovery action. The hosted Worker requires
+`CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH` as a secret whenever
+`CAMPFIRE_PUBLICATION_ALPHA=1`; the alpha flag alone is closed.
+
 ## Enroll a new teammate into existing work
 
-The instance must already be provisioned, reachable over HTTPS, and running
-the candidate API/schema. Invitation creation does not provision hosting or
-expose a local service. The owner uses their existing human credentials for
+The instance must already be provisioned or published, reachable over HTTPS, and
+running the candidate API/schema. Invitation creation does not provision hosting
+or expose a local service. The owner uses their existing human credentials for
 that exact endpoint; another-machine invitations cannot use the owner's
 localhost URL. A path prefix such as `/campfire` is supported.
 

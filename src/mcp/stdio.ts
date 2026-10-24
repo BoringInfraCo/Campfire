@@ -186,6 +186,7 @@ export async function startStdioServer(
     service: runtime.service,
     identity: resolved,
     playbookEnabled: withPlaybook,
+    databasePath: runtime.config.databasePath,
   });
   const transport = new StdioServerTransport();
 

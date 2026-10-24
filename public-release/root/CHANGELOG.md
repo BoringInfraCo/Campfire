@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.26.2 — candidate (unreleased)
+
+- Add `campfire publish` and `campfire publish-status` for an ordinary local owner to publish one existing local workspace to a private hosted Campfire endpoint, verify the structured state as the owner and agents, and cut the local profile over while keeping the local database as a read-only backup.
+- Add a private hosted owner-enrollment and atomic import boundary with an operator-held rehearsal admission code. The alpha flag alone fails closed; missing or wrong codes are rejected and rate-limited. Local bearer tokens are never transferred; fresh endpoint-bound owner and agent tokens are minted locally.
+- Add `campfire publish-recover`, read-only committed-retry verification, all-free-text credential/path scanning, source-provenance preservation, exhaustive unsupported-state checks, workspace binding, and canonical-digest hardening.
+- **Candidate only.** No public tag, GitHub Release, installer channel update, production Worker deployment, or two-Mac acceptance is claimed. The isolated rehearsal uses a distinctly named test Worker/D1.
+
 ## 1.26.1 — 2026-10-21
 
 - Repair the public export allowlist so the published snapshot builds. The v1.26.0 snapshot omitted `scripts/backfill-telemetry-claims.mjs`, which an exported telemetry test imports and `docs/OPERATOR.md` documents; public CI and all four archive jobs failed at `npm ci`. v1.26.0 produced no archives and pinned no install channel; its tag and snapshot remain as provenance and are not retargeted.

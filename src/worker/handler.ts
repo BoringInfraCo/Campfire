@@ -54,6 +54,12 @@ import { dispatchCampfireMethodAsync } from "./async-dispatch.js";
 import { createAsyncCampfireService, type AsyncCampfireService } from "./async-service.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
 import {
+  handlePublicationEnroll,
+  handlePublicationImport,
+  handlePublicationRecover,
+  type PublicationWorkerOptions,
+} from "./publication.js";
+import {
   handleTelemetryEvent,
   isInstallTokenRateLimited,
   recordInstallRequested,
@@ -141,6 +147,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     return 401;
   }
   switch (code) {
+    case "RateLimited":
+      return 429;
     case "Unauthorized":
     case "ParticipantRequired":
       return 403;
@@ -356,6 +364,11 @@ export interface D1WorkerHandlerOptions extends TelemetryHandlerOptions {
   assetsFetch?: AssetsFetch;
   idSource?: IdSource;
   clock?: () => string;
+  /**
+   * SHR-001 hosted publication boundary. Absent means the routes do not exist
+   * on this handler (local test handlers and older deployments).
+   */
+  publication?: PublicationWorkerOptions;
   webhookEnv?: Record<string, string | undefined>;
   sourceEnv?: Record<string, string | undefined>;
   ingressBodyTimeoutMs?: number;
@@ -677,6 +690,14 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
         return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
       }
 
+      if (path === "/v1/publication/enroll" || path === "/v1/publication/import" || path === "/v1/publication/recover") {
+        if (options.publication === undefined) {
+          return fail(404, "ValidationError", "Hosted publication is not configured on this instance");
+        }
+        if (path === "/v1/publication/enroll") return await handlePublicationEnroll(options.publication, request);
+        if (path === "/v1/publication/import") return await handlePublicationImport(options.publication, request, service);
+        return await handlePublicationRecover(options.publication, request);
+      }
       if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
       if (path === "/v1/call") {
         return await handleAsyncCall(service, request, notifyWrite);

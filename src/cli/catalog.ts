@@ -61,6 +61,9 @@ export const CLI_COMMAND_NAMES = [
   "revoke-token",
   "invite",
   "invite-teammate",
+  "publish",
+  "publish-status",
+  "publish-recover",
   "revoke-invitation",
   "join",
   "serve",
@@ -153,13 +156,51 @@ const READ = { mutates: false } as const;
 const WRITE = { mutates: true } as const;
 
 export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
-  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation for a new teammate.", "campfire invite-teammate <workspaceId> --out <private-file> --url <https-endpoint> [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["join", "revoke-invitation"], notes: [
-    "Owner-only: authorizes one new human to join this workspace with bounded agent identities.",
+  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation for a new teammate.", "campfire invite-teammate <workspaceId> --out <private-file> --url <https-endpoint> [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "revoke-invitation"], notes: [
+    "Owner-only: authorizes one new human to join an already reachable workspace with bounded agent identities.",
+    "Supplying a public URL does not publish a local workspace. Run campfire publish from the local owner profile first.",
     "The written file holds a credential. Anyone who holds it can claim that enrollment.",
     "A display name is not a verified email or an account identity.",
     "Transfer the file yourself over a channel you choose. Campfire sends no message and hosts no share URL.",
     "--allow-loopback is same-machine-only: it is for isolated developer tests, never for another machine.",
   ] }),
+  publish: spec(
+    "publish",
+    "start",
+    "Publish the selected local workspace to a hosted Campfire endpoint.",
+    "campfire publish --url <https-endpoint> [--workspace <id>] [--rehearsal-code <code>] [--dry-run] [--no-connect] [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: true, credentials: false, related: ["invite-teammate", "publish-status", "publish-recover", "connect"], notes: [
+      "Owner-only: the local human owner initiates publication; an agent session cannot grant hosted ownership.",
+      "A hosted rehearsal requires the operator-held rehearsal admission code. The alpha flag alone is closed.",
+      "Preflight shows the destination, workspace, counts, and unsupported state before any write.",
+      "Freezes supported local writes during finalization and keeps the local database as a backup.",
+      "Mints fresh endpoint-bound owner and agent tokens. Local bearer tokens are never transferred.",
+      "The hosted import is one atomic request: same request and digest is idempotent; changed content conflicts.",
+      "On success the local profile becomes a remote profile and the private receipt is written mode 0600.",
+      "Does not configure DNS, TLS, tunnels, Cloudflare, D1, or a second Campfire profile.",
+    ] },
+  ),
+  "publish-status": spec(
+    "publish-status",
+    "recover",
+    "Show the private publication receipt without contacting the hosted service.",
+    "campfire publish-status [--output auto|human|json]",
+    { ...READ, workspaceScoped: false, related: ["publish", "publish-recover"], notes: [
+      "Reads the last local publication state. Never prints credentials.",
+      "States are not_started, staged, committed, verified, and cut_over.",
+    ] },
+  ),
+  "publish-recover": spec(
+    "publish-recover",
+    "recover",
+    "Replace the hosted publication owner credential using the saved recovery secret.",
+    "campfire publish-recover [--rehearsal-code <code>] [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: false, related: ["publish", "publish-status"], notes: [
+      "Requires the private publication receipt and its recovery secret; never prints a token.",
+      "Revokes the previous hosted owner token and stores the replacement privately.",
+      "Does not reimport the workspace or create a second hosted workspace.",
+    ] },
+  ),
   "revoke-invitation": spec("revoke-invitation", "recover", "Revoke an enrollment invitation without removing existing members.", "campfire revoke-invitation <invitationId> --workspace <workspaceId>", { ...WRITE, workspaceScoped: true, notes: [
     "Cancels an unclaimed invitation, or stops receipt replay for a consumed one.",
     "It does not remove already enrolled humans, agents, credentials, or membership. It is not offboarding.",

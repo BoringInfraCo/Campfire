@@ -22,6 +22,7 @@ const BOOLEAN_FLAGS = new Set([
   "allow-remote",
   "connect",
   "no-connect",
+  "dry-run",
   "open",
   "no-open",
   "with-playbook",

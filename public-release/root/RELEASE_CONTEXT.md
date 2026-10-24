@@ -1,5 +1,9 @@
 # Campfire {{VERSION}} release context
 
+> Candidate/unreleased note: this context is prepared for the v1.26.2 SHR-001
+> private two-Mac rehearsal. It is not a public release, production deployment,
+> channel pin, or two-Mac acceptance result.
+
 This public source snapshot was exported on {{EXPORT_DATE}} from private canonical source commit `{{SOURCE_COMMIT}}` (dated {{SOURCE_DATE}}). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
@@ -59,21 +63,17 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Verification
 
 At source preparation, the private {{VERSION}} candidate passed type checking,
-build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. On the recorded ACT-001 candidate the full suite
-passed 1,482 tests with one opt-in terminal capture skipped by default. The
-v1.26.1 release-prep battery records 119 files / 1,492 tests with 1,490
-passing, one expected pre-pin install-channel assertion, and one opt-in skip;
-the post-publication pin closes that assertion and is recorded in the private
-release decision. The candidate also passes 19 frozen ACT-001 fixture checks
-and an audited public export of 401 files that includes source, migration
-`0009`, and the synthetic ACT-001 tests while excluding `docs/evidence/`,
-private configuration, and secrets. The repaired battery additionally runs
-`npm ci`, the build, and the exported ACT-001 tests in a clean export
-directory. The public export audit, archive verification, channel pins,
+build, local Darwin ARM64 packaging, and a deployment dry run against a
+distinctly named isolated Worker configuration. The v1.26.2 SHR-001 repair
+battery records 127 files / 1,518 tests with 1,517 passing and one opt-in
+terminal capture skipped; its focused tests cover the rehearsal admission gate,
+free-text credential/path scanning, committed-retry verification, CLI recovery,
+provenance preservation, workspace binding, unsupported state, and canonical
+digest hardening. The public export audit, archive verification, channel pins,
 production deployment, and live installer check are separate promotion steps
-and are recorded only when performed. This source snapshot does not establish provider interoperability,
-live cross-harness continuation, human comprehension, Gate E/B/C, or a
-production performance claim.
+and are recorded only when performed. This source snapshot does not establish
+provider interoperability, live cross-harness continuation, human
+comprehension, Gate E/B/C, or a production performance claim, and it is not a
+public v1.26.2 release.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

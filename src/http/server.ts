@@ -30,6 +30,7 @@ import {
 import type { CampfireRuntime } from "../runtime.js";
 import type { CampfireStore } from "../store/store.js";
 import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod } from "./dispatch.js";
+import { assertLocalWritesAllowed, isPublicationBlockedMethod } from "../publication/state.js";
 
 export const DEFAULT_HTTP_HOST = "127.0.0.1";
 export const DEFAULT_HTTP_PORT = 9414;
@@ -76,6 +77,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     return 401;
   }
   switch (code) {
+    case "RateLimited":
+      return 429;
     case "Unauthorized":
     case "ParticipantRequired":
       return 403;
@@ -459,6 +462,9 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
     }
 
     try {
+      if (isPublicationBlockedMethod(method)) {
+        assertLocalWritesAllowed(options.runtime.config.databasePath);
+      }
       const result = dispatchCampfireMethod(service, ctx, method, params);
       logAccess({
         allow: true,
