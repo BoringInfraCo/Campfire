@@ -10,6 +10,7 @@
 | `step-0/SNAPSHOT-MANIFEST.md` | Table allowlist, exclusions, validation |
 | `step-0/ANSWER-KEY.md` | Arbora identity, counts, tip, digest |
 | `step-0/THREAT-MODEL.md` | Threats, controls, operator responsibility |
+| `rehearsal/README.md` | Isolated candidate, endpoint, gate matrix, installation, and the explicit NOT OBSERVED boundary |
 
 Engineering acceptance:
 `tests/acceptance/shr-001-publish-share.test.ts`. The physical two-Mac run is
