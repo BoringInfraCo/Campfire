@@ -56,9 +56,9 @@ The candidate adds one local-to-hosted publication path:
 | Local-write freeze and private receipt handling | **PASS** | `tests/unit/shr-001-guard.test.ts` |
 | Publish → invite → join → read with source offline (engineering) | **PASS** | `tests/acceptance/shr-001-publish-share.test.ts` |
 | CLI supported path | **PASS** | `tests/integration/shr-001-publish-cli.test.ts` |
-| Full existing suite | **PASS** | 127 files, 1531 tests (1,530 passed, 1 skipped) after repair and catalog updates |
+| Full existing suite | **PASS** | 127 files, 1538 tests (1,537 passed, 1 skipped) after repair and catalog updates |
 | Installed Arbora snapshot import | **PASS** | `tests/worker/shr-001-installed-capture.test.ts` re-reads the captured database and imports the same finding into an isolated D1 handler |
-| Installed v1.26.2 candidate preflight → isolated endpoint | **PASS** | Candidate record: source `f85fc55`, checksum `90acb5c…e7c0`; dry run reported tip 8 and candidate digest; no network |
+| Installed v1.26.2 candidate preflight → isolated endpoint | **PASS** | Candidate record: source `b68b93c`, checksum `439f51d…0283`; dry run reported tip 8 and candidate digest; no network |
 | Installed candidate publish → isolated Worker | **NOT RUN** | This is the two-Mac rehearsal action, not a preparation claim |
 | Isolated D1 migration `0010` and schema | **PASS** | 10 migrations applied; publication tables present; initial enrollments 0 |
 | Rehearsal admission gate remotely | **PASS** | Alpha off / no hash / missing code / wrong code all 403; correct code + invalid body 400; no rows created |
