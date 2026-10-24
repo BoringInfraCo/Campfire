@@ -85,23 +85,23 @@ export function commandForNextAction(
     case "retry_publish":
     case "resume_original_publication":
     case "wait_or_resume_publish":
-    case "start_new_publication":
     case "retry_later":
-      return "campfire publish --url <https-endpoint> --dry-run";
-    case "select_local_workspace":
-      return "campfire publish --help";
+      return "campfire publish --url <https-endpoint>";
+    case "start_new_publication":
     case "remove_unsupported_state":
     case "reduce_workspace_scope":
     case "recompute_snapshot":
       return "campfire publish --url <https-endpoint> --dry-run";
+    case "select_local_workspace":
+    case "use_local_owner_credential":
+      return "campfire publish --help";
+    case "recover_publication_credentials":
+      return "campfire publish-recover";
     case "resolve_source_change":
     case "inspect_publication_state":
-    case "recover_publication_credentials":
     case "resume_or_abandon_publication":
     case "use_existing_publication":
       return "campfire publish-status";
-    case "use_local_owner_credential":
-      return "campfire publish --help";
     case "use_remote_profile":
       return "campfire status";
     case "run_campfire_onboard":

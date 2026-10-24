@@ -111,6 +111,11 @@ describe("SHR-001 hosted publication boundary", () => {
 
     const allowed = await setup();
     expect((await allowed.call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(200);
+
+    const limited = await setup({ maxAdmissionAttemptsPerHour: 2 }, `cfrh_${"0".repeat(48)}`);
+    expect((await limited.call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(403);
+    expect((await limited.call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(403);
+    expect((await limited.call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(429);
   });
 
   it("recovers the owner credential only with the recovery secret and admission code", async () => {
@@ -192,9 +197,14 @@ describe("SHR-001 hosted publication boundary", () => {
     expect(replay.body).toEqual(imported.body);
     const changed = structuredClone(snapshot);
     changed.findings[0]!.summary = "changed after commit";
-    changed.digest = "f".repeat(64);
+    changed.digest = publicationDigest(changed);
     const changedResult = await call("/v1/publication/import", ownerToken, { requestId: "pub-request-1", digest: changed.digest, snapshot: changed });
-    expect(changedResult.status).toBe(400);
+    expect(changedResult.status).toBe(409);
+
+    const tampered = structuredClone(snapshot);
+    tampered.findings[0]!.summary = "tampered without digest";
+    const tamperedResult = await call("/v1/publication/import", ownerToken, { requestId: "pub-request-1", digest: snapshot.digest, snapshot: tampered });
+    expect(tamperedResult.status).toBe(400);
 
     // The import is bound to the workspace id recorded at enrollment.
     const otherWorkspace = structuredClone(snapshot);

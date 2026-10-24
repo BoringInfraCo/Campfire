@@ -267,6 +267,12 @@ Recovery:
 - Hosted copy must be rolled back: it is not automatically deleted. Record an
   operator decision, keep the local database as the backup, and do not point the
   local profile at two writable authorities.
+- Abandon an interrupted publication: stop the publishing process, keep
+  `publication.json` if recovery may still be possible, and remove only the stale
+  `publication.lock` after confirming the PID is not alive. This is a manual
+  operator action, not a success receipt. If the run reached `cut_over`, remove
+  `publication.cutover` only if you deliberately intend to write the local
+  backup again; the hosted copy remains authoritative.
 
 The publication boundary never transfers local bearer tokens, token hashes,
 invitation secrets, installer tokens, raw transcripts, filesystem paths,

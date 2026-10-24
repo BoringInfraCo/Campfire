@@ -24,7 +24,7 @@ import { createCounterIdSource } from "../../src/domain/ids.js";
 import { campfireHttpCall } from "../../src/http/client.js";
 import { hashToken } from "../../src/service/tokens.js";
 import { publishWorkspace } from "../../src/publication/publish.js";
-import { readPublicationState, savePublicationState } from "../../src/publication/state.js";
+import { readPublicationCutover, readPublicationState, savePublicationState } from "../../src/publication/state.js";
 import { createD1Store, migrateD1 } from "../../src/worker/d1-store.js";
 import { createD1WorkerHandler } from "../../src/worker/handler.js";
 import { sqliteD1 } from "../helpers/sqlite-d1.js";
@@ -205,6 +205,27 @@ describe("SHR-001 local publish → invite → join → continue with the source
     expect(imacCredentials?.agents?.opencode).not.toBe(SHR.agentToken);
     expect(macState?.credentials?.humanToken).not.toBe(SHR.humanToken);
     expect(macState?.credentials?.agents.codex).not.toBe(SHR.agentToken);
+
+    // A crash can leave a cut_over receipt without the marker. The next publish
+    // invocation repairs the read-only backup marker without another import.
+    rmSync(join(macEnv.CAMPFIRE_CONFIG_DIR!, "publication.cutover"), { force: true });
+    expect(readPublicationCutover(macEnv)).toBeUndefined();
+    const repaired = await publishWorkspace({
+      endpoint: hosted.url,
+      databasePath: macDb,
+      localUrl: "http://127.0.0.1:9414",
+      ownerHumanId: SHR.humanId,
+      ownerHumanName: SHR.humanName,
+      packageVersion: "1.26.2-test",
+      allowLoopbackHttp: true,
+      connect: false,
+      rehearsalCode: REHEARSAL_CODE,
+      env: macEnv,
+      now: () => NOW,
+      mcpCommand: "campfire",
+    });
+    expect(repaired.alreadyPublished).toBe(true);
+    expect(readPublicationCutover(macEnv)?.workspaceId).toBe(SHR.workspaceId);
   });
 
   it("retries a committed receipt after an older verifier registered a session", async () => {

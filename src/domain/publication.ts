@@ -409,9 +409,9 @@ const ID_RE = /^[a-zA-Z0-9_.-]{1,128}$/;
 const DIGEST_RE = /^[0-9a-f]{64}$/;
 const TOKEN_HASH_RE = /^[0-9a-f]{64}$/;
 const FORBIDDEN_CREDENTIAL_TEXT_RE =
-  /\b(?:cft|cfe|cfr)_[a-f0-9]{32,}\b|\b(?:sk-|gh[pousr]_)[A-Za-z0-9_-]{20,}\b|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+  /\b(?:cft|cfe|cfr|cfrh)_[a-f0-9]{24,}\b|\b(?:sk-|gh[pousr]_|github_pat_)[A-Za-z0-9_-]{20,}\b|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 const FORBIDDEN_PATH_TEXT_RE =
-  /(?:^|[\s"'(=,:;])(?:file:\/\/?|\/(?:Users|home|private|tmp|var|opt|etc|Volumes|root)\/|[A-Za-z]:[\\/](?:Users|Documents|Desktop)\\|~[\\/])/i;
+  /(?:^|[\s"'<>(=,:;])(?:file:\/\/?|\/(?=[A-Za-z0-9._~-])|[A-Za-z]:[\\/](?:Users|Documents|Desktop)\\|~[\\/])/i;
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -538,7 +538,12 @@ function assertNoForbiddenFreeText(value: unknown, field: string): void {
     return;
   }
   if (!isRecord(value)) return;
-  for (const [key, entry] of Object.entries(value)) assertNoForbiddenFreeText(entry, `${field}.${key}`);
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === "__proto__" || key === "constructor" || key === "prototype" || SECRET_KEY_RE.test(key)) {
+      fail("Snapshot free text contains a credential-shaped key", `${field}.${key}`, "remove_unsupported_state");
+    }
+    assertNoForbiddenFreeText(entry, `${field}.${key}`);
+  }
 }
 
 function auxiliary(value: unknown, field: string): Record<string, unknown> | undefined {

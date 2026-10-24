@@ -135,6 +135,9 @@ function resolveLocalWorkspace(input: PublishInput): string {
   if (input.workspaceId !== undefined && input.workspaceId.trim().length > 0) return input.workspaceId;
   const profile = loadAnyProfile(input.env);
   if (profile?.mode === "remote") {
+    // A remote profile may resume a cut_over receipt or a verified cutover
+    // repair; it never selects a different local database.
+    if (profile.workspaceId.trim().length > 0) return profile.workspaceId;
     throw new ValidationError("This profile is already hosted; local publication is not available", {
       field: "profile",
       nextAction: "use_remote_profile",
@@ -329,6 +332,14 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
   const workspaceId = resolveLocalWorkspace(input);
   const existing = existingStateFor(input, endpoint, workspaceId);
   if (existing?.state === "cut_over") {
+    // Repair a missing marker after a crash between the profile write and the
+    // marker/receipt update. The local backup must not stay writable.
+    markPublicationCutover({
+      workspaceId: existing.workspaceId,
+      publicationId: existing.publicationId,
+      databasePath: existing.sourceDatabasePath,
+      cutOverAt: existing.cutOverAt ?? now(input),
+    }, env);
     return { receipt: existing, alreadyPublished: true, warnings: [] };
   }
   const remote = loadRemoteProfile(env);
@@ -373,13 +384,13 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
       cutOverAt: now(input),
       nextAction: `campfire invite-teammate ${existing.workspaceId} --out <private-file>`,
     };
-    updatePublicationReceipt(receipt, env);
     markPublicationCutover({
       workspaceId: receipt.workspaceId,
       publicationId: receipt.publicationId,
       databasePath: receipt.sourceDatabasePath,
       cutOverAt: receipt.cutOverAt!,
     }, env);
+    updatePublicationReceipt(receipt, env);
     releasePublicationLock(receipt.publicationId, env);
     return { receipt, warnings: [] };
   }
@@ -648,15 +659,17 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
         cutOverAt: now(input),
         nextAction: `campfire invite-teammate ${snapshot.workspace.id} --out <private-file>`,
       };
+      // Marker before receipt: a crash here leaves a verified receipt and a
+      // read-only backup, which the verified-resume branch repairs.
+      markPublicationCutover({
+        workspaceId: receipt.workspaceId,
+        publicationId: receipt.publicationId,
+        databasePath: receipt.sourceDatabasePath,
+        cutOverAt: receipt.cutOverAt ?? now(input),
+      }, env);
       updatePublicationReceipt(receipt, env);
     }
 
-    markPublicationCutover({
-      workspaceId: receipt.workspaceId,
-      publicationId: receipt.publicationId,
-      databasePath: receipt.sourceDatabasePath,
-      cutOverAt: receipt.cutOverAt ?? now(input),
-    }, env);
     releasePublicationLock(receipt.publicationId, env);
     return { receipt, snapshot, warnings };
   } catch (error) {

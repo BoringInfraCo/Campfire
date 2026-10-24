@@ -137,19 +137,22 @@ async function assertRehearsalAdmission(options: PublicationWorkerOptions, reque
     return fail(403, "Unauthorized", "Hosted publication admission is not configured");
   }
   const source = await sourceHash(request);
-  try {
-    await recordAdmissionAttempt(options, source, at);
-  } catch (error) {
-    if (error instanceof CampfireError) return fail(statusFor(error), error.code, error.message, error.details);
-    throw error;
-  }
+  const countFailure = async (): Promise<Response | undefined> => {
+    try {
+      await recordAdmissionAttempt(options, source, at);
+      return undefined;
+    } catch (error) {
+      if (error instanceof CampfireError) return fail(statusFor(error), error.code, error.message, error.details);
+      throw error;
+    }
+  };
   const supplied = request.headers.get(PUBLICATION_REHEARSAL_HEADER)?.trim();
   if (supplied === undefined || supplied.length === 0) {
-    return fail(403, "Unauthorized", "A rehearsal admission code is required");
+    return (await countFailure()) ?? fail(403, "Unauthorized", "A rehearsal admission code is required");
   }
   const actual = await hashTokenWeb(supplied);
   if (actual !== options.rehearsalCodeHash) {
-    return fail(403, "Unauthorized", "The rehearsal admission code was rejected");
+    return (await countFailure()) ?? fail(403, "Unauthorized", "The rehearsal admission code was rejected");
   }
   return undefined;
 }

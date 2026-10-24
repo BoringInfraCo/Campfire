@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { canonicalJson } from "../../src/domain/publication.js";
+import { canonicalJson, parsePublicationSnapshot } from "../../src/domain/publication.js";
 import { inspectPublicationSource, readWorkspaceSnapshot } from "../../src/publication/snapshot.js";
 import { openSqliteStore } from "../../src/store/sqlite-store.js";
 import { SHR, seedShrLocalWorkspace } from "../helpers/shr-001.js";
@@ -95,11 +95,16 @@ describe("SHR-001 local snapshot", () => {
     })).toThrow(/credential-shaped material/);
   });
 
-  it("refuses an absolute path embedded in a decision rationale", () => {
+  it.each([
+    ["/srv/secret/report.json", /absolute filesystem path/],
+    ["<file:///Users/sergio/private/notes.md>", /absolute filesystem path/],
+    ["cfrh_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+    ["github_pat_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", /credential-shaped material/],
+  ])("refuses free text %s", (text, expected) => {
     const databasePath = setup();
     const store = openSqliteStore(databasePath);
     store.updateDecision(SHR.decisionId, {
-      rationale: "The evidence is at /private/var/arbora/report.json",
+      rationale: text,
       updatedAt: "2026-10-23T12:20:00.000Z",
     });
     store.close();
@@ -109,7 +114,30 @@ describe("SHR-001 local snapshot", () => {
       ownerHumanId: SHR.humanId,
       packageVersion: "1.26.2-test",
       exportedAt: "2026-10-23T12:30:00.000Z",
-    })).toThrow(/absolute filesystem path/);
+    })).toThrow(expected);
+  });
+
+  it("refuses a credential-shaped auxiliary key", () => {
+    const databasePath = setup();
+    const store = openSqliteStore(databasePath);
+    store.createArtifact({
+      id: "art_credential_key",
+      workspaceId: SHR.workspaceId,
+      type: "report",
+      title: "Report",
+      uriOrPath: "https://example.invalid/report",
+      metadata: { api_key: "not-printed" },
+      createdBy: { actorId: SHR.humanId, actorType: "human" },
+      createdAt: "2026-10-23T12:20:00.000Z",
+    });
+    store.close();
+    expect(() => readWorkspaceSnapshot({
+      databasePath,
+      workspaceId: SHR.workspaceId,
+      ownerHumanId: SHR.humanId,
+      packageVersion: "1.26.2-test",
+      exportedAt: "2026-10-23T12:30:00.000Z",
+    })).toThrow(/credential-shaped key|secret field/);
   });
 
   it("refuses action mutation receipts even without an action proposal", () => {
@@ -128,6 +156,30 @@ describe("SHR-001 local snapshot", () => {
     store.close();
     expect(inspectPublicationSource(databasePath, SHR.workspaceId, SHR.humanId).unsupported)
       .toContainEqual({ feature: "action_mutation_receipts", count: 1 });
+  });
+
+  it("refuses an actor id without its actor type", () => {
+    const databasePath = setup();
+    const snapshot = readWorkspaceSnapshot({
+      databasePath,
+      workspaceId: SHR.workspaceId,
+      ownerHumanId: SHR.humanId,
+      packageVersion: "1.26.2-test",
+      exportedAt: "2026-10-23T12:30:00.000Z",
+    });
+    const bad = structuredClone(snapshot);
+    bad.tasks.push({
+      id: "task_missing_assignee_type",
+      title: "bad assignee",
+      status: "open",
+      assigneeActorId: SHR.agentId,
+      createdByActorId: SHR.humanId,
+      createdByActorType: "human",
+      createdAt: "2026-10-23T12:30:00.000Z",
+      updatedAt: "2026-10-23T12:30:00.000Z",
+    });
+    bad.counts.tasks += 1;
+    expect(() => parsePublicationSnapshot(bad)).toThrow(/Actor id and type/);
   });
 
   it("canonicalizes __proto__ as data rather than dropping it", () => {

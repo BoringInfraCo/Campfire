@@ -53,11 +53,12 @@ membership.
 finding find_5cd543722a044c20 current
 createdBy agt_955034ffb2544082 (agent)
 agentSessionId ses_b790c6652d944c40
-summary SHA-256 afe966d9f79cf477f20bd6a4d52d7382fa1d7680de73c14b472a97f19e0e9653
+summary SHA-256 626148f1d16457f6b3f4bafa675fff32d2aa54e6e1f79a52e5ac291fe96045f7
 ```
 
 The summary hash is `printf '%s' "<summary>" | shasum -a 256`; it lets a
-verifier compare content without repeating the record text.
+verifier compare content without repeating the record text. A previous record
+used a trailing newline and produced `afe966d9…`; that value is superseded.
 
 ## 4. Contribution order
 
