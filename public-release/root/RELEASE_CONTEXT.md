@@ -65,7 +65,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 At source preparation, the private {{VERSION}} candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The v1.26.2 SHR-001 repair
-battery records 127 files / 1,518 tests with 1,517 passing and one opt-in
+battery records 127 files / 1,549 tests with 1,548 passing and one opt-in
 terminal capture skipped; its focused tests cover the rehearsal admission gate,
 free-text credential/path scanning, committed-retry verification, CLI recovery,
 provenance preservation, workspace binding, unsupported state, and canonical
