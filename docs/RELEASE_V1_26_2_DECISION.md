@@ -74,8 +74,9 @@ package reports `1.26.2` / `candidate` with the controlled-alpha note.
 | Linux x64 | `67d8acc483ddbda13c987aeef1b51b1b2118c7ad19db05f52d4eadef708d3ae1` |
 
 The local SHA-256 above is the pre-CI Darwin ARM64 check only. Do not publish
-it. `releaseStatus` stays `candidate`, so Homebrew and Nix remain on 1.26.1
-until a later pin from these four archives. The release is a controlled Cloud
+it. `releaseStatus` stays `candidate`. This channel-pin commit points
+Homebrew and Nix at these four published archives. The v1.26.2 tag does
+not move. The release is a controlled Cloud
 alpha: CLI accept or decline, no browser click-to-accept, and no open signup.
 MAC-002 may use the released artifact. This decision does not deploy the
 Worker.

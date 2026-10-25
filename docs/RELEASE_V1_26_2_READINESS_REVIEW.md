@@ -51,7 +51,7 @@ existing rehearsal link would not move its workspace or invitation.
 | Usage measurement | **PARTIAL** | Isolated D1 read-only 24-hour snapshot: 1,139 queries read, 135 written, 4,144 rows read, 392 written; database 495,616 bytes. Seven Cloudflare policies are active (`docs/evidence/shr-001/clo-001/README.md`). No per-route/tenant Worker CPU report or cost-per-team estimate is recorded. |
 | Cloud alpha budgets | **OPEN** | One-workspace and publication/import caps exist; invitation edge rate limiting is approximate. Bounded ongoing writes, invitation issuance, and context reads per alpha namespace, plus an operator switch for expensive writes, remain unverified. |
 | Branded production URL | **PARTIAL** | `https://boringinfra.company/campfire/join` returns the static page. A fresh production workspace `ws_c5687463e8624498` was published on October 25 and a branded link was issued and accepted on a same-machine second profile. The physical iMac acceptance is **NOT OBSERVED**. Seven notification policies are active; per-team CPU, the 5% invitation ratio, and D1 growth stay outside Cloudflare Notifications. |
-| Pinned distributable | **PARTIAL** | Local Darwin ARM64 verification archive SHA-256 `523054058c2a62f7f0e8168349e841e0adb4b1a947e4539bce1d391dd54c2a75` carries the controlled-alpha `releaseNote`. Do not publish `7087e5c4…` or `c0347b2d…`. Published checksums come from the public release workflow. Homebrew and Nix stay on 1.26.1. |
+| Pinned distributable | **PARTIAL** | Local Darwin ARM64 verification archive SHA-256 `523054058c2a62f7f0e8168349e841e0adb4b1a947e4539bce1d391dd54c2a75` carries the controlled-alpha `releaseNote`. Do not publish `7087e5c4…` or `c0347b2d…`. Published checksums come from the public release workflow. Homebrew and Nix are pinned to those v1.26.2 archives. |
 | Regression suite | **PASS after fixture repair** | See validation note below; the acceptance fixture used an October 23 clock and its invitation had expired by this review. The test now uses the current run time. |
 
 Validation on the frozen pin `ffbb30b`: the focused SHR/CLO set passed 21
@@ -210,7 +210,7 @@ sequence are done, with the limits named in the decision:
   expensive writes `"0"`. Do not deploy committed `wrangler.toml` over it.
 - A fresh production workspace was published. Arbora stays on the isolated
   rehearsal D1. The physical iMac acceptance is not observed.
-- Homebrew and Nix stay on 1.26.1 until all four release archives exist.
+- Homebrew and Nix are pinned to the four published v1.26.2 archives.
   `releaseStatus` stays `candidate`.
 
 The October 30 target remains a **review target**. No open Cloud signup,
