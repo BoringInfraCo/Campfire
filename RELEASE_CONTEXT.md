@@ -4,7 +4,7 @@
 > installed CLI previews, accepts, or declines one invitation link. There is no
 > browser click-to-accept surface and no open Cloud signup. The physical
 > two-Mac acceptance is not part of this release's evidence. Homebrew and Nix
-> stay on the previous pin until the release archives are attached.
+> install the published v1.26.2 archives.
 
 This public source snapshot was exported on 2026-10-25 from private canonical source commit `5d86bbc1de124d674e86e60a03aae730edc98278` (dated 2026-10-25T16:12:40-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 

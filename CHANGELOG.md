@@ -5,7 +5,7 @@
 - Add `campfire publish` and `campfire publish-status` for an ordinary local owner to publish one existing local workspace to a private hosted Campfire endpoint, verify the structured state as the owner and agents, and cut the local profile over while keeping the local database as a read-only backup.
 - Add a private hosted owner-enrollment and atomic import boundary with an operator-held rehearsal admission code. The alpha flag alone fails closed; missing or wrong codes are rejected and rate-limited. Local bearer tokens are never transferred; fresh endpoint-bound owner and agent tokens are minted locally.
 - Add `campfire publish-recover`, read-only committed-retry verification, all-free-text credential/path scanning, source-provenance preservation, exhaustive unsupported-state checks, workspace binding, and canonical-digest hardening.
-- Cloud sharing is a controlled alpha: an admitted owner publishes from the installed CLI, and an invited recipient previews, accepts, or declines the invitation link in that CLI. There is no browser click-to-accept surface and no open Cloud signup. The physical two-Mac acceptance is not part of this release's evidence. Homebrew and Nix stay on the previous pin until the release archives are attached.
+- Cloud sharing is a controlled alpha: an admitted owner publishes from the installed CLI, and an invited recipient previews, accepts, or declines the invitation link in that CLI. There is no browser click-to-accept surface and no open Cloud signup. The physical two-Mac acceptance is not part of this release's evidence. Homebrew and Nix install the published v1.26.2 archives.
 
 ## 1.26.1 — 2026-10-21
 
