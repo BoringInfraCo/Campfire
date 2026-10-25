@@ -57,15 +57,25 @@ This record is the REL-001 founder decision. It follows
 
 ## Publication
 
-Publish GitHub Release `v1.26.2` from the public snapshot of the release tag.
-The snapshot test builds its forbidden samples in parts so the export audit
-does not see those literals. That test change does not alter `package.json`
-or the local archive.
-The public release workflow builds Darwin and Linux archives for ARM64 and
-x64 and attaches them with `--clobber`. Those workflow checksums are the
-published assets. The local SHA-256 above is the pre-CI Darwin ARM64 check
-only. `releaseStatus` stays `candidate`, so Homebrew and Nix remain on
-1.26.1 until a later pin from all four archives. The release is a controlled
-Cloud alpha: CLI accept or decline, no browser click-to-accept, and no open
-signup. MAC-002 may use the released artifact. This decision does not deploy
-the Worker.
+Published October 25, 2026. Private annotated tag `v1.26.2` is
+`5d86bbc1de124d674e86e60a03aae730edc98278`. The public snapshot is
+`bf126294e3f32c2d384da3588b7b6638b73af44d` on `BoringInfraCo/Campfire`, parent
+`e12e52b`. The GitHub Release is
+https://github.com/BoringInfraCo/Campfire/releases/tag/v1.26.2. Public CI
+`40229954192` passed. Release workflow `40229970842` passed and attached the
+archives. Each downloaded checksum matched its archive, and each extracted
+package reports `1.26.2` / `candidate` with the controlled-alpha note.
+
+| Archive | SHA-256 |
+| --- | --- |
+| Darwin ARM64 | `e97f8c3d3af3cad350769265b2fdfdefa4b733b4fde54ffa84c6bddc56c900e7` |
+| Darwin x64 | `9d24897b3eae166aebdd3e3931e6010b5db6bfe0dbc9a9f87c294c0c7ccbbbcf` |
+| Linux ARM64 | `d859d1b2d490cf36930ca458d9c2920212fe89ee071bb2acf1417932bce4f675` |
+| Linux x64 | `67d8acc483ddbda13c987aeef1b51b1b2118c7ad19db05f52d4eadef708d3ae1` |
+
+The local SHA-256 above is the pre-CI Darwin ARM64 check only. Do not publish
+it. `releaseStatus` stays `candidate`, so Homebrew and Nix remain on 1.26.1
+until a later pin from these four archives. The release is a controlled Cloud
+alpha: CLI accept or decline, no browser click-to-accept, and no open signup.
+MAC-002 may use the released artifact. This decision does not deploy the
+Worker.

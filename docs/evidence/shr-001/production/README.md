@@ -20,7 +20,10 @@ The physical iMac acceptance is not proven here.
 | Local verification archive | `Campfire-Internal/release/campfire-darwin-arm64.tar.gz` |
 | Local verification SHA-256 | `523054058c2a62f7f0e8168349e841e0adb4b1a947e4539bce1d391dd54c2a75` |
 | Archive `releaseNote` | Controlled Cloud alpha. CLI accept/decline. No browser click-to-accept. No open signup. |
-| Published assets | Built by the public release workflow after `v1.26.2` is published. Those checksums replace this local Darwin ARM64 archive. |
+| Published Darwin ARM64 | `e97f8c3d3af3cad350769265b2fdfdefa4b733b4fde54ffa84c6bddc56c900e7` |
+| Published Darwin x64 | `9d24897b3eae166aebdd3e3931e6010b5db6bfe0dbc9a9f87c294c0c7ccbbbcf` |
+| Published Linux ARM64 | `d859d1b2d490cf36930ca458d9c2920212fe89ee071bb2acf1417932bce4f675` |
+| Published Linux x64 | `67d8acc483ddbda13c987aeef1b51b1b2118c7ad19db05f52d4eadef708d3ae1` |
 
 The archive differs from the earlier `0d2c2de` candidate
 (`269aac014c39037e037a41b50bc77f9e202cc7c8f0ace7de9c4dd61ed6c8fcbc`): the
