@@ -224,10 +224,11 @@ and `join`. There is no reset flag.
 SHR-001 adds the local-to-hosted bridge. The hosted Worker must already be
 deployed with D1 migration `0010_workspace_publication.sql`. Enrollment is
 closed unless the deployment sets `CAMPFIRE_PUBLICATION_ALPHA=1`; this is a
-private alpha, not public signup. Keep it off until the abuse and cost review is
-recorded. Optionally set `CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY` (default 5).
+controlled Cloud alpha, not public signup. Keep it off until the abuse and cost
+review is recorded. Optionally set `CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY`
+(default 5).
 
-For the admitted production alpha, the canonical API base must be
+For the controlled Cloud alpha, the canonical API base must be
 `https://boringinfra.company/campfire`. Publishing to that base makes owner
 invitation links start with `https://boringinfra.company/campfire/join#v1.…`.
 The live route, production schema, and workspace data must be verified before

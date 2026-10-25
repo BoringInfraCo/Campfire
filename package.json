@@ -5,7 +5,7 @@
   "description": "The shared workspace where people and their agents work together.",
   "campfire": {
     "releaseStatus": "candidate",
-    "releaseNote": "Controlled Cloud alpha candidate; admitted users share through the installed CLI, where the recipient previews, accepts, or declines. No browser click-to-accept and no open Cloud signup; no public tag or release"
+    "releaseNote": "Controlled Cloud alpha. Admitted users share through the installed CLI, where the recipient previews, accepts, or declines. No browser click-to-accept and no open Cloud signup."
   },
   "type": "module",
   "engines": {

@@ -1,8 +1,10 @@
 # Campfire {{VERSION}} release context
 
-> Candidate/unreleased note: this context is prepared for the v1.26.2 SHR-001
-> private two-Mac rehearsal. It is not a public release, production deployment,
-> channel pin, or two-Mac acceptance result.
+> Controlled Cloud alpha. An admitted owner publishes and shares, and the
+> installed CLI previews, accepts, or declines one invitation link. There is no
+> browser click-to-accept surface and no open Cloud signup. The physical
+> two-Mac acceptance is not part of this release's evidence. Homebrew and Nix
+> stay on the previous pin until the release archives are attached.
 
 This public source snapshot was exported on {{EXPORT_DATE}} from private canonical source commit `{{SOURCE_COMMIT}}` (dated {{SOURCE_DATE}}). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
@@ -64,8 +66,8 @@ Ship a harness-independent shared workspace where people and authorized agents c
 
 At source preparation, the private {{VERSION}} candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
-distinctly named isolated Worker configuration. The v1.26.2 SHR-001 repair
-battery records 127 files / 1,549 tests with 1,548 passing and one opt-in
+distinctly named isolated Worker configuration. The pin-scoped v1.26.2
+full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in
 terminal capture skipped; its focused tests cover the rehearsal admission gate,
 free-text credential/path scanning, committed-retry verification, CLI recovery,
 provenance preservation, workspace binding, unsupported state, and canonical
@@ -73,7 +75,9 @@ digest hardening. The public export audit, archive verification, channel pins,
 production deployment, and live installer check are separate promotion steps
 and are recorded only when performed. This source snapshot does not establish
 provider interoperability, live cross-harness continuation, human
-comprehension, Gate E/B/C, or a production performance claim, and it is not a
-public v1.26.2 release.
+comprehension, Gate E/B/C, or a production performance claim. Cloud sharing
+is a controlled alpha: the installed CLI accepts or declines an invitation
+link, and there is no browser click-to-accept surface or open Cloud signup.
+The physical two-Mac acceptance is not part of this release's evidence.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

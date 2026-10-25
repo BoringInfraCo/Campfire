@@ -169,7 +169,7 @@ operative decision for the whole workspace. This feature is published for
 real-user testing under a founder override: three frozen synthetic pilots
 remain NO-GO, and ordinary-work value is unmeasured. See `CHANGELOG.md`.
 
-### Publish and share a local workspace (v1.26.2 candidate)
+### Publish and share a local workspace (v1.26.2 controlled Cloud alpha candidate)
 
 A local owner can publish one existing local workspace to a hosted Campfire
 endpoint and continue from another Mac after the source goes offline:
@@ -184,9 +184,11 @@ campfire publish-recover   # only when the owner credential must be replaced
 
 The hosted endpoint must already run migration `0010` and have
 `CAMPFIRE_PUBLICATION_ALPHA=1` plus the rehearsal admission hash. The alpha flag
-alone is closed. This is a private rehearsal candidate, not public signup. The
-local database is retained as a read-only backup after cutover; credentials are
-never printed. See `docs/OPERATOR.md`.
+alone is closed. Cloud sharing is a controlled alpha: an admitted owner
+publishes, and an invited recipient previews, accepts, or declines the
+invitation link in the installed CLI. There is no browser click-to-accept
+surface and no open Cloud signup. The local database is retained as a read-only
+backup after cutover; credentials are never printed. See `docs/OPERATOR.md`.
 
 ## Build and verify
 

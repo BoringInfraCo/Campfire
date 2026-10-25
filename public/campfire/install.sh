@@ -91,6 +91,8 @@ print_next_steps() {
   log "  campfire join --invitation-link <link>"
   log "  campfire join --invitation-link <link> --accept --human-name <name> --harness codex|opencode"
   log "  campfire join --invitation-link <link> --decline"
+  log "Cloud sharing is a controlled alpha. The invited recipient accepts or declines in the installed CLI."
+  log "There is no browser click-to-accept surface and no open Cloud signup."
   log "  campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode"
   log "Starting locally? Run  campfire  in a terminal. That records you and starts the local API and Viewer. It does not create a workspace."
 }

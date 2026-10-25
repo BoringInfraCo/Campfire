@@ -1,16 +1,22 @@
-# Campfire v1.26.2 — candidate record (unreleased)
+# Campfire v1.26.2 — controlled Cloud alpha candidate record
 
 **Date:** October 24, 2026  
-**Status:** **CANDIDATE / UNRELEASED / ISOLATED REHEARSAL ONLY**  
+**Update (October 25, 2026):** The founder decision is
+`docs/RELEASE_V1_26_2_DECISION.md` (**CONDITIONAL GO**). This file remains the
+earlier candidate record. Checksum `269aac01…` must not be published.  
+**Status:** **CONTROLLED CLOUD ALPHA CANDIDATE / ISOLATED REHEARSAL RECORD**\
 **Package:** `1.26.2`  
 **Source position:** `0d2c2debd29214959f21abf7330fe34d2d28de4e`  
 **Archive:** `~/campfire-rehearsal/v1.26.2/artifacts/campfire-1.26.2-darwin-arm64.tar.gz`  
 **SHA-256:** `269aac014c39037e037a41b50bc77f9e202cc7c8f0ace7de9c4dd61ed6c8fcbc`  
 **Isolated endpoint:** `https://campfire-shr001-rehearsal.sunbeam-redraft-7j.workers.dev`
 
-No public tag, GitHub Release, installer-channel update, or production
-deployment was created. This record is not a release decision and does not claim
-a completed two-Mac rehearsal.
+Cloud sharing is a controlled alpha: an admitted owner publishes from the
+installed CLI, and an invited recipient previews, accepts, or declines the
+invitation link in that CLI. There is no browser click-to-accept surface and no
+open Cloud signup. No public tag, GitHub Release, installer-channel update, or
+production deployment was created. This record is not a release decision and
+does not claim a completed two-Mac rehearsal.
 
 ## Source and archive
 
@@ -28,10 +34,12 @@ a completed two-Mac rehearsal.
 ## Version-linked metadata
 
 - `package.json` and `package-lock.json` are `1.26.2`.
-- `campfire.releaseStatus` is `candidate`; `campfire.releaseNote` states that no
-  public tag, release, channel, or production deployment exists.
-- `src/telemetry/releases.ts` remains at the last released versions. An
-  unreleased candidate is allowed through telemetry as `unknown_release`.
+- `campfire.releaseStatus` is `candidate`. The shipped `campfire.releaseNote`
+  states that Cloud sharing is a controlled alpha with CLI preview/accept/decline,
+  no browser click-to-accept, and no open Cloud signup.
+- `src/telemetry/releases.ts` remains at the last released versions while
+  `releaseStatus` is `candidate`, so telemetry treats 1.26.2 as `unknown_release`
+  until the install channels are pinned.
 - Homebrew and Nix channel files remain pinned to the last released `1.26.1`.
   The install-channel **test** treats a candidate as a non-release and does not
   loosen the released-version guard. The channel sync script itself has no
@@ -56,6 +64,23 @@ a completed two-Mac rehearsal.
 | Installed `campfire up --no-open` smoke | **PASS** — local API on `127.0.0.1:9414`; no registration was performed |
 | Installed-candidate `publish --dry-run` | **PASS** — tip 8, candidate digest `4c8496e9…a757`; no network, temporary receipt only |
 | Production Worker unchanged | **PASS** — live production version remains `785c8415-5d58-4cd9-9a57-97aef22b78ad` |
+
+### October 25 pin-scoped re-run
+
+The source was frozen at `ffbb30b7c4b8ceeaaf69ec87e3ddcf8504141e71` (including
+the invitation limiter, alpha usage budgets, and recovery work added after the
+`0d2c2de` archive above). From a clean worktree at that pin:
+
+- Focused SHR/CLO set: **PASS** — 21 files / 129 tests, including the
+  publication acceptance path, Worker publication and alpha-usage handlers,
+  invitation-link and enrollment tests (client, service, catalog, recovery, and
+  Worker enrollment), alpha observability, and SHR snapshot/guard/recovery tests.
+- Full suite: **PASS** — 132 files / 1,581 tests (1,580 passed, one opt-in
+  terminal-capture skip).
+
+The archive and checksum in the table above remain the earlier `0d2c2de`
+packaging record. A release archive must be rebuilt from the frozen pin; this
+record does not claim that build or a physical two-Mac run.
 
 ## Isolated hosted target
 
@@ -143,4 +168,6 @@ Do not use that build to update public install channels.
   installer-channel update, or production deployment exists.
 - The rehearsal admission gate is not public-alpha admission or public
   self-service approval.
+- There is no browser click-to-accept surface and no open Cloud signup.
+  Recipient consent is the installed CLI `--accept` or `--decline` step.
 - The stale default profile is not the rehearsal profile.

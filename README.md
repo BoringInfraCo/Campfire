@@ -156,8 +156,11 @@ create a second hosted workspace. The receipt states are `not_started`, `staged`
 `committed`, `verified`, and `cut_over`. Human and JSON output never print
 credentials.
 
-This is a private-alpha foundation, not public self-service. It does not
-configure DNS, TLS, a tunnel, Cloudflare, D1, or a second profile for you. The
+Cloud sharing is a controlled alpha, not public self-service: an admitted
+owner publishes, and an invited recipient previews, accepts, or declines the
+invitation link in the installed CLI. There is no browser click-to-accept
+surface and no open Cloud signup. It does not configure DNS, TLS, a tunnel,
+Cloudflare, D1, or a second profile for you. The
 hosted endpoint must already be deployed with migration `0010`,
 `CAMPFIRE_PUBLICATION_ALPHA=1`, and a Worker secret containing the SHA-256 of the
 operator-held rehearsal code. If the alpha is on and that hash is absent, every
@@ -194,9 +197,11 @@ campfire up
 
 Accept enrolls that recipient's own human and selected agent identities and
 opens the hosted workspace. Decline creates no membership or credential. A
-used, expired, or revoked link returns a clear result. `--out <private-file>`
-and `campfire join --invitation-file` remain a compatibility path; they do not
-replace the link.
+used, expired, or revoked link returns a clear result. Cloud sharing is a
+controlled alpha: acceptance and decline happen in the installed CLI, there is
+no browser click-to-accept page, and there is no open Cloud signup. `--out
+<private-file>` and `campfire join --invitation-file` remain a compatibility
+path; they do not replace the link.
 
 Select both supported harnesses by repeating `--harness codex --harness opencode`.
 Join stores the recipient's own credentials and prepares their MCP connections.
