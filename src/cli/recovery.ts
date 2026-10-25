@@ -78,7 +78,38 @@ export function commandForNextAction(
     case "select_supported_harness":
       return "campfire join --help";
     case "choose_invitation_output":
-      return "campfire invite-teammate <workspaceId> --out <new-private-file>";
+      return "campfire invite-teammate <workspaceId> [--out <new-private-file>]";
+    case "paste_invitation_link":
+      return "campfire join --invitation-link <full-link>";
+    case "publish_workspace":
+    case "pass_publish_url":
+    case "begin_publication":
+    case "retry_publish":
+    case "resume_original_publication":
+    case "wait_or_resume_publish":
+    case "retry_later":
+      return "campfire publish --url <https-endpoint>";
+    case "start_new_publication":
+    case "remove_unsupported_state":
+    case "reduce_workspace_scope":
+    case "recompute_snapshot":
+      return "campfire publish --url <https-endpoint> --dry-run";
+    case "select_local_workspace":
+    case "use_local_owner_credential":
+      return "campfire publish --help";
+    case "recover_publication_credentials":
+      return "campfire publish-recover";
+    case "restore_publication_receipt":
+      return "campfire publish-status";
+    case "resolve_source_change":
+    case "inspect_publication_state":
+    case "resume_or_abandon_publication":
+    case "use_existing_publication":
+      return "campfire publish-status";
+    case "use_remote_profile":
+      return "campfire status";
+    case "run_campfire_onboard":
+      return "campfire onboard --help";
     case "recover_original_enrollment":
     case "recover_enrollment_credentials":
     case "check_enrollment_receipt":
@@ -144,7 +175,7 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
         : undefined;
 
   const recoveryCode = typeof details.recoveryCode === "string" ? details.recoveryCode : undefined;
-  if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire invite-teammate <workspaceId> --out <new-private-file>",when:"Ask the workspace owner for a fresh invitation; keep any pending credentials for recovery"}];
+  if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire join --invitation-link <full-link>",when:"Ask the workspace owner for a fresh invitation link; an invitation id alone cannot join, and pending credentials stay local for recovery"}];
   if (recoveryCode === "agent_already_enrolled") return [{command:"campfire connect --harness codex|opencode",when:"Reconnect the existing enrolled harness"}];
   if (recoveryCode === "invitation_already_claimed") return [{command:"campfire join --help",when:"Retry the original prepared request; another recipient needs a new invitation"}];
   if (unknown !== undefined) {

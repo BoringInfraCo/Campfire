@@ -88,6 +88,11 @@ print_next_steps() {
     log "This install will talk to $SERVER_URL."
   fi
   log "Joining a teammate's existing work? On a fresh or isolated profile, before any local first run:"
+  log "  campfire join --invitation-link <link>"
+  log "  campfire join --invitation-link <link> --accept --human-name <name> --harness codex|opencode"
+  log "  campfire join --invitation-link <link> --decline"
+  log "Cloud sharing is a controlled alpha. The invited recipient accepts or declines in the installed CLI."
+  log "There is no browser click-to-accept surface and no open Cloud signup."
   log "  campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode"
   log "Starting locally? Run  campfire  in a terminal. That records you and starts the local API and Viewer. It does not create a workspace."
 }

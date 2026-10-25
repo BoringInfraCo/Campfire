@@ -550,10 +550,20 @@ The first implementation should intentionally remain narrow.
 - semantic memory ranking;
 - long-term behavioral learning;
 - billing;
-- hosted multi-tenant control plane;
+- a general hosted multi-tenant control plane;
 - deep integrations across the entire engineering stack.
 
 These may become important, but they are not necessary to validate the core thesis.
+
+**SHR-001 exception (October 2026).** One narrow hosted slice is now in scope:
+a local human owner may publish one existing local workspace to a private,
+single-workspace hosted namespace, verify it, invite one teammate, and continue
+after the source computer is offline. The slice is opt-in and founder-directed.
+It is not a general account console, organization directory, SSO, billing,
+self-service public signup, arbitrary SQLite upload, or hosted Viewer. The
+general control plane and billing remain deferred. See
+`docs/Campfire-v1.26.2-SHR-001-Publish-and-Share.md` and the trust-model
+amendment in `docs/ARCHITECTURE.md`.
 
 ---
 

@@ -51,8 +51,8 @@ export interface SetupContract {
     tokenInBrowser: false;
   };
   enrollment: {
-    invitation: "campfire invite-teammate <workspaceId> --out <private-file>";
-    join: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode";
+    invitation: "campfire invite-teammate <workspaceId>";
+    join: "campfire join --invitation-link <link> [--accept|--decline]";
     additionalAgent: "campfire connect --harness codex|opencode --enroll";
     remoteStartup: "campfire up";
     sessionsAutomatic: false;
@@ -90,8 +90,8 @@ export function setupContract(options?: {
     agentSteps: SETUP_AGENT_STEPS,
     viewer: { command: "campfire view", bind: "loopback", tokenInBrowser: false },
     enrollment: {
-      invitation: "campfire invite-teammate <workspaceId> --out <private-file>",
-      join: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode",
+      invitation: "campfire invite-teammate <workspaceId>",
+      join: "campfire join --invitation-link <link> [--accept|--decline]",
       additionalAgent: "campfire connect --harness codex|opencode --enroll",
       remoteStartup: "campfire up", sessionsAutomatic: false,
     },

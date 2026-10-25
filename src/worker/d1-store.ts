@@ -53,7 +53,7 @@ import type {
 import { Conflict } from "../domain/errors.js";
 import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
-import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
+import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
   asCorrectionConflict,
@@ -1384,6 +1384,9 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
     async revokeEnrollmentInvitation(input) {
       return executeEnrollment(revokeEnrollmentStatements(input, globalThis.crypto.randomUUID()));
+    },
+    async declineEnrollmentInvitation(input) {
+      return executeEnrollment(declineEnrollmentStatements(input, globalThis.crypto.randomUUID()));
     },
     async provisionEnrollment(plan) {
       return executeEnrollment(provisionEnrollmentStatements(plan, globalThis.crypto.randomUUID()));

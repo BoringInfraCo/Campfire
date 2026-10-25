@@ -19,6 +19,7 @@ import { createD1Store } from "./d1-store.js";
 import type { CampfireWorkerEnv } from "./d1-types.js";
 import { createD1WorkerHandler } from "./handler.js";
 import { createD1TelemetryGuard } from "../telemetry/guard.js";
+import { recordAlphaRequest } from "./alpha-observability.js";
 import type { TelemetryGateMode } from "./telemetry.js";
 
 interface WorkerContext {
@@ -68,14 +69,35 @@ async function deliverPending(env: CampfireWorkerEnv): Promise<void> {
 
 export default {
   async fetch(request: Request, env: CampfireWorkerEnv, ctx: WorkerContext): Promise<Response> {
+    const startedAt = performance.now();
     const store = createD1Store(env.DB);
     // Set by the handler only when a write committed a delivery-eligible
     // mutation. Kept out of the handler's return type deliberately: the sweep is
     // an operational side effect, not part of the client's response contract.
     let deliveryEnqueued = false;
+    const enrollmentsPerDay = Number(env.CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY);
+    const admissionAttempts = Number(env.CAMPFIRE_PUBLICATION_ADMISSION_ATTEMPTS_PER_HOUR);
     const handle = createD1WorkerHandler({
       store,
-      assetsFetch: (req) => env.ASSETS.fetch(req),
+      // An API-only isolated deployment may omit the Assets binding.
+      assetsFetch: env.ASSETS === undefined ? undefined : (req) => env.ASSETS!.fetch(req),
+      publication: {
+        db: env.DB,
+        enabled: (env.CAMPFIRE_PUBLICATION_ALPHA ?? "").trim() === "1",
+        ...(env.CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH === undefined
+          ? {}
+          : { rehearsalCodeHash: env.CAMPFIRE_PUBLICATION_REHEARSAL_CODE_HASH.trim() }),
+        ...(Number.isInteger(enrollmentsPerDay) && enrollmentsPerDay > 0
+          ? { maxEnrollmentsPerSourcePerDay: enrollmentsPerDay }
+          : {}),
+        ...(Number.isInteger(admissionAttempts) && admissionAttempts > 0
+          ? { maxAdmissionAttemptsPerHour: admissionAttempts }
+          : {}),
+      },
+      alphaUsage: {
+        db: env.DB,
+        expensiveWritesEnabled: env.CAMPFIRE_ALPHA_EXPENSIVE_WRITES === "1",
+      },
       webhookEnv: webhookEnv(env),
       sourceEnv: webhookEnv(env),
       onWriteCommitted: () => {
@@ -87,6 +109,8 @@ export default {
       // Same for the limiter: absent binding means the ingestion route is
       // unbounded, which is exactly how it behaved before the binding existed.
       telemetryRateLimiter: env.TELEMETRY_RATE_LIMITER,
+      invitationRateLimiter: env.INVITATION_RATE_LIMITER,
+      requireInvitationRateLimiter: true,
       // Integrity: outcome measurement and the per-installation budget are
       // optional bindings like the ones above. The guard is built from the
       // Worker's own D1 so claims land in the same database the migrations
@@ -98,6 +122,7 @@ export default {
       telemetryGateMode: telemetryGateMode(env),
     });
     const response = await handle(request);
+    recordAlphaRequest(env.ALPHA_OPS, request, response.status, performance.now() - startedAt);
     // Immediate delivery is retained for writes, so a freshly enqueued delivery
     // still leaves the instance without waiting for the scheduled trigger.
     if (deliveryEnqueued) {

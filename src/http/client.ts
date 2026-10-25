@@ -5,7 +5,7 @@
  * bearer token is the actor; callers never send an acting actor id.
  */
 import { CampfireError, ValidationError, type CampfireErrorCode } from "../domain/errors.js";
-import type { EnrollmentReceipt, RedeemEnrollmentInput } from "../domain/enrollment.js";
+import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentReceipt, RedeemEnrollmentInput } from "../domain/enrollment.js";
 import type { BridgeReport } from "../bridge/report.js";
 
 const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
@@ -25,6 +25,9 @@ const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
   "DecisionNotFound",
   "CrossWorkspaceReference",
   "Conflict",
+  "ActionProposalNotFound",
+  "ActionReceiptNotFound",
+  "RateLimited",
   "RecallRestart",
 ]);
 
@@ -116,7 +119,7 @@ export function hostedIdentityError(error: CampfireError): CampfireError {
   }
 }
 
-async function readCampfireResponse<T>(response: Response): Promise<T> {
+export async function readCampfireResponse<T>(response: Response): Promise<T> {
   let payload: unknown;
   try {
     payload = await response.json();
@@ -174,14 +177,29 @@ export async function campfireHttpBridgeReport(options: {
   return readCampfireResponse<BridgeReport>(response);
 }
 
-/** Invitation capability is never sent to the actor dispatch endpoint. */
+/** Invitation capability is never sent to the actor dispatch endpoint or a URL. */
+async function campfireHttpEnrollment<T>(options: {
+  baseUrl: string; secret: string; path: string; body: unknown;
+}): Promise<T> {
+  const response = await fetch(`${options.baseUrl.replace(/\/+$/, "")}${options.path}`, {
+    method: "POST", redirect: "error", signal: AbortSignal.timeout(15_000),
+    headers: { authorization: `Bearer ${options.secret}`, "content-type": "application/json" },
+    body: JSON.stringify(options.body),
+  });
+  return readCampfireResponse<T>(response);
+}
 export async function campfireHttpRedeemEnrollment(options: {
   baseUrl: string; secret: string; input: RedeemEnrollmentInput;
 }): Promise<EnrollmentReceipt> {
-  const response = await fetch(`${options.baseUrl.replace(/\/+$/, "")}/v1/enrollment/redeem`, {
-    method: "POST", redirect: "error", signal: AbortSignal.timeout(15_000),
-    headers: { authorization: `Bearer ${options.secret}`, "content-type": "application/json" },
-    body: JSON.stringify(options.input),
-  });
-  return readCampfireResponse<EnrollmentReceipt>(response);
+  return campfireHttpEnrollment<EnrollmentReceipt>({ ...options, path: "/v1/enrollment/redeem", body: options.input });
+}
+export async function campfireHttpPreviewEnrollment(options: {
+  baseUrl: string; secret: string; invitationId: string;
+}): Promise<EnrollmentInvitationPreview> {
+  return campfireHttpEnrollment({ ...options, path: "/v1/enrollment/preview", body: { invitationId: options.invitationId } });
+}
+export async function campfireHttpDeclineEnrollment(options: {
+  baseUrl: string; secret: string; invitationId: string;
+}): Promise<EnrollmentDeclineReceipt> {
+  return campfireHttpEnrollment({ ...options, path: "/v1/enrollment/decline", body: { invitationId: options.invitationId } });
 }

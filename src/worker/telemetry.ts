@@ -261,6 +261,37 @@ export async function isInstallTokenRateLimited(
 }
 
 /**
+ * Distinct key prefix for invitation preview, decline, and redeem.
+ *
+ * Those routes are authorized by possession of the link. Their dedicated
+ * per-source binding is independent of telemetry and installer minting. The
+ * address, Authorization header, and URL never reach the binding.
+ */
+export const INVITATION_RATE_LIMIT_PREFIX = "invitation:";
+
+/**
+ * Consume one unit of the invitation budget for this source.
+ *
+ * Returns a distinct unavailable result when protection cannot run, before
+ * any invitation row is read. Deployed Workers fail closed in that case.
+ * Local handler tests can leave the binding optional. Callers must not log
+ * the request URL or bearer secret.
+ */
+export async function invitationCapabilityRateLimit(
+  rateLimiter: RateLimiterBinding | undefined,
+  request: Request,
+): Promise<"allowed" | "limited" | "unavailable"> {
+  const address = clientAddress(request);
+  if (address === undefined || rateLimiter === undefined) return "unavailable";
+  try {
+    const verdict = await rateLimiter.limit({ key: `${INVITATION_RATE_LIMIT_PREFIX}${opaqueKey(address)}` });
+    return verdict.success ? "allowed" : "limited";
+  } catch {
+    return "unavailable";
+  }
+}
+
+/**
  * Record one ingestion outcome in the ops dataset.
  *
  * The point carries only the outcome, the reason, and the event name —

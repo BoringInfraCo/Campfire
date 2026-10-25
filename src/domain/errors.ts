@@ -23,6 +23,7 @@ export type CampfireErrorCode =
   | "Conflict"
   | "ActionProposalNotFound"
   | "ActionReceiptNotFound"
+  | "RateLimited"
   | "RecallRestart";
 
 export class CampfireError extends Error {
@@ -142,6 +143,12 @@ export class ActionProposalNotFound extends CampfireError {
 export class ActionReceiptNotFound extends CampfireError {
   constructor(receiptId: string) {
     super("ActionReceiptNotFound", `Action receipt not found: ${receiptId}`, { receiptId });
+  }
+}
+
+export class RateLimited extends CampfireError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super("RateLimited", message, details);
   }
 }
 

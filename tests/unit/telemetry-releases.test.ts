@@ -31,8 +31,16 @@ function compareTriples(a: [number, number, number], b: [number, number, number]
 }
 
 describe("telemetry release-time map", () => {
-  it("contains the shipped package version", () => {
-    const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")) as { version: string };
+  it("contains released versions but not an unreleased candidate", () => {
+    const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")) as {
+      version: string;
+      campfire?: { releaseStatus?: string };
+    };
+    if (packageJson.campfire?.releaseStatus === "candidate") {
+      expect(TELEMETRY_RELEASES[packageJson.version]).toBeUndefined();
+      expect(TELEMETRY_RELEASES["1.26.1"]).toBeDefined();
+      return;
+    }
     expect(TELEMETRY_RELEASES[packageJson.version]).toBeDefined();
     expect(telemetryReleaseAt(packageJson.version)).toBe(TELEMETRY_RELEASES[packageJson.version]);
   });

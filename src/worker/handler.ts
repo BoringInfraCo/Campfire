@@ -1,4 +1,5 @@
 import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
+import { INVITATION_LANDING_HTML } from "../bootstrap/invitation-link.js";
 /**
  * Cloudflare Workers fetch handler for Campfire.
  *
@@ -40,6 +41,7 @@ import {
   githubIngressPathSourceId,
   ingestGithubWorkflowRun,
   ingestGithubWorkflowRunAsync,
+  type GithubIngressResponse,
 } from "../service/github-ingress.js";
 import { collectBridgeReport } from "../bridge/report.js";
 import {
@@ -53,9 +55,17 @@ import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod 
 import { dispatchCampfireMethodAsync } from "./async-dispatch.js";
 import { createAsyncCampfireService, type AsyncCampfireService } from "./async-service.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
+import { checkAlphaUsage, type AlphaUsageOptions } from "./alpha-usage.js";
+import {
+  handlePublicationEnroll,
+  handlePublicationImport,
+  handlePublicationRecover,
+  type PublicationWorkerOptions,
+} from "./publication.js";
 import {
   handleTelemetryEvent,
   isInstallTokenRateLimited,
+  invitationCapabilityRateLimit,
   recordInstallRequested,
   TELEMETRY_PATH,
   type AnalyticsEngineDataset,
@@ -141,6 +151,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     return 401;
   }
   switch (code) {
+    case "RateLimited":
+      return 429;
     case "Unauthorized":
     case "ParticipantRequired":
       return 403;
@@ -309,6 +321,10 @@ interface TelemetryHandlerOptions {
   telemetryDataset?: AnalyticsEngineDataset;
   /** Optional per-source budget for the anonymous ingestion route. */
   telemetryRateLimiter?: RateLimiterBinding;
+  /** Dedicated invitation preview/decline/redeem budget. */
+  invitationRateLimiter?: RateLimiterBinding;
+  /** Deployed Workers require a working invitation limiter and client address. */
+  requireInvitationRateLimiter?: boolean;
   /** Optional integrity outcome measurement. */
   telemetryOpsDataset?: AnalyticsEngineDataset;
   /** Optional per-installation budget for the ingestion route. */
@@ -353,9 +369,16 @@ export interface SyncWorkerHandlerOptions extends TelemetryHandlerOptions {
 
 export interface D1WorkerHandlerOptions extends TelemetryHandlerOptions {
   store: AsyncCampfireStore;
+  /** Strict per-team budgets and emergency switch for published Cloud alpha. */
+  alphaUsage?: Omit<AlphaUsageOptions, "store">;
   assetsFetch?: AssetsFetch;
   idSource?: IdSource;
   clock?: () => string;
+  /**
+   * SHR-001 hosted publication boundary. Absent means the routes do not exist
+   * on this handler (local test handlers and older deployments).
+   */
+  publication?: PublicationWorkerOptions;
   webhookEnv?: Record<string, string | undefined>;
   sourceEnv?: Record<string, string | undefined>;
   ingressBodyTimeoutMs?: number;
@@ -570,6 +593,8 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
         });
       }
 
+      if (request.method === "GET" && path === "/join") return invitationLanding();
+
       if (request.method === "GET") {
         // Every installer route is measured and tokenized through the same
         // serving path: the short route, the asset route, and versioned
@@ -596,7 +621,16 @@ export function createWorkerHandler(options: SyncWorkerHandlerOptions): (request
         return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
       }
 
-      if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
+      if (path === "/v1/enrollment/redeem" || path === "/v1/enrollment/preview" || path === "/v1/enrollment/decline") {
+        const budget = await invitationCapabilityRateLimit(options.invitationRateLimiter, request);
+        if (budget === "unavailable" && options.requireInvitationRateLimiter) {
+          return fail(503, "ServiceUnavailable", "Invitation enrollment is temporarily unavailable");
+        }
+        if (budget === "limited") {
+          return fail(429, "RateLimited", "Invitation attempts are temporarily rate limited");
+        }
+        return await handleEnrollmentRedeem(service, request, path);
+      }
       if (path === "/v1/call") {
         return await handleSyncCall(service, request);
       }
@@ -652,8 +686,11 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
           clock: options.clock,
           idSource: options.idSource,
           ingressBodyTimeoutMs: options.ingressBodyTimeoutMs,
+          alphaUsage: options.alphaUsage,
         });
       }
+
+      if (request.method === "GET" && path === "/join") return invitationLanding();
 
       if (request.method === "GET") {
         const installer: InstallerServeOptions = {
@@ -668,7 +705,7 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
         const installerResponse = await handleInstaller(request, assetsFetch, installer);
         if (installerResponse !== undefined) return installerResponse;
         if (path.startsWith("/api/")) {
-          return await handleAsyncViewerGet(service, request, url);
+          return await handleAsyncViewerGet(service, request, url, options);
         }
         return fail(404, "ValidationError", `Not found: ${path}`);
       }
@@ -677,12 +714,29 @@ export function createD1WorkerHandler(options: D1WorkerHandlerOptions): (request
         return fail(405, "ValidationError", `Method not allowed: ${request.method}`);
       }
 
-      if (path === "/v1/enrollment/redeem") return await handleEnrollmentRedeem(service, request);
+      if (path === "/v1/publication/enroll" || path === "/v1/publication/import" || path === "/v1/publication/recover") {
+        if (options.publication === undefined) {
+          return fail(404, "ValidationError", "Hosted publication is not configured on this instance");
+        }
+        if (path === "/v1/publication/enroll") return await handlePublicationEnroll(options.publication, request);
+        if (path === "/v1/publication/import") return await handlePublicationImport(options.publication, request, service);
+        return await handlePublicationRecover(options.publication, request);
+      }
+      if (path === "/v1/enrollment/redeem" || path === "/v1/enrollment/preview" || path === "/v1/enrollment/decline") {
+        const budget = await invitationCapabilityRateLimit(options.invitationRateLimiter, request);
+        if (budget === "unavailable" && options.requireInvitationRateLimiter) {
+          return fail(503, "ServiceUnavailable", "Invitation enrollment is temporarily unavailable");
+        }
+        if (budget === "limited") {
+          return fail(429, "RateLimited", "Invitation attempts are temporarily rate limited");
+        }
+        return await handleEnrollmentRedeem(service, request, path);
+      }
       if (path === "/v1/call") {
-        return await handleAsyncCall(service, request, notifyWrite);
+        return await handleAsyncCall(service, request, options, notifyWrite);
       }
       if (path === "/api/call") {
-        return await handleAsyncViewerPost(service, request);
+        return await handleAsyncViewerPost(service, request, options);
       }
       return fail(404, "ValidationError", `Not found: ${path}`);
     } catch (error) {
@@ -721,6 +775,22 @@ async function resolveAsyncActor(
     }
     throw error;
   }
+}
+
+async function alphaBudgetResponse(
+  options: D1WorkerHandlerOptions,
+  actor: ActorContext["actor"],
+  method: string,
+): Promise<Response | undefined> {
+  const verdict = await checkAlphaUsage(
+    options.alphaUsage === undefined ? undefined : { ...options.alphaUsage, store: options.store },
+    actor,
+    method,
+  );
+  if (verdict === "allowed") return undefined;
+  if (verdict === "limited") return fail(429, "RateLimited", "Cloud alpha daily usage limit reached");
+  if (verdict === "stopped") return fail(503, "ServiceUnavailable", "Cloud alpha writes are temporarily paused");
+  return fail(503, "ServiceUnavailable", "Cloud alpha usage control is temporarily unavailable");
 }
 
 async function handleSyncCall(service: CampfireService, request: Request): Promise<Response> {
@@ -764,6 +834,7 @@ async function handleSyncCall(service: CampfireService, request: Request): Promi
 async function handleAsyncCall(
   service: AsyncCampfireService,
   request: Request,
+  options: D1WorkerHandlerOptions,
   onWriteCommitted?: () => void,
 ): Promise<Response> {
   const resolved = await resolveAsyncActor(service, bearerToken(request));
@@ -785,6 +856,9 @@ async function handleAsyncCall(
   const ctx: ActorContext = { actor: resolved.actor };
   const sessionId = agentSessionIdOf(params);
   if (sessionId !== undefined) ctx.agentSessionId = sessionId;
+
+  const budget = await alphaBudgetResponse(options, ctx.actor, method);
+  if (budget !== undefined) return budget;
 
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
@@ -837,7 +911,7 @@ async function handleSyncViewerPost(service: CampfireService, request: Request):
   }
 }
 
-async function handleAsyncViewerPost(service: AsyncCampfireService, request: Request): Promise<Response> {
+async function handleAsyncViewerPost(service: AsyncCampfireService, request: Request, options: D1WorkerHandlerOptions): Promise<Response> {
   const resolved = await resolveAsyncActor(service, bearerToken(request));
   if (resolved instanceof Response) return resolved;
 
@@ -857,6 +931,9 @@ async function handleAsyncViewerPost(service: AsyncCampfireService, request: Req
   const ctx: ActorContext = { actor: resolved.actor };
   const sessionId = agentSessionIdOf(params);
   if (sessionId !== undefined) ctx.agentSessionId = sessionId;
+
+  const budget = await alphaBudgetResponse(options, ctx.actor, method);
+  if (budget !== undefined) return budget;
 
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
@@ -899,6 +976,7 @@ async function handleAsyncViewerGet(
   service: AsyncCampfireService,
   request: Request,
   url: URL,
+  options: D1WorkerHandlerOptions,
 ): Promise<Response> {
   const method = url.pathname.slice("/api/".length).trim();
   if (method.length === 0 || !isViewerReadMethod(method)) {
@@ -910,6 +988,8 @@ async function handleAsyncViewerGet(
   const ctx: ActorContext = { actor: resolved.actor };
   const sessionId = agentSessionIdOf(params);
   if (sessionId !== undefined) ctx.agentSessionId = sessionId;
+  const budget = await alphaBudgetResponse(options, ctx.actor, method);
+  if (budget !== undefined) return budget;
   try {
     const result = await dispatchCampfireMethodAsync(service, ctx, method, params);
     return json(200, { ok: true, result: projectViewerResult(method, result) });
@@ -1021,6 +1101,7 @@ async function handleWorkerGithubIngress(
     clock?: () => string;
     idSource?: IdSource;
     ingressBodyTimeoutMs?: number;
+    alphaUsage?: Omit<AlphaUsageOptions, "store">;
   },
 ): Promise<Response> {
   if (request.method !== "POST") {
@@ -1066,6 +1147,26 @@ async function handleWorkerGithubIngress(
     clock: options.clock ?? nowIso,
     idSource: options.idSource ?? createId,
     webhookEnv: options.sourceEnv,
+    beforeMutation: async (): Promise<GithubIngressResponse | undefined> => {
+      if (options.mode !== "d1") return undefined;
+      const verdict = await checkAlphaUsage(
+        options.alphaUsage === undefined ? undefined : {
+          ...options.alphaUsage,
+          store: options.store as AsyncCampfireStore,
+        },
+        { actorId: config.source.agentId, actorType: "agent" },
+        "github_ingress",
+      );
+      if (verdict === "allowed") return undefined;
+      const status = verdict === "limited" ? 429 : 503;
+      const error = verdict === "limited" ? "RateLimited" : "ServiceUnavailable";
+      const message = verdict === "limited"
+        ? "Cloud alpha daily usage limit reached"
+        : verdict === "stopped"
+          ? "Cloud alpha writes are temporarily paused"
+          : "Cloud alpha usage control is temporarily unavailable";
+      return { status, body: { ok: false, error, message } };
+    },
   };
   const result = options.mode === "d1"
     ? await ingestGithubWorkflowRunAsync(options.store as AsyncCampfireStore, config.source, ingressRequest, deps)
@@ -1073,9 +1174,21 @@ async function handleWorkerGithubIngress(
   return json(result.status, result.body);
 }
 
+function invitationLanding(): Response {
+  return new Response(INVITATION_LANDING_HTML, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+    },
+  });
+}
+
 async function handleEnrollmentRedeem(
   service: CampfireService | AsyncCampfireService,
   request: Request,
+  path: "/v1/enrollment/redeem" | "/v1/enrollment/preview" | "/v1/enrollment/decline" = "/v1/enrollment/redeem",
 ): Promise<Response> {
   const secret = bearerToken(request);
   if (secret === undefined) return fail(401, "Unauthorized", "Missing invitation capability");
@@ -1086,13 +1199,17 @@ async function handleEnrollmentRedeem(
     }
     let input: unknown;
     try { input = JSON.parse(new TextDecoder().decode(body.bytes)); } catch { return fail(400, "ValidationError", "Request body must be JSON"); }
-    const result = await service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
+    const result = path === "/v1/enrollment/preview"
+      ? await service.previewEnrollment(secret, input)
+      : path === "/v1/enrollment/decline"
+        ? await service.declineEnrollment(secret, input)
+        : await service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
     // Enrollment records participants and contributions, not domain events.
-    // It cannot enqueue a webhook delivery.
+    // Preview and decline do not enqueue a webhook delivery either.
     return json(200, { ok: true, result });
   } catch (error) {
     if (error instanceof CampfireError) return fail(statusFor(error.code, false), error.code, error.message, error.details);
-    logInternalError({ route: "/v1/enrollment/redeem", stage: "redeem" }, error);
-    return fail(500, "InternalError", "Enrollment could not be completed; retry the saved request");
+    logInternalError({ route: path, stage: path === "/v1/enrollment/redeem" ? "redeem" : "invitation" }, error);
+    return fail(500, "InternalError", path === "/v1/enrollment/redeem" ? "Enrollment could not be completed; retry the saved request" : "Invitation could not be read");
   }
 }

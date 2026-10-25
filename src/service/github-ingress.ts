@@ -79,6 +79,8 @@ export interface GithubIngressDeps {
   clock: () => string;
   idSource: IdSource;
   webhookEnv?: Record<string, string | undefined>;
+  /** Hosted operating gate; called only after the signed event is validated. */
+  beforeMutation?: () => Promise<GithubIngressResponse | undefined>;
 }
 
 function jsonOk(outcome: GithubIngressOutcome): GithubIngressResponse {
@@ -694,6 +696,11 @@ export async function ingestGithubWorkflowRunAsync(
 
   const deliveryId = requireDeliveryId(request.deliveryId);
   if (typeof deliveryId !== "string") return deliveryId;
+  // This precedes every D1 mutation, including source-session fingerprint
+  // rotation and ignored delivery receipts. Unsigned requests never consume
+  // the team's hosted budget.
+  const budget = await deps.beforeMutation?.();
+  if (budget !== undefined) return budget;
   const event = verified.kind.event;
   const payloadDigest = verified.payloadDigest;
   const now = deps.clock();

@@ -12,7 +12,7 @@ import type {
   ActionSubmissionOutcome,
   SignedObservationRef,
 } from "../domain/action-proposal.js";
-import type { EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
+import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
 import type { CampfireHandoffPacket, WorkspaceRecall } from "../domain/recall.js";
 import type {
@@ -640,6 +640,8 @@ export interface CampfireService {
   issueEnrollmentInvitation(ctx: ActorContext, input: IssueEnrollmentInvitationInput): IssuedEnrollmentInvitation;
   getEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentInvitationView;
   revokeEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentRevocationReceipt;
+  previewEnrollment(secret: string, input: unknown): EnrollmentInvitationPreview;
+  declineEnrollment(secret: string, input: unknown): EnrollmentDeclineReceipt;
   redeemEnrollment(secret: string, input: RedeemEnrollmentInput): EnrollmentReceipt;
   enrollOwnedAgent(ctx: ActorContext, input: EnrollOwnedAgentInput): OwnedAgentReceipt;
   checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus;

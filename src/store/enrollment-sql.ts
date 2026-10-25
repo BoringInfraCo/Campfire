@@ -3,7 +3,7 @@
  * distinguishes the winning write from even an identical concurrent retry.
  * Every dependent INSERT selects only if that execution won the claim.
  */
-import type { EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
+import type { DeclineEnrollmentInvitationPlan, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
 import type { Agent, ActorToken, NewContribution, WorkspaceParticipant } from "../domain/types.js";
 
 export interface EnrollmentStatement { sql: string; values: unknown[] }
@@ -71,6 +71,27 @@ export function revokeEnrollmentStatements(input: RevokeEnrollmentInvitationPlan
         WHERE id = ? AND workspace_id = ? AND revoked_at IS NULL AND ? = 'human' AND ${allowed.sql}`,
       values: [input.revokedAt, nonce, input.invitationId, input.workspaceId, input.actor.actorType, ...allowed.values] },
     contributionInsert(input.contribution, { sql: "EXISTS (SELECT 1 FROM enrollment_invitations WHERE id = ? AND revoked_at IS NOT NULL AND claim_nonce = ?)", values: [input.invitationId, nonce] }),
+  ];
+}
+/**
+ * Recipient decline. The first statement only stamps `revoked_at`. It inserts
+ * no human, agent, token, or participant. The contribution records that the
+ * invitation capability declined, using the issuing human as the only existing
+ * principal because the recipient has no identity yet.
+ */
+export function declineEnrollmentStatements(input: DeclineEnrollmentInvitationPlan, nonce: string): EnrollmentStatement[] {
+  const stillOwner = ownerGuard(input.workspaceId, input.issuedByHumanId, input.teamId);
+  return [
+    {
+      sql: `UPDATE enrollment_invitations SET revoked_at = ?, claim_nonce = ?
+        WHERE id = ? AND workspace_id = ? AND secret_hash = ? AND revoked_at IS NULL AND consumed_at IS NULL
+          AND julianday(expires_at) > julianday(?) AND ${stillOwner.sql}`,
+      values: [input.declinedAt, nonce, input.invitationId, input.workspaceId, input.secretHash, input.declinedAt, ...stillOwner.values],
+    },
+    contributionInsert(input.contribution, {
+      sql: "EXISTS (SELECT 1 FROM enrollment_invitations WHERE id = ? AND revoked_at IS NOT NULL AND claim_nonce = ?)",
+      values: [input.invitationId, nonce],
+    }),
   ];
 }
 export function provisionEnrollmentStatements(plan: EnrollmentProvisionPlan, nonce: string): EnrollmentStatement[] {

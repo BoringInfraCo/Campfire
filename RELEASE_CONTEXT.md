@@ -1,6 +1,12 @@
-# Campfire 1.26.1 release context
+# Campfire 1.26.2 release context
 
-This public source snapshot was exported on 2026-10-22 from private canonical source commit `3fa35163c8a2c86d92732fd4cc0d4051c3be481d` (dated 2026-10-21T23:51:45-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+> Controlled Cloud alpha. An admitted owner publishes and shares, and the
+> installed CLI previews, accepts, or declines one invitation link. There is no
+> browser click-to-accept surface and no open Cloud signup. The physical
+> two-Mac acceptance is not part of this release's evidence. Homebrew and Nix
+> stay on the previous pin until the release archives are attached.
+
+This public source snapshot was exported on 2026-10-25 from private canonical source commit `5d86bbc1de124d674e86e60a03aae730edc98278` (dated 2026-10-25T16:12:40-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -53,27 +59,25 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.26.1.
+- The versioned installer source for v1.26.2.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.26.1 candidate passed type checking,
-build, local Darwin ARM64 packaging with a version-derived installer copy, and a
-Worker deployment dry run. On the recorded ACT-001 candidate the full suite
-passed 1,482 tests with one opt-in terminal capture skipped by default. The
-v1.26.1 release-prep battery records 119 files / 1,492 tests with 1,490
-passing, one expected pre-pin install-channel assertion, and one opt-in skip;
-the post-publication pin closes that assertion and is recorded in the private
-release decision. The candidate also passes 19 frozen ACT-001 fixture checks
-and an audited public export of 401 files that includes source, migration
-`0009`, and the synthetic ACT-001 tests while excluding `docs/evidence/`,
-private configuration, and secrets. The repaired battery additionally runs
-`npm ci`, the build, and the exported ACT-001 tests in a clean export
-directory. The public export audit, archive verification, channel pins,
+At source preparation, the private 1.26.2 candidate passed type checking,
+build, local Darwin ARM64 packaging, and a deployment dry run against a
+distinctly named isolated Worker configuration. The pin-scoped v1.26.2
+full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in
+terminal capture skipped; its focused tests cover the rehearsal admission gate,
+free-text credential/path scanning, committed-retry verification, CLI recovery,
+provenance preservation, workspace binding, unsupported state, and canonical
+digest hardening. The public export audit, archive verification, channel pins,
 production deployment, and live installer check are separate promotion steps
-and are recorded only when performed. This source snapshot does not establish provider interoperability,
-live cross-harness continuation, human comprehension, Gate E/B/C, or a
-production performance claim.
+and are recorded only when performed. This source snapshot does not establish
+provider interoperability, live cross-harness continuation, human
+comprehension, Gate E/B/C, or a production performance claim. Cloud sharing
+is a controlled alpha: the installed CLI accepts or declines an invitation
+link, and there is no browser click-to-accept surface or open Cloud signup.
+The physical two-Mac acceptance is not part of this release's evidence.
 
 Raw agent transcripts, local Campfire databases, credentials, internal runbooks, private evidence captures, and unshipped development history are not part of this release.

@@ -40,7 +40,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.26.1/install.sh | sh -s -- --version 1.26.1
+curl -fsSL https://boringinfra.company/campfire/v1.26.2/install.sh | sh -s -- --version 1.26.2
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
@@ -168,6 +168,27 @@ using a recalled rule. A query-matched decision set does not select an
 operative decision for the whole workspace. This feature is published for
 real-user testing under a founder override: three frozen synthetic pilots
 remain NO-GO, and ordinary-work value is unmeasured. See `CHANGELOG.md`.
+
+### Publish and share a local workspace (v1.26.2 controlled Cloud alpha candidate)
+
+A local owner can publish one existing local workspace to a hosted Campfire
+endpoint and continue from another Mac after the source goes offline:
+
+```bash
+campfire publish --url https://campfire.example.com --dry-run
+campfire publish --url https://campfire.example.com \
+  --rehearsal-code "$CAMPFIRE_PUBLICATION_REHEARSAL_CODE"
+campfire publish-status
+campfire publish-recover   # only when the owner credential must be replaced
+```
+
+The hosted endpoint must already run migration `0010` and have
+`CAMPFIRE_PUBLICATION_ALPHA=1` plus the rehearsal admission hash. The alpha flag
+alone is closed. Cloud sharing is a controlled alpha: an admitted owner
+publishes, and an invited recipient previews, accepts, or declines the
+invitation link in the installed CLI. There is no browser click-to-accept
+surface and no open Cloud signup. The local database is retained as a read-only
+backup after cutover; credentials are never printed. See `docs/OPERATOR.md`.
 
 ## Build and verify
 

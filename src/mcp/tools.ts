@@ -14,6 +14,7 @@ import { CampfireError, ValidationError } from "../domain/errors.js";
 import { FINDING_EVIDENCE_RELATIONS } from "../domain/types.js";
 import { campfireHttpCall, hostedIdentityError, hostedPreflightError } from "../http/client.js";
 import { dispatchCampfireMethod } from "../http/dispatch.js";
+import { assertLocalWritesAllowed, isPublicationBlockedMethod } from "../publication/state.js";
 import { getReadRecipe, searchCapabilities } from "../catalog/capability-search.js";
 import { getPlaybook } from "../playbooks/index.js";
 import type { ActorContext } from "../service/authorization.js";
@@ -30,6 +31,8 @@ export interface CampfireMcpOptions {
   unavailable?: { message: string; details?: Record<string, unknown> };
   /** Register the opt-in read-only get_playbook tool (WOW-001 pilot). Default off; the default tool list is unchanged. */
   playbookEnabled?: boolean;
+  /** Local database selected by this MCP process, used only by the publication write gate. */
+  databasePath?: string;
 }
 
 const ACTOR_TYPES = ["human", "agent"] as const;
@@ -177,6 +180,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
     }
     if (service === undefined) {
       throw new ValidationError("Campfire MCP server is missing a service");
+    }
+    if (options.databasePath !== undefined && isPublicationBlockedMethod(method)) {
+      assertLocalWritesAllowed(options.databasePath);
     }
     return dispatchCampfireMethod(service, actorCtx, method, params);
   }
