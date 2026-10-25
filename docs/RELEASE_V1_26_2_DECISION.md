@@ -57,7 +57,10 @@ This record is the REL-001 founder decision. It follows
 
 ## Publication
 
-Publish GitHub Release `v1.26.2` from the public snapshot of this commit.
+Publish GitHub Release `v1.26.2` from the public snapshot of the release tag.
+The snapshot test builds its forbidden samples in parts so the export audit
+does not see those literals. That test change does not alter `package.json`
+or the local archive.
 The public release workflow builds Darwin and Linux archives for ARM64 and
 x64 and attaches them with `--clobber`. Those workflow checksums are the
 published assets. The local SHA-256 above is the pre-CI Darwin ARM64 check
