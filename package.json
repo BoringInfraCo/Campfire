@@ -5,7 +5,7 @@
   "description": "The shared workspace where people and their agents work together.",
   "campfire": {
     "releaseStatus": "candidate",
-    "releaseNote": "Unreleased two-Mac rehearsal candidate; no public tag, release, installer channel, or production deployment"
+    "releaseNote": "Controlled Cloud alpha candidate; admitted users share through the installed CLI, where the recipient previews, accepts, or declines. No browser click-to-accept and no open Cloud signup; no public tag or release"
   },
   "type": "module",
   "engines": {
