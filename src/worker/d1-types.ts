@@ -53,6 +53,12 @@ export interface CampfireWorkerEnv {
    * route is still open, exactly as it was before the limit existed.
    */
   TELEMETRY_RATE_LIMITER?: RateLimiterBinding;
+  /** Dedicated invitation budget; deployed Workers refuse joins when absent. */
+  INVITATION_RATE_LIMITER?: RateLimiterBinding;
+  /** Optional bounded-operations dataset; records closed route class and status only. */
+  ALPHA_OPS?: AnalyticsEngineDataset;
+  /** Exact "1" permits expensive writes for published alpha teams only. */
+  CAMPFIRE_ALPHA_EXPENSIVE_WRITES?: string;
   /**
    * Integrity outcome measurement (`[[analytics_engine_datasets]]`).
    * Records only the outcome, reason, and event name — never an id, address,

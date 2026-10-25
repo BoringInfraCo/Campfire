@@ -53,7 +53,7 @@ async function setup(mode: "sync" | "d1") {
     const result = await actorCall(prefix, owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared" });
     expect(result.status).toBe(200); return result.body.result as { invitationId: string; secret: string };
   };
-  return { store, call, actorCall, issue };
+  return { store, handle, call, actorCall, issue };
 }
 function input(invitationId: string) {
   return { invitationId, requestId: "worker-enroll-request", humanName: "Teammate", humanTokenHash: hashToken("teammate-human"),
@@ -61,6 +61,15 @@ function input(invitationId: string) {
 }
 
 describe.each(["sync", "d1"] as const)("Sprint 020 Worker enrollment transport on %s", (mode) => {
+  it("serves the branded invitation path without reading a fragment capability", async () => {
+    const { handle } = await setup(mode);
+    const response = await handle(new Request("https://boringinfra.company/campfire/join#v1.private-fragment"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(await response.text()).not.toContain("private-fragment");
+  });
+
   it.each(["", "/campfire"])("supports %s API base path and exact replay without leaking credentials", async (prefix) => {
     const { store, call, actorCall, issue } = await setup(mode);
     const invitation = await issue(prefix);
@@ -136,5 +145,102 @@ describe.each(["sync", "d1"] as const)("Sprint 020 Worker enrollment transport o
     expect(revoked.status).toBe(200);
     expect((await call("/campfire/v1/enrollment/redeem", invitation.secret, request)).status).toBe(403);
     expect((await actorCall("/campfire", "teammate-human", "get_workspace_context", { workspaceId: "ws_shared" })).status).toBe(200);
+  });
+});
+
+describe("invitation capability rate limit", () => {
+  it("fails closed before enrollment reads when the deployed limiter is unavailable", async () => {
+    const local = openInMemoryStore();
+    close.push(() => local.close());
+    const service = createCampfireService({ store: local, clock: () => NOW, idSource: createCounterIdSource() });
+    const post = (handle: ReturnType<typeof createWorkerHandler>, withAddress = true) => handle(new Request("https://campfire.test/campfire/v1/enrollment/preview", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer cfe_${"ab".repeat(16)}`,
+        "content-type": "application/json",
+        ...(withAddress ? { "CF-Connecting-IP": "203.0.113.44" } : {}),
+      },
+      body: JSON.stringify({ invitationId: "ein_inv_000001" }),
+    }));
+    const missing = createWorkerHandler({ service, requireInvitationRateLimiter: true });
+    expect((await post(missing)).status).toBe(503);
+    const broken = createWorkerHandler({ service, requireInvitationRateLimiter: true, invitationRateLimiter: {
+      async limit() { throw new Error("binding unavailable"); },
+    } });
+    expect((await post(broken)).status).toBe(503);
+    expect((await post(broken, false)).status).toBe(503);
+    expect(await local.countHumans()).toBe(0);
+  });
+
+  it("fails closed on the D1 production handler when its invitation binding is missing", async () => {
+    const adapter = sqliteD1();
+    close.push(() => adapter.database.close());
+    await migrateD1(adapter.binding);
+    const handle = createD1WorkerHandler({
+      store: createD1Store(adapter.binding),
+      requireInvitationRateLimiter: true,
+    });
+    const response = await handle(new Request("https://boringinfra.company/campfire/v1/enrollment/preview", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer cfe_${"ab".repeat(16)}`,
+        "content-type": "application/json",
+        "CF-Connecting-IP": "203.0.113.44",
+      },
+      body: JSON.stringify({ invitationId: "ein_inv_000001" }),
+    }));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: "ServiceUnavailable" });
+  });
+
+  it("stops preview, decline, and redeem for one source without reading the secret into the limiter key", async () => {
+    const local = openInMemoryStore();
+    close.push(() => local.close());
+    const service = createCampfireService({ store: local, clock: () => NOW, idSource: createCounterIdSource() });
+    const keys: string[] = [];
+    let remaining = 1;
+    const handle = createWorkerHandler({
+      service,
+      invitationRateLimiter: {
+        async limit({ key }) {
+          keys.push(key);
+          if (remaining > 0) {
+            remaining -= 1;
+            return { success: true };
+          }
+          return { success: false };
+        },
+      },
+    });
+    await local.createOrganization({ id: "org", name: "Org", createdAt: NOW });
+    await local.createTeam({ id: "team", organizationId: "org", name: "Team", createdAt: NOW });
+    await local.createHuman({ id: "hum_owner", teamId: "team", displayName: "Owner", createdAt: NOW });
+    await local.createActorToken({ id: "tok_owner", actor: owner, tokenHash: hashToken("hum_owner"), createdAt: NOW });
+    await local.createWorkspace({ id: "ws_shared", teamId: "team", name: "Shared", status: "active", createdBy: owner, createdAt: NOW, updatedAt: NOW });
+    await local.addParticipant({ workspaceId: "ws_shared", actor: owner, role: "owner", joinedAt: NOW });
+    const issued = await service.issueEnrollmentInvitation({ actor: owner }, { workspaceId: "ws_shared" });
+    const secret = issued.secret;
+    const post = (path: string) => handle(new Request(`https://campfire.test${path}`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${secret}`,
+        "content-type": "application/json",
+        "CF-Connecting-IP": "203.0.113.44",
+      },
+      body: JSON.stringify({ invitationId: issued.invitationId }),
+    }));
+    const allowed = await post("/v1/enrollment/preview");
+    expect(allowed.status).toBe(200);
+    const limited = await post("/v1/enrollment/decline");
+    expect(limited.status).toBe(429);
+    const body = await limited.json() as { error: string; message: string };
+    expect(body.error).toBe("RateLimited");
+    expect(JSON.stringify(body)).not.toContain(secret);
+    expect(JSON.stringify(keys)).not.toContain(secret);
+    expect(JSON.stringify(keys)).not.toContain("203.0.113.44");
+    expect(keys.every((key) => key.startsWith("invitation:"))).toBe(true);
+    expect(await local.countHumans()).toBe(1);
+    const stillPending = await service.previewEnrollment(secret, { invitationId: issued.invitationId });
+    expect(stillPending.status).toBe("pending");
   });
 });

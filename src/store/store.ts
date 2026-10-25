@@ -48,7 +48,7 @@ import type {
   TaskStatus,
   DecisionStatus,
 } from "../domain/types.js";
-import type { EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
+import type { DeclineEnrollmentInvitationPlan, EnrollmentHarness, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
 import type {
   ContributionPageQuery,
   ContributionWindow,
@@ -276,6 +276,8 @@ export interface CampfireStore {
   getEnrollmentInvitation(id: string): EnrollmentInvitation | undefined;
   getEnrollmentInvitationByHash(secretHash: string): EnrollmentInvitation | undefined;
   revokeEnrollmentInvitation(input: RevokeEnrollmentInvitationPlan): boolean;
+  /** False means this call did not claim the decline. Callers re-read the row. */
+  declineEnrollmentInvitation(input: DeclineEnrollmentInvitationPlan): boolean;
   provisionEnrollment(plan: EnrollmentProvisionPlan): boolean;
   getOwnedAgentEnrollment(workspaceId: string, humanId: string, harness: EnrollmentHarness): OwnedAgentEnrollmentRecord | undefined;
   provisionOwnedAgent(plan: OwnedAgentProvisionPlan): boolean;

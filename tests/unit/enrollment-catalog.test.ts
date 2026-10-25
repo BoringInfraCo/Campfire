@@ -5,7 +5,8 @@ import { parseArgs } from "../../src/cli/args.js";
 import { resolveCommandOutput } from "../../src/cli/output.js";
 it("advertises invitation and enrollment variants without changing legacy join output",()=>{
  const manifest=buildCommandManifest('1.9.0');
- expect(manifest.commands.find(command=>command.name==='join')?.variants?.[0]).toMatchObject({selector:'--invitation-file',mutates:true,outputModes:['auto','human','json']});
+ expect(manifest.commands.find(command=>command.name==='join')?.variants?.find(variant=>variant.selector==='--invitation-file')).toMatchObject({selector:'--invitation-file',mutates:true,outputModes:['auto','human','json']});
+ expect(manifest.commands.find(command=>command.name==='join')?.variants?.find(variant=>variant.selector==='--invitation-link')).toMatchObject({selector:'--invitation-link',outputModes:['auto','human','json']});
  expect(manifest.commands.find(command=>command.name==='connect')?.variants?.[0]).toMatchObject({selector:'--enroll',mutates:true});
  expect(formatCommandUsage('join')).toContain('--invitation-file');expect(formatCommandUsage('connect')).toContain('--enroll');
  expect(commandSpecForArgs('join',{}).alwaysJson).toBe(true);

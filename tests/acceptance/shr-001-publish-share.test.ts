@@ -30,7 +30,9 @@ import { createD1WorkerHandler } from "../../src/worker/handler.js";
 import { sqliteD1 } from "../helpers/sqlite-d1.js";
 import { SHR, isolatedProfileEnv, seedShrLocalWorkspace, writeShrLocalProfile } from "../helpers/shr-001.js";
 
-const NOW = "2026-10-23T14:00:00.000Z";
+// The client checks invitation expiry against wall time, so the Worker clock
+// must be current for this end-to-end flow to remain valid after the test date.
+const NOW = new Date().toISOString();
 const REHEARSAL_CODE = `cfrh_${"a".repeat(48)}`;
 const roots: string[] = [];
 const servers: Server[] = [];

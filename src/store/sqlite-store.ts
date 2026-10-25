@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import { Conflict } from "../domain/errors.js";
 import { applyMigrations } from "./migrations.js";
-import { issueEnrollmentStatements, revokeEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
+import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
 import type {
   ActorType,
@@ -1599,6 +1599,9 @@ function createSqliteStore(db: Database.Database): CampfireStore {
     },
     revokeEnrollmentInvitation(input) {
       return executeEnrollment(revokeEnrollmentStatements(input, globalThis.crypto.randomUUID()));
+    },
+    declineEnrollmentInvitation(input) {
+      return executeEnrollment(declineEnrollmentStatements(input, globalThis.crypto.randomUUID()));
     },
     provisionEnrollment(plan) {
       return executeEnrollment(provisionEnrollmentStatements(plan, globalThis.crypto.randomUUID()));

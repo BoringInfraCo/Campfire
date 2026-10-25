@@ -382,7 +382,7 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
       ...existing,
       state: "cut_over",
       cutOverAt: now(input),
-      nextAction: `campfire invite-teammate ${existing.workspaceId} --out <private-file>`,
+      nextAction: `campfire invite-teammate ${existing.workspaceId}`,
     };
     markPublicationCutover({
       workspaceId: receipt.workspaceId,
@@ -657,7 +657,7 @@ export async function publishWorkspace(input: PublishInput): Promise<PublishResu
         ...receipt,
         state: "cut_over",
         cutOverAt: now(input),
-        nextAction: `campfire invite-teammate ${snapshot.workspace.id} --out <private-file>`,
+        nextAction: `campfire invite-teammate ${snapshot.workspace.id}`,
       };
       // Marker before receipt: a crash here leaves a verified receipt and a
       // read-only backup, which the verified-resume branch repairs.

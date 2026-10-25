@@ -26,6 +26,8 @@ const BOOLEAN_FLAGS = new Set([
   "open",
   "no-open",
   "with-playbook",
+  "accept",
+  "decline",
 ]);
 
 export function parseArgs(argv: string[]): ParsedArgs {

@@ -4,7 +4,8 @@ import { chmodSync, closeSync, existsSync, fsyncSync, linkSync, openSync, mkdirS
 import { dirname, join, resolve } from "node:path";
 import { CampfireError, ValidationError } from "../domain/errors.js";
 import { normalizeRedeemEnrollmentInput, type EnrollmentHarness, type EnrollmentReceipt, type IssuedEnrollmentInvitation, type OwnedAgentReceipt, type RedeemEnrollmentInput } from "../domain/enrollment.js";
-import { campfireHttpCall, campfireHttpRedeemEnrollment } from "../http/client.js";
+import { campfireHttpCall, campfireHttpDeclineEnrollment, campfireHttpPreviewEnrollment, campfireHttpRedeemEnrollment } from "../http/client.js";
+import { parseInvitationLink } from "./invitation-link.js";
 import { generateRawToken, hashToken } from "../service/tokens.js";
 import { loadAnyProfile, loadCredentials, resolveProfilePaths } from "./profile.js";
 import { canonicalEndpoint, loadRemoteProfile, persistRemoteProfile, resolveRemoteAccess } from "./remote-profile.js";
@@ -132,8 +133,36 @@ async function recoverEnrollment(pending:PendingEnrollment):Promise<EnrollmentRe
   }
   return {version:1,kind:"workspace_enrollment",invitationId:pending.input.invitationId,requestId:pending.input.requestId,workspace:pending.invitation.workspace,human:{id:identity.actor.actorId,name:pending.input.humanName},agents,enrolledAt:human.joinedAt};
 }
+export async function previewInvitationLink(link: string, allowLoopback = false) {
+  const parsed = parseInvitationLink(link, allowLoopback);
+  const preview = await campfireHttpPreviewEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId });
+  if (preview.kind !== "enrollment_invitation_preview" || preview.invitationId !== parsed.invitationId || preview.workspace?.id === undefined || preview.inviter?.name === undefined) {
+    failure("Invitation preview did not match the link", "paste_invitation_link");
+  }
+  return preview;
+}
+export async function declineInvitationLink(link: string, allowLoopback = false) {
+  const parsed = parseInvitationLink(link, allowLoopback);
+  const receipt = await campfireHttpDeclineEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId });
+  if (receipt.kind !== "enrollment_invitation_decline" || receipt.membershipCreated !== false || receipt.invitationId !== parsed.invitationId) {
+    failure("Invitation decline did not match the link", "paste_invitation_link");
+  }
+  return receipt;
+}
+export async function acceptInvitationLink(input: Omit<JoinFromInvitationInput, "invitationFile"> & { link: string }, env: NodeJS.ProcessEnv = process.env): Promise<JoinOutcome> {
+  const parsed = parseInvitationLink(input.link, input.allowLoopback === true);
+  const preview = await previewInvitationLink(input.link, input.allowLoopback === true);
+  if (preview.status !== "pending") failure(`Invitation is ${preview.status}. No membership was created.`, preview.status === "expired" ? "request_new_invitation" : "paste_invitation_link");
+  const invitation = validateInvitation({
+    version: 1, kind: "enrollment_invitation", invitationId: preview.invitationId, secret: parsed.secret, url: parsed.url,
+    workspace: preview.workspace, expiresAt: preview.expiresAt, permittedHarnesses: preview.permittedHarnesses,
+  }, input.allowLoopback === true);
+  return completeEnrollment(invitation, { ...input, invitationFile: input.link }, env);
+}
 export async function joinFromInvitation(input:JoinFromInvitationInput,env:NodeJS.ProcessEnv=process.env):Promise<JoinOutcome> {
-  const invitation = invitationFromFile(input.invitationFile,input.allowLoopback===true);
+  return completeEnrollment(invitationFromFile(input.invitationFile, input.allowLoopback === true), input, env);
+}
+async function completeEnrollment(invitation: InvitationFile, input: JoinFromInvitationInput, env: NodeJS.ProcessEnv): Promise<JoinOutcome> {
   if(!Array.isArray(input.harnesses) || input.harnesses.length<1 || input.harnesses.length>2 ||
       input.harnesses.some(harness=>!invitation.permittedHarnesses.includes(harness)) || new Set(input.harnesses).size!==input.harnesses.length || !text(input.humanName)) failure("Requested enrollment is outside the invitation's supported scope", "check_invitation_scope");
   const selectedConnections=connectionSettings(input,env);

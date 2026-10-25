@@ -108,10 +108,40 @@ describe("SHR-001 CLI", () => {
     expect(readPublicationState(env)?.receipt.state).toBe("cut_over");
 
     const previous = readPublicationState(env)?.credentials?.humanToken;
+    const previousRecoverySecret = readPublicationState(env)?.credentials?.recoverySecret;
     const recoveryLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await runCliEntry(["publish-recover", "--rehearsal-code", REHEARSAL_CODE, "--json"])).toBe(0);
     recoveryLog.mockRestore();
     expect(readPublicationState(env)?.credentials?.humanToken).not.toBe(previous);
+    expect(readPublicationState(env)?.credentials?.recoverySecret).not.toBe(previousRecoverySecret);
+    expect(readPublicationState(env)?.pendingRecovery).toBeUndefined();
+
+    // Commit succeeds, but its HTTP response disappears. The private pending
+    // replacement lets the next invocation verify and finish without replaying
+    // the now invalid old recovery secret.
+    const fetchBeforeDrop = globalThis.fetch;
+    let dropped = false;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (...args) => {
+      const response = await fetchBeforeDrop(...args);
+      if (!dropped && String(args[0]).endsWith("/v1/publication/recover")) {
+        dropped = true;
+        throw new Error("simulated lost recovery response");
+      }
+      return response;
+    });
+    const recoveryError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(await runCliEntry(["publish-recover", "--rehearsal-code", REHEARSAL_CODE, "--json"])).toBe(1);
+    recoveryError.mockRestore();
+    fetchSpy.mockRestore();
+    expect(dropped).toBe(true);
+    const pending = readPublicationState(env)?.pendingRecovery;
+    expect(pending).toBeDefined();
+    const resumeLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await runCliEntry(["publish-recover", "--rehearsal-code", REHEARSAL_CODE, "--json"])).toBe(0);
+    resumeLog.mockRestore();
+    expect(readPublicationState(env)?.pendingRecovery).toBeUndefined();
+    expect(readPublicationState(env)?.credentials?.humanToken).toBe(pending?.humanToken);
+    expect(readPublicationState(env)?.credentials?.recoverySecret).toBe(pending?.recoverySecret);
     const statusAfterRecovery = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await runCliEntry(["status", "--output", "json"])).toBe(0);
     statusAfterRecovery.mockRestore();

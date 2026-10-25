@@ -8,6 +8,7 @@ import { hashToken } from "../../src/service/tokens.js";
 import { readWorkspaceSnapshot } from "../../src/publication/snapshot.js";
 import { createD1Store, migrateD1 } from "../../src/worker/d1-store.js";
 import { createD1WorkerHandler } from "../../src/worker/handler.js";
+import { prunePublicationAdmissionAttempts } from "../../src/worker/publication.js";
 import { sqliteD1 } from "../helpers/sqlite-d1.js";
 import { SHR, seedShrLocalWorkspace } from "../helpers/shr-001.js";
 
@@ -125,20 +126,71 @@ describe("SHR-001 hosted publication boundary", () => {
     expect((await call("/v1/publication/import", ownerToken, { requestId: "pub-request-1", digest: snapshot.digest, snapshot })).status).toBe(200);
 
     const wrong = await call("/v1/publication/recover", undefined, {
-      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: `cfr_${"0".repeat(32)}`, humanTokenHash: hashToken("replacement"),
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: `cfr_${"0".repeat(32)}`, humanTokenHash: hashToken("replacement"), newRecoveryHash: hashToken(`cfr_${"5".repeat(32)}`),
     });
     expect(wrong.status).toBe(403);
 
     const replacement = `cft_${"4".repeat(32)}`;
+    const nextRecovery = `cfr_${"5".repeat(32)}`;
     const recovered = await call("/v1/publication/recover", undefined, {
-      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: recovery, humanTokenHash: hashToken(replacement),
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: recovery, humanTokenHash: hashToken(replacement), newRecoveryHash: hashToken(nextRecovery),
     });
     expect(recovered.status).toBe(200);
+    expect((await call("/v1/publication/recover", undefined, {
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: recovery,
+      humanTokenHash: hashToken(`cft_${"6".repeat(32)}`), newRecoveryHash: hashToken(`cfr_${"6".repeat(32)}`),
+    })).status).toBe(403);
+    expect((await call("/v1/publication/recover", undefined, {
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: nextRecovery,
+      humanTokenHash: hashToken(`cft_${"7".repeat(32)}`), newRecoveryHash: hashToken(`cfr_${"7".repeat(32)}`),
+    })).status).toBe(200);
     expect((await actorCall(ownerToken, "whoami")).status).toBe(401);
-    expect((await actorCall(replacement, "whoami")).body.result.actor.actorId).toBe(SHR.humanId);
-    expect((await actorCall(replacement, "get_workspace", { workspaceId: SHR.workspaceId })).status).toBe(200);
+    expect((await actorCall(replacement, "whoami")).status).toBe(401);
+    const secondReplacement = `cft_${"7".repeat(32)}`;
+    expect((await actorCall(secondReplacement, "whoami")).body.result.actor.actorId).toBe(SHR.humanId);
+    expect((await actorCall(secondReplacement, "get_workspace", { workspaceId: SHR.workspaceId })).status).toBe(200);
     // Agent credentials are not rotated by human recovery.
     expect((await actorCall(agentToken, "whoami")).body.result.actor.actorId).toBe(SHR.agentId);
+  });
+
+  it("bounds recovery attempts independently of publication admission", async () => {
+    const { call } = await setup();
+    expect((await call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(200);
+    const body = {
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: `cfr_${"0".repeat(32)}`,
+      humanTokenHash: hashToken(`cft_${"8".repeat(32)}`), newRecoveryHash: hashToken(`cfr_${"8".repeat(32)}`),
+    };
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      expect((await call("/v1/publication/recover", undefined, body)).status).toBe(403);
+    }
+    expect((await call("/v1/publication/recover", undefined, body)).status).toBe(429);
+  });
+
+  it("prunes admission and recovery source counters after seven days", async () => {
+    const { adapter, call } = await setup(undefined, `cfrh_${"0".repeat(48)}`);
+    expect((await call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(403);
+    await adapter.binding.prepare(
+      "INSERT INTO publication_admission_attempts (source_hash, window_start, attempts, updated_at) VALUES (?, ?, 1, ?)",
+    ).bind("old-source", "2026-10-15T00:00:00.000Z", "2026-10-15T00:00:00.000Z").run();
+    await prunePublicationAdmissionAttempts(adapter.binding, NOW);
+    const rows = await adapter.binding.prepare("SELECT source_hash FROM publication_admission_attempts ORDER BY source_hash").all<{ source_hash: string }>();
+    expect(rows.results).toHaveLength(1);
+    expect(rows.results[0]?.source_hash).not.toBe("old-source");
+  });
+
+  it("fences simultaneous recovery requests using the same old secret", async () => {
+    const { call, actorCall } = await setup();
+    expect((await call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(200);
+    const tokens = [`cft_${"9".repeat(32)}`, `cft_${"a".repeat(32)}`];
+    const requests = tokens.map((token, index) => call("/v1/publication/recover", undefined, {
+      requestId: "pub-request-1", humanId: SHR.humanId, recoverySecret: recovery,
+      humanTokenHash: hashToken(token), newRecoveryHash: hashToken(`cfr_${String(index + 6).repeat(32)}`),
+    }));
+    const results = await Promise.all(requests);
+    expect(results.map((result) => result.status).sort()).toEqual([200, 403]);
+    const winner = results.findIndex((result) => result.status === 200);
+    expect((await actorCall(tokens[winner]!, "whoami")).status).toBe(200);
+    expect((await actorCall(tokens[1 - winner]!, "whoami")).status).toBe(401);
   });
 
   it("enrolls a fresh owner, imports one complete graph, and keeps tenants isolated", async () => {

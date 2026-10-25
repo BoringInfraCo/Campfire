@@ -135,7 +135,20 @@ export function readPublicationState(env: NodeJS.ProcessEnv = process.env): Publ
       ...(rehearsalCode === undefined ? {} : { rehearsalCode }),
     };
   }
-  return { version: 1, receipt, ...(credentials === undefined ? {} : { credentials }) };
+  let pendingRecovery: PublicationStateFile["pendingRecovery"];
+  if (file.pendingRecovery !== undefined) {
+    if (credentials === undefined || typeof file.pendingRecovery !== "object" || file.pendingRecovery === null) {
+      throw new ValidationError("Pending publication recovery is invalid", { field: "publication.pendingRecovery" });
+    }
+    const pending = file.pendingRecovery as Record<string, unknown>;
+    if (typeof pending.humanToken !== "string" || !/^cft_[a-f0-9]{32}$/.test(pending.humanToken) ||
+        typeof pending.recoverySecret !== "string" || !/^cfr_[a-f0-9]{32}$/.test(pending.recoverySecret)) {
+      throw new ValidationError("Pending publication recovery is invalid", { field: "publication.pendingRecovery" });
+    }
+    pendingRecovery = { humanToken: pending.humanToken, recoverySecret: pending.recoverySecret };
+  }
+  return { version: 1, receipt, ...(credentials === undefined ? {} : { credentials }),
+    ...(pendingRecovery === undefined ? {} : { pendingRecovery }) };
 }
 
 export function savePublicationState(state: PublicationStateFile, env: NodeJS.ProcessEnv = process.env): string {
@@ -164,6 +177,7 @@ export function updatePublicationReceipt(receipt: PublicationReceipt, env: NodeJ
     version: 1,
     receipt,
     ...(existing?.credentials === undefined ? {} : { credentials: existing.credentials }),
+    ...(existing?.pendingRecovery === undefined ? {} : { pendingRecovery: existing.pendingRecovery }),
   };
   savePublicationState(state, env);
   return state;

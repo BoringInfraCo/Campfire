@@ -8,7 +8,7 @@
  * `CampfireStore` (AGENTS.md invariant 7).
  */
 import type { ActorContext, Authorizer } from "./authorization.js";
-import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildOwnedAgentPlan, invitationView, normalizeEnrollOwnedAgentInput, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
+import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentDeclineReceipt, type EnrollmentInvitation, type EnrollmentInvitationPreview, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import { assembleWorkspaceContext } from "./context-assembly.js";
 import { createCorrectionActions } from "./correction-actions.js";
@@ -191,6 +191,43 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
     }
     return invitation;
+  }
+
+  function enrollmentOwnerStillValid(invitation: EnrollmentInvitation): boolean {
+    const workspace = store.getWorkspace(invitation.workspaceId);
+    const issuer = store.getHuman(invitation.issuedByHumanId);
+    const participant = store.getParticipant(invitation.workspaceId, { actorId: invitation.issuedByHumanId, actorType: "human" });
+    return workspace?.status === "active" && workspace.teamId === invitation.teamId && issuer?.teamId === invitation.teamId && participant?.role === "owner";
+  }
+
+  function loadInvitationCapability(secret: string, rawInput: unknown): { invitation: EnrollmentInvitation; secretHash: string } {
+    const input = normalizeEnrollmentCapabilityLookup(rawInput);
+    if (typeof secret !== "string" || !/^cfe_[a-f0-9]{32}$/.test(secret)) {
+      throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+    }
+    const secretHash = hashToken(secret);
+    const invitation = store.getEnrollmentInvitationByHash(secretHash);
+    const workspace = invitation === undefined ? undefined : store.getWorkspace(invitation.workspaceId);
+    const issuer = invitation === undefined ? undefined : store.getHuman(invitation.issuedByHumanId);
+    if (invitation === undefined || invitation.id !== input.invitationId || workspace === undefined || issuer === undefined || workspace.name.trim().length === 0 || issuer.displayName.trim().length === 0) {
+      throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+    }
+    return { invitation, secretHash };
+  }
+
+  function describeInvitation(invitation: EnrollmentInvitation): EnrollmentInvitationPreview {
+    const workspace = store.getWorkspace(invitation.workspaceId);
+    const issuer = store.getHuman(invitation.issuedByHumanId);
+    if (workspace === undefined || issuer === undefined) {
+      throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+    }
+    return buildEnrollmentPreview({
+      invitation,
+      workspaceName: workspace.name,
+      inviterName: issuer.displayName,
+      now: clock(),
+      ownerStillValid: enrollmentOwnerStillValid(invitation),
+    });
   }
 
   function replayEnrollment(invitation: EnrollmentInvitation, input: ReturnType<typeof normalizeRedeemEnrollmentInput>, digest: string): EnrollmentReceipt {
@@ -848,6 +885,48 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: input.workspaceId, actor: ctx.actor, action: "update", objectType: "enrollment_invitation", objectId: invitation.id, payload: { revokedAt: now }, createdAt: now };
       if (!store.revokeEnrollmentInvitation({ invitationId: invitation.id, workspaceId: input.workspaceId, actor: ctx.actor, revokedAt: now, contribution })) throw new Unauthorized("Workspace owner authority changed before invitation revocation", { recoveryCode: "owner_required" });
       return revocationReceipt({ ...invitation, revokedAt: now });
+    },
+
+    previewEnrollment(secret, rawInput) {
+      const loaded = loadInvitationCapability(secret, rawInput);
+      return describeInvitation(loaded.invitation);
+    },
+
+    declineEnrollment(secret, rawInput): EnrollmentDeclineReceipt {
+      const loaded = loadInvitationCapability(secret, rawInput);
+      const status = invitationPreviewStatus(loaded.invitation, clock(), enrollmentOwnerStillValid(loaded.invitation));
+      if (status === "consumed") return declineReceipt(loaded.invitation, "already_used");
+      if (status === "expired") return declineReceipt(loaded.invitation, "expired");
+      if (status === "revoked") return declineReceipt(loaded.invitation, "already_revoked");
+      if (status === "unavailable") return declineReceipt(loaded.invitation, "unavailable");
+      const now = clock();
+      const contribution: Omit<Contribution, "appendPosition"> = {
+        id: idSource("contribution"),
+        workspaceId: loaded.invitation.workspaceId,
+        actor: { actorId: loaded.invitation.issuedByHumanId, actorType: "human" },
+        action: "update",
+        objectType: "enrollment_invitation",
+        objectId: loaded.invitation.id,
+        payload: { recipientDeclined: true, membershipCreated: false, authority: "invitation_capability" },
+        createdAt: now,
+      };
+      const claimed = store.declineEnrollmentInvitation({
+        invitationId: loaded.invitation.id,
+        workspaceId: loaded.invitation.workspaceId,
+        secretHash: loaded.secretHash,
+        declinedAt: now,
+        issuedByHumanId: loaded.invitation.issuedByHumanId,
+        teamId: loaded.invitation.teamId,
+        contribution,
+      });
+      if (claimed) return declineReceipt(loaded.invitation, "declined", now);
+      const current = store.getEnrollmentInvitation(loaded.invitation.id);
+      if (current === undefined) throw new Unauthorized("Invalid enrollment invitation", { recoveryCode: "invalid_enrollment_invitation" });
+      const after = invitationPreviewStatus(current, clock(), enrollmentOwnerStillValid(current));
+      if (after === "consumed") return declineReceipt(current, "already_used");
+      if (after === "expired") return declineReceipt(current, "expired");
+      if (after === "revoked") return declineReceipt(current, "already_revoked");
+      return declineReceipt(current, "unavailable");
     },
 
     redeemEnrollment(secret, rawInput) {

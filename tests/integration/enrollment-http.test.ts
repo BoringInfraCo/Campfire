@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { createRuntimeFromPath } from "../../src/runtime.js";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
 import { startCampfireHttpServer } from "../../src/http/server.js";
-import { campfireHttpCall, campfireHttpRedeemEnrollment } from "../../src/http/client.js";
+import { campfireHttpCall, campfireHttpDeclineEnrollment, campfireHttpPreviewEnrollment, campfireHttpRedeemEnrollment } from "../../src/http/client.js";
 import { hashToken } from "../../src/service/tokens.js";
 const cleanup: Array<() => void | Promise<void>> = [];
 afterEach(async () => { for (const close of cleanup.reverse()) await close(); cleanup.length = 0; });
@@ -24,6 +24,29 @@ it("keeps redemption separate from actor calls and returns stable credentials on
   await expect(campfireHttpRedeemEnrollment({baseUrl:server.url,secret:invitation.secret,input:{...input,role:"owner"} as any})).rejects.toMatchObject({code:"ValidationError"});
   const viewer = await fetch(`${server.url}/v1/call`, {method:"POST",headers:{authorization:`Bearer ${invitation.secret}`,"content-type":"application/json"},body:JSON.stringify({method:"redeem_enrollment",params:input})});
   expect(viewer.status).toBe(400);
+});
+
+it("previews from the capability header and does not echo a link secret on the landing page", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "enrollment-preview-"));
+  const runtime = createRuntimeFromPath(join(dir, "state.db"));
+  seedFixture(runtime.store);
+  const server = await startCampfireHttpServer({ runtime, port: 0 });
+  cleanup.push(() => rmSync(dir, { recursive: true, force: true }), () => runtime.close(), () => server.close());
+  const invitation = await campfireHttpCall<any>({ baseUrl: server.url, token: FIXTURE.tokens.sergio, method: "issue_enrollment_invitation", params: { workspaceId: FIXTURE.workspaces.billing } });
+  const humans = runtime.store.countHumans();
+  const preview = await campfireHttpPreviewEnrollment({ baseUrl: server.url, secret: invitation.secret, invitationId: invitation.invitationId });
+  expect(preview.status).toBe("pending");
+  expect(preview.inviter.name).toBe("Sergio");
+  expect(runtime.store.countHumans()).toBe(humans);
+  const page = await fetch(`${server.url}/campfire/join?secret=${invitation.secret}`);
+  const html = await page.text();
+  expect(page.status).toBe(200);
+  expect(html).not.toContain(invitation.secret);
+  expect(html).not.toContain(invitation.invitationId);
+  expect(html).toContain("does not create a membership");
+  const declined = await campfireHttpDeclineEnrollment({ baseUrl: server.url, secret: invitation.secret, invitationId: invitation.invitationId });
+  expect(declined).toMatchObject({ outcome: "declined", membershipCreated: false });
+  expect(runtime.store.countHumans()).toBe(humans);
 });
 
 it("finishes the recipient profile and two-agent continuity without a local database", async () => {

@@ -114,9 +114,14 @@ function hourBucket(at: string): string {
   return new Date(Math.floor(ms / 3_600_000) * 3_600_000).toISOString();
 }
 
-async function recordAdmissionAttempt(options: PublicationWorkerOptions, source: string, at: string): Promise<void> {
+/** Keep admission and recovery source counters for a bounded incident window. */
+export async function prunePublicationAdmissionAttempts(db: D1Database, at: string): Promise<void> {
+  const cutoff = new Date(Date.parse(at) - 7 * 24 * 3_600_000).toISOString();
+  await db.prepare("DELETE FROM publication_admission_attempts WHERE window_start < ?").bind(cutoff).run();
+}
+
+async function recordAdmissionAttempt(options: PublicationWorkerOptions, source: string, at: string, limit = options.maxAdmissionAttemptsPerHour ?? 30): Promise<void> {
   const windowStart = hourBucket(at);
-  const limit = options.maxAdmissionAttemptsPerHour ?? 30;
   const row = await options.db.prepare(
     `INSERT INTO publication_admission_attempts (source_hash, window_start, attempts, updated_at)
      VALUES (?, ?, 1, ?)
@@ -551,6 +556,14 @@ export async function handlePublicationRecover(
   const at = now(options);
   const denied = await assertRehearsalAdmission(options, request, at);
   if (denied !== undefined) return denied;
+  // The admission code is shared by an invited cohort, so recovery needs its
+  // own source budget even when the code is correct. Never store the secret.
+  try {
+    await recordAdmissionAttempt(options, await hashTokenWeb(`publication-recovery:${request.headers.get("cf-connecting-ip") ?? "unattributed"}`), at, 10);
+  } catch (error) {
+    if (error instanceof CampfireError) return fail(statusFor(error), error.code, error.message, error.details);
+    return fail(500, "InternalError", "Publication recovery budget could not be checked");
+  }
   const body = await readJson(request, PUBLICATION_LIMITS.maxImportBytes);
   if (!body.ok) return body.response;
   let input;
@@ -561,12 +574,23 @@ export async function handlePublicationRecover(
     if (row === undefined) throw new Unauthorized("Publication enrollment was not found for this recovery request");
     const recoveryHash = await hashTokenWeb(input.recoverySecret);
     if (recoveryHash !== row.recovery_hash) throw new Unauthorized("Recovery proof did not match");
+    if (input.newRecoveryHash === recoveryHash) throw new ValidationError("Recovery secret must rotate", { field: "newRecoveryHash" });
+    // Fence the conditional token writes to this exact recovery attempt. A
+    // concurrent replay of the old secret cannot revoke the newly issued token.
+    const recoveryNonce = crypto.randomUUID();
     const statements = [
-      options.db.prepare("UPDATE actor_tokens SET revoked_at = ? WHERE actor_id = ? AND actor_type = 'human' AND revoked_at IS NULL").bind(at, input.humanId),
-      options.db.prepare("INSERT INTO actor_tokens (id, actor_id, actor_type, token_hash, created_at, revoked_at) VALUES (?, ?, 'human', ?, ?, NULL)").bind(id(options, "token"), input.humanId, input.humanTokenHash, at),
-      options.db.prepare("UPDATE publication_enrollments SET human_token_hash = ? WHERE request_id = ?").bind(input.humanTokenHash, input.requestId),
+      options.db.prepare("UPDATE publication_enrollments SET human_token_hash = ?, recovery_hash = ?, claim_nonce = ? WHERE request_id = ? AND human_id = ? AND recovery_hash = ?")
+        .bind(input.humanTokenHash, input.newRecoveryHash, recoveryNonce, input.requestId, input.humanId, recoveryHash),
+      options.db.prepare("UPDATE actor_tokens SET revoked_at = ? WHERE actor_id = ? AND actor_type = 'human' AND revoked_at IS NULL AND EXISTS (SELECT 1 FROM publication_enrollments WHERE request_id = ? AND claim_nonce = ?)")
+        .bind(at, input.humanId, input.requestId, recoveryNonce),
+      options.db.prepare("INSERT INTO actor_tokens (id, actor_id, actor_type, token_hash, created_at, revoked_at) SELECT ?, ?, 'human', ?, ?, NULL WHERE EXISTS (SELECT 1 FROM publication_enrollments WHERE request_id = ? AND claim_nonce = ?)")
+        .bind(id(options, "token"), input.humanId, input.humanTokenHash, at, input.requestId, recoveryNonce),
     ];
     await options.db.batch(statements);
+    const changed = await first<Row>(options.db, "SELECT claim_nonce FROM publication_enrollments WHERE request_id = ? AND human_id = ?", input.requestId, input.humanId);
+    if (changed?.claim_nonce !== recoveryNonce) {
+      throw new Unauthorized("Recovery proof was already rotated");
+    }
     return json(200, { ok: true, result: { version: 1, kind: "workspace_publication_recovery", requestId: input.requestId, humanId: input.humanId, recoveredAt: at } });
   } catch (error) {
     if (error instanceof CampfireError) return fail(statusFor(error), error.code, error.message, error.details);

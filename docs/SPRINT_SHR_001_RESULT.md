@@ -2,9 +2,35 @@
 
 **Date:** October 24, 2026 (repair amendment)  
 **Contract:** `docs/Campfire-v1.26.2-SHR-001-Publish-and-Share.md`  
-**Verdict:** **CONDITIONAL GO — repaired engineering candidate; two-Mac acceptance pending**  
+**Verdict at candidate preparation:** **CONDITIONAL GO — repaired engineering candidate; two-Mac acceptance pending**
+
 **Candidate:** `1.26.2` unreleased archive; no public tag, GitHub Release, channel update, or production deployment  
-**Two-Mac acceptance:** **NOT OBSERVED**
+**Two-Mac acceptance at candidate preparation:** **NOT OBSERVED**
+
+**October 24 post-candidate addendum:** The installed link-and-consent candidate
+was deployed to the isolated rehearsal Worker. The operator then ran a physical
+MacBook → hosted Arbora → iMac → fresh MacBook trace. The iMac OpenCode agent
+read original finding `find_5cd543722a044c20`, created task
+`task_3795d9d37d3842e9` as contribution `con_09640a17b9b14ea7`, and read it
+back. A fresh MacBook Codex session independently read the same task and its
+agent/session/contribution provenance from hosted workspace
+`ws_df6794f33efc459b`. See the dated addendum in
+`docs/evidence/shr-001/rehearsal/README.md`. The matrix and disposition below
+are the earlier candidate decision; they are retained as a historical snapshot.
+The operator reports the two-Mac handoff passed, while no machine-level offline
+interval capture is attached. The public release and controlled-alpha operating
+review remain open, including the absent invitation rate-limiter binding on the
+rehearsal Worker at the time of that trace.
+
+**October 24 operating follow-up:** A dedicated invitation binding is now
+deployed on the isolated rehearsal Worker and its live 429 behavior was
+observed. The missing-binding case now fails closed for deployed enrollment
+routes. A D1 export restored into temporary local SQLite preserved the Arbora
+finding and iMac task. These close the specific missing-binding gate and provide
+a limited export drill; they do not approve production promotion. The branded
+`https://boringinfra.company/campfire/join` route is still 404 on the older
+production Worker, migration `0010` is pending there, and the remaining CLO-001
+operating gates are listed in `docs/RELEASE_V1_26_2_READINESS_REVIEW.md`.
 
 ## 1. What was implemented
 

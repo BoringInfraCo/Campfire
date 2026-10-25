@@ -151,10 +151,11 @@ that past sessions are not imported. It does not register an agent session
 and does not provision Cloudflare. The agent creates the workspace and goal
 when work starts. A second workspace is a normal `create_workspace`.
 
-To join an existing teammate's work instead, do not run a local first run: use
-`campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`
-on a fresh or isolated profile before any local profile exists, then continue
-with "Enroll a new teammate into existing work" below.
+To join an existing teammate's work instead, do not run a local first run. Paste
+the owner's invitation link on a fresh or isolated profile before any local
+profile exists:
+`campfire join --invitation-link <link>`, then `--accept` or `--decline`.
+Continue with "Enroll a new teammate into existing work" below.
 
 Once a workspace exists, `campfire status` prints the live, authorized
 overview: goal, work counts, decisions, participants, attention, and the
@@ -225,6 +226,16 @@ deployed with D1 migration `0010_workspace_publication.sql`. Enrollment is
 closed unless the deployment sets `CAMPFIRE_PUBLICATION_ALPHA=1`; this is a
 private alpha, not public signup. Keep it off until the abuse and cost review is
 recorded. Optionally set `CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY` (default 5).
+
+For the admitted production alpha, the canonical API base must be
+`https://boringinfra.company/campfire`. Publishing to that base makes owner
+invitation links start with `https://boringinfra.company/campfire/join#v1.…`.
+The live route, production schema, and workspace data must be verified before
+giving out such links; editing an isolated-rehearsal link's host does not move
+its invitation. The deployed Worker requires `INVITATION_RATE_LIMITER` for
+preview, decline, and redeem. Missing or failed protection returns 503, and
+the configured short-window source budget is an abuse guard, not a hard account
+quota. See `RELEASE_V1_26_2_READINESS_REVIEW.md` for the current HOLD gates.
 
 For the MacBook rehearsal, pin the Arbora profile for every Campfire command and
 harness process. The default `~/.config/campfire` profile is a stale Ada profile
@@ -298,25 +309,34 @@ localhost URL. A path prefix such as `/campfire` is supported.
 An authenticated human owner of the active workspace runs:
 
 ```bash
-campfire invite-teammate <workspaceId> --out ./alice.invitation.json
-# Optional expiry override, from 1 through 168 hours:
-campfire invite-teammate <workspaceId> --out ./bob.invitation.json --expires-in-hours 48
+campfire invite-teammate <workspaceId>
+# Optional expiry override, from 1 through 168 hours, and an optional compatibility file:
+campfire invite-teammate <workspaceId> --expires-in-hours 48 --out ./bob.invitation.json
 ```
 
-The file is written with mode 0600, never silently replaces an existing file,
-and contains an expiring enrollment secret. Transfer it through a private
-channel of your choice. Campfire sends no message or email. Possession grants
-one new-person enrollment; a display name is not verified email/account identity.
-The receipt reports safe metadata, not the secret, in both human and JSON output.
+The owner receives one private link. Its capability is in the fragment
+(`#v1....`), so opening the link in a browser does not send that capability to
+Campfire, and `campfire status` does not print it. The raw secret is not a
+separate field in the receipt. `--out` still writes a mode-0600 compatibility
+file and never silently replaces an existing file. Campfire sends no message
+or email. Possession of the link grants one preview and, only after an explicit
+accept, one new-person enrollment. A display name is not verified identity.
+An invitation id alone is refused and is never passed to local `join_workspace`.
 
 On the teammate's machine, using a fresh or isolated Campfire profile that
 has not run a local first run:
 
 ```bash
-campfire join --invitation-file ./alice.invitation.json \
-  --human-name "Alice" --harness opencode
+campfire join --invitation-link '<link>'
+campfire join --invitation-link '<link>' --accept --human-name "Alice" --harness opencode
+campfire join --invitation-link '<link>' --decline
 campfire up
 ```
+
+Preview shows the workspace name and inviter and writes nothing. Accept enrolls
+the recipient's own human and agent identities and opens the hosted workspace.
+Decline revokes an unused link and creates no membership. The compatibility
+file path remains `campfire join --invitation-file ./alice.invitation.json`.
 
 To select both validated harnesses, repeat `--harness codex --harness opencode`.
 The endpoint and workspace come from the invitation. Do not pass a workspace,

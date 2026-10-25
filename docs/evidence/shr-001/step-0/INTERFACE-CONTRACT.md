@@ -55,15 +55,35 @@ already remote. It does not reimport the workspace and never prints a token.
 
 ### Existing commands
 
-- `campfire invite-teammate` is unchanged in purpose. It requires a reachable
-  hosted endpoint and an owner credential. A local-only profile now fails with
-  `nextAction: publish_workspace`; supplying a URL does not publish anything.
-- `campfire join --invitation-file ...` is unchanged and is the recipient path.
+- `campfire invite-teammate` requires a reachable hosted endpoint and an owner
+  credential. A local-only profile fails with `nextAction: publish_workspace`;
+  supplying a URL does not publish anything. The owner receives one private
+  link. The capability is in the URL fragment. `--out` remains a compatibility
+  file and is not the recipient path.
+- `campfire join --invitation-link <link>` previews the workspace and inviter.
+  `--accept` enrolls the recipient's own human and agent identities and opens
+  the hosted workspace. `--decline` creates no membership. An invitation id is
+  rejected and is never sent to local `join_workspace`.
+- `campfire join --invitation-file ...` remains the compatibility recipient path.
 - `campfire connect --harness ...` is the supported harness rebinding path.
 
 ## 2. Hosted routes
 
 All routes accept an optional `/campfire` prefix on the production zone.
+
+### Invitation link
+
+`GET <endpoint>/join` returns a static page. On the production zone that address
+is `https://boringinfra.company/campfire/join`; on an origin-root Worker it is
+`https://<worker>/join`. The Worker also accepts one `/campfire` prefix, and it
+does not add a second one. The fragment is not sent, is not
+logged, and is not reflected. `POST /v1/enrollment/preview` and
+`POST /v1/enrollment/decline` take `Authorization: Bearer <invitation capability>`
+and a body of `{ "invitationId": "ein_..." }` only. Preview writes nothing.
+Decline of a pending link revokes it and inserts no human, agent, token, or
+participant. A consumed link stays enrolled; decline does not remove that
+membership. Redeem remains `POST /v1/enrollment/redeem` and is reached only
+after an explicit accept.
 
 ### Rehearsal admission gate
 

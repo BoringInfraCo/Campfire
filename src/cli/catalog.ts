@@ -156,12 +156,14 @@ const READ = { mutates: false } as const;
 const WRITE = { mutates: true } as const;
 
 export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
-  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation for a new teammate.", "campfire invite-teammate <workspaceId> --out <private-file> --url <https-endpoint> [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "revoke-invitation"], notes: [
+  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation link for a new teammate.", "campfire invite-teammate <workspaceId> [--out <private-file>] [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "revoke-invitation"], notes: [
     "Owner-only: authorizes one new human to join an already reachable workspace with bounded agent identities.",
     "Supplying a public URL does not publish a local workspace. Run campfire publish from the local owner profile first.",
-    "The written file holds a credential. Anyone who holds it can claim that enrollment.",
+    "The owner receives one private link. Its capability is in the URL fragment and is not printed by campfire status.",
+    "The recipient previews the workspace and inviter, then explicitly accepts or declines. Decline creates no membership.",
+    "--out writes the same capability to a mode-0600 file for compatibility. The file is not required.",
     "A display name is not a verified email or an account identity.",
-    "Transfer the file yourself over a channel you choose. Campfire sends no message and hosts no share URL.",
+    "Campfire sends no message. Share the link yourself. An invitation id alone is not enough to join.",
     "--allow-loopback is same-machine-only: it is for isolated developer tests, never for another machine.",
   ] }),
   publish: spec(
@@ -990,13 +992,24 @@ export function formatCommandUsage(command: CliCommand): string {
   return lines.join("\n");
 }
 
+function invitationJoinRequested(flags: Record<string, string | boolean>, positionals: readonly string[]): boolean {
+  return flags["invitation-file"] !== undefined || flags["invitation-link"] !== undefined || positionals.some((value) => value.includes("/join#") || value.includes("/campfire/join") || value.includes("#v1.") || /^ein_[A-Za-z0-9_.-]+$/.test(value) || /^cfe_[a-f0-9]{32}$/.test(value));
+}
+
 /** Variants preserve the legacy JSON-only join contract. */
-export function commandSpecForArgs(name: CliCommand, flags: Record<string, string | boolean>): CliCommandSpec {
+export function commandSpecForArgs(name: CliCommand, flags: Record<string, string | boolean>, positionals: readonly string[] = []): CliCommandSpec {
   const base = commandSpec(name);
-  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Join existing work as a new teammate and prepare configs for selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Compatibility: join from a private invitation file and prepare configs for selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  if (name === "join" && invitationJoinRequested(flags, positionals)) {
+    const consent = flags.accept === true || flags.decline === true;
+    return { ...base, group: "start", mutates: consent, usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline]", description: consent ? "Accept or decline a private invitation link." : "Preview a private invitation link before accepting or declining.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  }
   if (name === "connect" && flags.enroll === true) return { ...base, mutates: true, usage: "campfire connect --harness codex|opencode --enroll", description: "Enroll an additional recipient-owned harness and connect it." };
   return base;
 }
 
-CLI_CATALOG.join = { ...CLI_CATALOG.join, variants: [{ selector: "--invitation-file", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", mutates: true, outputModes: DUAL }] };
+CLI_CATALOG.join = { ...CLI_CATALOG.join, variants: [
+  { selector: "--invitation-link", usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline]", mutates: true, outputModes: DUAL },
+  { selector: "--invitation-file", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", mutates: true, outputModes: DUAL },
+] };
 CLI_CATALOG.connect = { ...CLI_CATALOG.connect, variants: [{ selector: "--enroll", usage: "campfire connect --harness codex|opencode --enroll", mutates: true, outputModes: DUAL }] };

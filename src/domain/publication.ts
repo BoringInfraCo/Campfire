@@ -359,6 +359,7 @@ export interface PublicationRecoveryInput {
   humanId: string;
   recoverySecret: string;
   humanTokenHash: string;
+  newRecoveryHash: string;
 }
 
 export interface PublicationRecoveryReceipt {
@@ -403,6 +404,8 @@ export interface PublicationStateFile {
     /** Operator-held rehearsal capability. Never printed in a receipt. */
     rehearsalCode?: string;
   };
+  /** Saved before the recovery request so a lost response cannot strand the owner. */
+  pendingRecovery?: { humanToken: string; recoverySecret: string };
 }
 
 const ID_RE = /^[a-zA-Z0-9_.-]{1,128}$/;
@@ -1121,16 +1124,18 @@ export function validateEnrollmentInput(value: unknown): PublicationEnrollmentIn
 }
 
 export function validateRecoveryInput(value: unknown): PublicationRecoveryInput {
-  const input = exact(value, ["requestId", "humanId", "recoverySecret", "humanTokenHash"], "recovery");
+  const input = exact(value, ["requestId", "humanId", "recoverySecret", "humanTokenHash", "newRecoveryHash"], "recovery");
   if (typeof input.recoverySecret !== "string" || !/^cfr_[a-f0-9]{32}$/.test(input.recoverySecret)) {
     fail("Invalid recovery secret", "recoverySecret");
   }
   if (!hasValidTokenHash(input.humanTokenHash)) fail("Invalid human token hash", "humanTokenHash");
+  if (!hasValidTokenHash(input.newRecoveryHash)) fail("Invalid replacement recovery hash", "newRecoveryHash");
   return {
     requestId: identifier(input.requestId, "requestId"),
     humanId: identifier(input.humanId, "humanId"),
     recoverySecret: input.recoverySecret,
     humanTokenHash: input.humanTokenHash,
+    newRecoveryHash: input.newRecoveryHash,
   };
 }
 

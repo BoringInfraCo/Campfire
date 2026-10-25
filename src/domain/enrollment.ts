@@ -59,6 +59,38 @@ export interface EnrollmentRevocationReceipt {
   revokedAt: string;
   revokedAuthority: "unclaimed_enrollment" | "consumed_receipt_replay";
 }
+export const ENROLLMENT_PREVIEW_STATUSES = ["pending", "expired", "revoked", "consumed", "unavailable"] as const;
+export type EnrollmentPreviewStatus = (typeof ENROLLMENT_PREVIEW_STATUSES)[number];
+/** Safe recipient view. It never includes a secret, hash, digest, token, or receipt. */
+export interface EnrollmentInvitationPreview {
+  version: 1;
+  kind: "enrollment_invitation_preview";
+  invitationId: string;
+  workspace: { id: string; name: string; teamId: string };
+  inviter: { id: string; name: string };
+  expiresAt: string;
+  permittedHarnesses: EnrollmentHarness[];
+  status: EnrollmentPreviewStatus;
+}
+export interface EnrollmentDeclineReceipt {
+  version: 1;
+  kind: "enrollment_invitation_decline";
+  invitationId: string;
+  workspaceId: string;
+  outcome: "declined" | "already_revoked" | "expired" | "already_used" | "unavailable";
+  membershipCreated: false;
+  declinedAt?: string;
+}
+/** Recipient decline. The secret hash authorizes the write; no membership rows are inserted. */
+export interface DeclineEnrollmentInvitationPlan {
+  invitationId: string;
+  workspaceId: string;
+  secretHash: string;
+  declinedAt: string;
+  issuedByHumanId: string;
+  teamId: string;
+  contribution: NewContribution;
+}
 export function revocationReceipt(invitation: EnrollmentInvitation): EnrollmentRevocationReceipt {
   return {
     version: 1,
@@ -170,6 +202,51 @@ export function normalizeIssueEnrollmentInput(value: unknown): Required<IssueEnr
 export function normalizeInvitationLookup(value: unknown): RevokeEnrollmentInvitationInput {
   const input = object(value, ["workspaceId", "invitationId"], "invitation lookup");
   return { workspaceId: identifier(input.workspaceId, "workspaceId"), invitationId: identifier(input.invitationId, "invitationId") };
+}
+/** Body for preview and decline. The capability travels in the Authorization header, never in this object. */
+export function normalizeEnrollmentCapabilityLookup(value: unknown): { invitationId: string } {
+  const input = object(value, ["invitationId"], "invitation capability");
+  return { invitationId: identifier(input.invitationId, "invitationId") };
+}
+export function invitationPreviewStatus(invitation: EnrollmentInvitation, now: string, ownerStillValid: boolean): EnrollmentPreviewStatus {
+  if (invitation.consumedAt !== undefined) return "consumed";
+  if (invitation.revokedAt !== undefined) return "revoked";
+  if (invitation.expiresAt <= now) return "expired";
+  if (!ownerStillValid) return "unavailable";
+  return "pending";
+}
+export function buildEnrollmentPreview(input: {
+  invitation: EnrollmentInvitation;
+  workspaceName: string;
+  inviterName: string;
+  now: string;
+  ownerStillValid: boolean;
+}): EnrollmentInvitationPreview {
+  return {
+    version: 1,
+    kind: "enrollment_invitation_preview",
+    invitationId: input.invitation.id,
+    workspace: { id: input.invitation.workspaceId, name: input.workspaceName, teamId: input.invitation.teamId },
+    inviter: { id: input.invitation.issuedByHumanId, name: input.inviterName },
+    expiresAt: input.invitation.expiresAt,
+    permittedHarnesses: [...input.invitation.permittedHarnesses],
+    status: invitationPreviewStatus(input.invitation, input.now, input.ownerStillValid),
+  };
+}
+export function declineReceipt(
+  invitation: Pick<EnrollmentInvitation, "id" | "workspaceId">,
+  outcome: EnrollmentDeclineReceipt["outcome"],
+  declinedAt?: string,
+): EnrollmentDeclineReceipt {
+  return {
+    version: 1,
+    kind: "enrollment_invitation_decline",
+    invitationId: invitation.id,
+    workspaceId: invitation.workspaceId,
+    outcome,
+    membershipCreated: false,
+    ...(declinedAt === undefined ? {} : { declinedAt }),
+  };
 }
 export function normalizeRedeemEnrollmentInput(value: unknown): RedeemEnrollmentInput {
   const input = object(value, ["invitationId", "requestId", "humanName", "humanTokenHash", "agents"], "enrollment request");

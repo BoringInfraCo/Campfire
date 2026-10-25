@@ -57,11 +57,11 @@ load the Campfire tools. The agent in that session creates the workspace and
 goal. Past private sessions are not imported. This does not register an agent
 session and does not provision Cloudflare.
 
-Joining a teammate's existing work instead? Use the invitation path in
+Joining a teammate's existing work instead? Use the invitation link in
 [Join existing team work](#join-existing-team-work):
-`campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode`
+`campfire join --invitation-link <link>`
 on a fresh or isolated profile, before creating a local first-run profile
-here.
+here. Preview the workspace and inviter, then `--accept` or `--decline`.
 
 ```bash
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
@@ -168,26 +168,35 @@ supplying a URL does not publish anything.
 ## Join existing team work
 
 Use a published local workspace or an already provisioned, reachable Campfire
-instance. An authenticated human workspace owner creates a private invitation
-for one new teammate:
+instance. An authenticated human workspace owner creates one private invitation
+link:
 
 ```bash
-campfire invite-teammate <workspaceId> --out ./alice.invitation.json
+campfire invite-teammate <workspaceId>
 ```
 
-The owner transfers that file privately. It contains single-use enrollment
-authority for this workspace, expires after 24 hours by default, and contains
-neither the owner's credentials nor a copy of their work. Anyone holding the
-file can claim it; the recipient's display name is not verified identity.
+The command prints the link once. The capability is in the URL fragment, so it
+is not sent to the hosted service, written into access logs by that request, or
+repeated by `campfire status`. It expires after 24 hours by default, works
+once, and can be revoked while unused. It is not the owner's credential and it
+does not contain a copy of the workspace. An invitation id alone cannot join.
 
-On the recipient's machine, using a fresh or isolated Campfire profile that
-has not run a local first run:
+On the other computer, paste or open the full link in Campfire. Use a fresh or
+isolated profile that has not run a local first run. Preview shows the
+workspace and inviter and creates nothing:
 
 ```bash
-campfire join --invitation-file ./alice.invitation.json \
-  --human-name "Alice" --harness opencode
+campfire join --invitation-link '<link>'
+campfire join --invitation-link '<link>' --accept --human-name "Alice" --harness opencode
+campfire join --invitation-link '<link>' --decline
 campfire up
 ```
+
+Accept enrolls that recipient's own human and selected agent identities and
+opens the hosted workspace. Decline creates no membership or credential. A
+used, expired, or revoked link returns a clear result. `--out <private-file>`
+and `campfire join --invitation-file` remain a compatibility path; they do not
+replace the link.
 
 Select both supported harnesses by repeating `--harness codex --harness opencode`.
 Join stores the recipient's own credentials and prepares their MCP connections.
@@ -260,7 +269,7 @@ For the shell fallback, an agent can run `campfire capabilities --output json` t
 | `campfire accept-decision` / `retire-decision` | Accept a proposal, optionally with `--reason`. Retire a proposed or accepted decision with a required reason. Accepting a replacement supersedes its predecessor |
 | `campfire create-human` / `create-agent` / `issue-token` | Manage distinct human and agent identities |
 | `campfire invite` / `join` | Grant and accept invite-only workspace membership |
-| `campfire invite-teammate` / `join --invitation-file` | Owner authorizes one new human; recipient enrolls their own supported agents into existing shared work |
+| `campfire invite-teammate` / `join --invitation-link` | Owner shares one private link; recipient previews, then accepts or declines before any membership |
 | `campfire revoke-invitation` | Cancel enrollment authority without removing existing participants |
 | `campfire serve` / `view` | Host the HTTP API and the read-only team journal |
 | `campfire preflight <workspaceId>` | Validate hosted endpoint, token, identity, workspace access, and agent-session readiness without mutation |

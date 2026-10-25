@@ -1,4 +1,5 @@
 import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
+import { INVITATION_LANDING_HTML } from "../bootstrap/invitation-link.js";
 /**
  * Campfire HTTP adapter.
  *
@@ -361,6 +362,16 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
   async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = req.url ?? "/";
     const path = url.split("?")[0] ?? "/";
+    if (path === "/campfire/join" || path === "/join") {
+      if (req.method !== "GET" && req.method !== "HEAD") { fail(res, 405, "ValidationError", "GET required", {}); return; }
+      res.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+      });
+      res.end(req.method === "HEAD" ? undefined : INVITATION_LANDING_HTML);
+      return;
+    }
     if (path === "/v1/bridge") {
       await handleBridgeReport(req, res, options.runtime.store);
       return;
@@ -370,7 +381,7 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
       await handleGithubIngress(req, res, githubSourceId, options);
       return;
     }
-    if (path === "/v1/enrollment/redeem") {
+    if (path === "/v1/enrollment/redeem" || path === "/v1/enrollment/preview" || path === "/v1/enrollment/decline") {
       if (req.method !== "POST") { fail(res, 405, "ValidationError", "POST required", {}); return; }
       const secret = bearerToken(req);
       if (secret === undefined) { fail(res, 401, "Unauthorized", "Missing invitation capability", {}); return; }
@@ -378,13 +389,17 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
         const raw = await readBody(req);
         let input: unknown;
         try { input = JSON.parse(raw); } catch { throw new CampfireError("ValidationError", "Request body must be JSON"); }
-        const result = service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
+        const result = path === "/v1/enrollment/preview"
+          ? service.previewEnrollment(secret, input)
+          : path === "/v1/enrollment/decline"
+            ? service.declineEnrollment(secret, input)
+            : service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
         writeJson(res, 200, { ok: true, result });
       } catch (error) {
         if (error instanceof CampfireError) fail(res, statusFor(error.code, false), error.code, error.message, {}, error.details);
         else {
-          logInternalError("/v1/enrollment/redeem", error);
-          fail(res, 500, "InternalError", "Enrollment could not be completed; retry the saved request", {});
+          logInternalError(path, error);
+          fail(res, 500, "InternalError", path === "/v1/enrollment/redeem" ? "Enrollment could not be completed; retry the saved request" : "Invitation could not be read", {});
         }
       }
       return;

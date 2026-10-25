@@ -102,6 +102,61 @@ for (const mode of ["sync", "async"] as const) {
       expect(store.getEnrollmentInvitation(invitation.invitationId)?.consumedAt).toBeUndefined();
     });
 
+    it("previews without consuming and declines without a membership", async () => {
+      const invitation = await service.issueEnrollmentInvitation(owner, { workspaceId });
+      const humans = store.countHumans();
+      const participants = store.listParticipants(workspaceId);
+      const preview = await service.previewEnrollment(invitation.secret, { invitationId: invitation.invitationId });
+      expect(preview).toMatchObject({
+        kind: "enrollment_invitation_preview",
+        status: "pending",
+        workspace: { id: workspaceId, name: "billing-deploy-failure" },
+        inviter: { id: FIXTURE.humans.sergio, name: "Sergio" },
+      });
+      expect(JSON.stringify(preview)).not.toContain(invitation.secret);
+      expect(preview).not.toHaveProperty("secret");
+      expect(preview).not.toHaveProperty("secretHash");
+      expect(store.getEnrollmentInvitation(invitation.invitationId)?.consumedAt).toBeUndefined();
+      expect(store.getEnrollmentInvitation(invitation.invitationId)?.revokedAt).toBeUndefined();
+      const declined = await service.declineEnrollment(invitation.secret, { invitationId: invitation.invitationId });
+      expect(declined).toMatchObject({ outcome: "declined", membershipCreated: false, invitationId: invitation.invitationId });
+      expect(store.countHumans()).toBe(humans);
+      expect(store.listParticipants(workspaceId)).toEqual(participants);
+      expect(store.getEnrollmentInvitation(invitation.invitationId)?.consumedAt).toBeUndefined();
+      expect(store.getEnrollmentInvitation(invitation.invitationId)?.revokedAt).toBe(NOW);
+      expect(await service.declineEnrollment(invitation.secret, { invitationId: invitation.invitationId })).toMatchObject({ outcome: "already_revoked", membershipCreated: false });
+      await expect(Promise.resolve().then(() => service.redeemEnrollment(invitation.secret, prepared(invitation.invitationId)))).rejects.toThrow("Invalid enrollment invitation");
+      expect(store.countHumans()).toBe(humans);
+      await expect(Promise.resolve().then(() => service.previewEnrollment(invitation.secret, { invitationId: "ein_other" }))).rejects.toThrow("Invalid enrollment invitation");
+    });
+
+    it("decline after accept does not remove the enrolled human or agent", async () => {
+      const invitation = await service.issueEnrollmentInvitation(owner, { workspaceId });
+      const receipt = await service.redeemEnrollment(invitation.secret, prepared(invitation.invitationId));
+      const humans = store.countHumans();
+      const declined = await service.declineEnrollment(invitation.secret, { invitationId: invitation.invitationId });
+      expect(declined.outcome).toBe("already_used");
+      expect(declined.membershipCreated).toBe(false);
+      expect(store.countHumans()).toBe(humans);
+      expect(store.getParticipant(workspaceId, { actorId: receipt.human.id, actorType: "human" })?.role).toBe("member");
+      expect(store.listParticipants(workspaceId).filter((entry) => entry.actor.actorType === "agent" && receipt.agents.some((agent) => agent.id === entry.actor.actorId))).toHaveLength(2);
+      expect((await service.previewEnrollment(invitation.secret, { invitationId: invitation.invitationId })).status).toBe("consumed");
+    });
+
+    it("an expired link previews and declines without a membership", async () => {
+      let now = NOW;
+      const local = mode === "sync"
+        ? createCampfireService({ idSource: createCounterIdSource(), clock: () => now, store })
+        : createAsyncCampfireService({ idSource: createCounterIdSource(), clock: () => now, store: wrapSync(store) });
+      const invitation = await local.issueEnrollmentInvitation(owner, { workspaceId });
+      const humans = store.countHumans();
+      now = "2026-12-01T00:00:00.000Z";
+      expect((await local.previewEnrollment(invitation.secret, { invitationId: invitation.invitationId })).status).toBe("expired");
+      expect(await local.declineEnrollment(invitation.secret, { invitationId: invitation.invitationId })).toMatchObject({ outcome: "expired", membershipCreated: false });
+      expect(store.getEnrollmentInvitation(invitation.invitationId)?.revokedAt).toBeUndefined();
+      expect(store.countHumans()).toBe(humans);
+    });
+
     it("invitation revocation cancels consumed receipt recovery without erasing valid participant credentials", async () => {
       const invitation = await service.issueEnrollmentInvitation(owner, { workspaceId });
       const input = prepared(invitation.invitationId);

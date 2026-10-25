@@ -23,6 +23,20 @@ name = "campfire"
 main = "src/worker/index.ts"
 compatibility_date = "2026-09-12"
 compatibility_flags = ["nodejs_compat"]
+# Branded zone route only. Do not publish a workers.dev or preview hostname.
+workers_dev = false
+preview_urls = false
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 0.05
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.05
 # The public installer contract is scoped to this prefix; other
 # boringinfra.company routes remain owned by their existing application.
 routes = [{ pattern = "boringinfra.company/campfire/*", zone_name = "boringinfra.company" }]
@@ -54,6 +68,12 @@ dataset = "campfire_telemetry"
 binding = "TELEMETRY_OPS"
 dataset = "campfire_telemetry_ops"
 
+# Closed-vocabulary hosted route/status measurement; no request content or
+# capability is recorded. See docs/OPERATOR.md for the alpha usage review.
+[[analytics_engine_datasets]]
+binding = "ALPHA_OPS"
+dataset = "campfire_alpha_ops"
+
 # Per-source budget for POST /v1/telemetry. That route carries no bearer by
 # design, so it is open to anyone who learns the URL; this bounds the cost of a
 # flood. `namespace_id` is any stable integer you choose — it is a label, not a
@@ -77,6 +97,13 @@ name = "TELEMETRY_ID_RATE_LIMITER"
 namespace_id = "1002"
 simple = { limit = 10, period = 60 }
 
+# Invitation preview, decline, and redeem use a separate budget. The deployed
+# Worker refuses these routes when this binding or source address is missing.
+[[ratelimits]]
+name = "INVITATION_RATE_LIMITER"
+namespace_id = "1003"
+simple = { limit = 30, period = 60 }
+
 # Integrity gate mode (optional plain var, not a secret). Production runs
 # enforce: the installer bakes a single-use token into every served script, so
 # tokenless installs are forgeries, replays, or unmeasured fetches — not honest
@@ -88,6 +115,9 @@ TELEMETRY_GATE_MODE = "enforce"
 # unless this is exactly "1". Leave it "0" until the deployment has migration
 # 0010, the abuse/cost review, and a deliberate operator decision.
 CAMPFIRE_PUBLICATION_ALPHA = "0"
+# Published alpha teams start with expensive writes paused until the operator
+# explicitly enables them. Existing teams are unaffected.
+CAMPFIRE_ALPHA_EXPENSIVE_WRITES = "0"
 # Optional per-source enrollment budget per rolling 24 hours. Default 5.
 # CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY = "5"
 #
@@ -108,4 +138,4 @@ run_worker_first = true
 # Retry webhook deliveries that the request-lifetime pump did not finish.
 # This is the Worker scheduler, not a machine daemon.
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/5 * * * *", "0 0 * * *"]

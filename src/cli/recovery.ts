@@ -78,7 +78,9 @@ export function commandForNextAction(
     case "select_supported_harness":
       return "campfire join --help";
     case "choose_invitation_output":
-      return "campfire invite-teammate <workspaceId> --out <new-private-file>";
+      return "campfire invite-teammate <workspaceId> [--out <new-private-file>]";
+    case "paste_invitation_link":
+      return "campfire join --invitation-link <full-link>";
     case "publish_workspace":
     case "pass_publish_url":
     case "begin_publication":
@@ -173,7 +175,7 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
         : undefined;
 
   const recoveryCode = typeof details.recoveryCode === "string" ? details.recoveryCode : undefined;
-  if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire invite-teammate <workspaceId> --out <new-private-file>",when:"Ask the workspace owner for a fresh invitation; keep any pending credentials for recovery"}];
+  if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire join --invitation-link <full-link>",when:"Ask the workspace owner for a fresh invitation link; an invitation id alone cannot join, and pending credentials stay local for recovery"}];
   if (recoveryCode === "agent_already_enrolled") return [{command:"campfire connect --harness codex|opencode",when:"Reconnect the existing enrolled harness"}];
   if (recoveryCode === "invitation_already_claimed") return [{command:"campfire join --help",when:"Retry the original prepared request; another recipient needs a new invitation"}];
   if (unknown !== undefined) {
