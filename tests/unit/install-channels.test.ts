@@ -12,14 +12,10 @@ const root = resolve(import.meta.dirname, "../..");
 const formula = readFileSync(resolve(root, "packaging/homebrew/campfire.rb"), "utf8");
 const flake = readFileSync(resolve(root, "flake.nix"), "utf8");
 const exporterPath = resolve(root, "scripts/export-public-release.mjs");
-const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")) as {
-  version: string;
-  campfire?: { releaseStatus?: string };
-};
-const packageVersion = packageJson.version;
-// The 1.26.3 candidate keeps releaseStatus candidate. Homebrew and Nix stay on
-// the published 1.26.2 archives until the post-release pin commit.
-const pinnedVersion = packageJson.campfire?.releaseStatus === "candidate" ? "1.26.2" : packageVersion;
+const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version as string;
+// v1.26.3 stays releaseStatus candidate. The founder pin still points Homebrew
+// and Nix at the published 1.26.3 archives.
+const pinnedVersion = packageVersion;
 
 function digestsFromFormula(text: string): Record<string, string> {
   const digests: Record<string, string> = {};
