@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.3 — 2026-10-25
+
+- Add a quiet notice when a newer public stable Campfire release is available. `campfire update`, `campfire /update`, and exact `/update` plus Return in the dashboard review that release. A direct install confirms the pinned version, checks the published SHA-256, and keeps the previous install until the new binary passes. Declining, a failed check, or a missing checksum changes nothing.
+- Homebrew and Nix installs print `brew upgrade campfire` or `nix profile upgrade campfire` and are not overwritten. A source checkout prints the curl installer line and is not overwritten. A process that started the local API or Viewer can restart it after `/health` reports the new version. Any other running service reports `restart required`.
+- Cloud sharing stays a controlled alpha: an admitted owner publishes from the installed CLI, and an invited recipient previews, accepts, or declines in that CLI. There is no browser click-to-accept surface and no open Cloud signup. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.26.2 archives until the release-workflow checksums are pinned.
+
 ## 1.26.2 — 2026-10-25
 
 - Add `campfire publish` and `campfire publish-status` for an ordinary local owner to publish one existing local workspace to a private hosted Campfire endpoint, verify the structured state as the owner and agents, and cut the local profile over while keeping the local database as a read-only backup.

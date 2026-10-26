@@ -110,9 +110,9 @@ describe("ACT-001 D1 baseline preservation", () => {
     expect(ANSWER_KEY.interfaces.cliFamily).toBe("campfire actions");
     // Playbook is the only gated command; every other name is default-visible.
     const visible = CLI_COMMAND_NAMES.filter((name) => name !== "playbook");
-    expect(visible).toHaveLength(frozen.length + 4);
+    expect(visible).toHaveLength(frozen.length + 5);
     const added = visible.filter((name) => !frozen.includes(name));
-    expect(added).toEqual(["actions", "publish", "publish-status", "publish-recover"]);
+    expect(added).toEqual(["update", "actions", "publish", "publish-status", "publish-recover"]);
     const spec = commandSpec("actions");
     expect(spec.usage).toBe(
       "campfire actions propose|approve|reject|cancel|reserve|receipt|inspect|list|receipts [--output auto|human|json]",
@@ -193,7 +193,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.26.2");
+    expect(pkg.version).toBe("1.26.3");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

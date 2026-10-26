@@ -28,6 +28,8 @@ const BOOLEAN_FLAGS = new Set([
   "with-playbook",
   "accept",
   "decline",
+  "check",
+  "version",
 ]);
 
 export function parseArgs(argv: string[]): ParsedArgs {
@@ -76,6 +78,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
   }
 
   const [command, ...rest] = positionals;
+  if (command === "/update") return { command: "update", positionals: rest, flags, occurrences };
   return { command, positionals: rest, flags, occurrences };
 }
 

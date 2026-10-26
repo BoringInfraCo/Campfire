@@ -86,6 +86,9 @@ import {
   type DashboardPageInput,
 } from "./dashboard.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
+import { announceStableUpdate, runUpdateCommand } from "./update-command.js";
+import { setOwnedCampfireService } from "./service-owner.js";
+import { shouldAnnounce } from "../update/notice.js";
 import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
 import {
   DASHBOARD_AWAITING_WORKSPACE,
@@ -1459,6 +1462,14 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
       workspaceId,
       actorId: actor.actorId,
       actorType: actor.actorType,
+      onUpdate: async () => {
+        try {
+          await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
+        } catch (error) {
+          console.error(formatCliFailure(error, { command: "update" }));
+          throw error;
+        }
+      },
       load: async () =>
         (await backend.call("get_workspace_context", {
           workspaceId,
@@ -2521,13 +2532,24 @@ async function cmdServe(parsed: ParsedArgs): Promise<void> {
   const runtime = createRuntime(config);
   const running = await startCampfireHttpServer({ runtime, host, port });
   console.error(`[campfire] HTTP server listening on ${running.url}`);
+  let stopped = false;
+  const stopOwned = async (): Promise<void> => {
+    if (stopped) return;
+    stopped = true;
+    setOwnedCampfireService(undefined);
+    await running.close();
+    runtime.close();
+  };
+  setOwnedCampfireService({
+    profileMode: "local",
+    argv: process.argv.slice(2),
+    apiUrl: running.url,
+    stop: stopOwned,
+  });
   await new Promise<void>((resolve) => {
     const shutdown = (signal: NodeJS.Signals): void => {
       console.error(`[campfire] received ${signal}, shutting down`);
-      void running.close().finally(() => {
-        runtime.close();
-        resolve();
-      });
+      void stopOwned().finally(resolve);
     };
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);
@@ -2553,10 +2575,23 @@ async function cmdView(parsed: ParsedArgs, argv: string[]): Promise<void> {
       workspaceHint: loadRemoteProfile() === undefined ? "local" : "joined",
     });
     console.error(`[campfire] viewer listening on ${running.url}`);
+    let stopped = false;
+    const stopOwned = async (): Promise<void> => {
+      if (stopped) return;
+      stopped = true;
+      setOwnedCampfireService(undefined);
+      await running.close();
+    };
+    setOwnedCampfireService({
+      profileMode: loadRemoteProfile() === undefined ? "local" : "remote",
+      argv: process.argv.slice(2),
+      viewerUrl: running.url,
+      stop: stopOwned,
+    });
     await new Promise<void>((resolve) => {
       const shutdown = (signal: NodeJS.Signals): void => {
         console.error(`[campfire] received ${signal}, shutting down`);
-        void running.close().finally(() => resolve());
+        void stopOwned().finally(resolve);
       };
       process.once("SIGINT", shutdown);
       process.once("SIGTERM", shutdown);
@@ -2712,11 +2747,22 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         }));
       }
       console.error(`[campfire] remote workspace  viewer ${viewer.url}`);
+      let stopped = false;
+      const stopOwned = async (): Promise<void> => {
+        if (stopped) return;
+        stopped = true;
+        setOwnedCampfireService(undefined);
+        await viewer.close();
+      };
+      setOwnedCampfireService({
+        profileMode: "remote",
+        argv: process.argv.slice(2),
+        viewerUrl: viewer.url,
+        stop: stopOwned,
+      });
       await new Promise<void>((resolve) => {
         const shutdown = (): void => {
-          process.removeListener("SIGINT", shutdown);
-          process.removeListener("SIGTERM", shutdown);
-          void viewer.close().finally(resolve);
+          void stopOwned().finally(resolve);
         };
         process.once("SIGINT", shutdown);
         process.once("SIGTERM", shutdown);
@@ -2836,13 +2882,25 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
     }
     console.error(`[campfire] HTTP ${running.apiUrl}  viewer ${running.viewerUrl}`);
     const session = running;
+    let stopped = false;
+    const stopOwned = async (): Promise<void> => {
+      if (stopped) return;
+      stopped = true;
+      setOwnedCampfireService(undefined);
+      await session.close();
+      runtime.close();
+    };
+    setOwnedCampfireService({
+      profileMode: "local",
+      argv: process.argv.slice(2),
+      apiUrl: session.apiUrl,
+      viewerUrl: session.viewerUrl,
+      stop: stopOwned,
+    });
     await new Promise<void>((resolve) => {
       const shutdown = (signal: NodeJS.Signals): void => {
         console.error(`[campfire] received ${signal}, shutting down`);
-        void session.close().finally(() => {
-          runtime.close();
-          resolve();
-        });
+        void stopOwned().finally(resolve);
       };
       process.once("SIGINT", shutdown);
       process.once("SIGTERM", shutdown);
@@ -3218,6 +3276,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   doctor: (parsed) => cmdDoctor(parsed),
   handoff: (parsed) => cmdHandoff(parsed),
   up: (parsed) => cmdUp(parsed),
+  update: (parsed) => runUpdateCommand(parsed),
   status: (parsed, argv) => cmdStatus(parsed, argv),
   dashboard: (parsed, argv) => cmdDashboard(parsed, argv),
   agents: (parsed, argv) => cmdAgents(parsed, argv),
@@ -3285,6 +3344,24 @@ export async function runCli(argv: string[]): Promise<void> {
   if (parsed.flags.help === true) {
     printHelp(parsed.command);
     return;
+  }
+
+  if (parsed.command === undefined && parsed.flags.version === true) {
+    console.log(installedCampfireVersion());
+    return;
+  }
+
+  if (parsed.command !== "update") {
+    const jsonOutput = parsed.flags.json === true || parsed.flags.output === "json" || process.env.CAMPFIRE_OUTPUT === "json";
+    if (shouldAnnounce({
+      stdoutIsTTY: process.stdout.isTTY === true,
+      command: parsed.command,
+      outputMode: jsonOutput ? "json" : "human",
+      noninteractive: process.env.CAMPFIRE_NONINTERACTIVE === "1",
+      ci: process.env.CI === "1" || process.env.CI === "true",
+    })) {
+      await announceStableUpdate({ command: parsed.command });
+    }
   }
 
   // Package-manager installs (brew/nix) never fetch install.sh, so the shell

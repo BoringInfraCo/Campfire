@@ -4,7 +4,9 @@
  *
  * One active section renders at a time. The local `/` filter narrows the
  * shown rows of the loaded page — matching, loaded, and workspace total stay
- * separate numbers. It is not workspace search. Record text is untrusted:
+ * separate numbers. It is not workspace search. The exact input `/update`
+ * followed by Return requests an update and is not kept as a filter. Record
+ * text is untrusted:
  * only `renderDashboard` text is drawn, and every record string goes through
  * `stripTerminalControls`. An omitted participant roster is not zero people.
  */
@@ -166,6 +168,8 @@ export interface DashboardState {
   help: boolean;
   quit: boolean;
   refreshRequested: boolean;
+  /** Set only by exact `/update` then Return. Not a shown-row filter. */
+  updateRequested: boolean;
   detailOpen: boolean;
   /** Local filter over the shown rows of the active section (never the workspace). */
   filter: string;
@@ -209,6 +213,8 @@ export interface DashboardSessionOptions {
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
   now?: () => Date;
+  /** Side effect for an exact `/update` request. The dashboard does not install. */
+  onUpdate?: () => Promise<void>;
 }
 
 const SECTIONS: readonly DashboardSection[] = [
@@ -232,6 +238,7 @@ const HELP_LINES = [
   "h opens or closes recorded changes for the selected task, decision, finding, or artifact.",
   "esc closes history first. A later esc clears a committed filter. ctrl-c always quits.",
   "/ filters the loaded page, not the workspace. enter confirms; esc clears. Letters stay text.",
+  "/update reviews a Campfire update. The canonical command is campfire update. Other / text still filters this page.",
   "r reloads orientation and the active page as separate reads.",
   "? toggles this help. q quits.",
   "Registration, role, and join time are not presence or permission.",
@@ -277,6 +284,7 @@ export function createDashboardState(input: {
     help: false,
     quit: false,
     refreshRequested: false,
+    updateRequested: false,
     detailOpen: false,
     filter: "",
     filterMode: false,
@@ -640,6 +648,7 @@ function withoutTransient(state: DashboardState): DashboardState {
     help: state.help,
     quit: state.quit,
     refreshRequested: false,
+    updateRequested: state.updateRequested,
     detailOpen: false,
     filter: state.filter,
     filterMode: state.filterMode,
@@ -725,10 +734,13 @@ export function reconcileAfterLoad(
 function reduceFilterModeKey(state: DashboardState, key: string): DashboardState {
   if (key === "\u001b" || key === "esc") {
     // esc clears the text AND leaves typing mode in one step.
-    return reconcileSelection(state, { ...state, filter: "", filterMode: false });
+    return reconcileSelection(state, { ...state, filter: "", filterMode: false, updateRequested: false });
   }
   if (key === "\r" || key === "\n" || key === "\r\n" || key === "enter") {
-    // enter confirms: the text stays and keeps narrowing the shown rows.
+    // Exact `/update` requests an update. Every other string stays a filter.
+    if (state.filter === "update") {
+      return { ...state, filter: "", filterMode: false, updateRequested: true };
+    }
     return { ...state, filterMode: false };
   }
   if (key === "\u007f" || key === "\u0008" || key === "backspace") {
@@ -1004,10 +1016,17 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   if (key === "\u001b" || key === "esc") {
     // History closes before a committed filter so one esc cannot do both.
     if (state.history?.open === true) {
-      return { ...state, generation: state.generation + 1, history: undefined, historyRequest: undefined, statusNote: undefined };
+      return {
+        ...state,
+        generation: state.generation + 1,
+        history: undefined,
+        historyRequest: undefined,
+        statusNote: undefined,
+        updateRequested: false,
+      };
     }
-    if (state.filter.length === 0) return state;
-    return reconcileSelection(state, { ...state, filter: "" });
+    if (state.filter.length === 0) return state.updateRequested ? { ...state, updateRequested: false } : state;
+    return reconcileSelection(state, { ...state, filter: "", updateRequested: false });
   }
   if (key === "\u007f" || key === "\u0008" || key === "backspace") return state;
   if (key === "/") return { ...state, filterMode: true };
@@ -2096,6 +2115,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   let pumping = false;
   let pendingPump = false;
   let listening = false;
+  let updating = false;
   let resolveQuit: () => void = () => {};
   const quitPromise = new Promise<void>((resolve) => {
     resolveQuit = resolve;
@@ -2110,8 +2130,8 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     };
   };
 
-  const draw = (): void => {
-    if (closed) return;
+  const draw = (force = false): void => {
+    if (closed || (updating && !force)) return;
     const size = viewportOf();
     const frame = renderDashboard(state, size.columns, size.rows);
     writeControl(stdout, "\x1b[H\x1b[2J");
@@ -2314,8 +2334,24 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     if (!closed) draw();
   };
 
+  const performUpdate = async (): Promise<void> => {
+    leaveScreen();
+    try {
+      if (options.onUpdate !== undefined) await options.onUpdate();
+    } catch {
+      if (!closed && !finished && !state.quit) {
+        state = { ...state, statusNote: "Update could not be completed." };
+      }
+    }
+    if (!closed && !finished && !state.quit) {
+      enterScreen();
+      draw(true);
+    }
+    updating = false;
+  };
+
   const onData = (chunk: Buffer | string): void => {
-    if (closed || finished) return;
+    if (closed || finished || updating) return;
     const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
     const next = reduceDashboardChunk(state, text);
     if (next === state) return;
@@ -2328,6 +2364,12 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
       // the burst navigated to.
       draw();
       finish();
+      return;
+    }
+    if (state.updateRequested) {
+      state = { ...state, updateRequested: false };
+      updating = true;
+      void performUpdate();
       return;
     }
     draw();
@@ -2364,7 +2406,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   };
 
   const timer = setInterval(() => {
-    if (closed || suspended || !terminalIsForeground()) return;
+    if (closed || suspended || updating || !terminalIsForeground()) return;
     state = requestDashboardRefresh(state);
     schedule();
   }, DASHBOARD_AUTO_REFRESH_MS);
