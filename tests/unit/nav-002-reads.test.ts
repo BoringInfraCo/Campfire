@@ -117,7 +117,7 @@ describe("NAV-002 bounded reads", () => {
       "get_artifact",
       "get_record_history",
     ]);
-    expect(CLI_COMMAND_NAMES).toHaveLength(64);
+    expect(CLI_COMMAND_NAMES).toHaveLength(65);
     const listed = (source: string): string[] => {
       const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);
       expect(match).not.toBeNull();

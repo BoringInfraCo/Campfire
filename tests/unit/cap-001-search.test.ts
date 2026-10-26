@@ -232,15 +232,18 @@ describe("recipes and corpus bounds", () => {
   });
 
   it("copies the frozen gate-off operations and keeps the playbook out", () => {
-    const cap001 = capabilityOperations().filter((entry) => !ACT001_OPERATION_IDS.has(entry.id));
+    const cap001 = capabilityOperations().filter(
+      (entry) => !ACT001_OPERATION_IDS.has(entry.id) && entry.id !== "update_campfire",
+    );
     expect(cap001).toEqual(frozenCatalog.operations);
-    expect(capabilityOperations()).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size);
+    expect(capabilityOperations()).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size + 1);
     const blob = JSON.stringify(cap001);
     expect(blob).not.toContain("get_playbook");
     expect(blob).not.toContain("incident-investigation");
     const enabled = capabilityOperations({ playbookEnabled: true });
     expect(enabled.map((entry) => entry.id)).toContain("get_playbook");
-    expect(enabled).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size + 1);
+    expect(enabled.map((entry) => entry.id)).toContain("update_campfire");
+    expect(enabled).toHaveLength(frozenCatalog.operations.length + ACT001_OPERATION_IDS.size + 2);
   });
 
   it("adds get_playbook only when the gate is on and the query is a real substring", () => {

@@ -9,6 +9,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { installedCampfireVersion } from "../bootstrap/version.js";
 import { CampfireError, type CampfireErrorCode } from "../domain/errors.js";
 import type { WorkspaceContext } from "../service/service.js";
 import { GENERATED_VIEW_CSP, renderGeneratedWorkspaceView } from "./generated-workspace-view.js";
@@ -287,6 +288,14 @@ export async function startCampfireViewer(options: ViewerServerOptions): Promise
 
     const url = req.url ?? "/";
     const path = url.split("?")[0] ?? "/";
+    if (path === "/health") {
+      if (req.method !== "GET") {
+        fail(res, 405, "ValidationError", "Method not allowed");
+        return;
+      }
+      writeJson(res, 200, { version: installedCampfireVersion() });
+      return;
+    }
     const generated = /^\/generated\/workspaces\/([A-Za-z0-9_-]{1,128})$/.exec(path);
 
     if (generated !== null) {

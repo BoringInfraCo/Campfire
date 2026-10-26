@@ -421,7 +421,23 @@ function playbookOperation(): CapabilityOperation {
 
 function operationsFor(playbookEnabled: boolean): readonly CapabilityOperation[] {
   const operations = playbookEnabled ? [...BASE_OPERATIONS, playbookOperation()] : [...BASE_OPERATIONS];
-  return [...operations, ...ACT001_OPERATIONS];
+  return [...operations, ...ACT001_OPERATIONS, updateOperation()];
+}
+
+function updateOperation(): CapabilityOperation {
+  return {
+    id: "update_campfire",
+    purpose: "Review and install a newer published stable Campfire release.",
+    effect: "local-operation",
+    scope: "installed",
+    requiredInputs: [],
+    preconditions: ["An explicit yes is required before a direct install. Homebrew and Nix prefixes are not overwritten."],
+    outputCaveat: "The canonical command is campfire update. A notice is not an install. This does not change workspace records, credentials, or the hosted Worker.",
+    surfaces: {
+      cli: { usage: "campfire update [--check] [--output auto|human|json]" },
+      mcp: { unavailable: "operator CLI only; not an agent MCP tool" },
+    },
+  };
 }
 
 function aliasesFor(id: string): readonly string[] {
@@ -622,5 +638,6 @@ export function getReadRecipe(id: string): ReadRecipe {
 
 for (const operation of BASE_OPERATIONS) assertOperationBounds(operation);
 for (const operation of ACT001_OPERATIONS) assertOperationBounds(operation);
+assertOperationBounds(updateOperation());
 assertOperationBounds(playbookOperation());
 for (const recipe of RECIPES) assertRecipeBounds(recipe);

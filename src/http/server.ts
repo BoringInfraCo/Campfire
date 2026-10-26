@@ -31,6 +31,7 @@ import {
 import type { CampfireRuntime } from "../runtime.js";
 import type { CampfireStore } from "../store/store.js";
 import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod } from "./dispatch.js";
+import { installedCampfireVersion } from "../bootstrap/version.js";
 import { assertLocalWritesAllowed, isPublicationBlockedMethod } from "../publication/state.js";
 
 export const DEFAULT_HTTP_HOST = "127.0.0.1";
@@ -362,6 +363,14 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
   async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = req.url ?? "/";
     const path = url.split("?")[0] ?? "/";
+    if (path === "/health") {
+      if (req.method !== "GET") {
+        fail(res, 405, "ValidationError", "GET required", {});
+        return;
+      }
+      writeJson(res, 200, { version: installedCampfireVersion() });
+      return;
+    }
     if (path === "/campfire/join" || path === "/join") {
       if (req.method !== "GET" && req.method !== "HEAD") { fail(res, 405, "ValidationError", "GET required", {}); return; }
       res.writeHead(200, {

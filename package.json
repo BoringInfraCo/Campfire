@@ -1,11 +1,11 @@
 {
   "name": "campfire",
-  "version": "1.26.2",
+  "version": "1.26.3",
   "private": true,
   "description": "The shared workspace where people and their agents work together.",
   "campfire": {
     "releaseStatus": "candidate",
-    "releaseNote": "Controlled Cloud alpha. Admitted users share through the installed CLI, where the recipient previews, accepts, or declines. No browser click-to-accept and no open Cloud signup."
+    "releaseNote": "Controlled Cloud alpha. Admitted users share through the installed CLI, where the recipient previews, accepts, or declines. campfire update reviews a newer stable release before anything is installed. No browser click-to-accept and no open Cloud signup."
   },
   "type": "module",
   "engines": {

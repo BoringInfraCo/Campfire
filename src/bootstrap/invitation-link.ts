@@ -13,7 +13,7 @@ export const INVITATION_LANDING_HTML = `<!DOCTYPE html>
 </head>
 <body>
 <p>This page cannot see the private part of a Campfire invitation.</p>
-<p>Paste the full link into the Campfire 1.26.2 candidate on this computer. The released 1.26.1 <code>campfire</code> command cannot accept it.</p>
+<p>Paste the full link into Campfire 1.26.2 or newer on this computer. The released 1.26.1 <code>campfire</code> command cannot accept it.</p>
 <pre>campfire join --invitation-link '&lt;link&gt;'</pre>
 <p>Keep the # in the link and do not type a backslash before it. Campfire shows the workspace and inviter before anything is joined. Accept or decline explicitly. Opening this page does not create a membership.</p>
 </body>

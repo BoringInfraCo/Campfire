@@ -1,12 +1,12 @@
-# Campfire 1.26.2 release context
+# Campfire 1.26.3 release context
 
 > Controlled Cloud alpha. An admitted owner publishes and shares, and the
 > installed CLI previews, accepts, or declines one invitation link. There is no
 > browser click-to-accept surface and no open Cloud signup. The physical
 > two-Mac acceptance is not part of this release's evidence. Homebrew and Nix
-> install the published v1.26.2 archives.
+> install the published v1.26.2 archives until the v1.26.3 checksum pin.
 
-This public source snapshot was exported on 2026-10-25 from private canonical source commit `5d86bbc1de124d674e86e60a03aae730edc98278` (dated 2026-10-25T16:12:40-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-10-26 from private canonical source commit `f60cf689ff230dd914a3be0d2ae21ce753d782dd` (dated 2026-10-25T21:35:45-04:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -59,12 +59,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.26.2.
+- The versioned installer source for v1.26.3.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.26.2 candidate passed type checking,
+At source preparation, the private 1.26.3 candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The pin-scoped v1.26.2
 full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in
