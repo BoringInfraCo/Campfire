@@ -3,6 +3,14 @@
 **Status:** Revised  
 **Version:** 0.2  
 **Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`); October 15 v1.18 work-continuity contract drafted; October 15 WCO-001 baseline recorded and a labeled single-operator rehearsal run (eligible two-human case NOT OBSERVED), Amendment 1's bounded guidance/schema repair implemented with D1–D6 passing, recorded as CONDITIONAL GO — engineering candidate; October 15 v1.18.0 published and deployed under the recorded release-scope override in `docs/RELEASE_V1_18_DECISION.md`; October 15 v1.19 team-attention contract proposed (unimplemented and unscored); October 15 ATT-001 baseline frozen (fixture v2), engineering candidate implemented with D1–D6 passing and independent verification, two-person trace NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 15 founder directed a full public v1.19.0 release under the recorded release-scope override (docs/RELEASE_V1_19_DECISION.md); October 15 v1.19.0 published and deployed under that override; October 16 interface reassessment recorded after v1.19; October 16 founder directed UIX-001 terminal and Viewer planning before the open human traces; October 16 UIX-001 Shared Work Console implemented as an engineering candidate with D1–D6 passing, five cold tasks NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 16 founder directed a public v1.20.0 release under the recorded release-scope override (docs/RELEASE_V1_20_DECISION.md); October 16 v1.20.0 frozen unpublished before promotion after the export review found the pty capture test required a machine-local Playwright install; repair 70f4023 keeps PTY assertions mandatory and makes evidence capture opt-in; October 16 v1.20.1 release prepared under the recorded release-scope override (docs/RELEASE_V1_20_1_DECISION.md); October 16 v1.20.1 published and deployed — public snapshot d66a4e6, four checksummed archives, Homebrew/Nix pins and tap promoted, Worker 3300f315, and a clean isolated install reporting 1.20.1; October 18 ONB-001 implemented and recorded (`docs/SPRINT_ONB_001_RESULT.md`, corrected `4abbe2e` to leave D6 pending), then the founder-directed v1.22.1 release-prep revision (`b1ba31c`, decision in `docs/RELEASE_V1_22_1_DECISION.md`) closed D6 in a dated addendum with `pack:tarball` passing and the published v1.22.0 installer copy unchanged; verdict CONDITIONAL GO — engineering candidate, human outcome NOT OBSERVED, publication pending the release-gate reassessment; October 18–19 v1.22.1 published and deployed under the recorded founder release decision in `docs/RELEASE_V1_22_1_DECISION.md` — public snapshot `dfc3880` with annotated tag, GitHub Release `v1.22.1` (workflow `39183976392`, four checksummed archives verified), channel pin `828f51e` (private CI `39184752043` green) and public addendum `a7fe66e` (public CI `39184822069` green), tap promotion `0e9efa3`, production Worker `12de3762`, and live installer checks; human outcome NOT OBSERVED; October 18 NAV-002 implemented and recorded as CONDITIONAL GO — engineering candidate (Step 0 freeze `073b674`, bounded reads `edeab41`, terminal drill-down `02eed76`, catalog locks `b2321e9`, result `8552976`, narrow-history follow-up `961d0b3`), human comparison NOT OBSERVED; October 19 the founder directed the v1.23 release; v1.23.0 published and deployed under the recorded founder release decision in `docs/RELEASE_V1_23_DECISION.md` — private tag `7a466819` → `b97b47b`, public snapshot `8c14621` with annotated tag, GitHub Release `v1.23.0` (workflow `39199045755`, four checksummed archives verified, all extract 1.23.0), channel pin `8c2a546` (private CI `39199438425` green) and public addendum `65fff4a` (public CI `39199498859` green), tap promotion `483a8fd`, migration 0007 applied to production D1, production Worker `da752833`, and live installer checks; human outcome NOT OBSERVED
+**Latest planning update:** October 29, 2026 — consolidated the Shepherdr
+comparison into one canonical execution-provider assessment and added a
+separate Herder native-app assessment. The current desktop hierarchy remains
+adopted; the Herder review refines its contextual pane, quiet attention badges,
+and responsive content modes without changing Campfire authority or adding a
+runtime. The evidence-gated RUN-000 provider sequence, October 27 Cloud plan,
+and October 28 session-continuity sequence remain proposed. The Sunday desktop
+target is an internal-alpha implementation plan, not a public release decision.
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -728,6 +736,11 @@ Campfire does not need to become an agent runtime.
 
 It can coordinate work while external harnesses and runtimes execute it.
 
+Shepherdr/herdr is the first named optional provider candidate. The
+[canonical assessment](Campfire-Shepherdr-Assessment.md) records the adopted
+interface lessons, missing dependency relation, constrained extension slots,
+coordinator boundary, mobile focus, and patterns Campfire will not copy.
+
 ### Pico relationship
 
 Pico becomes especially relevant here.
@@ -929,6 +942,18 @@ The UI may evolve toward:
 Do not build a collaboration dashboard before knowing what humans actually need to inspect or control.
 
 The UI should expose the collaboration model rather than invent a second product model.
+
+The [Campfire multi-surface strategy](Campfire-Multi-Surface-Strategy.md)
+defines how that model can remain coherent across CLI/MCP, TUI, web, macOS,
+iPhone, and iPad. It is a companion interface strategy, not a second canonical
+roadmap or authorization to begin every surface at once.
+
+The proposed [Cloud live coordination and Steward plan](Campfire-Cloud-Live-Coordination-and-Steward-Plan.md)
+sequences deterministic facilitation, optional live invalidation,
+cross-device attention delivery, existing-proposal approval cards, and bounded
+Steward derivation. D1 remains canonical throughout. Durable Objects, Queues,
+push, and model inference are evidence-gated transports or derived behavior,
+not a new product model.
 
 > Campfire should make shared work state tangible without making the interface the source of truth.
 
@@ -1799,6 +1824,22 @@ runner or terminal multiplexer. Any implementation still needs a separately
 scoped sprint and comparison against the shipped v1.20.1 CLI and Viewer under
 the open UIX-001 observation rules.
 
+**Shepherdr interface reference (October 29):** the current native prototype
+already implements the adopted workspace/sidebar/body hierarchy. The
+[canonical assessment](Campfire-Shepherdr-Assessment.md) records that status and
+the richer Needs You card direction. Do not open another sidebar redesign or
+treat this implementation state as evidence that MAC-002 has passed.
+
+**Herder native-app reference (October 29):** the
+[separate assessment](Campfire-Herder-App-Assessment.md) reviews
+`herder-sh/herder` at a pinned revision. Adopt its quiet nonzero badge,
+contextual navigation, and responsive list/detail lessons, but map them to
+Campfire's durable attention and existing Viewer contract. Herder session
+states are not Campfire agent-presence evidence. The Sunday plan completes the
+current shell and removes the main-pane filter strip; it does not authorize a
+new store, daemon, FFI core, transcript model, runtime, mobile target, or
+public native release.
+
 ### v1.21 candidate — make cited work usable in a handoff
 
 The sprint contract is
@@ -1952,6 +1993,112 @@ After these bounded cycles, broader production-event integrations, action
 classes, and hosted-team economics follow measured return use, team
 continuation, and controlled-action demand, not an interview's adoption claims.
 
+### Evidence-gated Cloud interaction sequence
+
+The Coworkers review identifies useful implementation patterns for Campfire's
+later Cloud experience, but does not move an evidence gate or authorize a bot
+runtime. The sequence is:
+
+```text
+stable Cloud identity, revocation, and catch-up
+        ↓
+FAC-001 — deterministic attention and change comprehension
+        ↓
+measured latency or missed-work evidence
+        ├── LIVE-001 — authenticated committed-position fan-out
+        └── NTF-001 — outbox-backed, privacy-minimized attention delivery
+        ↓
+ordinary Gate F demand
+        └── APR-001 — approval cards over existing ActionProposal authority
+
+remaining comprehension failure after FAC-001
+        └── STW-001 — opt-in, cited, freshness-labeled derived briefs
+```
+
+LIVE-001 may use one hibernatable Durable Object per workspace, but D1 retains
+workspace records, membership, authorization, provenance, contribution order,
+and the recorded inputs from which attention is derived. Every socket signal
+is recoverable through the durable cursor,
+and versioned refresh remains the fallback. NTF-001 uses a transactional outbox
+and idempotent asynchronous delivery; a notification cannot create ownership,
+urgency, approval, or presence. APR-001 introduces no second approval object.
+STW-001 cannot mutate canonical work or become a hidden orchestrator.
+
+Each item requires its own pinned baseline, threat model, cost ceiling,
+deterministic denial/revocation/fault checks, representative device evidence,
+and release decision. Entry gates, proposed contracts, workstreams, acceptance
+matrices, rollback, and non-goals live in the dedicated plan. No release version
+or date is assigned here.
+
+### Evidence-gated external execution-provider sequence
+
+Shepherdr/herdr is the first named candidate. Detailed provider responsibilities,
+card behavior, status separation, coordinator limits, task dependencies,
+extension slots, mobile scope, and rejected patterns live only in the
+[canonical assessment](Campfire-Shepherdr-Assessment.md). The roadmap owns the
+sequence:
+
+```text
+ACT-001 real provider interoperability + ordinary Gate F demand
+        ↓
+APR-001 — understandable approval over existing ActionProposal authority
+        ↓
+RUN-000 — pinned Shepherdr/herdr compatibility spike
+        ↓
+provider-on/provider-off comparison + receipt/provenance evidence
+        ├── HOLD/REJECT — retain Campfire-only control plane
+        └── GO — freeze one optional adapter contract
+        ↓
+repeated demand for Campfire-hosted execution
+        └── RUN-001 — separate managed-runtime investigation
+```
+
+RUN-000 uses one disposable repository, one allowlisted action class, and a
+provider-off control. It does not authorize a general runner, coordinator,
+plugin system, status model, or managed-runtime claim.
+
+### Evidence-gated external session-continuity sequence
+
+The Atuin Threads review identifies a useful optional integration after the
+native workspace interface is stable. Atuin can own opt-in private transcript
+capture, encrypted sync, search, resume, fork, and harness-specific
+reconstruction. Campfire continues to own authorized structured work, identity,
+currentness, provenance, and the resulting contribution.
+
+```text
+MAC-001B toolkit verdict + MAC-002 read-only workspace semantics
+        ↓
+CON-000 — pinned local Atuin compatibility spike
+        ↓
+observed need and transcript-isolation evidence
+        ↓
+CON-001 — user-initiated private Continue in… alpha
+        ↓
+repeated evidence that existing provenance is insufficient
+        ↓
+CON-002 — build-or-hold decision for a minimal continuation receipt
+
+Gate B/C evidence + explicit private-session transport demand
+        ↓
+separate team/cross-device privacy and architecture decision
+```
+
+`Campfire context only` remains the control and fallback. The provider is never
+required for startup or ordinary continuation. CON-000 changes no schema and
+launches nothing silently. CON-001 must use explicit confirmation and a stable
+operation ID, register a distinct destination Campfire AgentSession, and keep
+transcripts, tool output, private paths, provider credentials, and external
+locators out of the canonical workspace by default. CON-002 opens only if real
+use proves AgentSession, Contribution, and Activity cannot answer the needed
+continuation question.
+
+The complete boundary, native/TUI/CLI flow, private/shared data table, adapter
+contract, threat model, acceptance matrix, workstreams, rollback, and evidence
+requirements live in
+[Campfire-External-Agent-Session-Continuity-Plan.md](Campfire-External-Agent-Session-Continuity-Plan.md).
+This planning entry does not change WCO-001, close Gate B/C/E, authorize raw
+session sharing, or turn Campfire into a harness or runtime.
+
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |
 | Work continuity | Can an invited teammate and their agent take over recorded work, resolve a real dependency, and leave the next person oriented? Build on existing enrollment, task ownership, corrections, and handoff. | Voluntary repeat use (Gate B) and ordinary multi-participant value (Gate C), not another fixture-only pass. |
@@ -1981,6 +2128,29 @@ Television is an adjacent personal-agent product that organizes persistent inter
 Telepath Stash is worth monitoring and not worth adopting. It describes shared planning files, artifacts, and coordination state across agents, and it points toward indexing, meaning, versioning, and collaboration layers. The note is [Introducing Stash](https://buttondown.com/telepath/archive/introducing-stash-local-first-sync-for-agents/). That territory is adjacent to Campfire. It does not change this sequence.
 
 [Pi Durable](https://github.com/earendil-works/pi/blob/main/packages/durable/README.md) is an experimental harness that checkpoints its own runner. The October 22 reading is [PI_DURABLE_WORK_CONTINUITY_ASSESSMENT.md](PI_DURABLE_WORK_CONTINUITY_ASSESSMENT.md). Campfire can borrow the distinction between a shared handoff and execution resume. It should not copy the harness.
+
+[Coworkers](https://github.com/fayazara/coworkers/tree/f2580db4bf7e09e4336a52aafe40f1a4e54b7091)
+is an experimental Cloudflare-hosted personal-agent system built around a user
+hub and per-bot Durable Objects. Its WebSocket, push, approval, routine,
+secret-boundary, and background-model patterns are useful implementation
+references. Its bot-owned chat/memory/computer model, permissive action
+defaults, and hosted execution boundary are not Campfire's roadmap. The adapted
+decision is recorded in
+[Campfire-Cloud-Live-Coordination-and-Steward-Plan.md](Campfire-Cloud-Live-Coordination-and-Steward-Plan.md).
+
+[Atuin Threads](https://blog.atuin.sh/threads-agent-sessions/) provides
+searchable, optionally synchronized private agent-session history and can
+resume, fork, or continue a session in another supported harness. That is a
+useful external continuity substrate, not Campfire's shared data model.
+Campfire should integrate through a pinned local CLI or MCP boundary, preserve
+its context-only fallback, and accept only authorized structured outcomes into
+the workspace. The adapted decision is recorded in
+[Campfire-External-Agent-Session-Continuity-Plan.md](Campfire-External-Agent-Session-Continuity-Plan.md).
+
+[Shepherdr](https://github.com/eliasstravik/shepherdr) is the interface and
+optional provider reference recorded in the
+[canonical assessment](Campfire-Shepherdr-Assessment.md). RUN-000 follows
+APR-001; no current release or MAC sprint depends on it.
 
 ## Roadmap and sprint boundary
 

@@ -1,0 +1,866 @@
+{
+  "run": {
+    "tool": "prototypes/mac-002/parity.ts",
+    "purpose": "Gate S1 semantic parity (docs/Campfire-Multi-Surface-Strategy.md, Evidence gates) — read-only evidence",
+    "startedAt": "2026-10-29T02:28:35.521Z",
+    "finishedAt": "2026-10-29T02:28:35.538Z",
+    "selfcheck": true,
+    "viewer": "http://127.0.0.1:62977",
+    "workspaceId": "ws_mac002_demo",
+    "pageLimit": 50,
+    "cliSurface": {
+      "repositoryRoot": "/Users/sergio/Documents/Developer/BoringInfraCo/Campfire-Internal/",
+      "entry": "src/cli/index.ts",
+      "outputMode": "--output json",
+      "identity": "env passthrough (default hum_sergio/human when no env identity is set)"
+    },
+    "safety": {
+      "readsOnly": true,
+      "credentialEnvSet": false,
+      "envBooleans": {
+        "campfireUrlInEnv": false,
+        "campfireTokenInEnv": false,
+        "campfireActorIdInEnv": false
+      }
+    }
+  },
+  "legErrors": {
+    "cli": "selfcheck: CLI leg disabled (offline canned Viewer)"
+  },
+  "snapshots": {
+    "viewer-raw": {
+      "list.workspaceIds": [
+        "ws_mac002_demo"
+      ],
+      "workspace.openTaskCount": 3,
+      "whoami.actorId": "hum_sergio",
+      "whoami.actorType": "human",
+      "workspace.id": "ws_mac002_demo",
+      "workspace.name": "Parity demo workspace",
+      "workspace.status": "active",
+      "workspace.goalTitle": "Prove cross-surface parity",
+      "workspace.goalId": "goal_mac002_demo",
+      "workspace.goalStatus": "active",
+      "tasks.slice.ids": [
+        "task_mac002_a",
+        "task_mac002_b",
+        "task_mac002_c"
+      ],
+      "tasks.slice.statusById": [
+        "task_mac002_a=open",
+        "task_mac002_b=blocked",
+        "task_mac002_c=open"
+      ],
+      "tasks.slice.total": 3,
+      "tasks.slice.returned": 3,
+      "tasks.slice.truncated": false,
+      "findings.slice.ids": [
+        "find_mac002_a"
+      ],
+      "findings.slice.currentnessById": [
+        "find_mac002_a=current"
+      ],
+      "findings.slice.total": 1,
+      "findings.slice.returned": 1,
+      "findings.slice.truncated": false,
+      "artifacts.slice.ids": [
+        "art_mac002_a"
+      ],
+      "artifacts.slice.total": 1,
+      "artifacts.slice.returned": 1,
+      "artifacts.slice.truncated": false,
+      "decisions.slice.ids": [
+        "dec_mac002_a",
+        "dec_mac002_acc",
+        "dec_mac002_old"
+      ],
+      "decisions.slice.statusById": [
+        "dec_mac002_a=proposed",
+        "dec_mac002_acc=accepted",
+        "dec_mac002_old=absent"
+      ],
+      "decisions.slice.proposedCount": 1,
+      "decisions.slice.acceptedCount": 1,
+      "decisions.slice.supersededCount": 1,
+      "decisions.slice.needsReviewIds": [
+        "dec_mac002_acc"
+      ],
+      "decisions.slice.total": 2,
+      "decisions.slice.returned": 2,
+      "decisions.slice.truncated": false,
+      "attention.needsYou": [
+        "task|task_mac002_b|blocked|assigned_blocked_task|hum_sergio|blocked task assigned to you",
+        "decision|dec_mac002_a|proposed|proposed_decision_actionable|-|proposed decision — actionable by you, not accepted"
+      ],
+      "attention.needsAttention": [
+        "task|task_mac002_c|open|team_open_task|-|team open task cue",
+        "decision|dec_mac002_acc|accepted|accepted_decision_needs_review|-|accepted decision cites non-current evidence — needs human review"
+      ],
+      "attention.coverageTasks": {
+        "returned": 3,
+        "total": 3
+      },
+      "attention.coverageDecisions": {
+        "returned": 3,
+        "total": 3
+      },
+      "attention.coverageComplete": true,
+      "attention.reasonCodes": [
+        "accepted_decision_needs_review",
+        "assigned_blocked_task",
+        "proposed_decision_actionable",
+        "team_open_task"
+      ],
+      "alignment.status": "established",
+      "alignment.proposedDecisionIds": [
+        "dec_mac002_a"
+      ],
+      "alignment.acceptedDecisionIds": [
+        "dec_mac002_acc"
+      ],
+      "alignment.unresolvedBlockedTaskIds": [
+        "task_mac002_b"
+      ],
+      "suggestedNext.summary": "Start the assigned open task.",
+      "suggestedNext.kind": "task",
+      "suggestedNext.reason": "assigned_open_task",
+      "provenance.slice.ids": [
+        "con_mac002_0001",
+        "con_mac002_0002"
+      ],
+      "provenance.slice.total": 2,
+      "provenance.slice.truncated": false,
+      "participants.omittedTotal": 2,
+      "tasks.page.ids": [
+        "task_mac002_a",
+        "task_mac002_b",
+        "task_mac002_c"
+      ],
+      "tasks.page.statusById": [
+        "task_mac002_a=open",
+        "task_mac002_b=blocked",
+        "task_mac002_c=open"
+      ],
+      "tasks.page.total": 3,
+      "tasks.page.returned": 3,
+      "tasks.page.truncated": false,
+      "tasks.page.nextCursor": "absent",
+      "participants.roster": [
+        "ag_mac002_cli|agent|Parity CLI harness|-",
+        "hum_sergio|owner|Sergio|-"
+      ],
+      "participants.rosterTotal": 2,
+      "participants.rosterReturned": 2,
+      "activity.page.ids": [
+        "con_mac002_0001",
+        "con_mac002_0002"
+      ],
+      "activity.page.total": 2,
+      "activity.page.truncated": false,
+      "activity.page.nextBefore": "absent"
+    },
+    "desktop-client": {
+      "list.workspaceIds": [
+        "ws_mac002_demo"
+      ],
+      "workspace.openTaskCount": 3,
+      "workspace.id": "ws_mac002_demo",
+      "workspace.name": "Parity demo workspace",
+      "workspace.status": "active",
+      "workspace.goalTitle": "Prove cross-surface parity",
+      "workspace.goalId": "goal_mac002_demo",
+      "workspace.goalStatus": "active",
+      "tasks.slice.ids": [
+        "task_mac002_a",
+        "task_mac002_b",
+        "task_mac002_c"
+      ],
+      "tasks.slice.statusById": [
+        "task_mac002_a=open",
+        "task_mac002_b=blocked",
+        "task_mac002_c=open"
+      ],
+      "tasks.slice.total": 3,
+      "tasks.slice.returned": 3,
+      "tasks.slice.truncated": false,
+      "findings.slice.ids": [
+        "find_mac002_a"
+      ],
+      "findings.slice.currentnessById": [
+        "find_mac002_a=current"
+      ],
+      "findings.slice.total": 1,
+      "findings.slice.returned": 1,
+      "findings.slice.truncated": false,
+      "artifacts.slice.ids": [
+        "art_mac002_a"
+      ],
+      "artifacts.slice.total": 1,
+      "artifacts.slice.returned": 1,
+      "artifacts.slice.truncated": false,
+      "decisions.slice.ids": [
+        "dec_mac002_a",
+        "dec_mac002_acc",
+        "dec_mac002_old"
+      ],
+      "decisions.slice.statusById": [
+        "dec_mac002_a=proposed",
+        "dec_mac002_acc=accepted",
+        "dec_mac002_old=absent"
+      ],
+      "decisions.slice.proposedCount": 1,
+      "decisions.slice.acceptedCount": 1,
+      "decisions.slice.supersededCount": 1,
+      "decisions.slice.needsReviewIds": [
+        "dec_mac002_acc"
+      ],
+      "decisions.slice.total": 2,
+      "decisions.slice.returned": 2,
+      "decisions.slice.truncated": false,
+      "attention.needsYou": [
+        "task|task_mac002_b|blocked|assigned_blocked_task|hum_sergio|blocked task assigned to you",
+        "decision|dec_mac002_a|proposed|proposed_decision_actionable|-|proposed decision — actionable by you, not accepted"
+      ],
+      "attention.needsAttention": [
+        "task|task_mac002_c|open|team_open_task|-|team open task cue",
+        "decision|dec_mac002_acc|accepted|accepted_decision_needs_review|-|accepted decision cites non-current evidence — needs human review"
+      ],
+      "attention.coverageTasks": {
+        "returned": 3,
+        "total": 3
+      },
+      "attention.coverageDecisions": {
+        "returned": 3,
+        "total": 3
+      },
+      "attention.coverageComplete": true,
+      "attention.reasonCodes": [
+        "accepted_decision_needs_review",
+        "assigned_blocked_task",
+        "proposed_decision_actionable",
+        "team_open_task"
+      ],
+      "provenance.slice.ids": [
+        "con_mac002_0001",
+        "con_mac002_0002"
+      ],
+      "provenance.slice.total": 2,
+      "provenance.slice.truncated": false,
+      "participants.omittedTotal": 2
+    },
+    "cli": {}
+  },
+  "verdicts": {
+    "ab": {
+      "verdicts": [
+        {
+          "cell": "activity.page.ids",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.nextBefore",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.total",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.truncated",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.acceptedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.proposedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.status",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.unresolvedBlockedTaskIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageComplete",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageDecisions",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageTasks",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsAttention",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsYou",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.reasonCodes",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.acceptedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.needsReviewIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.proposedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.supersededCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.currentnessById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.omittedTotal",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.roster",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterReturned",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterTotal",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "provenance.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "suggestedNext.kind",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.reason",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.summary",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.ids",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.returned",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.statusById",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.total",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.truncated",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.goalId",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalStatus",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalTitle",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.id",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.name",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.status",
+          "verdict": "PASS"
+        }
+      ],
+      "compared": 41,
+      "diffs": 0
+    },
+    "ac": {
+      "verdicts": [
+        {
+          "cell": "activity.page.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.nextBefore",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.acceptedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.proposedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.status",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.unresolvedBlockedTaskIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.returned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.coverageComplete",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.coverageDecisions",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.coverageTasks",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.needsAttention",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.needsYou",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "attention.reasonCodes",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.acceptedCount",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.needsReviewIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.proposedCount",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.returned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.statusById",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.supersededCount",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "decisions.slice.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "findings.slice.currentnessById",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "findings.slice.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "findings.slice.returned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "findings.slice.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "findings.slice.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.omittedTotal",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.roster",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterReturned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterTotal",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "provenance.slice.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "provenance.slice.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "provenance.slice.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.kind",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.reason",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.summary",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.returned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.statusById",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.ids",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.returned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.statusById",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.total",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.truncated",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.goalId",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.goalStatus",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.goalTitle",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.id",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.name",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.status",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        }
+      ],
+      "compared": 0,
+      "diffs": 0
+    }
+  },
+  "summary": {
+    "abCompared": 41,
+    "abDiffs": 0,
+    "acCompared": 0,
+    "acPass": 0,
+    "acSkips": 63,
+    "acDiffs": 0,
+    "exit": 0,
+    "notes": []
+  }
+}

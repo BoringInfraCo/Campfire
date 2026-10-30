@@ -1,0 +1,1063 @@
+{
+  "run": {
+    "tool": "prototypes/mac-002/parity.ts",
+    "purpose": "Gate S1 semantic parity (docs/Campfire-Multi-Surface-Strategy.md, Evidence gates) — read-only evidence",
+    "startedAt": "2026-10-29T02:26:52.691Z",
+    "finishedAt": "2026-10-29T02:27:21.358Z",
+    "selfcheck": false,
+    "viewer": "http://127.0.0.1:9415",
+    "workspaceId": "ws_df6794f33efc459b",
+    "pageLimit": 50,
+    "cliSurface": {
+      "repositoryRoot": "/Users/sergio/Documents/Developer/BoringInfraCo/Campfire-Internal/",
+      "entry": "src/cli/index.ts",
+      "outputMode": "--output json",
+      "identity": "env passthrough (default hum_sergio/human when no env identity is set)"
+    },
+    "safety": {
+      "readsOnly": true,
+      "credentialEnvSet": false,
+      "envBooleans": {
+        "campfireUrlInEnv": false,
+        "campfireTokenInEnv": false,
+        "campfireActorIdInEnv": false
+      }
+    }
+  },
+  "legErrors": {},
+  "snapshots": {
+    "viewer-raw": {
+      "list.workspaceIds": [
+        "ws_df6794f33efc459b"
+      ],
+      "workspace.openTaskCount": 1,
+      "whoami.actorId": "hum_156ff89c089f4d13",
+      "whoami.actorType": "human",
+      "workspace.id": "ws_df6794f33efc459b",
+      "workspace.name": "Arbora",
+      "workspace.status": "active",
+      "workspace.goalTitle": "Identify the smallest useful user-facing feature to build next",
+      "workspace.goalId": "goal_4c89cc049e7445c7",
+      "workspace.goalStatus": "active",
+      "tasks.slice.ids": [
+        "task_3795d9d37d3842e9"
+      ],
+      "tasks.slice.statusById": [
+        "task_3795d9d37d3842e9=open"
+      ],
+      "tasks.slice.total": 1,
+      "tasks.slice.returned": 1,
+      "tasks.slice.truncated": false,
+      "findings.slice.ids": [
+        "find_5cd543722a044c20"
+      ],
+      "findings.slice.currentnessById": [
+        "find_5cd543722a044c20=current"
+      ],
+      "findings.slice.total": 1,
+      "findings.slice.returned": 1,
+      "findings.slice.truncated": false,
+      "artifacts.slice.ids": [],
+      "artifacts.slice.total": 0,
+      "artifacts.slice.returned": 0,
+      "artifacts.slice.truncated": false,
+      "decisions.slice.ids": [],
+      "decisions.slice.statusById": [],
+      "decisions.slice.proposedCount": 0,
+      "decisions.slice.acceptedCount": 0,
+      "decisions.slice.supersededCount": 0,
+      "decisions.slice.needsReviewIds": [],
+      "decisions.slice.total": 0,
+      "decisions.slice.returned": 0,
+      "decisions.slice.truncated": false,
+      "attention.needsYou": [],
+      "attention.needsAttention": [],
+      "attention.coverageTasks": {
+        "returned": 1,
+        "total": 1
+      },
+      "attention.coverageDecisions": {
+        "returned": 0,
+        "total": 0
+      },
+      "attention.coverageComplete": true,
+      "attention.reasonCodes": [],
+      "alignment.status": "unspecified",
+      "alignment.proposedDecisionIds": [],
+      "alignment.acceptedDecisionIds": [],
+      "alignment.unresolvedBlockedTaskIds": [],
+      "suggestedNext.summary": "Implement address search and selection on a real satellite map",
+      "suggestedNext.kind": "task",
+      "suggestedNext.reason": "team_open_task",
+      "provenance.slice.ids": [
+        "con_cb4013b45f1247de",
+        "con_35f7858a77fb4d55",
+        "con_3d17f3f76eae446e",
+        "con_4c04e4a50a914e29",
+        "con_1bddacab82904a88",
+        "con_7a6a1c48c3014a45",
+        "con_9b38bc9f1b4c4c09",
+        "con_70fe9495cb7d4107",
+        "con_7631433945b94b46",
+        "con_ebaa38df7c4b4796",
+        "con_85e175e920ff4433",
+        "con_e11a2e2426c049b9",
+        "con_50259fc356da4981",
+        "con_be44b59e554f440d",
+        "con_793146423f774c41",
+        "con_09640a17b9b14ea7",
+        "con_55c3bc57b6854689"
+      ],
+      "provenance.slice.total": 17,
+      "provenance.slice.truncated": false,
+      "participants.omittedTotal": 4,
+      "tasks.page.ids": [
+        "task_3795d9d37d3842e9"
+      ],
+      "tasks.page.statusById": [
+        "task_3795d9d37d3842e9=open"
+      ],
+      "tasks.page.total": 1,
+      "tasks.page.returned": 1,
+      "tasks.page.truncated": false,
+      "tasks.page.nextCursor": "absent",
+      "participants.roster": [
+        "agt_49b4999f33424f55|agent|OpenCode|hum_ab19b25d25bb4c0e",
+        "agt_955034ffb2544082|agent|Codex|hum_156ff89c089f4d13",
+        "hum_156ff89c089f4d13|owner|Sergio|-",
+        "hum_ab19b25d25bb4c0e|member|Sergio|-"
+      ],
+      "participants.rosterTotal": 4,
+      "participants.rosterReturned": 4,
+      "activity.page.ids": [
+        "con_cb4013b45f1247de",
+        "con_35f7858a77fb4d55",
+        "con_3d17f3f76eae446e",
+        "con_4c04e4a50a914e29",
+        "con_1bddacab82904a88",
+        "con_7a6a1c48c3014a45",
+        "con_9b38bc9f1b4c4c09",
+        "con_70fe9495cb7d4107",
+        "con_7631433945b94b46",
+        "con_ebaa38df7c4b4796",
+        "con_85e175e920ff4433",
+        "con_e11a2e2426c049b9",
+        "con_50259fc356da4981",
+        "con_be44b59e554f440d",
+        "con_793146423f774c41",
+        "con_09640a17b9b14ea7",
+        "con_55c3bc57b6854689"
+      ],
+      "activity.page.total": 17,
+      "activity.page.truncated": false,
+      "activity.page.nextBefore": "absent"
+    },
+    "desktop-client": {
+      "list.workspaceIds": [
+        "ws_df6794f33efc459b"
+      ],
+      "workspace.openTaskCount": 1,
+      "workspace.id": "ws_df6794f33efc459b",
+      "workspace.name": "Arbora",
+      "workspace.status": "active",
+      "workspace.goalTitle": "Identify the smallest useful user-facing feature to build next",
+      "workspace.goalId": "goal_4c89cc049e7445c7",
+      "workspace.goalStatus": "active",
+      "tasks.slice.ids": [
+        "task_3795d9d37d3842e9"
+      ],
+      "tasks.slice.statusById": [
+        "task_3795d9d37d3842e9=open"
+      ],
+      "tasks.slice.total": 1,
+      "tasks.slice.returned": 1,
+      "tasks.slice.truncated": false,
+      "findings.slice.ids": [
+        "find_5cd543722a044c20"
+      ],
+      "findings.slice.currentnessById": [
+        "find_5cd543722a044c20=current"
+      ],
+      "findings.slice.total": 1,
+      "findings.slice.returned": 1,
+      "findings.slice.truncated": false,
+      "artifacts.slice.ids": [],
+      "artifacts.slice.total": 0,
+      "artifacts.slice.returned": 0,
+      "artifacts.slice.truncated": false,
+      "decisions.slice.ids": [],
+      "decisions.slice.statusById": [],
+      "decisions.slice.proposedCount": 0,
+      "decisions.slice.acceptedCount": 0,
+      "decisions.slice.supersededCount": 0,
+      "decisions.slice.needsReviewIds": [],
+      "decisions.slice.total": 0,
+      "decisions.slice.returned": 0,
+      "decisions.slice.truncated": false,
+      "attention.needsYou": [],
+      "attention.needsAttention": [],
+      "attention.coverageTasks": {
+        "returned": 1,
+        "total": 1
+      },
+      "attention.coverageDecisions": {
+        "returned": 0,
+        "total": 0
+      },
+      "attention.coverageComplete": true,
+      "attention.reasonCodes": [],
+      "provenance.slice.ids": [
+        "con_cb4013b45f1247de",
+        "con_35f7858a77fb4d55",
+        "con_3d17f3f76eae446e",
+        "con_4c04e4a50a914e29",
+        "con_1bddacab82904a88",
+        "con_7a6a1c48c3014a45",
+        "con_9b38bc9f1b4c4c09",
+        "con_70fe9495cb7d4107",
+        "con_7631433945b94b46",
+        "con_ebaa38df7c4b4796",
+        "con_85e175e920ff4433",
+        "con_e11a2e2426c049b9",
+        "con_50259fc356da4981",
+        "con_be44b59e554f440d",
+        "con_793146423f774c41",
+        "con_09640a17b9b14ea7",
+        "con_55c3bc57b6854689"
+      ],
+      "provenance.slice.total": 17,
+      "provenance.slice.truncated": false,
+      "participants.omittedTotal": 4
+    },
+    "cli": {
+      "whoami.actorId": "hum_156ff89c089f4d13",
+      "whoami.actorType": "human",
+      "list.workspaceIds": [
+        "ws_df6794f33efc459b"
+      ],
+      "workspace.openTaskCount": 1,
+      "workspace.id": "ws_df6794f33efc459b",
+      "workspace.name": "Arbora",
+      "workspace.status": "active",
+      "workspace.goalTitle": "Identify the smallest useful user-facing feature to build next",
+      "workspace.goalId": "goal_4c89cc049e7445c7",
+      "workspace.goalStatus": "active",
+      "tasks.slice.ids": [
+        "task_3795d9d37d3842e9"
+      ],
+      "tasks.slice.statusById": [
+        "task_3795d9d37d3842e9=open"
+      ],
+      "tasks.slice.total": 1,
+      "tasks.slice.returned": 1,
+      "tasks.slice.truncated": false,
+      "findings.slice.ids": [
+        "find_5cd543722a044c20"
+      ],
+      "findings.slice.currentnessById": [
+        "find_5cd543722a044c20=current"
+      ],
+      "findings.slice.total": 1,
+      "findings.slice.returned": 1,
+      "findings.slice.truncated": false,
+      "artifacts.slice.ids": [],
+      "artifacts.slice.total": 0,
+      "artifacts.slice.returned": 0,
+      "artifacts.slice.truncated": false,
+      "decisions.slice.ids": [],
+      "decisions.slice.statusById": [],
+      "decisions.slice.proposedCount": 0,
+      "decisions.slice.acceptedCount": 0,
+      "decisions.slice.supersededCount": 0,
+      "decisions.slice.needsReviewIds": [],
+      "decisions.slice.total": 0,
+      "decisions.slice.returned": 0,
+      "decisions.slice.truncated": false,
+      "attention.needsYou": [],
+      "attention.needsAttention": [],
+      "attention.coverageTasks": {
+        "returned": 1,
+        "total": 1
+      },
+      "attention.coverageDecisions": {
+        "returned": 0,
+        "total": 0
+      },
+      "attention.coverageComplete": true,
+      "attention.reasonCodes": [],
+      "alignment.status": "unspecified",
+      "alignment.proposedDecisionIds": [],
+      "alignment.acceptedDecisionIds": [],
+      "alignment.unresolvedBlockedTaskIds": [],
+      "suggestedNext.summary": "Implement address search and selection on a real satellite map",
+      "suggestedNext.kind": "task",
+      "suggestedNext.reason": "team_open_task",
+      "provenance.slice.ids": [
+        "con_cb4013b45f1247de",
+        "con_35f7858a77fb4d55",
+        "con_3d17f3f76eae446e",
+        "con_4c04e4a50a914e29",
+        "con_1bddacab82904a88",
+        "con_7a6a1c48c3014a45",
+        "con_9b38bc9f1b4c4c09",
+        "con_70fe9495cb7d4107",
+        "con_7631433945b94b46",
+        "con_ebaa38df7c4b4796",
+        "con_85e175e920ff4433",
+        "con_e11a2e2426c049b9",
+        "con_50259fc356da4981",
+        "con_be44b59e554f440d",
+        "con_793146423f774c41",
+        "con_09640a17b9b14ea7",
+        "con_55c3bc57b6854689"
+      ],
+      "provenance.slice.total": 17,
+      "provenance.slice.truncated": false,
+      "participants.roster": [
+        "agt_49b4999f33424f55|agent|OpenCode|hum_ab19b25d25bb4c0e",
+        "agt_955034ffb2544082|agent|Codex|hum_156ff89c089f4d13",
+        "hum_156ff89c089f4d13|owner|Sergio|-",
+        "hum_ab19b25d25bb4c0e|member|Sergio|-"
+      ],
+      "participants.rosterTotal": 4,
+      "tasks.page.ids": [
+        "task_3795d9d37d3842e9"
+      ],
+      "tasks.page.statusById": [
+        "task_3795d9d37d3842e9=open"
+      ],
+      "tasks.page.total": 1,
+      "tasks.page.returned": 1,
+      "tasks.page.truncated": false,
+      "tasks.page.nextCursor": "absent",
+      "findings.page.ids": [
+        "find_5cd543722a044c20"
+      ],
+      "findings.page.currentnessById": [
+        "find_5cd543722a044c20=current"
+      ],
+      "findings.page.total": 1,
+      "findings.page.returned": 1,
+      "findings.page.truncated": false,
+      "findings.page.nextCursor": "absent",
+      "decisions.page.ids": [],
+      "decisions.page.statusById": [],
+      "decisions.page.proposedCount": 0,
+      "decisions.page.acceptedCount": 0,
+      "decisions.page.supersededCount": 0,
+      "decisions.page.needsReviewIds": [],
+      "decisions.page.total": 0,
+      "decisions.page.returned": 0,
+      "decisions.page.truncated": false,
+      "decisions.page.nextCursor": "absent",
+      "artifacts.page.ids": [],
+      "artifacts.page.total": 0,
+      "artifacts.page.returned": 0,
+      "artifacts.page.truncated": false,
+      "artifacts.page.nextCursor": "absent",
+      "activity.page.ids": [
+        "con_cb4013b45f1247de",
+        "con_35f7858a77fb4d55",
+        "con_3d17f3f76eae446e",
+        "con_4c04e4a50a914e29",
+        "con_1bddacab82904a88",
+        "con_7a6a1c48c3014a45",
+        "con_9b38bc9f1b4c4c09",
+        "con_70fe9495cb7d4107",
+        "con_7631433945b94b46",
+        "con_ebaa38df7c4b4796",
+        "con_85e175e920ff4433",
+        "con_e11a2e2426c049b9",
+        "con_50259fc356da4981",
+        "con_be44b59e554f440d",
+        "con_793146423f774c41",
+        "con_09640a17b9b14ea7",
+        "con_55c3bc57b6854689"
+      ],
+      "activity.page.total": 17,
+      "activity.page.truncated": false,
+      "activity.page.nextBefore": "absent",
+      "changes.toCursor": "con_55c3bc57b6854689",
+      "changes.truncated": false,
+      "inspect.task.id": "task_3795d9d37d3842e9",
+      "inspect.task.status": "open"
+    }
+  },
+  "verdicts": {
+    "ab": {
+      "verdicts": [
+        {
+          "cell": "activity.page.ids",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.nextBefore",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.total",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "activity.page.truncated",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.acceptedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.proposedDecisionIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.status",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "alignment.unresolvedBlockedTaskIds",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageComplete",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageDecisions",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageTasks",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsAttention",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsYou",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.reasonCodes",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.acceptedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.needsReviewIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.proposedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.supersededCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.currentnessById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.omittedTotal",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.roster",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterReturned",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterTotal",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "provenance.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "suggestedNext.kind",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.reason",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "suggestedNext.summary",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.ids",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.returned",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.statusById",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.total",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.page.truncated",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "tasks.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.goalId",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalStatus",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalTitle",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.id",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.name",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.status",
+          "verdict": "PASS"
+        }
+      ],
+      "compared": 41,
+      "diffs": 0
+    },
+    "ac": {
+      "verdicts": [
+        {
+          "cell": "activity.page.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "activity.page.nextBefore",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "activity.page.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "activity.page.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "alignment.acceptedDecisionIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "alignment.proposedDecisionIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "alignment.status",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "alignment.unresolvedBlockedTaskIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.page.ids",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "artifacts.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "artifacts.page.returned",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "artifacts.page.total",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "artifacts.page.truncated",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "artifacts.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "artifacts.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageComplete",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageDecisions",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.coverageTasks",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsAttention",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.needsYou",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "attention.reasonCodes",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "changes.toCursor",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "changes.truncated",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.acceptedCount",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.ids",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.needsReviewIds",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.proposedCount",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.returned",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.statusById",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.supersededCount",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.total",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.page.truncated",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "decisions.slice.acceptedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.needsReviewIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.proposedCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.supersededCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "decisions.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.page.currentnessById",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.page.ids",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.page.nextCursor",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.page.returned",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.page.total",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.page.truncated",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "findings.slice.currentnessById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "findings.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "inspect.task.id",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "inspect.task.status",
+          "verdict": "SKIP",
+          "reason": "viewer-raw does not return this cell; the cell comes from the cli surface output shape"
+        },
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.omittedTotal",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.roster",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "participants.rosterReturned",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "participants.rosterTotal",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "provenance.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "suggestedNext.kind",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "suggestedNext.reason",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "suggestedNext.summary",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.nextCursor",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.page.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.ids",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.returned",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.statusById",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.total",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "tasks.slice.truncated",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalId",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalStatus",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.goalTitle",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.id",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.name",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "workspace.status",
+          "verdict": "PASS"
+        }
+      ],
+      "compared": 61,
+      "diffs": 0
+    }
+  },
+  "summary": {
+    "abCompared": 41,
+    "abDiffs": 0,
+    "acCompared": 61,
+    "acPass": 61,
+    "acSkips": 27,
+    "acDiffs": 0,
+    "exit": 0,
+    "notes": []
+  }
+}

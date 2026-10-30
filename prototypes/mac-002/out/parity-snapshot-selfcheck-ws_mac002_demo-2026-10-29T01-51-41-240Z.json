@@ -1,0 +1,111 @@
+{
+  "run": {
+    "tool": "prototypes/mac-002/parity.ts",
+    "purpose": "Gate S1 semantic parity (docs/Campfire-Multi-Surface-Strategy.md, Evidence gates) — read-only evidence",
+    "startedAt": "2026-10-29T01:51:21.210Z",
+    "finishedAt": "2026-10-29T01:51:41.240Z",
+    "selfcheck": true,
+    "viewer": "http://127.0.0.1:61503",
+    "workspaceId": "ws_mac002_demo",
+    "pageLimit": 50,
+    "cliSurface": {
+      "repositoryRoot": "/Users/sergio/Documents/Developer/BoringInfraCo/Campfire-Internal/",
+      "entry": "src/cli/index.ts",
+      "outputMode": "--output json",
+      "identity": "env passthrough (default hum_sergio/human when no env identity is set)"
+    },
+    "safety": {
+      "readsOnly": true,
+      "credentialEnvSet": false,
+      "envBooleans": {
+        "campfireUrlInEnv": false,
+        "campfireTokenInEnv": false,
+        "campfireActorIdInEnv": false
+      }
+    }
+  },
+  "legErrors": {
+    "viewerRaw": "viewer-raw: Viewer unreachable at http://127.0.0.1:61503/api/call (The operation timed out.). Run campfire up, then refresh.; Viewer unreachable at http://127.0.0.1:61503/api/call (The operation timed out.). Run campfire up, then refresh.; Viewer unreachable at http://127.0.0.1:61503/api/call (The operation timed out.). Run campfire up, then refresh.; Viewer unreachable at http://127.0.0.1:61503/api/call (The operation timed out.). Run campfire up, then refresh.",
+    "desktopClient": "desktop-client: getWorkspaceContext() failed: ViewerCallError: Viewer unreachable. Run campfire up, then refresh.",
+    "cli": "selfcheck: CLI leg disabled (offline canned Viewer)"
+  },
+  "snapshots": {
+    "viewer-raw": {
+      "list.workspaceIds": [
+        "ws_mac002_demo"
+      ],
+      "workspace.openTaskCount": 3,
+      "whoami.actorId": "hum_sergio",
+      "whoami.actorType": "human"
+    },
+    "desktop-client": {
+      "list.workspaceIds": [
+        "ws_mac002_demo"
+      ],
+      "workspace.openTaskCount": 3
+    },
+    "cli": {}
+  },
+  "verdicts": {
+    "ab": {
+      "verdicts": [
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "PASS"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "SKIP",
+          "reason": "desktop-client does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "PASS"
+        }
+      ],
+      "compared": 2,
+      "diffs": 0
+    },
+    "ac": {
+      "verdicts": [
+        {
+          "cell": "list.workspaceIds",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorId",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "whoami.actorType",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        },
+        {
+          "cell": "workspace.openTaskCount",
+          "verdict": "SKIP",
+          "reason": "cli does not return this cell; the cell comes from the viewer-raw surface output shape"
+        }
+      ],
+      "compared": 0,
+      "diffs": 0
+    }
+  },
+  "summary": {
+    "abCompared": 2,
+    "abDiffs": 0,
+    "acCompared": 0,
+    "acPass": 0,
+    "acSkips": 4,
+    "acDiffs": 0,
+    "exit": 1,
+    "notes": []
+  }
+}
