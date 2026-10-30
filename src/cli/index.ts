@@ -79,6 +79,14 @@ import {
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import {
+  DEFAULT_INTENT_HOST,
+  DEFAULT_INTENT_PORT,
+  startCampfireIntentBridge,
+  type RunningIntentBridge,
+} from "../intent/server.js";
+import { INTENT_METHODS } from "../intent/allowlist.js";
+import { resolveOperatorCall } from "../intent/resolve.js";
+import {
   DASHBOARD_HISTORY_PAGE_LIMIT,
   DASHBOARD_PEOPLE_PAGE_LIMIT,
   DASHBOARD_TASK_PAGE_LIMIT,
@@ -2556,6 +2564,73 @@ async function cmdServe(parsed: ParsedArgs): Promise<void> {
   });
 }
 
+async function cmdIntent(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const host = optionalFlag(parsed.flags, "host") ?? DEFAULT_INTENT_HOST;
+  const portRaw = optionalFlag(parsed.flags, "port");
+  const port = portRaw === undefined ? DEFAULT_INTENT_PORT : Number(portRaw);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
+  }
+  const output = commandOutput(parsed);
+  const operator = await resolveOperatorCall({
+    ...(typeof parsed.flags.url === "string" ? { url: parsed.flags.url } : {}),
+    ...(typeof parsed.flags.token === "string" ? { token: parsed.flags.token } : {}),
+  });
+  let bridge: RunningIntentBridge | undefined;
+  try {
+    bridge = await startCampfireIntentBridge({
+      call: operator.call,
+      host,
+      port,
+      actor: operator.actor,
+    });
+    const receipt = {
+      mode: operator.mode,
+      human: operator.actor.actorId,
+      endpoint: operator.url,
+      intentUrl: bridge.url,
+      allowlist: [...INTENT_METHODS],
+      serialization: "per-workspace in-process queue; service-level preconditions pending",
+    };
+    emitResult(receipt, output, (value) => [
+      "Intent bridge listening:",
+      `  URL        ${value.intentUrl}`,
+      `  Bound as   operator human ${value.human} (${value.mode === "remote" ? `hosted ${value.endpoint}` : "local profile"})`,
+      `  Allowlist  ${value.allowlist.join(", ")}`,
+      "",
+      "The desktop app sends typed intents here; it holds no Campfire token.",
+      "Stop with Ctrl+C.",
+    ].join("\n"));
+    console.error(`[campfire] intent bridge ${bridge.url}`);
+    let stopped = false;
+    const stopOwned = async (): Promise<void> => {
+      if (stopped) return;
+      stopped = true;
+      const active = bridge;
+      bridge = undefined;
+      if (active !== undefined) await active.close();
+      await operator.close();
+    };
+    // Deliberately NOT registered with campfire update's service owner:
+    // update-command stops owned services and health-checks on
+    // apiUrl/viewerUrl, so an owned-but-unprobeable intent bridge would make
+    // a confirmed update fail and roll back. The bridge is a manually
+    // started process: update reports "restart required" instead.
+    await new Promise<void>((resolve) => {
+      const shutdown = (signal: NodeJS.Signals): void => {
+        console.error(`[campfire] received ${signal}, shutting down`);
+        void stopOwned().finally(resolve);
+      };
+      process.once("SIGINT", shutdown);
+      process.once("SIGTERM", shutdown);
+    });
+  } catch (error) {
+    if (bridge !== undefined) await bridge.close();
+    await operator.close();
+    throw error;
+  }
+}
+
 async function cmdView(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const host = optionalFlag(parsed.flags, "host") ?? DEFAULT_VIEWER_HOST;
   const allowRemote = parsed.flags["allow-remote"] === true;
@@ -2717,7 +2792,17 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         const configPath = override ?? defaultHarnessConfigPath(harness as "codex" | "opencode");
         const input = { harness, configPath, url: agentAccess.url, agentToken: agentAccess.token,
           workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire", rejectConflicting: true };
-        assertConnectionCompatible(input);
+        try {
+          assertConnectionCompatible(input);
+        } catch (error) {
+          if (error instanceof CampfireError && error.details?.nextAction === "use_isolated_harness_config") {
+            throw new ValidationError(
+              `${harness} already has a Campfire connection for another profile. Run campfire up --no-connect to open the read-only Viewer without changing it; use an isolated harness config to connect this profile.`,
+              { field: "config", nextAction: "up_without_harness_connection" },
+            );
+          }
+          throw error;
+        }
         return input;
       });
       for (const input of plans) prepared.push(prepareConnection(input).harness);
@@ -3276,6 +3361,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   doctor: (parsed) => cmdDoctor(parsed),
   handoff: (parsed) => cmdHandoff(parsed),
   up: (parsed) => cmdUp(parsed),
+  intent: (parsed, argv) => cmdIntent(parsed, argv),
   update: (parsed) => runUpdateCommand(parsed),
   status: (parsed, argv) => cmdStatus(parsed, argv),
   dashboard: (parsed, argv) => cmdDashboard(parsed, argv),

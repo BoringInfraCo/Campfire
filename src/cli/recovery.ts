@@ -74,6 +74,8 @@ export function commandForNextAction(
       return "CAMPFIRE_CONFIG_DIR=<new-private-directory> campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode";
     case "use_isolated_harness_config":
       return `campfire connect --harness ${harness} --config <private-config-path>`;
+    case "up_without_harness_connection":
+      return "campfire up --no-connect --no-open";
     case "check_invitation_scope":
     case "select_supported_harness":
       return "campfire join --help";

@@ -69,6 +69,7 @@ export const CLI_COMMAND_NAMES = [
   "join",
   "serve",
   "view",
+  "intent",
   "mcp",
   "init",
   "bootstrap",
@@ -775,6 +776,20 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "Read-only team journal. Binds loopback only (127.0.0.1, ::1, localhost).",
       "Non-loopback --host requires --allow-remote. The browser never receives a token.",
       "Operational notices go to stderr; stdout carries no result document.",
+    ] },
+  ),
+  intent: spec(
+    "intent",
+    "admin",
+    "Start the desktop intent bridge (bounded local writes) - loopback only, actor-bound to the operator human.",
+    "campfire intent [--host 127.0.0.1] [--port 9416] [--url <https-endpoint>] [--token <token>] [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: false, related: ["up", "view"], notes: [
+      "Separate, explicitly started desktop write channel. The read-only Viewer on 9415 stays the visual channel; this bridge (default 9416) accepts typed intents only.",
+      "Loopback only with no --allow-remote escape hatch: the bridge forwards the operator's write authority to the local service or a hosted profile, and the desktop app itself holds no token.",
+      "Accepts a bounded allowlist of dispatch methods: task status update and create, decision propose/accept/retire, finding record, invitation create. Everything else is refused before dispatch.",
+      "Uses the same profile and credential resolution as campfire up. With a hosted profile it relays the same narrow allowlist through the hosted API using the operator's human credential.",
+      "Supports local writes only through the ordinary publication gates; writes stay blocked while publication freezes the local database.",
+      "The bridge is not registered with campfire update's service owner: update reports restart required rather than stopping a channel it did not start.",
     ] },
   ),
   mcp: spec(

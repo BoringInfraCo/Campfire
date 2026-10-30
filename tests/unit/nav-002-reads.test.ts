@@ -117,7 +117,10 @@ describe("NAV-002 bounded reads", () => {
       "get_artifact",
       "get_record_history",
     ]);
-    expect(CLI_COMMAND_NAMES).toHaveLength(65);
+    // The desktop intent channel adds exactly one CLI name (Phase C):
+    // `intent`, the loopback bridge whose allowlist is numbered below.
+    expect(CLI_COMMAND_NAMES).toHaveLength(66);
+    expect(CLI_COMMAND_NAMES).toContain("intent");
     const listed = (source: string): string[] => {
       const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);
       expect(match).not.toBeNull();
