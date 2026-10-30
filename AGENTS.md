@@ -1,5 +1,26 @@
 # AGENTS.md
 
+## Context Canary — All Agents
+
+This repository uses this root `AGENTS.md` as the shared instruction file for
+Codex, OpenCode, Grok, and any other coding agent that supports the convention.
+
+- Start every user-facing reply with `Sergio,` exactly.
+- Do not omit the prefix from short replies, clarifying questions, progress
+  updates, tool summaries, or final answers.
+- If earlier session details are no longer clear, or the conversation has
+  become too long to follow reliably, keep the prefix, state that context may
+  be degraded, and recommend starting a fresh session instead of guessing.
+- Before recommending a fresh session during active repository work, create or
+  update `HANDOFF.md` with the current goal, completed work, remaining work,
+  key files, validation performed, and open questions. Do not include secrets,
+  credentials, private transcript text, or unsupported claims. If the task is
+  read-only or repository writes are not allowed, include the same handoff in
+  the reply instead.
+- At the start of a session, read `HANDOFF.md` first when it exists. Treat it as
+  temporary continuation context, not canonical product state, and do not
+  commit it unless the user explicitly asks.
+
 This file defines the operating instructions for coding agents working in the Campfire repository.
 
 Campfire is a Boring Infra Co. project.
@@ -500,6 +521,26 @@ private tag, public snapshot, GitHub Release, channel pins, tap promotion,
 migration `0009`, Worker deployment, and clean install are recorded there. The
 CONDITIONAL GO verdict is unchanged, and publication does not convert live
 harness or provider observations into passes.
+
+Sprint SHR-001 — Publish and Share the First Local Workspace is a **repaired
+engineering candidate** for the v1.26.2 slot; its contract is
+`docs/Campfire-v1.26.2-SHR-001-Publish-and-Share.md`, its result is
+`docs/SPRINT_SHR_001_RESULT.md`, and its candidate record is
+`docs/RELEASE_V1_26_2_CANDIDATE.md`. It adds `campfire publish`,
+`campfire publish-status`, and `campfire publish-recover`; a private hosted
+owner-enrollment/import boundary behind `CAMPFIRE_PUBLICATION_ALPHA=1` plus an
+operator-held rehearsal admission hash; D1 migration `0010`; a read-only
+allow-listed snapshot with all-free-text credential/path scanning, one-batch
+atomic import, read-only committed-retry verification, and a recoverable local
+profile cutover. The installed Arbora source was captured token-free (workspace
+`ws_df6794f33efc459b`, finding `find_5cd543722a044c20`, tip 8), and the v1.26.2
+candidate digest was recomputed. A 1.26.2 candidate archive and a distinctly
+named isolated Worker/D1 are prepared for the rehearsal. The physical two-Mac
+acceptance is **NOT OBSERVED**, no hosted Arbora copy exists, and no public tag,
+GitHub Release, channel update, production deployment, or public self-service
+is claimed. Do not describe a backend-only test, a tunnel, a copied finding, or
+a staged/committed receipt as the user fix. Public self-service remains blocked
+on an abuse and cost review.
 
 For future bounded sprints, `docs/ROADMAP.md` records the founder delivery
 rule: passing local engineering checks can support a separately approved,
