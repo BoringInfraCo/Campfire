@@ -370,6 +370,8 @@ The full disclosure, including how the installation id is created and where the 
 - [docs/PRODUCT_DEFINITION.md](docs/PRODUCT_DEFINITION.md) — collaboration model and invariants
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MCP → service → authorization → domain → SQLite
 - [docs/ROADMAP.md](docs/ROADMAP.md) — evidence-backed stages toward team memory
+- [docs/Campfire-Local-Voice-Dictation-Plan.md](docs/Campfire-Local-Voice-Dictation-Plan.md) — proposed local review-before-submit dictation boundary
+- [docs/Campfire-DIC-000-Hex-Local-Dictation-Spike.md](docs/Campfire-DIC-000-Hex-Local-Dictation-Spike.md) — proposed pinned Hex compatibility and evidence sprint
 - [docs/OPERATOR.md](docs/OPERATOR.md) — hosting, tokens, and the single-writer rule
 - [docs/TELEMETRY.md](docs/TELEMETRY.md) — what anonymous product telemetry collects, why, and how to disable it
 - [docs/SPRINT_006_RESULT.md](docs/SPRINT_006_RESULT.md) — hosted multi-participant acceptance evidence for the v1.0 product cut

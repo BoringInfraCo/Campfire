@@ -29,4 +29,4 @@ These stay open and are not claimed:
 - the branded Cloud handoff
 - the two-Mac CLI update checks
 
-MAC-003 distribution is not started. The readable GPUIX window body, an accessibility tree that reaches Refresh and a selected record, and one fresh authorized real-profile read on the same response as SwiftUI remain the missing MAC-001B gates.
+MAC-003 distribution was not started when this scope was written. On October 31, 2026 the public decision is HOLD: [verdict](../mac-003/VERDICT.md). The readable GPUIX window body, an accessibility tree that reaches Refresh and a selected record, and one fresh authorized real-profile read on the same response as SwiftUI remain the missing MAC-001B gates.

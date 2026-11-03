@@ -3,14 +3,13 @@
 **Status:** Revised  
 **Version:** 0.2  
 **Date:** October 3, 2026; sequence revised October 9 after published `v1.14.0`, extended October 10 with an implemented v1.16 candidate, updated October 11 (local; run timestamps cross October 12 UTC) with the RCL-001, RCL-002, and RCL-003 pilot verdicts NO-GO / REFRAME; October 13 founder release preparation direction recorded (Gate E open; not published); October 13 v1.16.0 published and deployed; October 13 post-v1.16 direction added for v1.17; October 14 v1.17 Shared Work Home implemented as an engineering candidate with D1–D7 deterministic checks passing (controlled human traces and reference observations still open; not published); October 14 founder direction recorded for the v1.17 release path (two controlled traces first; a separate recorded founder override is required to publish with open observations); October 14 founder authorized a public v1.17.0 release under the recorded release-scope override; October 15 v1.17.0 published and deployed (see `docs/RELEASE_V1_17_DECISION.md`); October 15 v1.18 work-continuity contract drafted; October 15 WCO-001 baseline recorded and a labeled single-operator rehearsal run (eligible two-human case NOT OBSERVED), Amendment 1's bounded guidance/schema repair implemented with D1–D6 passing, recorded as CONDITIONAL GO — engineering candidate; October 15 v1.18.0 published and deployed under the recorded release-scope override in `docs/RELEASE_V1_18_DECISION.md`; October 15 v1.19 team-attention contract proposed (unimplemented and unscored); October 15 ATT-001 baseline frozen (fixture v2), engineering candidate implemented with D1–D6 passing and independent verification, two-person trace NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 15 founder directed a full public v1.19.0 release under the recorded release-scope override (docs/RELEASE_V1_19_DECISION.md); October 15 v1.19.0 published and deployed under that override; October 16 interface reassessment recorded after v1.19; October 16 founder directed UIX-001 terminal and Viewer planning before the open human traces; October 16 UIX-001 Shared Work Console implemented as an engineering candidate with D1–D6 passing, five cold tasks NOT OBSERVED, recorded as CONDITIONAL GO — engineering candidate; October 16 founder directed a public v1.20.0 release under the recorded release-scope override (docs/RELEASE_V1_20_DECISION.md); October 16 v1.20.0 frozen unpublished before promotion after the export review found the pty capture test required a machine-local Playwright install; repair 70f4023 keeps PTY assertions mandatory and makes evidence capture opt-in; October 16 v1.20.1 release prepared under the recorded release-scope override (docs/RELEASE_V1_20_1_DECISION.md); October 16 v1.20.1 published and deployed — public snapshot d66a4e6, four checksummed archives, Homebrew/Nix pins and tap promoted, Worker 3300f315, and a clean isolated install reporting 1.20.1; October 18 ONB-001 implemented and recorded (`docs/SPRINT_ONB_001_RESULT.md`, corrected `4abbe2e` to leave D6 pending), then the founder-directed v1.22.1 release-prep revision (`b1ba31c`, decision in `docs/RELEASE_V1_22_1_DECISION.md`) closed D6 in a dated addendum with `pack:tarball` passing and the published v1.22.0 installer copy unchanged; verdict CONDITIONAL GO — engineering candidate, human outcome NOT OBSERVED, publication pending the release-gate reassessment; October 18–19 v1.22.1 published and deployed under the recorded founder release decision in `docs/RELEASE_V1_22_1_DECISION.md` — public snapshot `dfc3880` with annotated tag, GitHub Release `v1.22.1` (workflow `39183976392`, four checksummed archives verified), channel pin `828f51e` (private CI `39184752043` green) and public addendum `a7fe66e` (public CI `39184822069` green), tap promotion `0e9efa3`, production Worker `12de3762`, and live installer checks; human outcome NOT OBSERVED; October 18 NAV-002 implemented and recorded as CONDITIONAL GO — engineering candidate (Step 0 freeze `073b674`, bounded reads `edeab41`, terminal drill-down `02eed76`, catalog locks `b2321e9`, result `8552976`, narrow-history follow-up `961d0b3`), human comparison NOT OBSERVED; October 19 the founder directed the v1.23 release; v1.23.0 published and deployed under the recorded founder release decision in `docs/RELEASE_V1_23_DECISION.md` — private tag `7a466819` → `b97b47b`, public snapshot `8c14621` with annotated tag, GitHub Release `v1.23.0` (workflow `39199045755`, four checksummed archives verified, all extract 1.23.0), channel pin `8c2a546` (private CI `39199438425` green) and public addendum `65fff4a` (public CI `39199498859` green), tap promotion `483a8fd`, migration 0007 applied to production D1, production Worker `da752833`, and live installer checks; human outcome NOT OBSERVED
-**Latest planning update:** October 29, 2026 — consolidated the Shepherdr
-comparison into one canonical execution-provider assessment and added a
-separate Herder native-app assessment. The current desktop hierarchy remains
-adopted; the Herder review refines its contextual pane, quiet attention badges,
-and responsive content modes without changing Campfire authority or adding a
-runtime. The evidence-gated RUN-000 provider sequence, October 27 Cloud plan,
-and October 28 session-continuity sequence remain proposed. The Sunday desktop
-target is an internal-alpha implementation plan, not a public release decision.
+**Latest planning update:** October 31, 2026 — added the proposed DIC-000 Hex
+local-dictation compatibility spike and its review-before-submit architecture.
+It is a draft-only, local experiment after the native workspace baseline; it
+does not open a production write path, replace VoiceOver accessibility, add
+cloud speech, or expand the Sunday desktop release gate. The October 29
+Shepherdr/Herder assessments, RUN-000 provider sequence, October 27 Cloud plan,
+and October 28 session-continuity sequence remain proposed.
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2, Architecture v0.2
 
@@ -2099,6 +2098,48 @@ requirements live in
 This planning entry does not change WCO-001, close Gate B/C/E, authorize raw
 session sharing, or turn Campfire into a harness or runtime.
 
+### Evidence-gated local dictation sequence
+
+Hex is the first named local speech-to-text candidate. Campfire may use its
+engine to help a person prepare a draft, but audio and raw transcription remain
+transient interface input. Dictation is not Apple VoiceOver, narration, a new
+agent command surface, or a source of canonical authority.
+
+```text
+MAC-002 read-oriented desktop semantics stable enough for an isolated probe
+        ↓
+DIC-000 — pinned Hex SDK/helper compatibility spike
+        ↓
+local privacy + license/model + OS + performance + packaging evidence
+        ├── HOLD/REJECT — typed Campfire experience remains unchanged
+        └── GO — freeze one separate DIC-001 product contract
+                    ↓
+one equivalent typed composer/action proves authorization, conflicts,
+retry, denial, revocation, and receipts against a real profile
+                    ↓
+DIC-001 — Campfire-owned microphone → editable local draft → explicit submit
+                    ↓
+repeated voluntary value
+        └── DIC-002 — separate expansion decision
+```
+
+DIC-000 may use an installed Hex app for a labeled research trace and a pinned
+self-built helper with licensed fixture audio. It changes no service schema,
+Viewer method, MCP method, intent allowlist, permission, entitlement, or release
+bundle, and makes no workspace write. A GO authorizes only a DIC-001 contract.
+
+DIC-001, if later approved, must use Campfire-owned microphone capture and a
+bundled, signed, authenticated local helper. It must preserve typed fallback,
+explicit permission and model-download consent, review/edit/discard, existing
+application-service authority, content-free diagnostics, deterministic cleanup,
+and truthful unsupported-OS behavior. It cannot require the Hex application or
+silently fall back to cloud transcription.
+
+The full product boundary is
+[Campfire-Local-Voice-Dictation-Plan.md](Campfire-Local-Voice-Dictation-Plan.md).
+The frozen evidence procedure is
+[Campfire-DIC-000-Hex-Local-Dictation-Spike.md](Campfire-DIC-000-Hex-Local-Dictation-Spike.md).
+
 | Order | Product question | Evidence before expansion |
 | --- | --- | --- |
 | Work continuity | Can an invited teammate and their agent take over recorded work, resolve a real dependency, and leave the next person oriented? Build on existing enrollment, task ownership, corrections, and handoff. | Voluntary repeat use (Gate B) and ordinary multi-participant value (Gate C), not another fixture-only pass. |
@@ -2146,6 +2187,12 @@ Campfire should integrate through a pinned local CLI or MCP boundary, preserve
 its context-only fallback, and accept only authorized structured outcomes into
 the workspace. The adapted decision is recorded in
 [Campfire-External-Agent-Session-Continuity-Plan.md](Campfire-External-Agent-Session-Continuity-Plan.md).
+
+[Hex](https://github.com/anomalyco/hex) is the pinned local speech-to-text
+candidate for DIC-000. Campfire is evaluating its engine and protocol, not
+adopting its application, transcript history, global dictation UX, or product
+identity. The plan is
+[Campfire-Local-Voice-Dictation-Plan.md](Campfire-Local-Voice-Dictation-Plan.md).
 
 [Shepherdr](https://github.com/eliasstravik/shepherdr) is the interface and
 optional provider reference recorded in the

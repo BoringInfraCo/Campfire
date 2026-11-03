@@ -2,13 +2,14 @@
  * UIX-001 read-only terminal console; NAV-001 focused navigator; NAV-002
  * paged work, on-demand people, and selected-record history.
  *
- * One active section renders at a time. The local `/` filter narrows the
- * shown rows of the loaded page — matching, loaded, and workspace total stay
- * separate numbers. It is not workspace search. The exact input `/update`
- * followed by Return requests an update and is not kept as a filter. Record
- * text is untrusted:
- * only `renderDashboard` text is drawn, and every record string goes through
- * `stripTerminalControls`. An omitted participant roster is not zero people.
+ * One active section renders at a time, starting at overview. The local `/`
+ * filter narrows the shown rows of the loaded page — matching, loaded, and
+ * workspace total stay separate numbers. It is not workspace search. The
+ * exact input `/update` followed by Return requests an update and is not kept
+ * as a filter. `w` lists workspaces; enter switches, and the screen still
+ * draws one workspace. Record text is untrusted: only `renderDashboard` text
+ * is drawn, and every record string goes through `stripTerminalControls`. An
+ * omitted participant roster is not zero people.
  */
 import { execFileSync } from "node:child_process";
 import { CampfireError } from "../domain/errors.js";
@@ -49,8 +50,10 @@ const NOT_RUNNING = "in_progress is a recorded task status, not a running proces
 const NOT_ATTENTION = "This page is not an attention recomputation or an all-clear.";
 const NOT_CENSUS = "Pages are separate reads. This is not a consistent census.";
 const NOT_PRESENCE = "Recorded registration is not presence or permission to act.";
+const WORKSPACE_LIST_UNAVAILABLE = "The workspace list is unavailable.";
+const RECORDED_NOT_PRESENT = "recorded, not present";
 
-export type DashboardSection = "attention" | "work" | "decisions" | "references" | "people" | "changes";
+export type DashboardSection = "overview" | "attention" | "work" | "decisions" | "references" | "people" | "changes";
 export type DashboardPerspective = "mine" | "team";
 export type DashboardInspectKind = "task" | "finding" | "decision" | "artifact";
 export type HistoryObjectType = DashboardInspectKind;
@@ -72,6 +75,8 @@ export interface PagePlace {
   cursor?: string;
   pageNumber: number;
   humanOwnerId?: string;
+  /** Cleaned name from the page this place left, when that human was on it. */
+  humanOwnerName?: string;
 }
 
 export interface LoadedPage<T> {
@@ -89,8 +94,13 @@ export interface LoadedPage<T> {
 }
 
 export interface PeoplePageState extends LoadedPage<ParticipantListItem> {
-  /** Set when the page is that human's workspace-participating agents. */
+  /** Set when the page is that human's recorded agents. */
   humanOwnerId?: string;
+  /**
+   * Set only when that human was on the page this read left. Otherwise the
+   * heading uses the id.
+   */
+  humanOwnerName?: string;
 }
 
 /**
@@ -125,6 +135,7 @@ export interface PageRequest {
   previousSelectionId?: string;
   recoverOnRejectedCursor: boolean;
   humanOwnerId?: string;
+  humanOwnerName?: string;
   objectType?: HistoryObjectType;
   objectId?: string;
 }
@@ -145,6 +156,7 @@ export interface AppliedPageStamp {
   cursorStack: PagePlace[];
   previousSelectionId?: string;
   humanOwnerId?: string;
+  humanOwnerName?: string;
 }
 
 export interface HistoryStamp {
@@ -195,6 +207,14 @@ export interface DashboardState {
   /** Why an unavailable key did nothing. Not an exception. */
   statusNote?: string;
   selectionNote?: string;
+  /** Workspace picker. One workspace still renders; this is not a tab strip. */
+  workspaceListOpen: boolean;
+  workspaceChoices: Array<{ id: string; name: string }>;
+  workspaceListRow: number;
+  /** Set by `w`. The session lists workspaces, or notes that the list is unavailable. */
+  workspaceListRequest?: { generation: number };
+  /** Set by enter on a workspace row. The session assigns this id and refreshes. */
+  workspaceSwitchId?: string;
 }
 
 export interface DashboardSessionOptions {
@@ -215,9 +235,17 @@ export interface DashboardSessionOptions {
   now?: () => Date;
   /** Side effect for an exact `/update` request. The dashboard does not install. */
   onUpdate?: () => Promise<void>;
+  /** Id and name only. Omitted means `w` notes that the list is unavailable. */
+  listWorkspaces?: () => Promise<Array<{ id: string; name: string }>>;
+  /**
+   * Assigns the id closed over by the host's loaders. Called when a switch
+   * id is fulfilled, before the context refresh reads it.
+   */
+  adoptWorkspace?: (workspaceId: string) => void;
 }
 
 const SECTIONS: readonly DashboardSection[] = [
+  "overview",
   "attention",
   "work",
   "decisions",
@@ -227,16 +255,17 @@ const SECTIONS: readonly DashboardSection[] = [
 ];
 
 const FOOTER =
-  "p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit";
-const COMPACT_FOOTER = "tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
+  "p perspective  tab section  w workspaces  j/k move  n/b page  h history  / filter  enter  r refresh  ? help  esc  q quit";
+const COMPACT_FOOTER = "tab  w list  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
 
 const HELP_LINES = [
-  "p switches My work and Team work. It does not change the workspace.",
-  "tab moves among attention, work, decisions, references, people, and recent changes.",
-  "j and k move within shown rows, or among loaded contributions while history is open. enter opens a read-only detail.",
+  "p switches Needs You and Needs Attention. It does not change the workspace.",
+  "tab moves among Overview, Needs You or Needs Attention, Work, Decisions, Sources, People & Agents, and Activity.",
+  "w lists workspaces. enter switches to the selected workspace. esc closes the list.",
+  "j and k move within shown rows, among workspace choices while that list is open, or among loaded contributions while history is open. enter opens a read-only detail.",
   "n and b page Work, People, or an open history panel. Elsewhere they do not move the selection.",
   "h opens or closes recorded changes for the selected task, decision, finding, or artifact.",
-  "esc closes history first. A later esc clears a committed filter. ctrl-c always quits.",
+  "esc closes the workspace list first, then history. A later esc clears a committed filter. ctrl-c always quits.",
   "/ filters the loaded page, not the workspace. enter confirms; esc clears. Letters stay text.",
   "/update reviews a Campfire update. The canonical command is campfire update. Other / text still filters this page.",
   "r reloads orientation and the active page as separate reads.",
@@ -279,7 +308,7 @@ export function createDashboardState(input: {
     actorId: input.actorId,
     actorType: input.actorType,
     perspective: input.perspective ?? "mine",
-    section: input.section ?? "attention",
+    section: input.section ?? "overview",
     row: 0,
     help: false,
     quit: false,
@@ -290,6 +319,9 @@ export function createDashboardState(input: {
     filterMode: false,
     generation: 1,
     boundedReads: input.boundedReads ?? false,
+    workspaceListOpen: false,
+    workspaceChoices: [],
+    workspaceListRow: 0,
     ...(input.context === undefined ? {} : { context: input.context }),
     ...(input.refreshedAt === undefined ? {} : { refreshedAt: input.refreshedAt }),
     ...(input.staleError === undefined ? {} : { staleError: input.staleError }),
@@ -407,7 +439,53 @@ function participantText(item: ParticipantListItem): string {
   if (label !== id) parts.push(id);
   parts.push(`role ${clean(item.role)}`);
   if (item.harness !== undefined && clean(item.harness).length > 0) parts.push(`harness ${clean(item.harness)}`);
+  if (item.actor.actorType === "agent") parts.push(RECORDED_NOT_PRESENT);
   return parts.filter((part) => part.length > 0).join("  ");
+}
+
+/**
+ * Humans first, then agents grouped by the owner key in first-seen order.
+ * Selectable rows stay the participants. Headers are drawn later and are not
+ * rows, so j/k follows this order.
+ */
+function groupedPeople(items: readonly ParticipantListItem[]): ParticipantListItem[] {
+  const humans: ParticipantListItem[] = [];
+  const agents: ParticipantListItem[] = [];
+  for (const item of items) {
+    if (item.actor.actorType === "agent") agents.push(item);
+    else humans.push(item);
+  }
+  const groups = new Map<string, ParticipantListItem[]>();
+  for (const agent of agents) {
+    const key = clean(agent.humanOwnerId ?? "");
+    const list = groups.get(key);
+    if (list === undefined) groups.set(key, [agent]);
+    else list.push(agent);
+  }
+  const ordered = [...humans];
+  for (const list of groups.values()) ordered.push(...list);
+  return ordered;
+}
+
+/** Names of humans on this loaded page. A missing name falls back to the id. */
+function humanNamesOnPage(items: readonly ParticipantListItem[]): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const item of items) {
+    if (item.actor.actorType === "agent") continue;
+    const id = clean(item.actor.actorId);
+    if (id.length === 0 || names.has(id)) continue;
+    const name = clean(item.name);
+    names.set(id, name.length > 0 ? name : id);
+  }
+  return names;
+}
+
+function peopleGroupLabel(item: ParticipantListItem, humans: ReadonlyMap<string, string>): string {
+  if (item.actor.actorType !== "agent") return "People";
+  const owner = clean(item.humanOwnerId ?? "");
+  if (owner.length === 0) return "Agents";
+  const name = humans.get(owner);
+  return name === undefined ? `Agents recorded for ${owner}` : `Agents recorded for ${name}`;
 }
 
 function taskRow(task: Task): DashRow {
@@ -539,6 +617,8 @@ export function sectionRows(state: DashboardState): DashRow[] {
   const context = sameWorkspace(state);
   if (context === undefined) return [];
   switch (state.section) {
+    case "overview":
+      return [];
     case "attention":
       return attentionItems(state, context).map((item) => {
         const kind = item.kind === "decision" ? "decision" : "task";
@@ -595,8 +675,9 @@ export function sectionRows(state: DashboardState): DashRow[] {
       }));
     case "people":
       // Rows come only from the participant page. The orientation array is
-      // not a page, and an omitted array is not a roster.
-      return (state.peoplePage?.items ?? []).map((item) => ({
+      // not a page, and an omitted array is not a roster. Grouping changes
+      // display order on this page; it is not a workspace census.
+      return groupedPeople(state.peoplePage?.items ?? []).map((item) => ({
         kind: "participant" as const,
         id: item.actor.actorId,
         text: participantText(item),
@@ -660,6 +741,11 @@ function withoutTransient(state: DashboardState): DashboardState {
     ...(state.taskPage === undefined ? {} : { taskPage: state.taskPage }),
     ...(state.peoplePage === undefined ? {} : { peoplePage: state.peoplePage }),
     ...(state.peopleSplit === undefined ? {} : { peopleSplit: state.peopleSplit }),
+    workspaceListOpen: state.workspaceListOpen,
+    workspaceChoices: state.workspaceChoices,
+    workspaceListRow: state.workspaceListRow,
+    ...(state.workspaceListRequest === undefined ? {} : { workspaceListRequest: state.workspaceListRequest }),
+    ...(state.workspaceSwitchId === undefined ? {} : { workspaceSwitchId: state.workspaceSwitchId }),
   };
 }
 
@@ -880,8 +966,14 @@ function pagePeople(state: DashboardState, direction: "next" | "back"): Dashboar
         generation,
         cursor: page.nextCursor,
         pageNumber: page.pageNumber + 1,
-        cursorStack: [...page.cursorStack, { cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId }],
+        cursorStack: [...page.cursorStack, {
+          cursor: page.cursor,
+          pageNumber: page.pageNumber,
+          humanOwnerId: page.humanOwnerId,
+          humanOwnerName: page.humanOwnerName,
+        }],
         humanOwnerId: page.humanOwnerId,
+        humanOwnerName: page.humanOwnerName,
         previousSelectionId: selectedId,
         recoverOnRejectedCursor: true,
       },
@@ -900,6 +992,7 @@ function pagePeople(state: DashboardState, direction: "next" | "back"): Dashboar
       pageNumber: previous.pageNumber,
       cursorStack: page.cursorStack.slice(0, -1),
       humanOwnerId: previous.humanOwnerId,
+      humanOwnerName: previous.humanOwnerName,
       previousSelectionId: selectedId,
       recoverOnRejectedCursor: previous.cursor !== undefined,
     },
@@ -989,19 +1082,28 @@ function toggleHistory(state: DashboardState): DashboardState {
   };
 }
 
-function openHumanAgents(state: DashboardState, humanId: string): DashboardState {
+function openHumanAgents(state: DashboardState, human: ParticipantListItem): DashboardState {
   const page = state.peoplePage;
   const generation = state.generation + 1;
+  const humanId = human.actor.actorId;
+  const name = clean(human.name);
+  const label = name.length > 0 ? name : clean(humanId);
   const stack = page === undefined
     ? []
-    : [...page.cursorStack, { cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId }];
+    : [...page.cursorStack, {
+      cursor: page.cursor,
+      pageNumber: page.pageNumber,
+      humanOwnerId: page.humanOwnerId,
+      humanOwnerName: page.humanOwnerName,
+    }];
   return {
     ...withoutTransient(state),
     generation,
-    statusNote: `Loading workspace-participating agents for ${clean(humanId)}. Rows below are the last successful page, not this request.`,
+    statusNote: `Loading agents recorded for ${label}. Rows below are the last successful page, not this request.`,
     peoplePageRequest: {
       generation,
       humanOwnerId: humanId,
+      ...(name.length > 0 ? { humanOwnerName: name } : {}),
       pageNumber: 1,
       cursorStack: stack,
       recoverOnRejectedCursor: false,
@@ -1009,9 +1111,103 @@ function openHumanAgents(state: DashboardState, humanId: string): DashboardState
   };
 }
 
+function closeWorkspaceList(state: DashboardState): DashboardState {
+  return {
+    ...state,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    statusNote: undefined,
+  };
+}
+
+/** Enter on a workspace row. The session assigns the id and refreshes context. */
+function requestWorkspaceSwitch(state: DashboardState): DashboardState {
+  const choice = state.workspaceChoices[state.workspaceListRow];
+  if (choice === undefined) return state;
+  return {
+    ...closeWorkspaceList(state),
+    workspaceSwitchId: choice.id,
+  };
+}
+
+/**
+ * Host loaders must already read the new id. Clears the previous workspace's
+ * pages, history, detail, and inspect state, and keeps the section.
+ */
+export function fulfillWorkspaceSwitch(state: DashboardState, workspaceId: string): DashboardState {
+  const generation = state.generation + 1;
+  const next: DashboardState = {
+    ...state,
+    workspaceId,
+    generation,
+    row: 0,
+    refreshRequested: true,
+    detailOpen: false,
+    inspected: undefined,
+    inspectRequest: undefined,
+    history: undefined,
+    historyRequest: undefined,
+    taskPage: undefined,
+    taskPageRequest: undefined,
+    peoplePage: undefined,
+    peoplePageRequest: undefined,
+    peopleSplit: undefined,
+    workspaceSwitchId: undefined,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    refreshedAt: undefined,
+    staleError: undefined,
+    statusNote: undefined,
+    selectionNote: undefined,
+  };
+  if (next.boundedReads && next.section === "work") {
+    next.taskPageRequest = { generation, pageNumber: 1, cursorStack: [], recoverOnRejectedCursor: false };
+  }
+  if (next.section === "people") {
+    next.peoplePageRequest = { generation, pageNumber: 1, cursorStack: [], recoverOnRejectedCursor: false };
+  }
+  return next;
+}
+
+export function applyWorkspaceChoices(
+  state: DashboardState,
+  choices: ReadonlyArray<{ id: string; name: string }>,
+): DashboardState {
+  if (!state.workspaceListOpen) return state;
+  const cleaned: Array<{ id: string; name: string }> = [];
+  for (const choice of choices) {
+    const id = clean(choice.id);
+    if (id.length === 0) continue;
+    const name = clean(choice.name);
+    cleaned.push({ id, name: name.length > 0 ? name : id });
+  }
+  const row = cleaned.length === 0 ? 0 : Math.min(state.workspaceListRow, cleaned.length - 1);
+  return {
+    ...state,
+    workspaceChoices: cleaned,
+    workspaceListRow: row,
+    workspaceListRequest: undefined,
+  };
+}
+
+export function unavailableWorkspaceList(state: DashboardState): DashboardState {
+  return {
+    ...state,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    workspaceChoices: [],
+    workspaceListRow: 0,
+    statusNote: WORKSPACE_LIST_UNAVAILABLE,
+  };
+}
+
 export function reduceDashboardKey(state: DashboardState, key: string): DashboardState {
   // Ctrl-C quits from every mode, including while a filter is being typed.
   if (key === "\u0003" || key === "ctrl-c") return { ...state, quit: true, refreshRequested: false };
+  // The workspace list closes before history and before a committed or in-progress filter.
+  if ((key === "\u001b" || key === "esc") && (state.workspaceListOpen || state.workspaceListRequest !== undefined)) {
+    return closeWorkspaceList(state);
+  }
   if (state.filterMode) return reduceFilterModeKey(state, key);
   if (key === "\u001b" || key === "esc") {
     // History closes before a committed filter so one esc cannot do both.
@@ -1029,9 +1225,21 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
     return reconcileSelection(state, { ...state, filter: "", updateRequested: false });
   }
   if (key === "\u007f" || key === "\u0008" || key === "backspace") return state;
-  if (key === "/") return { ...state, filterMode: true };
+  if (key === "/" && !state.workspaceListOpen) return { ...state, filterMode: true };
   const action = canonicalKey(key);
   if (action === "quit") return { ...state, quit: true, refreshRequested: false };
+  if (action === "w") {
+    return {
+      ...state,
+      workspaceListOpen: true,
+      workspaceListRequest: { generation: state.generation },
+      statusNote: undefined,
+    };
+  }
+  if (state.workspaceListOpen && (action === "tab" || action === "p" || action === "n" || action === "b" || action === "h" || action === "r" || action === "?")) {
+    if (action === "?") return { ...state, help: !state.help, refreshRequested: false };
+    return state;
+  }
   if (action === "p") {
     return clampRow({
       ...withoutTransient(state),
@@ -1042,10 +1250,16 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   }
   if (action === "tab") {
     const index = SECTIONS.indexOf(state.section);
-    const section = SECTIONS[(index + 1) % SECTIONS.length] ?? "attention";
+    const section = SECTIONS[(index + 1) % SECTIONS.length] ?? "overview";
     return openSection(state, section);
   }
   if (action === "j" || action === "k") {
+    if (state.workspaceListOpen) {
+      const count = state.workspaceChoices.length;
+      const delta = action === "j" ? 1 : -1;
+      const row = count <= 0 ? 0 : Math.min(count - 1, Math.max(0, state.workspaceListRow + delta));
+      return { ...state, workspaceListRow: row, statusNote: undefined };
+    }
     if (state.history?.open === true) {
       const count = state.history.page?.items.length ?? 0;
       const delta = action === "j" ? 1 : -1;
@@ -1073,10 +1287,11 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   }
   if (action === "h") return toggleHistory(state);
   if (action === "enter") {
+    if (state.workspaceListOpen) return requestWorkspaceSwitch(state);
     const selected = selectedRow(state);
     if (selected === undefined) return { ...withoutTransient(state), detailOpen: false };
     if (selected.kind === "participant" && selected.participant?.actor.actorType === "human") {
-      return openHumanAgents(state, selected.participant.actor.actorId);
+      return openHumanAgents(state, selected.participant);
     }
     const history = sameRecordHistory(state, selected.id);
     if (selected.full || selected.fetchKind === undefined) {
@@ -1172,6 +1387,7 @@ export function applyPeoplePage(
   const peoplePage: PeoplePageState = {
     ...toLoaded(page, stamp),
     ...(stamp.humanOwnerId === undefined ? {} : { humanOwnerId: stamp.humanOwnerId }),
+    ...(stamp.humanOwnerName === undefined ? {} : { humanOwnerName: stamp.humanOwnerName }),
   };
   const peopleSplit = stamp.humanOwnerId === undefined
     ? countSplit(state.peopleSplit, stamp.pageNumber, page.items, page.total, page.truncated)
@@ -1260,6 +1476,7 @@ export function rejectPeopleCursor(state: DashboardState, generation: number): D
   if (generation !== state.generation || state.section !== "people") return state;
   const nextGeneration = state.generation + 1;
   const humanOwnerId = state.peoplePage?.humanOwnerId;
+  const humanOwnerName = state.peoplePage?.humanOwnerName;
   return {
     ...state,
     generation: nextGeneration,
@@ -1270,6 +1487,7 @@ export function rejectPeopleCursor(state: DashboardState, generation: number): D
       cursorStack: [],
       recoverOnRejectedCursor: false,
       ...(humanOwnerId === undefined ? {} : { humanOwnerId }),
+      ...(humanOwnerName === undefined ? {} : { humanOwnerName }),
     },
   };
 }
@@ -1364,6 +1582,8 @@ function workspaceTotal(state: DashboardState, context: WorkspaceContext): strin
       return String(context.provenanceTotal);
     case "attention":
       return String(context.attentionCoverage.tasks.total);
+    case "overview":
+      return String(context.slices.tasks.total);
   }
 }
 
@@ -1411,9 +1631,9 @@ function sliceCoverage(
 function buildAttention(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const counts = attentionCoverageCounts(context.attentionCoverage);
   const coverage = attentionCoverageText(context.attentionCoverage);
-  const heading = state.perspective === "mine" ? "MY WORK  Needs You" : "TEAM WORK  Needs Attention";
+  const heading = state.perspective === "mine" ? "NEEDS YOU" : "NEEDS ATTENTION";
   const lines: TaggedLine[] = [
-    ...chrome(`${heading}  ATTENTION  ${counts}`, columns, 0),
+    ...chrome(`${heading}  ${counts}`, columns, 0),
     ...(coverage.length > 0 ? record(coverage, columns, 0) : []),
     ...record(ASSIGNMENT_RECORD_NOTE, columns, 1),
     ...filterIndicator(state, context, columns),
@@ -1444,11 +1664,56 @@ function noteLines(state: DashboardState, columns: number): TaggedLine[] {
   return lines;
 }
 
+function recordedAgentsLabel(page: PeoplePageState): string {
+  const name = page.humanOwnerName === undefined ? "" : clean(page.humanOwnerName);
+  const id = page.humanOwnerId === undefined ? "" : clean(page.humanOwnerId);
+  return `Agents recorded for ${name.length > 0 ? name : id}`;
+}
+
+function renderPeopleRows(state: DashboardState, columns: number): TaggedLine[] {
+  const humans = humanNamesOnPage(state.peoplePage?.items ?? []);
+  const rows = shownRows(state);
+  const lines: TaggedLine[] = [];
+  let previous = "";
+  rows.forEach((row, index) => {
+    const item = row.participant;
+    const header = item === undefined ? "" : peopleGroupLabel(item, humans);
+    if (header.length > 0 && header !== previous) {
+      lines.push(...chrome(header, columns, 1));
+      previous = header;
+    }
+    const marker = index === state.row ? "> " : "";
+    const rank = index === state.row || row.reviewCue ? 0 : 1;
+    lines.push(...record(`${marker}${row.text}`, columns, rank));
+  });
+  return lines;
+}
+
+function buildOverview(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
+  const lines: TaggedLine[] = [...chrome("OVERVIEW", columns, 0)];
+  const goal = context.goal;
+  if (goal !== undefined) {
+    const title = clean(goal.title);
+    if (title.length > 0) lines.push(...record(`goal  ${title}`, columns, 0));
+  }
+  if (Array.isArray(context.needsYou)) {
+    lines.push(...record(`Needs You  ${context.needsYou.length}`, columns, 0));
+  }
+  const tasks = context.slices?.tasks;
+  if (tasks !== undefined && typeof tasks.total === "number") {
+    lines.push(...record(sliceCoverage("tasks", tasks), columns, 1));
+  }
+  lines.push(...record("People load in People & Agents.", columns, 1));
+  lines.push(...noteLines(state, columns));
+  lines.push(...filterIndicator(state, context, columns));
+  return lines;
+}
+
 function buildWork(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const page = state.taskPage;
   const heading = page === undefined
-    ? `CURRENT WORK  ${sliceCoverage("tasks", context.slices.tasks)}`
-    : `CURRENT WORK  ${pageFact(page)}`;
+    ? `WORK  ${sliceCoverage("tasks", context.slices.tasks)}`
+    : `WORK  ${pageFact(page)}`;
   const lines: TaggedLine[] = [...chrome(heading, columns, page === undefined ? 1 : 0)];
   if (page !== undefined) {
     lines.push(...record(NOT_ATTENTION, columns, 1));
@@ -1482,7 +1747,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
   const page = state.peoplePage;
   const lines: TaggedLine[] = [];
   if (page === undefined) {
-    lines.push(...chrome("PEOPLE", columns, 0));
+    lines.push(...chrome("PEOPLE & AGENTS", columns, 0));
     lines.push(
       ...record(
         state.peoplePageRequest === undefined ? "People are loaded only when this section asks for them." : "People page is loading.",
@@ -1497,7 +1762,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
   if (page.humanOwnerId !== undefined) {
     lines.push(
       ...chrome(
-        `WORKSPACE-PARTICIPATING AGENTS  ${clean(page.humanOwnerId)}  total ${page.total}  ${pageFact(page)}`,
+        `${recordedAgentsLabel(page)}  total ${page.total}  ${pageFact(page)}`,
         columns,
         0,
       ),
@@ -1506,7 +1771,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
       ...record("total counts this human's agents in this workspace. It is not the unfiltered page and not a presence count.", columns, 1),
     );
   } else {
-    lines.push(...chrome(`PEOPLE  ${pageFact(page)}`, columns, 0));
+    lines.push(...chrome(`PEOPLE & AGENTS  ${pageFact(page)}`, columns, 0));
     lines.push(...record("This page is not the workspace human/agent split.", columns, 1));
   }
   lines.push(...record(NOT_PRESENCE, columns, 1));
@@ -1517,13 +1782,13 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
     lines.push(...emptyOrFilterLines(state, "No participant on this page.", columns, 1));
     return lines;
   }
-  lines.push(...renderRowList(rows, state.row, columns));
+  lines.push(...renderPeopleRows(state, columns));
   return lines;
 }
 
 function buildDecisions(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const lines: TaggedLine[] = [
-    ...chrome(`RECORDED DECISIONS  ${sliceCoverage("decisions", context.slices.decisions)}`, columns, 1),
+    ...chrome(`DECISIONS  ${sliceCoverage("decisions", context.slices.decisions)}`, columns, 1),
     ...record("Competing accepted decisions are not resolved here. needs review does not revoke acceptance.", columns, 1),
     ...filterIndicator(state, context, columns),
   ];
@@ -1540,7 +1805,7 @@ function buildDecisions(state: DashboardState, context: WorkspaceContext, column
 
 function buildReferences(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const lines: TaggedLine[] = [
-    ...chrome(`ARTIFACT REFERENCES  ${sliceCoverage("artifacts", context.slices.artifacts)}`, columns, 1),
+    ...chrome(`SOURCES  ${sliceCoverage("artifacts", context.slices.artifacts)}`, columns, 1),
     ...filterIndicator(state, context, columns),
   ];
   const rows = shownRows(state);
@@ -1558,7 +1823,7 @@ function buildChanges(state: DashboardState, context: WorkspaceContext, columns:
   const truncated = context.provenanceTruncated ? "  truncated" : "";
   const lines: TaggedLine[] = [
     ...chrome(
-      `RECENT CHANGES  showing ${context.provenance.length} of ${context.provenanceTotal}${truncated}`,
+      `ACTIVITY  showing ${context.provenance.length} of ${context.provenanceTotal}${truncated}`,
       columns,
       1,
     ),
@@ -1575,6 +1840,8 @@ function buildChanges(state: DashboardState, context: WorkspaceContext, columns:
 
 function buildActiveSection(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   switch (state.section) {
+    case "overview":
+      return buildOverview(state, context, columns);
     case "attention":
       return [...noteLines(state, columns), ...buildAttention(state, context, columns)];
     case "work":
@@ -1867,6 +2134,24 @@ function buildHistory(state: DashboardState, columns: number): TaggedLine[] {
   return lines;
 }
 
+function buildWorkspaceList(state: DashboardState, columns: number): TaggedLine[] {
+  const lines: TaggedLine[] = [...chrome("WORKSPACES", columns, 0)];
+  if (state.workspaceListRequest !== undefined && state.workspaceChoices.length === 0) {
+    lines.push(...record("Workspace list is loading.", columns, 0));
+  } else if (state.workspaceChoices.length === 0) {
+    lines.push(...record("No workspace was returned.", columns, 1));
+  } else {
+    state.workspaceChoices.forEach((choice, index) => {
+      const marker = index === state.workspaceListRow ? "> " : "";
+      const rank = index === state.workspaceListRow ? 0 : 1;
+      lines.push(...record(`${marker}${clean(choice.name)}  ${clean(choice.id)}`, columns, rank));
+    });
+  }
+  lines.push(...record("enter switches to the selected workspace. esc closes this list.", columns, 1));
+  lines.push(...noteLines(state, columns));
+  return lines;
+}
+
 function footerLines(columns: number, historyOpen: boolean): TaggedLine[] {
   const label = historyOpen
     ? columns < 100
@@ -1926,17 +2211,20 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
     ...chrome(`Campfire  /  ${name}  ${clean(state.workspaceId)}`, size.columns, 0),
     ...chrome(`${clean(state.actorId)} ${clean(state.actorType)}  ·  refreshed ${refreshed}`, size.columns, 0),
   ];
-  if (context?.goal === undefined) {
-    header.push(...chrome("GOAL", size.columns, 0), ...record("no recorded goal", size.columns, 0));
-  } else {
+  const awaitingSwitch = state.refreshRequested && state.context !== undefined && context === undefined;
+  if (context?.goal !== undefined) {
     header.push(
       ...chrome("GOAL", size.columns, 0),
       ...record(clean(context.goal.title), size.columns, 0),
       ...record(clean(context.goal.id), size.columns, 0),
     );
+  } else if (!awaitingSwitch) {
+    header.push(...chrome("GOAL", size.columns, 0), ...record("no recorded goal", size.columns, 0));
   }
   if (state.staleError !== undefined && clean(state.staleError).length > 0) {
     header.push(...record(`STALE  ${clean(state.staleError)}`, size.columns, 0));
+  } else if (awaitingSwitch) {
+    header.push(...record("Loading workspace context.", size.columns, 0));
   } else if (state.context !== undefined && context === undefined) {
     header.push(...record("STALE  workspace context did not match the authorized workspace", size.columns, 0));
   }
@@ -1950,7 +2238,9 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
     body.push(...chrome("HELP", size.columns, 1));
     for (const line of HELP_LINES) body.push(...record(line, size.columns, 1));
   }
-  if (context !== undefined) {
+  if (state.workspaceListOpen) {
+    body.push(...buildWorkspaceList(state, size.columns));
+  } else if (context !== undefined) {
     if (state.history?.open === true) {
       // A narrow terminal must offer every loaded contribution, even when the
       // ordinary list and source block would consume the whole viewport.
@@ -2037,7 +2327,7 @@ export function stripEscapeSequences(text: string): string {
  * mirroring the filter-mode typing path; a chunk that is exactly ESC stays the
  * esc key.
  */
-const COMMAND_CHARS = new Set(["p", "j", "k", "r", "?", "q", "/", "n", "b", "h"]);
+const COMMAND_CHARS = new Set(["p", "j", "k", "r", "?", "q", "/", "n", "b", "h", "w"]);
 
 /**
  * Command keys up to and including the `/` that starts a filter, then the
@@ -2183,14 +2473,48 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
 
   async function fulfillOne(): Promise<boolean> {
     if (closed) return false;
+    if (state.workspaceSwitchId !== undefined) {
+      const nextId = state.workspaceSwitchId;
+      options.adoptWorkspace?.(nextId);
+      state = fulfillWorkspaceSwitch(state, nextId);
+      return true;
+    }
+    if (state.workspaceListRequest !== undefined) {
+      state = { ...state, workspaceListRequest: undefined };
+      if (options.listWorkspaces === undefined) {
+        state = unavailableWorkspaceList(state);
+        return true;
+      }
+      try {
+        const choices = await options.listWorkspaces();
+        if (closed || !state.workspaceListOpen || state.workspaceListRequest !== undefined || state.workspaceSwitchId !== undefined) {
+          return true;
+        }
+        state = applyWorkspaceChoices(state, choices);
+      } catch (error) {
+        if (!closed && state.workspaceListOpen && state.workspaceListRequest === undefined && state.workspaceSwitchId === undefined) {
+          state = {
+            ...unavailableWorkspaceList(state),
+            statusNote: `The workspace list is unavailable. ${noteOf(errorText(error))}`,
+          };
+        }
+      }
+      return true;
+    }
+    const currentWorkspace = (): boolean => state.workspaceSwitchId === undefined;
     if (state.refreshRequested) {
       const generation = state.generation;
+      const requestedId = state.workspaceId;
       state = { ...state, refreshRequested: false };
       try {
         const loaded = await options.load();
-        if (!closed) state = applyContextLoad(state, loaded, now().toISOString(), generation);
+        if (!closed && state.workspaceId === requestedId && currentWorkspace()) {
+          state = applyContextLoad(state, loaded, now().toISOString(), generation);
+        }
       } catch (error) {
-        if (!closed) state = failContextLoad(state, generation, errorText(error));
+        if (!closed && state.workspaceId === requestedId && currentWorkspace()) {
+          state = failContextLoad(state, generation, errorText(error));
+        }
       }
       return true;
     }
@@ -2205,11 +2529,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failTaskPage(state, taskReq.generation, "Work page read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadTasks(taskReq.cursor);
-        if (!closed) state = applyTaskPage(state, page, { ...taskReq, readAt: now().toISOString() });
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
+          state = applyTaskPage(state, page, { ...taskReq, readAt: now().toISOString() });
+        }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (taskReq.recoverOnRejectedCursor && taskReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectTaskCursor(state, taskReq.generation);
         } else {
@@ -2229,11 +2556,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failPeoplePage(state, peopleReq.generation, "People page read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadPeople({ cursor: peopleReq.cursor, humanOwnerId: peopleReq.humanOwnerId });
-        if (!closed) state = applyPeoplePage(state, page, { ...peopleReq, readAt: now().toISOString() });
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
+          state = applyPeoplePage(state, page, { ...peopleReq, readAt: now().toISOString() });
+        }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (peopleReq.recoverOnRejectedCursor && peopleReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectPeopleCursor(state, peopleReq.generation);
         } else {
@@ -2255,9 +2585,10 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failHistoryRead(state, historyReq.generation, "History read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadHistory({ objectType, objectId, cursor: historyReq.cursor });
-        if (!closed) {
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
           state = applyHistoryPage(state, page, {
             generation: historyReq.generation,
             readAt: now().toISOString(),
@@ -2269,7 +2600,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
           });
         }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (historyReq.recoverOnRejectedCursor && historyReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectHistoryCursor(state, historyReq.generation);
         } else {
@@ -2285,14 +2616,19 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         return true;
       }
       state = { ...state, inspectRequest: undefined };
+      const requestedId = state.workspaceId;
       try {
         const record = await options.inspect(request.kind, request.id);
-        if (closed || state.generation !== request.generation) return true;
+        if (closed || state.generation !== request.generation || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) {
+          return true;
+        }
         const selected = shownRows(state)[state.row];
         if (selected?.id !== request.id) return true;
         state = { ...state, inspected: { method: inspectMethod(request.kind), sourceId: request.id, record } };
       } catch (error) {
-        if (closed || state.generation !== request.generation) return true;
+        if (closed || state.generation !== request.generation || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) {
+          return true;
+        }
         state = { ...state, staleError: clean(errorText(error)) || "read failed" };
       }
       return true;
@@ -2323,12 +2659,13 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
 
   const loadInitial = async (): Promise<void> => {
     const generation = state.generation;
+    const requestedId = state.workspaceId;
     try {
       const loaded = await options.load();
-      if (closed) return;
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
       state = applyContextLoad(state, loaded, now().toISOString(), generation);
     } catch (error) {
-      if (closed) return;
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
       state = failContextLoad(state, generation, errorText(error));
     }
     if (!closed) draw();

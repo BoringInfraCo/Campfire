@@ -8,7 +8,9 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  applyWorkspaceChoices,
   createDashboardState,
+  fulfillWorkspaceSwitch,
   normalizeInputChunk,
   reconcileAfterLoad,
   reduceDashboardKey,
@@ -16,6 +18,7 @@ import {
   sectionRows,
   shownRows,
   stripEscapeSequences,
+  unavailableWorkspaceList,
   type DashboardState,
 } from "../../src/cli/dashboard.js";
 import type { ContextSlice } from "../../src/domain/context-policy.js";
@@ -23,8 +26,8 @@ import type { ActorRef, Artifact, Decision, Task } from "../../src/domain/types.
 import type { AttentionCoverage, AttentionItem, WorkspaceContext } from "../../src/service/service.js";
 
 const FULL_FOOTER =
-  "p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit";
-const COMPACT_FOOTER = "tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
+  "p perspective  tab section  w workspaces  j/k move  n/b page  h history  / filter  enter  r refresh  ? help  esc  q quit";
+const COMPACT_FOOTER = "tab  w list  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
 const FILTER_SCOPE = "filters shown records, not the workspace";
 
 function slice<T>(items: T[] = [], extra?: { total?: number; returned?: number; truncated?: boolean }): ContextSlice<T> {
@@ -217,18 +220,36 @@ function flat(frame: string): string {
 }
 
 describe("NAV-001 focused navigator", () => {
-  it("cycles sections in order with tab and wraps to attention", () => {
+  it("cycles sections in order with tab and wraps to overview", () => {
     let state = stateFor(context());
     const order: string[] = [state.section];
-    for (let step = 0; step < 6; step += 1) {
+    for (let step = 0; step < 7; step += 1) {
       state = reduceDashboardKey(state, "tab");
       order.push(state.section);
     }
-    expect(order).toEqual(["attention", "work", "decisions", "references", "people", "changes", "attention"]);
+    expect(order).toEqual([
+      "overview",
+      "attention",
+      "work",
+      "decisions",
+      "references",
+      "people",
+      "changes",
+      "overview",
+    ]);
   });
 
-  it("renders only the active section: attention cues and SOURCE on the default frame", () => {
+  it("renders overview by default and keeps other sections off that frame", () => {
     const value = context({
+      goal: {
+        id: "goal_nav",
+        workspaceId: "ws_nav001_lab",
+        title: "One focused screen",
+        status: "active",
+        createdBy: actor("hum_ana"),
+        createdAt: "2026-10-16T00:00:00.000Z",
+        updatedAt: "2026-10-16T00:00:00.000Z",
+      },
       needsYou: [cue("task_attention_blocked", "assigned_blocked_task", "Blocked for Ana")],
       openTasks: [task("task_work_alpha", "open", "Alpha task")],
       proposedDecisions: [decision("dec_proposed_one", "proposed", "Consider the split")],
@@ -246,13 +267,29 @@ describe("NAV-001 focused navigator", () => {
       attentionCoverage: coverage(),
     });
     const frame = renderDashboard(stateFor(value), 120, 36);
-    expect(frame).toContain("task_attention_blocked");
-    expect(frame).toContain("SOURCE");
-    // The eager agent, artifact, and decision rows are no longer in the header.
+    expect(stateFor(value).section).toBe("overview");
+    expect(frame).toContain("OVERVIEW");
+    expect(frame).toContain("goal  One focused screen");
+    expect(frame).toContain("Needs You  1");
+    expect(frame).toContain("People load in People & Agents.");
+    expect(frame).not.toContain("task_attention_blocked");
     expect(frame).not.toContain("Rex");
     expect(frame).not.toContain("art_reference_one");
     expect(frame).not.toContain("dec_proposed_one");
+    expect(frame).not.toContain("MY WORK");
+    expect(frame).not.toContain("TEAM WORK");
+    expect(frame).not.toContain("working");
     expect(frame).toContain("1 registered agents");
+    const attention = renderDashboard(reduceDashboardKey(stateFor(value), "tab"), 120, 36);
+    expect(attention).toContain("NEEDS YOU");
+    expect(attention).toContain("task_attention_blocked");
+    expect(attention).toContain("SOURCE");
+    expect(attention).not.toContain("MY WORK");
+    expect(attention).not.toContain("TEAM WORK");
+    const team = renderDashboard(reduceDashboardKey(reduceDashboardKey(stateFor(value), "tab"), "p"), 120, 36);
+    expect(team).toContain("NEEDS ATTENTION");
+    expect(team).not.toContain("TEAM WORK");
+    expect(team).not.toContain("MY WORK");
   });
 
   it("enters filterMode on / without dropping the text or the selection", () => {
@@ -387,7 +424,8 @@ describe("NAV-001 focused navigator", () => {
     expect(frame).toContain("no shown row matches the filter");
     // The source page coverage stays visible; an empty shown list never
     // becomes an all-clear.
-    expect(frame).toContain("CURRENT WORK  tasks 3 of 5  truncated");
+    expect(frame).toContain("WORK  tasks 3 of 5  truncated");
+    expect(frame).not.toContain("CURRENT WORK");
     expect(frame).not.toContain("No open, in_progress, or blocked task in the returned records.");
   });
 
@@ -522,12 +560,94 @@ describe("NAV-001 chunked input", () => {
     let single = createDashboardState({ workspaceId: "ws_nav001_lab", actorId: "hum_nav001_ana", actorType: "human" });
     for (const key of ["tab", "tab", "q"]) single = reduceDashboardKey(single, key);
     expect(burst.section).toBe(single.section);
-    expect(burst.section).toBe("decisions");
+    expect(burst.section).toBe("work");
     expect(burst.quit).toBe(true);
     expect(single.quit).toBe(true);
 
     let refs = createDashboardState({ workspaceId: "ws_nav001_lab", actorId: "hum_nav001_ana", actorType: "human" });
     for (const key of normalizeInputChunk("\t\t\t")) refs = reduceDashboardKey(refs, key);
-    expect(refs.section).toBe("references");
+    expect(refs.section).toBe("decisions");
+  });
+});
+
+describe("workspace list", () => {
+  it("opens a list on w, moves only list rows, and enter requests a switch", () => {
+    let state = stateFor(context());
+    expect(state.section).toBe("overview");
+    state = reduceDashboardKey(state, "w");
+    expect(state.workspaceListOpen).toBe(true);
+    expect(state.workspaceListRequest).toEqual({ generation: state.generation });
+    state = applyWorkspaceChoices(state, [
+      { id: "ws_nav", name: "Navigator\u001b[31m lab" },
+      { id: "ws_other", name: "Other workspace" },
+    ]);
+    expect(state.workspaceChoices[0]?.name).toBe("Navigator lab");
+    state = reduceDashboardKey(state, "j");
+    expect(state.workspaceListRow).toBe(1);
+    expect(state.row).toBe(0);
+    expect(state.section).toBe("overview");
+    const frame = renderDashboard(state, 100, 24);
+    expect(frame).toContain("WORKSPACES");
+    expect(frame).toContain("Other workspace");
+    expect(frame).not.toContain("\u001b");
+    expect(frame).not.toContain("Navigator\u001b");
+    state = reduceDashboardKey(state, "enter");
+    expect(state.workspaceListOpen).toBe(false);
+    expect(state.workspaceSwitchId).toBe("ws_other");
+    const switched = fulfillWorkspaceSwitch(
+      {
+        ...state,
+        section: "people",
+        boundedReads: true,
+        taskPage: {
+          items: [],
+          total: 0,
+          returned: 0,
+          truncated: false,
+          pageNumber: 1,
+          readAt: "2026-10-16T00:00:00.000Z",
+          cursorStack: [],
+          stale: false,
+        },
+        detailOpen: true,
+        history: { open: true, objectType: "task", objectId: "task_work_alpha", row: 0 },
+      },
+      "ws_other",
+    );
+    expect(switched.workspaceId).toBe("ws_other");
+    expect(switched.section).toBe("people");
+    expect(switched.taskPage).toBeUndefined();
+    expect(switched.peoplePage).toBeUndefined();
+    expect(switched.history).toBeUndefined();
+    expect(switched.detailOpen).toBe(false);
+    expect(switched.refreshRequested).toBe(true);
+    expect(switched.peoplePageRequest?.pageNumber).toBe(1);
+  });
+
+  it("closes the workspace list on esc before history and before a filter", () => {
+    let state = reduceDashboardKey(stateFor(context()), "w");
+    state = {
+      ...state,
+      filter: "alpha",
+      history: { open: true, objectType: "task", objectId: "task_work_alpha", row: 0 },
+    };
+    state = reduceDashboardKey(state, "esc");
+    expect(state.workspaceListOpen).toBe(false);
+    expect(state.history?.open).toBe(true);
+    expect(state.filter).toBe("alpha");
+    state = reduceDashboardKey(state, "esc");
+    expect(state.history).toBeUndefined();
+    expect(state.filter).toBe("alpha");
+    state = reduceDashboardKey(state, "esc");
+    expect(state.filter).toBe("");
+  });
+
+  it("notes that the workspace list is unavailable without throwing", () => {
+    const opened = reduceDashboardKey(stateFor(context()), "w");
+    const noted = unavailableWorkspaceList(opened);
+    expect(noted.workspaceListOpen).toBe(false);
+    expect(noted.workspaceListRequest).toBeUndefined();
+    const frame = renderDashboard(noted, 100, 24);
+    expect(frame).toContain("The workspace list is unavailable.");
   });
 });

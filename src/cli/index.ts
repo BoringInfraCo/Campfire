@@ -1464,7 +1464,7 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
       console.log(DASHBOARD_AWAITING_WORKSPACE);
       return;
     }
-    const workspaceId = selection.workspaceId;
+    let workspaceId = selection.workspaceId;
     const actor = backend.identity.ctx.actor;
     await runDashboardSession({
       workspaceId,
@@ -1516,6 +1516,13 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
         const idField =
           kind === "task" ? "taskId" : kind === "finding" ? "findingId" : kind === "decision" ? "decisionId" : "artifactId";
         return backend.call(method, { workspaceId, [idField]: id });
+      },
+      listWorkspaces: async () => {
+        const listed = (await backend.call("list_workspaces", {})) as WorkspaceSummary[];
+        return listed.map((workspace) => ({ id: workspace.id, name: workspace.name }));
+      },
+      adoptWorkspace: (id) => {
+        workspaceId = id;
       },
     });
   });

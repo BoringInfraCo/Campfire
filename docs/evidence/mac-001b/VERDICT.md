@@ -1,8 +1,18 @@
-# MAC-001B toolkit verdict — 2026-10-27
+# MAC-001B toolkit verdict — 2026-10-29
 
-**Verdict: HOLD.**
+**Verdict: GPUIX.**
 
-This is a toolkit decision for the read-only Campfire slice. It does not open the MAC-002 two-Mac exit, distribute a Mac app, or claim the branded Cloud handoff or the two-Mac CLI update checks. A local read-only slice does not change this HOLD: [scope](../mac-002/SCOPE.md).
+The Sunday read-only desktop alpha stays on the GPUIX shell. SwiftUI remains the earlier comparison prototype. This does not open the two-Mac exit, notarize a build, or start public distribution. See [tonight's closeout](CLOSEOUT-2026-10-29.md).
+
+The founder inspected the running Campfire window on the evening of October 29 and accepted it. The window was the `7788220` shell, launched with `bun run dev:app` on Bun 1.4.2, against the Arbora Viewer at `127.0.0.1:9415` (`campfire up --no-open --no-connect`, config `~/.config/campfire-arbora`). That listener reported workspace `ws_df6794f33efc459b` (Arbora) and did not open a browser or replace a harness connection. The October 29 Viewer, desktop client, and CLI parity on that workspace still stands in [MAC-002 RESULT](../mac-002/RESULT.md).
+
+A separate VoiceOver transcript was not recorded in this closeout. Keyboard, contrast, and Reduce Motion stay with CF-DESK-06. They do not reopen the toolkit choice.
+
+## Prior verdict — 2026-10-27
+
+**Verdict at that date: HOLD.**
+
+This was a toolkit decision for the read-only Campfire slice. It did not open the MAC-002 two-Mac exit, distribute a Mac app, or claim the branded Cloud handoff or the two-Mac CLI update checks. A local read-only slice did not change that HOLD: [scope](../mac-002/SCOPE.md).
 
 ## What was compared
 

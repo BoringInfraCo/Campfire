@@ -329,6 +329,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
         "Registered agents are recorded participants, not live presence.",
         "needsYou and needsAttention are cues, not permission.",
         "Record text is stripped of terminal controls.",
+        "Opens on Overview and cycles Overview, Needs You, Work, Decisions, Sources, People & Agents, and Activity. `w` lists workspaces.",
       ],
     },
   ),

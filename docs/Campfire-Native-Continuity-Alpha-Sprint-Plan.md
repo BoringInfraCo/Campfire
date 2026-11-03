@@ -1,7 +1,7 @@
 # Campfire local, Cloud, and native continuity — phased sprint plan
 
 **Status:** Proposed cross-sprint plan. Sprint contracts and release decisions govern each release separately.
-**Revised:** October 29, 2026
+**Revised:** October 31, 2026
 **Current baseline:** [v1.26.3](RELEASE_V1_26_3_DECISION.md) is publicly downloadable under a CONDITIONAL GO for the CLI update experience. [v1.26.2](RELEASE_V1_26_2_DECISION.md) introduced controlled Cloud alpha admission. The [October 24 two-Mac trace](evidence/shr-001/rehearsal/README.md) observed the iMac create an attributed task from the hosted Arbora finding and a fresh MacBook session read it back. Physical acceptance on the branded production endpoint and a two-Mac v1.26.3 update check remain unobserved.
 **Target:** Try for an October 30 public **Campfire download** with local use and a controlled hosted sharing alpha. Open Cloud signup, paid plans, and the Mac app each need their own later release decision. The dates below are earliest review targets, subject to their exit gates.  
 **Founder choice:** “Public release” on October 30 means a public download with Cloud sharing limited to an invited alpha group, not open Cloud signup.
@@ -30,6 +30,13 @@ hard gates; no provider or production account architecture is approved yet.
 The [ENT-001 hosted route inventory](evidence/ent-001/ROUTE-INVENTORY.md) now
 classifies current routes and methods, including entry points outside the alpha
 usage meter. This is design evidence, not entitlement enforcement.
+
+**October 31 local-input direction:** Evaluate Hex through the proposed
+[DIC-000 compatibility spike](Campfire-DIC-000-Hex-Local-Dictation-Spike.md)
+only after review. DIC-000 is an isolated, draft-only experiment and is not a
+Sunday desktop deliverable, native release gate, production microphone path, or
+workspace write. The owning product and architecture boundary is
+[Campfire-Local-Voice-Dictation-Plan.md](Campfire-Local-Voice-Dictation-Plan.md).
 The [MAC-001 contract](Campfire-MAC-001-Native-Feasibility.md) and
 [feasibility result](evidence/mac-001/RESULT.md) record a compiled
 SwiftUI screen over the actual Viewer proxy. The October 25 real-profile
@@ -144,6 +151,7 @@ Public self-service is a later release decision. It needs verified account owner
 | **3 — Nov 4–6 earliest** | **PUB-001 self-service launch review** | Public Campfire Cloud signup and team sharing, only if all Phase 2 security, cost, recovery, and ordinary-user tests pass. | IDN-001, ENT-001, production-like load and restore exercise. |
 | **4 — after observed use** | **BIL-001 paid plans** | Optional paid tier for measured team value, with billing and support rules; no plan or price is promised here. | Public free tier, measured usage and costs, pricing decision. |
 | **Parallel, then after Phase 1** | **MAC-001 feasibility → MAC-001B GPUIX comparison → MAC-002 read-only alpha → MAC-003 distribution** | A separate native Mac app release that presents authorized work; it is not required to use Cloud. | Shipped Viewer/proxy contract, an observed toolkit comparison, and native acceptance evidence. |
+| **After a stable read-oriented desktop baseline** | **DIC-000 Hex compatibility spike → possible DIC-001 local dictation alpha** | Optional local speech-to-text may prepare an editable draft; no audio or raw transcript becomes shared state. | Pinned Hex/helper/model evidence, typed fallback, privacy and accessibility checks, and—before DIC-001—an equivalent typed action with real-profile conflict safety. |
 | **After shared semantics are proved** | **FAC-001 deterministic facilitation → STW-001 opt-in Steward decision** | Low-noise, source-backed attention and catch-up across surfaces; generated briefs only if measured need and budget justify them. | Authorized complete context, contribution ordering, currentness, and observed user comprehension. |
 | **After the native read-only workspace is stable** | **CON-000 Atuin compatibility spike → CON-001 private Continue in… alpha → possible CON-002 provenance decision** | Optional local resume, fork, or cross-harness continuation while Campfire remains the structured team record. | MAC-001B/MAC-002 semantics, pinned provider and harness versions, explicit user confirmation, transcript-isolation checks, and observed need. |
 | **After identity and measured delivery need** | **LIVE-001 live invalidation / NTF-001 cross-device attention** | Faster authorized refresh and optional privacy-minimized notification without changing the canonical workspace. | Released catch-up cursor, stable revocation, trusted FAC-001 attention, latency/missed-work evidence, and separate sprint contracts. |
@@ -223,6 +231,34 @@ toolkit decision, not a native release or a completed security audit.
 **MAC-002 — read-only continuity alpha, after Phase 1.** Implement the bounded workspace overview and selected finding/task detail described below, with status, attribution, citations, paging/truncation, stale/unreachable states, and keyboard navigation. Test against both local and admitted hosted profiles with the same authorized actor; verify denied and revoked reads. **Exit:** the native and CLI/Viewer views agree on IDs, currentness, counts, and source; the integrated two-Mac screen test passes. No writing or agent process control is included.
 
 **MAC-003 — native distribution decision.** Recheck signing, notarization, update path, crash reporting/privacy, and support for the target Macs. Run install, upgrade, offline, and revoked-credential cases from the packaged app. **Exit:** a separate public/alpha/HOLD decision for the Mac app. A successful Cloud release never silently approves native distribution.
+
+### Local dictation track — after review; outside the Sunday alpha gate
+
+**DIC-000 — pinned Hex compatibility spike.** Use the exact reviewed Hex
+revision and SDK in an isolated desktop target. Run one explicitly labeled
+installed-Hex research trace and one self-built-helper fixture trace. Measure
+Bun/protocol compatibility, model/license/size, cold and warm latency, memory,
+CPU, cancellation, offline behavior, OS support, process/file/network cleanup,
+accessibility feasibility, nested signing, and notarization implications. The
+spike uses synthetic or specifically consented audio, retains no private speech,
+and makes no Campfire request or canonical write. **Exit:** a dated `GO`,
+`HOLD`, or `REJECT` under the
+[DIC-000 contract](Campfire-DIC-000-Hex-Local-Dictation-Spike.md). GO authorizes
+only a separately reviewed DIC-001 contract.
+
+**DIC-001 — local review-before-submit alpha, only after two gates.** The entry
+gates are DIC-000 GO and one equivalent typed Campfire composer/action passing
+real-profile authorization, compare-and-set/conflict, retry, denial, revocation,
+and receipt checks. Campfire owns microphone capture, permission, the editable
+draft, confirmation, packaging, and lifecycle; a pinned signed helper owns only
+local inference. Audio and raw text stay transient and local. **Exit:** one
+bounded destination works from a packaged app with keyboard/VoiceOver,
+privacy, offline, cancellation, crash, cleanup, and typed-fallback evidence.
+
+This track does not replace Apple VoiceOver, add narration, install global
+dictation, ingest meetings, interpret commands, require the Hex app, or add a
+cloud speech fallback. The complete boundary is
+[Campfire-Local-Voice-Dictation-Plan.md](Campfire-Local-Voice-Dictation-Plan.md).
 
 ### Workspace facilitation track — after shared interface semantics
 
@@ -346,6 +382,7 @@ contract; it does not authorize a Campfire runtime or RUN-001.
 | **Native toolkit reassessment — MAC-001B** | Put the same bounded real Campfire slice into an isolated 1Git-derived GPUIX shell; remove unrelated product services and compare it with the recorded SwiftUI prototype. | A dated toolkit verdict and dependency/license/maintenance inventory. It does not authorize MAC-002, distribution, or mobile work. |
 | **Workspace facilitation — FAC-001, then possible STW-001** | First align deterministic attention/catch-up across surfaces; observe actual need before an opt-in generated-brief contract. | Source-traceable, low-noise cues first; any Steward inference needs separate quality, privacy, and cost evidence. |
 | **External session continuity — CON-000, then possible CON-001/002** | After the native workspace is useful on its own, test one pinned Atuin adapter locally with a context-only fallback and no shared transcript ingestion. | Compatibility and one real two-harness local trace first; a shared continuation receipt or cross-device session sharing waits on separate evidence. |
+| **Local dictation — DIC-000, then possible DIC-001** | After founder review, test one pinned Hex SDK/helper with a licensed fixture and a labeled external-Hex trace. Keep the experiment isolated from production permissions, intents, and release builds. | Compatibility, privacy, OS, model/license, performance, packaging, and accessibility verdict first. Product dictation waits for a safe typed composer. |
 | **Future delivery — LIVE-001, NTF-001, APR-001** | Measure refresh latency, missed attention, notification demand, and controlled-action demand; freeze no dependency until the owning entry gate passes. | Separate live, delivery, and approval decisions that preserve D1 authority and polling/catch-up fallback. |
 | **Optional execution provider — RUN-000** | Keep Shepherdr as a named compatibility candidate; design and test only after APR-001 has a live provider path and observed demand. | A provider-on/provider-off comparison and authority-boundary result. No managed-runtime or provider-dependency claim. |
 
@@ -396,6 +433,11 @@ The app does not read SQLite, hold bearer tokens, call the hosted API directly, 
 - **Cloud alpha release:** Governed by SHR-001, CLO-001, and REL-001. It must prove sharing from installed Campfire without relying on the Mac app, and meet the controlled-alpha operating gates above. It makes no public self-service or managed-runtime claim.
 - **Public Cloud signup:** Governed by IDN-001, ENT-001, and PUB-001, with a separate dated release decision. Phase 1 does not authorize it.
 - **Native alpha:** Governed by MAC-001 through MAC-003 and its own evidence. A successful Cloud release does not automatically approve a native release.
+- **Local dictation:** Governed first by DIC-000 and the
+  [local dictation plan](Campfire-Local-Voice-Dictation-Plan.md). DIC-000 is
+  draft-only and changes no canonical state. DIC-001 requires a separate
+  contract plus a proven typed action; neither sprint is part of the Sunday
+  internal-alpha gate unless a later review explicitly changes that scope.
 - **Live coordination and notifications:** Governed by separately frozen
   LIVE-001 and NTF-001 contracts after stable identity, catch-up, attention,
   revocation, privacy, and measured user need. D1 remains canonical and every

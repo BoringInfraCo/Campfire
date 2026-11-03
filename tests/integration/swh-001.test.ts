@@ -796,8 +796,8 @@ describe("SWH-001 D6 — accessibility and compatibility", () => {
     expect(INDEX_HTML).toContain('id="perspective-mine"');
     expect(INDEX_HTML).toContain('id="perspective-team"');
     expect(INDEX_HTML).toContain('data-perspective="mine"');
-    expect(INDEX_HTML).toMatch(/id="perspective-mine"[^>]*aria-pressed="true"[^>]*>My work</);
-    expect(INDEX_HTML).toMatch(/id="perspective-team"[^>]*aria-pressed="false"[^>]*>Team work</);
+    expect(INDEX_HTML).toMatch(/id="perspective-mine"[^>]*aria-pressed="true"[^>]*>Needs You</);
+    expect(INDEX_HTML).toMatch(/id="perspective-team"[^>]*aria-pressed="false"[^>]*>Needs Attention</);
     expect(INDEX_HTML).toContain('id="mast"');
     expect(INDEX_HTML).toContain("Workstream");
     expect(INDEX_HTML).toContain("Campfire");
@@ -811,8 +811,8 @@ describe("SWH-001 D6 — accessibility and compatibility", () => {
 
     const { sandbox, listeners } = loadAppSandbox();
     expect(evalIn(sandbox, "state.perspective")).toBe("mine");
-    expect(evalIn(sandbox, "perspectiveLabel('mine')")).toBe("My work");
-    expect(evalIn(sandbox, "perspectiveLabel('team')")).toBe("Team work");
+    expect(evalIn(sandbox, "perspectiveLabel('mine')")).toBe("Needs You");
+    expect(evalIn(sandbox, "perspectiveLabel('team')")).toBe("Needs Attention");
 
     evalIn(
       sandbox,
@@ -826,7 +826,7 @@ describe("SWH-001 D6 — accessibility and compatibility", () => {
     expect(evalIn<string>(sandbox, 'els.perspectiveMine.attrs["aria-pressed"]')).toBe("false");
     expect(evalIn<string>(sandbox, 'els.perspectiveTeam.attrs["aria-pressed"]')).toBe("true");
     expect(evalIn<string>(sandbox, 'els.orientation.attrs["data-perspective"]')).toBe("team");
-    expect(evalIn<string>(sandbox, "els.currentWorkTitle.textContent")).toBe("Team work");
+    expect(evalIn<string>(sandbox, "els.currentWorkTitle.textContent")).toBe("Needs Attention");
     evalIn(sandbox, 'setPerspective("mine")');
     expect(evalIn(sandbox, "state.perspective")).toBe("mine");
 
