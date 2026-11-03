@@ -87,14 +87,22 @@ print_next_steps() {
   if [ -n "$SERVER_URL" ]; then
     log "This install will talk to $SERVER_URL."
   fi
-  log "Joining a teammate's existing work? On a fresh or isolated profile, before any local first run:"
+  # Dim the comment only. The command stays plain so it can be copied.
+  # curl | sh keeps stdout on the terminal; a pipe or NO_COLOR stays plain.
+  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    printf '  campfire                              \033[2m# start here\033[0m\n'
+  else
+    log "  campfire                              # start here"
+  fi
+  log ""
+  log "Records you and opens the local API and Viewer."
+  log "It does not create a workspace."
+  log ""
+  log "Joining a teammate? On a fresh profile, before that:"
+  log ""
   log "  campfire join --invitation-link <link>"
-  log "  campfire join --invitation-link <link> --accept --human-name <name> --harness codex|opencode"
-  log "  campfire join --invitation-link <link> --decline"
-  log "Cloud sharing is a controlled alpha. The invited recipient accepts or declines in the installed CLI."
-  log "There is no browser click-to-accept surface and no open Cloud signup."
-  log "  campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode"
-  log "Starting locally? Run  campfire  in a terminal. That records you and starts the local API and Viewer. It does not create a workspace."
+  log ""
+  log "Accept or decline in the CLI."
 }
 
 # ---- anonymous install_completed report (TEL-001D) ----
@@ -529,7 +537,7 @@ if [ -n "$SUM_FILE" ]; then
     fail "a checksum was published but neither sha256sum nor shasum is available to verify it"
   fi
   [ "$expected" = "$actual" ] || fail "sha256 mismatch for campfire tarball (expected $expected, got $actual)"
-  log "Checksum verified (sha256 $actual)."
+  log "Checksum verified."
 fi
 
 # ---- privileged install: no sudo unless needed, and only after prompting ----
