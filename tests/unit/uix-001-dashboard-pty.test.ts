@@ -19,8 +19,9 @@ const FRAME_SIZES = [
   { columns: 80, rows: 24, name: "ana-lab-80x24" },
   { columns: 120, rows: 36, name: "ana-lab-120x36" },
 ] as const;
-const GOAL_ID = SCENARIO.goal.lab;
 const WORKSPACE_ID = SCENARIO.workspaces.lab;
+/** The overview draws this label. The goal id stays off that screen. */
+const OVERVIEW_READY = "GOAL";
 const ACTOR_ID = SCENARIO.humans.ana;
 
 const ENTER = "\u001b[?1049h";
@@ -205,7 +206,7 @@ function runDashboard(db: string, configDir: string, rows: number, cols: number,
     rows,
     cols,
     mode,
-    goal: GOAL_ID,
+    goal: OVERVIEW_READY,
     timeout: 20,
   })], {
     encoding: "utf8",
@@ -246,13 +247,13 @@ function assertRestored(result: PtyResult, exitCodes: number[]): void {
   const hide = result.stream.indexOf(HIDE, Math.max(0, enter));
   const show = result.stream.indexOf(SHOW, Math.max(0, hide));
   const leave = result.stream.indexOf(LEAVE, Math.max(0, show));
-  const goal = result.stream.indexOf(GOAL_ID);
+  const ready = result.stream.indexOf(OVERVIEW_READY);
   expect(enter, "missing enter alternate screen").toBeGreaterThanOrEqual(0);
   expect(hide, "missing hide cursor").toBeGreaterThan(enter);
   expect(show, "missing show cursor").toBeGreaterThan(hide);
   expect(leave, "missing leave alternate screen").toBeGreaterThan(show);
-  expect(goal, "goal was not drawn").toBeGreaterThanOrEqual(0);
-  expect(goal, "goal was not drawn before leaving the screen").toBeLessThan(leave);
+  expect(ready, "overview was not drawn").toBeGreaterThanOrEqual(0);
+  expect(ready, "overview was not drawn before leaving the screen").toBeLessThan(leave);
 }
 
 function stripControls(text: string): string {
@@ -279,11 +280,15 @@ function lastFrame(stream: Buffer, rows: number, columns: number): string {
 }
 
 function assertFrameFacts(text: string, size: { columns: number; rows: number }): void {
-  expect(text).toContain(GOAL_ID);
-  expect(text).toContain("Make team attention cues trustworthy without changing recorded work.");
+  expect(text).toContain(OVERVIEW_READY);
+  expect(text).not.toContain(SCENARIO.goal.lab);
+  // The overview wraps a long goal inside the pane, so the title is not one full-width line.
+  const rail = size.columns < 72 ? 0 : 24;
+  const pane = text.split("\n").map((line) => (rail <= 0 ? line : line.slice(Math.min(line.length, rail + 3)))).join(" ");
+  expect(pane.replace(/\s+/g, " ")).toContain("Make team attention cues trustworthy without changing recorded work.");
   expect(text).toContain("q quit");
   expect(text).toContain(WORKSPACE_ID);
-  expect(text).toMatch(/20\/21|20 of 21/);
+  expect(text).toContain("NEEDS YOU");
   expect(text.includes("\u001b")).toBe(false);
   expect(text.includes("cft_")).toBe(false);
   expect(text.includes("/Users/")).toBe(false);

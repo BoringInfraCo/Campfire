@@ -2,13 +2,16 @@
  * UIX-001 read-only terminal console; NAV-001 focused navigator; NAV-002
  * paged work, on-demand people, and selected-record history.
  *
- * One active section renders at a time. The local `/` filter narrows the
+ * The default frame is one read-only shell: a workspace and people rail, and
+ * an overview pane (goal, Needs You, Needs Attention, work). Other sections
+ * keep a single body plus the source block. The local `/` filter narrows the
  * shown rows of the loaded page — matching, loaded, and workspace total stay
- * separate numbers. It is not workspace search. The exact input `/update`
- * followed by Return requests an update and is not kept as a filter. Record
- * text is untrusted:
- * only `renderDashboard` text is drawn, and every record string goes through
- * `stripTerminalControls`. An omitted participant roster is not zero people.
+ * separate numbers. It is not workspace search and not a model prompt. The
+ * exact input `/update` followed by Return requests an update and is not kept
+ * as a filter. `w` lists workspaces; enter switches, and the screen still
+ * draws one workspace. Record text is untrusted: only `renderDashboard` text
+ * is drawn, and every record string goes through `stripTerminalControls`. An
+ * omitted participant roster is not zero people. Registration is not presence.
  */
 import { execFileSync } from "node:child_process";
 import { CampfireError } from "../domain/errors.js";
@@ -49,8 +52,10 @@ const NOT_RUNNING = "in_progress is a recorded task status, not a running proces
 const NOT_ATTENTION = "This page is not an attention recomputation or an all-clear.";
 const NOT_CENSUS = "Pages are separate reads. This is not a consistent census.";
 const NOT_PRESENCE = "Recorded registration is not presence or permission to act.";
+const WORKSPACE_LIST_UNAVAILABLE = "The workspace list is unavailable.";
+const RECORDED_NOT_PRESENT = "recorded, not present";
 
-export type DashboardSection = "attention" | "work" | "decisions" | "references" | "people" | "changes";
+export type DashboardSection = "overview" | "attention" | "work" | "decisions" | "references" | "people" | "changes";
 export type DashboardPerspective = "mine" | "team";
 export type DashboardInspectKind = "task" | "finding" | "decision" | "artifact";
 export type HistoryObjectType = DashboardInspectKind;
@@ -72,6 +77,8 @@ export interface PagePlace {
   cursor?: string;
   pageNumber: number;
   humanOwnerId?: string;
+  /** Cleaned name from the page this place left, when that human was on it. */
+  humanOwnerName?: string;
 }
 
 export interface LoadedPage<T> {
@@ -89,8 +96,13 @@ export interface LoadedPage<T> {
 }
 
 export interface PeoplePageState extends LoadedPage<ParticipantListItem> {
-  /** Set when the page is that human's workspace-participating agents. */
+  /** Set when the page is that human's recorded agents. */
   humanOwnerId?: string;
+  /**
+   * Set only when that human was on the page this read left. Otherwise the
+   * heading uses the id.
+   */
+  humanOwnerName?: string;
 }
 
 /**
@@ -125,6 +137,7 @@ export interface PageRequest {
   previousSelectionId?: string;
   recoverOnRejectedCursor: boolean;
   humanOwnerId?: string;
+  humanOwnerName?: string;
   objectType?: HistoryObjectType;
   objectId?: string;
 }
@@ -145,6 +158,7 @@ export interface AppliedPageStamp {
   cursorStack: PagePlace[];
   previousSelectionId?: string;
   humanOwnerId?: string;
+  humanOwnerName?: string;
 }
 
 export interface HistoryStamp {
@@ -195,6 +209,14 @@ export interface DashboardState {
   /** Why an unavailable key did nothing. Not an exception. */
   statusNote?: string;
   selectionNote?: string;
+  /** Workspace picker. One workspace still renders; this is not a tab strip. */
+  workspaceListOpen: boolean;
+  workspaceChoices: Array<{ id: string; name: string }>;
+  workspaceListRow: number;
+  /** Set by `w`. The session lists workspaces, or notes that the list is unavailable. */
+  workspaceListRequest?: { generation: number };
+  /** Set by enter on a workspace row. The session assigns this id and refreshes. */
+  workspaceSwitchId?: string;
 }
 
 export interface DashboardSessionOptions {
@@ -215,9 +237,17 @@ export interface DashboardSessionOptions {
   now?: () => Date;
   /** Side effect for an exact `/update` request. The dashboard does not install. */
   onUpdate?: () => Promise<void>;
+  /** Id and name only. Omitted means `w` notes that the list is unavailable. */
+  listWorkspaces?: () => Promise<Array<{ id: string; name: string }>>;
+  /**
+   * Assigns the id closed over by the host's loaders. Called when a switch
+   * id is fulfilled, before the context refresh reads it.
+   */
+  adoptWorkspace?: (workspaceId: string) => void;
 }
 
 const SECTIONS: readonly DashboardSection[] = [
+  "overview",
   "attention",
   "work",
   "decisions",
@@ -226,22 +256,28 @@ const SECTIONS: readonly DashboardSection[] = [
   "changes",
 ];
 
-const FOOTER =
-  "p perspective   tab section   j/k move   n/b page   h history   / filter   enter   r refresh   ? help   esc   q quit";
-const COMPACT_FOOTER = "tab  j/k move  n/b page  h history  / filter  enter  r  ?  esc  q quit";
+const FOOTER_LEFT = "j/k move    h history    ? help";
+const FOOTER_RIGHT = "tab section    enter open    q quit";
+const COMPACT_FOOTER = "j/k move  h history  ? help  tab  enter  q quit";
 
 const HELP_LINES = [
-  "p switches My work and Team work. It does not change the workspace.",
-  "tab moves among attention, work, decisions, references, people, and recent changes.",
-  "j and k move within shown rows, or among loaded contributions while history is open. enter opens a read-only detail.",
+  "Overview shows the goal, Needs You, Needs Attention, and work. The rail lists workspaces and recorded people.",
+  "tab moves among Overview, Needs You or Needs Attention, Work, Decisions, Sources, People & Agents, and Activity.",
+  "p switches Needs You and Needs Attention. It does not change the workspace.",
+  "w lists workspaces. enter switches to the selected workspace. esc closes the list.",
+  "The rail shows each workspace, then new and menu. menu is m, which opens this help. new is campfire create-workspace; this screen does not create one.",
+  "j and k move within shown rows, among workspace choices while that list is open, or among loaded contributions while history is open. enter opens a read-only detail.",
   "n and b page Work, People, or an open history panel. Elsewhere they do not move the selection.",
   "h opens or closes recorded changes for the selected task, decision, finding, or artifact.",
-  "esc closes history first. A later esc clears a committed filter. ctrl-c always quits.",
+  "esc closes the workspace list first, then history. A later esc clears a committed filter. ctrl-c always quits.",
   "/ filters the loaded page, not the workspace. enter confirms; esc clears. Letters stay text.",
   "/update reviews a Campfire update. The canonical command is campfire update. Other / text still filters this page.",
   "r reloads orientation and the active page as separate reads.",
   "? toggles this help. q quits.",
   "Registration, role, and join time are not presence or permission.",
+  "Recorded registration is not presence.",
+  RECORDED_NOT_PRESENT,
+  NOT_RUNNING,
   "needsYou and needsAttention are cues, not permission. A work page is not an all-clear.",
   "An empty history means no contributions are recorded for that record, not that no earlier work happened.",
 ];
@@ -279,7 +315,7 @@ export function createDashboardState(input: {
     actorId: input.actorId,
     actorType: input.actorType,
     perspective: input.perspective ?? "mine",
-    section: input.section ?? "attention",
+    section: input.section ?? "overview",
     row: 0,
     help: false,
     quit: false,
@@ -290,6 +326,9 @@ export function createDashboardState(input: {
     filterMode: false,
     generation: 1,
     boundedReads: input.boundedReads ?? false,
+    workspaceListOpen: false,
+    workspaceChoices: [],
+    workspaceListRow: 0,
     ...(input.context === undefined ? {} : { context: input.context }),
     ...(input.refreshedAt === undefined ? {} : { refreshedAt: input.refreshedAt }),
     ...(input.staleError === undefined ? {} : { staleError: input.staleError }),
@@ -407,7 +446,53 @@ function participantText(item: ParticipantListItem): string {
   if (label !== id) parts.push(id);
   parts.push(`role ${clean(item.role)}`);
   if (item.harness !== undefined && clean(item.harness).length > 0) parts.push(`harness ${clean(item.harness)}`);
+  if (item.actor.actorType === "agent") parts.push(RECORDED_NOT_PRESENT);
   return parts.filter((part) => part.length > 0).join("  ");
+}
+
+/**
+ * Humans first, then agents grouped by the owner key in first-seen order.
+ * Selectable rows stay the participants. Headers are drawn later and are not
+ * rows, so j/k follows this order.
+ */
+function groupedPeople(items: readonly ParticipantListItem[]): ParticipantListItem[] {
+  const humans: ParticipantListItem[] = [];
+  const agents: ParticipantListItem[] = [];
+  for (const item of items) {
+    if (item.actor.actorType === "agent") agents.push(item);
+    else humans.push(item);
+  }
+  const groups = new Map<string, ParticipantListItem[]>();
+  for (const agent of agents) {
+    const key = clean(agent.humanOwnerId ?? "");
+    const list = groups.get(key);
+    if (list === undefined) groups.set(key, [agent]);
+    else list.push(agent);
+  }
+  const ordered = [...humans];
+  for (const list of groups.values()) ordered.push(...list);
+  return ordered;
+}
+
+/** Names of humans on this loaded page. A missing name falls back to the id. */
+function humanNamesOnPage(items: readonly ParticipantListItem[]): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const item of items) {
+    if (item.actor.actorType === "agent") continue;
+    const id = clean(item.actor.actorId);
+    if (id.length === 0 || names.has(id)) continue;
+    const name = clean(item.name);
+    names.set(id, name.length > 0 ? name : id);
+  }
+  return names;
+}
+
+function peopleGroupLabel(item: ParticipantListItem, humans: ReadonlyMap<string, string>): string {
+  if (item.actor.actorType !== "agent") return "People";
+  const owner = clean(item.humanOwnerId ?? "");
+  if (owner.length === 0) return "Agents";
+  const name = humans.get(owner);
+  return name === undefined ? `Agents recorded for ${owner}` : `Agents recorded for ${name}`;
 }
 
 function taskRow(task: Task): DashRow {
@@ -504,6 +589,49 @@ function attentionItems(state: DashboardState, context: WorkspaceContext): Atten
   return state.perspective === "mine" ? context.needsYou : context.needsAttention;
 }
 
+function attentionRow(context: WorkspaceContext, item: AttentionItem): DashRow {
+  const kind = item.kind === "decision" ? "decision" : "task";
+  const full = kind === "decision" ? decisionById(context, item.id) !== undefined : taskById(context, item.id) !== undefined;
+  return {
+    kind,
+    id: item.id,
+    text: attentionText(item),
+    full,
+    reviewCue: item.reason === "accepted_decision_needs_review" || (item.needsReviewFindingIds?.length ?? 0) > 0,
+    ...(full ? {} : { fetchKind: kind }),
+  };
+}
+
+/** Tasks the work section would list: a loaded page, else orientation when unbounded. */
+function workSource(state: DashboardState, context: WorkspaceContext): Task[] {
+  if (state.taskPage !== undefined) return state.taskPage.items;
+  if (state.boundedReads) return [];
+  return currentTasks(context);
+}
+
+/**
+ * Overview work rows follow the work section's source, keep open and
+ * in_progress tasks, and skip ids already listed under Needs You.
+ */
+function overviewWorkRows(state: DashboardState, context: WorkspaceContext): DashRow[] {
+  const skip = new Set(context.needsYou.map((item) => item.id));
+  return workSource(state, context)
+    .filter((task) => (task.status === "open" || task.status === "in_progress") && !skip.has(task.id))
+    .map(taskRow);
+}
+
+function overviewParts(state: DashboardState, context: WorkspaceContext): {
+  needsYou: DashRow[];
+  needsAttention: DashRow[];
+  work: DashRow[];
+} {
+  return {
+    needsYou: context.needsYou.map((item) => attentionRow(context, item)),
+    needsAttention: context.needsAttention.map((item) => attentionRow(context, item)),
+    work: overviewWorkRows(state, context),
+  };
+}
+
 function changeRows(context: WorkspaceContext): DashRow[] {
   if (context.provenance.length > 0) {
     return context.provenance.map((entry) => contributionRow(entry));
@@ -539,19 +667,13 @@ export function sectionRows(state: DashboardState): DashRow[] {
   const context = sameWorkspace(state);
   if (context === undefined) return [];
   switch (state.section) {
+    case "overview": {
+      // Same order the overview pane draws, so j/k moves that combined list.
+      const parts = overviewParts(state, context);
+      return [...parts.needsYou, ...parts.needsAttention, ...parts.work];
+    }
     case "attention":
-      return attentionItems(state, context).map((item) => {
-        const kind = item.kind === "decision" ? "decision" : "task";
-        const full = kind === "decision" ? decisionById(context, item.id) !== undefined : taskById(context, item.id) !== undefined;
-        return {
-          kind,
-          id: item.id,
-          text: attentionText(item),
-          full,
-          reviewCue: item.reason === "accepted_decision_needs_review" || (item.needsReviewFindingIds?.length ?? 0) > 0,
-          ...(full ? {} : { fetchKind: kind }),
-        };
-      });
+      return attentionItems(state, context).map((item) => attentionRow(context, item));
     case "work":
       // A loaded list_tasks page is the work list. Orientation tasks stay the
       // fallback only for fixtures that never asked for a bounded page.
@@ -595,8 +717,9 @@ export function sectionRows(state: DashboardState): DashRow[] {
       }));
     case "people":
       // Rows come only from the participant page. The orientation array is
-      // not a page, and an omitted array is not a roster.
-      return (state.peoplePage?.items ?? []).map((item) => ({
+      // not a page, and an omitted array is not a roster. Grouping changes
+      // display order on this page; it is not a workspace census.
+      return groupedPeople(state.peoplePage?.items ?? []).map((item) => ({
         kind: "participant" as const,
         id: item.actor.actorId,
         text: participantText(item),
@@ -660,6 +783,11 @@ function withoutTransient(state: DashboardState): DashboardState {
     ...(state.taskPage === undefined ? {} : { taskPage: state.taskPage }),
     ...(state.peoplePage === undefined ? {} : { peoplePage: state.peoplePage }),
     ...(state.peopleSplit === undefined ? {} : { peopleSplit: state.peopleSplit }),
+    workspaceListOpen: state.workspaceListOpen,
+    workspaceChoices: state.workspaceChoices,
+    workspaceListRow: state.workspaceListRow,
+    ...(state.workspaceListRequest === undefined ? {} : { workspaceListRequest: state.workspaceListRequest }),
+    ...(state.workspaceSwitchId === undefined ? {} : { workspaceSwitchId: state.workspaceSwitchId }),
   };
 }
 
@@ -880,8 +1008,14 @@ function pagePeople(state: DashboardState, direction: "next" | "back"): Dashboar
         generation,
         cursor: page.nextCursor,
         pageNumber: page.pageNumber + 1,
-        cursorStack: [...page.cursorStack, { cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId }],
+        cursorStack: [...page.cursorStack, {
+          cursor: page.cursor,
+          pageNumber: page.pageNumber,
+          humanOwnerId: page.humanOwnerId,
+          humanOwnerName: page.humanOwnerName,
+        }],
         humanOwnerId: page.humanOwnerId,
+        humanOwnerName: page.humanOwnerName,
         previousSelectionId: selectedId,
         recoverOnRejectedCursor: true,
       },
@@ -900,6 +1034,7 @@ function pagePeople(state: DashboardState, direction: "next" | "back"): Dashboar
       pageNumber: previous.pageNumber,
       cursorStack: page.cursorStack.slice(0, -1),
       humanOwnerId: previous.humanOwnerId,
+      humanOwnerName: previous.humanOwnerName,
       previousSelectionId: selectedId,
       recoverOnRejectedCursor: previous.cursor !== undefined,
     },
@@ -989,19 +1124,28 @@ function toggleHistory(state: DashboardState): DashboardState {
   };
 }
 
-function openHumanAgents(state: DashboardState, humanId: string): DashboardState {
+function openHumanAgents(state: DashboardState, human: ParticipantListItem): DashboardState {
   const page = state.peoplePage;
   const generation = state.generation + 1;
+  const humanId = human.actor.actorId;
+  const name = clean(human.name);
+  const label = name.length > 0 ? name : clean(humanId);
   const stack = page === undefined
     ? []
-    : [...page.cursorStack, { cursor: page.cursor, pageNumber: page.pageNumber, humanOwnerId: page.humanOwnerId }];
+    : [...page.cursorStack, {
+      cursor: page.cursor,
+      pageNumber: page.pageNumber,
+      humanOwnerId: page.humanOwnerId,
+      humanOwnerName: page.humanOwnerName,
+    }];
   return {
     ...withoutTransient(state),
     generation,
-    statusNote: `Loading workspace-participating agents for ${clean(humanId)}. Rows below are the last successful page, not this request.`,
+    statusNote: `Loading agents recorded for ${label}. Rows below are the last successful page, not this request.`,
     peoplePageRequest: {
       generation,
       humanOwnerId: humanId,
+      ...(name.length > 0 ? { humanOwnerName: name } : {}),
       pageNumber: 1,
       cursorStack: stack,
       recoverOnRejectedCursor: false,
@@ -1009,9 +1153,103 @@ function openHumanAgents(state: DashboardState, humanId: string): DashboardState
   };
 }
 
+function closeWorkspaceList(state: DashboardState): DashboardState {
+  return {
+    ...state,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    statusNote: undefined,
+  };
+}
+
+/** Enter on a workspace row. The session assigns the id and refreshes context. */
+function requestWorkspaceSwitch(state: DashboardState): DashboardState {
+  const choice = state.workspaceChoices[state.workspaceListRow];
+  if (choice === undefined) return state;
+  return {
+    ...closeWorkspaceList(state),
+    workspaceSwitchId: choice.id,
+  };
+}
+
+/**
+ * Host loaders must already read the new id. Clears the previous workspace's
+ * pages, history, detail, and inspect state, and keeps the section.
+ */
+export function fulfillWorkspaceSwitch(state: DashboardState, workspaceId: string): DashboardState {
+  const generation = state.generation + 1;
+  const next: DashboardState = {
+    ...state,
+    workspaceId,
+    generation,
+    row: 0,
+    refreshRequested: true,
+    detailOpen: false,
+    inspected: undefined,
+    inspectRequest: undefined,
+    history: undefined,
+    historyRequest: undefined,
+    taskPage: undefined,
+    taskPageRequest: undefined,
+    peoplePage: undefined,
+    peoplePageRequest: undefined,
+    peopleSplit: undefined,
+    workspaceSwitchId: undefined,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    refreshedAt: undefined,
+    staleError: undefined,
+    statusNote: undefined,
+    selectionNote: undefined,
+  };
+  if (next.boundedReads && next.section === "work") {
+    next.taskPageRequest = { generation, pageNumber: 1, cursorStack: [], recoverOnRejectedCursor: false };
+  }
+  if (next.section === "people") {
+    next.peoplePageRequest = { generation, pageNumber: 1, cursorStack: [], recoverOnRejectedCursor: false };
+  }
+  return next;
+}
+
+export function applyWorkspaceChoices(
+  state: DashboardState,
+  choices: ReadonlyArray<{ id: string; name: string }>,
+): DashboardState {
+  const cleaned: Array<{ id: string; name: string }> = [];
+  for (const choice of choices) {
+    const id = clean(choice.id);
+    if (id.length === 0) continue;
+    const name = clean(choice.name);
+    cleaned.push({ id, name: name.length > 0 ? name : id });
+  }
+  const row = cleaned.length === 0 ? 0 : Math.min(state.workspaceListRow, cleaned.length - 1);
+  // Store choices for the rail even when the picker is closed. Do not open it.
+  return {
+    ...state,
+    workspaceChoices: cleaned,
+    workspaceListRow: row,
+    workspaceListRequest: undefined,
+  };
+}
+
+export function unavailableWorkspaceList(state: DashboardState): DashboardState {
+  return {
+    ...state,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    workspaceChoices: [],
+    workspaceListRow: 0,
+    statusNote: WORKSPACE_LIST_UNAVAILABLE,
+  };
+}
+
 export function reduceDashboardKey(state: DashboardState, key: string): DashboardState {
   // Ctrl-C quits from every mode, including while a filter is being typed.
   if (key === "\u0003" || key === "ctrl-c") return { ...state, quit: true, refreshRequested: false };
+  // The workspace list closes before history and before a committed or in-progress filter.
+  if ((key === "\u001b" || key === "esc") && (state.workspaceListOpen || state.workspaceListRequest !== undefined)) {
+    return closeWorkspaceList(state);
+  }
   if (state.filterMode) return reduceFilterModeKey(state, key);
   if (key === "\u001b" || key === "esc") {
     // History closes before a committed filter so one esc cannot do both.
@@ -1029,9 +1267,21 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
     return reconcileSelection(state, { ...state, filter: "", updateRequested: false });
   }
   if (key === "\u007f" || key === "\u0008" || key === "backspace") return state;
-  if (key === "/") return { ...state, filterMode: true };
+  if (key === "/" && !state.workspaceListOpen) return { ...state, filterMode: true };
   const action = canonicalKey(key);
   if (action === "quit") return { ...state, quit: true, refreshRequested: false };
+  if (action === "w") {
+    return {
+      ...state,
+      workspaceListOpen: true,
+      workspaceListRequest: { generation: state.generation },
+      statusNote: undefined,
+    };
+  }
+  if (state.workspaceListOpen && (action === "tab" || action === "p" || action === "n" || action === "b" || action === "h" || action === "r" || action === "?" || action === "m")) {
+    if (action === "?" || action === "m") return { ...state, help: !state.help, refreshRequested: false };
+    return state;
+  }
   if (action === "p") {
     return clampRow({
       ...withoutTransient(state),
@@ -1042,10 +1292,16 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   }
   if (action === "tab") {
     const index = SECTIONS.indexOf(state.section);
-    const section = SECTIONS[(index + 1) % SECTIONS.length] ?? "attention";
+    const section = SECTIONS[(index + 1) % SECTIONS.length] ?? "overview";
     return openSection(state, section);
   }
   if (action === "j" || action === "k") {
+    if (state.workspaceListOpen) {
+      const count = state.workspaceChoices.length;
+      const delta = action === "j" ? 1 : -1;
+      const row = count <= 0 ? 0 : Math.min(count - 1, Math.max(0, state.workspaceListRow + delta));
+      return { ...state, workspaceListRow: row, statusNote: undefined };
+    }
     if (state.history?.open === true) {
       const count = state.history.page?.items.length ?? 0;
       const delta = action === "j" ? 1 : -1;
@@ -1063,7 +1319,7 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
     return { ...moved, ...sameRecordHistory(state, beforeId) };
   }
   if (action === "r") return requestDashboardRefresh(state);
-  if (action === "?") return { ...state, help: !state.help, refreshRequested: false };
+  if (action === "?" || action === "m") return { ...state, help: !state.help, refreshRequested: false };
   if (action === "n" || action === "b") {
     const direction = action === "n" ? "next" : "back";
     if (state.history?.open === true) return pageHistory(state, direction);
@@ -1073,10 +1329,11 @@ export function reduceDashboardKey(state: DashboardState, key: string): Dashboar
   }
   if (action === "h") return toggleHistory(state);
   if (action === "enter") {
+    if (state.workspaceListOpen) return requestWorkspaceSwitch(state);
     const selected = selectedRow(state);
     if (selected === undefined) return { ...withoutTransient(state), detailOpen: false };
     if (selected.kind === "participant" && selected.participant?.actor.actorType === "human") {
-      return openHumanAgents(state, selected.participant.actor.actorId);
+      return openHumanAgents(state, selected.participant);
     }
     const history = sameRecordHistory(state, selected.id);
     if (selected.full || selected.fetchKind === undefined) {
@@ -1128,7 +1385,17 @@ function keepDetail(state: DashboardState, id: string | undefined, found: boolea
 }
 
 export function applyTaskPage(state: DashboardState, page: DashboardPageInput<Task>, stamp: AppliedPageStamp): DashboardState {
-  if (stamp.generation !== state.generation || state.section !== "work") return state;
+  if (stamp.generation !== state.generation) return state;
+  // Overview prefetches page 1 for the rail and the work block. Keep the
+  // overview selection; only the work section repositions its own rows.
+  if (state.section !== "work") {
+    if (state.section !== "overview") return state;
+    return {
+      ...state,
+      taskPage: toLoaded(page, stamp),
+      taskPageRequest: undefined,
+    };
+  }
   const draft: DashboardState = {
     ...state,
     taskPage: toLoaded(page, stamp),
@@ -1168,10 +1435,30 @@ export function applyPeoplePage(
   page: DashboardPageInput<ParticipantListItem>,
   stamp: AppliedPageStamp,
 ): DashboardState {
-  if (stamp.generation !== state.generation || state.section !== "people") return state;
+  if (stamp.generation !== state.generation) return state;
+  if (state.section !== "people") {
+    // The rail reads page 1 while another section is showing. Do not move that
+    // section's selection or treat the page as the people-section roster walk
+    // unless it is the unfiltered page the rail asked for.
+    const peoplePage: PeoplePageState = {
+      ...toLoaded(page, stamp),
+      ...(stamp.humanOwnerId === undefined ? {} : { humanOwnerId: stamp.humanOwnerId }),
+      ...(stamp.humanOwnerName === undefined ? {} : { humanOwnerName: stamp.humanOwnerName }),
+    };
+    const peopleSplit = stamp.humanOwnerId === undefined
+      ? countSplit(state.peopleSplit, stamp.pageNumber, page.items, page.total, page.truncated)
+      : state.peopleSplit;
+    return {
+      ...state,
+      peoplePage,
+      peoplePageRequest: undefined,
+      ...(peopleSplit === undefined ? {} : { peopleSplit }),
+    };
+  }
   const peoplePage: PeoplePageState = {
     ...toLoaded(page, stamp),
     ...(stamp.humanOwnerId === undefined ? {} : { humanOwnerId: stamp.humanOwnerId }),
+    ...(stamp.humanOwnerName === undefined ? {} : { humanOwnerName: stamp.humanOwnerName }),
   };
   const peopleSplit = stamp.humanOwnerId === undefined
     ? countSplit(state.peopleSplit, stamp.pageNumber, page.items, page.total, page.truncated)
@@ -1260,6 +1547,7 @@ export function rejectPeopleCursor(state: DashboardState, generation: number): D
   if (generation !== state.generation || state.section !== "people") return state;
   const nextGeneration = state.generation + 1;
   const humanOwnerId = state.peoplePage?.humanOwnerId;
+  const humanOwnerName = state.peoplePage?.humanOwnerName;
   return {
     ...state,
     generation: nextGeneration,
@@ -1270,6 +1558,7 @@ export function rejectPeopleCursor(state: DashboardState, generation: number): D
       cursorStack: [],
       recoverOnRejectedCursor: false,
       ...(humanOwnerId === undefined ? {} : { humanOwnerId }),
+      ...(humanOwnerName === undefined ? {} : { humanOwnerName }),
     },
   };
 }
@@ -1364,6 +1653,8 @@ function workspaceTotal(state: DashboardState, context: WorkspaceContext): strin
       return String(context.provenanceTotal);
     case "attention":
       return String(context.attentionCoverage.tasks.total);
+    case "overview":
+      return String(context.slices.tasks.total);
   }
 }
 
@@ -1411,9 +1702,9 @@ function sliceCoverage(
 function buildAttention(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const counts = attentionCoverageCounts(context.attentionCoverage);
   const coverage = attentionCoverageText(context.attentionCoverage);
-  const heading = state.perspective === "mine" ? "MY WORK  Needs You" : "TEAM WORK  Needs Attention";
+  const heading = state.perspective === "mine" ? "NEEDS YOU" : "NEEDS ATTENTION";
   const lines: TaggedLine[] = [
-    ...chrome(`${heading}  ATTENTION  ${counts}`, columns, 0),
+    ...chrome(`${heading}  ${counts}`, columns, 0),
     ...(coverage.length > 0 ? record(coverage, columns, 0) : []),
     ...record(ASSIGNMENT_RECORD_NOTE, columns, 1),
     ...filterIndicator(state, context, columns),
@@ -1444,11 +1735,221 @@ function noteLines(state: DashboardState, columns: number): TaggedLine[] {
   return lines;
 }
 
+function recordedAgentsLabel(page: PeoplePageState): string {
+  const name = page.humanOwnerName === undefined ? "" : clean(page.humanOwnerName);
+  const id = page.humanOwnerId === undefined ? "" : clean(page.humanOwnerId);
+  return `Agents recorded for ${name.length > 0 ? name : id}`;
+}
+
+function renderPeopleRows(state: DashboardState, columns: number): TaggedLine[] {
+  const humans = humanNamesOnPage(state.peoplePage?.items ?? []);
+  const rows = shownRows(state);
+  const lines: TaggedLine[] = [];
+  let previous = "";
+  rows.forEach((row, index) => {
+    const item = row.participant;
+    const header = item === undefined ? "" : peopleGroupLabel(item, humans);
+    if (header.length > 0 && header !== previous) {
+      lines.push(...chrome(header, columns, 1));
+      previous = header;
+    }
+    const marker = index === state.row ? "> " : "";
+    const rank = index === state.row || row.reviewCue ? 0 : 1;
+    lines.push(...record(`${marker}${row.text}`, columns, rank));
+  });
+  return lines;
+}
+
+interface PaneLine extends TaggedLine {
+  /** `full` uses the terminal width. `pane` sits to the right of the rail. */
+  span?: "full" | "pane";
+}
+
+/** One sidebar width. The body keeps a 3-column gutter: the divider plus a 2-space inset. */
+const SIDEBAR_WIDTH = 24;
+const BODY_GUTTER = 3;
+
+function shellLayout(columns: number): { rail: number; gutter: number; main: number } {
+  if (columns < 72) return { rail: 0, gutter: 0, main: columns };
+  return {
+    rail: SIDEBAR_WIDTH,
+    gutter: BODY_GUTTER,
+    main: Math.max(1, columns - SIDEBAR_WIDTH - BODY_GUTTER),
+  };
+}
+
+function tagSpan(lines: readonly TaggedLine[], mainWidth: number): PaneLine[] {
+  return lines.map((line) => ({
+    text: line.text,
+    rank: line.rank,
+    span: line.text.length > mainWidth ? "full" : "pane",
+  }));
+}
+
+function overviewTitleLine(name: string, id: string, needs: number, width: number): string {
+  const right = `Needs You  ${needs}`;
+  const left = `${name}  ${id}`.trim();
+  const gap = width - left.length - right.length;
+  if (gap >= 2) return left + " ".repeat(gap) + right;
+  const compact = `${left}  ${right}`;
+  return compact.length <= width ? compact : compact.slice(0, width);
+}
+
+function rowMatchesFilter(state: DashboardState, row: DashRow): boolean {
+  if (state.filter.length === 0) return true;
+  const needle = state.filter.toLowerCase();
+  return row.id.toLowerCase().includes(needle) || row.text.toLowerCase().includes(needle);
+}
+
+function pushPane(lines: PaneLine[], text: string, width: number, rank: number): void {
+  const parts = wrapSegments(text, Math.max(1, width), "");
+  for (const part of parts) lines.push({ text: part, rank, span: "pane" });
+}
+
+/** Prefix stays on the first line only. Continuation lines keep the same indent. */
+function pushPrefixed(lines: PaneLine[], text: string, mainWidth: number, rank: number, prefix: string): void {
+  // Keep the two-space token gaps. `clean` would collapse them.
+  const body = stripTerminalControls(text).trim();
+  if (body.length === 0) {
+    lines.push({ text: prefix, rank, span: "pane" });
+    return;
+  }
+  const room = Math.max(1, mainWidth - prefix.length);
+  const parts = wrapSegments(body, room, "");
+  parts.forEach((part, index) => {
+    const lead = index === 0 ? prefix : " ".repeat(prefix.length);
+    lines.push({ text: lead + part, rank, span: "pane" });
+  });
+}
+
+function pushBlank(lines: PaneLine[]): void {
+  lines.push({ text: "", rank: 2, span: "pane" });
+}
+
+/**
+ * Display name for an overview subtitle. People-page rows win over the
+ * orientation roster. A missing name falls back to the actor id. No actor
+ * yields an empty string so the row does not invent an assignee.
+ */
+function personName(state: DashboardState, context: WorkspaceContext, actorId: string | undefined): string {
+  if (actorId === undefined) return "";
+  const id = clean(actorId);
+  if (id.length === 0) return "";
+  const lists: Array<{ actor: { actorId: string }; name: string }> = [
+    ...(state.peoplePage?.items ?? []),
+    ...context.participants,
+  ];
+  for (const person of lists) {
+    if (clean(person.actor.actorId) !== id) continue;
+    const name = clean(person.name);
+    return name.length > 0 ? name : id;
+  }
+  return id;
+}
+
+function withRecordId(text: string, id: string): string {
+  if (id.length === 0) return text;
+  if (text.split(/\s+/).includes(id)) return text;
+  return text.length > 0 ? `${text}    ${id}` : id;
+}
+
+/**
+ * Two-line overview drawing. `sectionRows` stays the dense filter text.
+ * Subtitles are not selectable rows; the `>` marker still tracks `state.row`.
+ */
+function overviewVisual(
+  group: "needsYou" | "needsAttention" | "work",
+  row: DashRow,
+  state: DashboardState,
+  context: WorkspaceContext,
+): { primary: string; secondary: string } {
+  const id = clean(row.id);
+  if (group === "work") {
+    const task = taskRecord(state, context, row.id);
+    const status = task === undefined ? "" : taskStatusLabel(task.status);
+    const title = task === undefined ? "" : clean(task.title);
+    const primary = [status, title].filter((part) => part.length > 0).join("  ");
+    const name = personName(state, context, task?.assignee?.actorId);
+    if (task?.status === "in_progress") {
+      const who = name.length > 0 ? `${name}    ` : "";
+      return { primary, secondary: `${who}not a running process` };
+    }
+    return { primary, secondary: name };
+  }
+  const item = [...context.needsYou, ...context.needsAttention].find((entry) => entry.id === row.id);
+  if (item?.kind === "decision") {
+    const status = clean(item.status);
+    const summary = clean(item.summary);
+    const primary = [status, summary].filter((part) => part.length > 0).join("  ");
+    const findings = (item.needsReviewFindingIds ?? []).map((findingId) => clean(findingId)).filter((findingId) => findingId.length > 0);
+    const review = row.reviewCue || item.reason === "accepted_decision_needs_review" || findings.length > 0;
+    if (!review) return { primary, secondary: "" };
+    const cites = findings.length > 0 ? `    cites ${findings.join("  ")}` : "";
+    return { primary, secondary: `needs review${cites}    acceptance unchanged` };
+  }
+  const status = item === undefined ? "" : taskStatusLabel(item.status);
+  const summary = item === undefined ? "" : clean(item.summary);
+  const primary = [status, summary].filter((part) => part.length > 0).join("  ");
+  const assignee = item?.assignee?.actorId ?? taskRecord(state, context, row.id)?.assignee?.actorId;
+  const name = personName(state, context, assignee);
+  const assigned = name.length > 0 ? `assigned to ${name}` : "";
+  return { primary, secondary: withRecordId(assigned, id) };
+}
+
+function buildOverview(state: DashboardState, context: WorkspaceContext, columns: number, mainWidth: number): PaneLine[] {
+  const lines: PaneLine[] = [];
+  const width = Math.max(1, mainWidth);
+  const name = clean(context.workspace.name);
+  const needs = context.needsYou.length;
+  const titleWidth = mainWidth > 0 && mainWidth < columns ? mainWidth : columns;
+  const titleLine = overviewTitleLine(name.length > 0 ? name : "workspace", clean(state.workspaceId), needs, titleWidth);
+  // Padding before "Needs You" is intentional; do not trim it.
+  lines.push({ text: titleLine, rank: 0, span: "pane" });
+  if (state.staleError !== undefined && clean(state.staleError).length > 0) {
+    pushPane(lines, `STALE  ${clean(state.staleError)}`, width, 0);
+  }
+  pushBlank(lines);
+  lines.push({ text: "GOAL", rank: 0, span: "pane" });
+  pushBlank(lines);
+  const goal = context.goal;
+  if (goal !== undefined && clean(goal.title).length > 0) {
+    // Stay inside the pane. A long title wraps here instead of spanning the rail.
+    // A measure near 48 breaks the billing goal the way the shell mock does.
+    pushPane(lines, clean(goal.title), Math.min(width, 48), 0);
+  } else {
+    lines.push({ text: "no recorded goal", rank: 0, span: "pane" });
+  }
+  lines.push(...tagSpan(noteLines(state, columns), mainWidth));
+
+  const parts = overviewParts(state, context);
+  let shownIndex = 0;
+  const drawGroup = (title: string, rows: DashRow[], group: "needsYou" | "needsAttention" | "work"): void => {
+    pushBlank(lines);
+    lines.push({ text: title, rank: 0, span: "pane" });
+    for (const row of rows) {
+      if (!rowMatchesFilter(state, row)) continue;
+      const selected = shownIndex === state.row;
+      const rank = selected || row.reviewCue ? 0 : 1;
+      const visual = overviewVisual(group, row, state, context);
+      const secondary = selected ? withRecordId(visual.secondary, clean(row.id)) : visual.secondary;
+      pushPrefixed(lines, visual.primary, width, rank, selected ? "> " : "  ");
+      // Subtitle sits under the title, one step past the status word.
+      if (secondary.length > 0) pushPrefixed(lines, secondary, width, rank, "      ");
+      shownIndex += 1;
+    }
+  };
+  drawGroup("NEEDS YOU", parts.needsYou, "needsYou");
+  drawGroup("NEEDS ATTENTION", parts.needsAttention, "needsAttention");
+  drawGroup("WORK", parts.work, "work");
+  if (state.detailOpen) lines.push(...tagSpan(buildSource(state, context, columns), mainWidth));
+  return lines;
+}
+
 function buildWork(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const page = state.taskPage;
   const heading = page === undefined
-    ? `CURRENT WORK  ${sliceCoverage("tasks", context.slices.tasks)}`
-    : `CURRENT WORK  ${pageFact(page)}`;
+    ? `WORK  ${sliceCoverage("tasks", context.slices.tasks)}`
+    : `WORK  ${pageFact(page)}`;
   const lines: TaggedLine[] = [...chrome(heading, columns, page === undefined ? 1 : 0)];
   if (page !== undefined) {
     lines.push(...record(NOT_ATTENTION, columns, 1));
@@ -1482,7 +1983,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
   const page = state.peoplePage;
   const lines: TaggedLine[] = [];
   if (page === undefined) {
-    lines.push(...chrome("PEOPLE", columns, 0));
+    lines.push(...chrome("PEOPLE & AGENTS", columns, 0));
     lines.push(
       ...record(
         state.peoplePageRequest === undefined ? "People are loaded only when this section asks for them." : "People page is loading.",
@@ -1497,7 +1998,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
   if (page.humanOwnerId !== undefined) {
     lines.push(
       ...chrome(
-        `WORKSPACE-PARTICIPATING AGENTS  ${clean(page.humanOwnerId)}  total ${page.total}  ${pageFact(page)}`,
+        `${recordedAgentsLabel(page)}  total ${page.total}  ${pageFact(page)}`,
         columns,
         0,
       ),
@@ -1506,7 +2007,7 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
       ...record("total counts this human's agents in this workspace. It is not the unfiltered page and not a presence count.", columns, 1),
     );
   } else {
-    lines.push(...chrome(`PEOPLE  ${pageFact(page)}`, columns, 0));
+    lines.push(...chrome(`PEOPLE & AGENTS  ${pageFact(page)}`, columns, 0));
     lines.push(...record("This page is not the workspace human/agent split.", columns, 1));
   }
   lines.push(...record(NOT_PRESENCE, columns, 1));
@@ -1517,13 +2018,13 @@ function buildPeople(state: DashboardState, context: WorkspaceContext, columns: 
     lines.push(...emptyOrFilterLines(state, "No participant on this page.", columns, 1));
     return lines;
   }
-  lines.push(...renderRowList(rows, state.row, columns));
+  lines.push(...renderPeopleRows(state, columns));
   return lines;
 }
 
 function buildDecisions(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const lines: TaggedLine[] = [
-    ...chrome(`RECORDED DECISIONS  ${sliceCoverage("decisions", context.slices.decisions)}`, columns, 1),
+    ...chrome(`DECISIONS  ${sliceCoverage("decisions", context.slices.decisions)}`, columns, 1),
     ...record("Competing accepted decisions are not resolved here. needs review does not revoke acceptance.", columns, 1),
     ...filterIndicator(state, context, columns),
   ];
@@ -1540,7 +2041,7 @@ function buildDecisions(state: DashboardState, context: WorkspaceContext, column
 
 function buildReferences(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   const lines: TaggedLine[] = [
-    ...chrome(`ARTIFACT REFERENCES  ${sliceCoverage("artifacts", context.slices.artifacts)}`, columns, 1),
+    ...chrome(`SOURCES  ${sliceCoverage("artifacts", context.slices.artifacts)}`, columns, 1),
     ...filterIndicator(state, context, columns),
   ];
   const rows = shownRows(state);
@@ -1558,7 +2059,7 @@ function buildChanges(state: DashboardState, context: WorkspaceContext, columns:
   const truncated = context.provenanceTruncated ? "  truncated" : "";
   const lines: TaggedLine[] = [
     ...chrome(
-      `RECENT CHANGES  showing ${context.provenance.length} of ${context.provenanceTotal}${truncated}`,
+      `ACTIVITY  showing ${context.provenance.length} of ${context.provenanceTotal}${truncated}`,
       columns,
       1,
     ),
@@ -1575,6 +2076,8 @@ function buildChanges(state: DashboardState, context: WorkspaceContext, columns:
 
 function buildActiveSection(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
   switch (state.section) {
+    case "overview":
+      return buildOverview(state, context, columns, columns);
     case "attention":
       return [...noteLines(state, columns), ...buildAttention(state, context, columns)];
     case "work":
@@ -1867,12 +2370,39 @@ function buildHistory(state: DashboardState, columns: number): TaggedLine[] {
   return lines;
 }
 
+function buildWorkspaceList(state: DashboardState, columns: number): TaggedLine[] {
+  const lines: TaggedLine[] = [...chrome("WORKSPACES", columns, 0)];
+  if (state.workspaceListRequest !== undefined && state.workspaceChoices.length === 0) {
+    lines.push(...record("Workspace list is loading.", columns, 0));
+  } else if (state.workspaceChoices.length === 0) {
+    lines.push(...record("No workspace was returned.", columns, 1));
+  } else {
+    state.workspaceChoices.forEach((choice, index) => {
+      const marker = index === state.workspaceListRow ? "> " : "";
+      const rank = index === state.workspaceListRow ? 0 : 1;
+      lines.push(...record(`${marker}${clean(choice.name)}  ${clean(choice.id)}`, columns, rank));
+    });
+  }
+  lines.push(...record("enter switches to the selected workspace. esc closes this list.", columns, 1));
+  lines.push(...noteLines(state, columns));
+  return lines;
+}
+
+function wideFooter(columns: number): string {
+  const gap = columns - FOOTER_LEFT.length - FOOTER_RIGHT.length;
+  if (gap < 1) {
+    const joined = `${FOOTER_LEFT}  ${FOOTER_RIGHT}`;
+    return joined.length <= columns ? joined : joined.slice(0, columns);
+  }
+  return FOOTER_LEFT + " ".repeat(gap) + FOOTER_RIGHT;
+}
+
 function footerLines(columns: number, historyOpen: boolean): TaggedLine[] {
   const label = historyOpen
     ? columns < 100
       ? "j/k event  n/b API page  h/esc close  r refresh  q quit"
       : "j/k event   n/b API page   h/esc close   r refresh   q quit"
-    : columns < 100 ? COMPACT_FOOTER : FOOTER;
+    : columns < 100 ? COMPACT_FOOTER : wideFooter(columns);
   const lines = chrome(label, columns, 0);
   if (lines.some((line) => line.text.includes("q quit"))) return lines;
   return [{ text: "q quit", rank: 0 }];
@@ -1901,14 +2431,23 @@ function fit(tagged: TaggedLine[], rows: number): string[] {
  * A full screen of rank-0 cues can push the selected id off the first page.
  * Put any missing fact back on the last content line. The footer stays.
  */
+function isFilterChrome(line: string | undefined): boolean {
+  if (line === undefined) return false;
+  const body = line.trim();
+  if (body.length === 0) return false;
+  const first = body[0] ?? "";
+  if (first === "┌" || first === "└" || first === "│" || first === "┐" || first === "┘") return true;
+  return body.startsWith("> filter");
+}
+
 function pinFacts(lines: string[], columns: number, facts: readonly string[]): string[] {
   const frame = [...lines];
   const missing = facts.filter(
     (fact) => fact.length > 0 && !frame.some((line) => line.includes(fact)),
   );
   let slot = frame.length - 1;
-  if ((frame[slot] ?? "").includes("q quit")) slot -= 1;
   for (const fact of missing) {
+    while (slot >= 0 && ((frame[slot] ?? "").includes("q quit") || isFilterChrome(frame[slot]))) slot -= 1;
     if (slot < 0) break;
     const text = `  ${fact}`;
     frame[slot] = text.length > columns ? text.slice(0, columns) : text;
@@ -1917,61 +2456,588 @@ function pinFacts(lines: string[], columns: number, facts: readonly string[]): s
   return frame;
 }
 
-export function renderDashboard(state: DashboardState, columns: number, rows: number): string {
-  const size = viewport(columns, rows);
-  const context = sameWorkspace(state);
+function projectLine(left: string, railWidth: number, right: string, columns: number, gutter = BODY_GUTTER): string {
+  if (railWidth <= 0) return right.length > columns ? right.slice(0, columns) : right;
+  const clipped = left.length > railWidth ? left.slice(0, railWidth) : left;
+  const gap = " ".repeat(Math.max(1, gutter));
+  const line = `${clipped.padEnd(railWidth, " ")}${gap}${right}`;
+  return line.length > columns ? line.slice(0, columns) : line;
+}
+
+function composeShell(
+  rail: readonly TaggedLine[],
+  main: readonly PaneLine[],
+  railWidth: number,
+  columns: number,
+  gutter = BODY_GUTTER,
+): TaggedLine[] {
+  if (railWidth <= 0) {
+    return main.map((line) => ({
+      text: line.text.length > columns ? line.text.slice(0, columns) : line.text,
+      rank: line.rank,
+    }));
+  }
+  const out: TaggedLine[] = [];
+  let railIndex = 0;
+  for (const line of main) {
+    if (line.span === "full") {
+      out.push({ text: line.text.length > columns ? line.text.slice(0, columns) : line.text, rank: line.rank });
+      continue;
+    }
+    const left = railIndex < rail.length ? (rail[railIndex]?.text ?? "") : "";
+    if (railIndex < rail.length) railIndex += 1;
+    out.push({ text: projectLine(left, railWidth, line.text, columns, gutter), rank: line.rank });
+  }
+  while (railIndex < rail.length) {
+    const left = rail[railIndex];
+    railIndex += 1;
+    if (left === undefined) continue;
+    out.push({ text: projectLine(left.text, railWidth, "", columns, gutter), rank: left.rank });
+  }
+  return out;
+}
+
+function railSplitLine(left: string, right: string, width: number): string {
+  if (width <= left.length) return left.slice(0, Math.max(0, width));
+  if (left.length + 1 + right.length > width) return `${left} ${right}`.slice(0, width);
+  return left + " ".repeat(width - left.length - right.length) + right;
+}
+
+function agentsGroupedLine(width: number): string {
+  return railSplitLine("agents", "grouped", width);
+}
+
+function workspaceActionsLine(width: number): string {
+  return railSplitLine("new", "menu", width);
+}
+
+/** People for the rail. An omitted orientation roster is not an empty team. */
+function railRoster(state: DashboardState, context: WorkspaceContext): ParticipantListItem[] {
+  if (state.peoplePage !== undefined) return state.peoplePage.items;
+  if (context.participantsCoverage?.omitted === true) return [];
+  if (context.participants.length > 0) return [...context.participants];
+  return [];
+}
+
+function personLabel(item: ParticipantListItem): string {
+  const name = clean(item.name);
+  return name.length > 0 ? name : clean(item.actor.actorId);
+}
+
+/** Harness sits on the right edge of the rail. No glyph: registration is not presence. */
+function railAgentLine(item: ParticipantListItem, width: number): string {
+  const name = personLabel(item);
+  const harness = item.harness === undefined ? "" : clean(item.harness);
+  const indented = `  ${name}`;
+  if (harness.length === 0) return indented;
+  if (width <= 0) return indented.slice(0, Math.max(0, width));
+  // A harness that fits by itself stays; the name is what gets clipped.
+  if (harness.length >= width) return harness.slice(0, width);
+  const gap = width - indented.length - harness.length;
+  if (gap >= 1) return indented + " ".repeat(gap) + harness;
+  const room = width - harness.length - 1;
+  if (room <= 0) return harness.padStart(width, " ");
+  return `${indented.slice(0, room)} ${harness}`;
+}
+
+function railPeople(items: readonly ParticipantListItem[], width: number): TaggedLine[] {
+  const lines: TaggedLine[] = [];
+  const add = (text: string): void => {
+    lines.push(railPlain(text, width, 1));
+  };
+  const humans = items.filter((item) => item.actor.actorType !== "agent");
+  const agents = items.filter((item) => item.actor.actorType === "agent");
+  const nested = new Set<ParticipantListItem>();
+  for (const human of humans) {
+    add(personLabel(human));
+    const id = clean(human.actor.actorId);
+    for (const agent of agents) {
+      if (clean(agent.humanOwnerId ?? "") !== id) continue;
+      nested.add(agent);
+      add(railAgentLine(agent, width));
+    }
+  }
+  const byOwner = new Map<string, ParticipantListItem[]>();
+  for (const agent of agents) {
+    if (nested.has(agent)) continue;
+    const key = clean(agent.humanOwnerId ?? "");
+    const list = byOwner.get(key);
+    if (list === undefined) byOwner.set(key, [agent]);
+    else list.push(agent);
+  }
+  for (const [owner, list] of byOwner) {
+    if (owner.length > 0) add(owner);
+    for (const agent of list) add(railAgentLine(agent, width));
+  }
+  return lines;
+}
+
+/** One rail row. Leading spaces are indentation, so this does not trim them. */
+function railPlain(text: string, width: number, rank: number): TaggedLine {
+  const cleaned = stripTerminalControls(text).replace(/[\r\n]+/g, "");
+  return { text: cleaned.length > width ? cleaned.slice(0, width) : cleaned, rank };
+}
+
+function workspaceRailRow(name: string, selected: boolean, badge: string, width: number): string {
+  const marker = selected ? "> " : "  ";
+  // The count sits on the name. The empty rest of the rail stays empty.
+  const body = badge.length > 0 ? `${marker}${name} ${badge}` : `${marker}${name}`;
+  return body.length > width ? body.slice(0, width) : body;
+}
+
+function buildRail(state: DashboardState, context: WorkspaceContext, width: number): TaggedLine[] {
+  const lines: TaggedLine[] = [...chrome("workspaces", width, 1)];
+  const needs = context.needsYou.length;
+  const badge = needs > 0 ? String(needs) : "";
+  const choices = state.workspaceChoices;
+  if (choices.length === 0) {
+    const name = clean(context.workspace.name);
+    lines.push(railPlain(workspaceRailRow(name.length > 0 ? name : "workspace", true, badge, width), width, 0));
+  } else {
+    for (const choice of choices) {
+      const selected = choice.id === state.workspaceId;
+      lines.push(railPlain(workspaceRailRow(clean(choice.name), selected, selected ? badge : "", width), width, selected ? 0 : 1));
+    }
+  }
+  lines.push({ text: workspaceActionsLine(width), rank: 1 });
+  // One blank between the workspace list and the people list. Both groups stay packed.
+  lines.push({ text: "", rank: 1 });
+  lines.push({ text: agentsGroupedLine(width), rank: 1 });
+  lines.push(...railPeople(railRoster(state, context), width));
+  return lines;
+}
+
+function shownRecordsDetail(state: DashboardState, context: WorkspaceContext | undefined): string {
+  const typing = state.filterMode ? " (typing — enter confirms, esc clears, ctrl-c quits)" : "";
+  const shown = shownRows(state).length;
+  const loaded = sectionRows(state).length;
+  const total = context === undefined ? "0" : workspaceTotal(state, context);
+  return `filter "${clean(state.filter)}"${typing}  filters shown records, not the workspace  matching ${shown}  loaded ${loaded}  workspace total ${total}`;
+}
+
+function buildPrompt(state: DashboardState, context: WorkspaceContext | undefined, width: number): TaggedLine[] {
+  if (!filterActive(state)) return chrome("> filter shown records", width, 0);
+  return chrome(`> ${clean(state.filter)}  ${shownRecordsDetail(state, context)}`, width, 0);
+}
+
+/** Overview filter sits in the main pane, inset one column from each edge. */
+function buildFilterBox(state: DashboardState, context: WorkspaceContext | undefined, width: number): TaggedLine[] {
+  const boxWidth = Math.max(1, width > 2 ? width - 2 : width);
+  const rule = (left: string, right: string): string => {
+    if (boxWidth <= 1) return left.slice(0, boxWidth);
+    if (boxWidth === 2) return `${left}${right}`.slice(0, boxWidth);
+    return left + "─".repeat(boxWidth - 2) + right;
+  };
+  const content = (text: string): string => {
+    if (boxWidth <= 1) return "│".slice(0, boxWidth);
+    if (boxWidth === 2) return "││";
+    const room = boxWidth - 2;
+    const body = text.length > room ? text.slice(0, room) : text.padEnd(room, " ");
+    return `│${body}│`;
+  };
+  const middle = filterActive(state) ? `> ${clean(state.filter)}` : "> filter shown records";
+  const lines: TaggedLine[] = [
+    { text: rule("┌", "┐"), rank: 0 },
+    { text: content(` ${middle}`), rank: 0 },
+  ];
+  if (filterActive(state)) lines.push({ text: content(` ${shownRecordsDetail(state, context)}`), rank: 0 });
+  lines.push({ text: rule("└", "┘"), rank: 0 });
+  return lines;
+}
+
+function buildClassicHeader(state: DashboardState, context: WorkspaceContext | undefined, columns: number): TaggedLine[] {
   const name = context === undefined ? "workspace" : clean(context.workspace.name);
   const refreshed = state.refreshedAt === undefined ? "not yet" : clean(state.refreshedAt);
   const header: TaggedLine[] = [
-    ...chrome(`Campfire  /  ${name}  ${clean(state.workspaceId)}`, size.columns, 0),
-    ...chrome(`${clean(state.actorId)} ${clean(state.actorType)}  ·  refreshed ${refreshed}`, size.columns, 0),
+    ...chrome(`Campfire  /  ${name}  ${clean(state.workspaceId)}`, columns, 0),
+    ...chrome(`${clean(state.actorId)} ${clean(state.actorType)}  ·  refreshed ${refreshed}`, columns, 0),
   ];
-  if (context?.goal === undefined) {
-    header.push(...chrome("GOAL", size.columns, 0), ...record("no recorded goal", size.columns, 0));
-  } else {
+  const awaitingSwitch = state.refreshRequested && state.context !== undefined && context === undefined;
+  if (context?.goal !== undefined) {
     header.push(
-      ...chrome("GOAL", size.columns, 0),
-      ...record(clean(context.goal.title), size.columns, 0),
-      ...record(clean(context.goal.id), size.columns, 0),
+      ...chrome("GOAL", columns, 0),
+      ...record(clean(context.goal.title), columns, 0),
+      ...record(clean(context.goal.id), columns, 0),
     );
+  } else if (!awaitingSwitch) {
+    header.push(...chrome("GOAL", columns, 0), ...record("no recorded goal", columns, 0));
   }
   if (state.staleError !== undefined && clean(state.staleError).length > 0) {
-    header.push(...record(`STALE  ${clean(state.staleError)}`, size.columns, 0));
+    header.push(...record(`STALE  ${clean(state.staleError)}`, columns, 0));
+  } else if (awaitingSwitch) {
+    header.push(...record("Loading workspace context.", columns, 0));
   } else if (state.context !== undefined && context === undefined) {
-    header.push(...record("STALE  workspace context did not match the authorized workspace", size.columns, 0));
+    header.push(...record("STALE  workspace context did not match the authorized workspace", columns, 0));
   }
   if (context !== undefined) {
-    header.push(...record(attentionCoverageCounts(context.attentionCoverage), size.columns, 0));
-    header.push(...buildParticipants(state, context, size.columns));
+    header.push(...record(attentionCoverageCounts(context.attentionCoverage), columns, 0));
+    header.push(...buildParticipants(state, context, columns));
+  }
+  return header;
+}
+
+export function renderDashboard(state: DashboardState, columns: number, rows: number): string {
+  const size = viewport(columns, rows);
+  const layout = shellLayout(size.columns);
+  const context = sameWorkspace(state);
+  const historyOpen = state.history?.open === true;
+  const overviewShell = context !== undefined
+    && state.section === "overview"
+    && !state.help
+    && !state.workspaceListOpen
+    && !historyOpen;
+
+  const main: PaneLine[] = [];
+  if (!overviewShell) main.push(...tagSpan(buildClassicHeader(state, context, size.columns), layout.main));
+  if (state.help) {
+    const help: TaggedLine[] = [...chrome("HELP", size.columns, 1)];
+    for (const line of HELP_LINES) help.push(...record(line, size.columns, 1));
+    main.push(...tagSpan(help, layout.main));
+  } else if (state.workspaceListOpen) {
+    main.push(...tagSpan(buildWorkspaceList(state, size.columns), layout.main));
+  } else if (context !== undefined && historyOpen) {
+    const history: TaggedLine[] = [
+      ...chrome(`SOURCE  ${clean(state.history?.objectType ?? "")}  ${clean(state.history?.objectId ?? "")}`, size.columns, 0),
+      ...buildHistory(state, size.columns),
+    ];
+    main.push(...tagSpan(history, layout.main));
+  } else if (overviewShell && context !== undefined) {
+    main.push(...buildOverview(state, context, size.columns, layout.main));
+  } else if (context !== undefined) {
+    main.push(...tagSpan([
+      ...buildActiveSection(state, context, size.columns),
+      ...buildSource(state, context, size.columns),
+    ], layout.main));
   }
 
-  let body: TaggedLine[] = [];
-  if (state.help) {
-    body.push(...chrome("HELP", size.columns, 1));
-    for (const line of HELP_LINES) body.push(...record(line, size.columns, 1));
-  }
-  if (context !== undefined) {
-    if (state.history?.open === true) {
-      // A narrow terminal must offer every loaded contribution, even when the
-      // ordinary list and source block would consume the whole viewport.
-      body.push(...chrome(`SOURCE  ${clean(state.history.objectType)}  ${clean(state.history.objectId)}`, size.columns, 0));
-      body.push(...buildHistory(state, size.columns));
-    } else {
-      // NAV-001: exactly one active section, then its selected-record source block.
-      body.push(...buildActiveSection(state, context, size.columns));
-      body.push(...buildSource(state, context, size.columns));
-    }
-  }
-  const footer = footerLines(size.columns, state.history?.open === true);
+  const rail = layout.rail > 0 && context !== undefined ? buildRail(state, context, layout.rail) : [];
+  const promptWidth = layout.rail > 0 ? layout.main : size.columns;
+  const footer = footerLines(size.columns, historyOpen);
   const footerKept = footer.length >= size.rows ? footer.slice(footer.length - size.rows) : footer;
-  const fitted = fit([...header, ...body], size.rows - footerKept.length);
+  const promptRoom = Math.max(0, size.rows - footerKept.length);
+  const prompt = (overviewShell ? buildFilterBox(state, context, promptWidth) : buildPrompt(state, context, promptWidth)).slice(0, promptRoom);
+  const promptTexts = prompt.map((line) => projectLine("", layout.rail, line.text, size.columns, layout.gutter));
+  const room = Math.max(0, size.rows - footerKept.length - promptTexts.length);
+  const fitted = fit(composeShell(rail, main, layout.rail, size.columns, layout.gutter), room);
+  const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
   const selected = context === undefined ? undefined : shownRows(state)[state.row];
-  const coverageToken =
-    context === undefined ? "" : attentionCoverageCounts(context.attentionCoverage).split(" ")[0] ?? "";
-  const facts = [state.workspaceId, context?.goal?.id ?? "", selected?.id ?? "", coverageToken];
-  return pinFacts([...fitted, ...footerKept.map((line) => line.text)], size.columns, facts)
-    .map((line) => stripTerminalControls(line))
-    .join("\n");
+  const coverageToken = context === undefined ? "" : attentionCoverageCounts(context.attentionCoverage).split(" ")[0] ?? "";
+  // The overview keeps the workspace id and the selected record id, which the
+  // shell already shows. Goal id and coverage stay off that screen.
+  const facts = overviewShell
+    ? [state.workspaceId, selected?.id ?? ""]
+    : [state.workspaceId, context?.goal?.id ?? "", selected?.id ?? "", coverageToken];
+  return pinFacts(
+    [...fitted, ...blanks, ...promptTexts, ...footerKept.map((line) => line.text)],
+    size.columns,
+    facts,
+  ).map((line) => stripTerminalControls(line)).join("\n");
+}
+
+const RESET = "\x1b[0m";
+const GOLD = "\x1b[38;2;230;176;110m";
+const DIM = "\x1b[2m";
+const BAR_BG = "\x1b[48;2;48;42;30m";
+const BAR_FG = "\x1b[38;2;244;236;220m";
+const RAIL_PANEL = "\x1b[48;2;22;24;32m";
+const RAIL_CHIP = "\x1b[48;2;44;48;60m";
+const RAIL_NAME = "\x1b[38;2;236;238;242m";
+const COUNT_FG = "\x1b[38;2;255;244;230m";
+const COUNT_BG = "\x1b[48;2;196;122;48m";
+/** One column. The same mark for every selected workspace; it does not report a session. */
+const WORKSPACE_MARK = "●";
+/** One column. The same mark for every recorded agent; it does not report a session. */
+const AGENT_MARK = "◦";
+
+/** Longest first so "in progress" wins over any shorter prefix. */
+const STATUS_WORDS = [
+  "in progress",
+  "superseded",
+  "completed",
+  "accepted",
+  "proposed",
+  "rejected",
+  "blocked",
+  "retired",
+  "open",
+];
+
+const SECTION_LABELS = new Set(["GOAL", "NEEDS YOU", "NEEDS ATTENTION", "WORK"]);
+
+interface PaintedLine {
+  raw: string;
+  footer: boolean;
+  /** Null when the line is not a rail + gutter + pane composition. */
+  railText: string | null;
+  pane: string;
+}
+
+/**
+ * Live color for one plain `renderDashboard` frame. The renderer stays free
+ * of escapes. A non-empty `NO_COLOR` returns the frame unchanged. Inverse
+ * video is not used; the `>` already in the text is the selection.
+ */
+export function paintDashboardFrame(frame: string, columns: number): string {
+  if ((process.env.NO_COLOR ?? "").length > 0) return frame;
+  const width = viewport(columns, 1).columns;
+  const layout = shellLayout(width);
+  const parts = frame.split("\n").map((line) => describeDashboardLine(line, layout.rail, layout.gutter));
+  const bar = selectionSpan(parts);
+  return parts.map((part, index) => (
+    paintDashboardLine(part, index >= bar.start && index <= bar.end, layout.rail, layout.gutter, layout.main, width)
+  )).join("\n");
+}
+
+function paintSelection(frame: string, columns: number): string {
+  return paintDashboardFrame(frame, columns);
+}
+
+function isFooterLine(line: string): boolean {
+  return line === "q quit" || (line.includes("j/k") && line.includes("q quit"));
+}
+
+function describeDashboardLine(line: string, rail: number, gutter: number): PaintedLine {
+  if (isFooterLine(line)) return { raw: line, footer: true, railText: null, pane: line };
+  // Filler rows between the work and the filter are empty. The sidebar still covers them.
+  if (rail > 0 && line.length === 0) {
+    return { raw: line, footer: false, railText: " ".repeat(rail), pane: "" };
+  }
+  const gap = rail > 0 ? Math.max(1, gutter) : 0;
+  const gutterText = gap > 0 ? line.slice(rail, rail + gap) : "";
+  if (rail <= 0 || line.length < rail + gap || gutterText.trim() !== "") {
+    return { raw: line, footer: false, railText: null, pane: line };
+  }
+  const railText = line.slice(0, rail);
+  // A full-width row can land a space on the gutter column. The only `> `
+  // that belongs in the rail is the workspace marker at column 0.
+  if (railText.indexOf("> ") > 0) return { raw: line, footer: false, railText: null, pane: line };
+  return { raw: line, footer: false, railText, pane: line.slice(rail + gap) };
+}
+
+function statusWord(content: string): string | undefined {
+  for (const word of STATUS_WORDS) {
+    if (content === word || content.startsWith(`${word} `)) return word;
+  }
+  return undefined;
+}
+
+function isSectionLabel(pane: string): boolean {
+  return SECTION_LABELS.has(pane.trim());
+}
+
+function isFilterPane(pane: string): boolean {
+  if (pane.includes("filters shown records")) return true;
+  const body = pane.trim();
+  if (body.length === 0) return false;
+  if (body.startsWith("> filter")) return true;
+  const first = body[0] ?? "";
+  return first === "┌" || first === "└" || first === "│" || first === "┐" || first === "┘";
+}
+
+function isSubtitle(pane: string): boolean {
+  return /^ {4,}\S/.test(pane);
+}
+
+/** Overview's next row is exactly two spaces and a status word. */
+function isNextRecord(pane: string): boolean {
+  if (!pane.startsWith("  ") || pane.startsWith("   ")) return false;
+  return statusWord(pane.slice(2)) !== undefined;
+}
+
+/**
+ * A wrapped title keeps going. A sibling row is two spaces plus either a
+ * status word or the double-space field gap records use.
+ */
+function isWrapContinuation(pane: string): boolean {
+  if (!pane.startsWith("  ") || pane.startsWith("   ") || pane.startsWith("  > ")) return false;
+  const body = pane.slice(2);
+  if (!/\S/.test(body)) return false;
+  if (statusWord(body) !== undefined) return false;
+  return !body.includes("  ");
+}
+
+function isSelectionStart(pane: string): boolean {
+  if (pane.includes("filters shown records")) return false;
+  if (pane.startsWith("> filter") || pane.startsWith("  > filter")) return false;
+  return pane.startsWith("> ") || pane.startsWith("  > ");
+}
+
+function includeInBar(pane: string): boolean {
+  if (pane.trim().length === 0) return false;
+  if (isSectionLabel(pane) || isFilterPane(pane) || isNextRecord(pane)) return false;
+  return isSubtitle(pane) || isWrapContinuation(pane);
+}
+
+function selectionSpan(parts: readonly PaintedLine[]): { start: number; end: number } {
+  const start = parts.findIndex((part) => !part.footer && isSelectionStart(part.pane));
+  if (start < 0) return { start: -1, end: -1 };
+  let end = start;
+  let index = start + 1;
+  while (index < parts.length) {
+    const part = parts[index];
+    if (part === undefined || part.footer || !includeInBar(part.pane)) break;
+    end = index;
+    if (!isSubtitle(part.pane)) {
+      index += 1;
+      continue;
+    }
+    index += 1;
+    while (index < parts.length) {
+      const follow = parts[index];
+      if (follow === undefined || follow.footer || !isSubtitle(follow.pane)) break;
+      end = index;
+      index += 1;
+    }
+    break;
+  }
+  return { start, end };
+}
+
+function paintSectionLabel(pane: string): string | undefined {
+  const trimmed = pane.trim();
+  if (!SECTION_LABELS.has(trimmed)) return undefined;
+  const at = pane.indexOf(trimmed);
+  return `${pane.slice(0, at)}${GOLD}${trimmed}${RESET}${pane.slice(at + trimmed.length)}`;
+}
+
+function paintNeedsYou(pane: string): string | undefined {
+  if (pane.startsWith(">") || pane.startsWith(" ")) return undefined;
+  const at = pane.indexOf("Needs You");
+  if (at <= 0 || !/\S/.test(pane.slice(0, at))) return undefined;
+  const left = pane.slice(0, at);
+  const parts = left.match(/^(\S+)(  )(\S+)(.*)$/);
+  const head = parts === null
+    ? left
+    : `${parts[1]}${parts[2]}${DIM}${parts[3]}${RESET}${parts[4]}`;
+  return `${head}${GOLD}${pane.slice(at)}${RESET}`;
+}
+
+function leadingStatus(pane: string): { index: number; word: string } | undefined {
+  let offset = -1;
+  if (pane.startsWith("  > ")) offset = 4;
+  else if (pane.startsWith("> ")) offset = 2;
+  else if (pane.startsWith("  ") && !pane.startsWith("   ")) offset = 2;
+  if (offset < 0) return undefined;
+  const word = statusWord(pane.slice(offset));
+  if (word === undefined) return undefined;
+  return { index: offset, word };
+}
+
+/** The plain frame keeps `>`. On the bar the status word is the marker. */
+function hideSelectionMark(text: string): string {
+  return text.replace(/^( *)> /, (mark) => " ".repeat(mark.length));
+}
+
+function paintRecordText(text: string, onBar: boolean): string {
+  const shown = onBar ? hideSelectionMark(text) : text;
+  if (isSubtitle(shown)) return onBar ? `${BAR_BG}${DIM}${shown}${RESET}` : `${DIM}${shown}${RESET}`;
+  const status = leadingStatus(shown);
+  if (!onBar) {
+    if (status === undefined) return shown;
+    return `${shown.slice(0, status.index)}${GOLD}${status.word}${RESET}${shown.slice(status.index + status.word.length)}`;
+  }
+  if (status === undefined) return `${BAR_BG}${BAR_FG}${shown}${RESET}`;
+  const before = shown.slice(0, status.index);
+  const after = shown.slice(status.index + status.word.length);
+  // Reset clears the bar background, so each colored run puts it back.
+  return `${BAR_BG}${BAR_FG}${before}${RESET}${BAR_BG}${GOLD}${status.word}${RESET}${BAR_BG}${BAR_FG}${after}${RESET}`;
+}
+
+function paintPlainPane(pane: string): string {
+  if (isFilterPane(pane)) return pane;
+  return paintSectionLabel(pane) ?? paintNeedsYou(pane) ?? paintRecordText(pane, false);
+}
+
+function padPane(pane: string, railText: string | null, rail: number, gutter: number, main: number, columns: number): string {
+  const gap = railText === null ? 0 : Math.max(rail > 0 ? 1 : 0, gutter);
+  const budget = railText === null ? columns : Math.max(0, columns - rail - gap);
+  const target = Math.min(main, budget);
+  if (pane.length >= target) return pane;
+  return pane + " ".repeat(target - pane.length);
+}
+
+function paintWorkspaceRail(railText: string): string {
+  const count = railText.match(/^(> )(\S+)(?:( )(\d+))?(\s*)$/);
+  if (count === null) return `${RAIL_PANEL}${railText}${RESET}`;
+  const name = count[2] ?? "";
+  const gap = count[3] ?? "";
+  const digits = count[4] ?? "";
+  const rest = count[5] ?? "";
+  const chip = `${RAIL_CHIP}${RAIL_NAME}${WORKSPACE_MARK} ${name}${gap}${RESET}`;
+  const badge = digits.length > 0 ? `${COUNT_FG}${COUNT_BG}${digits}${RESET}` : "";
+  const tail = rest.length > 0 ? `${RAIL_PANEL}${rest}${RESET}` : "";
+  return chip + badge + tail;
+}
+
+/**
+ * List mark plus the agent name, harness still on the right edge.
+ * The mark is omitted when the rail is too narrow to keep that edge.
+ */
+function paintAgentRail(railText: string, indentedName: string, harness: string, tail: string): string {
+  const name = indentedName.trim();
+  const prefix = `  ${AGENT_MARK} ${name}`;
+  const room = railText.length - tail.length;
+  const hole = room - prefix.length - harness.length;
+  const shown = hole >= 1 ? `${prefix}${" ".repeat(hole)}${harness}${tail}` : railText;
+  const harnessAt = shown.length - tail.length - harness.length;
+  const markAt = shown.indexOf(AGENT_MARK);
+  if (hole < 1 || markAt < 0 || harnessAt < markAt) {
+    const gap = " ".repeat(Math.max(0, railText.length - indentedName.length - harness.length - tail.length));
+    const plain = `${RAIL_PANEL}${indentedName}${gap}${DIM}${harness}${RESET}`;
+    return tail.length > 0 ? `${plain}${RAIL_PANEL}${tail}${RESET}` : plain;
+  }
+  const head = shown.slice(0, markAt);
+  const mid = shown.slice(markAt + AGENT_MARK.length, harnessAt);
+  const painted = `${RAIL_PANEL}${head}${DIM}${AGENT_MARK}${RESET}${RAIL_PANEL}${mid}${DIM}${harness}${RESET}`;
+  return tail.length > 0 ? `${painted}${RAIL_PANEL}${tail}${RESET}` : painted;
+}
+
+/** Sidebar column. Harness names are dim; a human name stays bright. */
+function paintQuietRail(railText: string): string {
+  if (railText.trim().length === 0) return `${RAIL_PANEL}${railText}${RESET}`;
+  const header = railText.trim();
+  if (
+    header === "workspaces"
+    || (railText.startsWith("agents") && railText.trimEnd().endsWith("grouped"))
+    || (railText.startsWith("new") && railText.trimEnd().endsWith("menu"))
+  ) {
+    return `${RAIL_PANEL}${DIM}${railText}${RESET}`;
+  }
+  const openWorkspace = railText.match(/^  (\S+)(\s*)$/);
+  if (openWorkspace !== null) {
+    const name = openWorkspace[1] ?? "";
+    const rest = openWorkspace[2] ?? "";
+    return `${RAIL_PANEL}${DIM}${AGENT_MARK}${RESET}${RAIL_PANEL} ${name}${rest}${RESET}`;
+  }
+  const agent = railText.match(/^(  \S.*?\S)( {2,})(\S+)(\s*)$/);
+  if (agent !== null) {
+    return paintAgentRail(railText, agent[1] ?? "", agent[3] ?? "", agent[4] ?? "");
+  }
+  if (/^\S+$/.test(header)) {
+    const trimmed = railText.trimEnd();
+    const pad = railText.slice(trimmed.length);
+    const name = `${RAIL_PANEL}${RAIL_NAME}${trimmed}${RESET}`;
+    return pad.length > 0 ? `${name}${RAIL_PANEL}${pad}${RESET}` : name;
+  }
+  return `${RAIL_PANEL}${railText}${RESET}`;
+}
+
+function paintDashboardLine(
+  part: PaintedLine,
+  onBar: boolean,
+  rail: number,
+  gutter: number,
+  main: number,
+  columns: number,
+): string {
+  if (part.footer) return `${DIM}${part.raw}${RESET}`;
+  const pane = onBar
+    ? paintRecordText(padPane(part.pane, part.railText, rail, gutter, main, columns), true)
+    : paintPlainPane(part.pane);
+  if (part.railText === null) return pane;
+  const left = part.railText.startsWith("> ") ? paintWorkspaceRail(part.railText) : paintQuietRail(part.railText);
+  const gap = " ".repeat(Math.max(1, gutter));
+  return `${left}${RAIL_PANEL}${gap}${RESET}${pane}`;
 }
 
 function terminalIsForeground(): boolean {
@@ -2037,7 +3103,7 @@ export function stripEscapeSequences(text: string): string {
  * mirroring the filter-mode typing path; a chunk that is exactly ESC stays the
  * esc key.
  */
-const COMMAND_CHARS = new Set(["p", "j", "k", "r", "?", "q", "/", "n", "b", "h"]);
+const COMMAND_CHARS = new Set(["p", "j", "k", "r", "?", "q", "/", "n", "b", "h", "w"]);
 
 /**
  * Command keys up to and including the `/` that starts a filter, then the
@@ -2133,7 +3199,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   const draw = (force = false): void => {
     if (closed || (updating && !force)) return;
     const size = viewportOf();
-    const frame = renderDashboard(state, size.columns, size.rows);
+    const frame = paintSelection(renderDashboard(state, size.columns, size.rows), size.columns);
     writeControl(stdout, "\x1b[H\x1b[2J");
     writeControl(stdout, frame.endsWith("\n") ? frame : `${frame}\n`);
     writeControl(stdout, "\x1b[H");
@@ -2176,6 +3242,36 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     resolveQuit();
   };
 
+  const queueRailReads = (): void => {
+    // Context omits participants, so the rail and overview work block ask for
+    // the same reads the people and work sections use. The picker stays closed.
+    if (options.loadPeople !== undefined && state.peoplePage === undefined && state.peoplePageRequest === undefined) {
+      state = {
+        ...state,
+        peoplePageRequest: {
+          generation: state.generation,
+          pageNumber: 1,
+          cursorStack: [],
+          recoverOnRejectedCursor: false,
+        },
+      };
+    }
+    if (state.boundedReads && options.loadTasks !== undefined && state.taskPage === undefined && state.taskPageRequest === undefined) {
+      state = {
+        ...state,
+        taskPageRequest: {
+          generation: state.generation,
+          pageNumber: 1,
+          cursorStack: [],
+          recoverOnRejectedCursor: false,
+        },
+      };
+    }
+    if (options.listWorkspaces !== undefined && state.workspaceChoices.length === 0 && state.workspaceListRequest === undefined && !state.workspaceListOpen) {
+      state = { ...state, workspaceListRequest: { generation: state.generation } };
+    }
+  };
+
   const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
   const isRejectedCursor = (error: unknown): boolean =>
@@ -2183,14 +3279,57 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
 
   async function fulfillOne(): Promise<boolean> {
     if (closed) return false;
+    if (state.workspaceSwitchId !== undefined) {
+      const nextId = state.workspaceSwitchId;
+      options.adoptWorkspace?.(nextId);
+      state = fulfillWorkspaceSwitch(state, nextId);
+      return true;
+    }
+    if (state.workspaceListRequest !== undefined) {
+      // A picker request must ignore a stale result. A rail prefetch applies
+      // while the picker is closed, and yields if a picker request starts.
+      const forPicker = state.workspaceListOpen;
+      state = { ...state, workspaceListRequest: undefined };
+      if (options.listWorkspaces === undefined) {
+        if (forPicker) state = unavailableWorkspaceList(state);
+        return true;
+      }
+      try {
+        const choices = await options.listWorkspaces();
+        if (closed || state.workspaceSwitchId !== undefined) return true;
+        const superseded = state.workspaceListRequest !== undefined;
+        if (forPicker) {
+          if (!state.workspaceListOpen || superseded) return true;
+        } else if (superseded || state.workspaceListOpen) {
+          return true;
+        }
+        state = applyWorkspaceChoices(state, choices);
+      } catch (error) {
+        if (closed || state.workspaceSwitchId !== undefined) return true;
+        if (forPicker && state.workspaceListOpen && state.workspaceListRequest === undefined) {
+          state = {
+            ...unavailableWorkspaceList(state),
+            statusNote: `The workspace list is unavailable. ${noteOf(errorText(error))}`,
+          };
+        }
+      }
+      return true;
+    }
+    const currentWorkspace = (): boolean => state.workspaceSwitchId === undefined;
     if (state.refreshRequested) {
       const generation = state.generation;
+      const requestedId = state.workspaceId;
       state = { ...state, refreshRequested: false };
       try {
         const loaded = await options.load();
-        if (!closed) state = applyContextLoad(state, loaded, now().toISOString(), generation);
+        if (!closed && state.workspaceId === requestedId && currentWorkspace()) {
+          state = applyContextLoad(state, loaded, now().toISOString(), generation);
+          if (state.context?.workspace.id === requestedId && state.staleError === undefined) queueRailReads();
+        }
       } catch (error) {
-        if (!closed) state = failContextLoad(state, generation, errorText(error));
+        if (!closed && state.workspaceId === requestedId && currentWorkspace()) {
+          state = failContextLoad(state, generation, errorText(error));
+        }
       }
       return true;
     }
@@ -2205,11 +3344,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failTaskPage(state, taskReq.generation, "Work page read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadTasks(taskReq.cursor);
-        if (!closed) state = applyTaskPage(state, page, { ...taskReq, readAt: now().toISOString() });
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
+          state = applyTaskPage(state, page, { ...taskReq, readAt: now().toISOString() });
+        }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (taskReq.recoverOnRejectedCursor && taskReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectTaskCursor(state, taskReq.generation);
         } else {
@@ -2229,11 +3371,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failPeoplePage(state, peopleReq.generation, "People page read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadPeople({ cursor: peopleReq.cursor, humanOwnerId: peopleReq.humanOwnerId });
-        if (!closed) state = applyPeoplePage(state, page, { ...peopleReq, readAt: now().toISOString() });
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
+          state = applyPeoplePage(state, page, { ...peopleReq, readAt: now().toISOString() });
+        }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (peopleReq.recoverOnRejectedCursor && peopleReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectPeopleCursor(state, peopleReq.generation);
         } else {
@@ -2255,9 +3400,10 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         state = failHistoryRead(state, historyReq.generation, "History read is not available.");
         return true;
       }
+      const requestedId = state.workspaceId;
       try {
         const page = await options.loadHistory({ objectType, objectId, cursor: historyReq.cursor });
-        if (!closed) {
+        if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) {
           state = applyHistoryPage(state, page, {
             generation: historyReq.generation,
             readAt: now().toISOString(),
@@ -2269,7 +3415,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
           });
         }
       } catch (error) {
-        if (closed) return true;
+        if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return true;
         if (historyReq.recoverOnRejectedCursor && historyReq.cursor !== undefined && isRejectedCursor(error)) {
           state = rejectHistoryCursor(state, historyReq.generation);
         } else {
@@ -2285,14 +3431,19 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         return true;
       }
       state = { ...state, inspectRequest: undefined };
+      const requestedId = state.workspaceId;
       try {
         const record = await options.inspect(request.kind, request.id);
-        if (closed || state.generation !== request.generation) return true;
+        if (closed || state.generation !== request.generation || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) {
+          return true;
+        }
         const selected = shownRows(state)[state.row];
         if (selected?.id !== request.id) return true;
         state = { ...state, inspected: { method: inspectMethod(request.kind), sourceId: request.id, record } };
       } catch (error) {
-        if (closed || state.generation !== request.generation) return true;
+        if (closed || state.generation !== request.generation || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) {
+          return true;
+        }
         state = { ...state, staleError: clean(errorText(error)) || "read failed" };
       }
       return true;
@@ -2323,13 +3474,20 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
 
   const loadInitial = async (): Promise<void> => {
     const generation = state.generation;
+    const requestedId = state.workspaceId;
+    let loadedOk = false;
     try {
       const loaded = await options.load();
-      if (closed) return;
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
       state = applyContextLoad(state, loaded, now().toISOString(), generation);
+      loadedOk = state.context?.workspace.id === requestedId && state.staleError === undefined;
     } catch (error) {
-      if (closed) return;
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
       state = failContextLoad(state, generation, errorText(error));
+    }
+    if (loadedOk && !closed && state.workspaceSwitchId === undefined) {
+      queueRailReads();
+      schedule();
     }
     if (!closed) draw();
   };

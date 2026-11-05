@@ -832,6 +832,7 @@ header select:focus-visible {
   display: none;
 }
 
+#stage[data-section="overview"] .section-body[data-section-body="overview"],
 #stage[data-section="attention"] .section-body[data-section-body="attention"],
 #stage[data-section="work"] .section-body[data-section-body="work"],
 #stage[data-section="decisions"] .section-body[data-section-body="decisions"],
@@ -1290,6 +1291,9 @@ header select {
 #orientation #owned-note { display: none; }
 #needs-you-panel > .panel-note,
 #needs-attention-panel > .panel-note { display: none; }
+#overview-body > div + div { margin-top: 0.35em; }
+#people-list .ogroup-label { display: block; padding: 12px 11px 2px; }
+#overview-panel .panel-title,
 #needs-you-panel .panel-title,
 #needs-attention-panel .panel-title,
 #work-panel .panel-title,

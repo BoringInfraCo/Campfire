@@ -423,7 +423,7 @@ for (const spec of CAPTURES) {
   const rowsSeen = artifactRowIds(frame);
   const checks: Record<string, unknown> = {
     lineCount: frame.split("\n").length - 1,
-    sectionTitleDrawn: frame.includes("ARTIFACT REFERENCES"),
+    sectionTitleDrawn: frame.includes("SOURCES"),
     referenceLabelDrawn: frame.includes("stored reference, not fetched"),
     artifactRowsDrawn: rowsSeen,
     expectedArtifactRowsPresent: spec.expectedArtifactRows.every((id) => rowsSeen.includes(id)),

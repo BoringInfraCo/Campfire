@@ -41,16 +41,17 @@
             <p class="rail-label">Navigate</p>
             <!-- SWH-001: perspectives emphasize the same authorized workspace. -->
             <nav id="perspective" class="perspective" aria-label="Perspectives">
-              <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">My work</button>
-              <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Team work</button>
+              <button type="button" id="perspective-mine" class="perspective-btn" data-perspective="mine" aria-pressed="true">Needs You</button>
+              <button type="button" id="perspective-team" class="perspective-btn" data-perspective="team" aria-pressed="false">Needs Attention</button>
             </nav>
             <nav id="sections" class="sections" aria-label="Sections">
-              <button type="button" id="section-attention" class="section-btn" data-section="attention" aria-pressed="true">Needs You</button>
+              <button type="button" id="section-overview" class="section-btn" data-section="overview" aria-pressed="true">Overview</button>
+              <button type="button" id="section-attention" class="section-btn" data-section="attention" aria-pressed="false">Needs You</button>
               <button type="button" id="section-work" class="section-btn" data-section="work" aria-pressed="false">Work</button>
               <button type="button" id="section-decisions" class="section-btn" data-section="decisions" aria-pressed="false">Decisions</button>
               <button type="button" id="section-sources" class="section-btn" data-section="sources" aria-pressed="false">Sources</button>
-              <button type="button" id="section-people" class="section-btn" data-section="people" aria-pressed="false">People</button>
-              <button type="button" id="section-changes" class="section-btn" data-section="changes" aria-pressed="false">Recent changes</button>
+              <button type="button" id="section-people" class="section-btn" data-section="people" aria-pressed="false">People &amp; Agents</button>
+              <button type="button" id="section-changes" class="section-btn" data-section="changes" aria-pressed="false">Activity</button>
             </nav>
           </div>
           <div class="rail-bottom">
@@ -59,16 +60,22 @@
             <p class="rail-caveat">Registered relationships only. Presence and running sessions are not inferred.</p>
           </div>
         </aside>
-        <main id="stage" data-section="attention" data-layer="list">
+        <main id="stage" data-section="overview" data-layer="list">
       <div id="list-pane">
         <div class="list-head">
-          <div class="list-title-line"><h1 id="section-heading">Needs you</h1><span id="section-count"></span></div>
-          <p id="section-subtitle">Recorded changes that may need a human response</p>
+          <div class="list-title-line"><h1 id="section-heading">Overview</h1><span id="section-count"></span></div>
+          <p id="section-subtitle">Recorded goal, attention, and task counts from this read</p>
           <label class="row-filter" id="row-filter-label" for="row-filter">Filter loaded rows</label>
           <input id="row-filter" type="search" autocomplete="off" aria-describedby="filter-note" placeholder="Filter these shown records" />
           <p id="filter-note" class="panel-note">Filter matches loaded rows only.</p>
         </div>
         <div class="list-content">
+        <div class="section-body" data-section-body="overview">
+          <section class="panel" id="overview-panel" aria-labelledby="overview-title">
+            <h2 class="panel-title" id="overview-title">Overview</h2>
+            <div id="overview-body" class="panel-body"></div>
+          </section>
+        </div>
         <div class="section-body" data-section-body="attention">
           <section id="orientation" class="orientation" data-perspective="mine" aria-label="Orientation">
             <div id="record-notes" class="panel-body" hidden></div>
@@ -97,7 +104,7 @@
             <div id="work-list" data-key-list="work" tabindex="0"></div>
           </section>
           <details class="secondary-disclosure">
-            <summary>My work summary</summary>
+            <summary>Current work summary</summary>
             <section class="panel" id="current-work-panel" aria-labelledby="current-work-title">
               <h2 class="panel-title" id="current-work-title">Current Work</h2>
               <div id="current-work" class="panel-body"></div>
@@ -120,13 +127,13 @@
         </div>
         <div class="section-body" data-section-body="sources">
           <section class="panel sources" id="sources-panel" aria-labelledby="sources-title">
-            <h2 class="panel-title" id="sources-title">Shared sources</h2>
+            <h2 class="panel-title" id="sources-title">Sources</h2>
             <div id="sources" class="panel-body" data-key-list="sources" tabindex="0"></div>
           </section>
         </div>
         <div class="section-body" data-section-body="people">
           <section class="panel" id="people-panel" aria-labelledby="people-title">
-            <h2 class="panel-title" id="people-title">People</h2>
+            <h2 class="panel-title" id="people-title">People &amp; Agents</h2>
             <p id="people-coverage" class="coverage"></p>
             <p class="panel-note">Registration is a record, not presence or permission to act.</p>
             <div class="pager">

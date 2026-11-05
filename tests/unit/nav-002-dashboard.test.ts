@@ -170,7 +170,7 @@ describe("NAV-002 dashboard projection", () => {
       participantsCoverage: { returned: 0, total: 57, truncated: true, omitted: true },
       needsYou: [cue("task_nav001_assigned_open_ana", "Give the terminal one focused screen")],
     });
-    const frame = renderDashboard(stateFor(value), 120, 36);
+    const frame = renderDashboard(stateFor(value, "attention"), 120, 36);
     expect(frame).not.toContain("0 people");
     expect(frame).not.toContain("20 people · 37 registered agents");
     expect(frame).not.toContain("Hidden Person");
@@ -252,7 +252,8 @@ describe("NAV-002 dashboard projection", () => {
       truncated: false,
     }, { generation: 1, readAt: READ_AT, pageNumber: 1, cursorStack: [], humanOwnerId: "hum_nav001_ana" });
     const filteredFrame = renderDashboard(filtered, 120, 40);
-    expect(filteredFrame).toContain("WORKSPACE-PARTICIPATING AGENTS");
+    expect(filteredFrame).toContain("Agents recorded for hum_nav001_ana");
+    expect(filteredFrame).not.toContain("WORKSPACE-PARTICIPATING AGENTS");
     expect(filteredFrame).toContain("total 2");
     expect(filteredFrame).toContain("hum_nav001_ana");
     expect(filteredFrame).not.toContain("20 people");
@@ -445,11 +446,47 @@ describe("NAV-002 dashboard projection", () => {
     const value = context({
       needsYou: [cue("task_one", "One"), cue("task_two", "Two")],
     });
-    const state = stateFor(value);
+    const state = stateFor(value, "attention");
     const next = reduceDashboardKey(state, "n");
     expect(next.row).toBe(state.row);
     expect(next.section).toBe("attention");
     expect(renderDashboard(next, 80, 24)).toContain("Paging is unavailable here.");
+  });
+
+  it("groups the loaded people page under People and recorded agents", () => {
+    const value = context({
+      participantsCoverage: { returned: 0, total: 4, truncated: true, omitted: true },
+    });
+    const state = applyPeoplePage(stateFor(value, "people"), {
+      items: [
+        participant("agt_loose", "agent", { name: "Loose", harness: "codex", role: "agent" }),
+        participant("hum_ana", "human", { name: "Ana", role: "member" }),
+        participant("agt_ana", "agent", { name: "Ana Agent", harness: "opencode", humanOwnerId: "hum_ana", role: "agent" }),
+        participant("agt_zed", "agent", { name: "Zed Agent", harness: "codex", humanOwnerId: "hum_zed", role: "agent" }),
+      ],
+      total: 4,
+      returned: 4,
+      truncated: false,
+    }, { generation: 1, readAt: READ_AT, pageNumber: 1, cursorStack: [] });
+    expect(sectionRows(state).map((row) => row.id)).toEqual(["hum_ana", "agt_loose", "agt_ana", "agt_zed"]);
+    const moved = reduceDashboardKey(state, "j");
+    expect(sectionRows(moved)[moved.row]?.id).toBe("agt_loose");
+    const opened = reduceDashboardKey(state, "enter");
+    expect(opened.peoplePageRequest?.humanOwnerId).toBe("hum_ana");
+    expect(opened.peoplePageRequest?.humanOwnerName).toBe("Ana");
+    const lines = renderDashboard(state, 120, 40).split("\n");
+    expect(lines.some((line) => line.endsWith("People"))).toBe(true);
+    expect(lines.some((line) => line.endsWith("Agents"))).toBe(true);
+    expect(lines.some((line) => line.endsWith("Agents recorded for Ana"))).toBe(true);
+    expect(lines.some((line) => line.endsWith("Agents recorded for hum_zed"))).toBe(true);
+    const frame = lines.join("\n");
+    expect(frame).toContain("PEOPLE & AGENTS");
+    expect(frame).toContain("role agent");
+    expect(frame).toContain("harness opencode");
+    expect(frame).toContain("recorded, not present");
+    expect(frame).toContain("not the workspace human/agent split");
+    expect(frame).toContain("Recorded registration is not presence or permission to act.");
+    expect(frame).not.toContain("is present");
   });
 });
 

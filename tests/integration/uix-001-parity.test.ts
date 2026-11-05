@@ -83,12 +83,17 @@ function tall(state: DashboardState): string {
   return renderDashboard(state, COLUMNS, ROWS);
 }
 
+/** One tab from the Overview landing reaches Needs You or Needs Attention. */
+function attentionFrame(state: DashboardState): string {
+  return tall(reduceDashboardKey(state, "tab"));
+}
+
 /** Every section/row the keyboard can select, so a source-only artifact still counts. */
 function framesIncludingSelection(initial: DashboardState): string[] {
   const frames: string[] = [];
   let state = initial;
-  // NAV-002 sections: attention, work, decisions, references, people, changes.
-  for (let section = 0; section < 6; section += 1) {
+  // Overview, then attention, work, decisions, references, people, changes.
+  for (let section = 0; section < 7; section += 1) {
     const count = sectionRows(state).length;
     const steps = Math.max(count, 1);
     for (let row = 0; row < steps; row += 1) {
@@ -267,9 +272,15 @@ describe("UIX-001 ATT-001 lab parity", () => {
     const anaMine = tall(anaMineState);
     const anaTeam = tall(anaTeamState);
     const benMine = tall(benMineState);
+    const anaMineAttention = attentionFrame(anaMineState);
+    const anaTeamAttention = attentionFrame(anaTeamState);
+    const benMineAttention = attentionFrame(benMineState);
     expectFrameFits(anaMine);
     expectFrameFits(anaTeam);
     expectFrameFits(benMine);
+    expectFrameFits(anaMineAttention);
+    expectFrameFits(anaTeamAttention);
+    expectFrameFits(benMineAttention);
 
     const anaViewMine = renderViewer(ana, SCENARIO.humans.ana, "mine");
     const anaViewTeam = renderViewer(ana, SCENARIO.humans.ana, "team");
@@ -308,16 +319,20 @@ describe("UIX-001 ATT-001 lab parity", () => {
     }
 
     for (const frame of [anaMine, anaTeam, benMine]) {
+      expect(frame).toContain("OVERVIEW");
       expect(frame).toContain(SCENARIO.goal.lab);
       expect(frame).toContain(GOAL_TITLE);
       expect(frame).toContain(SCENARIO.workspaces.lab);
       expect(frame.includes("20/21") || frame.includes("20 of 21")).toBe(true);
       expect(frame).toContain("truncated");
-      expect(frame).toContain("Cues beyond the returned pages may exist.");
       expect(frame).toContain("registered");
       expect(frame).not.toContain("online");
       expect(frame).not.toContain("working");
       expect(frame).not.toContain("operative");
+    }
+
+    for (const frame of [anaMineAttention, anaTeamAttention, benMineAttention]) {
+      expect(frame).toContain("Cues beyond the returned pages may exist.");
     }
 
     expect(anaViewTeam.goal).toContain(GOAL_TITLE);
@@ -347,23 +362,26 @@ describe("UIX-001 ATT-001 lab parity", () => {
     expect(anaViewTeam.needsAttention).toContain(FINDING_WITHDRAWN);
 
     for (const id of [REVIEW_SUPERSEDED, REVIEW_WITHDRAWN]) {
-      for (const text of [anaTeam, anaViewTeam.needsAttention]) {
+      for (const text of [anaTeamAttention, anaViewTeam.needsAttention]) {
         const around = windowAround(text, id);
         expect(around, id).toContain("accepted");
         expect(around, id).not.toContain("retired");
       }
     }
-    expect(windowAround(anaTeam, REVIEW_SUPERSEDED)).toContain(FINDING_SUPERSEDED);
-    expect(windowAround(anaTeam, REVIEW_WITHDRAWN)).toContain(FINDING_WITHDRAWN);
+    expect(windowAround(anaTeamAttention, REVIEW_SUPERSEDED)).toContain(FINDING_SUPERSEDED);
+    expect(windowAround(anaTeamAttention, REVIEW_WITHDRAWN)).toContain(FINDING_WITHDRAWN);
     expect(windowAround(anaViewTeam.needsAttention, REVIEW_SUPERSEDED)).toContain(FINDING_SUPERSEDED);
     expect(windowAround(anaViewTeam.needsAttention, REVIEW_WITHDRAWN)).toContain(FINDING_WITHDRAWN);
 
-    // Competing ids are on the NAV-001 decisions section (tab twice) and in
-    // the Viewer alignment list that renderOrientation fills. Current work
-    // keeps the accepted summaries; it does not repeat the id when a summary
-    // exists.
-    const anaTeamDecisions = tall(reduceDashboardKey(reduceDashboardKey(anaTeamState, "tab"), "tab"));
-    expect(anaTeamDecisions).toContain("RECORDED DECISIONS");
+    // Competing ids are on the decisions section: Overview, Needs Attention,
+    // Work, then Decisions. The Viewer alignment list that
+    // renderOrientation fills shows the same ids. Current work keeps the
+    // accepted summaries; it does not repeat the id when a summary exists.
+    const anaTeamDecisions = tall(
+      reduceDashboardKey(reduceDashboardKey(reduceDashboardKey(anaTeamState, "tab"), "tab"), "tab"),
+    );
+    expect(anaTeamDecisions).toContain("DECISIONS  decisions");
+    expect(anaTeamDecisions).not.toContain("RECORDED DECISIONS");
     for (const text of [anaTeamDecisions, anaViewTeam.alignment]) {
       expect(text).toContain(COMPETING_A);
       expect(text).toContain(COMPETING_B);
@@ -387,10 +405,10 @@ describe("UIX-001 ATT-001 lab parity", () => {
     expect(anaViewMine.sources).toContain("not fetched");
 
     expect(ben.needsYou).toEqual([]);
-    expect(benMine).toContain("more matching records may exist");
-    expect(benMine).not.toContain("caught up");
-    expect(benMine).not.toContain("all work is done");
-    expect(benMine).not.toContain("the work is done");
+    expect(benMineAttention).toContain("more matching records may exist");
+    expect(benMineAttention).not.toContain("caught up");
+    expect(benMineAttention).not.toContain("all work is done");
+    expect(benMineAttention).not.toContain("the work is done");
     expect(benView.needsYou).toContain("more matching records may exist");
     expect(benView.emptyText).toContain("more matching records may exist");
     expect(benView.needsYou).not.toContain("caught up");
@@ -400,7 +418,7 @@ describe("UIX-001 ATT-001 lab parity", () => {
 
     const cue = ana.needsYou[0];
     expect(cue).toBeDefined();
-    expect(anaMine).toContain(cue!.id);
+    expect(anaMineAttention).toContain(cue!.id);
     expect(anaViewMine.needsYou).toContain(cue!.id);
     const workId = ana.currentWork.blockedTasks[0]?.id ?? ana.openTasks[0]?.id;
     expect(workId).toBeDefined();

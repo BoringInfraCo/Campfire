@@ -192,7 +192,7 @@ describe("UIX-001 dashboard", () => {
       needsYou: [cue("id_keep", "assigned_open_task", `summary ${poisoned} stays`, actor(`${poisoned}hum_owner`))],
       openTasks: [task("id_keep", "open", `title ${poisoned} stays`, actor(`${poisoned}hum_owner`))],
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    const frame = renderDashboard(stateFor(value, { section: "attention" }), 120, 40);
     expect(frame).toContain("id_keep");
     expect(frame).toContain("goal_keep_id");
     expect(frame).not.toContain("\u001B");
@@ -209,7 +209,7 @@ describe("UIX-001 dashboard", () => {
         completeUnderRules: false,
       }),
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    const frame = renderDashboard(stateFor(value, { section: "attention" }), 120, 40);
     expect(frame).toContain("No cue found in the returned records; more matching records may exist.");
     expect(frame.includes("20/21") || frame.includes("20 of 21")).toBe(true);
     expect(frame).not.toContain("caught up");
@@ -221,7 +221,7 @@ describe("UIX-001 dashboard", () => {
       needsYou: [],
       attentionCoverage: coverage({ completeUnderRules: true }),
     });
-    const frame = renderDashboard(stateFor(value), 120, 40);
+    const frame = renderDashboard(stateFor(value, { section: "attention" }), 120, 40);
     expect(frame).toContain("No recorded attention cues match these rules. This does not mean all work is done.");
   });
 
@@ -235,6 +235,7 @@ describe("UIX-001 dashboard", () => {
       ],
     });
     let state = stateFor(value);
+    state = reduceDashboardKey(state, "tab");
     state = reduceDashboardKey(state, "tab");
     state = reduceDashboardKey(state, "tab");
     expect(state.section).toBe("decisions");
@@ -257,6 +258,7 @@ describe("UIX-001 dashboard", () => {
     let state = stateFor(value);
     state = reduceDashboardKey(state, "tab");
     state = reduceDashboardKey(state, "tab");
+    state = reduceDashboardKey(state, "tab");
     const frame = renderDashboard(state, 120, 40);
     expect(frame).toContain("dec_competing_a");
     expect(frame).toContain("dec_competing_b");
@@ -270,12 +272,13 @@ describe("UIX-001 dashboard", () => {
     let state = stateFor(value);
     state = reduceDashboardKey(state, "tab");
     state = reduceDashboardKey(state, "tab");
+    state = reduceDashboardKey(state, "tab");
     const frame = renderDashboard(state, 120, 40);
     expect(frame).toContain("dec_proposed");
     expect(frame).toContain("not an instruction");
   });
 
-  it("does not enumerate agent rows on the default frame; registration is not presence", () => {
+  it("shows recorded people in the rail and does not call registration presence", () => {
     const value = context({
       participants: [
         {
@@ -295,11 +298,14 @@ describe("UIX-001 dashboard", () => {
       ],
     });
     const frame = renderDashboard(stateFor(value), 120, 40);
-    expect(frame).toContain("1 people · 1 registered agents");
-    expect(frame).not.toContain("Rex");
-    expect(frame).not.toContain("hum_owner");
+    expect(frame).toContain("Rex");
+    expect(frame).toContain("Owner");
+    expect(frame).toContain("codex");
+    expect(frame).not.toContain("recorded, not present");
     expect(frame).not.toContain("online");
     expect(frame).not.toContain("working");
+    expect(frame).not.toContain("idle");
+    expect(frame).not.toContain("is present");
   });
 
   it("switches the attention list with p and keeps the workspace id", () => {
@@ -307,7 +313,7 @@ describe("UIX-001 dashboard", () => {
       needsYou: [cue("task_mine_only", "assigned_open_task", "Mine")],
       needsAttention: [cue("task_team_only", "team_open_task", "Team")],
     });
-    const mine = stateFor(value);
+    const mine = stateFor(value, { section: "attention" });
     const team = reduceDashboardKey(mine, "p");
     expect(team.workspaceId).toBe(mine.workspaceId);
     expect(team.perspective).toBe("team");
@@ -354,7 +360,7 @@ describe("UIX-001 dashboard", () => {
         completeUnderRules: false,
       }),
     });
-    const state = stateFor(value);
+    const state = stateFor(value, { section: "attention" });
     for (const [columns, rows] of [
       [80, 24],
       [120, 36],
@@ -380,7 +386,7 @@ describe("UIX-001 dashboard", () => {
         "Accepted decision cites non-current evidence",
       ),
     );
-    let state = stateFor(context({ needsYou }));
+    let state = stateFor(context({ needsYou }), { section: "attention" });
     for (let step = 0; step < 29; step += 1) state = reduceDashboardKey(state, "j");
     const frame = renderDashboard(state, 80, 24);
     expect(frame).toContain("dec_review_29");

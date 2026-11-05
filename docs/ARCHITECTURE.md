@@ -1,8 +1,11 @@
 # Campfire — Architecture
 
-**Status:** Revised for published CAP-001 and the planned v1.26 ACT-001 pilot boundary
+**Status:** Revised for published CAP-001, the planned v1.26 ACT-001 pilot
+boundary, and the proposed local-dictation adapter boundary
 **Version:** 0.2
-**Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001 boundary October 20, 2026; ACT-001 pilot planned October 21, 2026
+**Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001
+boundary October 20, 2026; ACT-001 pilot planned October 21, 2026; local
+dictation boundary proposed October 31, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -586,6 +589,50 @@ This is a proposed narrow Phase 8 probe. Its contract and Step 0 freeze govern
 implementation; this amendment does not claim Gate F demand or authorize a
 general policy, grant, workflow, or execution system.
 
+### External execution-provider adapters
+
+Campfire may later dispatch one approved ActionProposal to an optional external
+execution provider. Shepherdr/herdr is the first named compatibility candidate,
+not a required component and not a replacement for Campfire's domain model.
+
+```text
+Campfire ActionProposal
+        |
+        | authorized human review + immutable intent digest
+        v
+single Campfire reservation
+        |
+        | provider adapter with provider-owned credential
+        v
+Shepherdr/herdr or another execution provider
+        |
+        | worktree, process, terminal stream, review, merge attempt
+        v
+submission/outcome receipt + cited artifact or finding
+        |
+        | authorization + provenance
+        v
+Campfire workspace
+```
+
+Campfire owns workspace authorization, proposal identity, approval, expiry,
+reservation, deduplication, receipts, provenance, and durable outcomes. The
+provider owns process scheduling, worktrees, terminal streams, model/runtime
+configuration, provider plugins, and provider credentials. Provider status is
+an observed, freshness-bounded projection. It never directly completes a
+Campfire Task, accepts a Decision, grants a capability, or proves that an agent
+is present or authorized.
+
+The adapter must preserve a provider-off path: ordinary Campfire reads,
+contributions, decisions, and human follow-up continue when Shepherdr is absent
+or disabled. Raw transcripts, terminal output, private paths, and provider
+credentials stay outside canonical records. Campfire may retain only the
+bounded provider operation reference needed for reconciliation, plus cited
+artifacts and receipts whose source and observation time are explicit. The
+[canonical Shepherdr assessment](Campfire-Shepherdr-Assessment.md) owns the
+provider spike, Needs You, coordinator, dependency, extension, mobile, and
+non-adoption tracks; they are not duplicated here.
+
 ## 9. Contribution and Provenance Model
 
 Every meaningful mutation should generate a contribution record.
@@ -732,6 +779,100 @@ If future features ingest transcripts to derive candidate work state, the raw tr
 ### Invariant
 
 > A participant may access a shared finding without gaining access to the private conversation that produced the finding.
+
+### Local voice-input adapters
+
+A local speech-to-text engine may help the current person compose a draft, but
+it is an interface adapter rather than a Campfire domain, storage, or authority
+component.
+
+```text
+explicit microphone action
+        |
+        v
+transient local audio
+        |
+        v
+local transcription adapter
+        |
+        v
+editable local draft
+        |
+        | explicit human review and confirmation
+        v
+existing typed Campfire application service
+        |
+        v
+authorized canonical collaboration object + provenance
+```
+
+Audio, raw transcripts, discarded drafts, model weights, helper credentials,
+and provider-specific process identifiers remain outside Workspace state,
+Contributions, Artifacts, Sources, Viewer payloads, Cloud data, telemetry, and
+normal logs. The adapter receives no workspace credential or canonical action
+authority. A transcription response can update only a local draft; it cannot
+create or mutate shared state.
+
+Submission, if separately authorized, must use the same typed application
+service, actor and agent/session attribution, validation, expected-version or
+compare-and-set rules, idempotency, and receipt as typed input. Dictation cannot
+add a parallel write protocol or weaken denial, revocation, conflict, and
+recovery behavior. The typed flow must pass first.
+
+The first candidate is a pinned Hex-derived local helper. Research may connect
+to a separately installed Hex app or use fixture audio, but a product path must
+use Campfire-owned microphone capture and a Campfire-bundled, signed,
+authenticated child helper. It must remain optional, local-only, bounded, and
+absent from app startup when unsupported. The product boundary and evidence
+sequence are in
+[Campfire-Local-Voice-Dictation-Plan.md](Campfire-Local-Voice-Dictation-Plan.md)
+and
+[Campfire-DIC-000-Hex-Local-Dictation-Spike.md](Campfire-DIC-000-Hex-Local-Dictation-Spike.md).
+
+### External session-continuity adapters
+
+An optional external system may capture, encrypt, synchronize, search, resume,
+fork, or reconstruct a private agent session. Atuin Threads is the first
+planned compatibility candidate. That provider remains outside Campfire's
+canonical workspace and authorization model.
+
+```text
+private transcript and external session locator
+        |
+        | external provider policy and local user consent
+        v
+session-continuity adapter
+        |
+        | optional resume, fork, or Continue in… request
+        v
+destination harness
+        |
+        | distinct registered Campfire AgentSession
+        | authorized structured contributions
+        v
+Campfire workspace
+```
+
+Harness- and provider-specific formats stay at the interface boundary. An
+external session locator is not a Campfire actor, credential, membership,
+permission, or canonical provenance identifier. Possession of a Campfire
+workspace credential does not grant the external transcript, and possession of
+the external transcript does not grant Campfire records.
+
+The initial integration keeps private transcript content, tool input/output,
+file diffs, provider credentials, and external locators out of Campfire Cloud,
+the Viewer, telemetry, notifications, and canonical records. Campfire
+authorizes and supplies current structured state separately. The destination
+agent registers its own Campfire AgentSession and contributes through existing
+application services.
+
+A continuation receipt is not part of the current domain. Add one only after a
+real integration trace proves that existing AgentSession, Contribution, and
+Activity records cannot express required continuation provenance. Any earned
+receipt must remain harness-independent and preserve SQLite/D1, authorization,
+replay, migration, and transcript-isolation guarantees. The planning boundary
+and evidence sequence are in
+[Campfire-External-Agent-Session-Continuity-Plan.md](Campfire-External-Agent-Session-Continuity-Plan.md).
 
 ---
 
@@ -1210,6 +1351,14 @@ If collaboration semantics live directly inside MCP handlers, future interfaces 
 
 Campfire does not need to schedule autonomous agent swarms to prove team collaboration.
 
+### Execution provider becomes the source of truth
+
+An external coordinator may report that work is queued, working, needs input,
+ready, merging, or done. Those labels are operational observations, not
+Campfire Task or Decision transitions. Importing them as authority would make
+workspace truth depend on one provider and bypass Campfire authorization,
+review, provenance, currentness, and reconciliation.
+
 ### Premature intelligence
 
 LLM-generated summaries, embeddings, automatic memory extraction, and relevance ranking can hide whether the underlying state model actually works.
@@ -1278,6 +1427,10 @@ Workflow execution or workspace state
 Terminal program status
         !=
 Recorded task state, agent presence, or authorization
+
+Execution-provider status
+        !=
+Campfire task lifecycle, approval, or authority
 ```
 
 Terminal status reports, including Rex's OSC 7501, describe what a program
@@ -1399,6 +1552,11 @@ Potential future capabilities include:
 - capability delegation,
 - workspace templates,
 - external system synchronization,
+- optional private session-continuity adapters that leave transcripts outside
+  the canonical workspace,
+- optional execution-provider adapters that leave process control, worktrees,
+  terminal streams, plugins, and provider credentials outside the canonical
+  workspace,
 - notification/subscription models,
 - remote team hosting (SHR-001 is a narrow private-alpha slice; general remote hosting remains future),
 - audit controls,
@@ -1492,6 +1650,7 @@ The following should remain true as Campfire evolves:
 10. **Campfire can function independently of other Boring Infra products.**
 11. **Model inference is not required for storage correctness.**
 12. **The system should be able to explain why an agent received a piece of context.**
+13. **An external runtime may execute approved work, but cannot become Campfire's authority or canonical workspace.**
 
 These invariants matter more than any particular framework, database, or protocol choice.
 

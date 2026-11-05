@@ -86,7 +86,7 @@ describe("UPD-001 /update request", () => {
     expect(filtered.filter).toBe("n");
     expect(filtered.updateRequested).toBe(false);
     expect(filtered.statusNote).toBeUndefined();
-    expect(filtered.section).toBe("attention");
+    expect(filtered.section).toBe("overview");
 
     const quit = reduceDashboardKey(reduceDashboardKey(bare(), "/"), "\u0003");
     expect(quit.quit).toBe(true);
@@ -123,7 +123,12 @@ describe("UPD-001 /update request", () => {
     expect(frame).toContain(
       "/update reviews a Campfire update. The canonical command is campfire update. Other / text still filters this page.",
     );
+    expect(frame).toContain(
+      "p switches Needs You and Needs Attention. It does not change the workspace.",
+    );
     expect(frame).toContain("? toggles this help. q quits.");
     expect(frame).toContain("/ filters the loaded page, not the workspace. enter confirms; esc clears. Letters stay text.");
+    expect(frame).not.toContain("recent changes");
+    expect(frame).not.toContain("My work");
   });
 });

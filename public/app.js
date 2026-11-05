@@ -48,6 +48,7 @@ const els = {
   retryRefresh: document.getElementById("retry-refresh"),
   ownedNote: document.getElementById("owned-note"),
   sectionAttention: document.getElementById("section-attention"),
+  overviewBody: document.getElementById("overview-body"),
   workCoverage: document.getElementById("work-coverage"),
   workList: document.getElementById("work-list"),
   workPrev: document.getElementById("work-prev"),
@@ -92,7 +93,7 @@ const state = {
   loadingOlder: false,
   error: null,
   // NAV-003 navigation. Perspective is emphasis, not authorization.
-  section: "attention",
+  section: "overview",
   layer: "list",
   detailTab: "overview",
   rowFilter: "",
@@ -101,6 +102,7 @@ const state = {
   selectionLost: null,
   focusOriginId: null,
   sectionSelection: {
+    overview: null,
     attention: null,
     work: null,
     decisions: null,
@@ -307,7 +309,7 @@ function classifyArtifactReference(reference) {
 // They are navigation over already-authorized records, not privacy modes.
 
 function perspectiveLabel(value) {
-  return value === "team" ? "Team work" : "My work";
+  return value === "team" ? "Needs Attention" : "Needs You";
 }
 
 function readStoredPerspective() {
@@ -341,7 +343,7 @@ function renderPerspective() {
   }
   if (els.orientation) els.orientation.setAttribute("data-perspective", value);
   if (els.currentWorkTitle) els.currentWorkTitle.textContent = perspectiveLabel(value);
-  if (els.sectionAttention) els.sectionAttention.textContent = value === "team" ? "Needs Attention" : "Needs You";
+  if (els.sectionAttention) els.sectionAttention.textContent = "Needs You";
 }
 
 function setPerspective(value) {
@@ -768,6 +770,7 @@ function resetSelection() {
   state.selectionLost = null;
   state.focusOriginId = null;
   state.sectionSelection = {
+    overview: null,
     attention: null,
     work: null,
     decisions: null,
@@ -798,6 +801,7 @@ function ensureWorkspace(list) {
 
 function setWorkspace(id) {
   if (!id || id === state.workspaceId) return;
+  // The workspace <select> changes workspace only. The current section stays.
   state.workspaceId = id;
   sessionStorage.setItem(STORAGE_KEY, id);
   resetSelection();
@@ -1976,7 +1980,7 @@ function renderStream() {
   }
 }
 
-const NAV_SECTIONS = ["attention", "work", "decisions", "sources", "people", "changes"];
+const NAV_SECTIONS = ["overview", "attention", "work", "decisions", "sources", "people", "changes"];
 const WORK_PAGE_LIMIT = 20;
 const PEOPLE_PAGE_LIMIT = 20;
 const HISTORY_PAGE_LIMIT = 10;
@@ -2094,15 +2098,100 @@ function peopleRowHtml(item) {
   const name = visibleText(strField(item.name, id));
   const kind = type === "human" ? "human" : "agent";
   const bits = [id, type === "human" ? "human participant" : "registered agent"];
-  const harness = strField(item.harness);
-  if (harness) bits.push(`harness ${harness}`);
   if (type === "agent") {
+    const role = visibleText(strField(item.role));
+    if (role) bits.push(role);
+    const harness = strField(item.harness);
+    if (harness) bits.push(`harness ${harness}`);
+    bits.push("recorded, not present");
     const owner = strField(item.humanOwnerId);
     bits.push(owner ? `owner ${owner}` : "no recorded owner");
     if (item.humanOwnerIsParticipant === false) bits.push("owner is outside the roster");
+  } else {
+    const harness = strField(item.harness);
+    if (harness) bits.push(`harness ${harness}`);
   }
   const current = state.sectionSelection.people === id ? ` aria-current="true"` : "";
   return `<button type="button" class="row-btn" data-record-id="${esc(id)}" data-record-kind="${esc(kind)}"${current}><span class="row-main"><span class="row-symbol" aria-hidden="true">${type === "human" ? "●" : "◇"}</span><span class="row-title">${esc(name)}</span></span><span class="row-meta">${esc(bits.join(" · "))}</span></button>`;
+}
+
+// Headers name groups on this loaded page. They are not selectable rows.
+// A registration is not presence, so agent rows say they are recorded, not present.
+function peopleGroups(items) {
+  const humans = [];
+  const agents = [];
+  for (const item of items) {
+    if (!isRecord(item)) continue;
+    const actor = isRecord(item.actor) ? item.actor : {};
+    if (strField(actor.actorType) === "agent") agents.push(item);
+    else humans.push(item);
+  }
+  const nameById = new Map();
+  for (const human of humans) {
+    const actor = isRecord(human.actor) ? human.actor : {};
+    const id = strField(actor.actorId);
+    const name = visibleText(strField(human.name));
+    if (id && name) nameById.set(id, name);
+  }
+  const groups = [];
+  if (humans.length) groups.push({ label: "People", items: humans });
+  const byOwner = new Map();
+  for (const agent of agents) {
+    const owner = strField(agent.humanOwnerId);
+    const bucket = byOwner.get(owner);
+    if (bucket) bucket.push(agent);
+    else byOwner.set(owner, [agent]);
+  }
+  for (const [owner, rows] of byOwner) {
+    const name = owner ? nameById.get(owner) : "";
+    const label = name
+      ? `Agents recorded for ${name}`
+      : owner
+        ? `Agents recorded for ${owner}`
+        : "Agents";
+    groups.push({ label, items: rows });
+  }
+  return groups;
+}
+
+function groupedPeopleHtml(items) {
+  return peopleGroups(items)
+    .map(
+      (group) =>
+        `<div class="ogroup"><div class="ogroup-label">${esc(group.label)}</div>${group.items.map(peopleRowHtml).join("")}</div>`,
+    )
+    .join("");
+}
+
+function recordedTaskCount(context) {
+  const slices = isRecord(context) && isRecord(context.slices) ? context.slices : null;
+  const tasks = slices && isRecord(slices.tasks) ? slices.tasks : null;
+  if (tasks && typeof tasks.total === "number") return tasks.total;
+  const coverage = isRecord(context) && isRecord(context.attentionCoverage) ? context.attentionCoverage : null;
+  const covered = coverage && isRecord(coverage.tasks) ? coverage.tasks : null;
+  if (covered && typeof covered.total === "number") return covered.total;
+  return null;
+}
+
+function renderOverview() {
+  if (!els.overviewBody) return;
+  const caveat = `<p class="panel-note">People are read on People &amp; Agents. Registration is not presence.</p>`;
+  if (!isRecord(state.context)) {
+    els.overviewBody.innerHTML = `<div class="empty">Overview is not loaded.</div>${caveat}`;
+    return;
+  }
+  const parts = [];
+  const goal = isRecord(state.context.goal) ? state.context.goal : null;
+  const title = goal ? visibleText(strField(goal.title)) : "";
+  if (title) parts.push(`<div class="ogroup"><div class="ogroup-label">Goal</div><div>${esc(title)}</div></div>`);
+  const team = state.perspective === "team";
+  const attention = team ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+  const label = team ? "Needs Attention" : "Needs You";
+  parts.push(`<div>${esc(label)} · ${attention.length} shown</div>`);
+  const taskCount = recordedTaskCount(state.context);
+  if (taskCount !== null) parts.push(`<div>Tasks · ${taskCount} recorded</div>`);
+  parts.push(caveat);
+  els.overviewBody.innerHTML = parts.join("");
 }
 
 function decisionSectionRows(context) {
@@ -2774,7 +2863,7 @@ function seedSectionPreview() {
     const people = asArray(state.peoplePage && state.peoplePage.items);
     const matchPerson = (row) => {
       const actor = isRecord(row.actor) ? row.actor : {};
-      return matchesRowFilter(`${strField(actor.actorId)} ${strField(row.name)} ${strField(actor.actorType)} ${strField(row.humanOwnerId)}`);
+      return matchesRowFilter(`${strField(actor.actorId)} ${strField(row.name)} ${strField(actor.actorType)} ${strField(row.role)} ${strField(row.harness)} ${strField(row.humanOwnerId)}`);
     };
     record = pick(people, matchPerson, (row) => strField(row.actor && row.actor.actorId));
     const actor = isRecord(record) && isRecord(record.actor) ? record.actor : {};
@@ -2814,17 +2903,19 @@ function renderNavigation() {
     }
   }
   const sectionCopy = {
+    overview: ["Overview", "Recorded goal, attention, and task counts from this read"],
     attention: state.perspective === "team"
-      ? ["Needs attention", "Recorded changes that may need a team response"]
-      : ["Needs you", "Recorded changes that may need your response"],
+      ? ["Needs Attention", "Recorded changes that may need a team response"]
+      : ["Needs You", "Recorded changes that may need your response"],
     work: ["Work", "Tasks recorded in this workspace"],
     decisions: ["Decisions", "Recorded decisions and their state"],
     sources: ["Sources", "Findings and artifact references in this read"],
-    people: ["People", "Registered workspace participants"],
-    changes: ["Recent changes", "Recorded activity since your last visit"],
+    people: ["People & Agents", "Registered workspace participants"],
+    changes: ["Activity", "Recorded activity since your last visit"],
   };
   if (els.sectionHeading) els.sectionHeading.textContent = sectionCopy[state.section][0];
   if (els.sectionSubtitle) els.sectionSubtitle.textContent = sectionCopy[state.section][1];
+  renderOverview();
   const navCount = (name, count, qualified) => {
     const button = typeof document !== "undefined" ? document.getElementById(`section-${name}`) : null;
     if (!button || !button.setAttribute) return;
@@ -2884,7 +2975,7 @@ function renderNavigation() {
     else {
       const rows = filteredPageItems(people.items, (item) => {
         const actor = isRecord(item.actor) ? item.actor : {};
-        return `${strField(actor.actorId)} ${strField(item.name)} ${strField(actor.actorType)} ${strField(item.humanOwnerId)}`;
+        return `${strField(actor.actorId)} ${strField(item.name)} ${strField(actor.actorType)} ${strField(item.role)} ${strField(item.harness)} ${strField(item.humanOwnerId)}`;
       });
       const empty = people.humanOwnerId
         ? "No workspace-participating agents were returned for this owner."
@@ -2892,7 +2983,9 @@ function renderNavigation() {
       els.peopleList.innerHTML =
         people.items.length && !rows.length
           ? `<div class="empty">no shown row matches the filter. Filter matches loaded rows only.</div>`
-          : listHtml(rows.map(peopleRowHtml), empty);
+          : rows.length
+            ? groupedPeopleHtml(rows)
+            : listHtml([], empty);
     }
   }
   if (els.peoplePrev) els.peoplePrev.disabled = !(people && people.cursorStack.length);

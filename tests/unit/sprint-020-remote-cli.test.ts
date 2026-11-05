@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -142,5 +142,23 @@ describe("Sprint 020 remote recipient CLI", () => {
     expect(contents).not.toContain(profile.agents[0]!.token);
     expect(JSON.parse(output[0]!)).toMatchObject({ mode: "remote", agents: ["opencode"], reloadRequired: true, sessionRegistered: false });
     expect(calls.map((call) => call.method)).toEqual(["whoami", "list_workspaces"]);
+  });
+  it("explains how to open the Viewer when an existing harness belongs to another profile", async () => {
+    const path = join(dir, "opencode.json");
+    const existing = {
+      mcp: {
+        campfire: {
+          type: "local", enabled: true, command: ["campfire", "mcp"],
+          environment: { CAMPFIRE_URL: "https://other.example.test", CAMPFIRE_TOKEN: "other-secret", CAMPFIRE_HARNESS: "opencode" },
+        },
+      },
+    };
+    writeFileSync(path, JSON.stringify(existing));
+    expect(await runCliEntry(["up", "--harness", "opencode", "--config", path, "--no-open"])).toBe(1);
+    expect(errors.join("\n")).toContain("campfire up --no-connect");
+    expect(errors.join("\n")).not.toContain(profile.humanToken);
+    expect(errors.join("\n")).not.toContain(profile.agents[1]!.token);
+    expect(readFileSync(path, "utf8")).toBe(JSON.stringify(existing));
+    expect(viewerServer.startCampfireViewer).not.toHaveBeenCalled();
   });
 });

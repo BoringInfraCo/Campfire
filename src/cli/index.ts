@@ -79,11 +79,20 @@ import {
 } from "./projections.js";
 import { commandForNextAction, formatCliFailure, SEED_RESET_WARNING } from "./recovery.js";
 import {
+  DEFAULT_INTENT_HOST,
+  DEFAULT_INTENT_PORT,
+  startCampfireIntentBridge,
+  type RunningIntentBridge,
+} from "../intent/server.js";
+import { INTENT_METHODS } from "../intent/allowlist.js";
+import { resolveOperatorCall } from "../intent/resolve.js";
+import {
   DASHBOARD_HISTORY_PAGE_LIMIT,
   DASHBOARD_PEOPLE_PAGE_LIMIT,
   DASHBOARD_TASK_PAGE_LIMIT,
   runDashboardSession,
   type DashboardPageInput,
+  type DashboardSessionOptions,
 } from "./dashboard.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { announceStableUpdate, runUpdateCommand } from "./update-command.js";
@@ -1445,6 +1454,81 @@ async function cmdStatus(parsed: ParsedArgs, argv: string[]): Promise<void> {
   });
 }
 
+/**
+ * Loader wiring shared by `campfire dashboard` and the interactive bare command.
+ * Callers pass the call they already authorized. The local human shell passes
+ * loopback HTTP on the listener this process owns so `withBackend` does not
+ * open a second SQLite connection.
+ */
+function dashboardSessionOptions(options: {
+  workspaceId: string;
+  actorId: string;
+  actorType: string;
+  call: (method: string, params: Record<string, unknown>) => Promise<unknown>;
+}): DashboardSessionOptions {
+  let workspaceId = options.workspaceId;
+  const call = options.call;
+  return {
+    workspaceId,
+    actorId: options.actorId,
+    actorType: options.actorType,
+    onUpdate: async () => {
+      try {
+        await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
+      } catch (error) {
+        console.error(formatCliFailure(error, { command: "update" }));
+        throw error;
+      }
+    },
+    load: async () =>
+      (await call("get_workspace_context", {
+        workspaceId,
+        participants: "omit",
+      })) as WorkspaceContext,
+    loadTasks: async (cursor) => {
+      const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_TASK_PAGE_LIMIT };
+      if (cursor !== undefined) params.cursor = cursor;
+      return (await call("list_tasks", params)) as WorkspaceObjectPage<Task>;
+    },
+    loadPeople: async (query) => {
+      const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_PEOPLE_PAGE_LIMIT };
+      if (query.cursor !== undefined) params.cursor = query.cursor;
+      if (query.humanOwnerId !== undefined) params.humanOwnerId = query.humanOwnerId;
+      return (await call("list_workspace_participants", params)) as DashboardPageInput<ParticipantListItem>;
+    },
+    loadHistory: async (query) => {
+      const params: Record<string, unknown> = {
+        workspaceId,
+        objectType: query.objectType,
+        objectId: query.objectId,
+        limit: DASHBOARD_HISTORY_PAGE_LIMIT,
+      };
+      if (query.cursor !== undefined) params.cursor = query.cursor;
+      return (await call("get_record_history", params)) as DashboardPageInput<Contribution>;
+    },
+    inspect: (kind, id) => {
+      const method =
+        kind === "task"
+          ? "get_task"
+          : kind === "finding"
+            ? "get_finding"
+            : kind === "decision"
+              ? "get_decision"
+              : "get_artifact";
+      const idField =
+        kind === "task" ? "taskId" : kind === "finding" ? "findingId" : kind === "decision" ? "decisionId" : "artifactId";
+      return call(method, { workspaceId, [idField]: id });
+    },
+    listWorkspaces: async () => {
+      const listed = (await call("list_workspaces", {})) as WorkspaceSummary[];
+      return listed.map((workspace) => ({ id: workspace.id, name: workspace.name }));
+    },
+    adoptWorkspace: (id) => {
+      workspaceId = id;
+    },
+  };
+}
+
 async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
   if (!isInteractiveTty()) {
     throw new ValidationError(DASHBOARD_NON_TTY_MESSAGE);
@@ -1456,60 +1540,15 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
       console.log(DASHBOARD_AWAITING_WORKSPACE);
       return;
     }
-    const workspaceId = selection.workspaceId;
     const actor = backend.identity.ctx.actor;
-    await runDashboardSession({
-      workspaceId,
-      actorId: actor.actorId,
-      actorType: actor.actorType,
-      onUpdate: async () => {
-        try {
-          await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
-        } catch (error) {
-          console.error(formatCliFailure(error, { command: "update" }));
-          throw error;
-        }
-      },
-      load: async () =>
-        (await backend.call("get_workspace_context", {
-          workspaceId,
-          participants: "omit",
-        })) as WorkspaceContext,
-      loadTasks: async (cursor) => {
-        const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_TASK_PAGE_LIMIT };
-        if (cursor !== undefined) params.cursor = cursor;
-        return (await backend.call("list_tasks", params)) as WorkspaceObjectPage<Task>;
-      },
-      loadPeople: async (input) => {
-        const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_PEOPLE_PAGE_LIMIT };
-        if (input.cursor !== undefined) params.cursor = input.cursor;
-        if (input.humanOwnerId !== undefined) params.humanOwnerId = input.humanOwnerId;
-        return (await backend.call("list_workspace_participants", params)) as DashboardPageInput<ParticipantListItem>;
-      },
-      loadHistory: async (input) => {
-        const params: Record<string, unknown> = {
-          workspaceId,
-          objectType: input.objectType,
-          objectId: input.objectId,
-          limit: DASHBOARD_HISTORY_PAGE_LIMIT,
-        };
-        if (input.cursor !== undefined) params.cursor = input.cursor;
-        return (await backend.call("get_record_history", params)) as DashboardPageInput<Contribution>;
-      },
-      inspect: (kind, id) => {
-        const method =
-          kind === "task"
-            ? "get_task"
-            : kind === "finding"
-              ? "get_finding"
-              : kind === "decision"
-                ? "get_decision"
-                : "get_artifact";
-        const idField =
-          kind === "task" ? "taskId" : kind === "finding" ? "findingId" : kind === "decision" ? "decisionId" : "artifactId";
-        return backend.call(method, { workspaceId, [idField]: id });
-      },
-    });
+    await runDashboardSession(
+      dashboardSessionOptions({
+        workspaceId: selection.workspaceId,
+        actorId: actor.actorId,
+        actorType: actor.actorType,
+        call: (method, params) => backend.call(method, params),
+      }),
+    );
   });
 }
 
@@ -2556,6 +2595,73 @@ async function cmdServe(parsed: ParsedArgs): Promise<void> {
   });
 }
 
+async function cmdIntent(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const host = optionalFlag(parsed.flags, "host") ?? DEFAULT_INTENT_HOST;
+  const portRaw = optionalFlag(parsed.flags, "port");
+  const port = portRaw === undefined ? DEFAULT_INTENT_PORT : Number(portRaw);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
+  }
+  const output = commandOutput(parsed);
+  const operator = await resolveOperatorCall({
+    ...(typeof parsed.flags.url === "string" ? { url: parsed.flags.url } : {}),
+    ...(typeof parsed.flags.token === "string" ? { token: parsed.flags.token } : {}),
+  });
+  let bridge: RunningIntentBridge | undefined;
+  try {
+    bridge = await startCampfireIntentBridge({
+      call: operator.call,
+      host,
+      port,
+      actor: operator.actor,
+    });
+    const receipt = {
+      mode: operator.mode,
+      human: operator.actor.actorId,
+      endpoint: operator.url,
+      intentUrl: bridge.url,
+      allowlist: [...INTENT_METHODS],
+      serialization: "per-workspace in-process queue; service-level preconditions pending",
+    };
+    emitResult(receipt, output, (value) => [
+      "Intent bridge listening:",
+      `  URL        ${value.intentUrl}`,
+      `  Bound as   operator human ${value.human} (${value.mode === "remote" ? `hosted ${value.endpoint}` : "local profile"})`,
+      `  Allowlist  ${value.allowlist.join(", ")}`,
+      "",
+      "The desktop app sends typed intents here; it holds no Campfire token.",
+      "Stop with Ctrl+C.",
+    ].join("\n"));
+    console.error(`[campfire] intent bridge ${bridge.url}`);
+    let stopped = false;
+    const stopOwned = async (): Promise<void> => {
+      if (stopped) return;
+      stopped = true;
+      const active = bridge;
+      bridge = undefined;
+      if (active !== undefined) await active.close();
+      await operator.close();
+    };
+    // Deliberately NOT registered with campfire update's service owner:
+    // update-command stops owned services and health-checks on
+    // apiUrl/viewerUrl, so an owned-but-unprobeable intent bridge would make
+    // a confirmed update fail and roll back. The bridge is a manually
+    // started process: update reports "restart required" instead.
+    await new Promise<void>((resolve) => {
+      const shutdown = (signal: NodeJS.Signals): void => {
+        console.error(`[campfire] received ${signal}, shutting down`);
+        void stopOwned().finally(resolve);
+      };
+      process.once("SIGINT", shutdown);
+      process.once("SIGTERM", shutdown);
+    });
+  } catch (error) {
+    if (bridge !== undefined) await bridge.close();
+    await operator.close();
+    throw error;
+  }
+}
+
 async function cmdView(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const host = optionalFlag(parsed.flags, "host") ?? DEFAULT_VIEWER_HOST;
   const allowRemote = parsed.flags["allow-remote"] === true;
@@ -2717,7 +2823,17 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         const configPath = override ?? defaultHarnessConfigPath(harness as "codex" | "opencode");
         const input = { harness, configPath, url: agentAccess.url, agentToken: agentAccess.token,
           workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire", rejectConflicting: true };
-        assertConnectionCompatible(input);
+        try {
+          assertConnectionCompatible(input);
+        } catch (error) {
+          if (error instanceof CampfireError && error.details?.nextAction === "use_isolated_harness_config") {
+            throw new ValidationError(
+              `${harness} already has a Campfire connection for another profile. Run campfire up --no-connect to open the read-only Viewer without changing it; use an isolated harness config to connect this profile.`,
+              { field: "config", nextAction: "up_without_harness_connection" },
+            );
+          }
+          throw error;
+        }
         return input;
       });
       for (const input of plans) prepared.push(prepareConnection(input).harness);
@@ -2953,9 +3069,161 @@ function startHuman(humanName: string): void {
   }
 }
 
-async function cmdDefault(parsed: ParsedArgs): Promise<void> {
+/** Interactive human console: TTY, not JSON, and not an explicit machine path. */
+function humanShellRequested(parsed: ParsedArgs): boolean {
+  return (
+    isInteractiveTty() &&
+    commandOutput(parsed) !== "json" &&
+    process.env.CAMPFIRE_NONINTERACTIVE !== "1"
+  );
+}
+
+/**
+ * Local half of `campfire up`, then the read-only console.
+ *
+ * This process is the SQLite owner and the loopback HTTP server for the
+ * session, so a harness MCP client can call Campfire without opening the
+ * database itself. Reads go through that HTTP API. `withBackend` is not used
+ * here because it would open a second runtime. The browser stays closed, and
+ * quitting the console (or SIGINT) stops the listener this command started.
+ */
+async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
+  const profile = loadAnyProfile();
+  if (profile === undefined || profile.mode === "remote") {
+    throw new ValidationError("No local Campfire profile yet. Run campfire in a terminal, or pass --human-name.", {
+      field: "profile",
+    });
+  }
+  const humanToken = readOperatorHumanToken();
+  if (humanToken === undefined) {
+    throw new ValidationError("Missing operator credential. Re-run campfire onboard.", { field: "credentials" });
+  }
+  const config = loadConfig();
+  ensureParentDir(config.databasePath);
+  const runtime = createRuntime(config);
+  let running: Awaited<ReturnType<typeof startLocalWorkspace>> | undefined;
+  let stopping: Promise<void> | undefined;
+  const stopOwned = (): Promise<void> => {
+    if (stopping !== undefined) return stopping;
+    stopping = (async () => {
+      setOwnedCampfireService(undefined);
+      await running?.close();
+      runtime.close();
+    })();
+    return stopping;
+  };
+  try {
+    const actor = runtime.service.resolveToken(humanToken);
+    const human = runtime.store.getHuman(actor.actorId);
+    if (human === undefined) {
+      throw new ValidationError("The stored operator credential is not a human.", { field: "credentials" });
+    }
+    const connect = parsed.flags["no-connect"] !== true;
+    if (connect) {
+      const harnesses = detectInstalledHarnesses();
+      const known: Record<string, string | undefined> = {};
+      const stored = loadCredentials();
+      for (const harness of harnesses) {
+        known[harness] = stored?.agents?.[harness] ?? (profile.harness === harness ? stored?.agentToken : undefined);
+      }
+      const mcpCommand = optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire";
+      const url = optionalFlag(parsed.flags, "url") ?? profile.url;
+      const configOverride = harnesses.length === 1 ? optionalFlag(parsed.flags, "config") : undefined;
+      const result = connectInstalledHarnesses({
+        store: runtime.store,
+        service: runtime.service,
+        human: { id: human.id, teamId: human.teamId },
+        harnesses,
+        knownTokens: known,
+        url,
+        mcpCommand,
+        ...(profile.workspaceId === undefined ? {} : { workspaceId: profile.workspaceId }),
+        configPathFor: (harness) => configOverride ?? defaultHarnessConfigPath(harness),
+        onMintedToken: (harness, token) => rememberAgentCredential(harness, token),
+      });
+      if (result.agents.length > 0) {
+        rememberProfileAgents(
+          result.agents.map((agent) => ({ id: agent.agentId, name: agent.name, harness: agent.harness })),
+        );
+      }
+    }
+    const httpHost = optionalFlag(parsed.flags, "host") ?? DEFAULT_HTTP_HOST;
+    const httpPortRaw = optionalFlag(parsed.flags, "port");
+    const httpPort = httpPortRaw === undefined ? DEFAULT_HTTP_PORT : Number(httpPortRaw);
+    const viewerPortRaw = optionalFlag(parsed.flags, "viewer-port");
+    const viewerPort = viewerPortRaw === undefined ? DEFAULT_VIEWER_PORT : Number(viewerPortRaw);
+    if (!Number.isInteger(httpPort) || httpPort < 0 || httpPort > 65535) {
+      throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
+    }
+    if (!Number.isInteger(viewerPort) || viewerPort < 0 || viewerPort > 65535) {
+      throw new ValidationError("--viewer-port must be an integer between 0 and 65535", { field: "viewer-port" });
+    }
+    running = await startLocalWorkspace({
+      runtime,
+      human: { actor },
+      httpHost,
+      httpPort,
+      viewerPort,
+    });
+    const session = running;
+    const explicit = explicitWorkspaceArgument(parsed);
+    let workspaceId =
+      explicit !== undefined && explicit.trim().length > 0 ? explicit : profile.workspaceId;
+    if (workspaceId === undefined) {
+      const listed = runtime.service.listWorkspaces({ actor });
+      if (listed.length === 1) workspaceId = listed[0]!.id;
+      else if (listed.length === 0) {
+        // Same human receipt as non-TTY bare `campfire`. An empty console has no workspace to show.
+        printStatus(false);
+        return;
+      } else {
+        throw workspaceSelectionError(listed);
+      }
+    }
+    setOwnedCampfireService({
+      profileMode: "local",
+      argv: process.argv.slice(2),
+      apiUrl: session.apiUrl,
+      viewerUrl: session.viewerUrl,
+      stop: stopOwned,
+    });
+    const onSignal = (signal: NodeJS.Signals): void => {
+      console.error(`[campfire] received ${signal}, shutting down`);
+      // The dashboard turns SIGINT into quit. SIGTERM has no dashboard handler.
+      if (signal === "SIGTERM") process.stdin.emit("data", "q");
+      void stopOwned();
+    };
+    process.once("SIGINT", onSignal);
+    process.once("SIGTERM", onSignal);
+    try {
+      await runDashboardSession(
+        dashboardSessionOptions({
+          workspaceId,
+          actorId: actor.actorId,
+          actorType: actor.actorType,
+          call: (method, params) =>
+            campfireHttpCall({ baseUrl: session.apiUrl, token: humanToken, method, params }),
+        }),
+      );
+    } finally {
+      process.off("SIGINT", onSignal);
+      process.off("SIGTERM", onSignal);
+    }
+  } catch (error) {
+    await stopOwned();
+    throw error;
+  } finally {
+    await stopOwned();
+  }
+}
+
+async function cmdDefault(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const existing = loadAnyProfile();
   if (existing?.mode === "remote") {
+    if (humanShellRequested(parsed)) {
+      await cmdDashboard(parsed, argv);
+      return;
+    }
     const result = { mode: "remote", human: existing.humanName, humanId: existing.humanId,
       workspaceId: existing.workspaceId, workspace: existing.workspaceName, agents: existing.agents,
       nextAction: "campfire up", pastSessionsImported: false };
@@ -2967,6 +3235,10 @@ async function cmdDefault(parsed: ParsedArgs): Promise<void> {
     return;
   }
   if (existing !== undefined) {
+    if (humanShellRequested(parsed)) {
+      await runLocalHumanShell(parsed);
+      return;
+    }
     printStatus(commandOutput(parsed) === "json");
     return;
   }
@@ -2997,7 +3269,7 @@ async function cmdDefault(parsed: ParsedArgs): Promise<void> {
     console.log(formatStatus(loadProfile()!));
     return;
   }
-  await cmdUp(parsed);
+  await runLocalHumanShell(parsed);
 }
 
 function printHelp(command?: string): void {
@@ -3276,6 +3548,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   doctor: (parsed) => cmdDoctor(parsed),
   handoff: (parsed) => cmdHandoff(parsed),
   up: (parsed) => cmdUp(parsed),
+  intent: (parsed, argv) => cmdIntent(parsed, argv),
   update: (parsed) => runUpdateCommand(parsed),
   status: (parsed, argv) => cmdStatus(parsed, argv),
   dashboard: (parsed, argv) => cmdDashboard(parsed, argv),
@@ -3381,7 +3654,7 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.command === undefined) {
-    return cmdDefault(parsed);
+    return cmdDefault(parsed, argv);
   }
 
   if (!isKnownCommand(parsed.command)) {

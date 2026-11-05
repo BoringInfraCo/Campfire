@@ -1019,7 +1019,9 @@ describe("NAV-003 viewer navigation", () => {
     expect(INDEX_HTML).toContain(">Back<");
     expect(INDEX_HTML).toContain('id="sections"');
     expect(INDEX_HTML).toContain("Needs You");
-    expect(INDEX_HTML).toContain("Recent changes");
+    expect(INDEX_HTML).toContain("Overview");
+    expect(INDEX_HTML).toContain(">Activity<");
+    expect(INDEX_HTML).not.toContain("Recent changes");
     expect(INDEX_HTML).toContain("Workstream");
     expect(INDEX_HTML).toContain('id="since-title"');
     const narrow = APP_CSS.slice(APP_CSS.indexOf("@media (max-width: 719px)"));
@@ -1045,6 +1047,7 @@ describe("NAV-003 viewer navigation", () => {
         proposedDecisions: [{ id: "dec_local", status: "proposed", summary: "Review the plan", rationale: "Evidence is still being checked.", createdAt: "2026-10-17T12:00:00Z" }],
         needsYou: [{ id: "dec_local", kind: "decision", summary: "Review the plan", reason: "proposed_decision_actionable" }]
       };
+      state.section = "attention";
       state.layer = "list";
       render();`,
       sandbox,

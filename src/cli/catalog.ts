@@ -69,6 +69,7 @@ export const CLI_COMMAND_NAMES = [
   "join",
   "serve",
   "view",
+  "intent",
   "mcp",
   "init",
   "bootstrap",
@@ -328,6 +329,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
         "Registered agents are recorded participants, not live presence.",
         "needsYou and needsAttention are cues, not permission.",
         "Record text is stripped of terminal controls.",
+        "Opens on Overview and cycles Overview, Needs You, Work, Decisions, Sources, People & Agents, and Activity. `w` lists workspaces.",
       ],
     },
   ),
@@ -777,6 +779,20 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "Operational notices go to stderr; stdout carries no result document.",
     ] },
   ),
+  intent: spec(
+    "intent",
+    "admin",
+    "Start the desktop intent bridge (bounded local writes) - loopback only, actor-bound to the operator human.",
+    "campfire intent [--host 127.0.0.1] [--port 9416] [--url <https-endpoint>] [--token <token>] [--output auto|human|json]",
+    { ...WRITE, workspaceScoped: false, related: ["up", "view"], notes: [
+      "Separate, explicitly started desktop write channel. The read-only Viewer on 9415 stays the visual channel; this bridge (default 9416) accepts typed intents only.",
+      "Loopback only with no --allow-remote escape hatch: the bridge forwards the operator's write authority to the local service or a hosted profile, and the desktop app itself holds no token.",
+      "Accepts a bounded allowlist of dispatch methods: task status update and create, decision propose/accept/retire, finding record, invitation create. Everything else is refused before dispatch.",
+      "Uses the same profile and credential resolution as campfire up. With a hosted profile it relays the same narrow allowlist through the hosted API using the operator's human credential.",
+      "Supports local writes only through the ordinary publication gates; writes stay blocked while publication freezes the local database.",
+      "The bridge is not registered with campfire update's service owner: update reports restart required rather than stopping a channel it did not start.",
+    ] },
+  ),
   mcp: spec(
     "mcp",
     "admin",
@@ -916,9 +932,9 @@ const GLOBAL_NOTES = [
   "view binds loopback only (127.0.0.1, ::1, localhost); non-loopback --host",
   "requires --allow-remote. The browser never receives a token.",
   "",
-  "campfire with no args records the human once and starts up on an interactive",
-  "first run; later it prints status. It does not ask for agents, workspaces,",
-  "or goals. campfire up starts serve and view, prepares a Campfire MCP config",
+  "campfire with no args records the human once. An interactive terminal opens",
+  "the read-only console, and scripts still get status or JSON. It does not ask",
+  "for agents, workspaces, or goals. campfire up starts serve and view, prepares a Campfire MCP config",
   "for each detected Codex or OpenCode, and",
   "opens the loopback Viewer. A later loopback session reuses that listener or",
   "starts it when it is down. It does not import past sessions. The agent reads",
@@ -958,7 +974,7 @@ const GLOBAL_NOTES = [
 function groupLines(group: CliGroup): string[] {
   const lines: string[] = [`${GROUP_TITLES[group]}:`];
   if (group === "start") {
-    lines.push("  campfire                        Record you, then start the local API and Viewer; reload a prepared harness to load Campfire tools");
+    lines.push("  campfire                        Open the read-only console in an interactive terminal; scripts still get status or JSON");
   }
   for (const name of discoverableCommandNames()) {
     const entry = CLI_CATALOG[name];
@@ -977,7 +993,7 @@ export function formatUsage(): string {
     "Campfire",
     "",
     "Usage:",
-    "  campfire [--human-name <name>]  Record you, then start the local API and Viewer; reload a prepared harness to load Campfire tools",
+    "  campfire [--human-name <name>]  Open the read-only console in an interactive terminal; scripts still get status or JSON",
     "  campfire <command> --help       Usage for one command",
     "",
     ...sections,
