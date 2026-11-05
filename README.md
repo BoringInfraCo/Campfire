@@ -32,6 +32,12 @@ brew install boringinfraco/campfire/campfire
 nix profile install github:BoringInfraCo/Campfire
 ```
 
+Bun can run the installer. It downloads that same archive. The `campfire` command still runs on Node.js 22, and this command does not install Node.js.
+
+```bash
+bun https://raw.githubusercontent.com/BoringInfraCo/Campfire/main/public/campfire/install.mjs
+```
+
 `onboard` remains the explicit, non-interactive setup path. Its JSON credential
 receipt requires `--json` or `--output json`. `campfire seed --reset` loads a
 deterministic demo fixture; it is not how a new operator creates a workspace.

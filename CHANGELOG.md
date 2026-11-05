@@ -4,7 +4,7 @@
 
 - An interactive `campfire` opens the read-only terminal work shell: the workspace rail and the current goal, attention, and work, without a command list. Quitting that console stops the listener this command started. Campfire does not leave a background daemon running after you quit.
 - Until a workspace exists, an interactive `campfire` prints the no-workspace status and stops instead of an empty console. `campfire up` remains how a long-running listener and the read-only Viewer are started on purpose, and how scripts pass `--no-open` or `--json`. Scripts and `--output json` keep the existing status path.
-- No schema, migration, Worker, Viewer allowlist, MCP tool, or authorization change. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.27.0 archives until the four v1.28.0 checksums exist.
+- No schema, migration, Worker, Viewer allowlist, MCP tool, or authorization change. This release does not deploy the Worker. Homebrew and Nix install the published v1.28.0 archives. `bun https://raw.githubusercontent.com/BoringInfraCo/Campfire/main/public/campfire/install.mjs` installs that same archive and still runs Campfire on Node.js 22.
 
 ## 1.26.3 — 2026-10-25
 
