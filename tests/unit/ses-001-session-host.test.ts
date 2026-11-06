@@ -848,10 +848,10 @@ describe("SES-001 session host", () => {
     );
     const repo = mkdtempSync(join(tmpdir(), "ses001-adapters-"));
     const bin = mkdtempSync(join(tmpdir(), "ses001-adapters-bin-"));
-    const claude = installBinary(bin, "claude", "2.1.260");
+    const claude = installBinary(bin, "claude", "2.1.319");
     const opencode = installBinary(bin, "opencode", "2.2.5");
     const versions = (executable: string): string => {
-      if (executable.endsWith("/claude")) return "2.1.260 (Claude Code)";
+      if (executable.endsWith("/claude")) return "2.1.319 (Claude Code)";
       if (executable.endsWith("/opencode")) return "opencode v2.2.5";
       return "codex-cli 0.164.0";
     };
@@ -860,7 +860,7 @@ describe("SES-001 session host", () => {
         { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_claude", harness: "claude-code", repository: repo, launch: "copy-launch-command" },
         { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: () => "9.9.9" },
       ),
-    ).toThrow(/Claude Code 2\.1\.260 is required/);
+    ).toThrow(/Claude Code 2\.1\.319 is required/);
     const cases = [
       {
         harness: "claude-code" as const,
@@ -993,10 +993,10 @@ describe("SES-001 session host", () => {
     expect(profileSelectionForHost(process.env)).toEqual({ harness: "claude-code", agentId: "agt_claude" });
     const repo = mkdtempSync(join(tmpdir(), "ses001-select-"));
     const bin = mkdtempSync(join(tmpdir(), "ses001-select-bin-"));
-    const claude = installBinary(bin, "claude", "2.1.260");
+    const claude = installBinary(bin, "claude", "2.1.319");
     prepareSession(
       { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_claude", harness: "claude-code", repository: repo, launch: "copy-launch-command" },
-      { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: () => "2.1.260 (Claude Code)" },
+      { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: () => "2.1.319 (Claude Code)" },
     );
     expect(profileSelectionForHost(process.env)?.harness).toBe("claude-code");
     errors = [];
@@ -1045,7 +1045,7 @@ describe("SES-001 session host", () => {
     const task = JSON.parse(logs.at(-1) ?? "{}") as { id: string };
     const repo = mkdtempSync(join(tmpdir(), "ses001-owned-"));
     const bin = mkdtempSync(join(tmpdir(), "ses001-owned-bin-"));
-    process.env.CLAUDE_CLI = installBinary(bin, "claude", "2.1.260");
+    process.env.CLAUDE_CLI = installBinary(bin, "claude", "2.1.319");
     expect(await runCliEntry([
       "session", "prepare",
       "--workspace", onboard.workspace.id,

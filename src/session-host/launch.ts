@@ -1,7 +1,7 @@
 /**
  * Session-host launch selection for the three pinned harnesses.
  *
- * Codex stays on codex-cli 0.164.0. Claude Code is 2.1.260 and takes the
+ * Codex stays on codex-cli 0.164.0. Claude Code is 2.1.319 and takes the
  * initial instruction as a positional prompt. OpenCode is 2.2.5 and takes
  * `--prompt` on the interactive root command, not `opencode run`.
  * The child is always shell:false. The environment allowlist lives in codex.ts.

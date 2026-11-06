@@ -7,7 +7,7 @@
  */
 
 export const CODEX_CLI_VERSION = "0.164.0";
-export const CLAUDE_CODE_VERSION = "2.1.260";
+export const CLAUDE_CODE_VERSION = "2.1.319";
 export const OPENCODE_CLI_VERSION = "2.2.5";
 export const HEARTBEAT_MS = 15_000;
 export const UNLAUNCHED_TTL_MS = 60 * 60 * 1000;

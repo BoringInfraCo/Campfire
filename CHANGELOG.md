@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.29.2 — 2026-11-06
+
+- The Claude Code session pin is 2.1.319. v1.29.1 pinned 2.1.260. The installed binary updated itself, and session run accepts 2.1.319. Launch arguments are unchanged: Claude Code receives one positional instruction, and OpenCode receives `--prompt` and that instruction.
+- On an isolated local server, OpenCode 2.2.5 read the attached workspace through Campfire (`workspace:list` and `workspace:read`). That check used an `OPENCODE_CLI` wrapper that adds `--standalone` so it did not attach to an already running `opencode serve`. The shipped argv does not include `--standalone`.
+- A live Campfire tool read inside Claude Code is NOT OBSERVED. Claude Code 2.1.319 registered the session, then the model request returned authentication_failed (401) and the UI said to run `/login`. Registering a session is not a tool read. The Mac app, the two-Mac proof, and the Worker are unchanged. This source snapshot does not deploy the Worker. Homebrew and Nix stay on the published v1.29.1 archives until the v1.29.2 checksums exist.
+
 ## 1.29.1 — 2026-11-06
 
 - The local session host can prepare and launch Claude Code 2.1.260 and OpenCode 2.2.5 beside Codex 0.164.0. Claude Code receives one positional instruction. OpenCode receives `--prompt` and that instruction. `opencode run` is not the launch. The host stays off unless `CAMPFIRE_SESSION_HOST=1`. Embedded launch still requires `CAMPFIRE_EMBEDDED_TERMINAL=1`.
