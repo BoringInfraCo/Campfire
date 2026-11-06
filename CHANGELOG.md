@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.29.3 — 2026-11-06
+
+- A terminal `campfire` no longer prints an authorization trace before the receipt. The `{"event":"authz",...}` line was a service log for checks such as `workspace:list`. Redirected stderr still records the decision. Authorization itself is unchanged.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. Homebrew and Nix stay on the published v1.29.2 archives until the v1.29.3 checksums exist.
+
 ## 1.29.2 — 2026-11-06
 
 - The Claude Code session pin is 2.1.319. v1.29.1 pinned 2.1.260. The installed binary updated itself, and session run accepts 2.1.319. Launch arguments are unchanged: Claude Code receives one positional instruction, and OpenCode receives `--prompt` and that instruction.

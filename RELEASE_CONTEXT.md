@@ -1,4 +1,4 @@
-# Campfire 1.29.2 release context
+# Campfire 1.29.3 release context
 
 > Controlled Cloud alpha. An admitted owner publishes and shares, and the
 > installed CLI previews, accepts, or declines one invitation link. There is no
@@ -7,7 +7,7 @@
 > install the published v1.29.1 archives. This source snapshot does not deploy the
 > Worker. `bun` can run the installer; the CLI still runs on Node.js 22.
 
-This public source snapshot was exported on 2026-11-06 from private canonical source commit `6cdd17a18d2be469e0ce6166242beb420e4e471c` (dated 2026-11-06T01:46:20-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-11-06 from private canonical source commit `95faee3d2befb80fdafcb64631dee70c883a71fe` (dated 2026-11-06T13:14:20-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -53,6 +53,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - In 1.29.0, one owned Codex session can attach to one task in its workspace. Runtime reports expire, listing omits process details and terminal bytes, and a final report does not change the task. The local host is flag-gated and launches Codex externally. Claude Code, OpenCode, a real harness trace, and the two-Mac proof are NOT OBSERVED. The Mac app is not in this tag. This release does not deploy the Worker. Homebrew and Nix install the published v1.29.0 archives.
 - In 1.29.1, that same host can launch Claude Code 2.1.260 and OpenCode 2.2.5. Claude Code takes one positional instruction. OpenCode takes `--prompt` and that instruction, not `opencode run`. Connecting Claude Code writes only the user-scope Campfire MCP server and refuses a relative command or a foreign server named campfire. Cloud enrollment stays Codex or OpenCode. Schema stays 11. A live Campfire tool read is NOT OBSERVED. The Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix install the published v1.29.1 archives.
 - In 1.29.2, the Claude Code pin is 2.1.319 because the installed binary updated itself. Launch arguments are unchanged. OpenCode 2.2.5 read the attached workspace through Campfire on an isolated server. That observation used an `OPENCODE_CLI` wrapper adding `--standalone` and is not the shipped argv. A live Campfire tool read inside Claude Code is NOT OBSERVED: the session registered, then the model request returned authentication_failed (401). The Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.1 archives until the v1.29.2 checksums exist.
+- In 1.29.3, a terminal no longer prints the authorization trace before the Campfire receipt. Redirected stderr still records the decision. Authorization, schema, the Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.2 archives until the v1.29.3 checksums exist.
 - The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
 - The first-run and join surfaces now report actual preparation state instead of implying a live agent: a fresh interactive `campfire` (and local `campfire up`) names only successfully prepared harnesses as `Config prepared — restart <Harness> to load Campfire tools` and gives one next action (restart the named harness and describe the work); `--no-connect` is labeled as deliberately skipped; returning profiles route to `campfire up` or current authorized work without claiming service or presence state; and the join receipt distinguishes `Joined` membership from `Config prepared` configuration, never telling an unprepared harness to reload. The no-workspace Viewer names a truthful next action and stays read-only and actor-bound. Human comprehension of the new receipts is NOT OBSERVED; ONB-001 is a founder-directed engineering candidate for real-user testing and moves no gate.
@@ -65,12 +66,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.29.2.
+- The versioned installer source for v1.29.3.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.29.2 candidate passed type checking,
+At source preparation, the private 1.29.3 candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The pin-scoped v1.26.2
 full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in

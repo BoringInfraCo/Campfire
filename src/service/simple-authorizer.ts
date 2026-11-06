@@ -43,6 +43,9 @@ function logAuthz(entry: {
   workspaceId?: string;
   reason?: string;
 }): void {
+  // The human at a terminal gets the Campfire receipt, not a machine trace.
+  // Redirected stderr still records the decision for operators and tests.
+  if (process.stderr.isTTY === true) return;
   process.stderr.write(`${JSON.stringify({ event: "authz", ...entry })}\n`);
 }
 

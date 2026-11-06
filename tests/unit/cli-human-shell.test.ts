@@ -30,11 +30,13 @@ describe("bare campfire human shell", () => {
   let errors: string[];
   let previousStdin: boolean | undefined;
   let previousStdout: boolean | undefined;
+  let previousStderr: boolean | undefined;
   let listenerClosed: boolean;
 
   afterEach(() => {
     setTty(process.stdin, previousStdin);
     setTty(process.stdout, previousStdout);
+    setTty(process.stderr, previousStderr);
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     rmSync(root, { recursive: true, force: true });
@@ -43,6 +45,7 @@ describe("bare campfire human shell", () => {
   function prepare(): void {
     previousStdin = process.stdin.isTTY;
     previousStdout = process.stdout.isTTY;
+    previousStderr = process.stderr.isTTY;
     root = mkdtempSync(join(tmpdir(), "campfire-human-shell-"));
     dbPath = join(root, "campfire.db");
     output = [];
@@ -84,6 +87,33 @@ describe("bare campfire human shell", () => {
     runtime.close();
     return { token: started.token, workspaceId: workspace.id, humanId: started.humanId };
   }
+
+  it("does not print an authorization trace before the empty-workspace receipt", async () => {
+    prepare();
+    const runtime = createRuntimeFromPath(dbPath);
+    const started = beginHuman(runtime.store, runtime.service, runtime.config, "Ada");
+    persistHumanProfile({
+      databasePath: dbPath,
+      humanId: started.humanId,
+      humanName: started.humanName,
+      humanToken: started.token,
+    });
+    runtime.close();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    setTty(process.stderr, true);
+    const traces: string[] = [];
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk): boolean => {
+      traces.push(String(chunk));
+      return true;
+    });
+
+    expect(await runCliEntry([])).toBe(0);
+
+    expect(traces.join("")).not.toContain('"event":"authz"');
+    expect(output.join("\n")).toContain("No workspace yet.");
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+  });
 
   it("opens the dashboard for a TTY local profile with a workspace and does not print the status card", async () => {
     prepare();
