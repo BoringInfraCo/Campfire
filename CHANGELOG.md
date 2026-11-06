@@ -5,7 +5,7 @@
 - A local Codex session can attach to one existing task. `register_agent_session` accepts an optional `taskId` in that workspace. A runtime report uses server time, a 45-second lease, and a sequence. Listing is `list_agent_sessions` and returns no PID, path, argv, or terminal bytes. A final report does not complete the task or write a contribution.
 - The session host is off unless `CAMPFIRE_SESSION_HOST=1`. It prepares, runs, stops, and reconciles Codex through Terminal.app or a copy-launch command. Claude Code and OpenCode are refused. Embedded launch is refused unless `CAMPFIRE_EMBEDDED_TERMINAL=1`. The Mac app is not part of this tag.
 - Local schema is 11. Migration `0012_agent_session_runtime.sql` adds the task attachment and runtime reports. Publication snapshots may include the historical task id and do not include runtime reports. Import still accepts schema 10.
-- Real Codex, Claude Code, OpenCode, and the two-Mac team proof are NOT OBSERVED. The host tests use a fake Codex fixture. This source snapshot does not deploy the Worker. Homebrew and Nix still install the published v1.28.1 archives until this release's four checksums exist.
+- Real Codex, Claude Code, OpenCode, and the two-Mac team proof are NOT OBSERVED. The host tests use a fake Codex fixture. This source snapshot does not deploy the Worker. Homebrew and Nix install the published v1.29.0 archives.
 
 ## 1.28.1 — 2026-11-05
 
