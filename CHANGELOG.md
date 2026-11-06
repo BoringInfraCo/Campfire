@@ -4,7 +4,7 @@
 
 - `campfire dashboard` is removed. Typing `campfire` in an interactive terminal opens the work shell (workspace rail, goal, attention, work) and starts the local API behind it. There is no separate dashboard command.
 - `campfire up` stays the headless listener: agents, `campfire update` restart, hosted remote profiles, and recovery still use it. Quitting the interactive shell stops the listener that session started. A non-interactive `campfire` prints status and does not start the listener. Hosted profiles still use `campfire up` for the long-running local journal/Viewer proxy.
-- No schema, migration, MCP tool, Viewer allowlist, or authorization change. This source snapshot does not deploy the Worker. Homebrew and Nix still install the published v1.28.0 archives until this release's four checksums exist.
+- No schema, migration, MCP tool, Viewer allowlist, or authorization change. This source snapshot does not deploy the Worker. Homebrew and Nix install the published v1.28.1 archives.
 
 ## 1.28.0 — 2026-11-05
 
