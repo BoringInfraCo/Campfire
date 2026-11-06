@@ -111,8 +111,9 @@ describe("ACT-001 D1 baseline preservation", () => {
     // Playbook is the only gated command; every other name is default-visible.
     // Phase C (desktop continuity sprint) adds `intent` — the bounded desktop
     // write channel — as the one catalog name past the SHR-001 family.
+    const retired = ["dashboard"];
     const visible = CLI_COMMAND_NAMES.filter((name) => name !== "playbook");
-    expect(visible).toHaveLength(frozen.length + 6);
+    expect(visible).toHaveLength(frozen.length + 6 - retired.length);
     const added = visible.filter((name) => !frozen.includes(name));
     expect(added).toEqual([
       "update",
@@ -122,6 +123,8 @@ describe("ACT-001 D1 baseline preservation", () => {
       "publish-recover",
       "intent",
     ]);
+    const visibleNames = new Set<string>(visible);
+    expect(frozen.filter((name) => !visibleNames.has(name))).toEqual(retired);
     const spec = commandSpec("actions");
     expect(spec.usage).toBe(
       "campfire actions propose|approve|reject|cancel|reserve|receipt|inspect|list|receipts [--output auto|human|json]",
@@ -202,7 +205,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.28.0");
+    expect(pkg.version).toBe("1.28.1");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

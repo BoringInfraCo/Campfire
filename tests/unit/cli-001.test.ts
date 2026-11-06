@@ -204,7 +204,8 @@ describe("output selection", () => {
       ]);
       expect(autoCode).toBe(0);
       expect(stdout()).not.toMatch(/cft_/);
-      expect(stdout()).toContain("campfire up");
+      expect(stdout()).toContain("Next: campfire");
+      expect(stdout()).not.toContain("campfire up");
 
       // Explicit JSON still emits the one-time receipt.
       logs = [];
@@ -232,7 +233,8 @@ describe("output selection", () => {
       ]);
       expect(envCode).toBe(0);
       expect(stdout()).not.toMatch(/cft_/);
-      expect(stdout()).toContain("campfire up");
+      expect(stdout()).toContain("Next: campfire");
+      expect(stdout()).not.toContain("campfire up");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

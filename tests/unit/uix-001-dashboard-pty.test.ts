@@ -186,18 +186,36 @@ finally:
             pass
 `;
 
+function writeShellProfile(db: string, configDir: string): void {
+  const tokens = JSON.parse(readFileSync(join(configDir, "tokens.json"), "utf8")) as { ana: string };
+  writeFileSync(
+    join(configDir, "config.json"),
+    JSON.stringify({
+      version: 1,
+      mode: "local",
+      databasePath: db,
+      url: "http://127.0.0.1:9414",
+      humanId: ACTOR_ID,
+      humanName: "Ana",
+      workspaceId: WORKSPACE_ID,
+      workspaceName: "ATT-001 attention lab",
+    }),
+  );
+  writeFileSync(join(configDir, "credentials.json"), JSON.stringify({ humanToken: tokens.ana }), { mode: 0o600 });
+}
+
 function runDashboard(db: string, configDir: string, rows: number, cols: number, mode: "q" | "ctrl-c" | "sigint"): PtyResult {
+  writeShellProfile(db, configDir);
   const argv = [
     join(ROOT, "node_modules/.bin/tsx"),
     join(ROOT, "src/cli/index.ts"),
-    "dashboard",
-    WORKSPACE_ID,
+    "--no-connect",
+    "--port",
+    "0",
+    "--viewer-port",
+    "0",
     "--db",
     db,
-    "--actor",
-    ACTOR_ID,
-    "--type",
-    "human",
   ];
   const child = spawnSync("python3", ["-c", PTY_DRIVER, JSON.stringify({
     argv,

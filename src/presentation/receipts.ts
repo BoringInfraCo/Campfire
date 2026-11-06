@@ -81,7 +81,7 @@ export function connectWriteConfig(harness: ReceiptHarness): string {
 }
 
 // ---------------------------------------------------------------------------
-// Local `up` (fresh interactive `campfire` and manual `campfire up`)
+// Local listener receipt. Interactive `campfire` and headless `campfire up` share it.
 // ---------------------------------------------------------------------------
 
 export interface LocalUpReceiptInput {
@@ -127,7 +127,7 @@ function localUpHarnessRows(input: LocalUpReceiptInput): string[] {
 
 function localUpNextLines(input: LocalUpReceiptInput): string[] {
   if (!input.connect) {
-    return ["  Next: Run campfire up without --no-connect to prepare your harness's Campfire tools."];
+    return ["  Next: Run campfire without --no-connect to prepare your harness's Campfire tools."];
   }
   if (input.prepared.length > 0) {
     const hasWorkspace = input.workspaces.length > 0;
@@ -151,7 +151,7 @@ function localUpNextLines(input: LocalUpReceiptInput): string[] {
     return lines;
   }
   if (input.detected.length === 0) {
-    return ["  Next: Install Codex or OpenCode, then run campfire up to prepare its Campfire tools."];
+    return ["  Next: Install Codex or OpenCode, then run campfire to prepare its Campfire tools."];
   }
   return input.detected.map((harness, index) =>
     index === 0 ? `  Next: ${connectWriteConfig(harness)}` : `${NEXT_INDENT}${connectWriteConfig(harness)}`,
@@ -180,7 +180,7 @@ export function formatLocalStatusReceipt(input: LocalStatusReceiptInput): string
       lines.push(receiptRow("Agents", `${input.agents}  (recorded, not live)`));
     }
     lines.push(
-      "  Next: Run campfire up to reopen Campfire and prepare your harness's tools.",
+      "  Next: Run campfire to reopen Campfire and prepare your harness's tools.",
       `${NEXT_INDENT}Then, in that session, describe the work you want to do;`,
       `${NEXT_INDENT}your agent can create a Campfire workspace and goal with you.`,
       PAST_SESSIONS_LINE,
@@ -192,7 +192,7 @@ export function formatLocalStatusReceipt(input: LocalStatusReceiptInput): string
   if (input.agents !== undefined) lines.push(receiptRow("Agents", input.agents));
   lines.push(
     nextCommand("  Next: ", "campfire status", "read your current authorized work"),
-    nextCommand(NEXT_INDENT, "campfire up", "open the Viewer and prepare your harness's tools"),
+    nextCommand(NEXT_INDENT, "campfire", "open Campfire and prepare your harness's tools"),
     "  Saved local profile — not live service or agent status.",
   );
   return lines.join("\n");
@@ -212,7 +212,7 @@ export function awaitingWorkspaceNextLines(): string[] {
 
 /** Dashboard awaiting state: the same truth, one line, no presence claim. */
 export const DASHBOARD_AWAITING_WORKSPACE =
-  "No workspace yet. Run campfire up, then describe the work to your agent; it can create the workspace and goal.";
+  "No workspace yet. Run campfire, then describe the work to your agent; it can create the workspace and goal.";
 
 // ---------------------------------------------------------------------------
 // Join receipt (invitation-file success)
@@ -233,7 +233,7 @@ export function formatJoinReceipt(input: JoinReceiptInput): string {
   lines.push("");
   if (input.prepared.length > 0) {
     lines.push(
-      `  Next: Run campfire up, then restart ${input.prepared
+      `  Next: Run campfire, then restart ${input.prepared
         .map((harness) => harnessLabel(harness))
         .join(" or ")}. Approve Campfire tools if asked,`,
       `${NEXT_INDENT}then begin from ${input.workspaceName}.`,
@@ -241,7 +241,7 @@ export function formatJoinReceipt(input: JoinReceiptInput): string {
   } else {
     // Membership without a prepared block: the recovery is an explicit
     // connect, never a reload of configuration that does not exist.
-    lines.push("  Next: Run campfire up.");
+    lines.push("  Next: Run campfire.");
     for (const harness of input.agents) lines.push(`${NEXT_INDENT}${connectWriteConfig(harness)}`);
   }
   return lines.join("\n");

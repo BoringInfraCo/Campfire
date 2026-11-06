@@ -83,7 +83,7 @@ describe("operator profile", () => {
     const status = formatStatus(profile!);
     expect(status).toContain(SAMPLE.workspaceName);
     expect(status).toContain(SAMPLE.goalTitle);
-    expect(status).toContain("campfire up");
+    expect(status).toContain("open Campfire and prepare your harness's tools");
     expect(status).not.toContain(SAMPLE.humanToken);
     expect(status).not.toContain(SAMPLE.agentToken);
     expect(status).not.toMatch(/cft_/);

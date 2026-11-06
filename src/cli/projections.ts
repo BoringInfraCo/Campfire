@@ -226,7 +226,7 @@ export function buildAwaitingWorkspace(human?: {
     state: "awaiting_workspace",
     ...(human === undefined ? {} : { human }),
     next: [
-      { command: "campfire up", when: "Start the local API and Viewer so an agent can connect" },
+      { command: "campfire", when: "Open Campfire so an agent can connect" },
       { command: "campfire --help", when: "See the command list" },
     ],
   };

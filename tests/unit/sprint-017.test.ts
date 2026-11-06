@@ -118,11 +118,12 @@ describe("sprint 017 first-run CLI", () => {
     expect(text).not.toContain(receipt.agent.token);
   });
 
-  it("prints a token-free human-mode onboard receipt that points at campfire up", async () => {
+  it("prints a token-free human-mode onboard receipt that points at campfire", async () => {
     expect(await runCliEntry(onboardArgs(["--output", "human"]))).toBe(0);
     const text = stdout.join("\n");
     expect(text).not.toMatch(/cft_/);
-    expect(text).toContain("campfire up");
+    expect(text).toContain("Next: campfire");
+    expect(text).not.toContain("campfire up");
     expect(text).toContain("Credentials are stored locally");
   });
 });

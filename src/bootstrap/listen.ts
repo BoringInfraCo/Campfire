@@ -15,7 +15,7 @@ import { bootstrapOrganizationTeam } from "./bootstrap.js";
 import { prepareConnection, type SupportedHarness } from "./connect.js";
 
 const ALREADY_HAS_HUMAN =
-  "This installation already has a human. Run campfire up, or use create-agent, create-workspace, and create-goal.";
+  "This installation already has a human. Run campfire, or use create-agent, create-workspace, and create-goal.";
 
 const HARNESS_NAME: Record<SupportedHarness, string> = {
   codex: "Codex",

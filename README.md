@@ -19,11 +19,13 @@ curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 campfire
 ```
 
-`campfire` records the local human on first run and, in that same interactive
-run, starts the local API and read-only Viewer and connects installed Codex or
-OpenCode harnesses. There is no separate `campfire up` step; on a later run
-`campfire` prints status, and `campfire up` reopens. The agent creates the
-workspace and goal when work begins. Past private sessions are not imported.
+Interactive `campfire` records the local human on first run, opens the
+terminal work shell, starts the local API, and connects installed Codex or
+OpenCode unless skipped. `campfire up` is the headless listener for scripts,
+agents, and hosted profiles, not a second way to open the shell. `campfire
+dashboard` is not a command. On a later non-interactive run, `campfire` prints
+status. The agent creates the workspace and goal when work begins. Past
+private sessions are not imported.
 
 Homebrew and Nix install the same checksummed GitHub Release archives. Homebrew uses its keg-only Node.js 22. Nix wraps Node.js 22 into the install. Neither sends install telemetry or starts a service.
 
@@ -46,7 +48,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.28.0/install.sh | sh -s -- --version 1.28.0
+curl -fsSL https://boringinfra.company/campfire/v1.28.1/install.sh | sh -s -- --version 1.28.1
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 

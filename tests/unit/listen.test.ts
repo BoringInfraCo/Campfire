@@ -123,7 +123,7 @@ describe("first-run human", () => {
       const text = stdout.join("\n");
       expect(text).toContain("Ada");
       expect(text).toContain("No workspace yet.");
-      expect(text).toContain("Run campfire up to reopen Campfire and prepare your harness's tools.");
+      expect(text).toContain("Run campfire to reopen Campfire and prepare your harness's tools.");
       expect(text).toContain("Past sessions are not imported.");
       expect(text).not.toMatch(/cft_/);
       expect(text).not.toContain(credentials!.humanToken);

@@ -3551,7 +3551,6 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   intent: (parsed, argv) => cmdIntent(parsed, argv),
   update: (parsed) => runUpdateCommand(parsed),
   status: (parsed, argv) => cmdStatus(parsed, argv),
-  dashboard: (parsed, argv) => cmdDashboard(parsed, argv),
   agents: (parsed, argv) => cmdAgents(parsed, argv),
   decisions: (parsed, argv) => cmdDecisions(parsed, argv),
   context: (parsed, argv) => cmdContext(parsed, argv),

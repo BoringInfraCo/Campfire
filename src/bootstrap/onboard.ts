@@ -158,7 +158,8 @@ export function formatOnboardReceipt(receipt: OnboardReceipt): string {
     "Credentials are stored locally (mode 0600) and are not printed here.",
     "Pass --json for one-time tokens.",
     "",
-    `Next: ${receipt.next.up}`,
+    // JSON next.up stays the headless listener. The human opens Campfire with one command.
+    "Next: campfire",
     `      Reload ${receipt.agent.harness} after connect. Approval may be required.`,
     `      As the agent: register_agent_session, then preflight.`,
     "",

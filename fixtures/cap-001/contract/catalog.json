@@ -47,15 +47,15 @@
     },
     {
       "id": "dashboard",
-      "purpose": "Read-only interactive terminal console for one workspace.",
+      "purpose": "Open Campfire in the terminal for one workspace.",
       "effect": "read",
       "scope": "workspace",
       "requiredInputs": [],
-      "preconditions": ["Interactive TTY. Non-TTY does not draw the console."],
+      "preconditions": ["Interactive terminal. A non-interactive call prints status instead of the shell."],
       "outputCaveat": "Projects an authorized read. Registered agents are not live presence. Attention cues are not permission.",
       "surfaces": {
-        "cli": { "usage": "campfire dashboard [workspace]" },
-        "mcp": { "unavailable": "interactive terminal command; not an MCP tool" }
+        "cli": { "usage": "campfire" },
+        "mcp": { "unavailable": "interactive terminal; not an MCP tool" }
       }
     },
     {

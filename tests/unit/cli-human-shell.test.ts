@@ -138,7 +138,7 @@ describe("bare campfire human shell", () => {
     expect(localWorkspace.openLoopbackUrl).not.toHaveBeenCalled();
     const text = output.join("\n");
     expect(text).toContain("Saved local profile — not live service or agent status.");
-    expect(text).toContain("campfire up");
+    expect(text).toContain("open Campfire and prepare your harness's tools");
     expect(text).not.toContain(token);
 
     output.length = 0;

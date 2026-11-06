@@ -286,6 +286,8 @@ describe("parity", () => {
     for (const operation of capabilityOperations()) {
       const cli = operation.surfaces.cli;
       if (!("usage" in cli)) continue;
+      // Bare campfire is the interactive shell, not a catalogued subcommand.
+      if (cli.usage === "campfire") continue;
       const word = cli.usage.split(" ")[1] as CliCommand;
       const live = commandSpec(word).usage;
       if (INSPECT_OPERATIONS.has(operation.id)) {

@@ -122,10 +122,10 @@ describe("Sprint 018 session entry", () => {
     expect(isCampfireCliEntry(CLI)).toBe(true);
     expect(spawnUp).not.toHaveBeenCalled();
     expect(result.ready).toBe(false);
-    if (!result.ready) expect(result.message).toContain("Run campfire up");
+    if (!result.ready) expect(result.message).toContain("Run campfire.");
   });
 
-  it("names campfire up when the loopback listener never accepts", async () => {
+  it("names campfire when the loopback listener never accepts", async () => {
     const dir = mkdtempSync(join(tmpdir(), "campfire-018-down-"));
     dirs.push(dir);
     const result = await ensureLocalListener({
@@ -139,7 +139,7 @@ describe("Sprint 018 session entry", () => {
     });
     expect(result.ready).toBe(false);
     if (!result.ready) {
-      expect(result.message).toContain("Run campfire up");
+      expect(result.message).toContain("Run campfire.");
       expect(result.details.nextAction).toBe("campfire up");
       expect(result.message).not.toContain("cft_");
     }
@@ -180,7 +180,7 @@ describe("Sprint 018 session entry", () => {
       [],
       async () => ({
         ready: false,
-        message: "Unable to reach Campfire at http://127.0.0.1:9. Run campfire up.",
+        message: "Unable to reach Campfire at http://127.0.0.1:9. Run campfire.",
         details: { field: "CAMPFIRE_URL", nextAction: "campfire up", url: "http://127.0.0.1:9" },
       }),
     );
@@ -196,7 +196,7 @@ describe("Sprint 018 session entry", () => {
       expect(client.getInstructions()).toBe(SESSION_INSTRUCTIONS);
       const outcome = callText(await client.callTool({ name: "whoami", arguments: {} }));
       expect(outcome.isError).toBe(true);
-      expect(outcome.json.message).toContain("Run campfire up");
+      expect(outcome.json.message).toContain("Run campfire.");
       expect(JSON.stringify(outcome.json)).not.toContain("cft_secret");
       await client.close();
       await server.close();

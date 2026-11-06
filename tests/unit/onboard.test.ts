@@ -134,7 +134,8 @@ describe("campfire onboard", () => {
       const agentToken = credentials!.agentToken;
       expect(agentToken).toBeDefined();
       expect(text).not.toMatch(/cft_/);
-      expect(text).toContain("campfire up");
+      expect(text).toContain("Next: campfire");
+      expect(text).not.toContain("campfire up");
       expect(runtime.service.resolveToken(humanToken)).toEqual({ actorId: human!.id, actorType: "human" });
       expect(runtime.service.resolveToken(agentToken!)).toEqual({ actorId: agents[0]!.id, actorType: "agent" });
       const stored = JSON.stringify({

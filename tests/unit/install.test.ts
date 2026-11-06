@@ -296,3 +296,19 @@ exit 0
     }
   });
 });
+
+describe("bun installer", () => {
+  const bunInstaller = fileURLToPath(new URL("../../public/campfire/install.mjs", import.meta.url));
+
+  it("delegates a dry run to install.sh and does not install Node", () => {
+    const prefix = join(root, "prefix");
+    const source = readFileSync(bunInstaller, "utf8");
+    expect(source).toContain("https://raw.githubusercontent.com/BoringInfraCo/Campfire/main/public/campfire/install.mjs");
+    expect(source).toContain("This never installs Node.js.");
+    const result = spawnSync(process.execPath, [bunInstaller, "--dry-run", "--prefix", prefix], { encoding: "utf8" });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Campfire install plan (dry run, nothing changed):");
+    expect(result.stdout).toContain("version:      latest");
+    expect(existsSync(prefix)).toBe(false);
+  });
+});

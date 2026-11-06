@@ -45,7 +45,7 @@ const A9_UP_JSON =
 
 /** Baseline packet `docs/evidence/onb-001/machine/C5-return-no-workspace-status-json.stdout.txt`. */
 const C5_STATUS_JSON =
-  '{"version":1,"kind":"workspace_status","state":"awaiting_workspace","human":{"id":"hum_[id]","name":"Ada"},"next":[{"command":"campfire up","when":"Start the local API and Viewer so an agent can connect"},{"command":"campfire --help","when":"See the command list"}]}';
+  '{"version":1,"kind":"workspace_status","state":"awaiting_workspace","human":{"id":"hum_[id]","name":"Ada"},"next":[{"command":"campfire","when":"Open Campfire so an agent can connect"},{"command":"campfire --help","when":"See the command list"}]}';
 
 function maskDynamic(text: string): string {
   return text
@@ -146,7 +146,7 @@ describe("ONB-001 local up receipt", () => {
     });
     expect(text).toContain("  Harness    No supported harness detected");
     expect(text).toContain(
-      "  Next: Install Codex or OpenCode, then run campfire up to prepare its Campfire tools.",
+      "  Next: Install Codex or OpenCode, then run campfire to prepare its Campfire tools.",
     );
     expectClean(text);
   });
@@ -163,7 +163,7 @@ describe("ONB-001 local up receipt", () => {
     });
     expect(text).toContain("  Harness    Connection setup skipped (--no-connect)");
     expect(text).toContain(
-      "  Next: Run campfire up without --no-connect to prepare your harness's Campfire tools.",
+      "  Next: Run campfire without --no-connect to prepare your harness's Campfire tools.",
     );
     expect(text).not.toContain("Config prepared");
     expectClean(text);
@@ -220,7 +220,7 @@ describe("ONB-001 returning local status", () => {
       [
         "  You        Ada",
         "  No workspace yet.",
-        "  Next: Run campfire up to reopen Campfire and prepare your harness's tools.",
+        "  Next: Run campfire to reopen Campfire and prepare your harness's tools.",
         "        Then, in that session, describe the work you want to do;",
         "        your agent can create a Campfire workspace and goal with you.",
         "  Past sessions are not imported.",
@@ -251,7 +251,7 @@ describe("ONB-001 returning local status", () => {
         "  Goal       Ship the billing migration safely",
         "  Agents     Codex (codex)",
         "  Next: campfire status    read your current authorized work",
-        "        campfire up        open the Viewer and prepare your harness's tools",
+        "        campfire           open Campfire and prepare your harness's tools",
         "  Saved local profile — not live service or agent status.",
       ].join("\n"),
     );
@@ -267,7 +267,7 @@ describe("ONB-001 awaiting-workspace projection", () => {
       state: "awaiting_workspace",
       human: { id: "hum_1", name: "Ada" },
       next: [
-        { command: "campfire up", when: "Start the local API and Viewer so an agent can connect" },
+        { command: "campfire", when: "Open Campfire so an agent can connect" },
         { command: "campfire --help", when: "See the command list" },
       ],
     });
@@ -280,7 +280,7 @@ describe("ONB-001 awaiting-workspace projection", () => {
         "You        Ada",
         "No workspace yet.",
         "Past sessions are not imported.",
-        "campfire up  Start the local API and Viewer so an agent can connect",
+        "campfire   Open Campfire so an agent can connect",
         "campfire --help  See the command list",
         "  Next: After your agent has the Campfire tools loaded, describe the work",
         "        you want to do; your agent can create a Campfire workspace and goal with you.",
@@ -291,7 +291,7 @@ describe("ONB-001 awaiting-workspace projection", () => {
 
   it("keeps the dashboard awaiting sentence free of presence claims", () => {
     expect(DASHBOARD_AWAITING_WORKSPACE).toBe(
-      "No workspace yet. Run campfire up, then describe the work to your agent; it can create the workspace and goal.",
+      "No workspace yet. Run campfire, then describe the work to your agent; it can create the workspace and goal.",
     );
     expectClean(DASHBOARD_AWAITING_WORKSPACE);
   });
@@ -311,7 +311,7 @@ describe("ONB-001 join receipt", () => {
         "  Codex      Config prepared — restart Codex to load Campfire tools",
         "  OpenCode   Config prepared — restart OpenCode to load Campfire tools",
         "",
-        "  Next: Run campfire up, then restart Codex or OpenCode. Approve Campfire tools if asked,",
+        "  Next: Run campfire, then restart Codex or OpenCode. Approve Campfire tools if asked,",
         "        then begin from billing deploy.",
       ].join("\n"),
     );
@@ -328,7 +328,7 @@ describe("ONB-001 join receipt", () => {
     expect(text).toContain("  Joined billing deploy as Ben.");
     expect(text).not.toContain("Config prepared");
     expect(text).not.toContain("Restart");
-    expect(text).toContain("  Next: Run campfire up.");
+    expect(text).toContain("  Next: Run campfire.");
     expect(text).toContain(
       "        Run campfire connect --harness codex --token <agent-token> to write its Campfire config.",
     );
@@ -548,7 +548,7 @@ describe("ONB-001 CLI receipts", () => {
       expect(await execution).toBe(0);
       const text = output.join("\n");
       expect(text).toContain("  Harness    Connection setup skipped (--no-connect)");
-      expect(text).toContain("  Next: Run campfire up without --no-connect to prepare your harness's Campfire tools.");
+      expect(text).toContain("  Next: Run campfire without --no-connect to prepare your harness's Campfire tools.");
       expect(text).not.toContain("Config prepared");
       expectClean(text);
     } finally {
@@ -583,7 +583,7 @@ describe("ONB-001 CLI receipts", () => {
           "You        Ada",
           "No workspace yet.",
           "Past sessions are not imported.",
-          "campfire up  Start the local API and Viewer so an agent can connect",
+          "campfire   Open Campfire so an agent can connect",
           "campfire --help  See the command list",
           "  Next: After your agent has the Campfire tools loaded, describe the work",
           "        you want to do; your agent can create a Campfire workspace and goal with you.",
@@ -618,7 +618,7 @@ describe("ONB-001 CLI receipts", () => {
       expect(await runCliEntry(["--db", dbPath])).toBe(0);
       const text = output.join("\n");
       expect(text).toContain("  No workspace yet.");
-      expect(text).toContain("  Next: Run campfire up to reopen Campfire and prepare your harness's tools.");
+      expect(text).toContain("  Next: Run campfire to reopen Campfire and prepare your harness's tools.");
       expect(text).toContain("  Past sessions are not imported.");
       expectClean(text);
     } finally {
@@ -836,7 +836,7 @@ describe("ONB-001 CLI receipts", () => {
         state: "awaiting_workspace",
         human: { id: expect.stringMatching(/^hum_[0-9a-f]+$/), name: "Ada" },
         next: [
-          { command: "campfire up", when: "Start the local API and Viewer so an agent can connect" },
+          { command: "campfire", when: "Open Campfire so an agent can connect" },
           { command: "campfire --help", when: "See the command list" },
         ],
       });

@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FIXTURE, seedFixture } from "../../src/bootstrap/seed.js";
-import { CLI_COMMAND_NAMES, commandSpec, formatUsage } from "../../src/cli/catalog.js";
+import { CLI_COMMAND_NAMES, formatUsage } from "../../src/cli/catalog.js";
 import { createDashboardState, reduceDashboardKey, renderDashboard } from "../../src/cli/dashboard.js";
 import { runCliEntry } from "../../src/cli/index.js";
 import type { ContextSlice } from "../../src/domain/context-policy.js";
@@ -403,13 +403,9 @@ describe("UIX-001 dashboard", () => {
     expect(viewerLabelDrift(APP_JS)).toEqual([]);
   });
 
-  it("catalogues dashboard as a read-only protocol command", () => {
-    expect(CLI_COMMAND_NAMES).toContain("dashboard");
-    const spec = commandSpec("dashboard");
-    expect(spec.protocol).toBe(true);
-    expect(spec.mutates).toBe(false);
-    expect(spec.workspaceScoped).toBe(true);
-    expect(formatUsage()).toContain("campfire dashboard [workspace]");
+  it("opens the terminal shell from campfire, not a separate dashboard command", () => {
+    expect(CLI_COMMAND_NAMES).not.toContain("dashboard");
+    expect(formatUsage()).not.toContain("campfire dashboard");
   });
 });
 
@@ -475,8 +471,7 @@ describe("UIX-001 dashboard non-TTY", () => {
     const code = await runCliEntry(["--db", dbPath, "dashboard"]);
     expect(code).not.toBe(0);
     const combined = `${logs.join("\n")}\n${errors.join("\n")}\n${writes.join("")}`;
-    expect(combined).toContain("campfire status --output human");
-    expect(combined).toContain("campfire status --output json");
+    expect(combined).toContain("Unknown command: dashboard");
     expect(combined).not.toContain("\u001B");
 
     logs = [];

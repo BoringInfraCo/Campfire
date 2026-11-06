@@ -53,7 +53,7 @@ export type EnsureListenerResult = ListenerReady | ListenerDown;
 function down(url: string, local: boolean): ListenerDown {
   // `campfire up` starts the loopback listener. It does not serve a remote URL.
   const message = local
-    ? `Unable to reach Campfire at ${url}. Run campfire up.`
+    ? `Unable to reach Campfire at ${url}. Run campfire.`
     : `Unable to reach Campfire at ${url}.`;
   return {
     ready: false,
