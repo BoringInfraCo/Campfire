@@ -1,13 +1,14 @@
-# Campfire 1.28.1 release context
+# Campfire 1.29.0 release context
 
 > Controlled Cloud alpha. An admitted owner publishes and shares, and the
 > installed CLI previews, accepts, or declines one invitation link. There is no
 > browser click-to-accept surface and no open Cloud signup. The physical
 > two-Mac acceptance is not part of this release's evidence. Homebrew and Nix
-> install the published v1.28.1 archives. This source snapshot does not deploy the
-> Worker. `bun` can run the installer; the CLI still runs on Node.js 22.
+> still install the published v1.28.1 archives until the v1.29.0 checksums
+> exist. This source snapshot does not deploy the Worker. `bun` can run the
+> installer; the CLI still runs on Node.js 22.
 
-This public source snapshot was exported on 2026-11-06 from private canonical source commit `72fb893a69fdf6437adddea3019a41a2633da91a` (dated 2026-11-05T19:30:05-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-11-06 from private canonical source commit `d2d041e5dddfe60a9e2ad24822c16b8b7af46c8e` (dated 2026-11-05T23:37:56-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -50,6 +51,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - Artifact references now render with a typed, deterministic reference class (safe absolute HTTPS, insecure HTTP, credential-bearing, local path, other/internal scheme, or unparsed; control characters force inert text), the destination host for openable references, and the recorded Finding evidence relation where one exists; relations are never inferred and historical or competing decisions are not promoted. The Viewer adds a clearly labeled deliberate open control for safe absolute HTTPS references only — `noopener noreferrer`, no referrer, destination host shown, navigation only on the user's own activation, no rendering-time fetches — while the terminal stays inspect-only. Whether a person can use this to reach, verify, or act on an external output in ordinary work is unmeasured: the artifact-handoff human observations are NOT OBSERVED, the sprint result stands as UNSCORED, and Gate B/C/E/F remain open. Campfire never fetches, hosts, or verifies targets, and workspace membership does not grant external access.
 - An interactive `campfire` opens the read-only terminal work shell over the same authorized workspace read: the workspace rail and the current goal, attention, and work, without a command list. Quitting that console stops the listener this command started. Until a workspace exists, an interactive `campfire` prints the no-workspace status and stops. `campfire up` remains the explicit long-running listener. Scripts and JSON keep the existing status path. No schema, migration, Worker, Viewer allowlist, MCP tool, or authorization change. Human comprehension of this shell is not part of this release. Homebrew and Nix install the published v1.28.0 archives. A Bun command runs the same installer; the CLI still runs on Node.js 22.
 - In 1.28.1, interactive `campfire` is the human entry and opens the terminal work shell. `campfire dashboard` is not a command. `campfire up` remains the headless listener. Human comprehension is not part of this release. Homebrew and Nix install the published v1.28.1 archives.
+- In 1.29.0, one owned Codex session can attach to one task in its workspace. Runtime reports expire, listing omits process details and terminal bytes, and a final report does not change the task. The local host is flag-gated and launches Codex externally. Claude Code, OpenCode, a real harness trace, and the two-Mac proof are NOT OBSERVED. The Mac app is not in this tag. This release does not deploy the Worker. Homebrew and Nix pins remain on the published v1.28.1 archives.
 - The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
 - The first-run and join surfaces now report actual preparation state instead of implying a live agent: a fresh interactive `campfire` (and local `campfire up`) names only successfully prepared harnesses as `Config prepared — restart <Harness> to load Campfire tools` and gives one next action (restart the named harness and describe the work); `--no-connect` is labeled as deliberately skipped; returning profiles route to `campfire up` or current authorized work without claiming service or presence state; and the join receipt distinguishes `Joined` membership from `Config prepared` configuration, never telling an unprepared harness to reload. The no-workspace Viewer names a truthful next action and stays read-only and actor-bound. Human comprehension of the new receipts is NOT OBSERVED; ONB-001 is a founder-directed engineering candidate for real-user testing and moves no gate.
@@ -62,12 +64,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.28.1.
+- The versioned installer source for v1.29.0.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.28.1 candidate passed type checking,
+At source preparation, the private 1.29.0 candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The pin-scoped v1.26.2
 full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in

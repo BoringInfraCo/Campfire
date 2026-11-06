@@ -24,7 +24,7 @@ import { CAMPFIRE_EVENT_TYPES } from "../../src/domain/events.js";
 import { githubIngressPathSourceId } from "../../src/service/github-ingress.js";
 import { ValidationError } from "../../src/domain/errors.js";
 import { openSqliteStore } from "../../src/store/sqlite-store.js";
-import { schemaVersion } from "../../src/store/migrations.js";
+import { CURRENT_SCHEMA_VERSION, schemaVersion } from "../../src/store/migrations.js";
 import { createCampfireService } from "../../src/service/campfire-service.js";
 import { ACT001, seedAct001Database } from "../../fixtures/act-001/seed.js";
 
@@ -67,6 +67,11 @@ const EXPECTED_HTTP_ADDITIONS = [
   "list_action_receipts",
 ] as const;
 
+const SES_HTTP_ADDITIONS = [
+  "report_agent_session_runtime",
+  "list_agent_sessions",
+] as const;
+
 const EXPECTED_MCP_ADDITIONS = [
   "propose_action",
   "reserve_action_execution",
@@ -83,10 +88,12 @@ describe("ACT-001 D1 baseline preservation", () => {
     expect(frozen.methods).toHaveLength(47);
     expect(ANSWER_KEY.baseline.httpMethods).toBe(47);
     expect(ANSWER_KEY.interfaces.serviceMethods).toBe(8);
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(frozen.count + EXPECTED_HTTP_ADDITIONS.length);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(
+      frozen.count + EXPECTED_HTTP_ADDITIONS.length + SES_HTTP_ADDITIONS.length,
+    );
     expect(new Set(CAMPFIRE_HTTP_METHODS).size).toBe(CAMPFIRE_HTTP_METHODS.length);
     const added = CAMPFIRE_HTTP_METHODS.filter((method) => !frozen.methods.includes(method));
-    expect([...added].sort()).toEqual([...EXPECTED_HTTP_ADDITIONS].sort());
+    expect([...added].sort()).toEqual([...EXPECTED_HTTP_ADDITIONS, ...SES_HTTP_ADDITIONS].sort());
   });
 
   it("pins v1.25 MCP tools (40) plus exactly the 6 ACT-001 agent tools", () => {
@@ -134,11 +141,11 @@ describe("ACT-001 D1 baseline preservation", () => {
     );
   });
 
-  it("keeps the Viewer allowlist at exactly the 12 v1.25 reads", () => {
+  it("keeps the v1.25 Viewer reads and adds the SES-001 session list", () => {
     const frozen = baselineJson<{ count: number; methods: string[] }>("viewer-allowlist.json");
     expect(frozen.count).toBe(12);
     expect(ANSWER_KEY.baseline.viewerReads).toBe(12);
-    expect([...VIEWER_READ_METHODS].sort()).toEqual([...frozen.methods].sort());
+    expect([...VIEWER_READ_METHODS].sort()).toEqual([...frozen.methods, "list_agent_sessions"].sort());
     for (const method of EXPECTED_HTTP_ADDITIONS) {
       expect(VIEWER_READ_METHODS as readonly string[]).not.toContain(method);
     }
@@ -205,7 +212,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.28.1");
+    expect(pkg.version).toBe("1.29.0");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);
@@ -275,7 +282,7 @@ describe("ACT-001 D8 fresh-vs-upgraded equivalence", () => {
           version: number;
         };
         expect(version.version).toBe(schemaVersion(check));
-        expect(version.version).toBe(10);
+        expect(version.version).toBe(CURRENT_SCHEMA_VERSION);
         const tables = check
           .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND (name LIKE 'action%' OR name LIKE 'github_ingress%' OR name LIKE 'github_source%')")
           .all() as Array<{ name: string }>;

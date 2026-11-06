@@ -5,6 +5,7 @@
  * Handlers stay thin: validate, call the service, serialize the result.
  */
 import type { ActorContext } from "./authorization.js";
+import type { AgentSessionRuntimeReport, DerivedSessionRuntimeState } from "../domain/session-runtime.js";
 import type {
   ActionProposal,
   ActionProviderRef,
@@ -62,6 +63,53 @@ export interface RegisterAgentSessionInput {
   humanId?: string;
   workspaceId: string;
   harness: string;
+  /** Optional task attachment. A task cannot be moved onto an existing session. */
+  taskId?: string;
+}
+
+export interface ReportAgentSessionRuntimeInput {
+  sessionId: string;
+  state: string;
+  sequence: number;
+  exitCode?: number;
+  failureKind?: string;
+}
+
+export interface ListAgentSessionsInput {
+  workspaceId: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface ListedAgentSession {
+  id: string;
+  workspaceId: string;
+  taskId?: string;
+  taskTitle?: string;
+  taskStatus?: TaskStatus;
+  agentId: string;
+  agentDisplayName: string;
+  harness: string;
+  humanId: string;
+  humanDisplayName: string;
+  startedAt: string;
+  endedAt?: string;
+  state: DerivedSessionRuntimeState;
+  reportedAt?: string;
+  expiresAt?: string;
+  exitCode?: number;
+  failureKind?: string;
+  sharedContributionCount: number;
+  newestContributionPosition?: number;
+}
+
+export interface AgentSessionListPage {
+  workspaceId: string;
+  serverTime: string;
+  sessions: ListedAgentSession[];
+  returned: number;
+  truncated: boolean;
+  nextCursor?: string;
 }
 
 export interface CreateHumanInput {
@@ -679,6 +727,8 @@ export interface CampfireService {
   joinWorkspace(ctx: ActorContext, input: JoinWorkspaceInput): WorkspaceParticipant;
   inviteToWorkspace(ctx: ActorContext, input: InviteToWorkspaceInput): WorkspaceInvite;
   registerAgentSession(ctx: ActorContext, input: RegisterAgentSessionInput): AgentSession;
+  reportAgentSessionRuntime(ctx: ActorContext, input: ReportAgentSessionRuntimeInput): AgentSessionRuntimeReport;
+  listAgentSessions(ctx: ActorContext, input: ListAgentSessionsInput): AgentSessionListPage;
   endAgentSession(ctx: ActorContext, sessionId: string): void;
 
   createGoal(ctx: ActorContext, input: CreateGoalInput): Goal;

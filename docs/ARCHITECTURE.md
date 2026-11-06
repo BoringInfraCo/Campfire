@@ -1,11 +1,13 @@
 # Campfire — Architecture
 
 **Status:** Revised for published CAP-001, the planned v1.26 ACT-001 pilot
-boundary, and the proposed local-dictation adapter boundary
+boundary, the proposed local-dictation adapter boundary, and the
+founder-directed SES-001 local session host
 **Version:** 0.2
 **Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001
 boundary October 20, 2026; ACT-001 pilot planned October 21, 2026; local
-dictation boundary proposed October 31, 2026
+dictation boundary proposed October 31, 2026; SES-001 local session host
+recorded November 5, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -633,6 +635,61 @@ artifacts and receipts whose source and observation time are explicit. The
 provider spike, Needs You, coordinator, dependency, extension, mobile, and
 non-adoption tracks; they are not duplicated here.
 
+### Founder-directed v1.29 local session host (SES-001)
+
+On November 5, 2026 the founder directed a bounded exception to the earlier
+rule that Campfire never owns agent execution. The contract is
+[Campfire v1.29 — SES-001](Campfire-v1.29-SES-001-Team-Agent-Sessions.md).
+This amendment records the boundary. CLI candidate v1.29.0 ships the flag-gated
+Codex external path. The Mac app is not in that tag. It does not open the
+Shepherdr or RUN-001 managed-runtime gate above.
+
+> Campfire Desktop may supervise a user-initiated local agent process, attach
+> that process's Campfire `AgentSession` to one task, and publish a
+> freshness-bounded operational report. Campfire still does not store the
+> transcript, replay the model, schedule autonomous work, provide inference,
+> share terminal bytes, or treat sessions as a second collaboration collection
+> beside the workspace.
+
+**Local execution ownership.** The workspace remains canonical. The local
+supervisor is an interface/runtime adapter in the installed Campfire CLI, not a
+domain service and not a second process manager inside Desktop. Desktop is a
+client of that host. The person initiates the process on their own machine.
+Campfire does not schedule it, supply inference, or replay the model. PID,
+process group, control socket, executable path, argv, environment, repository
+path, prompt, and terminal bytes stay in the private local launch registry or
+the process. They are not workspace records.
+
+**Task attachment.** `register_agent_session` accepts an optional `taskId`.
+Core verifies that the caller is that agent, the agent is an active workspace
+participant, the agent's recorded human owner matches the session human, the
+task exists in the same workspace, and the harness matches the registered
+agent or an explicitly allowed alias. Callers that omit `taskId` keep current
+behavior. A v1.29 team-session claim requires a non-null attachment. An
+existing session is not moved onto another task; a new attachment is a new
+`AgentSession`. Start, exit, and status do not mutate the Task. Marking a task
+`in_progress` stays a separate explicit human intent.
+
+**Expiring status reports.** The latest runtime report is one operational row
+per session, not a Task, Finding, Decision, Artifact, or Contribution. Its
+`state` is `starting`, `running`, `stopping`, `exited`, or `failed`. Its
+`origin` is `local_supervisor`. `sequence` increases monotonically per
+session; a lower or equal sequence is idempotent or rejected and never rolls
+status backward. `reported_at` and `expires_at` are server time. Client clocks
+are not trusted. The heartbeat target is 15 seconds. The active lease is 45
+seconds. Core accepts at most one active report per session per 5 seconds.
+`running` is shown only while the lease is current and the session has not
+ended. An expired non-final state (`starting`, `running`, or `stopping`) maps
+to `unknown`, never to `running`, `idle`, `blocked`, or `needs input`.
+`exited` and `failed` are final observations. They do not change Task state.
+Heartbeats do not create Contributions or DomainEvents. The report is not an
+approval, an authorization grant, or proof that the work succeeded.
+
+**No remote control.** No teammate and no hosted API can stop, restart, or
+send input to another person's local process. Stop is a local control-socket
+request from the owner of that launch. A stale PID is not a license to kill an
+arbitrary process.
+
 ## 9. Contribution and Provenance Model
 
 Every meaningful mutation should generate a contribution record.
@@ -779,6 +836,18 @@ If future features ingest transcripts to derive candidate work state, the raw tr
 ### Invariant
 
 > A participant may access a shared finding without gaining access to the private conversation that produced the finding.
+
+### User-initiated local session host
+
+SES-001 does not weaken that invariant. Supervising a local process publishes
+who is attached to which task and whether the operational report is still
+fresh. It does not publish the conversation. Terminal bytes, argv, environment,
+PID, local path, prompt, and transcript never enter workspace records, status
+reports, Viewer or Desktop read payloads, telemetry, logs, or publication
+snapshots. A teammate sees the bounded session projection, then uses the same
+authorized Findings, Decisions, Tasks, Artifacts, and Contributions as any
+other continuation. The harness keeps its own transcript under the provider's
+policy.
 
 ### Local voice-input adapters
 
@@ -1349,7 +1418,7 @@ If collaboration semantics live directly inside MCP handlers, future interfaces 
 
 ### Premature orchestration
 
-Campfire does not need to schedule autonomous agent swarms to prove team collaboration.
+Campfire does not need to schedule autonomous agent swarms to prove team collaboration. The November 5, 2026 SES-001 exception lets one local supervisor watch a user-initiated process and publish an expiring report. It does not schedule work, accept remote control, or authorize a swarm, a proprietary harness, or a generalized runtime.
 
 ### Execution provider becomes the source of truth
 
@@ -1511,7 +1580,9 @@ team-hosted process with actor tokens and invite-only membership
 engineering slice: local owner publication, private import, and remote
 continuation. It is not a general control plane and is not deployed or accepted
 as a v1.26.2 release. Everything else below remains future; no other Stage C/D
-item is claimed.
+item is claimed. SES-001, recorded November 5, 2026, is not one of these future
+items and does not open managed or hosted execution. Its local session-host
+boundary is in §8.
 
 If the Sprint 001 thesis holds, Campfire can grow toward:
 
@@ -1651,6 +1722,7 @@ The following should remain true as Campfire evolves:
 11. **Model inference is not required for storage correctness.**
 12. **The system should be able to explain why an agent received a piece of context.**
 13. **An external runtime may execute approved work, but cannot become Campfire's authority or canonical workspace.**
+14. **A local session host may supervise only a user-initiated process on that person's machine.** Its report expires, creates no Contribution, and never carries terminal bytes or remote control. The workspace stays canonical.
 
 These invariants matter more than any particular framework, database, or protocol choice.
 

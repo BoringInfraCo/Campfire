@@ -139,10 +139,11 @@ function arrange(): Fixture {
 }
 
 function agentSession(agent: ActorRef, workspaceId: string): string {
+  const harness = store.getAgent(agent.actorId)?.harness ?? "codex";
   return service.registerAgentSession(ctx(agent), {
     agentId: agent.actorId,
     workspaceId,
-    harness: "codex",
+    harness,
   }).id;
 }
 

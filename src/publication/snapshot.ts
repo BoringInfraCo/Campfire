@@ -136,7 +136,9 @@ export function inspectPublicationSource(databasePath: string, workspaceId: stri
   try {
     const read = db.transaction(() => {
     const version = schemaVersion(db);
-    if (version !== CURRENT_SCHEMA_VERSION) {
+    // A v1.28.1 database is schema 10. Schema 11 adds an optional task id and
+    // runtime rows, and runtime rows are not part of a snapshot.
+    if (version !== CURRENT_SCHEMA_VERSION && version !== 10) {
       invalid(`Local schema version ${version} is not the supported version ${CURRENT_SCHEMA_VERSION}`, "schema", "upgrade_or_restore_local");
     }
     const workspace = workspaceRow(db, workspaceId);
@@ -330,6 +332,7 @@ export function readWorkspaceSnapshot(input: ReadSnapshotInput): PublicationSnap
       harness: stringField(row, "harness"),
       startedAt: stringField(row, "started_at"),
       ...(optionalString(row, "ended_at") === undefined ? {} : { endedAt: optionalString(row, "ended_at")! }),
+      ...(optionalString(row, "task_id") === undefined ? {} : { taskId: optionalString(row, "task_id")! }),
     }));
     const goals: PublicationGoal[] = goalsRaw.map((row) => ({
       id: stringField(row, "id"),

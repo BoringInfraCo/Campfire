@@ -11,8 +11,13 @@ import { ValidationError } from "./errors.js";
 export const PUBLICATION_FORMAT = "campfire.workspace_snapshot";
 export const PUBLICATION_VERSION = 1 as const;
 export const PUBLICATION_RECEIPT_VERSION = 1 as const;
-/** The only local schema this snapshot reader/importer understands. */
-export const PUBLICATION_SOURCE_SCHEMA_VERSION = 10 as const;
+/**
+ * Local schema written by a current export. Imports still accept the previous
+ * snapshot schema so a v1.28.1 publication remains readable. Runtime reports
+ * are never part of either snapshot.
+ */
+export const PUBLICATION_SOURCE_SCHEMA_VERSION = 11 as const;
+export const PUBLICATION_ACCEPTED_SOURCE_SCHEMA_VERSIONS = [10, PUBLICATION_SOURCE_SCHEMA_VERSION] as const;
 /**
  * A rehearsal admission code is an operator-held capability, distinct from an
  * owner token and from an invitation secret. The Worker stores only its hash.
@@ -91,6 +96,8 @@ export interface PublicationSession {
   harness: string;
   startedAt: string;
   endedAt?: string;
+  /** Historical task attachment. Operational runtime state is not published. */
+  taskId?: string;
 }
 
 export interface PublicationGoal {
@@ -638,8 +645,16 @@ function parseParticipant(value: unknown): PublicationParticipant {
   };
 }
 
+function acceptedSourceSchemaVersion(version: number, field: string): number {
+  if (!(PUBLICATION_ACCEPTED_SOURCE_SCHEMA_VERSIONS as readonly number[]).includes(version)) {
+    fail(`Unsupported local schema version ${version}`, field, "upgrade_publication_contract");
+  }
+  return version;
+}
+
 function parseSession(value: unknown): PublicationSession {
-  const row = exact(value, ["id", "agentId", "humanId", "harness", "startedAt", "endedAt"], "session");
+  const row = exact(value, ["id", "agentId", "humanId", "harness", "startedAt", "endedAt", "taskId"], "session");
+  const taskId = optionalIdentifier(row.taskId, "session.taskId");
   return {
     id: identifier(row.id, "session.id"),
     agentId: identifier(row.agentId, "session.agentId"),
@@ -647,6 +662,7 @@ function parseSession(value: unknown): PublicationSession {
     harness: text(row.harness, "session.harness", 64),
     startedAt: timestamp(row.startedAt, "session.startedAt"),
     ...(optionalTimestamp(row.endedAt, "session.endedAt") === undefined ? {} : { endedAt: optionalTimestamp(row.endedAt, "session.endedAt")! }),
+    ...(taskId === undefined ? {} : { taskId }),
   };
 }
 
@@ -664,10 +680,10 @@ export function parsePublicationSnapshot(value: unknown): PublicationSnapshot {
   const owner = exact(root.owner, ["humanId", "displayName"], "owner");
   const counts = exact(root.counts, ["humans", "agents", "participants", "sessions", "goals", "tasks", "findings", "decisions", "artifacts", "findingTransitions", "decisionTransitions", "findingEvidence", "decisionCitations", "contributions", "contributionTip"], "counts");
 
-  const sourceSchemaVersion = integer(source.schemaVersion, "source.schemaVersion");
-  if (sourceSchemaVersion !== PUBLICATION_SOURCE_SCHEMA_VERSION) {
-    fail(`Unsupported local schema version ${sourceSchemaVersion}`, "source.schemaVersion", "upgrade_publication_contract");
-  }
+  const sourceSchemaVersion = acceptedSourceSchemaVersion(
+    integer(source.schemaVersion, "source.schemaVersion"),
+    "source.schemaVersion",
+  );
   const snapshot: PublicationSnapshot = {
     format: PUBLICATION_FORMAT,
     version: PUBLICATION_VERSION,
@@ -964,6 +980,7 @@ export function assertPublicationSnapshotConsistent(snapshot: PublicationSnapsho
   for (const participant of snapshot.participants) assertActor(participant.actorId, participant.actorType, "participants");
   for (const session of snapshot.sessions) {
     if (!agentIds.has(session.agentId) || !humanIds.has(session.humanId)) fail("Session actor is missing", "sessions");
+    if (session.taskId !== undefined && !taskIds.has(session.taskId)) fail("Session task is missing", "sessions.taskId");
   }
   for (const row of snapshot.goals) { assertActor(row.createdByActorId, row.createdByActorType, "goals"); assertSession(row.agentSessionId, "goals"); }
   for (const row of snapshot.tasks) {
@@ -1115,9 +1132,7 @@ export function validateEnrollmentInput(value: unknown): PublicationEnrollmentIn
     sourceWorkspaceId: identifier(input.sourceWorkspaceId, "sourceWorkspaceId"),
     sourcePackageVersion: text(input.sourcePackageVersion, "sourcePackageVersion", 64),
     sourceSchemaVersion: (() => {
-      const version = integer(input.sourceSchemaVersion, "sourceSchemaVersion");
-      if (version !== PUBLICATION_SOURCE_SCHEMA_VERSION) fail("Unsupported source schema version", "sourceSchemaVersion", "upgrade_campfire");
-      return version;
+      return acceptedSourceSchemaVersion(integer(input.sourceSchemaVersion, "sourceSchemaVersion"), "sourceSchemaVersion");
     })(),
     deviceKeyHash: hasValidTokenHash(input.deviceKeyHash) ? input.deviceKeyHash : fail("Invalid device key hash", "deviceKeyHash"),
   };

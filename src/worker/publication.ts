@@ -215,8 +215,8 @@ function insertParticipant(participant: PublicationSnapshot["participants"][numb
 
 function insertSession(row: PublicationSnapshot["sessions"][number], workspaceId: string, db: D1Database): D1PreparedStatement {
   return db.prepare(
-    "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).bind(row.id, row.agentId, row.humanId, workspaceId, row.harness, row.startedAt, row.endedAt ?? null);
+    "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at, task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  ).bind(row.id, row.agentId, row.humanId, workspaceId, row.harness, row.startedAt, row.endedAt ?? null, row.taskId ?? null);
 }
 
 function insertGoal(row: PublicationSnapshot["goals"][number], workspaceId: string, db: D1Database): D1PreparedStatement {

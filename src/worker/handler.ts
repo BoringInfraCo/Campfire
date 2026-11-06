@@ -95,6 +95,7 @@ const VIEWER_READ_METHODS = [
   "get_finding",
   "get_artifact",
   "get_record_history",
+  "list_agent_sessions",
 ] as const;
 
 type ViewerReadMethod = (typeof VIEWER_READ_METHODS)[number];

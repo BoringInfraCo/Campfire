@@ -8,6 +8,8 @@
  * `CampfireStore` (AGENTS.md invariant 7).
  */
 import type { ActorContext, Authorizer } from "./authorization.js";
+import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
+import { projectAgentSessionPage } from "./session-list.js";
 import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentDeclineReceipt, type EnrollmentInvitation, type EnrollmentInvitationPreview, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import { assembleWorkspaceContext } from "./context-assembly.js";
@@ -1929,6 +1931,20 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         );
       }
 
+      if (!harnessesMatch(agent.harness, input.harness)) {
+        throw new ValidationError("Session harness does not match the registered agent", {
+          field: "harness",
+        });
+      }
+      let taskId: string | undefined;
+      if (input.taskId !== undefined) {
+        const task = store.getTask(input.taskId);
+        if (task === undefined || task.workspaceId !== input.workspaceId) {
+          throw new ValidationError("Task is not in this workspace", { field: "taskId" });
+        }
+        taskId = task.id;
+      }
+
       const humanId = agent.humanId;
       const now = clock();
       const session: AgentSession = {
@@ -1936,6 +1952,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         agentId: input.agentId,
         humanId,
         workspaceId: input.workspaceId,
+        ...(taskId === undefined ? {} : { taskId }),
         harness: input.harness,
         startedAt: now,
       };
@@ -1947,11 +1964,75 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           "register_session",
           "agent_session",
           session.id,
-          { agentId: input.agentId, humanId, harness: input.harness },
+          {
+            agentId: input.agentId,
+            humanId,
+            harness: input.harness,
+            ...(taskId === undefined ? {} : { taskId }),
+          },
           now,
         );
       });
       return session;
+    },
+
+    reportAgentSessionRuntime(ctx, input) {
+      const session = store.getAgentSession(input.sessionId);
+      if (session === undefined) {
+        throw new SessionNotFound(input.sessionId);
+      }
+      authorizer.assertAllowed(ctx, "session:report", session.workspaceId);
+      if (ctx.actor.actorType !== "agent" || ctx.actor.actorId !== session.agentId) {
+        throw new Unauthorized(`Actor ${ctx.actor.actorId} may not report session ${session.id}`);
+      }
+      const now = clock();
+      const prepared = prepareRuntimeReport(session, store.getAgentSessionRuntime(session.id), input, now);
+      if (prepared.write) {
+        store.upsertAgentSessionRuntime(prepared.report);
+      }
+      return prepared.report;
+    },
+
+    listAgentSessions(ctx, input) {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const now = clock();
+      const sessions = store.listAgentSessions(input.workspaceId);
+      const taskMap = new Map<string, { title: string; status: Task["status"] }>();
+      const agents = new Map<string, { name: string }>();
+      const humans = new Map<string, { displayName: string }>();
+      const reports = new Map<string, AgentSessionRuntimeReport>();
+      const contributions = new Map<string, { count: number; newestPosition: number | null }>();
+      for (const session of sessions) {
+        if (session.taskId !== undefined && !taskMap.has(session.taskId)) {
+          const task = store.getTask(session.taskId);
+          if (task !== undefined && task.workspaceId === input.workspaceId) {
+            taskMap.set(task.id, { title: task.title, status: task.status });
+          }
+        }
+        if (!agents.has(session.agentId)) {
+          const agent = store.getAgent(session.agentId);
+          if (agent !== undefined) agents.set(agent.id, { name: agent.name });
+        }
+        if (!humans.has(session.humanId)) {
+          const human = store.getHuman(session.humanId);
+          if (human !== undefined) humans.set(human.id, { displayName: human.displayName });
+        }
+        const report = store.getAgentSessionRuntime(session.id);
+        if (report !== undefined) reports.set(session.id, report);
+        contributions.set(session.id, store.countSessionContributions(input.workspaceId, session.id));
+      }
+      return projectAgentSessionPage({
+        workspaceId: input.workspaceId,
+        now,
+        sessions,
+        tasks: taskMap,
+        agents,
+        humans,
+        reports,
+        contributions,
+        cursor: input.cursor,
+        limit: input.limit,
+      });
     },
 
     endAgentSession(ctx: ActorContext, sessionId: string): void {

@@ -49,6 +49,7 @@ import {
   type CliCommand,
 } from "./catalog.js";
 import { parseArgs, type ParsedArgs } from "./args.js";
+import { isSessionHostArgvCommand, runSessionHostFromParsed } from "./session-host.js";
 import { resolveErrorOutput, resolveExplicitOutput, resolveOutputMode, type ResolvedOutput } from "./output.js";
 import {
   buildAwaitingWorkspace,
@@ -3612,6 +3613,12 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
 export async function runCli(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
   applyDbFlag(parsed.flags);
+
+  // SES-001 stays outside CLI_COMMAND_NAMES; that list length is pinned by older sprints.
+  if (isSessionHostArgvCommand(parsed.command)) {
+    await runSessionHostFromParsed(parsed);
+    return;
+  }
 
   if (parsed.flags.help === true) {
     printHelp(parsed.command);

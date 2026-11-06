@@ -22,7 +22,9 @@ export { V9_SQL } from "./telemetry-integrity-schema.js";
 import { V10_SQL } from "./action-proposal-schema.js";
 export { V10_SQL } from "./action-proposal-schema.js";
 
-export const CURRENT_SCHEMA_VERSION = 10;
+import { SESSION_RUNTIME_TABLE_SQL, SESSION_TASK_COLUMN_SQL } from "./session-runtime-schema.js";
+
+export const CURRENT_SCHEMA_VERSION = 11;
 
 /** Sprint 019 outbox. Identical to migrations/0002 and worker schema V3_SQL. */
 export const V3_SQL = `
@@ -182,6 +184,16 @@ const MIGRATIONS: readonly Migration[] = [
     version: 10,
     up: (db) => {
       db.exec(V10_SQL);
+    },
+  },
+  {
+    version: 11,
+    up: (db) => {
+      const columns = db.prepare("PRAGMA table_info(agent_sessions)").all() as Array<{ name: string }>;
+      if (!columns.some((column) => column.name === "task_id")) {
+        db.exec(SESSION_TASK_COLUMN_SQL);
+      }
+      db.exec(SESSION_RUNTIME_TABLE_SQL);
     },
   },
 ];

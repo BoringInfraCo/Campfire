@@ -175,9 +175,9 @@ describe("sprint 016 setup contract and handoff", () => {
     const actor = runtime.service.resolveToken(agentToken);
     const session = runtime.service.registerAgentSession(
       { actor },
-      { agentId: actor.actorId, workspaceId, harness: "opencode" },
+      { agentId: actor.actorId, workspaceId, harness: "codex" },
     );
-    expect(diagnoseLocal(runtime, { workspaceId, harness: "codex", token: agentToken }).nextAction).toBe("harness_mismatch");
+    expect(diagnoseLocal(runtime, { workspaceId, harness: "opencode", token: agentToken }).nextAction).toBe("harness_mismatch");
     runtime.service.endAgentSession({ actor, agentSessionId: session.id }, session.id);
     runtime.service.registerAgentSession({ actor }, { agentId: actor.actorId, workspaceId, harness: "codex" });
     const ready = diagnoseLocal(runtime, { workspaceId, harness: "codex", token: agentToken });

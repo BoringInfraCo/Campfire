@@ -41,6 +41,8 @@ export const CAMPFIRE_HTTP_METHODS = [
   "revoke_enrollment_invitation",
   "enroll_owned_agent",
   "register_agent_session",
+  "report_agent_session_runtime",
+  "list_agent_sessions",
   "create_goal",
   "update_goal",
   "add_finding",
@@ -594,14 +596,48 @@ export function dispatchCampfireMethod(
           `Agent ${ctx.actor.actorId} may not register a session for ${agentId}`,
         );
       }
-      const input: { agentId: string; workspaceId: string; harness: string; humanId?: string } = {
+      const input: { agentId: string; workspaceId: string; harness: string; humanId?: string; taskId?: string } = {
         agentId,
         workspaceId: str(params, "workspaceId"),
         harness: str(params, "harness"),
       };
       const humanId = optionalStr(params, "humanId");
       if (humanId !== undefined) input.humanId = humanId;
+      const taskId = optionalStr(params, "taskId");
+      if (taskId !== undefined) input.taskId = taskId;
       return service.registerAgentSession(ctx, input);
+    }
+    case "report_agent_session_runtime": {
+      const sequence = params.sequence;
+      if (typeof sequence !== "number" || !Number.isFinite(sequence)) {
+        throw new ValidationError("sequence must be a number", { field: "sequence" });
+      }
+      const input: {
+        sessionId: string;
+        state: string;
+        sequence: number;
+        exitCode?: number;
+        failureKind?: string;
+      } = {
+        sessionId: str(params, "sessionId"),
+        state: str(params, "state"),
+        sequence,
+      };
+      const exitCode = optionalNum(params, "exitCode");
+      if (exitCode !== undefined) input.exitCode = exitCode;
+      const failureKind = optionalStr(params, "failureKind");
+      if (failureKind !== undefined) input.failureKind = failureKind;
+      return service.reportAgentSessionRuntime(ctx, input);
+    }
+    case "list_agent_sessions": {
+      const input: { workspaceId: string; limit?: number; cursor?: string } = {
+        workspaceId: str(params, "workspaceId"),
+      };
+      const limit = passthroughLimit(params);
+      if (limit !== undefined) input.limit = limit;
+      const cursor = passthroughCursor(params);
+      if (cursor !== undefined) input.cursor = cursor;
+      return service.listAgentSessions(ctx, input);
     }
     case "create_goal":
       return service.createGoal(ctx, {

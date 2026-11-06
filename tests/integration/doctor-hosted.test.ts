@@ -209,14 +209,14 @@ describe("hosted campfire doctor session id", () => {
     const wrongHarnessSession = await call(server.url, receipt.agent.token, "register_agent_session", {
       agentId: receipt.agent.id,
       workspaceId: receipt.workspace.id,
-      harness: "other",
+      harness: "codex",
     });
     expect(wrongHarnessSession.body.ok).toBe(true);
     if (!wrongHarnessSession.body.ok) return;
     const wrongHarness = await doctor([
       receipt.workspace.id,
       "--harness",
-      "codex",
+      "other",
       "--session",
       wrongHarnessSession.body.result.id as string,
     ]);

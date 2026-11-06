@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS agent_sessions (
   workspace_id TEXT NOT NULL REFERENCES workspaces(id),
   harness      TEXT NOT NULL,
   started_at   TEXT NOT NULL,
-  ended_at     TEXT
+  ended_at     TEXT,
+  task_id      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS goals (
@@ -99,6 +100,21 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at              TEXT NOT NULL,
   updated_at              TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS agent_session_runtime_reports (
+  session_id   TEXT PRIMARY KEY REFERENCES agent_sessions(id),
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id),
+  task_id      TEXT NOT NULL REFERENCES tasks(id),
+  state        TEXT NOT NULL,
+  origin       TEXT NOT NULL,
+  sequence     INTEGER NOT NULL,
+  reported_at  TEXT NOT NULL,
+  expires_at   TEXT,
+  exit_code    INTEGER,
+  failure_kind TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_session_runtime_workspace
+  ON agent_session_runtime_reports(workspace_id, reported_at);
 
 CREATE TABLE IF NOT EXISTS findings (
   id                      TEXT PRIMARY KEY,

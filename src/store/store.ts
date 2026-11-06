@@ -5,6 +5,7 @@
  * implementation lives in `sqlite-store.ts`. Keeping this explicit avoids
  * leaking storage details into collaboration semantics (AGENTS.md invariant 7).
  */
+import type { AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import type {
   ActionProposal,
   ActionReceipt,
@@ -195,6 +196,9 @@ export interface CampfireStore {
   getAgentSession(id: string): AgentSession | undefined;
   endAgentSession(id: string, endedAt: string): void;
   listAgentSessions(workspaceId: string): AgentSession[];
+  upsertAgentSessionRuntime(report: AgentSessionRuntimeReport): void;
+  getAgentSessionRuntime(sessionId: string): AgentSessionRuntimeReport | undefined;
+  countSessionContributions(workspaceId: string, sessionId: string): { count: number; newestPosition: number | null };
 
   // --- workspaces ---
   createWorkspace(workspace: Workspace): void;

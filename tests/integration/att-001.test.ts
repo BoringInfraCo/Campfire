@@ -844,6 +844,7 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
       "get_finding",
       "get_artifact",
       "get_record_history",
+      "list_agent_sessions",
     ]);
 
     const server = createCampfireMcpServer({ service, identity: { ctx: ctxA } as ServerIdentity });

@@ -25,6 +25,7 @@ export type Operation =
   | "artifact:attach"
   | "activity:read"
   | "session:register"
+  | "session:report"
   | "session:end"
   | "invite:create"
   | "action:propose"

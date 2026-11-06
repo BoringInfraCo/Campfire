@@ -10,6 +10,7 @@
  * boundary, never on D1 details. No new domain entities.
  */
 import { normalizeDeliveryLimit } from "../bridge/retry.js";
+import type { AgentSessionRuntimeReport, SessionFailureKind, SessionRuntimeState } from "../domain/session-runtime.js";
 import type {
   ActorType,
   ActorToken,
@@ -235,6 +236,20 @@ interface AgentSessionRow {
   harness: string;
   started_at: string;
   ended_at: string | null;
+  task_id: string | null;
+}
+
+interface AgentSessionRuntimeRow {
+  session_id: string;
+  workspace_id: string;
+  task_id: string;
+  state: string;
+  origin: string;
+  sequence: number;
+  reported_at: string;
+  expires_at: string | null;
+  exit_code: number | null;
+  failure_kind: string | null;
 }
 
 interface WorkspaceRow {
@@ -470,9 +485,25 @@ function mapAgentSession(row: AgentSessionRow): AgentSession {
     agentId: row.agent_id,
     humanId: row.human_id,
     workspaceId: row.workspace_id,
+    taskId: row.task_id ?? undefined,
     harness: row.harness,
     startedAt: row.started_at,
     endedAt: row.ended_at ?? undefined,
+  };
+}
+
+function mapRuntime(row: AgentSessionRuntimeRow): AgentSessionRuntimeReport {
+  return {
+    sessionId: row.session_id,
+    workspaceId: row.workspace_id,
+    taskId: row.task_id,
+    state: row.state as SessionRuntimeState,
+    origin: "local_supervisor",
+    sequence: row.sequence,
+    reportedAt: row.reported_at,
+    expiresAt: row.expires_at ?? undefined,
+    exitCode: row.exit_code ?? undefined,
+    failureKind: (row.failure_kind ?? undefined) as SessionFailureKind | undefined,
   };
 }
 
@@ -925,9 +956,9 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
 
     async createAgentSession(session) {
       await run(
-        "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at, task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         session.id, session.agentId, session.humanId, session.workspaceId,
-        session.harness, session.startedAt, session.endedAt ?? null);
+        session.harness, session.startedAt, session.endedAt ?? null, session.taskId ?? null);
     },
 
     async getAgentSession(id) {
@@ -942,6 +973,39 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     async listAgentSessions(workspaceId) {
       return (await all<AgentSessionRow>(
         "SELECT * FROM agent_sessions WHERE workspace_id = ? ORDER BY started_at", workspaceId)).map(mapAgentSession);
+    },
+
+    async upsertAgentSessionRuntime(report: AgentSessionRuntimeReport) {
+      await run(
+        `INSERT INTO agent_session_runtime_reports
+           (session_id, workspace_id, task_id, state, origin, sequence, reported_at, expires_at, exit_code, failure_kind)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(session_id) DO UPDATE SET
+           workspace_id = excluded.workspace_id,
+           task_id = excluded.task_id,
+           state = excluded.state,
+           origin = excluded.origin,
+           sequence = excluded.sequence,
+           reported_at = excluded.reported_at,
+           expires_at = excluded.expires_at,
+           exit_code = excluded.exit_code,
+           failure_kind = excluded.failure_kind`,
+        report.sessionId, report.workspaceId, report.taskId, report.state, report.origin,
+        report.sequence, report.reportedAt, report.expiresAt ?? null, report.exitCode ?? null,
+        report.failureKind ?? null);
+    },
+
+    async getAgentSessionRuntime(sessionId: string) {
+      const row = await first<AgentSessionRuntimeRow>(
+        "SELECT * FROM agent_session_runtime_reports WHERE session_id = ?", sessionId);
+      return row ? mapRuntime(row) : undefined;
+    },
+
+    async countSessionContributions(workspaceId: string, sessionId: string) {
+      const row = await first<{ count: number; newest: number | null }>(
+        "SELECT COUNT(*) AS count, MAX(append_position) AS newest FROM contributions WHERE workspace_id = ? AND agent_session_id = ?",
+        workspaceId, sessionId);
+      return { count: row?.count ?? 0, newestPosition: row?.newest ?? null };
     },
 
     async createWorkspace(workspace) {

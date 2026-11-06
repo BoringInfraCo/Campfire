@@ -1,9 +1,9 @@
 # Campfire — Product Definition v0.2
 
-**Status:** Revised after `v1.10.0`
+**Status:** Revised after `v1.10.0`; SES-001 local-session boundary recorded November 5, 2026
 **Company:** Boring Infra Co.  
 **Version:** 0.2  
-**Date:** October 3, 2026
+**Date:** October 3, 2026; SES-001 exception recorded November 5, 2026
 
 ---
 
@@ -438,7 +438,7 @@ Chat may expose Campfire state, but conversation transcripts are not the core ab
 Memory is one component of collaboration state, not the product itself.
 
 ### An agent framework
-Campfire does not dictate how agents reason, plan, or execute.
+Campfire does not dictate how agents reason, plan, or execute. The November 5, 2026 exception below is a user-initiated local process supervisor. It is not a framework for how agents think or a scheduler for when they run.
 
 ### A model provider
 Teams bring their existing agents and models.
@@ -460,6 +460,16 @@ Workspace is the collaboration boundary. A Channel, or any other collection of a
 
 ### A skills platform or workflow engine
 Guidance for how to record useful state may be tested later as one workspace playbook. That playbook does not execute workflow and does not add domain machinery. The only candidate named for that experiment is incident investigation.
+
+### Founder-directed v1.29 exception — local session host
+
+On November 5, 2026 the founder directed one narrow exception. It does not rewrite the thesis, and it does not remove any item in the list above.
+
+> Campfire Desktop may supervise a user-initiated local agent process, attach that process's Campfire `AgentSession` to one task, and publish a freshness-bounded operational report. Campfire still does not store the transcript, replay the model, schedule autonomous work, provide inference, share terminal bytes, or treat sessions as a second collaboration collection beside the workspace.
+
+The workspace remains canonical. A status report is an expiring operational observation, not a Task, Finding, Decision, Contribution, approval, authorization grant, or proof of successful work. Heartbeats do not create Contributions. Terminal bytes, argv, environment, PID, local path, prompt, and transcript never enter shared reads.
+
+This is a bounded, user-initiated local session host. The person starts a process they already own, on their own machine, against one task. Campfire may attach that process's `AgentSession` and publish whether the report is still fresh. Campfire does not decide how the agent reasons, plan work on its behalf, run it while the person is absent, or become a generic agent framework, orchestration engine, swarm, proprietary harness, or model provider. Managed or hosted execution stays outside this exception. The contract is `docs/Campfire-v1.29-SES-001-Team-Agent-Sessions.md`. CLI candidate v1.29.0 ships the flag-gated Codex external path. The Mac app, Claude Code, OpenCode, a real harness trace, and the two-Mac proof are not part of that tag.
 
 ---
 
@@ -630,7 +640,7 @@ Agents receive the minimum capabilities required for their work.
 Collaboration happens inside explicit boundaries.
 
 ### Durable work over durable sessions
-Sessions end. The team's work state should not.
+Sessions end. The team's work state should not. A v1.29 local supervisor may report that a user-initiated process is alive. That report expires. It is not the work.
 
 ### Existing tools remain sources of truth
 Campfire connects and coordinates rather than unnecessarily replacing the engineering stack.

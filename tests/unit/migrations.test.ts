@@ -74,6 +74,7 @@ describe("schema migrations", () => {
       { version: 8, applied_at: NOW },
       { version: 9, applied_at: NOW },
       { version: 10, applied_at: NOW },
+      { version: 11, applied_at: NOW },
     ]);
   });
 

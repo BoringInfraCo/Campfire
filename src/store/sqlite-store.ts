@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import { Conflict } from "../domain/errors.js";
+import type { AgentSessionRuntimeReport, SessionFailureKind, SessionRuntimeState } from "../domain/session-runtime.js";
 import { applyMigrations } from "./migrations.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
@@ -164,6 +165,20 @@ interface AgentSessionRow {
   harness: string;
   started_at: string;
   ended_at: string | null;
+  task_id: string | null;
+}
+
+interface AgentSessionRuntimeRow {
+  session_id: string;
+  workspace_id: string;
+  task_id: string;
+  state: string;
+  origin: string;
+  sequence: number;
+  reported_at: string;
+  expires_at: string | null;
+  exit_code: number | null;
+  failure_kind: string | null;
 }
 
 interface WorkspaceRow {
@@ -399,9 +414,25 @@ function mapAgentSession(row: AgentSessionRow): AgentSession {
     agentId: row.agent_id,
     humanId: row.human_id,
     workspaceId: row.workspace_id,
+    taskId: row.task_id ?? undefined,
     harness: row.harness,
     startedAt: row.started_at,
     endedAt: row.ended_at ?? undefined,
+  };
+}
+
+function mapRuntime(row: AgentSessionRuntimeRow): AgentSessionRuntimeReport {
+  return {
+    sessionId: row.session_id,
+    workspaceId: row.workspace_id,
+    taskId: row.task_id,
+    state: row.state as SessionRuntimeState,
+    origin: "local_supervisor",
+    sequence: row.sequence,
+    reportedAt: row.reported_at,
+    expiresAt: row.expires_at ?? undefined,
+    exitCode: row.exit_code ?? undefined,
+    failureKind: (row.failure_kind ?? undefined) as SessionFailureKind | undefined,
   };
 }
 
@@ -766,7 +797,7 @@ function createSqliteStore(db: Database.Database): CampfireStore {
 
     createAgentSession(session) {
       db.prepare(
-        "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO agent_sessions (id, agent_id, human_id, workspace_id, harness, started_at, ended_at, task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       ).run(
         session.id,
         session.agentId,
@@ -775,6 +806,7 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         session.harness,
         session.startedAt,
         session.endedAt ?? null,
+        session.taskId ?? null,
       );
     },
 
@@ -792,6 +824,51 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         .prepare("SELECT * FROM agent_sessions WHERE workspace_id = ? ORDER BY started_at")
         .all(workspaceId) as AgentSessionRow[];
       return rows.map(mapAgentSession);
+    },
+
+    upsertAgentSessionRuntime(report) {
+      db.prepare(
+        `INSERT INTO agent_session_runtime_reports
+           (session_id, workspace_id, task_id, state, origin, sequence, reported_at, expires_at, exit_code, failure_kind)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(session_id) DO UPDATE SET
+           workspace_id = excluded.workspace_id,
+           task_id = excluded.task_id,
+           state = excluded.state,
+           origin = excluded.origin,
+           sequence = excluded.sequence,
+           reported_at = excluded.reported_at,
+           expires_at = excluded.expires_at,
+           exit_code = excluded.exit_code,
+           failure_kind = excluded.failure_kind`,
+      ).run(
+        report.sessionId,
+        report.workspaceId,
+        report.taskId,
+        report.state,
+        report.origin,
+        report.sequence,
+        report.reportedAt,
+        report.expiresAt ?? null,
+        report.exitCode ?? null,
+        report.failureKind ?? null,
+      );
+    },
+
+    getAgentSessionRuntime(sessionId) {
+      const row = db
+        .prepare("SELECT * FROM agent_session_runtime_reports WHERE session_id = ?")
+        .get(sessionId) as AgentSessionRuntimeRow | undefined;
+      return row ? mapRuntime(row) : undefined;
+    },
+
+    countSessionContributions(workspaceId, sessionId) {
+      const row = db
+        .prepare(
+          "SELECT COUNT(*) AS count, MAX(append_position) AS newest FROM contributions WHERE workspace_id = ? AND agent_session_id = ?",
+        )
+        .get(workspaceId, sessionId) as { count: number; newest: number | null };
+      return { count: row.count, newestPosition: row.newest };
     },
 
     // --- workspaces ---

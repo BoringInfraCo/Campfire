@@ -49,6 +49,7 @@ const READS = [
   "get_finding",
   "get_artifact",
   "get_record_history",
+  "list_agent_sessions",
 ] as const;
 
 const WORKSPACE_READS: Array<[string, Record<string, unknown>]> = [
@@ -174,7 +175,7 @@ afterAll(async () => {
 describe("NAV-003 viewer read boundary", () => {
   it("allowlists exactly twelve reads and mirrors them on the worker", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([...READS]);
-    expect(VIEWER_READ_METHODS).toHaveLength(12);
+    expect(VIEWER_READ_METHODS).toHaveLength(13);
     const handler = readFileSync(new URL("../../src/worker/handler.ts", import.meta.url), "utf8");
     const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(handler);
     expect(match).not.toBeNull();

@@ -93,6 +93,8 @@ export interface AgentSession {
   agentId: string;
   humanId: string;
   workspaceId: string;
+  /** Set when the session is attached to one task. Omitted by older callers. */
+  taskId?: string;
   harness: string;
   startedAt: string;
   endedAt?: string;

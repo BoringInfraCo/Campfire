@@ -99,7 +99,7 @@ function explain(database: Database.Database, sql: string, params: readonly unkn
 describe("NAV-002 bounded reads", () => {
   it("keeps HTTP and CLI catalogs unchanged while the Viewer allowlist adds the seven NAV-003 reads", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(55);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(57);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(
       expect.arrayContaining(["list_workspace_participants", "get_record_history"]),
     );
@@ -116,6 +116,7 @@ describe("NAV-002 bounded reads", () => {
       "get_finding",
       "get_artifact",
       "get_record_history",
+      "list_agent_sessions",
     ]);
     // The desktop intent channel adds exactly one CLI name (Phase C):
     // `intent`, the loopback bridge whose allowlist is numbered below.

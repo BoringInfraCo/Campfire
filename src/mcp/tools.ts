@@ -511,6 +511,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
         humanId: z.string().optional(),
         workspaceId: z.string(),
         harness: z.string().optional(),
+        taskId: z.string().optional(),
       },
     },
     (args) =>
@@ -527,6 +528,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
           humanId: args.humanId,
           workspaceId: args.workspaceId,
           harness,
+          ...(args.taskId === undefined ? {} : { taskId: args.taskId }),
         })) as { id: string };
         requireCtx().agentSessionId = session.id;
         return session;

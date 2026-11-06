@@ -34,6 +34,8 @@ const CONTENT_READS = new Set([
   "get_finding", "get_task", "get_artifact", "get_activity",
   "list_workspace_participants", "get_record_history", "get_action_proposal",
   "list_action_proposals", "list_action_receipts",
+  // SES-001 observations. A heartbeat is not a canonical workspace write.
+  "list_agent_sessions", "report_agent_session_runtime",
 ]);
 
 export function alphaUsageCategory(method: string): AlphaUsageCategory | undefined {

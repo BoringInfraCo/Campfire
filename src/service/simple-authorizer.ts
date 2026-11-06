@@ -33,6 +33,7 @@ const VIEWER_WRITE_OPERATIONS: ReadonlySet<Operation> = new Set<Operation>([
   "action:review",
   "action:reserve",
   "action:report",
+  "session:report",
 ]);
 
 function logAuthz(entry: {
@@ -129,9 +130,9 @@ function evaluate(
     return;
   }
 
-  if (operation === "session:register") {
+  if (operation === "session:register" || operation === "session:report") {
     if (actor.actorType !== "agent") {
-      throw new Unauthorized("Only agent identities may register an agent session");
+      throw new Unauthorized("Only agent identities may register or report an agent session");
     }
     if (store.getWorkspace(targetWorkspaceId) === undefined) {
       throw new WorkspaceNotFound(targetWorkspaceId);

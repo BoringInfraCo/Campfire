@@ -7,6 +7,8 @@
  * (AGENTS.md invariant 7). No new domain entities.
  */
 import type { ActorContext } from "../service/authorization.js";
+import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
+import { projectAgentSessionPage } from "../service/session-list.js";
 import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
@@ -87,6 +89,9 @@ import {
   type RecordActionOutcomeInput,
   type RecordHistoryPage,
   type RegisterAgentSessionInput,
+  type ReportAgentSessionRuntimeInput,
+  type ListAgentSessionsInput,
+  type AgentSessionListPage,
   type RemoveDecisionBasisInput,
   type RemoveFindingEvidenceInput,
   type ReserveActionInput,
@@ -211,6 +216,8 @@ export interface AsyncCampfireService {
   joinWorkspace(ctx: ActorContext, input: JoinWorkspaceInput): Promise<WorkspaceParticipant>;
   inviteToWorkspace(ctx: ActorContext, input: InviteToWorkspaceInput): Promise<WorkspaceInvite>;
   registerAgentSession(ctx: ActorContext, input: RegisterAgentSessionInput): Promise<AgentSession>;
+  reportAgentSessionRuntime(ctx: ActorContext, input: ReportAgentSessionRuntimeInput): Promise<AgentSessionRuntimeReport>;
+  listAgentSessions(ctx: ActorContext, input: ListAgentSessionsInput): Promise<AgentSessionListPage>;
   endAgentSession(ctx: ActorContext, sessionId: string): Promise<void>;
   createGoal(ctx: ActorContext, input: CreateGoalInput): Promise<Goal>;
   updateGoal(ctx: ActorContext, input: UpdateGoalInput): Promise<Goal>;
@@ -2003,6 +2010,20 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         );
       }
 
+      if (!harnessesMatch(agent.harness, input.harness)) {
+        throw new ValidationError("Session harness does not match the registered agent", {
+          field: "harness",
+        });
+      }
+      let taskId: string | undefined;
+      if (input.taskId !== undefined) {
+        const task = await store.getTask(input.taskId);
+        if (task === undefined || task.workspaceId !== input.workspaceId) {
+          throw new ValidationError("Task is not in this workspace", { field: "taskId" });
+        }
+        taskId = task.id;
+      }
+
       const humanId = agent.humanId;
       const now = clock();
       const session: AgentSession = {
@@ -2010,6 +2031,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         agentId: input.agentId,
         humanId,
         workspaceId: input.workspaceId,
+        ...(taskId === undefined ? {} : { taskId }),
         harness: input.harness,
         startedAt: now,
       };
@@ -2021,11 +2043,75 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           "register_session",
           "agent_session",
           session.id,
-          { agentId: input.agentId, humanId, harness: input.harness },
+          {
+            agentId: input.agentId,
+            humanId,
+            harness: input.harness,
+            ...(taskId === undefined ? {} : { taskId }),
+          },
           now,
         );
       });
       return session;
+    },
+
+    async reportAgentSessionRuntime(ctx, input: ReportAgentSessionRuntimeInput): Promise<AgentSessionRuntimeReport> {
+      const session = await store.getAgentSession(input.sessionId);
+      if (session === undefined) {
+        throw new SessionNotFound(input.sessionId);
+      }
+      await authorizer.assertAllowed(ctx, "session:report", session.workspaceId);
+      if (ctx.actor.actorType !== "agent" || ctx.actor.actorId !== session.agentId) {
+        throw new Unauthorized(`Actor ${ctx.actor.actorId} may not report session ${session.id}`);
+      }
+      const now = clock();
+      const prepared = prepareRuntimeReport(session, await store.getAgentSessionRuntime(session.id), input, now);
+      if (prepared.write) {
+        await store.upsertAgentSessionRuntime(prepared.report);
+      }
+      return prepared.report;
+    },
+
+    async listAgentSessions(ctx, input: ListAgentSessionsInput): Promise<AgentSessionListPage> {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const now = clock();
+      const sessions = await store.listAgentSessions(input.workspaceId);
+      const taskMap = new Map<string, { title: string; status: Task["status"] }>();
+      const agents = new Map<string, { name: string }>();
+      const humans = new Map<string, { displayName: string }>();
+      const reports = new Map<string, AgentSessionRuntimeReport>();
+      const contributions = new Map<string, { count: number; newestPosition: number | null }>();
+      for (const session of sessions) {
+        if (session.taskId !== undefined && !taskMap.has(session.taskId)) {
+          const task = await store.getTask(session.taskId);
+          if (task !== undefined && task.workspaceId === input.workspaceId) {
+            taskMap.set(task.id, { title: task.title, status: task.status });
+          }
+        }
+        if (!agents.has(session.agentId)) {
+          const agent = await store.getAgent(session.agentId);
+          if (agent !== undefined) agents.set(agent.id, { name: agent.name });
+        }
+        if (!humans.has(session.humanId)) {
+          const human = await store.getHuman(session.humanId);
+          if (human !== undefined) humans.set(human.id, { displayName: human.displayName });
+        }
+        const report = await store.getAgentSessionRuntime(session.id);
+        if (report !== undefined) reports.set(session.id, report);
+        contributions.set(session.id, await store.countSessionContributions(input.workspaceId, session.id));
+      }
+      return projectAgentSessionPage({
+        workspaceId: input.workspaceId,
+        now,
+        sessions,
+        tasks: taskMap,
+        agents,
+        humans,
+        reports,
+        contributions,
+        cursor: input.cursor,
+        limit: input.limit,
+      });
     },
 
     async endAgentSession(ctx: ActorContext, sessionId: string): Promise<void> {

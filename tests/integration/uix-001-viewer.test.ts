@@ -108,7 +108,7 @@ describe("UIX-001 viewer shell", () => {
   });
 
   it("keeps the Viewer read allowlist at the twelve NAV-003 methods", () => {
-    expect(VIEWER_READ_METHODS).toHaveLength(12);
+    expect(VIEWER_READ_METHODS).toHaveLength(13);
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
@@ -122,6 +122,7 @@ describe("UIX-001 viewer shell", () => {
       "get_finding",
       "get_artifact",
       "get_record_history",
+      "list_agent_sessions",
     ]);
   });
 });
