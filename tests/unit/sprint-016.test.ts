@@ -130,6 +130,115 @@ describe("sprint 016 setup contract and handoff", () => {
     expect(open.mcp.campfire.environment.CAMPFIRE_TOKEN).toBe(token);
     expect(statSync(openPath).mode & 0o777).toBe(0o600);
 
+    const claudePath = join(dir, "claude.json");
+    const occupied = {
+      oauthAccount: { hidden: true },
+      mcpServers: { other: { command: "keep-me" }, campfire: { type: "sse", url: "https://example.test" } },
+    };
+    writeFileSync(claudePath, `${JSON.stringify(occupied, null, 2)}\n`);
+    const occupiedText = readFileSync(claudePath, "utf8");
+    expect(() =>
+      prepareConnection({
+        harness: "claude-code",
+        configPath: claudePath,
+        mcpCommand: "/tmp/campfire",
+        url: "http://127.0.0.1:9414",
+        agentToken: token,
+        workspaceId: "ws_test",
+      }),
+    ).toThrow(/refusing to replace/);
+    expect(readFileSync(claudePath, "utf8")).toBe(occupiedText);
+    const writable = { oauthAccount: { hidden: true }, mcpServers: { other: { command: "keep-me" } } };
+    writeFileSync(claudePath, `${JSON.stringify(writable)}\n`);
+    const claudePlan = prepareConnection({
+      harness: "claude-code",
+      configPath: claudePath,
+      mcpCommand: "/tmp/campfire",
+      url: "http://127.0.0.1:9414",
+      agentToken: token,
+      workspaceId: "ws_test",
+    });
+    expect(JSON.stringify(claudePlan)).not.toContain(token);
+    const claude = JSON.parse(readFileSync(claudePath, "utf8")) as {
+      oauthAccount: { hidden: boolean };
+      mcpServers: {
+        other: { command: string };
+        campfire: { type: string; command: string; args: string[]; env: Record<string, string> };
+      };
+    };
+    expect(claude.oauthAccount.hidden).toBe(true);
+    expect(claude.mcpServers.other.command).toBe("keep-me");
+    expect(claude.mcpServers.campfire).toEqual({
+      type: "stdio",
+      command: "/tmp/campfire",
+      args: ["mcp"],
+      env: {
+        CAMPFIRE_URL: "http://127.0.0.1:9414",
+        CAMPFIRE_TOKEN: token,
+        CAMPFIRE_HARNESS: "claude-code",
+      },
+    });
+    expect(statSync(claudePath).mode & 0o777).toBe(0o600);
+    const refreshed = prepareConnection({
+      harness: "claude-code",
+      configPath: claudePath,
+      mcpCommand: "/tmp/campfire",
+      url: "http://127.0.0.1:9414",
+      agentToken: "rotated-token-fixture",
+      workspaceId: "ws_test",
+    });
+    expect(JSON.stringify(refreshed)).not.toContain("rotated-token-fixture");
+    const rotated = JSON.parse(readFileSync(claudePath, "utf8")) as {
+      oauthAccount: { hidden: boolean };
+      mcpServers: { other: { command: string }; campfire: { command: string; env: { CAMPFIRE_TOKEN: string } } };
+    };
+    expect(rotated.oauthAccount.hidden).toBe(true);
+    expect(rotated.mcpServers.other.command).toBe("keep-me");
+    expect(rotated.mcpServers.campfire.command).toBe("/tmp/campfire");
+    expect(rotated.mcpServers.campfire.env.CAMPFIRE_TOKEN).toBe("rotated-token-fixture");
+    const foreign = {
+      oauthAccount: { hidden: true },
+      mcpServers: {
+        other: { command: "keep-me" },
+        campfire: { type: "stdio", command: "/usr/bin/other", args: ["serve"], env: { CAMPFIRE_HARNESS: "claude-code" } },
+      },
+    };
+    writeFileSync(claudePath, `${JSON.stringify(foreign, null, 2)}\n`);
+    const foreignText = readFileSync(claudePath, "utf8");
+    expect(() =>
+      prepareConnection({
+        harness: "claude-code",
+        configPath: claudePath,
+        mcpCommand: "/tmp/campfire",
+        url: "http://127.0.0.1:9414",
+        agentToken: token,
+        workspaceId: "ws_test",
+      }),
+    ).toThrow(/refusing to replace/);
+    expect(readFileSync(claudePath, "utf8")).toBe(foreignText);
+    expect(() =>
+      prepareConnection({
+        harness: "claude-code",
+        configPath: join(dir, "relative-claude.json"),
+        mcpCommand: "campfire",
+        url: "http://127.0.0.1:9414",
+        agentToken: token,
+      }),
+    ).toThrow(/absolute path/);
+    const notObject = join(dir, "claude-bad.json");
+    writeFileSync(notObject, JSON.stringify({ mcpServers: ["nope"] }));
+    const badText = readFileSync(notObject, "utf8");
+    expect(() =>
+      prepareConnection({
+        harness: "claude-code",
+        configPath: notObject,
+        mcpCommand: "/tmp/campfire",
+        url: "http://127.0.0.1:9414",
+        agentToken: token,
+      }),
+    ).toThrow(/mcpServers is not an object/);
+    expect(readFileSync(notObject, "utf8")).toBe(badText);
+
     const broken = join(dir, "broken.json");
     writeFileSync(broken, "{ not json");
     expect(() =>

@@ -14,6 +14,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
 import {
+  defaultClaudeConfigPath,
   defaultHarnessConfigPath,
   assertConnectionCompatible,
   detectInstalledHarnesses,
@@ -32,6 +33,7 @@ import {
   readOperatorAgentToken,
   readOperatorHumanToken,
   rememberAgentCredential,
+  rememberOwnedLocalAgent,
   rememberProfileAgents,
   saveCredentials,
 } from "../bootstrap/profile.js";
@@ -180,6 +182,7 @@ import type { ServerIdentity } from "../mcp/context.js";
 import { startStdioServer } from "../mcp/stdio.js";
 import { readBridgeOperatorToken, readWebhookBridgeConfig } from "../bridge/config.js";
 import { collectBridgeReport, formatBridgeReport, type BridgeReport } from "../bridge/report.js";
+import { harnessesMatch } from "../domain/session-runtime.js";
 import { createRuntime } from "../runtime.js";
 import { openReadonlySqliteStore } from "../store/sqlite-store.js";
 import type {
@@ -197,6 +200,7 @@ import type {
   WorkspaceView,
   ReadinessStatus,
   WorkspaceSummary,
+  CampfireService,
 } from "../service/service.js";
 import type { CampfireStore } from "../store/store.js";
 
@@ -272,6 +276,7 @@ function resolveCliIdentity(argv: string[], options?: { stripFlags?: string[] })
 interface CliBackend {
   identity: ServerIdentity;
   store?: CampfireStore;
+  service?: CampfireService;
   call(method: string, params?: Record<string, unknown>): Promise<unknown>;
 }
 
@@ -360,6 +365,7 @@ async function withBackend<T>(
     const backend: CliBackend = {
       identity: bound,
       store: runtime.store,
+      service: runtime.service,
       call: measuredCall((method, params) => {
         if (isPublicationBlockedMethod(method)) assertLocalWritesAllowed(config.databasePath);
         return Promise.resolve(dispatchCampfireMethod(runtime.service, bound.ctx, method, params ?? {}));
@@ -1028,7 +1034,11 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
   const profile = loadAnyProfile();
   const configPath =
     optionalFlag(flags, "config") ??
-    (harness === "codex" || harness === "opencode" ? defaultHarnessConfigPath(harness) : undefined);
+    (harness === "claude-code"
+      ? defaultClaudeConfigPath()
+      : harness === "codex" || harness === "opencode"
+        ? defaultHarnessConfigPath(harness)
+        : undefined);
   if (configPath === undefined) {
     throw new ValidationError("Missing required --config argument", { field: "config" });
   }
@@ -1072,6 +1082,7 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
     ...(access === undefined ? {} : { rejectConflicting: true }),
     ...(workspaceId === undefined ? {} : { workspaceId }),
   });
+  if (profile?.mode !== "remote") bindConnectedLocalAgent(agentToken, plan.harness);
   if (commandOutput(parsed) === "json") {
     printJson(plan);
     return;
@@ -2724,8 +2735,69 @@ async function cmdCreateAgent(parsed: ParsedArgs, argv: string[]): Promise<void>
     if (teamId === undefined || teamId.length === 0) {
       throw new ValidationError("Missing required --team argument", { field: "team" });
     }
-    printJson(await backend.call("create_agent", { name, humanId, harness, teamId }));
+    const created = await backend.call("create_agent", { name, humanId, harness, teamId }) as {
+      agent?: { id: string; name: string; harness: string };
+      token?: string;
+    };
+    if (created.agent !== undefined && created.token !== undefined) {
+      rememberJoinedLocalAgent(backend, created.agent, created.token);
+    }
+    printJson(created);
   });
+}
+
+/** Keep a local agent on the operator profile and in the current workspace. */
+function rememberJoinedLocalAgent(
+  backend: CliBackend,
+  agent: { id: string; name: string; harness: string },
+  token: string,
+): void {
+  const profile = loadAnyProfile();
+  if (profile === undefined || profile.mode === "remote" || backend.store === undefined || backend.service === undefined) return;
+  const stored = backend.store.getAgent(agent.id);
+  if (stored?.humanId !== profile.humanId) return;
+  rememberOwnedLocalAgent({ id: stored.id, name: stored.name, harness: stored.harness }, token);
+  const workspaceId = profile.workspaceId;
+  if (workspaceId === undefined) return;
+  const actor = { actorId: stored.id, actorType: "agent" as const };
+  if (backend.store.getParticipant(workspaceId, actor) !== undefined) return;
+  if (backend.identity.ctx.actor.actorType !== "human") return;
+  backend.service.inviteToWorkspace(backend.identity.ctx, { workspaceId, actor, role: "agent" });
+  backend.service.joinWorkspace({ actor }, { workspaceId });
+}
+
+/**
+ * A local connect already wrote the harness file. When the token belongs to
+ * an agent in this installation, record it for session prepare. A token this
+ * database does not know stays only in the harness file.
+ */
+function bindConnectedLocalAgent(token: string, harness: string): void {
+  const profile = loadAnyProfile();
+  if (profile === undefined || profile.mode === "remote") return;
+  const runtime = createRuntime(loadConfig());
+  try {
+    let actor: { actorId: string; actorType: "human" | "agent" };
+    try {
+      actor = runtime.service.resolveToken(token);
+    } catch {
+      return;
+    }
+    if (actor.actorType !== "agent") return;
+    const agent = runtime.store.getAgent(actor.actorId);
+    if (agent?.humanId !== profile.humanId || !harnessesMatch(agent.harness, harness)) return;
+    rememberJoinedLocalAgent(
+      {
+        identity: { ctx: { actor: { actorId: profile.humanId, actorType: "human" } } },
+        store: runtime.store,
+        service: runtime.service,
+        call: async () => undefined,
+      },
+      { id: agent.id, name: agent.name, harness: agent.harness },
+      token,
+    );
+  } finally {
+    runtime.close();
+  }
 }
 
 async function cmdIssueToken(parsed: ParsedArgs, argv: string[]): Promise<void> {
@@ -2811,7 +2883,10 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
     if (connect) {
       const selected = optionalFlag(parsed.flags, "harness");
       const installed = detectInstalledHarnesses();
-      const harnesses = profile.agents.map((agent) => agent.harness).filter((harness) => selected === undefined ? installed.includes(harness as "codex" | "opencode") : harness === selected);
+      const harnesses = profile.agents.map((agent) => agent.harness).filter((harness): harness is "codex" | "opencode" => {
+        if (harness !== "codex" && harness !== "opencode") return false;
+        return selected === undefined ? installed.includes(harness) : harness === selected;
+      });
       if (selected !== undefined && harnesses.length === 0) {
         throw new ValidationError("Selected harness has no enrolled recipient agent", { field: "harness", nextAction: "enroll_selected_harness" });
       }
@@ -2821,7 +2896,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
       }
       const plans = harnesses.map((harness) => {
         const agentAccess = resolveRemoteAccess({ harness }, { ...process.env, CAMPFIRE_TOKEN: undefined });
-        const configPath = override ?? defaultHarnessConfigPath(harness as "codex" | "opencode");
+        const configPath = override ?? defaultHarnessConfigPath(harness);
         const input = { harness, configPath, url: agentAccess.url, agentToken: agentAccess.token,
           workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire", rejectConflicting: true };
         try {
@@ -2837,7 +2912,13 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
         }
         return input;
       });
-      for (const input of plans) prepared.push(prepareConnection(input).harness);
+      for (const input of plans) {
+        const written = prepareConnection(input).harness;
+        if (written !== "codex" && written !== "opencode") {
+          throw new ValidationError("Remote Viewer connect prepares Codex or OpenCode only.", { field: "harness" });
+        }
+        prepared.push(written);
+      }
     }
     const viewer = await startCampfireViewer({ call, host: DEFAULT_VIEWER_HOST, port: viewerPort,
       theme: optionalFlag(parsed.flags, "theme") ?? DEFAULT_VIEWER_THEME, workspaceHint: "joined" });

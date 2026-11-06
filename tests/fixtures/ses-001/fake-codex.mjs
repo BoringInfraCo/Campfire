@@ -5,14 +5,25 @@
  * argv and a few environment keys in the working directory, then exits or waits.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const executableName = basename(process.argv[1] ?? "codex");
 
 if (process.argv.includes("--version")) {
-  const version = readFileSync(join(here, "codex-version.txt"), "utf8").trim();
-  process.stdout.write(`codex-cli ${version}\n`);
+  const versionFile = executableName === "claude"
+    ? "claude-version.txt"
+    : executableName === "opencode"
+      ? "opencode-version.txt"
+      : "codex-version.txt";
+  const version = readFileSync(join(here, versionFile), "utf8").trim();
+  const line = executableName === "claude"
+    ? `${version} (Claude Code)\n`
+    : executableName === "opencode"
+      ? `opencode v${version}\n`
+      : `codex-cli ${version}\n`;
+  process.stdout.write(line);
   process.exit(0);
 }
 

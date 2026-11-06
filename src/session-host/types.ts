@@ -7,16 +7,18 @@
  */
 
 export const CODEX_CLI_VERSION = "0.164.0";
+export const CLAUDE_CODE_VERSION = "2.1.260";
+export const OPENCODE_CLI_VERSION = "2.2.5";
 export const HEARTBEAT_MS = 15_000;
 export const UNLAUNCHED_TTL_MS = 60 * 60 * 1000;
 export const FINAL_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const STOP_GRACE_MS = 2_000;
 
 export const SESSION_HOST_DISABLED_MESSAGE =
-  "Team agent sessions are off. Set CAMPFIRE_SESSION_HOST=1 to prepare a local Codex session.";
+  "Team agent sessions are off. Set CAMPFIRE_SESSION_HOST=1 to prepare a local agent session.";
 
-export const CODEX_ONLY_MESSAGE =
-  "This slice supports Codex only. Claude Code and OpenCode launch are not available yet.";
+export const UNKNOWN_SESSION_HARNESS_MESSAGE =
+  "Unknown session harness. Use codex, claude-code, or opencode.";
 
 export const EMBEDDED_UNAVAILABLE_MESSAGE =
   "Embedded terminal launch is off. Set CAMPFIRE_EMBEDDED_TERMINAL=1 or use --launch external.";
@@ -189,6 +191,8 @@ export interface SessionHostDeps {
   spawnSync?: (command: string, args: readonly string[], options: { shell: false; cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number }) => SpawnSyncResult;
   openExternal?: (launcherPath: string) => void;
   codexExecutable?: string;
+  claudeExecutable?: string;
+  opencodeExecutable?: string;
   campfireExecutable?: string;
   /** When set, version inspection does not execute the binary. */
   readVersion?: (executable: string) => string;

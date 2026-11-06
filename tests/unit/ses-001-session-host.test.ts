@@ -9,7 +9,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { saveCredentials, saveProfile } from "../../src/bootstrap/profile.js";
+import { loadAnyProfile, saveCredentials, saveProfile } from "../../src/bootstrap/profile.js";
+import { persistRemoteProfile } from "../../src/bootstrap/remote-profile.js";
+import { profileSelectionForHost } from "../../src/cli/session-host.js";
 import { ValidationError } from "../../src/domain/errors.js";
 import { runCliEntry } from "../../src/cli/index.js";
 import { createFakeCoreClient, createHttpCoreClient, createServiceCoreClient, HTTP_METHODS } from "../../src/session-host/core-client.js";
@@ -19,14 +21,17 @@ import {
   prepareSession,
   reconcileSessions,
   runSession,
+  sessionAgentCredential,
   stopSession,
   type RunResult,
 } from "../../src/session-host/host.js";
 import { launcherPath, readLaunchRecord, registryDirectory, writeLaunchRecord } from "../../src/session-host/registry.js";
-import { CODEX_ONLY_MESSAGE, EMBEDDED_UNAVAILABLE_MESSAGE, RUNTIME_REPORT_MISSING_MESSAGE, type Clock, type ManagedChild, type SpawnRequest } from "../../src/session-host/types.js";
+import { EMBEDDED_UNAVAILABLE_MESSAGE, RUNTIME_REPORT_MISSING_MESSAGE, UNKNOWN_SESSION_HARNESS_MESSAGE, type Clock, type ManagedChild, type SpawnRequest } from "../../src/session-host/types.js";
 
 const HUMAN = "cft_ses001_human_secret";
 const AGENT = "cft_ses001_agent_secret";
+const CLAUDE_AGENT = "cft_ses001_claude_secret";
+const OPENCODE_AGENT = "cft_ses001_opencode_secret";
 const FINDING = "FINDING_SENTINEL_do_not_copy";
 const AWS = "aws-ses001-secret-value";
 const FIXTURE = fileURLToPath(new URL("../fixtures/ses-001/fake-codex.mjs", import.meta.url));
@@ -116,9 +121,14 @@ function installProfile(): void {
 }
 
 function installCodex(root: string, version = "0.164.0"): string {
-  const bin = join(root, "codex");
+  return installBinary(root, "codex", version);
+}
+
+function installBinary(root: string, name: "codex" | "claude" | "opencode", version: string): string {
+  const bin = join(root, name);
   copyFileSync(FIXTURE, bin);
-  writeFileSync(join(root, "codex-version.txt"), `${version}\n`);
+  const versionName = name === "claude" ? "claude-version.txt" : name === "opencode" ? "opencode-version.txt" : "codex-version.txt";
+  writeFileSync(join(root, versionName), `${version}\n`);
   chmodSync(bin, 0o755);
   return bin;
 }
@@ -164,7 +174,12 @@ describe("SES-001 session host", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.CAMPFIRE_SESSION_HOST;
+    delete process.env.CAMPFIRE_URL;
+    delete process.env.CAMPFIRE_DB;
+    delete process.env.CAMPFIRE_TELEMETRY;
     delete process.env.CODEX_CLI;
+    delete process.env.CLAUDE_CLI;
+    delete process.env.OPENCODE_CLI;
     delete process.env.CAMPFIRE_TOKEN;
     delete process.env.CAMPFIRE_BRIDGE_TOKEN;
     delete process.env.AWS_SECRET_ACCESS_KEY;
@@ -208,7 +223,7 @@ describe("SES-001 session host", () => {
     expect(failure.error.message).not.toContain(HUMAN);
   });
 
-  it("returns a token-free prepare receipt, separately gates embedded, and rejects non-Codex launch", () => {
+  it("returns a token-free prepare receipt, separately gates embedded, and rejects a mismatched or unknown harness", () => {
     enable();
     installProfile();
     const root = mkdtempSync(join(tmpdir(), "ses001-repo-"));
@@ -272,13 +287,19 @@ describe("SES-001 session host", () => {
         { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_codex", harness: "claude-code", repository: repo, launch: "external" },
         base(codex),
       ),
-    ).toThrow(CODEX_ONLY_MESSAGE);
+    ).toThrow(/does not match/);
     expect(() =>
       prepareSession(
         { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_codex", harness: "opencode", repository: repo, launch: "external" },
         base(codex),
       ),
-    ).toThrow(/Codex only/);
+    ).toThrow(/does not match/);
+    expect(() =>
+      prepareSession(
+        { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_codex", harness: "ghostty", repository: repo, launch: "external" },
+        base(codex),
+      ),
+    ).toThrow(UNKNOWN_SESSION_HARNESS_MESSAGE);
   });
 
   it("requires an existing in-repository worktree and does not create one", () => {
@@ -799,6 +820,247 @@ describe("SES-001 session host", () => {
         { ...base(codex), readVersion: () => "codex-cli 9.9.9" },
       ),
     ).toThrow(/Codex CLI 0\.164\.0 is required[\s\S]*9\.9\.9/);
+  });
+
+  it("prepares and runs Claude Code and OpenCode without copying the Codex credential", async () => {
+    enable();
+    saveProfile(
+      {
+        version: 1,
+        databasePath: join(tmpdir(), "ses001-unused.db"),
+        url: "http://127.0.0.1:9414",
+        humanId: "hum_owner",
+        humanName: "Owner",
+        agentId: "agt_codex",
+        agentName: "Codex",
+        harness: "codex",
+        agents: [
+          { id: "agt_codex", name: "Codex", harness: "codex" },
+          { id: "agt_claude", name: "Claude", harness: "claude" },
+          { id: "agt_open", name: "OpenCode", harness: "opencode" },
+        ],
+      },
+      process.env,
+    );
+    saveCredentials(
+      { humanToken: HUMAN, agentToken: AGENT, agents: { codex: AGENT, "claude-code": CLAUDE_AGENT, opencode: OPENCODE_AGENT } },
+      process.env,
+    );
+    const repo = mkdtempSync(join(tmpdir(), "ses001-adapters-"));
+    const bin = mkdtempSync(join(tmpdir(), "ses001-adapters-bin-"));
+    const claude = installBinary(bin, "claude", "2.1.260");
+    const opencode = installBinary(bin, "opencode", "2.2.5");
+    const versions = (executable: string): string => {
+      if (executable.endsWith("/claude")) return "2.1.260 (Claude Code)";
+      if (executable.endsWith("/opencode")) return "opencode v2.2.5";
+      return "codex-cli 0.164.0";
+    };
+    expect(() =>
+      prepareSession(
+        { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_claude", harness: "claude-code", repository: repo, launch: "copy-launch-command" },
+        { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: () => "9.9.9" },
+      ),
+    ).toThrow(/Claude Code 2\.1\.260 is required/);
+    const cases = [
+      {
+        harness: "claude-code" as const,
+        agentId: "agt_claude",
+        executable: claude,
+        token: CLAUDE_AGENT,
+        args: (instruction: string) => [instruction],
+      },
+      {
+        harness: "opencode" as const,
+        agentId: "agt_open",
+        executable: opencode,
+        token: OPENCODE_AGENT,
+        args: (instruction: string) => ["--prompt", instruction],
+      },
+    ];
+    for (const item of cases) {
+      const core = createFakeCoreClient();
+      const prepared = prepareSession(
+        {
+          workspaceId: "ws_lab",
+          taskId: "task_one",
+          agentId: item.agentId,
+          harness: item.harness,
+          repository: repo,
+          launch: "copy-launch-command",
+        },
+        {
+          ...base(item.executable, core),
+          codexExecutable: undefined,
+          claudeExecutable: item.harness === "claude-code" ? item.executable : undefined,
+          opencodeExecutable: item.harness === "opencode" ? item.executable : undefined,
+          readVersion: versions,
+        },
+      );
+      expect(prepared.receipt.harness).toBe(item.harness);
+      expect(prepared.receipt.agentId).toBe(item.agentId);
+      let child: ReturnType<typeof spawn> | undefined;
+      const seen: SpawnRequest[] = [];
+      const running = runSession(prepared.receipt.launchId, {
+        ...base(item.executable, core),
+        codexExecutable: undefined,
+        claudeExecutable: item.harness === "claude-code" ? item.executable : undefined,
+        opencodeExecutable: item.harness === "opencode" ? item.executable : undefined,
+        readVersion: undefined,
+        stdio: "ignore",
+        spawn: (request) => {
+          seen.push(request);
+          child = spawn(request.command, [...request.args], {
+            cwd: request.cwd,
+            env: request.env,
+            shell: false,
+            stdio: "ignore",
+          });
+          return child;
+        },
+      });
+      const capturePath = join(repo, "ses001-capture.json");
+      const started = Date.now();
+      while (!existsSync(capturePath)) {
+        if (Date.now() - started > 5_000) throw new Error(`${item.harness} fixture did not write a capture file`);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      const capture = JSON.parse(readFileSync(capturePath, "utf8")) as { argv: string[]; env: Record<string, string | null> };
+      const request = seen[0];
+      expect(request).toBeDefined();
+      expect(request?.shell).toBe(false);
+      expect(request?.command).toBe(item.executable);
+      expect(request?.cwd).toBe(realpathSync(repo));
+      const instruction = request?.args.at(-1) ?? "";
+      expect(request?.args).toEqual(item.args(instruction));
+      expect(instruction).toContain("ws_lab");
+      expect(instruction).toContain("task_one");
+      expect(instruction).not.toContain(item.token);
+      expect(instruction).not.toContain(AGENT);
+      expect(request?.env.CAMPFIRE_TOKEN).toBeUndefined();
+      expect(JSON.stringify(request?.env)).not.toContain(item.token);
+      expect(capture.argv.join("\n")).not.toContain(item.token);
+      expect(capture.env.CAMPFIRE_TOKEN).toBeNull();
+      rmSync(capturePath);
+      child?.kill("SIGTERM");
+      await running;
+      const registry = dumpRegistry();
+      expect(registry).not.toContain(item.token);
+      expect(registry).not.toContain(AGENT);
+      expect(registry).not.toContain("Read Campfire task");
+    }
+    saveCredentials({ humanToken: HUMAN, agentToken: AGENT, agents: { codex: AGENT } }, process.env);
+    expect(() =>
+      prepareSession(
+        { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_claude", harness: "claude-code", repository: repo, launch: "copy-launch-command" },
+        { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: versions },
+      ),
+    ).toThrow(/No Claude Code agent credential/);
+  });
+
+  it("keeps the remote Codex credential binding and selects a Claude-only profile", async () => {
+    enable();
+    persistRemoteProfile(
+      {
+        url: "https://shared.example.test/team-a/",
+        humanId: "hum_recipient",
+        humanName: "Alice",
+        workspaceId: "ws_existing",
+        humanToken: HUMAN,
+        agents: [{ id: "agt_remote_codex", name: "Remote Codex", harness: "codex", token: AGENT }],
+      },
+      process.env,
+    );
+    expect(sessionAgentCredential(process.env, "codex")).toBe(AGENT);
+    process.env.CAMPFIRE_URL = "https://other.example.test/team-a";
+    expect(() => sessionAgentCredential(process.env, "codex")).toThrow(/No Codex agent credential/);
+    delete process.env.CAMPFIRE_URL;
+
+    saveProfile(
+      {
+        version: 1,
+        databasePath: join(process.env.CAMPFIRE_DATA_DIR ?? tmpdir(), "missing.db"),
+        url: "http://127.0.0.1:9414",
+        humanId: "hum_owner",
+        humanName: "Owner",
+        agentId: "agt_claude",
+        agentName: "Claude",
+        harness: "claude",
+        agents: [{ id: "agt_claude", name: "Claude", harness: "claude" }],
+      },
+      process.env,
+    );
+    saveCredentials({ humanToken: HUMAN, agentToken: CLAUDE_AGENT, agents: { "claude-code": CLAUDE_AGENT } }, process.env);
+    expect(profileSelectionForHost(process.env)).toEqual({ harness: "claude-code", agentId: "agt_claude" });
+    const repo = mkdtempSync(join(tmpdir(), "ses001-select-"));
+    const bin = mkdtempSync(join(tmpdir(), "ses001-select-bin-"));
+    const claude = installBinary(bin, "claude", "2.1.260");
+    prepareSession(
+      { workspaceId: "ws_lab", taskId: "task_one", agentId: "agt_claude", harness: "claude-code", repository: repo, launch: "copy-launch-command" },
+      { ...base(claude), codexExecutable: undefined, claudeExecutable: claude, readVersion: () => "2.1.260 (Claude Code)" },
+    );
+    expect(profileSelectionForHost(process.env)?.harness).toBe("claude-code");
+    errors = [];
+    vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+      errors.push(args.map(String).join(" "));
+    });
+    const code = await runCliEntry(["session", "reconcile", "--output", "json"]);
+    expect(code).toBe(1);
+    expect(errors.join("\n")).not.toContain("No Codex agent credential");
+    expect(errors.join("\n")).not.toContain(CLAUDE_AGENT);
+  });
+
+  it("records a created Claude Code agent and prepares its session", async () => {
+    enable();
+    const data = process.env.CAMPFIRE_DATA_DIR;
+    if (data === undefined) throw new Error("missing data dir");
+    process.env.CAMPFIRE_DB = join(data, "owned-agent.db");
+    process.env.CAMPFIRE_TELEMETRY = "0";
+    logs = [];
+    errors = [];
+    vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+      errors.push(args.map(String).join(" "));
+    });
+    expect(await runCliEntry([
+      "onboard", "--human-name", "Ada", "--agent-name", "Codex", "--harness", "codex",
+      "--workspace-name", "Lab", "--goal", "Ship sessions", "--output", "json",
+    ])).toBe(0);
+    const onboard = JSON.parse(logs.at(-1) ?? "{}") as {
+      human: { id: string };
+      team: { id: string };
+      workspace: { id: string };
+    };
+    logs.length = 0;
+    expect(await runCliEntry([
+      "create-agent", "--name", "Claude", "--human", onboard.human.id, "--harness", "claude-code",
+      "--team", onboard.team.id, "--output", "json",
+    ])).toBe(0);
+    const created = JSON.parse(logs.at(-1) ?? "{}") as { agent: { id: string; harness: string }; token: string };
+    logs.length = 0;
+    expect(await runCliEntry([
+      "create-task", "--workspace", onboard.workspace.id, "--title", "Check Claude", "--output", "json",
+    ])).toBe(0);
+    const task = JSON.parse(logs.at(-1) ?? "{}") as { id: string };
+    const repo = mkdtempSync(join(tmpdir(), "ses001-owned-"));
+    const bin = mkdtempSync(join(tmpdir(), "ses001-owned-bin-"));
+    process.env.CLAUDE_CLI = installBinary(bin, "claude", "2.1.260");
+    expect(await runCliEntry([
+      "session", "prepare",
+      "--workspace", onboard.workspace.id,
+      "--task", task.id,
+      "--agent", created.agent.id,
+      "--harness", "claude-code",
+      "--repository", repo,
+      "--launch", "copy-launch-command",
+    ])).toBe(0);
+    expect(logs.at(-1)).toContain("session run lch_");
+    expect(logs.join("\n")).not.toContain(created.token);
+    expect(errors.join("\n")).not.toContain(created.token);
+    const profile = loadAnyProfile(process.env);
+    expect(profile?.agents?.some((agent) => agent.id === created.agent.id && agent.harness === "claude-code")).toBe(true);
+    expect(sessionAgentCredential(process.env, "claude-code")).toBe(created.token);
   });
 
   it("runs the fixture harness without putting secrets in argv, env, registry, or output", async () => {

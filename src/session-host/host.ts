@@ -18,10 +18,17 @@ import {
 import { constants } from "node:fs";
 import { accessSync } from "node:fs";
 import { dirname } from "node:path";
-import { loadAnyProfile, readOperatorAgentToken, type AnyCampfireProfile } from "../bootstrap/profile.js";
+import { loadAnyProfile, loadCredentials, readOperatorAgentToken, type AnyCampfireProfile } from "../bootstrap/profile.js";
 import { ValidationError } from "../domain/errors.js";
-import { SESSION_REPORT_MIN_INTERVAL_MS } from "../domain/session-runtime.js";
-import { assertCodexVersion, assertLaunchableHarness, buildCodexLaunch, discoverCodexExecutable, parseCodexVersion, readCodexVersion } from "./codex.js";
+import { harnessesMatch, SESSION_REPORT_MIN_INTERVAL_MS } from "../domain/session-runtime.js";
+import {
+  assertLaunchableHarness,
+  buildHarnessLaunch,
+  canonicalSessionHarness,
+  discoverHarnessExecutable,
+  explicitHarnessExecutable,
+  inspectHarnessExecutable,
+} from "./launch.js";
 import { sendControl, startControlServer, type ControlServer } from "./control.js";
 import { deleteCommandLauncher, formatCopyLaunchCommand, openTerminalLauncher, writeCommandLauncher } from "./external.js";
 import { assertSessionHostEnabled } from "./flag.js";
@@ -39,7 +46,6 @@ import {
 import { assertObjectId, reviewCheckout } from "./repository.js";
 import {
   EMBEDDED_UNAVAILABLE_MESSAGE,
-  CODEX_CLI_VERSION,
   FINAL_TTL_MS,
   HEARTBEAT_MS,
   RUNTIME_REPORT_MISSING_MESSAGE,
@@ -55,6 +61,7 @@ import {
   type SessionActorContext,
   type SessionHostDeps,
   type SpawnRequest,
+  type SupportedHarness,
 } from "./types.js";
 
 const FINAL_STATES = new Set(["exited", "failed", "control_lost"]);
@@ -149,25 +156,60 @@ function requireProfile(env: NodeJS.ProcessEnv): AnyCampfireProfile {
 function assertOwnedAgent(profile: AnyCampfireProfile, agentId: string, harness: string): void {
   const listed = profile.agents?.find((agent) => agent.id === agentId);
   if (listed !== undefined) {
-    if (listed.harness !== harness) {
+    if (!harnessesMatch(listed.harness, harness)) {
       throw new ValidationError("The launch agent harness does not match this profile.", { field: "harness" });
     }
     return;
   }
-  if (profile.mode !== "remote" && profile.agentId === agentId && profile.harness === harness) return;
+  if (profile.mode !== "remote" && profile.agentId === agentId && profile.harness !== undefined && harnessesMatch(profile.harness, harness)) return;
   throw new ValidationError("The launch agent is not owned by this profile.", { field: "agentId" });
 }
 
-function resolveCredential(deps: SessionHostDeps, harness: string): string {
-  const env = depsEnv(deps);
-  const token = deps.resolveAgentCredential?.(env, harness) ?? readOperatorAgentToken(env, harness);
-  if (token === undefined || token.trim().length === 0) {
-    throw new ValidationError("No Codex agent credential is stored for this profile. Connect the agent before campfire session run.", {
-      field: "credentials",
-      nextAction: "connect_agent",
-    });
+function harnessLabel(harness: SupportedHarness): string {
+  if (harness === "claude-code") return "Claude Code";
+  if (harness === "opencode") return "OpenCode";
+  return "Codex";
+}
+
+function missingCredential(harness: SupportedHarness): never {
+  throw new ValidationError(
+    `No ${harnessLabel(harness)} agent credential is stored for this profile. Connect the agent before campfire session run.`,
+    { field: "credentials", nextAction: "connect_agent" },
+  );
+}
+
+/** Agent token for this harness. A Codex legacy token is not reused for Claude Code or OpenCode. */
+export function sessionAgentCredential(env: NodeJS.ProcessEnv, harness: SupportedHarness): string {
+  const profile = loadAnyProfile(env);
+  if (profile?.mode === "remote") {
+    const remoteKeys = harness === "claude-code" ? (["claude-code", "claude"] as const) : ([harness] as const);
+    for (const key of remoteKeys) {
+      const remote = readOperatorAgentToken(env, key);
+      if (remote !== undefined && remote.trim().length > 0) return remote;
+    }
+    missingCredential(harness);
   }
-  return token;
+  const credentials = loadCredentials(env);
+  const keys = harness === "claude-code" ? ["claude-code", "claude"] : [harness];
+  for (const key of keys) {
+    const specific = credentials?.agents?.[key]?.trim();
+    if (specific !== undefined && specific.length > 0) return specific;
+  }
+  if (profile?.harness !== undefined && harnessesMatch(profile.harness, harness)) {
+    const legacy = credentials?.agentToken?.trim();
+    if (legacy !== undefined && legacy.length > 0) return legacy;
+  }
+  missingCredential(harness);
+}
+
+function resolveCredential(deps: SessionHostDeps, harness: SupportedHarness): string {
+  const env = depsEnv(deps);
+  if (deps.resolveAgentCredential !== undefined) {
+    const token = deps.resolveAgentCredential(env, harness);
+    if (token === undefined || token.trim().length === 0) missingCredential(harness);
+    return token;
+  }
+  return sessionAgentCredential(env, harness);
 }
 
 function executableIsPresent(path: string | undefined): boolean {
@@ -180,9 +222,9 @@ function executableIsPresent(path: string | undefined): boolean {
   }
 }
 
-function tryCodexPath(deps: SessionHostDeps): string | undefined {
+function tryHarnessPath(deps: SessionHostDeps, harness: SupportedHarness): string | undefined {
   try {
-    return discoverCodexExecutable(depsEnv(deps), deps.codexExecutable);
+    return discoverHarnessExecutable(depsEnv(deps), harness, explicitHarnessExecutable(deps, harness));
   } catch {
     return undefined;
   }
@@ -209,9 +251,7 @@ export function prepareSession(input: PrepareInput, deps: SessionHostDeps = {}):
   const workspaceId = assertObjectId(input.workspaceId, "workspaceId");
   const taskId = assertObjectId(input.taskId, "taskId");
   const agentId = assertObjectId(input.agentId, "agentId");
-  if (input.harness === "claude-code" || input.harness === "opencode" || input.harness !== "codex") {
-    assertLaunchableHarness(input.harness);
-  }
+  const harness = canonicalSessionHarness(input.harness);
   if (input.launch === "embedded") {
     if (env.CAMPFIRE_EMBEDDED_TERMINAL !== "1") {
       throw new ValidationError(EMBEDDED_UNAVAILABLE_MESSAGE, { field: "launch", nextAction: "use_external_launch" });
@@ -221,11 +261,11 @@ export function prepareSession(input: PrepareInput, deps: SessionHostDeps = {}):
     throw new ValidationError("Launch mode must be external, embedded, or copy-launch-command.", { field: "launch" });
   }
   const profile = requireProfile(env);
-  assertOwnedAgent(profile, agentId, "codex");
-  resolveCredential(deps, "codex");
+  assertOwnedAgent(profile, agentId, harness);
+  resolveCredential(deps, harness);
   const checkout = reviewCheckout(input.repository, input.worktree);
-  const executable = discoverCodexExecutable(env, deps.codexExecutable);
-  inspectCodex(executable, deps);
+  const executable = discoverHarnessExecutable(env, harness, explicitHarnessExecutable(deps, harness));
+  inspectHarnessExecutable(harness, executable, deps);
   const now = clockOf(deps).now();
   const launchId = createLaunchId();
   const record: LaunchRecord = {
@@ -235,7 +275,7 @@ export function prepareSession(input: PrepareInput, deps: SessionHostDeps = {}):
     taskId,
     agentId,
     humanId: profile.humanId,
-    harness: "codex",
+    harness,
     repositoryRoot: checkout.repositoryRoot,
     ...(checkout.worktreePath === undefined ? {} : { worktreePath: checkout.worktreePath }),
     launchMode: input.launch === "copy-launch-command" ? "copy" : input.launch,
@@ -263,15 +303,6 @@ export function prepareSession(input: PrepareInput, deps: SessionHostDeps = {}):
     });
   }
   return { receipt };
-}
-
-function inspectCodex(executable: string, deps: SessionHostDeps): void {
-  if (deps.readVersion !== undefined) {
-    const reported = deps.readVersion(executable);
-    assertCodexVersion(parseCodexVersion(reported) ?? (reported === CODEX_CLI_VERSION ? reported : undefined));
-    return;
-  }
-  readCodexVersion(executable, deps.spawnSync);
 }
 
 function armTimer(ms: number): { done: Promise<boolean>; cancel: () => void } {
@@ -468,12 +499,7 @@ export async function runSession(launchId: string, deps: SessionHostDeps = {}): 
   try {
     const record = readLaunchRecord(env, id);
     const { cwd } = revalidate(record, deps);
-    const credential = resolveCredential(deps, record.harness);
-    if (credential.length === 0) {
-      throw new ValidationError("No Codex agent credential is stored for this profile. Connect the agent before campfire session run.", {
-        field: "credentials",
-      });
-    }
+    resolveCredential(deps, record.harness);
     const root = ensureRegistry(env);
     deleteCommandLauncher(root, id);
     const core = deps.core;
@@ -481,8 +507,8 @@ export async function runSession(launchId: string, deps: SessionHostDeps = {}): 
       throw new ValidationError("Campfire Core is not available for this session.", { field: "core", nextAction: "upgrade_campfire_core" });
     }
     const agentCtx: SessionActorContext = deps.agentContext ?? { actor: { actorId: record.agentId, actorType: "agent" } };
-    const executable = discoverCodexExecutable(env, deps.codexExecutable);
-    inspectCodex(executable, deps);
+    const executable = discoverHarnessExecutable(env, record.harness, explicitHarnessExecutable(deps, record.harness));
+    inspectHarnessExecutable(record.harness, executable, deps);
     let sessionId: string;
     try {
       const session = await core.registerAgentSession(agentCtx, {
@@ -574,7 +600,8 @@ export async function runSession(launchId: string, deps: SessionHostDeps = {}): 
     }
     record.privateControlSocket = control.path;
     writeLaunchRecord(env, record);
-    const plan = buildCodexLaunch({
+    const plan = buildHarnessLaunch({
+      harness: record.harness,
       executable,
       cwd,
       parentEnv: env,
@@ -705,7 +732,6 @@ export async function reconcileSessions(deps: SessionHostDeps = {}): Promise<Rec
     controlLost: [],
     unchanged: [],
   };
-  const codexPath = tryCodexPath(deps);
   for (const record of listed.records) {
     const expiry = Date.parse(record.expiresAt);
     if (record.localState === "prepared" && !Number.isNaN(expiry) && expiry <= now) {
@@ -718,7 +744,7 @@ export async function reconcileSessions(deps: SessionHostDeps = {}): Promise<Rec
       result.finalizedRemoved.push(record.launchId);
       continue;
     }
-    if (record.localState === "prepared" && !executableIsPresent(codexPath)) {
+    if (record.localState === "prepared" && !executableIsPresent(tryHarnessPath(deps, record.harness))) {
       result.missingExecutable.push(record.launchId);
       continue;
     }

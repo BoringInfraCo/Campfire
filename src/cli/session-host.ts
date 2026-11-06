@@ -6,8 +6,9 @@
  */
 import { realpathSync } from "node:fs";
 import { isAbsolute } from "node:path";
-import { loadAnyProfile, readOperatorAgentToken, readOperatorHumanToken } from "../bootstrap/profile.js";
+import { loadAnyProfile, readOperatorHumanToken } from "../bootstrap/profile.js";
 import { ValidationError } from "../domain/errors.js";
+import { harnessesMatch } from "../domain/session-runtime.js";
 import { createRuntimeFromPath } from "../runtime.js";
 import { createHttpCoreClient, createServiceCoreClient } from "../session-host/core-client.js";
 import { assertSessionHostEnabled } from "../session-host/flag.js";
@@ -16,10 +17,12 @@ import {
   prepareSession,
   reconcileSessions,
   runSession,
+  sessionAgentCredential,
   stopSession,
   type ReconcileResult,
 } from "../session-host/host.js";
-import type { AgentSessionListPage, CoreClient, SessionActorContext, SessionHostDeps } from "../session-host/types.js";
+import { listRegistryEntries, readLaunchRecord } from "../session-host/registry.js";
+import type { AgentSessionListPage, CoreClient, SessionActorContext, SessionHostDeps, SupportedHarness } from "../session-host/types.js";
 import type { ParsedArgs } from "./args.js";
 import { formatSessionHostHelp } from "./session-host-catalog.js";
 
@@ -99,20 +102,58 @@ interface OpenedCore {
   close(): void;
 }
 
-export function openProfileCore(env: NodeJS.ProcessEnv = process.env): OpenedCore {
+const HOST_CREDENTIAL_ORDER: readonly SupportedHarness[] = ["codex", "opencode", "claude-code"];
+
+/**
+ * Reconcile and session list have no --harness flag. A single active launch
+ * selects that record's agent. Otherwise the first stored credential wins,
+ * with Codex first so an existing Codex profile stays on the v1.29.0 path.
+ */
+export function profileSelectionForHost(env: NodeJS.ProcessEnv): { harness: SupportedHarness; agentId: string } | undefined {
+  try {
+    const active = listRegistryEntries(env).records.filter((record) =>
+      record.localState === "prepared" || record.localState === "starting" || record.localState === "running" || record.localState === "stopping",
+    );
+    const harnesses = new Set(active.map((record) => record.harness));
+    const only = active[0];
+    if (harnesses.size === 1 && only !== undefined) return { harness: only.harness, agentId: only.agentId };
+  } catch {
+    // An empty registry still uses a stored credential below.
+  }
+  const profile = loadAnyProfile(env);
+  for (const harness of HOST_CREDENTIAL_ORDER) {
+    try {
+      sessionAgentCredential(env, harness);
+    } catch {
+      continue;
+    }
+    const listed = profile?.agents?.find((agent) => harnessesMatch(agent.harness, harness));
+    const legacyId = profile?.mode !== "remote" && profile?.agentId !== undefined && profile.harness !== undefined && harnessesMatch(profile.harness, harness)
+      ? profile.agentId
+      : undefined;
+    return { harness, agentId: listed?.id ?? legacyId ?? "agent" };
+  }
+  return undefined;
+}
+
+export function openProfileCore(
+  env: NodeJS.ProcessEnv = process.env,
+  selection?: { harness: SupportedHarness; agentId: string },
+): OpenedCore {
   const profile = loadAnyProfile(env);
   if (profile === undefined) {
     throw new ValidationError("No Campfire profile yet. Run campfire in a terminal.", { field: "profile" });
   }
-  const agentToken = readOperatorAgentToken(env, "codex");
-  if (agentToken === undefined) {
-    throw new ValidationError("No Codex agent credential is stored for this profile. Connect the agent before campfire session run.", {
-      field: "credentials",
-      nextAction: "connect_agent",
-    });
-  }
+  const harness = selection?.harness ?? "codex";
+  const agentToken = sessionAgentCredential(env, harness);
   const humanToken = readOperatorHumanToken(env);
   const reader: SessionActorContext = { actor: { actorId: profile.humanId, actorType: "human" } };
+  const listed = profile.agents?.find((agent) => harnessesMatch(agent.harness, harness));
+  const actorId = selection?.agentId
+    ?? listed?.id
+    ?? (profile.mode !== "remote" && profile.agentId !== undefined && profile.harness !== undefined && harnessesMatch(profile.harness, harness)
+      ? profile.agentId
+      : "agent");
   if (profile.mode === "remote" || (env.CAMPFIRE_URL?.trim().length ?? 0) > 0) {
     if (humanToken === undefined) {
       throw new ValidationError("No operator credential is stored for this profile.", { field: "credentials" });
@@ -123,7 +164,7 @@ export function openProfileCore(env: NodeJS.ProcessEnv = process.env): OpenedCor
         agentToken,
         humanToken,
       }),
-      agent: { actor: { actorId: profile.agents?.find((agent) => agent.harness === "codex")?.id ?? "agent", actorType: "agent" } },
+      agent: { actor: { actorId, actorType: "agent" } },
       reader,
       close() {},
     };
@@ -153,16 +194,17 @@ async function withProfileCore<T>(
   env: NodeJS.ProcessEnv,
   deps: SessionHostDeps,
   run: (core: OpenedCore) => Promise<T>,
+  selection?: { harness: SupportedHarness; agentId: string },
 ): Promise<T> {
   if (deps.core !== undefined) {
     return run({
       client: deps.core,
-      agent: deps.agentContext ?? { actor: { actorId: "agent", actorType: "agent" } },
+      agent: deps.agentContext ?? { actor: { actorId: selection?.agentId ?? "agent", actorType: "agent" } },
       reader: deps.readerContext ?? { actor: { actorId: "human", actorType: "human" } },
       close() {},
     });
   }
-  const opened = openProfileCore(env);
+  const opened = openProfileCore(env, selection);
   try {
     return await run(opened);
   } finally {
@@ -188,8 +230,11 @@ export async function runSessionHostFromParsed(parsed: ParsedArgs, deps: Session
       throw new ValidationError("Missing required <workspace> argument.", { field: "workspaceId" });
     }
     const mode = outputMode(parsed, ["human", "json"]);
-    const page = await withProfileCore(env, shared, (core) =>
-      listSessions(workspaceId, { ...shared, core: core.client, readerContext: core.reader }, flagString(parsed, "cursor")),
+    const page = await withProfileCore(
+      env,
+      shared,
+      (core) => listSessions(workspaceId, { ...shared, core: core.client, readerContext: core.reader }, flagString(parsed, "cursor")),
+      profileSelectionForHost(env),
     );
     if (mode === "json") printJson(page);
     else console.log(formatSessionList(workspaceId, page));
@@ -223,11 +268,15 @@ export async function runSessionHostFromParsed(parsed: ParsedArgs, deps: Session
     if (launchId === undefined || launchId.trim().length === 0) {
       throw new ValidationError("Missing required <launch-id> argument.", { field: "launchId" });
     }
-    const result = await withProfileCore(env, shared, (core) =>
-      runSession(launchId, { ...shared, core: core.client, agentContext: core.agent }),
+    const record = readLaunchRecord(env, launchId);
+    const result = await withProfileCore(
+      env,
+      shared,
+      (core) => runSession(launchId, { ...shared, core: core.client, agentContext: core.agent }),
+      { harness: record.harness, agentId: record.agentId },
     );
     if (result.localState === "failed") {
-      throw new ValidationError(`The Codex session failed (${result.failureKind ?? "failed"}).`, {
+      throw new ValidationError(`The session failed (${result.failureKind ?? "failed"}).`, {
         field: "launchId",
         launchId: result.launchId,
         ...(result.failureKind === undefined ? {} : { failureKind: result.failureKind }),
@@ -253,8 +302,11 @@ export async function runSessionHostFromParsed(parsed: ParsedArgs, deps: Session
   }
   if (subcommand === "reconcile") {
     outputMode(parsed, ["json"]);
-    const result: ReconcileResult = await withProfileCore(env, shared, (core) =>
-      reconcileSessions({ ...shared, core: core.client, agentContext: core.agent }),
+    const result: ReconcileResult = await withProfileCore(
+      env,
+      shared,
+      (core) => reconcileSessions({ ...shared, core: core.client, agentContext: core.agent }),
+      profileSelectionForHost(env),
     );
     printJson(result);
     return;

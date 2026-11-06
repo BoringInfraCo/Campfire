@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.29.1 — 2026-11-06
+
+- The local session host can prepare and launch Claude Code 2.1.260 and OpenCode 2.2.5 beside Codex 0.164.0. Claude Code receives one positional instruction. OpenCode receives `--prompt` and that instruction. `opencode run` is not the launch. The host stays off unless `CAMPFIRE_SESSION_HOST=1`. Embedded launch still requires `CAMPFIRE_EMBEDDED_TERMINAL=1`.
+- `campfire connect --harness claude-code` merges only `mcpServers.campfire` into the user Claude config. The command must be an absolute path. A different server named `campfire` is left unchanged. Codex and OpenCode keep their existing writers. `campfire connect --enroll` stays `codex|opencode`. Schema stays 11. There is no new migration.
+- A local `create-agent` records the agent on the operator profile, stores that harness token, and invites the agent into the current workspace. `campfire connect` records a local agent token the same way.
+- A live Campfire tool read inside Claude Code or OpenCode is NOT OBSERVED. The host tests use fake executables. The Mac app, the two-Mac proof, and the Worker are unchanged. This source snapshot does not deploy the Worker. Homebrew and Nix install the published v1.29.1 archives.
+
 ## 1.29.0 — 2026-11-05
 
 - A local Codex session can attach to one existing task. `register_agent_session` accepts an optional `taskId` in that workspace. A runtime report uses server time, a 45-second lease, and a sequence. Listing is `list_agent_sessions` and returns no PID, path, argv, or terminal bytes. A final report does not complete the task or write a contribution.

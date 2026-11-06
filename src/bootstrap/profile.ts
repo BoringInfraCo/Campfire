@@ -342,6 +342,34 @@ export function rememberProfileAgents(agents: ProfileAgent[], env: NodeJS.Proces
   saveProfile({ ...profile, agents }, env);
 }
 
+/**
+ * Record one locally created agent on the operator profile and keep its token
+ * in the credential file. A remote profile is left untouched. The onboard
+ * agent stays in the list so a later harness does not hide it.
+ */
+export function rememberOwnedLocalAgent(
+  agent: ProfileAgent,
+  token: string,
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  const profile = loadAnyProfile(env);
+  if (profile === undefined || profile.mode === "remote") return;
+  if (loadCredentials(env) === undefined) return;
+  rememberAgentCredential(agent.harness, token, env);
+  const onboard: ProfileAgent[] =
+    profile.agentId !== undefined && profile.agentName !== undefined && profile.harness !== undefined
+      ? [{ id: profile.agentId, name: profile.agentName, harness: profile.harness }]
+      : [];
+  const merged: ProfileAgent[] = [];
+  const seen = new Set<string>();
+  for (const entry of [...onboard, ...(profile.agents ?? []), agent]) {
+    if (seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    merged.push(entry);
+  }
+  rememberProfileAgents(merged, env);
+}
+
 export function persistOnboardProfile(
   input: {
     databasePath: string;

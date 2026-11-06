@@ -241,7 +241,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "connect",
     "start",
     "Write the Campfire MCP connection block for one installed harness.",
-    "campfire connect --harness codex|opencode [--config <path>] [--url <url>] [--token <agent-token>] [--workspace <id>] [--mcp-command <path>] [--output auto|human|json]",
+    "campfire connect --harness codex|claude-code|opencode [--config <path>] [--url <url>] [--token <agent-token>] [--workspace <id>] [--mcp-command <path>] [--output auto|human|json]",
     { ...WRITE, workspaceScoped: false, related: ["up", "doctor"], notes: [
       "Writes only that harness's Campfire MCP block. Unrelated settings stay in place.",
       "After onboard, --token / --config / --workspace can come from the local profile.",

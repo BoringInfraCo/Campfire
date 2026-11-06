@@ -15,7 +15,7 @@ import { constants } from "node:fs";
 import { accessSync } from "node:fs";
 import { delimiter, isAbsolute, join } from "node:path";
 import { ValidationError } from "../domain/errors.js";
-import { CODEX_CLI_VERSION, CODEX_ONLY_MESSAGE, type SpawnSyncResult, type SupportedHarness } from "./types.js";
+import { CODEX_CLI_VERSION, type SpawnSyncResult, type SupportedHarness } from "./types.js";
 
 const PASSTHROUGH = [
   "PATH",
@@ -38,12 +38,6 @@ const PASSTHROUGH = [
 ] as const;
 
 const SCRUBBED = ["CAMPFIRE_TOKEN", "CAMPFIRE_BRIDGE_TOKEN", "CAMPFIRE_HUMAN_TOKEN", "CAMPFIRE_OPERATOR_TOKEN"];
-
-export function assertLaunchableHarness(harness: string): asserts harness is "codex" {
-  if (harness === "claude-code" || harness === "opencode" || harness !== "codex") {
-    throw new ValidationError(CODEX_ONLY_MESSAGE, { field: "harness", value: harness });
-  }
-}
 
 export function isKnownHarness(harness: string): harness is SupportedHarness {
   return harness === "codex" || harness === "claude-code" || harness === "opencode";
@@ -113,7 +107,9 @@ function assertExecutable(path: string): void {
 }
 
 export function parseCodexVersion(output: string): string | undefined {
-  const match = /\b(\d+\.\d+\.\d+)\b/.exec(output);
+  // OpenCode prints `opencode v2.2.5`, so a word boundary cannot be required
+  // before the digits. Codex prints `codex-cli 0.164.0`.
+  const match = /(?:^|[^0-9])(\d+\.\d+\.\d+)\b/.exec(output);
   return match?.[1];
 }
 

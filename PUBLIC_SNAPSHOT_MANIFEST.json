@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "1.29.0",
-  "sourceCommit": "d2d041e5dddfe60a9e2ad24822c16b8b7af46c8e",
-  "sourceDate": "2026-11-05T23:37:56-05:00",
+  "version": "1.29.1",
+  "sourceCommit": "9223709f352fb1888523fe8ffec8e1b9f8c6b72b",
+  "sourceDate": "2026-11-06T01:01:15-05:00",
   "exportedAt": "2026-11-06T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
@@ -137,6 +137,7 @@
     "public/campfire/v1.28.0/install.sh",
     "public/campfire/v1.28.1/install.sh",
     "public/campfire/v1.29.0/install.sh",
+    "public/campfire/v1.29.1/install.sh",
     "public/campfire/v1.3.0/install.sh",
     "public/campfire/v1.4.0/install.sh",
     "public/campfire/v1.5.0/install.sh",
@@ -279,6 +280,7 @@
     "src/session-host/external.ts",
     "src/session-host/flag.ts",
     "src/session-host/host.ts",
+    "src/session-host/launch.ts",
     "src/session-host/registry.ts",
     "src/session-host/repository.ts",
     "src/session-host/types.ts",

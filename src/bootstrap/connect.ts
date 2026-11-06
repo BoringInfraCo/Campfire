@@ -5,9 +5,9 @@
  * authorization, and store never see a config file. The written file holds
  * the agent token; this function's return value does not.
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { ValidationError } from "../domain/errors.js";
 import { canonicalEndpoint } from "./endpoint.js";
 
@@ -15,7 +15,7 @@ const BEGIN = "# BEGIN campfire-connect";
 const END = "# END campfire-connect";
 
 export interface ConnectionPlan {
-  harness: "codex" | "opencode";
+  harness: "codex" | "opencode" | "claude-code";
   configPath: string;
   reloadRequired: true;
   approvalMayBeRequired: true;
@@ -74,7 +74,7 @@ export function assertConnectionCompatible(input: {
       url = JSON.parse(urls[0]![1]!);
       token = JSON.parse(tokens[0]![1]!);
     } catch { connectionConflict(); }
-  } else {
+  } else if (harness === "opencode") {
     let parsed: unknown;
     try { parsed = text.trim() ? JSON.parse(text) : {}; } catch { return connectionConflict(); }
     if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) connectionConflict();
@@ -92,6 +92,20 @@ export function assertConnectionCompatible(input: {
     url = (environment as Record<string, unknown>).CAMPFIRE_URL;
     token = (environment as Record<string, unknown>).CAMPFIRE_TOKEN;
     if ((environment as Record<string, unknown>).CAMPFIRE_HARNESS !== "opencode") connectionConflict();
+  } else {
+    let parsed: unknown;
+    try { parsed = text.trim() ? JSON.parse(text) : {}; } catch { return connectionConflict(); }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) connectionConflict();
+    const servers = (parsed as Record<string, unknown>).mcpServers;
+    if (servers === undefined) return;
+    if (servers === null || typeof servers !== "object" || Array.isArray(servers)) connectionConflict();
+    const campfire = (servers as Record<string, unknown>).campfire;
+    if (campfire === undefined) return;
+    if (!isClaudeCampfireServer(campfire)) connectionConflict();
+    const entry = campfire as Record<string, unknown>;
+    const environment = entry.env as Record<string, unknown>;
+    url = environment.CAMPFIRE_URL;
+    token = environment.CAMPFIRE_TOKEN;
   }
   if (typeof url !== "string" || typeof token !== "string" || input.url === undefined || input.agentToken === undefined) connectionConflict();
   try {
@@ -105,10 +119,10 @@ function rejectUnsafe(value: string, field: string): void {
   }
 }
 
-function assertSupported(harness: string): "codex" | "opencode" {
-  if (harness === "codex" || harness === "opencode") return harness;
+function assertSupported(harness: string): "codex" | "opencode" | "claude-code" {
+  if (harness === "codex" || harness === "opencode" || harness === "claude-code") return harness;
   throw new ValidationError(
-    `Harness ${JSON.stringify(harness)} has no validated connection adapter. Use codex or opencode.`,
+    `Harness ${JSON.stringify(harness)} has no validated connection adapter. Use codex, claude-code, or opencode.`,
     { field: "harness" },
   );
 }
@@ -195,6 +209,78 @@ function prepareOpenCode(input: PrepareConnectionInput): void {
   writeSecretFile(input.configPath, `${JSON.stringify(parsed, null, 2)}\n`);
 }
 
+function isClaudeCampfireServer(value: unknown): boolean {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const entry = value as Record<string, unknown>;
+  const environment = entry.env;
+  if (environment === null || typeof environment !== "object" || Array.isArray(environment)) return false;
+  const args = entry.args;
+  return entry.type === "stdio"
+    && typeof entry.command === "string"
+    && entry.command.length > 0
+    && Array.isArray(args)
+    && args.length === 1
+    && args[0] === "mcp"
+    && (environment as Record<string, unknown>).CAMPFIRE_HARNESS === "claude-code";
+}
+
+function claudeCampfireEntry(input: PrepareConnectionInput): Record<string, unknown> {
+  return {
+    type: "stdio",
+    command: input.mcpCommand,
+    args: ["mcp"],
+    env: {
+      CAMPFIRE_URL: input.url,
+      CAMPFIRE_TOKEN: input.agentToken,
+      CAMPFIRE_HARNESS: "claude-code",
+    },
+  };
+}
+
+function prepareClaude(input: PrepareConnectionInput): void {
+  let parsed: Record<string, unknown> = {};
+  try {
+    const text = readFileSync(input.configPath, "utf8");
+    if (text.trim().length === 0) parsed = {};
+    else {
+      const value = JSON.parse(text) as unknown;
+      if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        throw new ValidationError("Claude Code config must be a JSON object; refusing to guess", { field: "config" });
+      }
+      parsed = value as Record<string, unknown>;
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) throw error;
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") parsed = {};
+    else throw new ValidationError("Claude Code config is not strict JSON; refusing to guess", { field: "config" });
+  }
+  const servers = parsed.mcpServers;
+  if (servers !== undefined && (servers === null || typeof servers !== "object" || Array.isArray(servers))) {
+    throw new ValidationError("Claude Code mcpServers is not an object; refusing to guess", { field: "config" });
+  }
+  const existing = servers === undefined ? undefined : (servers as Record<string, unknown>).campfire;
+  if (existing !== undefined && !isClaudeCampfireServer(existing)) {
+    throw new ValidationError(
+      "Claude Code already has a campfire MCP server that is not the Campfire adapter; refusing to replace it",
+      { field: "config", nextAction: "use_isolated_harness_config" },
+    );
+  }
+  const next = { ...(servers as Record<string, unknown> | undefined) };
+  next.campfire = claudeCampfireEntry(input);
+  parsed.mcpServers = next;
+  writeClaudeFile(input.configPath, `${JSON.stringify(parsed, null, 2)}\n`);
+}
+
+/** Replace the Claude config by rename so a short write cannot truncate oauthAccount. */
+function writeClaudeFile(path: string, contents: string): void {
+  mkdirSync(dirname(path), { recursive: true });
+  const temporary = `${path}.campfire-tmp`;
+  writeFileSync(temporary, contents, { mode: 0o600 });
+  chmodSync(temporary, 0o600);
+  renameSync(temporary, path);
+  chmodSync(path, 0o600);
+}
+
 export function defaultHarnessConfigPath(
   harness: "codex" | "opencode",
   env: NodeJS.ProcessEnv = process.env,
@@ -206,6 +292,12 @@ export function defaultHarnessConfigPath(
   if (existsSync(local)) return local;
   const xdg = (env.XDG_CONFIG_HOME ?? "").trim() || join(home, ".config");
   return join(xdg, "opencode", "opencode.json");
+}
+
+/** User-scope Claude Code config. Project `.mcp.json` is never the default. */
+export function defaultClaudeConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+  const home = (env.HOME ?? homedir()).trim() || homedir();
+  return join(home, ".claude.json");
 }
 
 export type SupportedHarness = "codex" | "opencode";
@@ -238,9 +330,13 @@ export function prepareConnection(input: PrepareConnectionInput): ConnectionPlan
   rejectUnsafe(input.url, "url");
   rejectUnsafe(input.agentToken, "token");
   if (input.workspaceId !== undefined) rejectUnsafe(input.workspaceId, "workspace");
+  if (harness === "claude-code" && !isAbsolute(input.mcpCommand)) {
+    throw new ValidationError("Claude Code MCP command must be an absolute path.", { field: "mcp-command" });
+  }
   if (input.rejectConflicting) assertConnectionCompatible(input);
   if (harness === "codex") prepareCodex(input);
-  else prepareOpenCode(input);
+  else if (harness === "opencode") prepareOpenCode(input);
+  else prepareClaude(input);
   return {
     harness,
     configPath: input.configPath,

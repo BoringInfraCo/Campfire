@@ -7,7 +7,7 @@
  * `runSessionHostFromParsed` in `src/cli/index.ts`.
  */
 export const SESSION_HOST_USAGE = [
-  "campfire session prepare --workspace <id> --task <id> --agent <id> --harness codex --repository <absolute-path> [--worktree <absolute-path>] --launch external|embedded|copy-launch-command --output json",
+  "campfire session prepare --workspace <id> --task <id> --agent <id> --harness codex|claude-code|opencode --repository <absolute-path> [--worktree <absolute-path>] --launch external|embedded|copy-launch-command --output json",
   "campfire session run <launch-id>",
   "campfire session stop <launch-id> --output json",
   "campfire session reconcile --output json",
@@ -21,8 +21,8 @@ export function formatSessionHostHelp(): string {
     "Usage:",
     ...SESSION_HOST_USAGE.map((line) => `  ${line}`),
     "",
-    "This slice launches Codex in Terminal.app, prepares an independently gated embedded launch, or prints a copy-launch command.",
-    "Embedded launch requires CAMPFIRE_EMBEDDED_TERMINAL=1. Claude Code and OpenCode are not available.",
+    "This slice launches Codex, Claude Code, or OpenCode in Terminal.app, prepares an independently gated embedded launch, or prints a copy-launch command.",
+    "Embedded launch requires CAMPFIRE_EMBEDDED_TERMINAL=1.",
     "A --worktree path must already exist inside the repository. Campfire does not create or delete worktrees.",
     "The prepare receipt never includes a repository path, credential, environment, or provider config.",
   ].join("\n");
