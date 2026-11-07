@@ -13,7 +13,7 @@ const formula = readFileSync(resolve(root, "packaging/homebrew/campfire.rb"), "u
 const flake = readFileSync(resolve(root, "flake.nix"), "utf8");
 const exporterPath = resolve(root, "scripts/export-public-release.mjs");
 const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version as string;
-// The four v1.29.4 release archives are what Homebrew and Nix pin until the v1.29.5 checksums exist.
+// The four v1.29.4 release archives stay the Homebrew and Nix pin. v1.29.6 does not move that pin.
 const pinnedVersion = "1.29.4";
 
 function digestsFromFormula(text: string): Record<string, string> {
@@ -30,7 +30,7 @@ function digestsFromFormula(text: string): Record<string, string> {
 
 describe("install channels", () => {
   it("pins the Homebrew formula and Nix flake to the same release archives", () => {
-    expect(packageVersion).toBe("1.29.5");
+    expect(packageVersion).toBe("1.29.6");
     expect(formula).toContain(`/v${pinnedVersion}/`);
     expect(formula).not.toMatch(/^\s*version "/m);
     expect(flake).toMatch(`version = "${pinnedVersion}";`);

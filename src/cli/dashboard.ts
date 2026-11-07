@@ -2688,49 +2688,108 @@ function buildClassicHeader(state: DashboardState, context: WorkspaceContext | u
   return header;
 }
 
-const AWAITING_LINES = [
-  "CAMPFIRE",
-  "No workspace yet",
-  "Describe the work to your agent. It can create the workspace and goal.",
-  "Sessions, decisions, and people appear after a workspace exists.",
-  "Terminal output is not shown here.",
-];
+/** Mock navigation chrome. These are labels, not records. */
+const EMPTY_NAV = [
+  "My work",
+  "Team work",
+  "Sessions",
+  "Needs you",
+  "People & agents",
+  "Decisions",
+  "Sources",
+  "Recent changes",
+] as const;
 
-function frameLines(body: readonly string[], columns: number, rows: number): string {
-  const footer = footerLines(columns, false).map((line) => line.text);
-  const footerKept = footer.length >= rows ? footer.slice(footer.length - rows) : footer;
-  const room = Math.max(0, rows - footerKept.length);
-  const fitted = body.slice(0, room);
-  const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
-  return [...fitted, ...blanks, ...footerKept].map((line) => stripTerminalControls(line)).join("\n");
+function clipCell(text: string, width: number): string {
+  return text.length > width ? text.slice(0, width) : text;
 }
 
-function clipLines(lines: readonly string[], columns: number): string[] {
-  return lines.flatMap((line) => wrapSegments(line, columns, "").map((text) => (
-    text.length > columns ? text.slice(0, columns) : text
-  )));
-}
-
-/** Honest empty screen. It does not invent sessions, people, or terminal output. */
-export function renderAwaitingWorkspace(columns: number, rows: number): string {
-  const size = viewport(columns, rows);
-  return frameLines(clipLines(AWAITING_LINES, size.columns), size.columns, size.rows);
-}
-
-function renderAwaitingHelp(columns: number, rows: number): string {
-  const help: TaggedLine[] = [
-    ...chrome("HELP", columns, 0),
-    ...chrome("No workspace yet", columns, 0),
+function emptyRail(width: number): TaggedLine[] {
+  const lines: TaggedLine[] = [
+    { text: clipCell("CAMPFIRE", width), rank: 0 },
+    { text: "", rank: 0 },
+    { text: clipCell("NAVIGATE", width), rank: 0 },
   ];
-  for (const line of HELP_LINES) help.push(...record(line, columns, 1));
-  const footer = footerLines(columns, false);
-  const footerKept = footer.length >= rows ? footer.slice(footer.length - rows) : footer;
-  const room = Math.max(0, rows - footerKept.length);
-  const fitted = fit(help, room);
+  for (const name of EMPTY_NAV) {
+    const mark = name === "Sessions" ? "> " : "  ";
+    lines.push({ text: clipCell(`${mark}${name}`, width), rank: 0 });
+  }
+  return lines;
+}
+
+function titlePair(left: string, right: string, width: number): string[] {
+  if (left.length + 2 + right.length > width) return [clipCell(left, width), clipCell(right, width)];
+  const gap = width - left.length - right.length;
+  return [`${left}${" ".repeat(gap)}${right}`];
+}
+
+function emptyBody(width: number, help: boolean): PaneLine[] {
+  if (help) {
+    const lines: TaggedLine[] = [
+      ...chrome("HELP", width, 0),
+      ...chrome("No workspace yet", width, 0),
+    ];
+    for (const line of HELP_LINES) lines.push(...record(line, width, 1));
+    return lines.map((line) => ({ text: line.text, rank: line.rank }));
+  }
+  const prose = [
+    "Describe the work to your agent. It can create the workspace and goal.",
+    "Sessions, decisions, and people appear after a workspace exists.",
+    "Terminal output is not shown here.",
+  ];
+  const lines: PaneLine[] = [
+    ...titlePair("Team sessions", "Selected session", width).map((text) => ({ text, rank: 0 })),
+    ...titlePair("No workspace yet", "No session selected", width).map((text) => ({ text, rank: 0 })),
+  ];
+  for (const sentence of prose) {
+    for (const text of wrapSegments(sentence, width, "")) lines.push({ text, rank: 0 });
+  }
+  return lines;
+}
+
+/**
+ * The mock's shell with no workspace behind it.
+ * The sidebar carries the logo and section labels. The panes name Team sessions
+ * and Selected session. No session, person, or terminal line is invented.
+ */
+function renderEmptyShell(columns: number, rows: number, help: boolean): string {
+  const size = viewport(columns, rows);
+  const layout = shellLayout(size.columns);
+  const rail = layout.rail > 0 ? emptyRail(layout.rail) : [];
+  const mainWidth = layout.rail > 0 ? layout.main : size.columns;
+  const main = emptyBody(mainWidth, help);
+  if (layout.rail === 0) {
+    main.unshift(
+      { text: "CAMPFIRE", rank: 0 },
+      { text: "NAVIGATE", rank: 1 },
+      ...EMPTY_NAV.map((name) => ({
+        text: clipCell(name === "Sessions" ? `> ${name}` : `  ${name}`, mainWidth),
+        rank: 0,
+      })),
+    );
+  }
+  const footer = footerLines(size.columns, false);
+  const footerKept = footer.length >= size.rows ? footer.slice(footer.length - size.rows) : footer;
+  const room = Math.max(0, size.rows - footerKept.length);
+  // Help lines are lower rank than the sidebar. Keep each rail row, or a long
+  // help page drops the logo and the section labels beside it.
+  const composed = composeShell(rail, main, layout.rail, size.columns, layout.gutter).map((line, index) => (
+    layout.rail > 0 && index < rail.length ? { text: line.text, rank: 0 } : line
+  ));
+  const fitted = fit(composed, room);
   const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
   return [...fitted, ...blanks, ...footerKept.map((line) => line.text)]
     .map((line) => stripTerminalControls(line))
     .join("\n");
+}
+
+/** Honest empty screen. It does not invent sessions, people, or terminal output. */
+export function renderAwaitingWorkspace(columns: number, rows: number): string {
+  return renderEmptyShell(columns, rows, false);
+}
+
+function renderAwaitingHelp(columns: number, rows: number): string {
+  return renderEmptyShell(columns, rows, true);
 }
 
 export function renderDashboard(state: DashboardState, columns: number, rows: number): string {
@@ -2843,8 +2902,7 @@ export function paintDashboardFrame(frame: string, columns: number): string {
   const width = viewport(columns, 1).columns;
   const layout = shellLayout(width);
   const lines = frame.split("\n");
-  // Blank rows fill the sidebar only after a real rail row exists. The
-  // no-workspace screen is plain text, so its blank rows stay blank.
+  // Blank rows fill the sidebar only after a real rail row exists.
   const composed = lines.some((line) => {
     if (line.length === 0 || isFooterLine(line)) return false;
     return describeDashboardLine(line, layout.rail, layout.gutter).railText !== null;
@@ -3028,6 +3086,17 @@ function padPane(pane: string, railText: string | null, rail: number, gutter: nu
   return pane + " ".repeat(target - pane.length);
 }
 
+/** Section labels are not workspaces. `> Sessions` stays a nav row, not a workspace chip. */
+function paintEmptyNavRail(railText: string): string | undefined {
+  const match = railText.match(/^(> )(\S.*\S|\S)(\s*)$/);
+  const name = match?.[2] ?? "";
+  if (match === null || !EMPTY_NAV.includes(name as (typeof EMPTY_NAV)[number])) return undefined;
+  const label = `> ${name}`;
+  const rest = match[3] ?? "";
+  const marked = `${BAR_BG}${BAR_FG}${label}${RESET}`;
+  return rest.length > 0 ? `${marked}${RAIL_PANEL}${rest}${RESET}` : marked;
+}
+
 function paintWorkspaceRail(railText: string): string {
   const count = railText.match(/^(> )(\S+)(?:( )(\d+))?(\s*)$/);
   if (count === null) return `${RAIL_PANEL}${railText}${RESET}`;
@@ -3070,6 +3139,7 @@ function paintQuietRail(railText: string): string {
   const header = railText.trim();
   if (
     header === "workspaces"
+    || header === "NAVIGATE"
     || (railText.startsWith("agents") && railText.trimEnd().endsWith("grouped"))
     || (railText.startsWith("new") && railText.trimEnd().endsWith("menu"))
   ) {
@@ -3107,7 +3177,8 @@ function paintDashboardLine(
     ? paintRecordText(padPane(part.pane, part.railText, rail, gutter, main, columns), true)
     : paintPlainPane(part.pane);
   if (part.railText === null) return pane;
-  const left = part.railText.startsWith("> ") ? paintWorkspaceRail(part.railText) : paintQuietRail(part.railText);
+  const left = paintEmptyNavRail(part.railText)
+    ?? (part.railText.startsWith("> ") ? paintWorkspaceRail(part.railText) : paintQuietRail(part.railText));
   const gap = " ".repeat(Math.max(1, gutter));
   return `${left}${RAIL_PANEL}${gap}${RESET}${pane}`;
 }

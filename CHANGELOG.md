@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.29.6 — 2026-11-06
+
+- With no workspace, the work shell keeps the sessions layout: CAMPFIRE and the section labels in the sidebar, and the titles Team sessions and Selected session. The panes say no workspace yet and no session selected. It does not invent a workspace, people, harnesses, counts, or terminal output.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. The v1.29.5 tag is unchanged. Homebrew and Nix stay on the published v1.29.4 archives.
+
 ## 1.29.5 — 2026-11-06
 
 - The work shell no longer prints API request JSON over the screen. A terminal stays the shell. Redirected stderr still records each request. The no-workspace screen stays plain text and does not draw an empty sidebar.

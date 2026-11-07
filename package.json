@@ -1,6 +1,6 @@
 {
   "name": "campfire",
-  "version": "1.29.5",
+  "version": "1.29.6",
   "private": true,
   "description": "The shared workspace where people and their agents work together.",
   "campfire": {

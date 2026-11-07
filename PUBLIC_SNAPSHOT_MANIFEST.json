@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "1.29.5",
-  "sourceCommit": "e85d853f12aa96df86242145350b504aeeaef1a1",
-  "sourceDate": "2026-11-06T20:59:39-05:00",
+  "version": "1.29.6",
+  "sourceCommit": "0ee795959bad4bade45bb0d4979310a8e3af36e0",
+  "installChannelsCommit": "0ee795959bad4bade45bb0d4979310a8e3af36e0",
+  "sourceDate": "2026-11-06T21:15:22-05:00",
   "exportedAt": "2026-11-07T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
@@ -142,6 +143,7 @@
     "public/campfire/v1.29.3/install.sh",
     "public/campfire/v1.29.4/install.sh",
     "public/campfire/v1.29.5/install.sh",
+    "public/campfire/v1.29.6/install.sh",
     "public/campfire/v1.3.0/install.sh",
     "public/campfire/v1.4.0/install.sh",
     "public/campfire/v1.5.0/install.sh",

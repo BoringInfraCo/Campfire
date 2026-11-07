@@ -19,13 +19,31 @@ function awaitingState() {
   });
 }
 
-function expectHonest(frame: string): void {
+function paneProse(frame: string, columns: number): string {
+  const start = columns >= 72 ? 24 + 3 : 0;
+  return frame.split("\n").map((line) => line.slice(start)).join(" ").replace(/[ ]{2,}/g, " ");
+}
+
+function expectHonest(frame: string, columns: number): void {
+  const text = paneProse(frame, columns);
   expect(frame).toContain("CAMPFIRE");
+  expect(frame).toContain("NAVIGATE");
+  expect(frame).toContain("> Sessions");
+  expect(frame).toContain("My work");
+  expect(frame).toContain("Team work");
+  expect(frame).toContain("Needs you");
+  expect(frame).toContain("People & agents");
+  expect(frame).toContain("Decisions");
+  expect(frame).toContain("Sources");
+  expect(frame).toContain("Recent changes");
+  expect(frame).toContain("Team sessions");
+  expect(frame).toContain("Selected session");
   expect(frame).toContain("No workspace yet");
-  expect(frame).toContain("Describe the work to your agent. It can create the workspace and goal.");
+  expect(frame).toContain("No session selected");
+  expect(text).toContain("Describe the work to your agent. It can create the workspace and goal.");
   expect(frame).toContain("q quit");
-  expect(frame).toContain("Sessions, decisions, and people appear after a workspace exists.");
-  expect(frame).toContain("Terminal output is not shown here.");
+  expect(text).toContain("Sessions, decisions, and people appear after a workspace exists.");
+  expect(text).toContain("Terminal output is not shown here.");
   for (const word of ABSENT) expect(frame).not.toContain(word);
 }
 
@@ -33,25 +51,33 @@ describe("awaiting workspace dashboard", () => {
   it("draws an honest empty screen and quits on q", () => {
     const state = awaitingState();
     const frame = renderDashboard(state, 80, 24);
-    expectHonest(frame);
+    expectHonest(frame, 80);
     expect(frame.split("\n")).toHaveLength(24);
     expect(frame.split("\n").at(-1)).toBe("j/k move  h history  ? help  tab  enter  q quit");
     expect(frame).not.toContain("no recorded goal");
     expect(reduceDashboardKey(state, "q").quit).toBe(true);
   });
 
-  it("does not paint a sidebar across the blank rows", () => {
+  it("paints the sidebar behind the logo and sections", () => {
     const previous = process.env.NO_COLOR;
     delete process.env.NO_COLOR;
     try {
       const painted = paintDashboardFrame(renderDashboard(awaitingState(), 100, 24), 100);
-      expect(painted).not.toContain("\x1b[48;2;22;24;32m");
-      expect(painted).toContain("No workspace yet");
-      expect(painted).toContain("Describe the work to your agent. It can create the workspace and goal.");
+      expect(painted).toContain("\x1b[48;2;22;24;32m");
+      expect(painted).toContain("CAMPFIRE");
+      expect(painted).toContain("Team sessions");
+      expect(painted).toContain("Selected session");
+      expect(painted).not.toContain("Codex");
     } finally {
       if (previous === undefined) delete process.env.NO_COLOR;
       else process.env.NO_COLOR = previous;
     }
+  });
+
+  it("keeps the logo and sections when the terminal is too narrow for a sidebar", () => {
+    const frame = renderDashboard(awaitingState(), 60, 30);
+    expectHonest(frame, 60);
+    expect(frame.split("\n")).toHaveLength(30);
   });
 
   it("keeps help honest when no workspace exists", () => {
