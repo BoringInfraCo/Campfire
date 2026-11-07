@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseArgs } from "../../src/cli/args.js";
-import { formatUsage } from "../../src/cli/catalog.js";
+import { formatFullUsage } from "../../src/cli/catalog.js";
 import { runCliEntry } from "../../src/cli/index.js";
 import { installedCampfireVersion } from "../../src/bootstrap/version.js";
 import { startCampfireHttpServer } from "../../src/http/server.js";
@@ -386,7 +386,7 @@ describe("UPD-001 command", () => {
     await runUpdateCommand(parseArgs(["update"]), { ...direct, stdinIsTTY: true, prompt: async () => undefined });
     expect(fetchFile).not.toHaveBeenCalled();
     expect(logs.join("\n")).toContain("Update declined. Campfire 1.26.2 is unchanged.");
-    expect(formatUsage()).toContain("campfire update [--check] [--output auto|human|json]");
+    expect(formatFullUsage()).toContain("campfire update [--check] [--output auto|human|json]");
     expect(parseArgs(["/update", "--check"]).command).toBe("update");
     expect(parseArgs(["/update", "--check"]).flags.check).toBe(true);
   });

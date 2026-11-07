@@ -197,7 +197,7 @@ describe("playbook module", () => {
 describe("playbook CLI gate closed", () => {
   it("rejects the playbook command and hides it from discovery", async () => {
     const code = await entry(["playbook", "list", "--output", "json"]);
-    expect(code).toBe(1);
+    expect(code).toBe(2);
     const failure = JSON.parse(stderr()) as {
       error: { code: string; message: string };
       next?: Array<{ command: string }>;
@@ -216,13 +216,13 @@ describe("playbook CLI gate closed", () => {
 
     expect(formatUsage()).not.toContain("campfire playbook");
 
-    expect(await entry(["help", "playbook"])).toBe(1);
-    expect(await entry(["playbook", "--help"])).toBe(1);
+    expect(await entry(["help", "playbook"])).toBe(2);
+    expect(await entry(["playbook", "--help"])).toBe(2);
   });
 
   it("does not open the CLI gate through the MCP-only flag", async () => {
     const code = await entry(["playbook", "list", "--with-playbook", "--output", "json"]);
-    expect(code).toBe(1);
+    expect(code).toBe(2);
     const failure = JSON.parse(stderr()) as { error: { code: string } };
     expect(failure.error.code).toBe("ValidationError");
   });

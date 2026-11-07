@@ -15,6 +15,7 @@ import {
   CLI_COMMAND_NAMES,
   commandDiscoverable,
   commandSpec,
+  formatFullUsage,
   formatUsage,
   isKnownCommand,
 } from "../../src/cli/catalog.js";
@@ -271,7 +272,7 @@ describe("output selection", () => {
   it("keeps help-by-command compatible", async () => {
     await cli(["status", "--help"]);
     expect(stdout()).toContain("campfire status [workspace]");
-    expect(stdout()).toContain("Output: auto|human|json");
+    expect(stdout()).toContain("Prints text on a terminal and JSON when piped");
   });
 
   it("keeps protocol commands protocol-owned for every output request", () => {
@@ -749,7 +750,9 @@ describe("command semantics", () => {
     for (const name of CLI_COMMAND_NAMES) {
       expect(CLI_CATALOG[name].name).toBe(name);
       if (commandDiscoverable(name)) {
-        expect(formatUsage()).toContain(CLI_CATALOG[name].usage);
+        expect(formatFullUsage()).toContain(CLI_CATALOG[name].usage);
+        expect(formatUsage()).toContain("Start here:");
+        expect(formatUsage()).not.toContain("Administration:");
       }
     }
     // Only onboard can carry a one-time credential in a successful result.
@@ -832,7 +835,7 @@ describe("regression compatibility", () => {
       expect(isKnownCommand(name)).toBe(true);
     }
     const code = await entry(["definitely-not-a-command", "--output", "json"]);
-    expect(code).toBe(1);
+    expect(code).toBe(2);
     expect(parseStderr<{ error: { code: string } }>().error.code).toBe("ValidationError");
   });
 

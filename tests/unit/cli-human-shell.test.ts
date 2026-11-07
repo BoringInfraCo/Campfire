@@ -57,6 +57,9 @@ describe("bare campfire human shell", () => {
       errors.push(args.map(String).join(" "));
     });
     listenerClosed = false;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("connect ECONNREFUSED");
+    }));
     vi.spyOn(localWorkspace, "startLocalWorkspace").mockResolvedValue({
       apiUrl: "http://127.0.0.1:9414",
       viewerUrl: "http://127.0.0.1:9415",
@@ -88,7 +91,7 @@ describe("bare campfire human shell", () => {
     return { token: started.token, workspaceId: workspace.id, humanId: started.humanId };
   }
 
-  it("does not print an authorization trace before the empty-workspace receipt", async () => {
+  it("does not print an authorization trace and opens the console when there is no workspace", async () => {
     prepare();
     const runtime = createRuntimeFromPath(dbPath);
     const started = beginHuman(runtime.store, runtime.service, runtime.config, "Ada");
@@ -111,8 +114,12 @@ describe("bare campfire human shell", () => {
     expect(await runCliEntry([])).toBe(0);
 
     expect(traces.join("")).not.toContain('"event":"authz"');
-    expect(output.join("\n")).toContain("No workspace yet.");
-    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+      awaitingWorkspace: true,
+      workspaceId: "",
+    });
   });
 
   it("opens the dashboard for a TTY local profile with a workspace and does not print the status card", async () => {
@@ -225,5 +232,84 @@ describe("bare campfire human shell", () => {
     expect(text).not.toContain("open the shared workspace journal");
     expect(text).not.toContain("human-secret-sentinel");
     expect(text).not.toContain("codex-secret-sentinel");
+  });
+
+  it("attaches to a Campfire that is already listening and does not stop it on quit", async () => {
+    prepare();
+    const { workspaceId, humanId } = localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubGlobal("fetch", vi.fn(async (input: unknown) => {
+      const url = String(input);
+      if (url.endsWith("/health")) {
+        return new Response(JSON.stringify({ version: "1.29.3" }), { status: 200 });
+      }
+      return new Response("no", { status: 404 });
+    }));
+
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+
+    expect(localWorkspace.startLocalWorkspace).not.toHaveBeenCalled();
+    expect(listenerClosed).toBe(false);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+      workspaceId,
+      actorId: humanId,
+      actorType: "human",
+    });
+    expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
+  });
+
+  it("moves an unpinned busy port to an ephemeral bind without printing the Node listen error", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.mocked(localWorkspace.startLocalWorkspace).mockImplementation(async (options) => {
+      if (options.httpPort === 9414) {
+        const error = new Error("listen EADDRINUSE: address already in use 127.0.0.1:9414") as NodeJS.ErrnoException;
+        error.code = "EADDRINUSE";
+        throw error;
+      }
+      return {
+        apiUrl: "http://127.0.0.1:9",
+        viewerUrl: "http://127.0.0.1:10",
+        close: async () => {
+          listenerClosed = true;
+        },
+      };
+    });
+
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+
+    expect(localWorkspace.startLocalWorkspace).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(localWorkspace.startLocalWorkspace).mock.calls[1]?.[0]).toMatchObject({
+      httpPort: 0,
+      viewerPort: 0,
+    });
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
+    expect(listenerClosed).toBe(true);
+  });
+
+  it("names a pinned busy port without the raw Node listen error", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.mocked(localWorkspace.startLocalWorkspace).mockImplementation(async () => {
+      const error = new Error("listen EADDRINUSE: address already in use 127.0.0.1:9414") as NodeJS.ErrnoException;
+      error.code = "EADDRINUSE";
+      throw error;
+    });
+
+    expect(await runCliEntry(["--db", dbPath, "--port", "9414"])).toBe(1);
+
+    expect(localWorkspace.startLocalWorkspace).toHaveBeenCalledTimes(1);
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    const text = errors.join("\n");
+    expect(text).toContain("Another process is using that address");
+    expect(text).toContain("127.0.0.1:9414");
+    expect(text).not.toContain("EADDRINUSE");
   });
 });

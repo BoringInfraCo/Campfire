@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.29.4 — 2026-11-06
+
+- Typing `campfire` in a terminal opens the work shell even when Campfire is already listening on 127.0.0.1:9414, and even when this profile has no workspace yet. An existing Campfire listener is left running. A port the user did not pin retries once on an ephemeral port. A pinned busy port says another process is using that address. The empty screen says no workspace yet. It does not invent sessions, and it does not show terminal output.
+- Unknown options and extra arguments are rejected before a command does work. A usage mistake exits 2. An operational failure still exits 1. `campfire` lists the common jobs. `campfire help --all` lists every command. Each command's help has a summary, usage, options, and effects. A mistyped command suggests one close command and `campfire --help`. Command names are unchanged. Piped output still selects JSON when the output mode is `auto`.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. Homebrew and Nix stay on the published v1.29.3 archives until the v1.29.4 checksums exist.
+
 ## 1.29.3 — 2026-11-06
 
 - A terminal `campfire` no longer prints an authorization trace before the receipt. The `{"event":"authz",...}` line was a service log for checks such as `workspace:list`. Redirected stderr still records the decision. Authorization itself is unchanged.

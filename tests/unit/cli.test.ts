@@ -222,7 +222,7 @@ describe("runCli", () => {
   });
 
   it("prints usage including serve, invite, identity, and contribution commands", async () => {
-    await cli(["help"]);
+    await cli(["help", "--all"]);
     const output = stdout();
     expect(output).toContain("Start and connect:");
     expect(output).toContain("Understand the workspace:");
@@ -344,7 +344,7 @@ describe("runCli", () => {
   });
 
   it("documents the --json contract in usage", async () => {
-    await cli(["help"]);
+    await cli(["help", "--all"]);
     const output = stdout();
     expect(output).toContain("campfire show <workspaceId> [--since <contributionId>] [--output auto|human|json] [--full]");
     expect(output).toContain("campfire activity [workspace]");
@@ -774,7 +774,7 @@ describe("runCliEntry exit-code and stderr contract", () => {
 
     const code = await runCliEntry(["--db", dbPath, "definitely-not-a-command", "--json"]);
 
-    expect(code).toBe(1);
+    expect(code).toBe(2);
     const payload = JSON.parse(stderrText(errSpy)) as {
       error: { code: string; message: string };
       next?: Array<{ command: string }>;
@@ -782,6 +782,8 @@ describe("runCliEntry exit-code and stderr contract", () => {
     expect(payload.error.code).toBe("ValidationError");
     expect(payload.error.message).toContain("definitely-not-a-command");
     expect(payload.next?.some((step) => step.command === "campfire --help")).toBe(true);
+    const suggestions = (payload.next ?? []).filter((step) => step.command !== "campfire --help");
+    expect(suggestions.length).toBeLessThanOrEqual(1);
   });
 
   it("suggests a close command for an unknown name", async () => {
@@ -789,7 +791,7 @@ describe("runCliEntry exit-code and stderr contract", () => {
 
     const code = await runCliEntry(["--db", dbPath, "onbord"]);
 
-    expect(code).toBe(1);
+    expect(code).toBe(2);
     const stderr = stderrText(errSpy);
     expect(stderr).toContain("[ValidationError] Unknown command: onbord");
     expect(stderr).toContain("campfire onboard");

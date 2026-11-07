@@ -217,6 +217,11 @@ export interface DashboardState {
   workspaceListRequest?: { generation: number };
   /** Set by enter on a workspace row. The session assigns this id and refreshes. */
   workspaceSwitchId?: string;
+  /**
+   * No workspace exists yet. The frame must not invent records, sessions, or
+   * a goal, and the session must not call the workspace loaders.
+   */
+  awaitingWorkspace?: boolean;
 }
 
 export interface DashboardSessionOptions {
@@ -244,6 +249,11 @@ export interface DashboardSessionOptions {
    * id is fulfilled, before the context refresh reads it.
    */
   adoptWorkspace?: (workspaceId: string) => void;
+  /**
+   * Draw the empty-workspace screen. `workspaceId` stays required; callers
+   * pass `""` with this flag. Loaders are not called.
+   */
+  awaitingWorkspace?: boolean;
 }
 
 const SECTIONS: readonly DashboardSection[] = [
@@ -309,6 +319,7 @@ export function createDashboardState(input: {
   refreshedAt?: string;
   staleError?: string;
   boundedReads?: boolean;
+  awaitingWorkspace?: boolean;
 }): DashboardState {
   return {
     workspaceId: input.workspaceId,
@@ -332,6 +343,7 @@ export function createDashboardState(input: {
     ...(input.context === undefined ? {} : { context: input.context }),
     ...(input.refreshedAt === undefined ? {} : { refreshedAt: input.refreshedAt }),
     ...(input.staleError === undefined ? {} : { staleError: input.staleError }),
+    ...(input.awaitingWorkspace === true ? { awaitingWorkspace: true } : {}),
   };
 }
 
@@ -2676,8 +2688,57 @@ function buildClassicHeader(state: DashboardState, context: WorkspaceContext | u
   return header;
 }
 
+const AWAITING_LINES = [
+  "CAMPFIRE",
+  "No workspace yet",
+  "Describe the work to your agent. It can create the workspace and goal.",
+  "Sessions, decisions, and people appear after a workspace exists.",
+  "Terminal output is not shown here.",
+];
+
+function frameLines(body: readonly string[], columns: number, rows: number): string {
+  const footer = footerLines(columns, false).map((line) => line.text);
+  const footerKept = footer.length >= rows ? footer.slice(footer.length - rows) : footer;
+  const room = Math.max(0, rows - footerKept.length);
+  const fitted = body.slice(0, room);
+  const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
+  return [...fitted, ...blanks, ...footerKept].map((line) => stripTerminalControls(line)).join("\n");
+}
+
+function clipLines(lines: readonly string[], columns: number): string[] {
+  return lines.flatMap((line) => wrapSegments(line, columns, "").map((text) => (
+    text.length > columns ? text.slice(0, columns) : text
+  )));
+}
+
+/** Honest empty screen. It does not invent sessions, people, or terminal output. */
+export function renderAwaitingWorkspace(columns: number, rows: number): string {
+  const size = viewport(columns, rows);
+  return frameLines(clipLines(AWAITING_LINES, size.columns), size.columns, size.rows);
+}
+
+function renderAwaitingHelp(columns: number, rows: number): string {
+  const help: TaggedLine[] = [
+    ...chrome("HELP", columns, 0),
+    ...chrome("No workspace yet", columns, 0),
+  ];
+  for (const line of HELP_LINES) help.push(...record(line, columns, 1));
+  const footer = footerLines(columns, false);
+  const footerKept = footer.length >= rows ? footer.slice(footer.length - rows) : footer;
+  const room = Math.max(0, rows - footerKept.length);
+  const fitted = fit(help, room);
+  const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
+  return [...fitted, ...blanks, ...footerKept.map((line) => line.text)]
+    .map((line) => stripTerminalControls(line))
+    .join("\n");
+}
+
 export function renderDashboard(state: DashboardState, columns: number, rows: number): string {
   const size = viewport(columns, rows);
+  if (state.awaitingWorkspace === true) {
+    if (state.help !== true) return renderAwaitingWorkspace(size.columns, size.rows);
+    return renderAwaitingHelp(size.columns, size.rows);
+  }
   const layout = shellLayout(size.columns);
   const context = sameWorkspace(state);
   const historyOpen = state.history?.open === true;
@@ -3172,6 +3233,7 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     actorId: options.actorId,
     actorType: options.actorType,
     boundedReads: options.loadTasks !== undefined,
+    ...(options.awaitingWorkspace === true ? { awaitingWorkspace: true } : {}),
   });
   let closed = false;
   let finished = false;
@@ -3317,6 +3379,10 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
     }
     const currentWorkspace = (): boolean => state.workspaceSwitchId === undefined;
     if (state.refreshRequested) {
+      if (options.awaitingWorkspace === true || state.awaitingWorkspace === true) {
+        state = { ...state, refreshRequested: false };
+        return true;
+      }
       const generation = state.generation;
       const requestedId = state.workspaceId;
       state = { ...state, refreshRequested: false };
@@ -3473,6 +3539,10 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   };
 
   const loadInitial = async (): Promise<void> => {
+    if (options.awaitingWorkspace === true) {
+      if (!closed) draw();
+      return;
+    }
     const generation = state.generation;
     const requestedId = state.workspaceId;
     let loadedOk = false;
@@ -3571,13 +3641,14 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   if (typeof timer.unref === "function") timer.unref();
 
   try {
-    enterScreen();
+    // Listen before the first write so `q` typed as the screen opens still quits.
     stdin.on("data", onData);
     stdout.on("resize", onResize);
     process.on("SIGINT", onSigint);
     process.on("SIGTSTP", onStop);
     process.on("SIGCONT", onCont);
     listening = true;
+    enterScreen();
     await loadInitial();
     if (!finished) await quitPromise;
   } finally {

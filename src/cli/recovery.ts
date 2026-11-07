@@ -169,26 +169,34 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
   const details = error.details ?? {};
   const field = typeof details.field === "string" ? details.field : undefined;
   const nextAction = typeof details.nextAction === "string" ? details.nextAction : undefined;
+  if (field === "option" && command !== undefined && isKnownCommand(command)) {
+    return [{ command: `campfire ${command} --help`, when: "Show the options this command accepts" }];
+  }
+  if (field === "positional" && command !== undefined && isKnownCommand(command)) {
+    return [{ command: `campfire ${command} --help`, when: "Show the arguments this command accepts" }];
+  }
   const unknown =
-    typeof details.command === "string"
-      ? details.command
-      : error.message.startsWith("Unknown command: ")
-        ? error.message.slice("Unknown command: ".length)
-        : undefined;
+    field === "option" || field === "positional"
+      ? undefined
+      : typeof details.command === "string"
+        ? details.command
+        : error.message.startsWith("Unknown command: ")
+          ? error.message.slice("Unknown command: ".length)
+          : undefined;
 
   const recoveryCode = typeof details.recoveryCode === "string" ? details.recoveryCode : undefined;
   if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire join --invitation-link <full-link>",when:"Ask the workspace owner for a fresh invitation link; an invitation id alone cannot join, and pending credentials stay local for recovery"}];
   if (recoveryCode === "agent_already_enrolled") return [{command:"campfire connect --harness codex|opencode",when:"Reconnect the existing enrolled harness"}];
   if (recoveryCode === "invitation_already_claimed") return [{command:"campfire join --help",when:"Retry the original prepared request; another recipient needs a new invitation"}];
   if (unknown !== undefined) {
-    const steps: CliNextStep[] = suggestCommands(unknown).map((name) => ({
-      command: `campfire ${name}`,
-      when: "Did you mean this command?",
-    }));
-    steps.push({ command: "campfire --help", when: "List commands" });
+    const [best] = suggestCommands(unknown, 1);
+    const steps: CliNextStep[] = [];
+    if (best !== undefined) {
+      steps.push({ command: `campfire ${best}`, when: "Did you mean this command?" });
+    }
+    steps.push({ command: "campfire --help", when: "List common commands" });
     return steps;
   }
-
   if (error.code === "WorkspaceNotFound") {
     return [{ command: "campfire list", when: "List workspaces this actor can see" }];
   }

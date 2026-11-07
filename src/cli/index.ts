@@ -22,7 +22,8 @@ import {
   type SupportedHarness,
 } from "../bootstrap/connect.js";
 import { beginHuman, connectInstalledHarnesses } from "../bootstrap/listen.js";
-import { startLocalWorkspace, openLoopbackUrl, shouldOpenBrowser } from "../bootstrap/local-workspace.js";
+import { openLocalListener } from "../bootstrap/listener-attach.js";
+import { openLoopbackUrl, shouldOpenBrowser } from "../bootstrap/local-workspace.js";
 import {
   formatStatus,
   loadCredentials,
@@ -46,11 +47,13 @@ import {
   commandSpec,
   commandSpecForArgs,
   formatCommandUsage,
+  formatFullUsage,
   formatUsage,
   isKnownCommand,
   type CliCommand,
 } from "./catalog.js";
 import { parseArgs, type ParsedArgs } from "./args.js";
+import { assertKnownInvocation } from "./strict-args.js";
 import { isSessionHostArgvCommand, runSessionHostFromParsed } from "./session-host.js";
 import { resolveErrorOutput, resolveExplicitOutput, resolveOutputMode, type ResolvedOutput } from "./output.js";
 import {
@@ -103,7 +106,6 @@ import { setOwnedCampfireService } from "./service-owner.js";
 import { shouldAnnounce } from "../update/notice.js";
 import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
 import {
-  DASHBOARD_AWAITING_WORKSPACE,
   formatJoinReceipt,
   formatLocalUpReceipt,
   formatRemoteUpReceipt,
@@ -1476,6 +1478,7 @@ function dashboardSessionOptions(options: {
   workspaceId: string;
   actorId: string;
   actorType: string;
+  awaitingWorkspace?: boolean;
   call: (method: string, params: Record<string, unknown>) => Promise<unknown>;
 }): DashboardSessionOptions {
   let workspaceId = options.workspaceId;
@@ -1484,6 +1487,7 @@ function dashboardSessionOptions(options: {
     workspaceId,
     actorId: options.actorId,
     actorType: options.actorType,
+    ...(options.awaitingWorkspace === true ? { awaitingWorkspace: true } : {}),
     onUpdate: async () => {
       try {
         await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
@@ -1548,16 +1552,14 @@ async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const explicit = explicitWorkspaceArgument(parsed);
   await withBackend(argv, async (backend) => {
     const selection = await resolveReadWorkspace(backend, explicit, { allowAwaiting: true });
-    if ("awaiting" in selection) {
-      console.log(DASHBOARD_AWAITING_WORKSPACE);
-      return;
-    }
     const actor = backend.identity.ctx.actor;
+    const awaiting = "awaiting" in selection;
     await runDashboardSession(
       dashboardSessionOptions({
-        workspaceId: selection.workspaceId,
+        workspaceId: awaiting ? "" : selection.workspaceId,
         actorId: actor.actorId,
         actorType: actor.actorType,
+        ...(awaiting ? { awaitingWorkspace: true } : {}),
         call: (method, params) => backend.call(method, params),
       }),
     );
@@ -2978,7 +2980,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
-  let running: Awaited<ReturnType<typeof startLocalWorkspace>> | undefined;
+  let running: Awaited<ReturnType<typeof openLocalListener>> | undefined;
   try {
     const actor = runtime.service.resolveToken(humanToken);
     const human = runtime.store.getHuman(actor.actorId);
@@ -3026,8 +3028,10 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
     const workspaces = runtime.service.listWorkspaces({ actor });
     const httpHost = optionalFlag(parsed.flags, "host") ?? DEFAULT_HTTP_HOST;
     const httpPortRaw = optionalFlag(parsed.flags, "port");
+    const portPinned = httpPortRaw !== undefined;
     const httpPort = httpPortRaw === undefined ? DEFAULT_HTTP_PORT : Number(httpPortRaw);
     const viewerPortRaw = optionalFlag(parsed.flags, "viewer-port");
+    const viewerPortPinned = viewerPortRaw !== undefined;
     const viewerPort = viewerPortRaw === undefined ? DEFAULT_VIEWER_PORT : Number(viewerPortRaw);
     if (!Number.isInteger(httpPort) || httpPort < 0 || httpPort > 65535) {
       throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
@@ -3035,13 +3039,30 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
     if (!Number.isInteger(viewerPort) || viewerPort < 0 || viewerPort > 65535) {
       throw new ValidationError("--viewer-port must be an integer between 0 and 65535", { field: "viewer-port" });
     }
-    running = await startLocalWorkspace({
+    running = await openLocalListener({
       runtime,
       human: { actor },
       httpHost,
       httpPort,
       viewerPort,
+      portPinned,
+      viewerPortPinned,
     });
+    if (!running.owned) {
+      const attached = running;
+      running = undefined;
+      runtime.close();
+      if (commandOutput(parsed) === "json") {
+        printJson({
+          alreadyListening: true,
+          apiUrl: attached.apiUrl,
+          ...(attached.viewerUrl.length > 0 ? { viewerUrl: attached.viewerUrl } : {}),
+        });
+      } else {
+        console.log(`Campfire is already listening at ${attached.apiUrl}`);
+      }
+      return;
+    }
     const openBrowser = parsed.flags["no-open"] !== true && shouldOpenBrowser();
     if (openBrowser) {
       try {
@@ -3161,13 +3182,12 @@ function humanShellRequested(parsed: ParsedArgs): boolean {
 }
 
 /**
- * Local half of `campfire up`, then the read-only console.
+ * Local read-only console.
  *
- * This process is the SQLite owner and the loopback HTTP server for the
- * session, so a harness MCP client can call Campfire without opening the
- * database itself. Reads go through that HTTP API. `withBackend` is not used
- * here because it would open a second runtime. The browser stays closed, and
- * quitting the console (or SIGINT) stops the listener this command started.
+ * Reads go through loopback HTTP. When Campfire is already listening, this
+ * command attaches and quitting does not stop that listener. Otherwise this
+ * process starts the listener and stops it on quit. The browser stays closed.
+ * An empty workspace still opens the console.
  */
 async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
   const profile = loadAnyProfile();
@@ -3183,7 +3203,7 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
   const config = loadConfig();
   ensureParentDir(config.databasePath);
   const runtime = createRuntime(config);
-  let running: Awaited<ReturnType<typeof startLocalWorkspace>> | undefined;
+  let running: Awaited<ReturnType<typeof openLocalListener>> | undefined;
   let stopping: Promise<void> | undefined;
   const stopOwned = (): Promise<void> => {
     if (stopping !== undefined) return stopping;
@@ -3231,8 +3251,10 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
     }
     const httpHost = optionalFlag(parsed.flags, "host") ?? DEFAULT_HTTP_HOST;
     const httpPortRaw = optionalFlag(parsed.flags, "port");
+    const portPinned = httpPortRaw !== undefined;
     const httpPort = httpPortRaw === undefined ? DEFAULT_HTTP_PORT : Number(httpPortRaw);
     const viewerPortRaw = optionalFlag(parsed.flags, "viewer-port");
+    const viewerPortPinned = viewerPortRaw !== undefined;
     const viewerPort = viewerPortRaw === undefined ? DEFAULT_VIEWER_PORT : Number(viewerPortRaw);
     if (!Number.isInteger(httpPort) || httpPort < 0 || httpPort > 65535) {
       throw new ValidationError("--port must be an integer between 0 and 65535", { field: "port" });
@@ -3240,24 +3262,26 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
     if (!Number.isInteger(viewerPort) || viewerPort < 0 || viewerPort > 65535) {
       throw new ValidationError("--viewer-port must be an integer between 0 and 65535", { field: "viewer-port" });
     }
-    running = await startLocalWorkspace({
+    running = await openLocalListener({
       runtime,
       human: { actor },
       httpHost,
       httpPort,
       viewerPort,
+      portPinned,
+      viewerPortPinned,
     });
     const session = running;
     const explicit = explicitWorkspaceArgument(parsed);
     let workspaceId =
       explicit !== undefined && explicit.trim().length > 0 ? explicit : profile.workspaceId;
+    let awaitingWorkspace = false;
     if (workspaceId === undefined) {
       const listed = runtime.service.listWorkspaces({ actor });
       if (listed.length === 1) workspaceId = listed[0]!.id;
       else if (listed.length === 0) {
-        // Same human receipt as non-TTY bare `campfire`. An empty console has no workspace to show.
-        printStatus(false);
-        return;
+        awaitingWorkspace = true;
+        workspaceId = "";
       } else {
         throw workspaceSelectionError(listed);
       }
@@ -3283,6 +3307,7 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
           workspaceId,
           actorId: actor.actorId,
           actorType: actor.actorType,
+          ...(awaitingWorkspace ? { awaitingWorkspace: true } : {}),
           call: (method, params) =>
             campfireHttpCall({ baseUrl: session.apiUrl, token: humanToken, method, params }),
         }),
@@ -3354,16 +3379,16 @@ async function cmdDefault(parsed: ParsedArgs, argv: string[]): Promise<void> {
   await runLocalHumanShell(parsed);
 }
 
-function printHelp(command?: string): void {
+function printHelp(command?: string, all = false): void {
   if (command === undefined || command === "help") {
-    console.log(formatUsage());
+    console.log(all ? formatFullUsage() : formatUsage());
     return;
   }
   if (!isKnownCommand(command)) {
-    throw new ValidationError(`Unknown command: ${command}`, { command });
+    throw new ValidationError(`Unknown command: ${command}`, { command, usage: true });
   }
   if (!commandDiscoverable(command)) {
-    throw new ValidationError(`Unknown command: ${command}`, { command });
+    throw new ValidationError(`Unknown command: ${command}`, { command, usage: true });
   }
   console.log(formatCommandUsage(command));
 }
@@ -3688,7 +3713,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   bootstrap: (parsed) => cmdBootstrap(parsed.flags),
   seed: (parsed) => cmdSeed(parsed.flags),
   telemetry: (parsed) => cmdTelemetry(parsed),
-  help: (parsed) => printHelp(parsed.positionals[0]),
+  help: (parsed) => printHelp(parsed.positionals[0], parsed.flags.all === true),
 };
 
 export async function runCli(argv: string[]): Promise<void> {
@@ -3702,11 +3727,17 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.flags.help === true) {
-    printHelp(parsed.command);
+    if (parsed.command !== undefined && isKnownCommand(parsed.command)) {
+      assertKnownInvocation(commandSpec(parsed.command), parsed);
+    } else if (parsed.command === undefined) {
+      assertKnownInvocation(undefined, parsed);
+    }
+    printHelp(parsed.command, parsed.flags.all === true);
     return;
   }
 
   if (parsed.command === undefined && parsed.flags.version === true) {
+    assertKnownInvocation(undefined, parsed);
     console.log(installedCampfireVersion());
     return;
   }
@@ -3741,16 +3772,19 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.command === undefined) {
+    assertKnownInvocation(undefined, parsed);
     return cmdDefault(parsed, argv);
   }
 
   if (!isKnownCommand(parsed.command)) {
-    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
+    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command, usage: true });
   }
 
   if (!commandDiscoverable(parsed.command)) {
-    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command });
+    throw new ValidationError(`Unknown command: ${parsed.command}`, { command: parsed.command, usage: true });
   }
+
+  assertKnownInvocation(commandSpec(parsed.command), parsed);
 
   // Validate the output request once for every catalogued command, including
   // JSON-only commands whose handlers never consult the mode.
@@ -3781,7 +3815,7 @@ export async function runCliEntry(argv: string[]): Promise<number> {
         command: parsed.command,
       }),
     );
-    return 1;
+    return error instanceof CampfireError && error.details?.usage === true ? 2 : 1;
   }
 }
 

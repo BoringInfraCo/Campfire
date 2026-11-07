@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CLI_COMMAND_NAMES, formatCommandUsage, formatUsage } from "../../src/cli/catalog.js";
+import { CLI_COMMAND_NAMES, formatCommandUsage, formatFullUsage } from "../../src/cli/catalog.js";
 import { CLI_COMMAND_HANDLERS, runCliEntry } from "../../src/cli/index.js";
 import {
   buildWorkspaceInspect,
@@ -53,7 +53,7 @@ describe("COR-001 CLI catalog", () => {
       expect(help).toContain("does not edit the old assertion");
       expect(help).toContain("currentness");
     }
-    const menu = formatUsage();
+    const menu = formatFullUsage();
     expect(menu).toContain("do not edit the old assertion");
     expect(menu).toContain("--currentness current|superseded|withdrawn|all");
     expect(formatCommandUsage("add-decision")).toContain("does not edit the old assertion");

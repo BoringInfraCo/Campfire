@@ -276,7 +276,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "up",
     "admin",
     "Keep the local API listening without the terminal shell.",
-    "campfire up [--no-connect] [--no-open] [--port 9414] [--viewer-port 9415] [--output auto|human|json]",
+    "campfire up [--no-connect] [--no-open] [--host <host>] [--port 9414] [--viewer-port 9415] [--harness <name>] [--config <path>] [--mcp-command <path>] [--theme <name>] [--output auto|human|json]",
     { ...WRITE, workspaceScoped: false, related: ["status", "connect"], notes: [
       "Interactive campfire already starts this listener and opens the terminal shell.",
       "This command is the headless listener an agent session starts when nothing is listening.",
@@ -836,10 +836,11 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
   help: spec(
     "help",
     "discover",
-    "Print the grouped help menu or one command's usage.",
-    "campfire help [command]",
+    "Print the common jobs, or one command's usage.",
+    "campfire help [command] [--all]",
     { ...READ, workspaceScoped: false, outputModes: PROTOCOL, protocol: true, notes: [
-      "With no command, prints the grouped menu. campfire <command> --help is the same as campfire help <command>.",
+      "With no command, prints the common jobs. --all prints every command.",
+      "campfire <command> --help is the same as campfire help <command>.",
       "Help stays text: --output does not change it.",
     ] },
   ),
@@ -949,6 +950,97 @@ const GLOBAL_NOTES = [
   "SEED NOTE: --reset deletes the database file and its -wal/-shm sidecars before seeding.",
 ];
 
+const COMMON_JOBS = [
+  "status",
+  "show",
+  "connect",
+  "join",
+  "up",
+  "update",
+  "doctor",
+  "publish",
+  "whoami",
+  "create-workspace",
+] as const satisfies readonly CliCommand[];
+
+function jobLine(invocation: string, summary: string): string {
+  const left = `  ${invocation}`.padEnd(38, " ");
+  return `${left}${summary}`;
+}
+
+/** Root help: the common jobs, not the administration catalog. */
+export function formatUsage(): string {
+  const lines = [
+    "Campfire",
+    "",
+    "Start here:",
+    jobLine("campfire", "Open Campfire in this terminal"),
+    "",
+    "Common jobs:",
+  ];
+  for (const name of COMMON_JOBS) {
+    if (!commandDiscoverable(name)) continue;
+    lines.push(jobLine(`campfire ${name}`, CLI_CATALOG[name].description));
+  }
+  if (commandDiscoverable("playbook")) {
+    lines.push(jobLine("campfire playbook", CLI_CATALOG.playbook.description));
+  }
+  lines.push(
+    "",
+    jobLine("campfire <command> --help", "Usage, options, and effect for one command"),
+    jobLine("campfire help --all", "Every command, including administration"),
+    "",
+    "Global options:",
+    "  --output <auto|human|json>   auto is text on a terminal and JSON when piped",
+    "  --json                       Same as --output json",
+    "  --db <path>                  Database for this process",
+    "  --token <token>              Actor token, or set CAMPFIRE_TOKEN",
+    "  --help                       This screen, or one command when a command is named",
+    "",
+    "Corrections record a new assertion. They do not edit the old one.",
+    "A written harness config still needs the harness to reload.",
+  );
+  return lines.join("\n");
+}
+
+/** Full grouped catalog, including administration. `campfire help --all`. */
+export function formatFullUsage(): string {
+  const sections: string[] = [];
+  for (const group of CLI_GROUPS) {
+    sections.push(...groupLines(group), "");
+  }
+  return [
+    "Campfire",
+    "",
+    "Usage:",
+    "  campfire [--human-name <name>]  Open the read-only console in an interactive terminal; scripts still get status or JSON",
+    "  campfire <command> --help       Usage for one command",
+    "  campfire help --all             Every command",
+    "",
+    ...sections,
+    ...GLOBAL_NOTES,
+  ].join("\n");
+}
+
+function optionLines(entry: CliCommandSpec): string[] {
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  const texts = [entry.usage, ...(entry.variants ?? []).map((variant) => variant.usage)];
+  for (const text of texts) {
+    for (const match of text.matchAll(/--([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)(?:\s+([^\s]+))?/g)) {
+      const name = match[1]!;
+      if (seen.has(name)) continue;
+      seen.add(name);
+      const value = match[2]?.replace(/\]+$/, "");
+      const rendered = value !== undefined && value.length > 0 && !value.startsWith("--") && !value.startsWith("[")
+        ? `--${name} ${value}`
+        : `--${name}`;
+      lines.push(`  ${rendered}`);
+    }
+  }
+  return lines;
+}
+
 function groupLines(group: CliGroup): string[] {
   const lines: string[] = [`${GROUP_TITLES[group]}:`];
   if (group === "start") {
@@ -962,43 +1054,40 @@ function groupLines(group: CliGroup): string[] {
   return lines;
 }
 
-export function formatUsage(): string {
-  const sections: string[] = [];
-  for (const group of CLI_GROUPS) {
-    sections.push(...groupLines(group), "");
-  }
-  return [
-    "Campfire",
-    "",
-    "Usage:",
-    "  campfire [--human-name <name>]  Open the read-only console in an interactive terminal; scripts still get status or JSON",
-    "  campfire <command> --help       Usage for one command",
-    "",
-    ...sections,
-    ...GLOBAL_NOTES,
-  ].join("\n");
-}
-
 export function formatCommandUsage(command: CliCommand): string {
   const entry = CLI_CATALOG[command];
-  const lines = ["Usage:", `  ${entry.usage}`, ...(entry.variants ?? []).map(variant=>`  ${variant.usage}`)];
+  const lines = [
+    "Summary:",
+    `  ${entry.description}`,
+    "",
+    "Usage:",
+    `  ${entry.usage}`,
+    ...(entry.variants ?? []).map((variant) => `  ${variant.usage}`),
+  ];
+  const options = optionLines(entry);
+  if (options.length > 0) {
+    lines.push("", "Options:", ...options);
+  }
   if (entry.notes !== undefined && entry.notes.length > 0) {
     lines.push("", ...entry.notes);
   }
-  if (entry.variants?.length) lines.push("", "Variant output and mutability are listed by campfire capabilities --output json.");
   const modes = entry.protocol
-    ? "Output: protocol-owned. --output does not change it."
+    ? "Output stays with this command. --output does not change it."
     : entry.alwaysJson
-      ? "Output: JSON only (auto|json). --output human is rejected."
-      : "Output: auto|human|json. --json is an alias for --output json.";
+      ? "Prints JSON only. --output human is rejected."
+      : "Prints text on a terminal and JSON when piped. --output human or --json selects one.";
   lines.push(
     "",
-    modes,
-    entry.mutates ? "Mutates Campfire state." : "Reads Campfire state.",
-    entry.workspaceScoped ? "Workspace-scoped." : "Not workspace-scoped.",
-    "",
-    "See campfire --help for the full command list and global options.",
+    "Effects:",
+    `  ${entry.mutates ? "Can change Campfire state." : "Reads Campfire state."} ${entry.workspaceScoped ? "Uses one workspace." : "Not tied to one workspace."}`,
+    `  ${modes}`,
   );
+  const related = (entry.related ?? []).filter((name) => commandDiscoverable(name));
+  if (related.length > 0) {
+    lines.push("", "Next:", ...related.map((name) => `  campfire ${name} --help`));
+  } else {
+    lines.push("", "Next:", "  campfire --help");
+  }
   return lines.join("\n");
 }
 
