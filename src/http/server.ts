@@ -110,6 +110,8 @@ function logAccess(entry: {
   route?: string;
   kind?: "exception" | "non_exception";
 }): void {
+  // The terminal is the work shell. Request JSON belongs in redirected stderr.
+  if (process.stderr.isTTY === true) return;
   console.error(JSON.stringify(entry));
 }
 
@@ -345,7 +347,7 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
       });
     } catch {
       // Delivery failure must not change the Campfire response. The row stays pending.
-      console.error(JSON.stringify({ allow: false, error: "webhook_delivery_failed" }));
+      logAccess({ allow: false, error: "webhook_delivery_failed" });
     } finally {
       pumping = false;
     }

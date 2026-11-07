@@ -1,9 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "1.29.4",
-  "sourceCommit": "34d9b7e621ed10ddd381eb8448f8cab99588a15a",
-  "installChannelsCommit": "ca56066772c9ede468fd0e13e1b82f203ec24294",
-  "sourceDate": "2026-11-06T20:20:41-05:00",
+  "version": "1.29.5",
+  "sourceCommit": "e85d853f12aa96df86242145350b504aeeaef1a1",
+  "sourceDate": "2026-11-06T20:59:39-05:00",
   "exportedAt": "2026-11-07T00:00:00.000Z",
   "files": [
     ".github/workflows/ci.yml",
@@ -142,6 +141,7 @@
     "public/campfire/v1.29.2/install.sh",
     "public/campfire/v1.29.3/install.sh",
     "public/campfire/v1.29.4/install.sh",
+    "public/campfire/v1.29.5/install.sh",
     "public/campfire/v1.3.0/install.sh",
     "public/campfire/v1.4.0/install.sh",
     "public/campfire/v1.5.0/install.sh",
@@ -418,6 +418,7 @@
     "tests/unit/enrollment-service.test.ts",
     "tests/unit/evidence-writer.test.ts",
     "tests/unit/hardening.test.ts",
+    "tests/unit/http-access-log.test.ts",
     "tests/unit/identity.test.ts",
     "tests/unit/install-channels.test.ts",
     "tests/unit/install-telemetry.test.ts",

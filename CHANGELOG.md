@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.29.5 — 2026-11-06
+
+- The work shell no longer prints API request JSON over the screen. A terminal stays the shell. Redirected stderr still records each request. The no-workspace screen stays plain text and does not draw an empty sidebar.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. Homebrew and Nix stay on the published v1.29.4 archives until the v1.29.5 checksums exist.
+
 ## 1.29.4 — 2026-11-06
 
 - Typing `campfire` in a terminal opens the work shell even when Campfire is already listening on 127.0.0.1:9414, and even when this profile has no workspace yet. An existing Campfire listener is left running. A port the user did not pin retries once on an ephemeral port. A pinned busy port says another process is using that address. The empty screen says no workspace yet. It does not invent sessions, and it does not show terminal output.

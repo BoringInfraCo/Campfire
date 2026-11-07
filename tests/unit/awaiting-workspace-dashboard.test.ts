@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createDashboardState,
   reduceDashboardKey,
+  paintDashboardFrame,
   renderDashboard,
   runDashboardSession,
 } from "../../src/cli/dashboard.js";
@@ -37,6 +38,20 @@ describe("awaiting workspace dashboard", () => {
     expect(frame.split("\n").at(-1)).toBe("j/k move  h history  ? help  tab  enter  q quit");
     expect(frame).not.toContain("no recorded goal");
     expect(reduceDashboardKey(state, "q").quit).toBe(true);
+  });
+
+  it("does not paint a sidebar across the blank rows", () => {
+    const previous = process.env.NO_COLOR;
+    delete process.env.NO_COLOR;
+    try {
+      const painted = paintDashboardFrame(renderDashboard(awaitingState(), 100, 24), 100);
+      expect(painted).not.toContain("\x1b[48;2;22;24;32m");
+      expect(painted).toContain("No workspace yet");
+      expect(painted).toContain("Describe the work to your agent. It can create the workspace and goal.");
+    } finally {
+      if (previous === undefined) delete process.env.NO_COLOR;
+      else process.env.NO_COLOR = previous;
+    }
   });
 
   it("keeps help honest when no workspace exists", () => {

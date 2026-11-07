@@ -1,4 +1,4 @@
-# Campfire 1.29.4 release context
+# Campfire 1.29.5 release context
 
 > Controlled Cloud alpha. An admitted owner publishes and shares, and the
 > installed CLI previews, accepts, or declines one invitation link. There is no
@@ -7,7 +7,7 @@
 > install the published v1.29.1 archives. This source snapshot does not deploy the
 > Worker. `bun` can run the installer; the CLI still runs on Node.js 22.
 
-This public source snapshot was exported on 2026-11-07 from private canonical source commit `34d9b7e621ed10ddd381eb8448f8cab99588a15a` (dated 2026-11-06T20:20:41-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-11-07 from private canonical source commit `e85d853f12aa96df86242145350b504aeeaef1a1` (dated 2026-11-06T20:59:39-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -54,6 +54,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - In 1.29.1, that same host can launch Claude Code 2.1.260 and OpenCode 2.2.5. Claude Code takes one positional instruction. OpenCode takes `--prompt` and that instruction, not `opencode run`. Connecting Claude Code writes only the user-scope Campfire MCP server and refuses a relative command or a foreign server named campfire. Cloud enrollment stays Codex or OpenCode. Schema stays 11. A live Campfire tool read is NOT OBSERVED. The Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix install the published v1.29.1 archives.
 - In 1.29.2, the Claude Code pin is 2.1.319 because the installed binary updated itself. Launch arguments are unchanged. OpenCode 2.2.5 read the attached workspace through Campfire on an isolated server. That observation used an `OPENCODE_CLI` wrapper adding `--standalone` and is not the shipped argv. A live Campfire tool read inside Claude Code is NOT OBSERVED: the session registered, then the model request returned authentication_failed (401). The Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.1 archives until the v1.29.2 checksums exist.
 - In 1.29.3, a terminal no longer prints the authorization trace before the Campfire receipt. Redirected stderr still records the decision. Authorization, schema, the Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.2 archives until the v1.29.3 checksums exist.
+- In 1.29.5, the work shell no longer prints API request JSON over the screen. Redirected stderr still records each request. The no-workspace screen stays plain text and does not draw an empty sidebar. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.29.4 archives until the v1.29.5 checksums exist.
 - In 1.29.4, an interactive `campfire` opens the terminal even when a Campfire listener is already bound, and even when the profile has no workspace. The empty screen says no workspace yet and does not invent sessions or show terminal output. Unknown options and extra arguments fail before the command runs, and a usage mistake exits 2. Root help lists the common jobs; `campfire help --all` lists every command. Command names are unchanged. Piped `auto` output still selects JSON. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.29.3 archives until the v1.29.4 checksums exist.
 - The read-only terminal dashboard now focuses one section at a time over the same authorized workspace read: `tab` cycles sections, `j`/`k` move over the shown rows, `enter` inspects, `r` refreshes while preserving selection and labels stale records, and a bounded `/` filter narrows only the loaded rows and says so ("showing X of Y loaded rows"). The dashboard remains read-only, non-TTY behavior is unchanged, escape-led input chunks are stripped, and terminal state is restored on every exit path. The two-person comprehension comparison is NOT OBSERVED (one operator; the contract forbids substituting agents or the builder for a human answer), so this release is a founder-directed engineering candidate for real-user testing, not a comprehension result, and it moves no gate.
 
@@ -67,12 +68,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.29.4.
+- The versioned installer source for v1.29.5.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.29.4 candidate passed type checking,
+At source preparation, the private 1.29.5 candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The pin-scoped v1.26.2
 full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in

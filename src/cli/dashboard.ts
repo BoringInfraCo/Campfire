@@ -2842,7 +2842,18 @@ export function paintDashboardFrame(frame: string, columns: number): string {
   if ((process.env.NO_COLOR ?? "").length > 0) return frame;
   const width = viewport(columns, 1).columns;
   const layout = shellLayout(width);
-  const parts = frame.split("\n").map((line) => describeDashboardLine(line, layout.rail, layout.gutter));
+  const lines = frame.split("\n");
+  // Blank rows fill the sidebar only after a real rail row exists. The
+  // no-workspace screen is plain text, so its blank rows stay blank.
+  const composed = lines.some((line) => {
+    if (line.length === 0 || isFooterLine(line)) return false;
+    return describeDashboardLine(line, layout.rail, layout.gutter).railText !== null;
+  });
+  const parts = lines.map((line) => {
+    const part = describeDashboardLine(line, layout.rail, layout.gutter);
+    if (!composed && line.length === 0) return { ...part, railText: null, pane: "" };
+    return part;
+  });
   const bar = selectionSpan(parts);
   return parts.map((part, index) => (
     paintDashboardLine(part, index >= bar.start && index <= bar.end, layout.rail, layout.gutter, layout.main, width)
