@@ -40,6 +40,20 @@ import type {
 } from "../domain/events.js";
 import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
 import {
+  MEMORY_HEALTH_DECISIONS_SQL,
+  MEMORY_HEALTH_FINDINGS_SQL,
+  MEMORY_HEALTH_PROPOSALS_SQL,
+  MEMORY_HEALTH_TASKS_SQL,
+  MEMORY_HEALTH_TIP_SQL,
+  assembleMemoryHealthRows,
+  mapMemoryHealthTip,
+  type DecisionJoinRow,
+  type FindingJoinRow,
+  type MemoryHealthTipRow,
+  type ProposalJoinRow,
+  type TaskJoinRow,
+} from "./memory-health-queries.js";
+import {
   ACTION_MUTATION_RECEIPT_INSERT_SQL,
   ACTION_PROPOSAL_INSERT_SQL,
   ACTION_RECEIPT_INSERT_SQL,
@@ -1521,6 +1535,18 @@ function createSqliteStore(db: Database.Database): CampfireStore {
       const rows = db.prepare(listed.sql).all(...listed.params) as Array<ArtifactRow & RankedRow>;
       const total = readCount(db.prepare(counted.sql).get(...counted.params) as { count: number } | undefined);
       return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    readMemoryHealthSnapshot(workspaceId) {
+      const run = <T>(sql: string): T[] => db.prepare(sql).all(workspaceId) as T[];
+      const tip = db.prepare(MEMORY_HEALTH_TIP_SQL).get(workspaceId) as MemoryHealthTipRow | undefined;
+      const rows = assembleMemoryHealthRows({
+        decisions: run<DecisionJoinRow>(MEMORY_HEALTH_DECISIONS_SQL),
+        findings: run<FindingJoinRow>(MEMORY_HEALTH_FINDINGS_SQL),
+        tasks: run<TaskJoinRow>(MEMORY_HEALTH_TASKS_SQL),
+        proposals: run<ProposalJoinRow>(MEMORY_HEALTH_PROPOSALS_SQL),
+      });
+      return { tip: mapMemoryHealthTip(tip), rows };
     },
 
     recallSection(workspaceId, section, query) {

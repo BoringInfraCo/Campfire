@@ -175,6 +175,8 @@ export interface ActionMutationReceipt {
   createdAt: string;
 }
 
+import type { MemoryHealthSnapshot } from "./memory-health-queries.js";
+
 export interface CampfireStore {
   // --- identity ---
   createOrganization(organization: Organization): void;
@@ -366,6 +368,8 @@ export interface CampfireStore {
    * section never changes this page.
    */
   recallDecisionSet(workspaceId: string, query: RecallDecisionSetQuery): RecallDecisionSetPage;
+  /** MEM-001: one workspace-scoped read of the source rows and contribution tip. Read-only; no schema. */
+  readMemoryHealthSnapshot(workspaceId: string): MemoryHealthSnapshot;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
   /**
    * ACT-001 action proposals. `updateActionProposal` is a guarded claim: it

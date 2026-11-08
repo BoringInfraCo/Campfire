@@ -1,0 +1,309 @@
+{
+  "schema": "mem-000-candidate-source/1",
+  "workspaceId": "ws_mempage",
+  "clock": "2026-11-07T12:00:00.000Z",
+  "tip": 67,
+  "emptyWorkspace": {
+    "id": "ws_mempage_empty",
+    "tip": 7
+  },
+  "memberships": {
+    "ws_mempage": [
+      {
+        "actor": {
+          "actorId": "hum_mempage_owner",
+          "actorType": "human"
+        },
+        "role": "owner",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      },
+      {
+        "actor": {
+          "actorId": "hum_mempage_member",
+          "actorType": "human"
+        },
+        "role": "member",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      },
+      {
+        "actor": {
+          "actorId": "agt_mempage_agent",
+          "actorType": "agent"
+        },
+        "role": "agent",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      },
+      {
+        "actor": {
+          "actorId": "agt_mempage_executor",
+          "actorType": "agent"
+        },
+        "role": "agent",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      }
+    ],
+    "ws_mempage_empty": [
+      {
+        "actor": {
+          "actorId": "hum_mempage_owner",
+          "actorType": "human"
+        },
+        "role": "owner",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      },
+      {
+        "actor": {
+          "actorId": "hum_mempage_member",
+          "actorType": "human"
+        },
+        "role": "member",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      },
+      {
+        "actor": {
+          "actorId": "agt_mempage_agent",
+          "actorType": "agent"
+        },
+        "role": "agent",
+        "joinedAt": "2026-11-07T12:00:00.000Z"
+      }
+    ]
+  },
+  "sessions": {
+    "health": "ses_mempage_agent",
+    "empty": "ses_mempage_agent_empty"
+  },
+  "whitespace": "persisted:task_mempage_whitespace",
+  "acceptedAction": {
+    "id": "actp_mempage_accepted",
+    "status": "submission_accepted",
+    "receiptId": "arcp_mempage_accepted",
+    "outcome": "accepted"
+  },
+  "action": {
+    "proposal": {
+      "id": "actp_mempage_unknown",
+      "status": "submission_unknown",
+      "revision": 4,
+      "taskId": "task_mempage_action",
+      "reservationId": "resv_mempage_unknown",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    "receipt": {
+      "id": "arcp_mempage_unknown",
+      "outcome": "unknown",
+      "recordedAt": "2026-11-07T12:00:00.000Z"
+    }
+  },
+  "decisions": [
+    {
+      "id": "dec_mempage_review",
+      "status": "accepted",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "citations": [
+        {
+          "id": "cit_mempage_review",
+          "findingId": "find_mempage_old",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "dec_mempage_current",
+      "status": "accepted",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "citations": [
+        {
+          "id": "cit_mempage_current",
+          "findingId": "find_mempage_new",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "dec_mempage_proposed",
+      "status": "proposed",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "citations": [
+        {
+          "id": "cit_mempage_proposed",
+          "findingId": "find_mempage_old",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "dec_mempage_removed",
+      "status": "accepted",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "dec_mempage_old",
+      "status": "superseded",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "citations": [
+        {
+          "id": "cit_mempage_old",
+          "findingId": "find_mempage_old",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "dec_mempage_successor",
+      "status": "accepted",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    }
+  ],
+  "findings": [
+    {
+      "id": "find_mempage_old",
+      "currentness": "superseded",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "correctedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "find_mempage_new",
+      "currentness": "current",
+      "createdAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "find_mempage_a",
+      "currentness": "current",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "evidence": [
+        {
+          "id": "fev_mempage_a1",
+          "artifactId": "art_mempage_a",
+          "relation": "contradicts",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        },
+        {
+          "id": "fev_mempage_a2",
+          "artifactId": "art_mempage_b",
+          "relation": "contradicts",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "find_mempage_b",
+      "currentness": "current",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "evidence": [
+        {
+          "id": "fev_mempage_b1",
+          "artifactId": "art_mempage_c",
+          "relation": "contradicts",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "find_mempage_supported",
+      "currentness": "current",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "evidence": [
+        {
+          "id": "fev_mempage_supported",
+          "artifactId": "art_mempage_a",
+          "relation": "supports",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "find_mempage_withdrawn",
+      "currentness": "withdrawn",
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "correctedAt": "2026-11-07T12:00:00.000Z",
+      "evidence": [
+        {
+          "id": "fev_mempage_withdrawn",
+          "artifactId": "art_mempage_c",
+          "relation": "contradicts",
+          "createdAt": "2026-11-07T12:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_mempage_action",
+      "status": "blocked",
+      "descriptionPresent": true,
+      "assigneePresent": true,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "task_mempage_a",
+      "status": "blocked",
+      "descriptionPresent": false,
+      "assigneePresent": false,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "task_mempage_b",
+      "status": "blocked",
+      "descriptionPresent": false,
+      "assigneePresent": false,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:01:00.000Z"
+    },
+    {
+      "id": "task_mempage_description",
+      "status": "blocked",
+      "descriptionPresent": true,
+      "assigneePresent": false,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "task_mempage_assignee",
+      "status": "blocked",
+      "descriptionPresent": false,
+      "assigneePresent": true,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "task_mempage_open",
+      "status": "open",
+      "descriptionPresent": false,
+      "assigneePresent": false,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "task_mempage_whitespace",
+      "status": "blocked",
+      "descriptionPresent": false,
+      "assigneePresent": false,
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "art_mempage_a",
+      "createdAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "art_mempage_b",
+      "createdAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "art_mempage_c",
+      "createdAt": "2026-11-07T12:00:00.000Z"
+    }
+  ]
+}

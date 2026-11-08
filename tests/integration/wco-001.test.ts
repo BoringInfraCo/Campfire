@@ -405,6 +405,7 @@ describe("WCO-001 D5 — interface safety", () => {
         "get_read_recipe",
         "get_record_history",
         "get_decision",
+        "get_memory_health",
         "get_finding",
         "get_task",
         "get_workspace",
@@ -490,7 +491,7 @@ describe("WCO-001 D6 — compatibility", () => {
 
   it("keeps the CLI command catalog unchanged for continuation commands", () => {
     const commands = [...CLI_COMMAND_NAMES];
-    expect(commands).toHaveLength(65);
+    expect(commands).toHaveLength(66);
     for (const command of ["status", "context", "catch-up", "tasks", "update-task", "cite-evidence", "inspect"]) {
       expect(commands).toContain(command);
     }

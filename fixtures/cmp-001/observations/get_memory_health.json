@@ -1,0 +1,3102 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "default",
+      "parsedBody": {
+        "coverage": {
+          "returned": 4,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": false
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:00:36.000Z",
+            "id": "mh1:current_finding_has_contradicting_evidence:finding:24:find_mem000_contradicted:35:fev_mem000_contradicted_contradicts",
+            "reason": "current_finding_has_contradicting_evidence",
+            "relatedRecordIds": [
+              "fev_mem000_contradicted_contradicts",
+              "art_mem000_counterexample"
+            ],
+            "sourceFacts": {
+              "artifactId": "art_mem000_counterexample",
+              "evidenceId": "fev_mem000_contradicted_contradicts",
+              "findingCurrentness": "current",
+              "relation": "contradicts"
+            },
+            "sourceUpdateTime": "2026-11-07T12:00:41.000Z",
+            "subjectId": "find_mem000_contradicted",
+            "subjectType": "finding",
+            "summary": "Current Finding find_mem000_contradicted has contradicting evidence fev_mem000_contradicted_contradicts for Artifact art_mem000_counterexample; the Finding remains current."
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "id": "mh1:blocked_task_missing_context:task:27:task_mem000_blocked_missing",
+            "reason": "blocked_task_missing_context",
+            "relatedRecordIds": [],
+            "sourceFacts": {
+              "hasAssignee": false,
+              "hasDescription": false,
+              "taskStatus": "blocked"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:50.000Z",
+            "subjectId": "task_mem000_blocked_missing",
+            "subjectType": "task",
+            "summary": "Blocked Task task_mem000_blocked_missing has no recorded description or assignee.",
+            "updatedAt": "2026-11-07T12:01:50.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 3519,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 2,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.taskStatus": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 68,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.evidenceId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.hasAssignee": {
+              "count": 1,
+              "types": [
+                "boolean"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 4678,
+        "prettyOverheadBytes": 730,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 4642,
+        "textBytes": 4249,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-2-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 2,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=598:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":2,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2860,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 44,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=598:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":2,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3616,
+        "prettyOverheadBytes": 453,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3580,
+        "textBytes": 3313,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-1-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2119,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 30,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2637,
+        "prettyOverheadBytes": 291,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2601,
+        "textBytes": 2410,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "cursor": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-1-page-2",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=598:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2079,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 27,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=598:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2557,
+        "prettyOverheadBytes": 262,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2521,
+        "textBytes": 2341,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "reason": "action_outcome_unknown",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "reason-action_outcome_unknown",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown"
+          ],
+          "total": 1,
+          "truncated": false
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {
+          "reason": "action_outcome_unknown"
+        },
+        "kind": "memory_health",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1422,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 27,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 1,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1916,
+        "prettyOverheadBytes": 275,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1880,
+        "textBytes": 1697,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "reason": "bogus_reason",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "reason-invalid",
+      "parsedBody": {
+        "details": {
+          "field": "reason"
+        },
+        "error": "ValidationError",
+        "message": "Memory-health reason is not supported"
+      },
+      "shape": {
+        "compactEquivalentBytes": 106,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 210,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 174,
+        "textBytes": 106,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": -1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-negative",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_memory_health: Too small: expected number to be >0 at limit",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 222,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 186,
+        "textBytes": 132,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "cursor": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 192,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "default",
+      "parsedBody": {
+        "coverage": {
+          "returned": 4,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": false
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:00:36.000Z",
+            "id": "mh1:current_finding_has_contradicting_evidence:finding:24:find_mem000_contradicted:35:fev_mem000_contradicted_contradicts",
+            "reason": "current_finding_has_contradicting_evidence",
+            "relatedRecordIds": [
+              "fev_mem000_contradicted_contradicts",
+              "art_mem000_counterexample"
+            ],
+            "sourceFacts": {
+              "artifactId": "art_mem000_counterexample",
+              "evidenceId": "fev_mem000_contradicted_contradicts",
+              "findingCurrentness": "current",
+              "relation": "contradicts"
+            },
+            "sourceUpdateTime": "2026-11-07T12:00:41.000Z",
+            "subjectId": "find_mem000_contradicted",
+            "subjectType": "finding",
+            "summary": "Current Finding find_mem000_contradicted has contradicting evidence fev_mem000_contradicted_contradicts for Artifact art_mem000_counterexample; the Finding remains current."
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "id": "mh1:blocked_task_missing_context:task:27:task_mem000_blocked_missing",
+            "reason": "blocked_task_missing_context",
+            "relatedRecordIds": [],
+            "sourceFacts": {
+              "hasAssignee": false,
+              "hasDescription": false,
+              "taskStatus": "blocked"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:50.000Z",
+            "subjectId": "task_mem000_blocked_missing",
+            "subjectType": "task",
+            "summary": "Blocked Task task_mem000_blocked_missing has no recorded description or assignee.",
+            "updatedAt": "2026-11-07T12:01:50.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 3519,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 2,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.taskStatus": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 68,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.evidenceId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.hasAssignee": {
+              "count": 1,
+              "types": [
+                "boolean"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 4678,
+        "prettyOverheadBytes": 730,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 4642,
+        "textBytes": 4249,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-2-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 2,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=594:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":2,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2856,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 44,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=594:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":2,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3612,
+        "prettyOverheadBytes": 453,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3576,
+        "textBytes": 3309,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-1-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2115,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 30,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2633,
+        "prettyOverheadBytes": 291,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2597,
+        "textBytes": 2406,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "cursor": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-1-page-2",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=594:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2075,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 27,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=594:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":1,\"sourceUpdateTime\":\"2026-11-07T12:01:08.000Z\",\"subjectType\":\"decision\",\"subjectId\":\"dec_mem000_review\",\"id\":\"mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2553,
+        "prettyOverheadBytes": 262,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2517,
+        "textBytes": 2337,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "reason": "action_outcome_unknown",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "reason-action_outcome_unknown",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown"
+          ],
+          "total": 1,
+          "truncated": false
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {
+          "reason": "action_outcome_unknown"
+        },
+        "kind": "memory_health",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1422,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 27,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 1,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1916,
+        "prettyOverheadBytes": 275,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1880,
+        "textBytes": 1697,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "reason": "bogus_reason",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "reason-invalid",
+      "parsedBody": {
+        "details": {
+          "field": "reason"
+        },
+        "error": "ValidationError",
+        "message": "Memory-health reason is not supported"
+      },
+      "shape": {
+        "compactEquivalentBytes": 106,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 210,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 174,
+        "textBytes": 106,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": -1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-negative",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_memory_health: Too small: expected number to be >0 at limit",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 222,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 186,
+        "textBytes": 132,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "cursor": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 192,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "coverage": {
+          "returned": 4,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": false
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:05.000Z",
+            "id": "mh1:accepted_decision_needs_review:decision:17:dec_mem000_review:23:cit_mem000_review_basis",
+            "reason": "accepted_decision_needs_review",
+            "relatedRecordIds": [
+              "cit_mem000_review_basis",
+              "find_mem000_basis_superseded"
+            ],
+            "sourceFacts": {
+              "citationId": "cit_mem000_review_basis",
+              "decisionStatus": "accepted",
+              "findingCurrentness": "superseded",
+              "findingId": "find_mem000_basis_superseded"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:08.000Z",
+            "subjectId": "dec_mem000_review",
+            "subjectType": "decision",
+            "summary": "Accepted Decision dec_mem000_review needs review because cited Finding find_mem000_basis_superseded is superseded (citation cit_mem000_review_basis); acceptance is unchanged.",
+            "updatedAt": "2026-11-07T12:01:06.000Z"
+          },
+          {
+            "createdAt": "2026-11-07T12:00:36.000Z",
+            "id": "mh1:current_finding_has_contradicting_evidence:finding:24:find_mem000_contradicted:35:fev_mem000_contradicted_contradicts",
+            "reason": "current_finding_has_contradicting_evidence",
+            "relatedRecordIds": [
+              "fev_mem000_contradicted_contradicts",
+              "art_mem000_counterexample"
+            ],
+            "sourceFacts": {
+              "artifactId": "art_mem000_counterexample",
+              "evidenceId": "fev_mem000_contradicted_contradicts",
+              "findingCurrentness": "current",
+              "relation": "contradicts"
+            },
+            "sourceUpdateTime": "2026-11-07T12:00:41.000Z",
+            "subjectId": "find_mem000_contradicted",
+            "subjectType": "finding",
+            "summary": "Current Finding find_mem000_contradicted has contradicting evidence fev_mem000_contradicted_contradicts for Artifact art_mem000_counterexample; the Finding remains current."
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "id": "mh1:blocked_task_missing_context:task:27:task_mem000_blocked_missing",
+            "reason": "blocked_task_missing_context",
+            "relatedRecordIds": [],
+            "sourceFacts": {
+              "hasAssignee": false,
+              "hasDescription": false,
+              "taskStatus": "blocked"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:50.000Z",
+            "subjectId": "task_mem000_blocked_missing",
+            "subjectType": "task",
+            "summary": "Blocked Task task_mem000_blocked_missing has no recorded description or assignee.",
+            "updatedAt": "2026-11-07T12:01:50.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 3519,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.decisionStatus": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.findingCurrentness": {
+              "count": 2,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.taskStatus": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 68,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.citationId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.evidenceId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceFacts.hasAssignee": {
+              "count": 1,
+              "types": [
+                "boolean"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 4677,
+        "prettyOverheadBytes": 730,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 4642,
+        "textBytes": 4249,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "stale-cursor-setup-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2119,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 30,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2637,
+        "prettyOverheadBytes": 291,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2601,
+        "textBytes": 2410,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "stale-cursor-setup-page-1",
+      "parsedBody": {
+        "coverage": {
+          "returned": 1,
+          "rulesEvaluated": [
+            "action_outcome_unknown",
+            "accepted_decision_needs_review",
+            "current_finding_has_contradicting_evidence",
+            "blocked_task_missing_context"
+          ],
+          "total": 4,
+          "truncated": true
+        },
+        "cues": [
+          {
+            "createdAt": "2026-11-07T12:01:56.000Z",
+            "id": "mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown",
+            "reason": "action_outcome_unknown",
+            "relatedRecordIds": [
+              "task_mem000_blocked_complete",
+              "arcp_mem000_unknown",
+              "resv_mem000_unknown"
+            ],
+            "sourceFacts": {
+              "proposalRevision": 4,
+              "proposalStatus": "submission_unknown",
+              "reservationId": "resv_mem000_unknown",
+              "taskId": "task_mem000_blocked_complete",
+              "unknownReceiptId": "arcp_mem000_unknown",
+              "unknownReceiptOutcome": "unknown"
+            },
+            "sourceUpdateTime": "2026-11-07T12:01:59.000Z",
+            "subjectId": "actp_mem000_unknown",
+            "subjectType": "action_proposal",
+            "summary": "ActionProposal actp_mem000_unknown has unknown submission outcome; reconcile receipt arcp_mem000_unknown before any retry.",
+            "updatedAt": "2026-11-07T12:01:59.000Z"
+          }
+        ],
+        "filters": {},
+        "kind": "memory_health",
+        "nextCursor": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "observedAt": "<WALL_CLOCK>",
+        "orientationCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "schemaVersion": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2115,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "cues[].sourceFacts.proposalRevision": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "cues[].sourceFacts.proposalStatus": {
+              "count": 1,
+              "firstValue": "submission_unknown",
+              "types": [
+                "string"
+              ]
+            },
+            "observedAt": {
+              "count": 1,
+              "firstValue": "<WALL_CLOCK>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 30,
+          "pagination": {
+            "coverage.total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "coverage.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+              "types": [
+                "string"
+              ]
+            },
+            "orientationCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "cues[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].sourceUpdateTime": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "cues[].updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "coverage",
+            "cues",
+            "filters",
+            "kind",
+            "nextCursor",
+            "observedAt",
+            "orientationCursor",
+            "schemaVersion",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2633,
+        "prettyOverheadBytes": 291,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2597,
+        "textBytes": 2406,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "cursor": "<cursor:mh1:len=606:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"agent\",\"actorId\":\"agt_mem000_registered\",\"role\":\"agent\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "stale-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor",
+          "nextAction": "restart_without_cursor",
+          "recoveryCode": "memory_health_stale_cursor"
+        },
+        "error": "Conflict",
+        "message": "Memory health cursor is stale"
+      },
+      "shape": {
+        "compactEquivalentBytes": 173,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 285,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 249,
+        "textBytes": 173,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "cursor": "<cursor:mh1:len=602:{\"v\":1,\"ordering\":\"mem-health-1\",\"workspaceId\":\"ws_mem000_health\",\"actorType\":\"human\",\"actorId\":\"hum_mem000_member\",\"role\":\"member\",\"reason\":null,\"limit\":1,\"observedAt\":\"<WALL_CLOCK>\",\"contributionTip\":115,\"last\":{\"severity\":0,\"sourceUpdateTime\":\"2026-11-07T12:01:59.000Z\",\"subjectType\":\"action_proposal\",\"subjectId\":\"actp_mem000_unknown\",\"id\":\"mh1:action_outcome_unknown:action_proposal:19:actp_mem000_unknown:19:arcp_mem000_unknown\"}}>",
+        "limit": 1,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "stale-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor",
+          "nextAction": "restart_without_cursor",
+          "recoveryCode": "memory_health_stale_cursor"
+        },
+        "error": "Conflict",
+        "message": "Memory health cursor is stale"
+      },
+      "shape": {
+        "compactEquivalentBytes": 173,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 285,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 249,
+        "textBytes": 173,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 27,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 14,
+    "successFrameBytesMax": 4678,
+    "successTextBytesMax": 4249,
+    "successTopLevelKeys": [
+      "coverage",
+      "cues",
+      "filters",
+      "kind",
+      "nextCursor",
+      "observedAt",
+      "orientationCursor",
+      "schemaVersion",
+      "workspaceId"
+    ],
+    "successes": 13
+  },
+  "tool": "get_memory_health"
+}

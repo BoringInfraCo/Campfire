@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.30.0 — 2026-11-08
+
+- `campfire memory-health [workspace]`, the HTTP method `get_memory_health`, and the MCP tool `get_memory_health` list a bounded, paged set of workspace records that need review, with the reason and the source facts for each. Four fixed rules: an action outcome that is unknown, an accepted decision whose basis is under review, a current finding with contradicting evidence, and a blocked task with missing context. It reads canonical state with the caller's authorization, calls no model and no network, writes nothing, and stores nothing. It does not find everything that is stale or contradictory.
+- The eight read tools `get_workspace_context`, `get_workspace_changes`, `list_tasks`, `get_task`, `get_memory_health`, `get_decision`, `get_finding`, and `get_artifact` now return `structuredContent` equal to the existing text, a title, read-only annotations, and a declared output schema. The text block is unchanged. Errors stay text-only. `tools/list` grows from about 25 KB to about 51 KB and some responses grow up to about 1.8x.
+- Several enum and free-text fields in the context output schema are not declared, to keep `tools/list` small. Their values are still returned.
+- Observed only with scripted tests and one run each on Codex 0.167.0, Claude Code 2.1.319, and OpenCode 2.2.6. NOT OBSERVED: Codex 0.164.0 and OpenCode 2.2.5, model-visible bytes, the hosted MCP path, deployed D1, D1 mutation atomicity, a model-driven run using the final slimmed context schema, and a real person using memory health. This is an engineering candidate, not a demonstration of team value.
+- No schema or migration change. This source snapshot does not deploy the production Worker or its assets. Memory health works against local SQLite, local HTTP, and local MCP. A Worker older than this release is expected to answer `ValidationError: Unknown method` for `get_memory_health`, and the Worker-served v1.30.0 installer URL is not published. The v1.29.8 tag is unchanged. Homebrew and Nix stay on the published v1.29.8 archives until the v1.30.0 checksums exist.
+
 ## 1.29.8 — 2026-11-08
 
 - `campfire publish` and `campfire join --invitation-link` / `--invitation-file` accept `--allow-loopback` again. The v1.29.4 strict-argument check had rejected it with exit 2 because the command usage never named it. The flag is for same-machine testing only.

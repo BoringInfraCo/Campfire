@@ -72,6 +72,8 @@ const SES_HTTP_ADDITIONS = [
   "list_agent_sessions",
 ] as const;
 
+const MEM_HTTP_ADDITIONS = ["get_memory_health"] as const;
+
 const EXPECTED_MCP_ADDITIONS = [
   "propose_action",
   "reserve_action_execution",
@@ -79,6 +81,8 @@ const EXPECTED_MCP_ADDITIONS = [
   "get_action_proposal",
   "list_action_proposals",
   "list_action_receipts",
+  // MEM-001 step 3: deliberate read-only addition.
+  "get_memory_health",
 ] as const;
 
 describe("ACT-001 D1 baseline preservation", () => {
@@ -89,14 +93,14 @@ describe("ACT-001 D1 baseline preservation", () => {
     expect(ANSWER_KEY.baseline.httpMethods).toBe(47);
     expect(ANSWER_KEY.interfaces.serviceMethods).toBe(8);
     expect(CAMPFIRE_HTTP_METHODS).toHaveLength(
-      frozen.count + EXPECTED_HTTP_ADDITIONS.length + SES_HTTP_ADDITIONS.length,
+      frozen.count + EXPECTED_HTTP_ADDITIONS.length + SES_HTTP_ADDITIONS.length + MEM_HTTP_ADDITIONS.length,
     );
     expect(new Set(CAMPFIRE_HTTP_METHODS).size).toBe(CAMPFIRE_HTTP_METHODS.length);
     const added = CAMPFIRE_HTTP_METHODS.filter((method) => !frozen.methods.includes(method));
-    expect([...added].sort()).toEqual([...EXPECTED_HTTP_ADDITIONS, ...SES_HTTP_ADDITIONS].sort());
+    expect([...added].sort()).toEqual([...EXPECTED_HTTP_ADDITIONS, ...SES_HTTP_ADDITIONS, ...MEM_HTTP_ADDITIONS].sort());
   });
 
-  it("pins v1.25 MCP tools (40) plus exactly the 6 ACT-001 agent tools", () => {
+  it("pins v1.25 MCP tools (40) plus exactly the 6 ACT-001 agent tools and MEM-001 get_memory_health", () => {
     const frozen = baselineLines("mcp-tool-names-playbook-off.txt");
     expect(frozen).toHaveLength(40);
     expect(ANSWER_KEY.baseline.mcpToolsOff).toBe(40);
@@ -120,10 +124,11 @@ describe("ACT-001 D1 baseline preservation", () => {
     // write channel — as the one catalog name past the SHR-001 family.
     const retired = ["dashboard"];
     const visible = CLI_COMMAND_NAMES.filter((name) => name !== "playbook");
-    expect(visible).toHaveLength(frozen.length + 6 - retired.length);
+    expect(visible).toHaveLength(frozen.length + 7 - retired.length);
     const added = visible.filter((name) => !frozen.includes(name));
     expect(added).toEqual([
       "update",
+      "memory-health",
       "actions",
       "publish",
       "publish-status",
@@ -212,7 +217,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.29.8");
+    expect(pkg.version).toBe("1.30.0");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

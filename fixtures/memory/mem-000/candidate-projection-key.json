@@ -1,0 +1,362 @@
+{
+  "schema": "mem-000-candidate-projection-key/1",
+  "status": "CANDIDATE_EXPECTATION",
+  "fixture": "candidate-source.json",
+  "observedAt": "2026-11-07T18:00:00.000Z",
+  "expectedCues": [
+    {
+      "id": "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+      "reason": "action_outcome_unknown",
+      "subjectType": "action_proposal",
+      "subjectId": "actp_mempage_unknown",
+      "relatedRecordIds": [
+        "task_mempage_action",
+        "arcp_mempage_unknown",
+        "resv_mempage_unknown"
+      ],
+      "summary": "ActionProposal actp_mempage_unknown has unknown submission outcome; reconcile receipt arcp_mempage_unknown before any retry.",
+      "sourceFacts": {
+        "proposalStatus": "submission_unknown",
+        "proposalRevision": 4,
+        "taskId": "task_mempage_action",
+        "unknownReceiptId": "arcp_mempage_unknown",
+        "unknownReceiptOutcome": "unknown",
+        "reservationId": "resv_mempage_unknown"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review",
+      "reason": "accepted_decision_needs_review",
+      "subjectType": "decision",
+      "subjectId": "dec_mempage_review",
+      "relatedRecordIds": [
+        "cit_mempage_review",
+        "find_mempage_old"
+      ],
+      "summary": "Accepted Decision dec_mempage_review needs review because cited Finding find_mempage_old is superseded (citation cit_mempage_review); acceptance is unchanged.",
+      "sourceFacts": {
+        "decisionStatus": "accepted",
+        "citationId": "cit_mempage_review",
+        "findingId": "find_mempage_old",
+        "findingCurrentness": "superseded"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_a",
+      "relatedRecordIds": [
+        "fev_mempage_a1",
+        "art_mempage_a"
+      ],
+      "summary": "Current Finding find_mempage_a has contradicting evidence fev_mempage_a1 for Artifact art_mempage_a; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_a1",
+        "artifactId": "art_mempage_a",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_a",
+      "relatedRecordIds": [
+        "fev_mempage_a2",
+        "art_mempage_b"
+      ],
+      "summary": "Current Finding find_mempage_a has contradicting evidence fev_mempage_a2 for Artifact art_mempage_b; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_a2",
+        "artifactId": "art_mempage_b",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_b",
+      "relatedRecordIds": [
+        "fev_mempage_b1",
+        "art_mempage_c"
+      ],
+      "summary": "Current Finding find_mempage_b has contradicting evidence fev_mempage_b1 for Artifact art_mempage_c; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_b1",
+        "artifactId": "art_mempage_c",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_b",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_b has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:01:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:01:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_a",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_a has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_whitespace",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_whitespace has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    }
+  ],
+  "safeResolution": {
+    "action_outcome_unknown": "Reconcile existing proposal after external check; do not retry automatically.",
+    "accepted_decision_needs_review": "Remove erroneous decision basis, replace decision, or retire it after review.",
+    "current_finding_has_contradicting_evidence": "Remove erroneous evidence relation, correct finding, or withdraw it after review.",
+    "blocked_task_missing_context": "Update task with truthful missing context."
+  },
+  "unfilteredLimit2": [
+    {
+      "cueIds": [
+        "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+        "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown",
+          "accepted_decision_needs_review",
+          "current_finding_has_contradicting_evidence",
+          "blocked_task_missing_context"
+        ],
+        "total": 8,
+        "returned": 2,
+        "truncated": true
+      },
+      "nextCursorPresent": true
+    },
+    {
+      "cueIds": [
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown",
+          "accepted_decision_needs_review",
+          "current_finding_has_contradicting_evidence",
+          "blocked_task_missing_context"
+        ],
+        "total": 8,
+        "returned": 2,
+        "truncated": true
+      },
+      "nextCursorPresent": true
+    },
+    {
+      "cueIds": [
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+        "mh1:blocked_task_missing_context:task:14:task_mempage_b"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown",
+          "accepted_decision_needs_review",
+          "current_finding_has_contradicting_evidence",
+          "blocked_task_missing_context"
+        ],
+        "total": 8,
+        "returned": 2,
+        "truncated": true
+      },
+      "nextCursorPresent": true
+    },
+    {
+      "cueIds": [
+        "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+        "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown",
+          "accepted_decision_needs_review",
+          "current_finding_has_contradicting_evidence",
+          "blocked_task_missing_context"
+        ],
+        "total": 8,
+        "returned": 2,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ],
+  "filteredFindingLimit2": [
+    {
+      "cueIds": [
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "current_finding_has_contradicting_evidence"
+        ],
+        "total": 3,
+        "returned": 2,
+        "truncated": true
+      },
+      "nextCursorPresent": true
+    },
+    {
+      "cueIds": [
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "current_finding_has_contradicting_evidence"
+        ],
+        "total": 3,
+        "returned": 1,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ],
+  "emptyFiltered": [
+    {
+      "cueIds": [],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown"
+        ],
+        "total": 0,
+        "returned": 0,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ],
+  "cursorTests": {
+    "continuedPagePreserves": "initial observedAt, orientationCursor, filtered total, actor, role, filter and limit",
+    "staleTip": "Conflict, recoveryCode memory_health_stale_cursor, field cursor, nextAction restart_without_cursor; no cues/count/tip",
+    "malformedOrMismatched": "ValidationError field cursor after authorization, no decoded source data"
+  },
+  "orderingNotes": "Task B has the later source update time and precedes A and whitespace. Equal-time finding A versus B tests subjectId; A1 versus A2 tests cue.id for the same subject. subjectType is fixed by reason, so no valid same-reason pair can differ on subjectType. The whitespace-only description persists and is a positive cue.",
+  "unfilteredExactLimit8": [
+    {
+      "cueIds": [
+        "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+        "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review",
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2",
+        "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+        "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+        "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+        "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "action_outcome_unknown",
+          "accepted_decision_needs_review",
+          "current_finding_has_contradicting_evidence",
+          "blocked_task_missing_context"
+        ],
+        "total": 8,
+        "returned": 8,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ],
+  "filteredTaskLimit2": [
+    {
+      "cueIds": [
+        "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+        "mh1:blocked_task_missing_context:task:14:task_mempage_a"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "blocked_task_missing_context"
+        ],
+        "total": 3,
+        "returned": 2,
+        "truncated": true
+      },
+      "nextCursorPresent": true
+    },
+    {
+      "cueIds": [
+        "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "blocked_task_missing_context"
+        ],
+        "total": 3,
+        "returned": 1,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ],
+  "filteredTaskExactLimit3": [
+    {
+      "cueIds": [
+        "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+        "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+        "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace"
+      ],
+      "coverage": {
+        "rulesEvaluated": [
+          "blocked_task_missing_context"
+        ],
+        "total": 3,
+        "returned": 3,
+        "truncated": false
+      },
+      "nextCursorPresent": false
+    }
+  ]
+}

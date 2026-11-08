@@ -24,6 +24,7 @@ export const CAMPFIRE_HTTP_METHODS = [
   "get_workspace_context",
   "get_workspace_changes",
   "recall_workspace",
+  "get_memory_health",
   "project_handoff_packet",
   "list_decisions",
   "list_findings",
@@ -487,6 +488,18 @@ export async function dispatchCampfireMethodAsync(
       const limit = optionalInt(params, "limit");
       if (limit !== undefined) input.limit = limit;
       return await service.getWorkspaceChanges(ctx, input);
+    }
+    case "get_memory_health": {
+      const input: { workspaceId: string; reason?: string; limit?: number; cursor?: string } = {
+        workspaceId: str(params, "workspaceId"),
+      };
+      const reason = optionalStr(params, "reason");
+      if (reason !== undefined) input.reason = reason;
+      const limit = optionalInt(params, "limit");
+      if (limit !== undefined) input.limit = limit;
+      const cursor = optionalStr(params, "cursor");
+      if (cursor !== undefined) input.cursor = cursor;
+      return await service.getMemoryHealth(ctx, input);
     }
     case "recall_workspace":
       return await service.recallWorkspace(ctx, recallReadInput(params));

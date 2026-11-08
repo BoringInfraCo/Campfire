@@ -22,6 +22,15 @@ import type { CampfireService } from "../service/service.js";
 import { reportActivated, reportActive, telemetryInBackground } from "../telemetry/report.js";
 import type { ServerIdentity } from "./context.js";
 import { SESSION_INSTRUCTIONS } from "./instructions.js";
+import { getMemoryHealthOutputObject } from "./schemas/memory-health.js";
+import { getWorkspaceChangesSchema, getWorkspaceContextSchema } from "./schemas/orientation.js";
+import {
+  getArtifactOutputSchema,
+  getDecisionOutputSchema,
+  getFindingOutputSchema,
+  getTaskOutputSchema,
+  listTasksOutputSchema,
+} from "./schemas/records.js";
 
 export interface CampfireMcpOptions {
   service?: CampfireService;
@@ -59,9 +68,35 @@ const actorRefSchema = z.object({
   actorType: z.enum(ACTOR_TYPES),
 });
 
-function ok(result: unknown): CallToolResult {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+function ok(result: unknown, structured = false): CallToolResult {
+  const text = JSON.stringify(result, null, 2);
+  const out: CallToolResult = { content: [{ type: "text", text }] };
+  // CMP-001 slice A: structuredContent is the parsed text, so the two channels are equal by construction.
+  if (structured && typeof result === "object" && result !== null && !Array.isArray(result)) {
+    out.structuredContent = JSON.parse(text) as Record<string, unknown>;
+  }
+  return out;
 }
+
+/** Explicit hints (SDK defaults are pessimistic). Hints only; they grant no authority. */
+const READ_TOOL_ANNOTATIONS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+} as const;
+
+/** CMP-001 slice A: read tools that also return structuredContent next to the unchanged text block. */
+const STRUCTURED_READ_TITLES: Readonly<Record<string, string>> = {
+  get_workspace_context: "Get workspace context",
+  get_workspace_changes: "Get workspace changes",
+  list_tasks: "List tasks",
+  get_task: "Get task",
+  get_memory_health: "Get memory health",
+  get_decision: "Get decision",
+  get_finding: "Get finding",
+  get_artifact: "Get artifact",
+};
 
 function fail(code: string, message: string, details?: Record<string, unknown>): CallToolResult {
   return {
@@ -202,7 +237,7 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       // Success only. A throw below is a failed setup or failed authentication
       // (section 9) and must never activate.
       reportMcpSuccess(method);
-      return ok(result);
+      return ok(result, Object.hasOwn(STRUCTURED_READ_TITLES, method));
     } catch (error) {
       if (error instanceof CampfireError) {
         return fail(error.code, error.message, error.details);
@@ -295,6 +330,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_workspace_context",
     {
+      title: STRUCTURED_READ_TITLES.get_workspace_context,
+      outputSchema: getWorkspaceContextSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description:
         "Retrieve the bounded orientation projection for continuing work: goal, proposed and accepted decisions, open tasks, findings, artifacts, recent provenance, authorization-aware needsYou (work you can act on) and needsAttention (other team records — attention ordering, not an access boundary), current work, and an orientation hint. Each slice carries total, returned, and truncated; attentionCoverage states the returned task and decision page counts and whether the attention lists are complete under their selection rules (a truncated source page can hide a matching cue). needsAttention also carries a team review cue with reason accepted_decision_needs_review for a returned accepted decision whose cited findings are no longer current — a review cue, not a revocation of acceptance and not a transition. Pass orientationCursor to get_workspace_changes to catch up. Pass `since` (a contribution id) to also receive contributions strictly after it.",
       inputSchema: {
@@ -340,6 +378,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_workspace_changes",
     {
+      title: STRUCTURED_READ_TITLES.get_workspace_changes,
+      outputSchema: getWorkspaceChangesSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description:
         "Read the bounded catch-up after an orientationCursor or a previous catch-up cursor. The result is bounded; pass the returned cursor to continue.",
       inputSchema: {
@@ -364,6 +405,24 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       },
     },
     (args) => run("recall_workspace", () => invoke("recall_workspace", args)),
+  );
+
+  server.registerTool(
+    "get_memory_health",
+    {
+      title: STRUCTURED_READ_TITLES.get_memory_health,
+      outputSchema: getMemoryHealthOutputObject,
+      annotations: READ_TOOL_ANNOTATIONS,
+      description:
+        "Read-only, bounded memory-health page for one authorized workspace: deterministic findings about stale or unresolved workspace memory, with record ids, exact summaries, coverage, and a nextCursor. Optionally filter by reason. Pass the returned nextCursor to continue. Does not repair, write, or search another workspace.",
+      inputSchema: {
+        workspaceId: z.string(),
+        reason: z.string().optional(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+      },
+    },
+    (args) => run("get_memory_health", () => invoke("get_memory_health", args)),
   );
 
   server.registerTool(
@@ -399,6 +458,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "list_tasks",
     {
+      title: STRUCTURED_READ_TITLES.list_tasks,
+      outputSchema: listTasksOutputSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description:
         "List a bounded page of tasks in a workspace. The result is bounded; pass the returned cursor to continue the list.",
       inputSchema: {
@@ -428,6 +490,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_decision",
     {
+      title: STRUCTURED_READ_TITLES.get_decision,
+      outputSchema: getDecisionOutputSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description: "Read one decision in a workspace.",
       inputSchema: { workspaceId: z.string(), decisionId: z.string() },
     },
@@ -437,6 +502,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_finding",
     {
+      title: STRUCTURED_READ_TITLES.get_finding,
+      outputSchema: getFindingOutputSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description: "Read one finding in a workspace.",
       inputSchema: { workspaceId: z.string(), findingId: z.string() },
     },
@@ -446,6 +514,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_task",
     {
+      title: STRUCTURED_READ_TITLES.get_task,
+      outputSchema: getTaskOutputSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description: "Read one task in a workspace.",
       inputSchema: { workspaceId: z.string(), taskId: z.string() },
     },
@@ -455,6 +526,9 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "get_artifact",
     {
+      title: STRUCTURED_READ_TITLES.get_artifact,
+      outputSchema: getArtifactOutputSchema,
+      annotations: READ_TOOL_ANNOTATIONS,
       description: "Read one artifact in a workspace.",
       inputSchema: { workspaceId: z.string(), artifactId: z.string() },
     },

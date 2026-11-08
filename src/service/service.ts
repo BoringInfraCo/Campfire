@@ -15,6 +15,8 @@ import type {
 } from "../domain/action-proposal.js";
 import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
+import type { MemoryHealthResult } from "../domain/memory-health.js";
+import type { GetMemoryHealthInput } from "./memory-health-read.js";
 import type { CampfireHandoffPacket, WorkspaceRecall } from "../domain/recall.js";
 import type {
   ActorRef,
@@ -703,6 +705,8 @@ export interface CampfireService {
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): WorkspaceCatchUp;
   /** Authorized read. Does not write a contribution or a handoff file. */
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): WorkspaceRecall;
+  /** MEM-001: authorized, read-only, non-persisted memory-health cues. */
+  getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput): MemoryHealthResult;
   /**
    * Authorized projection of one recall plus orientation anchors.
    * The caller writes the private file. This method does not.

@@ -1,0 +1,19 @@
+{
+  "schema": "mem-000-supplemental-actor-tasks/1",
+  "evidenceClass": "Synthetic scripted engineering tasks; record IDs are provided in prompts, calls and next actions are scripted.",
+  "workspaceId": "ws_mempage",
+  "actors": [
+    {"id": "human_owner", "interface": "CLI", "identity": "hum_mempage_owner"},
+    {"id": "registered_agent", "interface": "MCP stdio", "identity": "agt_mempage_agent", "session": "ses_mempage_agent"}
+  ],
+  "tasks": [
+    {"id": "supplemental-decision", "prompt": "Inspect dec_mempage_review and the cited Finding find_mempage_old; report the citation, recorded states and safe review paths.", "calls": ["context", "review", "old-finding"], "subjects": ["dec_mempage_review"], "safeActions": ["remove_decision_basis_if_erroneous", "replace_decision", "retire_decision"]},
+    {"id": "supplemental-finding-a", "prompt": "Inspect find_mempage_a and identify each distinct contradicting relation and artifact. Report its currentness and safe review paths.", "calls": ["context", "finding-a"], "subjects": ["find_mempage_a"], "safeActions": ["remove_finding_evidence_if_erroneous", "correct_finding", "withdraw_finding"]},
+    {"id": "supplemental-finding-b", "prompt": "Inspect find_mempage_b and identify contradicting evidence and artifact. Report currentness and safe review paths.", "calls": ["context", "finding-b"], "subjects": ["find_mempage_b"], "safeActions": ["remove_finding_evidence_if_erroneous", "correct_finding", "withdraw_finding"]},
+    {"id": "supplemental-task-a", "prompt": "Inspect task_mempage_a; report its status and missing context, and a safe next action.", "calls": ["context", "task-a"], "subjects": ["task_mempage_a"], "safeActions": ["update_task"]},
+    {"id": "supplemental-task-b", "prompt": "Inspect task_mempage_b; report its status and missing context, and a safe next action.", "calls": ["context", "task-b"], "subjects": ["task_mempage_b"], "safeActions": ["update_task"]},
+    {"id": "supplemental-task-whitespace", "prompt": "Inspect task_mempage_whitespace; report its status and whether whitespace-only description and assignee constitute context, and a safe next action.", "calls": ["context", "task-whitespace"], "subjects": ["task_mempage_whitespace"], "safeActions": ["update_task"]},
+    {"id": "supplemental-unknown", "prompt": "Inspect actp_mempage_unknown and its receipts. Report the task, reservation and receipt and whether the external effect is known.", "calls": ["context", "unknown", "receipts"], "subjects": ["actp_mempage_unknown"], "safeActions": ["reconcile_existing_proposal"]}
+  ],
+  "coverageLimits": "These tasks do not establish discovery from an unnamed subject or observe real human or model choices. Candidate health pagination can be tested only after implementation."
+}

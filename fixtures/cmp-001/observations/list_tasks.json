@@ -1,0 +1,2991 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 5,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "page-1-limit-5",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+        "returned": 5,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2076,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 5,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 53,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3041,
+        "prettyOverheadBytes": 591,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3006,
+        "textBytes": 2667,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "cursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+        "limit": 5,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "page-2-limit-5",
+      "parsedBody": {
+        "items": [
+          {
+            "createdAt": "2026-11-07T12:01:43.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_17",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 17",
+            "updatedAt": "2026-11-07T12:01:44.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:41.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_16",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 16",
+            "updatedAt": "2026-11-07T12:01:42.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:39.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_15",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 15",
+            "updatedAt": "2026-11-07T12:01:40.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:37.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_14",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 14",
+            "updatedAt": "2026-11-07T12:01:38.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:35.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_13",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 13",
+            "updatedAt": "2026-11-07T12:01:36.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:36.000Z\",\"id\":\"task_mem000_filler_13\"}>",
+        "returned": 5,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1969,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 5,
+              "firstValue": "in_progress",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 51,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:36.000Z\",\"id\":\"task_mem000_filler_13\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].createdAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2863,
+        "prettyOverheadBytes": 537,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2827,
+        "textBytes": 2506,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "default",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:43.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_17",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 17",
+            "updatedAt": "2026-11-07T12:01:44.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:41.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_16",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 16",
+            "updatedAt": "2026-11-07T12:01:42.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:39.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_15",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 15",
+            "updatedAt": "2026-11-07T12:01:40.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:37.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_14",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 14",
+            "updatedAt": "2026-11-07T12:01:38.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:35.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_13",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 13",
+            "updatedAt": "2026-11-07T12:01:36.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:33.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_12",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 12",
+            "updatedAt": "2026-11-07T12:01:34.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:31.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_11",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 11",
+            "updatedAt": "2026-11-07T12:01:32.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:29.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_10",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 10",
+            "updatedAt": "2026-11-07T12:01:30.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:27.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_09",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 09",
+            "updatedAt": "2026-11-07T12:01:28.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:25.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_08",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 08",
+            "updatedAt": "2026-11-07T12:01:26.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:23.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_07",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 07",
+            "updatedAt": "2026-11-07T12:01:24.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:21.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_06",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 06",
+            "updatedAt": "2026-11-07T12:01:22.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:19.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_05",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 05",
+            "updatedAt": "2026-11-07T12:01:20.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:17.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_04",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 04",
+            "updatedAt": "2026-11-07T12:01:18.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:15.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_03",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 03",
+            "updatedAt": "2026-11-07T12:01:16.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+        "returned": 20,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 7117,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 20,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 188,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 10363,
+        "prettyOverheadBytes": 2106,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 10327,
+        "textBytes": 9223,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "status": "blocked",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "status-blocked",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "returned": 4,
+        "schemaVersion": 1,
+        "total": 4,
+        "truncated": false,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1554,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 4,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 43,
+          "pagination": {
+            "total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2359,
+        "prettyOverheadBytes": 486,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2323,
+        "textBytes": 2040,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "status": "bogus",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "status-invalid-enum",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool list_tasks: Invalid option: expected one of \"open\"|\"in_progress\"|\"blocked\"|\"completed\" at status",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 263,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 227,
+        "textBytes": 165,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 0,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-zero",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool list_tasks: Too small: expected number to be >0 at limit",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 215,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 179,
+        "textBytes": 125,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "cursor": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 192,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": 5,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "page-1-limit-5",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+        "returned": 5,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2076,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 5,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 53,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3041,
+        "prettyOverheadBytes": 591,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3006,
+        "textBytes": 2667,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "cursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+        "limit": 5,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "page-2-limit-5",
+      "parsedBody": {
+        "items": [
+          {
+            "createdAt": "2026-11-07T12:01:43.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_17",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 17",
+            "updatedAt": "2026-11-07T12:01:44.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:41.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_16",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 16",
+            "updatedAt": "2026-11-07T12:01:42.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:39.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_15",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 15",
+            "updatedAt": "2026-11-07T12:01:40.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:37.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_14",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 14",
+            "updatedAt": "2026-11-07T12:01:38.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:35.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_13",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 13",
+            "updatedAt": "2026-11-07T12:01:36.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:36.000Z\",\"id\":\"task_mem000_filler_13\"}>",
+        "returned": 5,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1969,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 5,
+              "firstValue": "in_progress",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 51,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:36.000Z\",\"id\":\"task_mem000_filler_13\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].createdAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2863,
+        "prettyOverheadBytes": 537,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2827,
+        "textBytes": 2506,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "default",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:43.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_17",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 17",
+            "updatedAt": "2026-11-07T12:01:44.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:41.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_16",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 16",
+            "updatedAt": "2026-11-07T12:01:42.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:39.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_15",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 15",
+            "updatedAt": "2026-11-07T12:01:40.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:37.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_14",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 14",
+            "updatedAt": "2026-11-07T12:01:38.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:35.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_13",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 13",
+            "updatedAt": "2026-11-07T12:01:36.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:33.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_12",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 12",
+            "updatedAt": "2026-11-07T12:01:34.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:31.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_11",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 11",
+            "updatedAt": "2026-11-07T12:01:32.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:29.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_10",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 10",
+            "updatedAt": "2026-11-07T12:01:30.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:27.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_09",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 09",
+            "updatedAt": "2026-11-07T12:01:28.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:25.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_08",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 08",
+            "updatedAt": "2026-11-07T12:01:26.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:23.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_07",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 07",
+            "updatedAt": "2026-11-07T12:01:24.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:21.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_06",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 06",
+            "updatedAt": "2026-11-07T12:01:22.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:19.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_05",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 05",
+            "updatedAt": "2026-11-07T12:01:20.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:17.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_04",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 04",
+            "updatedAt": "2026-11-07T12:01:18.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:15.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_03",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 03",
+            "updatedAt": "2026-11-07T12:01:16.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+        "returned": 20,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 7117,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 20,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 188,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 10363,
+        "prettyOverheadBytes": 2106,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 10327,
+        "textBytes": 9223,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "status": "blocked",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "status-blocked",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "returned": 4,
+        "schemaVersion": 1,
+        "total": 4,
+        "truncated": false,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1554,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 4,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 43,
+          "pagination": {
+            "total": {
+              "count": 1,
+              "firstValue": 4,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 4,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 2359,
+        "prettyOverheadBytes": 486,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 2323,
+        "textBytes": 2040,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "status": "bogus",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "status-invalid-enum",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool list_tasks: Invalid option: expected one of \"open\"|\"in_progress\"|\"blocked\"|\"completed\" at status",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 263,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 227,
+        "textBytes": 165,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "limit": 0,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "limit-zero",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool list_tasks: Too small: expected number to be >0 at limit",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 215,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 179,
+        "textBytes": 125,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "cursor": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 192,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:43.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_17",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 17",
+            "updatedAt": "2026-11-07T12:01:44.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:41.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_16",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 16",
+            "updatedAt": "2026-11-07T12:01:42.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:39.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_15",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 15",
+            "updatedAt": "2026-11-07T12:01:40.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:37.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_14",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 14",
+            "updatedAt": "2026-11-07T12:01:38.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:35.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_13",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 13",
+            "updatedAt": "2026-11-07T12:01:36.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:33.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_12",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 12",
+            "updatedAt": "2026-11-07T12:01:34.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:31.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_11",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 11",
+            "updatedAt": "2026-11-07T12:01:32.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:29.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_10",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 10",
+            "updatedAt": "2026-11-07T12:01:30.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:27.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_09",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 09",
+            "updatedAt": "2026-11-07T12:01:28.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:25.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_08",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 08",
+            "updatedAt": "2026-11-07T12:01:26.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:23.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_07",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 07",
+            "updatedAt": "2026-11-07T12:01:24.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:21.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_06",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 06",
+            "updatedAt": "2026-11-07T12:01:22.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:19.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_05",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 05",
+            "updatedAt": "2026-11-07T12:01:20.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:17.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_04",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 04",
+            "updatedAt": "2026-11-07T12:01:18.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:15.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_03",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 03",
+            "updatedAt": "2026-11-07T12:01:16.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+        "returned": 20,
+        "schemaVersion": 1,
+        "total": 23,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 7117,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 20,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 188,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:16.000Z\",\"id\":\"task_mem000_filler_03\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 23,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 20,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 10362,
+        "prettyOverheadBytes": 2106,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 10327,
+        "textBytes": 9223,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "limit": 5,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "stale-probe-fresh-page-1",
+      "parsedBody": {
+        "items": [
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:54.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_assignee_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with assignee only",
+            "updatedAt": "2026-11-07T12:01:55.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:52.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "A recorded description is enough to avoid the missing-both rule.",
+            "id": "task_mem000_blocked_description_only",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task with description only",
+            "updatedAt": "2026-11-07T12:01:53.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:49.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "id": "task_mem000_blocked_missing",
+            "status": "blocked",
+            "title": "MEM-BLOCKED task missing description and assignee",
+            "updatedAt": "2026-11-07T12:01:50.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "assignee": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "createdAt": "2026-11-07T12:01:47.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+            "id": "task_mem000_blocked_complete",
+            "status": "blocked",
+            "title": "MEM-UNKNOWN blocked action task with complete context",
+            "updatedAt": "2026-11-07T12:01:48.000Z",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "createdAt": "2026-11-07T12:01:45.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_member",
+              "actorType": "human"
+            },
+            "description": "Synthetic pagination filler with complete context.",
+            "id": "task_mem000_filler_18",
+            "status": "in_progress",
+            "title": "Routine in-progress filler 18",
+            "updatedAt": "2026-11-07T12:01:46.000Z",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "nextCursor": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+        "returned": 5,
+        "schemaVersion": 1,
+        "total": 26,
+        "truncated": true,
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2076,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "items[].status": {
+              "count": 5,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 53,
+          "pagination": {
+            "nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=170:{\"v\":1,\"kind\":\"task\",\"workspaceId\":\"ws_mem000_health\",\"rank\":1,\"at\":\"2026-11-07T12:01:46.000Z\",\"id\":\"task_mem000_filler_18\"}>",
+              "types": [
+                "string"
+              ]
+            },
+            "total": {
+              "count": 1,
+              "firstValue": 26,
+              "types": [
+                "number"
+              ]
+            },
+            "truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            }
+          },
+          "provenance": {
+            "items[].assignee.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].assignee.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorId": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].createdBy.actorType": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            },
+            "items[].updatedAt": {
+              "count": 5,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "items",
+            "nextCursor",
+            "returned",
+            "schemaVersion",
+            "total",
+            "truncated",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3042,
+        "prettyOverheadBytes": 591,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3006,
+        "textBytes": 2667,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 22,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 12,
+    "successFrameBytesMax": 10363,
+    "successTextBytesMax": 9223,
+    "successTopLevelKeys": [
+      "items",
+      "nextCursor",
+      "returned",
+      "schemaVersion",
+      "total",
+      "truncated",
+      "workspaceId"
+    ],
+    "successes": 10
+  },
+  "tool": "list_tasks"
+}

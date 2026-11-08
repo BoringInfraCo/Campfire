@@ -1,0 +1,1680 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_basis_superseded",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "basis-superseded",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "correctedAt": "2026-11-07T12:00:35.000Z",
+        "correctedBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "correctedSessionId": "ses_mem000_registered",
+        "correctionReason": "Synthetic recorded correction for the Step 0 decision-review case",
+        "createdAt": "2026-11-07T12:00:34.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "superseded",
+        "detail": "The accepted Decision continues to cite this historical assertion.",
+        "id": "find_mem000_basis_superseded",
+        "successorId": "find_mem000_basis_current",
+        "summary": "MEM-REVIEW original basis was later corrected",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 666,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 15,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "correctedAt",
+            "correctedBy",
+            "correctedSessionId",
+            "correctionReason",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "id",
+            "successorId",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 908,
+        "prettyOverheadBytes": 83,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 872,
+        "textBytes": 749,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_contradicted",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "contradicted",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:36.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "current",
+        "detail": "Only the explicit contradicts relation creates the candidate condition.",
+        "evidence": [
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_support",
+            "createdAt": "2026-11-07T12:00:40.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_contradicted",
+            "id": "fev_mem000_contradicted_supports",
+            "note": "Synthetic supporting relation",
+            "relation": "supports",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_counterexample",
+            "createdAt": "2026-11-07T12:00:41.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_contradicted",
+            "id": "fev_mem000_contradicted_contradicts",
+            "note": "Synthetic contradicting relation",
+            "relation": "contradicts",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "id": "find_mem000_contradicted",
+        "summary": "MEM-CONTRA current finding has both support and contradiction",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1138,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "current",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 29,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].agentSessionId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "evidence",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1652,
+        "prettyOverheadBytes": 273,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1616,
+        "textBytes": 1411,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "supported",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:37.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "current",
+        "detail": "A supports relation is a clean control.",
+        "evidence": [
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_support",
+            "createdAt": "2026-11-07T12:00:42.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_supported",
+            "id": "fev_mem000_supported_supports",
+            "note": "Synthetic supported-only control",
+            "relation": "supports",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "id": "find_mem000_supported",
+        "summary": "MEM-SUPPORT current finding has supporting evidence only",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 722,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "current",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 19,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "evidence",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1071,
+        "prettyOverheadBytes": 164,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1035,
+        "textBytes": 886,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_withdrawn",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "withdrawn",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "correctedAt": "2026-11-07T12:00:39.000Z",
+        "correctedBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "correctedSessionId": "ses_mem000_registered",
+        "correctionReason": "Synthetic withdrawal for the clean currentness control",
+        "createdAt": "2026-11-07T12:00:38.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "withdrawn",
+        "detail": "Withdrawal does not match the current-finding rule.",
+        "id": "find_mem000_withdrawn",
+        "summary": "MEM-WITHDRAWN historical finding",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 577,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "withdrawn",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 14,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "correctedAt",
+            "correctedBy",
+            "correctedSessionId",
+            "correctionReason",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 810,
+        "prettyOverheadBytes": 79,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 774,
+        "textBytes": 656,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "findingId": "find_does_not_exist"
+        },
+        "error": "FindingNotFound",
+        "message": "Finding not found: find_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 124,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 228,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 192,
+        "textBytes": 124,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_other_private",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "other-workspace-id",
+      "parsedBody": {
+        "details": {
+          "findingId": "find_mem000_other_private"
+        },
+        "error": "FindingNotFound",
+        "message": "Finding not found: find_mem000_other_private"
+      },
+      "shape": {
+        "compactEquivalentBytes": 136,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 240,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 204,
+        "textBytes": 136,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_basis_superseded",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "basis-superseded",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "correctedAt": "2026-11-07T12:00:35.000Z",
+        "correctedBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "correctedSessionId": "ses_mem000_registered",
+        "correctionReason": "Synthetic recorded correction for the Step 0 decision-review case",
+        "createdAt": "2026-11-07T12:00:34.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "superseded",
+        "detail": "The accepted Decision continues to cite this historical assertion.",
+        "id": "find_mem000_basis_superseded",
+        "successorId": "find_mem000_basis_current",
+        "summary": "MEM-REVIEW original basis was later corrected",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 666,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 15,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "correctedAt",
+            "correctedBy",
+            "correctedSessionId",
+            "correctionReason",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "id",
+            "successorId",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 908,
+        "prettyOverheadBytes": 83,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 872,
+        "textBytes": 749,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_contradicted",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "contradicted",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:36.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "current",
+        "detail": "Only the explicit contradicts relation creates the candidate condition.",
+        "evidence": [
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_support",
+            "createdAt": "2026-11-07T12:00:40.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_contradicted",
+            "id": "fev_mem000_contradicted_supports",
+            "note": "Synthetic supporting relation",
+            "relation": "supports",
+            "workspaceId": "ws_mem000_health"
+          },
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_counterexample",
+            "createdAt": "2026-11-07T12:00:41.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_contradicted",
+            "id": "fev_mem000_contradicted_contradicts",
+            "note": "Synthetic contradicting relation",
+            "relation": "contradicts",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "id": "find_mem000_contradicted",
+        "summary": "MEM-CONTRA current finding has both support and contradiction",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1138,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "current",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 29,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].agentSessionId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdAt": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "evidence",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1652,
+        "prettyOverheadBytes": 273,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1616,
+        "textBytes": 1411,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "supported",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:37.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "current",
+        "detail": "A supports relation is a clean control.",
+        "evidence": [
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_support",
+            "createdAt": "2026-11-07T12:00:42.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_supported",
+            "id": "fev_mem000_supported_supports",
+            "note": "Synthetic supported-only control",
+            "relation": "supports",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "id": "find_mem000_supported",
+        "summary": "MEM-SUPPORT current finding has supporting evidence only",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 722,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "current",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 19,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "evidence",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1071,
+        "prettyOverheadBytes": 164,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1035,
+        "textBytes": 886,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_withdrawn",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "withdrawn",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "correctedAt": "2026-11-07T12:00:39.000Z",
+        "correctedBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "correctedSessionId": "ses_mem000_registered",
+        "correctionReason": "Synthetic withdrawal for the clean currentness control",
+        "createdAt": "2026-11-07T12:00:38.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "withdrawn",
+        "detail": "Withdrawal does not match the current-finding rule.",
+        "id": "find_mem000_withdrawn",
+        "summary": "MEM-WITHDRAWN historical finding",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 577,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "withdrawn",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 14,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "correctedSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "correctedAt",
+            "correctedBy",
+            "correctedSessionId",
+            "correctionReason",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 810,
+        "prettyOverheadBytes": 79,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 774,
+        "textBytes": 656,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "findingId": "find_does_not_exist"
+        },
+        "error": "FindingNotFound",
+        "message": "Finding not found: find_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 124,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 228,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 192,
+        "textBytes": 124,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_other_private",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "other-workspace-id",
+      "parsedBody": {
+        "details": {
+          "findingId": "find_mem000_other_private"
+        },
+        "error": "FindingNotFound",
+        "message": "Finding not found: find_mem000_other_private"
+      },
+      "shape": {
+        "compactEquivalentBytes": 136,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 240,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 204,
+        "textBytes": 136,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "findingId": "find_mem000_supported",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:37.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "currentness": "current",
+        "detail": "A supports relation is a clean control.",
+        "evidence": [
+          {
+            "agentSessionId": "ses_mem000_registered",
+            "artifactId": "art_mem000_support",
+            "createdAt": "2026-11-07T12:00:42.000Z",
+            "createdBy": {
+              "actorId": "agt_mem000_registered",
+              "actorType": "agent"
+            },
+            "findingId": "find_mem000_supported",
+            "id": "fev_mem000_supported_supports",
+            "note": "Synthetic supported-only control",
+            "relation": "supports",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "id": "find_mem000_supported",
+        "summary": "MEM-SUPPORT current finding has supporting evidence only",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 722,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "currentness": {
+              "count": 1,
+              "firstValue": "current",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 19,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "evidence[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "currentness",
+            "detail",
+            "evidence",
+            "id",
+            "summary",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1070,
+        "prettyOverheadBytes": 164,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1035,
+        "textBytes": 886,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 19,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 10,
+    "successFrameBytesMax": 1652,
+    "successTextBytesMax": 1411,
+    "successTopLevelKeys": [
+      "agentSessionId",
+      "correctedAt",
+      "correctedBy",
+      "correctedSessionId",
+      "correctionReason",
+      "createdAt",
+      "createdBy",
+      "currentness",
+      "detail",
+      "evidence",
+      "id",
+      "successorId",
+      "summary",
+      "workspaceId"
+    ],
+    "successes": 9
+  },
+  "tool": "get_finding"
+}

@@ -282,7 +282,7 @@ export function releasePublicationLock(publicationId: string, env: NodeJS.Proces
 /** Methods that can mutate local collaboration state. Read-only methods stay usable. */
 const READ_ONLY_METHODS = new Set([
   "preflight", "whoami", "list_workspaces", "get_workspace", "get_workspace_context",
-  "get_workspace_changes", "recall_workspace", "project_handoff_packet", "list_decisions",
+  "get_workspace_changes", "recall_workspace", "get_memory_health", "project_handoff_packet", "list_decisions",
   "list_findings", "list_tasks", "list_artifacts", "get_decision", "get_finding", "get_task",
   "get_artifact", "get_activity", "list_workspace_participants", "get_record_history",
   "list_agent_sessions",

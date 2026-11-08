@@ -1,0 +1,1619 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "review",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-11-07T12:01:08.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human"
+            },
+            "decisionId": "dec_mem000_review",
+            "findingId": "find_mem000_basis_superseded",
+            "id": "cit_mem000_review_basis",
+            "note": "Original basis retained after correction",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "createdAt": "2026-11-07T12:01:05.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_mem000_basis_superseded"
+        ],
+        "rationale": "needsReview must not change the accepted lifecycle.",
+        "status": "accepted",
+        "summary": "MEM-REVIEW accepted decision retains a superseded basis",
+        "updatedAt": "2026-11-07T12:01:06.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 802,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 21,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "citations",
+            "createdAt",
+            "createdBy",
+            "id",
+            "needsReview",
+            "needsReviewFindingIds",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1184,
+        "prettyOverheadBytes": 183,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1148,
+        "textBytes": 985,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_current",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "current",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-11-07T12:01:09.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human"
+            },
+            "decisionId": "dec_mem000_current",
+            "findingId": "find_mem000_basis_current",
+            "id": "cit_mem000_current_basis",
+            "note": "Current basis control",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "createdAt": "2026-11-07T12:01:03.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_current",
+        "rationale": "The current citation is a clean decision control.",
+        "status": "accepted",
+        "summary": "MEM-CLEAN accepted decision with a current basis",
+        "updatedAt": "2026-11-07T12:01:04.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 698,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 19,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "citations",
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1054,
+        "prettyOverheadBytes": 167,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1018,
+        "textBytes": 865,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_superseded",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "superseded",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:00:59.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_superseded",
+        "rationale": "Historical only; not an accepted current rule.",
+        "status": "superseded",
+        "successorId": "dec_mem000_replacement",
+        "summary": "MEM-HISTORY superseded release rule",
+        "supersedeReason": "Synthetic explicit replacement",
+        "supersededAt": "2026-11-07T12:01:02.000Z",
+        "supersededBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "updatedAt": "2026-11-07T12:01:02.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 597,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "supersedeReason": {
+              "count": 1,
+              "firstValue": "Synthetic explicit replacement",
+              "types": [
+                "string"
+              ]
+            },
+            "supersededAt": {
+              "count": 1,
+              "firstValue": "2026-11-07T12:01:02.000Z",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 16,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "supersededBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "supersededBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "successorId",
+            "summary",
+            "supersedeReason",
+            "supersededAt",
+            "supersededBy",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 863,
+        "prettyOverheadBytes": 98,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 827,
+        "textBytes": 695,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_proposed",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "proposed",
+      "parsedBody": {
+        "createdAt": "2026-11-07T12:01:07.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_proposed",
+        "rationale": "A proposal is not accepted and has no stale basis.",
+        "status": "proposed",
+        "summary": "MEM-PROPOSED decision awaiting explicit review",
+        "updatedAt": "2026-11-07T12:01:07.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 346,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "proposed",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 519,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 483,
+        "textBytes": 394,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "decisionId": "dec_does_not_exist"
+        },
+        "error": "DecisionNotFound",
+        "message": "Decision not found: dec_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 125,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 125,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "review",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-11-07T12:01:08.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human"
+            },
+            "decisionId": "dec_mem000_review",
+            "findingId": "find_mem000_basis_superseded",
+            "id": "cit_mem000_review_basis",
+            "note": "Original basis retained after correction",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "createdAt": "2026-11-07T12:01:05.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_mem000_basis_superseded"
+        ],
+        "rationale": "needsReview must not change the accepted lifecycle.",
+        "status": "accepted",
+        "summary": "MEM-REVIEW accepted decision retains a superseded basis",
+        "updatedAt": "2026-11-07T12:01:06.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 802,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 21,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "citations",
+            "createdAt",
+            "createdBy",
+            "id",
+            "needsReview",
+            "needsReviewFindingIds",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1184,
+        "prettyOverheadBytes": 183,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1148,
+        "textBytes": 985,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_mem000_current",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "current",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-11-07T12:01:09.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human"
+            },
+            "decisionId": "dec_mem000_current",
+            "findingId": "find_mem000_basis_current",
+            "id": "cit_mem000_current_basis",
+            "note": "Current basis control",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "createdAt": "2026-11-07T12:01:03.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_current",
+        "rationale": "The current citation is a clean decision control.",
+        "status": "accepted",
+        "summary": "MEM-CLEAN accepted decision with a current basis",
+        "updatedAt": "2026-11-07T12:01:04.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 698,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 19,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "citations",
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1054,
+        "prettyOverheadBytes": 167,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1018,
+        "textBytes": 865,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_mem000_superseded",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "superseded",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:00:59.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_superseded",
+        "rationale": "Historical only; not an accepted current rule.",
+        "status": "superseded",
+        "successorId": "dec_mem000_replacement",
+        "summary": "MEM-HISTORY superseded release rule",
+        "supersedeReason": "Synthetic explicit replacement",
+        "supersededAt": "2026-11-07T12:01:02.000Z",
+        "supersededBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "updatedAt": "2026-11-07T12:01:02.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 597,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "superseded",
+              "types": [
+                "string"
+              ]
+            },
+            "supersedeReason": {
+              "count": 1,
+              "firstValue": "Synthetic explicit replacement",
+              "types": [
+                "string"
+              ]
+            },
+            "supersededAt": {
+              "count": 1,
+              "firstValue": "2026-11-07T12:01:02.000Z",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 16,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "supersededBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "supersededBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "successorId",
+            "summary",
+            "supersedeReason",
+            "supersededAt",
+            "supersededBy",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 863,
+        "prettyOverheadBytes": 98,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 827,
+        "textBytes": 695,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_mem000_proposed",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "proposed",
+      "parsedBody": {
+        "createdAt": "2026-11-07T12:01:07.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_proposed",
+        "rationale": "A proposal is not accepted and has no stale basis.",
+        "status": "proposed",
+        "summary": "MEM-PROPOSED decision awaiting explicit review",
+        "updatedAt": "2026-11-07T12:01:07.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 346,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "proposed",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "createdAt",
+            "createdBy",
+            "id",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 519,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 483,
+        "textBytes": 394,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "decisionId": "dec_does_not_exist"
+        },
+        "error": "DecisionNotFound",
+        "message": "Decision not found: dec_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 125,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 125,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "decisionId": "dec_mem000_review",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "approvedBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "citations": [
+          {
+            "createdAt": "2026-11-07T12:01:08.000Z",
+            "createdBy": {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human"
+            },
+            "decisionId": "dec_mem000_review",
+            "findingId": "find_mem000_basis_superseded",
+            "id": "cit_mem000_review_basis",
+            "note": "Original basis retained after correction",
+            "workspaceId": "ws_mem000_health"
+          }
+        ],
+        "createdAt": "2026-11-07T12:01:05.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_owner",
+          "actorType": "human"
+        },
+        "id": "dec_mem000_review",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_mem000_basis_superseded"
+        ],
+        "rationale": "needsReview must not change the accepted lifecycle.",
+        "status": "accepted",
+        "summary": "MEM-REVIEW accepted decision retains a superseded basis",
+        "updatedAt": "2026-11-07T12:01:06.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 802,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "accepted",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 21,
+          "pagination": {},
+          "provenance": {
+            "approvedBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "approvedBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "citations[].createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "approvedBy",
+            "citations",
+            "createdAt",
+            "createdBy",
+            "id",
+            "needsReview",
+            "needsReviewFindingIds",
+            "rationale",
+            "status",
+            "summary",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1183,
+        "prettyOverheadBytes": 183,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1148,
+        "textBytes": 985,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 17,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 8,
+    "successFrameBytesMax": 1184,
+    "successTextBytesMax": 985,
+    "successTopLevelKeys": [
+      "approvedBy",
+      "citations",
+      "createdAt",
+      "createdBy",
+      "id",
+      "needsReview",
+      "needsReviewFindingIds",
+      "rationale",
+      "status",
+      "successorId",
+      "summary",
+      "supersedeReason",
+      "supersededAt",
+      "supersededBy",
+      "updatedAt",
+      "workspaceId"
+    ],
+    "successes": 9
+  },
+  "tool": "get_decision"
+}

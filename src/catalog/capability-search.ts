@@ -51,6 +51,7 @@ export const MCP_TOOL_NAMES = [
   "get_artifact",
   "get_decision",
   "get_finding",
+  "get_memory_health",
   "get_read_recipe",
   "get_record_history",
   "get_task",

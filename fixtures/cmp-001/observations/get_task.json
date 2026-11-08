@@ -1,0 +1,1178 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "blocked-missing",
+      "parsedBody": {
+        "createdAt": "2026-11-07T12:01:49.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "id": "task_mem000_blocked_missing",
+        "status": "blocked",
+        "title": "MEM-BLOCKED task missing description and assignee",
+        "updatedAt": "2026-11-07T12:01:50.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 290,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 8,
+          "pagination": {},
+          "provenance": {
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "createdAt",
+            "createdBy",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 454,
+        "prettyOverheadBytes": 44,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 418,
+        "textBytes": 334,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_complete",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "blocked-complete",
+      "parsedBody": {
+        "assignee": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:01:47.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+        "id": "task_mem000_blocked_complete",
+        "status": "blocked",
+        "title": "MEM-UNKNOWN blocked action task with complete context",
+        "updatedAt": "2026-11-07T12:01:48.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 443,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 11,
+          "pagination": {},
+          "provenance": {
+            "assignee.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "assignee.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "assignee",
+            "createdAt",
+            "createdBy",
+            "description",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 649,
+        "prettyOverheadBytes": 67,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 613,
+        "textBytes": 510,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_mem000_open_assigned",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "open-assigned",
+      "parsedBody": {
+        "assignee": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:01:51.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "description": "A nonblocked pagination control.",
+        "id": "task_mem000_open_assigned",
+        "status": "open",
+        "title": "Routine open assigned task",
+        "updatedAt": "2026-11-07T12:01:51.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 374,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "open",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 11,
+          "pagination": {},
+          "provenance": {
+            "assignee.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "assignee.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "assignee",
+            "createdAt",
+            "createdBy",
+            "description",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 580,
+        "prettyOverheadBytes": 67,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 544,
+        "textBytes": 441,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "taskId": "task_does_not_exist"
+        },
+        "error": "TaskNotFound",
+        "message": "Task not found: task_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 115,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 219,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 183,
+        "textBytes": 115,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "missing-arg",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_task: Invalid input: expected string, received undefined at taskId",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 139,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "blocked-missing",
+      "parsedBody": {
+        "createdAt": "2026-11-07T12:01:49.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "id": "task_mem000_blocked_missing",
+        "status": "blocked",
+        "title": "MEM-BLOCKED task missing description and assignee",
+        "updatedAt": "2026-11-07T12:01:50.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 290,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 8,
+          "pagination": {},
+          "provenance": {
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "createdAt",
+            "createdBy",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 454,
+        "prettyOverheadBytes": 44,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 418,
+        "textBytes": 334,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "taskId": "task_mem000_blocked_complete",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "blocked-complete",
+      "parsedBody": {
+        "assignee": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:01:47.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "description": "The recorded blocker awaits reconciliation of an unknown submission.",
+        "id": "task_mem000_blocked_complete",
+        "status": "blocked",
+        "title": "MEM-UNKNOWN blocked action task with complete context",
+        "updatedAt": "2026-11-07T12:01:48.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 443,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 11,
+          "pagination": {},
+          "provenance": {
+            "assignee.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "assignee.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "assignee",
+            "createdAt",
+            "createdBy",
+            "description",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 649,
+        "prettyOverheadBytes": 67,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 613,
+        "textBytes": 510,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "taskId": "task_mem000_open_assigned",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "open-assigned",
+      "parsedBody": {
+        "assignee": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "createdAt": "2026-11-07T12:01:51.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "description": "A nonblocked pagination control.",
+        "id": "task_mem000_open_assigned",
+        "status": "open",
+        "title": "Routine open assigned task",
+        "updatedAt": "2026-11-07T12:01:51.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 374,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "open",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 11,
+          "pagination": {},
+          "provenance": {
+            "assignee.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "assignee.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "assignee",
+            "createdAt",
+            "createdBy",
+            "description",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 580,
+        "prettyOverheadBytes": 67,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 544,
+        "textBytes": 441,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "taskId": "task_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "taskId": "task_does_not_exist"
+        },
+        "error": "TaskNotFound",
+        "message": "Task not found: task_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 115,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 219,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 183,
+        "textBytes": 115,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "missing-arg",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_task: Invalid input: expected string, received undefined at taskId",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 139,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "taskId": "task_mem000_blocked_missing",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "createdAt": "2026-11-07T12:01:49.000Z",
+        "createdBy": {
+          "actorId": "hum_mem000_member",
+          "actorType": "human"
+        },
+        "id": "task_mem000_blocked_missing",
+        "status": "blocked",
+        "title": "MEM-BLOCKED task missing description and assignee",
+        "updatedAt": "2026-11-07T12:01:50.000Z",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 290,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {
+            "status": {
+              "count": 1,
+              "firstValue": "blocked",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "leafPathCount": 8,
+          "pagination": {},
+          "provenance": {
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "updatedAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "createdAt",
+            "createdBy",
+            "id",
+            "status",
+            "title",
+            "updatedAt",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 453,
+        "prettyOverheadBytes": 44,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 418,
+        "textBytes": 334,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 17,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 10,
+    "successFrameBytesMax": 649,
+    "successTextBytesMax": 510,
+    "successTopLevelKeys": [
+      "assignee",
+      "createdAt",
+      "createdBy",
+      "description",
+      "id",
+      "status",
+      "title",
+      "updatedAt",
+      "workspaceId"
+    ],
+    "successes": 7
+  },
+  "tool": "get_task"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "mem-000-questions/1",
+  "provenance": "FIXTURE EVIDENCE — scripted engineering evaluation only; not human observation, a live harness result, Gate E, or a MEM-001 result.",
+  "instructions": "Answer from the frozen read recipe outputs only. Cite exact record and relation ids. Do not mutate records, infer external truth, or treat a review condition as a lifecycle transition.",
+  "questions": [
+    {
+      "id": "q01-review-set",
+      "question": "Which recorded conditions require review under the four MEM-001 candidate rules, and which clean controls produce no condition?"
+    },
+    {
+      "id": "q02-decision-state",
+      "question": "What is the accepted Decision's lifecycle and read-time review state? Does the review condition revoke, replace, or select a Decision?"
+    },
+    {
+      "id": "q03-contradiction",
+      "question": "Which current Finding has an explicit contradicting Artifact relation? Name the Finding, Artifact, and evidence relation ids and distinguish them from supporting evidence."
+    },
+    {
+      "id": "q04-blocked-context",
+      "question": "Which blocked Task lacks both a non-empty description and an assignee, and which blocked Tasks retain enough recorded context to be clean controls?"
+    },
+    {
+      "id": "q05-unknown-outcome",
+      "question": "Which ActionProposal is submission_unknown? What do the proposal, task, reservation, and latest receipt establish, and what remains unknown?"
+    },
+    {
+      "id": "q06-safe-next-actions",
+      "question": "For each review condition, what existing typed read or follow-up is safe next? Identify any automatic retry, lifecycle mutation, or external-truth claim that would be unsafe."
+    },
+    {
+      "id": "q07-omissions-pagination",
+      "question": "Which source slices are truncated, which records require another page or drill-down, and which relevant records are absent from orientation and Recall?"
+    },
+    {
+      "id": "q08-currentness-evidence",
+      "question": "Which Findings are current, superseded, or withdrawn, and why do supported-only evidence and current citations stay clean?"
+    },
+    {
+      "id": "q09-incomplete-context",
+      "question": "Can the first orientation page establish complete coverage? Which explicit fields and follow-up calls are required before answering as if coverage were complete?"
+    },
+    {
+      "id": "q10-denied-discovery",
+      "question": "What can the nonparticipant and wrong-workspace actor discover, and what must their denied reads and list_workspaces results withhold?"
+    },
+    {
+      "id": "q11-actor-boundaries",
+      "question": "How do a human member, Viewer role, registered agent, unregistered agent, ended agent session, and revoked credential differ for reads and readiness?"
+    },
+    {
+      "id": "q12-measurement-limits",
+      "question": "Which measured results are deterministic engineering metrics, which are environment-dependent timings, and why are they not human or live-harness evidence?"
+    }
+  ]
+}

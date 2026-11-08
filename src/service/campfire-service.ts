@@ -7,6 +7,7 @@
  * it explains (AGENTS.md invariant 5). Storage details stay behind
  * `CampfireStore` (AGENTS.md invariant 7).
  */
+import { MEMORY_HEALTH_REASONS, validateMemoryHealthInput } from "../domain/memory-health.js";
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "./session-list.js";
@@ -144,6 +145,7 @@ import {
   recallLimit,
 } from "../domain/recall.js";
 import { projectRecall } from "./recall-read.js";
+import { memoryHealthFromSnapshot, type GetMemoryHealthInput } from "./memory-health-read.js";
 import { normalizeArtifactUri } from "../domain/artifacts.js";
 import { assertTaskTransition, assertWorkspaceTransition } from "../domain/lifecycle.js";
 import { assertFindingCurrentness } from "../store/context-queries.js";
@@ -1480,6 +1482,20 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         generatedAt: clock(),
         ordering: "material-then-chronological",
       };
+    },
+
+    getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput) {
+      requireReadableWorkspace(ctx, input.workspaceId);
+      const role = store.getParticipant(input.workspaceId, ctx.actor)?.role ?? "none";
+      validateMemoryHealthInput(input, MEMORY_HEALTH_REASONS);
+      const observedAt = clock();
+      const snapshot = store.transaction(() => store.readMemoryHealthSnapshot(input.workspaceId));
+      return memoryHealthFromSnapshot(
+        input,
+        { actorType: ctx.actor.actorType, actorId: ctx.actor.actorId, role },
+        observedAt,
+        snapshot,
+      );
     },
 
     recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput) {

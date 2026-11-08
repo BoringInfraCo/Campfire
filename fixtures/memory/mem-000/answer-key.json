@@ -1,0 +1,420 @@
+{
+  "schema": "mem-000-answer-key/1",
+  "provenance": "FIXTURE EVIDENCE \u2014 scripted engineering evaluation only; not human observation, a live harness result, Gate E, or a MEM-001 result.",
+  "baseline": {
+    "packageVersion": "1.29.7",
+    "annotatedTag": "v1.29.7",
+    "tagObject": "2272dc7bbbe848629ed3ff7bd4851d527fe4d8e1",
+    "tagTarget": "3e8abd0cdb5cb04ff93ca42b9f07b4eb1082eb7e",
+    "channelCommit": "60ab4e1236698023ed0eae063ddd1c8eeb9482d5"
+  },
+  "clock": {
+    "seedBase": "2026-11-07T12:00:00.000Z",
+    "readAt": "2026-11-07T18:00:00.000Z"
+  },
+  "workspaces": {
+    "health": "ws_mem000_health",
+    "clean": "ws_mem000_clean",
+    "other": "ws_mem000_other"
+  },
+  "actors": {
+    "owner": "hum_mem000_owner",
+    "member": "hum_mem000_member",
+    "viewer": "hum_mem000_viewer",
+    "nonparticipant": "hum_mem000_denied",
+    "wrongWorkspace": "hum_mem000_wrong",
+    "revokedCredential": "hum_mem000_revoked",
+    "registeredAgent": "agt_mem000_registered",
+    "unregisteredAgent": "agt_mem000_unregistered",
+    "inactiveAgent": "agt_mem000_inactive",
+    "executorAgent": "agt_mem000_executor"
+  },
+  "cleanControls": [
+    {
+      "id": "dec_mem000_current",
+      "reason": "Accepted Decision cites current find_mem000_basis_current and has no needsReview decoration."
+    },
+    {
+      "id": "dec_mem000_replacement",
+      "reason": "Accepted replacement cites a current Finding; its superseded predecessor remains historical and is not a new review cue."
+    },
+    {
+      "id": "find_mem000_supported",
+      "reason": "Current Finding has only an explicit supports relation."
+    },
+    {
+      "id": "find_mem000_basis_current",
+      "reason": "Current successor Finding is not itself contradictory."
+    },
+    {
+      "id": "find_mem000_withdrawn",
+      "reason": "Withdrawn Finding is not current and therefore does not match the current-finding rule."
+    },
+    {
+      "id": "task_mem000_blocked_complete",
+      "reason": "Blocked Task has both a non-empty description and an assignee."
+    },
+    {
+      "id": "task_mem000_blocked_description_only",
+      "reason": "Blocked Task has a non-empty description and no assignee; the rule requires both fields to be absent."
+    },
+    {
+      "id": "task_mem000_blocked_assignee_only",
+      "reason": "Blocked Task has an assignee and no description; the rule requires both fields to be absent."
+    },
+    {
+      "id": "actp_mem000_accepted",
+      "reason": "ActionProposal is submission_accepted with an accepted latest receipt, not submission_unknown."
+    },
+    {
+      "id": "ws_mem000_clean",
+      "reason": "Complete pages contain a current supported Finding, an accepted Decision citing it, a blocked Task with description and assignee, and no ActionProposal."
+    }
+  ],
+  "coverage": {
+    "healthOrientation": {
+      "decisions": {
+        "total": 12,
+        "returned": 10,
+        "truncated": true
+      },
+      "findings": {
+        "total": 3,
+        "returned": 3,
+        "truncated": false
+      },
+      "tasks": {
+        "total": 23,
+        "returned": 20,
+        "truncated": true
+      },
+      "attentionCompleteUnderRules": false
+    },
+    "healthListPages": {
+      "decisionsFirst": {
+        "total": 13,
+        "returned": 10,
+        "truncated": true
+      },
+      "decisionsFinalReturned": 3,
+      "findingsAll": {
+        "total": 5,
+        "returned": 5,
+        "truncated": false
+      },
+      "tasksFirst": {
+        "total": 23,
+        "returned": 20,
+        "truncated": true
+      },
+      "tasksFinalReturned": 3,
+      "actionProposals": {
+        "total": 2,
+        "returned": 2,
+        "truncated": false
+      },
+      "actionReceipts": {
+        "total": 1,
+        "returned": 1,
+        "truncated": false
+      }
+    },
+    "cleanOrientation": {
+      "decisions": {
+        "total": 1,
+        "returned": 1,
+        "truncated": false
+      },
+      "findings": {
+        "total": 1,
+        "returned": 1,
+        "truncated": false
+      },
+      "tasks": {
+        "total": 1,
+        "returned": 1,
+        "truncated": false
+      },
+      "attentionCompleteUnderRules": true
+    },
+    "recallUnknownOmitsProposal": true,
+    "orientationHasNoActionProposalSlice": true
+  },
+  "denials": {
+    "nonparticipantContext": "ParticipantRequired",
+    "wrongWorkspaceContext": "ParticipantRequired",
+    "memberOtherWorkspaceContext": "ParticipantRequired",
+    "endedSessionContext": "Unauthorized",
+    "revokedTokenResolution": "Unauthorized",
+    "unregisteredAgentPreflight": "Unauthorized",
+    "viewerWrite": "Unauthorized",
+    "unrelatedSentinel": "OTHER_WORKSPACE_ONLY_MEM000"
+  },
+  "contributionPositions": {
+    "healthTip": 115,
+    "cleanTip": 16,
+    "otherTip": 3,
+    "dec_mem000_review": 60,
+    "find_mem000_contradicted": 32,
+    "task_mem000_blocked_missing": 102,
+    "actp_mem000_unknown": 110,
+    "arcp_mem000_unknown": 111,
+    "actp_mem000_accepted": 114,
+    "arcp_mem000_accepted": 115
+  },
+  "measurementExpectations": {
+    "actors": [
+      "human_member",
+      "registered_agent"
+    ],
+    "expectedPositiveSubjects": 4,
+    "expectedFalsePositiveSubjects": 0,
+    "expectedNextActionErrors": 0,
+    "expectedLifecycleSafetyErrors": 0,
+    "expectedUnauthorizedLeaks": 0,
+    "incompleteContextRecognition": true,
+    "evidenceClass": "scripted deterministic application-dispatch measurements with separately recorded environment-dependent latency; no real human or live MCP/harness observations"
+  },
+  "v1297ObservedScoringCues": [
+    {
+      "id": "cue_accepted_decision_needs_review_dec_mem000_review",
+      "reason": "accepted_decision_needs_review",
+      "subjectType": "decision",
+      "subjectId": "dec_mem000_review",
+      "relatedRecordIds": [
+        "cit_mem000_review_basis",
+        "find_mem000_basis_superseded"
+      ],
+      "sourceFacts": {
+        "decisionStatus": "accepted",
+        "needsReview": true,
+        "needsReviewFindingIds": [
+          "find_mem000_basis_superseded"
+        ],
+        "citedFindingCurrentness": "superseded",
+        "citationId": "cit_mem000_review_basis"
+      },
+      "safeNextAction": "Inspect the Decision and its cited Finding. After explicit review, either record an accepted replacement with add_decision(replacesDecisionId) plus accept_decision or use retire_decision; do not revoke acceptance implicitly or execute a rule from the cue."
+    },
+    {
+      "id": "cue_current_finding_has_contradicting_evidence_find_mem000_contradicted",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mem000_contradicted",
+      "relatedRecordIds": [
+        "art_mem000_counterexample",
+        "fev_mem000_contradicted_contradicts"
+      ],
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "relation": "contradicts",
+        "evidenceId": "fev_mem000_contradicted_contradicts",
+        "artifactId": "art_mem000_counterexample"
+      },
+      "safeNextAction": "Inspect the Finding, relation, and referenced Artifact metadata. Use correct_finding or withdraw_finding only after explicit review; do not declare the Finding false or supersede it automatically."
+    },
+    {
+      "id": "cue_blocked_task_missing_context_task_mem000_blocked_missing",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mem000_blocked_missing",
+      "relatedRecordIds": [],
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "descriptionPresent": false,
+        "assigneePresent": false
+      },
+      "safeNextAction": "Inspect the blocked Task and use update_task to record a truthful description or assignee when known. Do not infer an external blocker or policy ownership."
+    },
+    {
+      "id": "cue_action_outcome_unknown_actp_mem000_unknown",
+      "reason": "action_outcome_unknown",
+      "subjectType": "action_proposal",
+      "subjectId": "actp_mem000_unknown",
+      "relatedRecordIds": [
+        "task_mem000_blocked_complete",
+        "arcp_mem000_unknown"
+      ],
+      "sourceFacts": {
+        "proposalStatus": "submission_unknown",
+        "taskId": "task_mem000_blocked_complete",
+        "reservationId": "resv_mem000_unknown",
+        "latestReceiptId": "arcp_mem000_unknown",
+        "latestReceiptOutcome": "unknown"
+      },
+      "safeNextAction": "Reconcile through the existing record_action_outcome path only after an external check, citing arcp_mem000_unknown. Do not claim success or failure and do not retry automatically."
+    }
+  ],
+  "expectedCues": [
+    {
+      "id": "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+      "reason": "action_outcome_unknown",
+      "subjectType": "action_proposal",
+      "subjectId": "actp_mempage_unknown",
+      "relatedRecordIds": [
+        "task_mempage_action",
+        "arcp_mempage_unknown",
+        "resv_mempage_unknown"
+      ],
+      "summary": "ActionProposal actp_mempage_unknown has unknown submission outcome; reconcile receipt arcp_mempage_unknown before any retry.",
+      "sourceFacts": {
+        "proposalStatus": "submission_unknown",
+        "proposalRevision": 4,
+        "taskId": "task_mempage_action",
+        "unknownReceiptId": "arcp_mempage_unknown",
+        "unknownReceiptOutcome": "unknown",
+        "reservationId": "resv_mempage_unknown"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review",
+      "reason": "accepted_decision_needs_review",
+      "subjectType": "decision",
+      "subjectId": "dec_mempage_review",
+      "relatedRecordIds": [
+        "cit_mempage_review",
+        "find_mempage_old"
+      ],
+      "summary": "Accepted Decision dec_mempage_review needs review because cited Finding find_mempage_old is superseded (citation cit_mempage_review); acceptance is unchanged.",
+      "sourceFacts": {
+        "decisionStatus": "accepted",
+        "citationId": "cit_mempage_review",
+        "findingId": "find_mempage_old",
+        "findingCurrentness": "superseded"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_a",
+      "relatedRecordIds": [
+        "fev_mempage_a1",
+        "art_mempage_a"
+      ],
+      "summary": "Current Finding find_mempage_a has contradicting evidence fev_mempage_a1 for Artifact art_mempage_a; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_a1",
+        "artifactId": "art_mempage_a",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_a",
+      "relatedRecordIds": [
+        "fev_mempage_a2",
+        "art_mempage_b"
+      ],
+      "summary": "Current Finding find_mempage_a has contradicting evidence fev_mempage_a2 for Artifact art_mempage_b; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_a2",
+        "artifactId": "art_mempage_b",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+      "reason": "current_finding_has_contradicting_evidence",
+      "subjectType": "finding",
+      "subjectId": "find_mempage_b",
+      "relatedRecordIds": [
+        "fev_mempage_b1",
+        "art_mempage_c"
+      ],
+      "summary": "Current Finding find_mempage_b has contradicting evidence fev_mempage_b1 for Artifact art_mempage_c; the Finding remains current.",
+      "sourceFacts": {
+        "findingCurrentness": "current",
+        "evidenceId": "fev_mempage_b1",
+        "artifactId": "art_mempage_c",
+        "relation": "contradicts"
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_b",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_b has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:01:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:01:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_a",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_a has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace",
+      "reason": "blocked_task_missing_context",
+      "subjectType": "task",
+      "subjectId": "task_mempage_whitespace",
+      "relatedRecordIds": [],
+      "summary": "Blocked Task task_mempage_whitespace has no recorded description or assignee.",
+      "sourceFacts": {
+        "taskStatus": "blocked",
+        "hasDescription": false,
+        "hasAssignee": false
+      },
+      "createdAt": "2026-11-07T12:00:00.000Z",
+      "updatedAt": "2026-11-07T12:00:00.000Z",
+      "sourceUpdateTime": "2026-11-07T12:00:00.000Z"
+    }
+  ],
+  "expectedCueSource": "Copied from candidate-projection-key.json. These are MEM-001 \u00a73 expectations for the candidate fixture, not v1.29.7 memory-health output. v1297ObservedScoringCues remains the observed four-cue scoring shape.",
+  "safeResolutionPaths": {
+    "notExecuted": true,
+    "accepted_decision_needs_review": [
+      "Inspect the Decision and cited Finding.",
+      "remove_decision_basis for this cue's citationId when that basis should be removed.",
+      "cite_decision_basis for an intended replacement basis.",
+      "add_decision plus accept_decision, or retire_decision, when the Decision itself should change."
+    ],
+    "current_finding_has_contradicting_evidence": [
+      "Inspect the Finding and authorized Artifact reference.",
+      "remove_finding_evidence for this cue's evidenceId if the recorded relation should be removed.",
+      "correct_finding or withdraw_finding when the Finding lifecycle should change."
+    ],
+    "blocked_task_missing_context": [
+      "update_task to record a non-empty description and/or an assignee after reading the Task."
+    ],
+    "action_outcome_unknown": [
+      "Read get_action_proposal and list_action_receipts.",
+      "record_action_outcome with reconciled_accepted or reconciled_failure and resolvesReceiptId only after external evidence."
+    ]
+  }
+}

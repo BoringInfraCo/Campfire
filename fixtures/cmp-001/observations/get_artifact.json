@@ -1,0 +1,807 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "support",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:32.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "id": "art_mem000_support",
+        "title": "MEM-CONTRA supporting reference",
+        "type": "document",
+        "uriOrPath": "https://example.invalid/mem-000/art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 333,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "id",
+            "title",
+            "type",
+            "uriOrPath",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 506,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 470,
+        "textBytes": 381,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "artifactId": "art_mem000_counterexample",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "counterexample",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:33.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "id": "art_mem000_counterexample",
+        "title": "MEM-CONTRA contradicting reference",
+        "type": "document",
+        "uriOrPath": "https://example.invalid/mem-000/art_mem000_counterexample",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 350,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "id",
+            "title",
+            "type",
+            "uriOrPath",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 523,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 487,
+        "textBytes": 398,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "artifactId": "art_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "artifactId": "art_does_not_exist"
+        },
+        "error": "ArtifactNotFound",
+        "message": "Artifact not found: art_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 125,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 125,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "support",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:32.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "id": "art_mem000_support",
+        "title": "MEM-CONTRA supporting reference",
+        "type": "document",
+        "uriOrPath": "https://example.invalid/mem-000/art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 333,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "id",
+            "title",
+            "type",
+            "uriOrPath",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 506,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 470,
+        "textBytes": 381,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "artifactId": "art_mem000_counterexample",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "counterexample",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:33.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "id": "art_mem000_counterexample",
+        "title": "MEM-CONTRA contradicting reference",
+        "type": "document",
+        "uriOrPath": "https://example.invalid/mem-000/art_mem000_counterexample",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 350,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "id",
+            "title",
+            "type",
+            "uriOrPath",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 523,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 487,
+        "textBytes": 398,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "artifactId": "art_does_not_exist",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "unknown-id",
+      "parsedBody": {
+        "details": {
+          "artifactId": "art_does_not_exist"
+        },
+        "error": "ArtifactNotFound",
+        "message": "Artifact not found: art_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 125,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 229,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 193,
+        "textBytes": 125,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "artifactId": "art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "agentSessionId": "ses_mem000_registered",
+        "createdAt": "2026-11-07T12:00:32.000Z",
+        "createdBy": {
+          "actorId": "agt_mem000_registered",
+          "actorType": "agent"
+        },
+        "id": "art_mem000_support",
+        "title": "MEM-CONTRA supporting reference",
+        "type": "document",
+        "uriOrPath": "https://example.invalid/mem-000/art_mem000_support",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 333,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 9,
+          "pagination": {},
+          "provenance": {
+            "agentSessionId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdAt": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "createdBy.actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "agentSessionId",
+            "createdAt",
+            "createdBy",
+            "id",
+            "title",
+            "type",
+            "uriOrPath",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 505,
+        "prettyOverheadBytes": 48,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 470,
+        "textBytes": 381,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 13,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 8,
+    "successFrameBytesMax": 523,
+    "successTextBytesMax": 398,
+    "successTopLevelKeys": [
+      "agentSessionId",
+      "createdAt",
+      "createdBy",
+      "id",
+      "title",
+      "type",
+      "uriOrPath",
+      "workspaceId"
+    ],
+    "successes": 5
+  },
+  "tool": "get_artifact"
+}

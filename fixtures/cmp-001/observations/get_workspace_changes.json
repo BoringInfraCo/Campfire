@@ -1,0 +1,1632 @@
+{
+  "evidenceClass": "scripted engineering (MCP SDK client over real stdio server; not a real harness, not model-visible bytes)",
+  "rows": [
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-tip",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": []
+        },
+        "changes": {
+          "items": [],
+          "returned": 0,
+          "total": 0,
+          "truncated": false
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 892,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 14,
+          "pagination": {
+            "changes.total": {
+              "count": 1,
+              "firstValue": 0,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {},
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1114,
+        "prettyOverheadBytes": 87,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1079,
+        "textBytes": 979,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 191,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "missing-after",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_workspace_changes: Invalid input: expected string, received undefined at after",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 240,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 205,
+        "textBytes": 151,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "x",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 148,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 248,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 212,
+        "textBytes": 148,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-tip",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": []
+        },
+        "changes": {
+          "items": [],
+          "returned": 0,
+          "total": 0,
+          "truncated": false
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 892,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 14,
+          "pagination": {
+            "changes.total": {
+              "count": 1,
+              "firstValue": 0,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {},
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1114,
+        "prettyOverheadBytes": 87,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1079,
+        "textBytes": 979,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "not-a-cursor",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-bad-cursor",
+      "parsedBody": {
+        "details": {
+          "field": "cursor"
+        },
+        "error": "ValidationError",
+        "message": "Cursor is malformed"
+      },
+      "shape": {
+        "compactEquivalentBytes": 88,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 191,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 156,
+        "textBytes": 88,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "missing-after",
+      "parsedBody": null,
+      "rawTextWhenNotJson": "MCP error -32602: Input validation error: Invalid arguments for tool get_workspace_changes: Invalid input: expected string, received undefined at after",
+      "shape": {
+        "compactEquivalentBytes": null,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 240,
+        "prettyOverheadBytes": null,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 205,
+        "textBytes": 151,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": false
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "x",
+        "workspaceId": "ws_does_not_exist"
+      },
+      "caseId": "workspace-not-found",
+      "parsedBody": {
+        "details": {
+          "workspaceId": "ws_does_not_exist"
+        },
+        "error": "WorkspaceNotFound",
+        "message": "Workspace not found: ws_does_not_exist"
+      },
+      "shape": {
+        "compactEquivalentBytes": 126,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 230,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 194,
+        "textBytes": 126,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "denied_human_nonparticipant",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_denied is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 133,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 232,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 197,
+        "textBytes": 133,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_wrong_workspace",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "ParticipantRequired",
+        "message": "Actor hum_mem000_wrong is not a participant of workspace ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 132,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 231,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 196,
+        "textBytes": 132,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "ended_session_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "denied-on-health",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_inactive has ended"
+      },
+      "shape": {
+        "compactEquivalentBytes": 95,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 194,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 159,
+        "textBytes": 95,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_other"
+      },
+      "caseId": "denied-on-other-workspace",
+      "parsedBody": {
+        "details": null,
+        "error": "Unauthorized",
+        "message": "Agent session ses_mem000_registered belongs to workspace ws_mem000_health, not ws_mem000_other"
+      },
+      "shape": {
+        "compactEquivalentBytes": 146,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": true,
+        "isErrorKeyPresent": true,
+        "jsonRpcFrameBytes": 246,
+        "prettyOverheadBytes": 0,
+        "resultKeys": [
+          "content",
+          "isError"
+        ],
+        "resultObjectBytes": 210,
+        "textBytes": 146,
+        "textIsCompactJson": true,
+        "textIsPrettyPrinted2Space": false,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "unregistered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "probe-participant-without-session",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": []
+        },
+        "changes": {
+          "items": [],
+          "returned": 0,
+          "total": 0,
+          "truncated": false
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 892,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 14,
+          "pagination": {
+            "changes.total": {
+              "count": 1,
+              "firstValue": 0,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {},
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1114,
+        "prettyOverheadBytes": 87,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1079,
+        "textBytes": 979,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-with-3-new-tasks-limit-2",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000001",
+            "task_000002"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000001",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000001: CMP-000 post-cursor write 1"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000002",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000002: CMP-000 post-cursor write 2"
+            }
+          ],
+          "nextCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+          "returned": 2,
+          "total": 3,
+          "truncated": true
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2595,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 33,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 2,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3163,
+        "prettyOverheadBytes": 325,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3127,
+        "textBytes": 2920,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "continue-from-toCursor",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000003"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000003",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000003: CMP-000 post-cursor write 3"
+            }
+          ],
+          "returned": 1,
+          "total": 3,
+          "truncated": true
+        },
+        "fromCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1507,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 22,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1903,
+        "prettyOverheadBytes": 208,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1867,
+        "textBytes": 1715,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "registered_agent",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-with-3-new-tasks-default",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000001",
+            "task_000002",
+            "task_000003"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000001",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000001: CMP-000 post-cursor write 1"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000002",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000002: CMP-000 post-cursor write 2"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000003",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000003: CMP-000 post-cursor write 3"
+            }
+          ],
+          "returned": 3,
+          "total": 3,
+          "truncated": false
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2750,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 42,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 3,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3468,
+        "prettyOverheadBytes": 430,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3432,
+        "textBytes": 3180,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-with-3-new-tasks-limit-2",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000001",
+            "task_000002"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000001",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000001: CMP-000 post-cursor write 1"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000002",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000002: CMP-000 post-cursor write 2"
+            }
+          ],
+          "nextCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+          "returned": 2,
+          "total": 3,
+          "truncated": true
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2595,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 33,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 2,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.nextCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 2,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3163,
+        "prettyOverheadBytes": 325,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3127,
+        "textBytes": 2920,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "limit": 2,
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "continue-from-toCursor",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000003"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000003",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000003: CMP-000 post-cursor write 3"
+            }
+          ],
+          "returned": 1,
+          "total": 3,
+          "truncated": true
+        },
+        "fromCursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 1507,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 22,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": true,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 1,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 1903,
+        "prettyOverheadBytes": 208,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 1867,
+        "textBytes": 1715,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    },
+    {
+      "actor": "human_member",
+      "args": {
+        "after": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "caseId": "after-orientation-with-3-new-tasks-default",
+      "parsedBody": {
+        "affected": {
+          "artifacts": [],
+          "decisions": [],
+          "findings": [],
+          "tasks": [
+            "task_000001",
+            "task_000002",
+            "task_000003"
+          ]
+        },
+        "changes": {
+          "items": [
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000001",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000001: CMP-000 post-cursor write 1"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000002\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":117,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000002",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000002: CMP-000 post-cursor write 2"
+            },
+            {
+              "actorId": "hum_mem000_owner",
+              "actorType": "human",
+              "changeType": "create",
+              "cursor": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000003\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":118,\"originPosition\":115,\"tip\":118}>",
+              "materiality": "normal",
+              "objectId": "task_000003",
+              "objectType": "task",
+              "occurredAt": "2026-11-07T18:30:00.000Z",
+              "summary": "create task task_000003: CMP-000 post-cursor write 3"
+            }
+          ],
+          "returned": 3,
+          "total": 3,
+          "truncated": false
+        },
+        "fromCursor": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+        "generatedAt": "<WALL_CLOCK>",
+        "ordering": "material-then-chronological",
+        "schemaVersion": 1,
+        "toCursor": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+        "workspaceId": "ws_mem000_health"
+      },
+      "shape": {
+        "compactEquivalentBytes": 2750,
+        "contentBlockCount": 1,
+        "contentBlockKeys": [
+          [
+            "text",
+            "type"
+          ]
+        ],
+        "contentBlockTypes": [
+          "text"
+        ],
+        "fields": {
+          "currentness": {},
+          "leafPathCount": 42,
+          "pagination": {
+            "changes.items[].cursor": {
+              "count": 3,
+              "firstValue": "<cursor:cf1:len=348:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T18:30:00.000Z\",\"id\":\"con_000001\",\"phase\":\"normal\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":116,\"originPosition\":115,\"tip\":118}>",
+              "types": [
+                "string"
+              ]
+            },
+            "changes.total": {
+              "count": 1,
+              "firstValue": 3,
+              "types": [
+                "number"
+              ]
+            },
+            "changes.truncated": {
+              "count": 1,
+              "firstValue": false,
+              "types": [
+                "boolean"
+              ]
+            },
+            "fromCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=350:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"2026-11-07T12:02:03.000Z\",\"id\":\"con_mem000_0115\",\"phase\":\"high\",\"originOccurredAt\":\"2026-11-07T12:02:03.000Z\",\"originId\":\"con_mem000_0115\",\"position\":115,\"originPosition\":115,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            },
+            "toCursor": {
+              "count": 1,
+              "firstValue": "<cursor:cf1:len=246:{\"v\":1,\"kind\":\"contribution\",\"workspaceId\":\"ws_mem000_health\",\"occurredAt\":\"\",\"id\":\"\",\"phase\":\"high\",\"originOccurredAt\":\"\",\"originId\":\"\",\"position\":118,\"originPosition\":118,\"tip\":0}>",
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "provenance": {
+            "changes.items[].actorId": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            },
+            "changes.items[].actorType": {
+              "count": 3,
+              "types": [
+                "string"
+              ]
+            }
+          },
+          "topLevelKeys": [
+            "affected",
+            "changes",
+            "fromCursor",
+            "generatedAt",
+            "ordering",
+            "schemaVersion",
+            "toCursor",
+            "workspaceId"
+          ]
+        },
+        "hasMeta": false,
+        "hasStructuredContent": false,
+        "isError": false,
+        "isErrorKeyPresent": false,
+        "jsonRpcFrameBytes": 3468,
+        "prettyOverheadBytes": 430,
+        "resultKeys": [
+          "content"
+        ],
+        "resultObjectBytes": 3432,
+        "textBytes": 3180,
+        "textIsCompactJson": false,
+        "textIsPrettyPrinted2Space": true,
+        "textParsesAsJson": true
+      }
+    }
+  ],
+  "schema": "cmp-000-tool-observations/1",
+  "summary": {
+    "anyStructuredContent": false,
+    "calls": 19,
+    "contentBlockCounts": [
+      1
+    ],
+    "errors": 10,
+    "successFrameBytesMax": 3468,
+    "successTextBytesMax": 3180,
+    "successTopLevelKeys": [
+      "affected",
+      "changes",
+      "fromCursor",
+      "generatedAt",
+      "ordering",
+      "schemaVersion",
+      "toCursor",
+      "workspaceId"
+    ],
+    "successes": 9
+  },
+  "tool": "get_workspace_changes"
+}

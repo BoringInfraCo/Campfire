@@ -48,7 +48,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.29.8/install.sh | sh -s -- --version 1.29.8
+curl -fsSL https://boringinfra.company/campfire/v1.30.0/install.sh | sh -s -- --version 1.30.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 
@@ -110,6 +110,23 @@ authorization. Recipes do not write, run code, or store workspace data. Both
 targeted harness smoke runs used discovery and the recipes and named the
 required ids; automatic adoption and improved continuation remain unproven,
 and the human comparison is NOT OBSERVED. See `CHANGELOG.md`.
+
+### Memory health review prompts
+
+```bash
+campfire memory-health [workspaceId] [--workspace <id>] [--reason <code>] [--limit <1..100>] [--cursor <opaque>] [--output auto|human|json]
+```
+
+`campfire memory-health` and the MCP tool `get_memory_health` list a bounded,
+paged set of workspace records that need review, with the reason and source
+facts for each. There are four fixed cue types: an unknown action outcome, an
+accepted decision whose basis is under review, a current finding with
+contradicting evidence, and a blocked task with missing context. It is
+read-only, uses the caller's authorization, calls no model and no network, and
+stores nothing. Cues are review prompts, not corrections, and it does not find
+everything stale or contradictory. It works against local SQLite, local HTTP,
+and local MCP. A hosted Worker that predates this release may return the generic
+`Unknown method` error until upgraded (expected, not observed).
 
 ### Action proposals and verification follow-up
 

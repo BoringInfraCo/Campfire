@@ -1,0 +1,20 @@
+{
+  "schema": "mem-000-candidate-controls/1",
+  "fixture": "candidate-source.json",
+  "controls": [
+    {"id":"dec_mempage_current","reason":"Accepted Decision cites the current successor Finding only."},
+    {"id":"dec_mempage_proposed","reason":"Decision cites a superseded Finding but is proposed, not accepted."},
+    {"id":"dec_mempage_old","reason":"Decision cites a superseded Finding but is itself superseded, not accepted."},
+    {"id":"dec_mempage_successor","reason":"Accepted replacement has no non-current citation."},
+    {"id":"dec_mempage_removed","reason":"The erroneous citation was removed; no current citation remains."},
+    {"id":"find_mempage_supported","reason":"The contradicting evidence relation was removed; only supports remains."},
+    {"id":"find_mempage_withdrawn","reason":"A withdrawn Finding is not current even though it has contradicting evidence."},
+    {"id":"task_mempage_action","reason":"Blocked Task has a nonempty description and assignee."},
+    {"id":"task_mempage_description","reason":"Blocked Task has a nonempty description; the rule requires both fields absent."},
+    {"id":"task_mempage_assignee","reason":"Blocked Task has an assignee; the rule requires both fields absent."},
+    {"id":"task_mempage_open","reason":"Task is open, not blocked, even though both context fields are absent."},
+    {"id":"actp_mempage_accepted","reason":"The proposal and its receipt have accepted outcomes, not unknown."},
+    {"id":"ws_mempage_empty","reason":"There are no work records, despite memberships and sessions."}
+  ],
+  "positiveNearMiss": {"id":"task_mempage_whitespace","reason":"The v1.29.7 service persists a whitespace-only description; it is empty under the MEM-001 trimmed-description rule and is a positive cue."}
+}

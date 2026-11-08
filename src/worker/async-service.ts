@@ -6,6 +6,9 @@
  * (AGENTS.md invariant 5). Storage stays behind the async store boundary
  * (AGENTS.md invariant 7). No new domain entities.
  */
+import { MEMORY_HEALTH_REASONS, validateMemoryHealthInput } from "../domain/memory-health.js";
+import type { MemoryHealthResult } from "../domain/memory-health.js";
+import { memoryHealthFromSnapshot, type GetMemoryHealthInput } from "../service/memory-health-read.js";
 import type { ActorContext } from "../service/authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "../service/session-list.js";
@@ -198,6 +201,7 @@ export interface AsyncCampfireService {
   getRecordHistory(ctx: ActorContext, input: GetRecordHistoryInput): Promise<RecordHistoryPage>;
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp>;
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): Promise<WorkspaceRecall>;
+  getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput): Promise<MemoryHealthResult>;
   projectHandoffPacket(ctx: ActorContext, input: ProjectHandoffPacketInput): Promise<CampfireHandoffPacket>;
   listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Decision>>;
   getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Promise<Decision>;
@@ -1550,6 +1554,20 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         generatedAt: clock(),
         ordering: "material-then-chronological",
       };
+    },
+
+    async getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput): Promise<MemoryHealthResult> {
+      await requireReadableWorkspace(ctx, input.workspaceId);
+      const role = (await store.getParticipant(input.workspaceId, ctx.actor))?.role ?? "none";
+      validateMemoryHealthInput(input, MEMORY_HEALTH_REASONS);
+      const observedAt = clock();
+      const snapshot = await store.readMemoryHealthSnapshot(input.workspaceId);
+      return memoryHealthFromSnapshot(
+        input,
+        { actorType: ctx.actor.actorType, actorId: ctx.actor.actorId, role },
+        observedAt,
+        snapshot,
+      );
     },
 
     async recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): Promise<WorkspaceRecall> {

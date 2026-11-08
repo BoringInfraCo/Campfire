@@ -57,6 +57,20 @@ import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
+  MEMORY_HEALTH_DECISIONS_SQL,
+  MEMORY_HEALTH_FINDINGS_SQL,
+  MEMORY_HEALTH_PROPOSALS_SQL,
+  MEMORY_HEALTH_TASKS_SQL,
+  MEMORY_HEALTH_TIP_SQL,
+  assembleMemoryHealthRows,
+  mapMemoryHealthTip,
+  type DecisionJoinRow,
+  type FindingJoinRow,
+  type MemoryHealthTipRow,
+  type ProposalJoinRow,
+  type TaskJoinRow,
+} from "../store/memory-health-queries.js";
+import {
   asCorrectionConflict,
   citationInsertParams,
   decisionClaimStatements,
@@ -1314,6 +1328,25 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       const rows = await all<ArtifactRow & RankedRow>(listed.sql, ...listed.params);
       const total = readCount(await first<{ count: number }>(counted.sql, ...counted.params));
       return rankedPage(rows, query.limit, total, mapArtifact);
+    },
+
+    async readMemoryHealthSnapshot(workspaceId) {
+      // D1 gives no read snapshot: bracket the source reads with the contribution tip and retry on a concurrent append.
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const before = await first<MemoryHealthTipRow>(MEMORY_HEALTH_TIP_SQL, workspaceId);
+        const rows = assembleMemoryHealthRows({
+          decisions: await all<DecisionJoinRow>(MEMORY_HEALTH_DECISIONS_SQL, workspaceId),
+          findings: await all<FindingJoinRow>(MEMORY_HEALTH_FINDINGS_SQL, workspaceId),
+          tasks: await all<TaskJoinRow>(MEMORY_HEALTH_TASKS_SQL, workspaceId),
+          proposals: await all<ProposalJoinRow>(MEMORY_HEALTH_PROPOSALS_SQL, workspaceId),
+        });
+        const after = await first<MemoryHealthTipRow>(MEMORY_HEALTH_TIP_SQL, workspaceId);
+        if (before?.id === after?.id) return { tip: mapMemoryHealthTip(after), rows };
+      }
+      throw new Conflict("Workspace changed during the memory-health read", {
+        recoveryCode: "memory_health_concurrent_write",
+        nextAction: "retry",
+      });
     },
 
     async recallSection(workspaceId, section, query) {

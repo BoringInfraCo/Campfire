@@ -1,0 +1,1079 @@
+{
+  "schema": "mem-000-actor-tasks/1",
+  "evidenceClass": "Synthetic scripted engineering tasks; the script selects the declared calls and follow-up, not a person or model.",
+  "taskTiming": "Each task is executed separately from the first declared call through the final call and records monotonic elapsed time. Script-derived answers are scored separately.",
+  "actors": [
+    {
+      "id": "human_member",
+      "interface": "CLI",
+      "identity": "hum_mem000_member"
+    },
+    {
+      "id": "registered_agent",
+      "interface": "MCP stdio",
+      "identity": "agt_mem000_registered",
+      "session": "ses_mem000_registered"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "decision-review",
+      "captureKey": "review",
+      "prompt": "Orient in ws_mem000_health. Inspect Decision dec_mem000_review and its cited Finding. Report the Decision status, citation and Finding ids and currentness, and a safe next review action without mutating state.",
+      "calls": [
+        "context-health",
+        "decision-review",
+        "finding-superseded"
+      ],
+      "requiredSourceIds": [
+        "dec_mem000_review",
+        "cit_mem000_review_basis",
+        "find_mem000_basis_superseded"
+      ],
+      "safeNextAction": "review_decision_basis",
+      "safeNextActionTargets": [
+        "dec_mem000_review",
+        "cit_mem000_review_basis",
+        "find_mem000_basis_superseded"
+      ],
+      "safety": "Accepted remains accepted; the cited Finding is superseded; no lifecycle mutation is implied."
+    },
+    {
+      "id": "contradicting-evidence",
+      "captureKey": "contradiction",
+      "prompt": "Orient in ws_mem000_health. Inspect Finding find_mem000_contradicted. Report its status and any contradicting evidence and artifact ids, and a safe next review action without mutating state.",
+      "calls": [
+        "context-health",
+        "finding-contradicted"
+      ],
+      "requiredSourceIds": [
+        "find_mem000_contradicted",
+        "fev_mem000_contradicted_contradicts",
+        "art_mem000_counterexample"
+      ],
+      "safeNextAction": "review_finding_evidence",
+      "safeNextActionTargets": [
+        "find_mem000_contradicted",
+        "fev_mem000_contradicted_contradicts",
+        "art_mem000_counterexample"
+      ],
+      "safety": "A current Finding with a contradiction remains current; the relation is not proof of external truth."
+    },
+    {
+      "id": "blocked-context",
+      "captureKey": "blocked",
+      "prompt": "Orient in ws_mem000_health. Inspect Task task_mem000_blocked_missing. Report its state and whether description and assignee are recorded, and a safe next action without mutating state.",
+      "calls": [
+        "context-health",
+        "task-missing"
+      ],
+      "requiredSourceIds": [
+        "task_mem000_blocked_missing"
+      ],
+      "safeNextAction": "update_task_after_review",
+      "safeNextActionTargets": [
+        "task_mem000_blocked_missing"
+      ],
+      "safety": "The Task remains blocked; missing fields do not prove the external blocker or intended owner."
+    },
+    {
+      "id": "unknown-outcome",
+      "captureKey": "unknown",
+      "prompt": "Orient in ws_mem000_health. Inspect ActionProposal actp_mem000_unknown and its receipts. Report proposal, Task, reservation and latest receipt ids and the recorded outcome; recommend a safe next step without executing an external action.",
+      "calls": [
+        "context-health",
+        "action-get",
+        "action-receipts"
+      ],
+      "requiredSourceIds": [
+        "actp_mem000_unknown",
+        "task_mem000_blocked_complete",
+        "resv_mem000_unknown",
+        "arcp_mem000_unknown"
+      ],
+      "safeNextAction": "reconcile_existing_proposal",
+      "safeNextActionTargets": [
+        "actp_mem000_unknown",
+        "arcp_mem000_unknown"
+      ],
+      "safety": "The submission outcome is unknown; do not claim success or failure or automatically retry."
+    },
+    {
+      "id": "pagination",
+      "captureKey": "pagination",
+      "prompt": "Orient in ws_mem000_health, traverse all Task and Decision pages, and report whether the first page was complete, how many records each list contained and whether both final pages have a continuation cursor.",
+      "calls": [
+        "context-health",
+        "decisions-page-1",
+        "decisions-page-2",
+        "tasks-page-1",
+        "tasks-page-2"
+      ],
+      "expected": {
+        "firstDecisionPageTruncated": true,
+        "firstTaskPageTruncated": true,
+        "decisionTotal": 13,
+        "taskTotal": 23,
+        "decisionFinalHasCursor": false,
+        "taskFinalHasCursor": false
+      },
+      "safety": "First-page truncation is not completeness; follow returned cursors. This task measures existing list pagination, not the future MEM health cursor."
+    },
+    {
+      "id": "current-controls",
+      "captureKey": "controls",
+      "prompt": "Inspect the current Finding, Decision, Task and ActionProposal lists in ws_mem000_health and the clean workspace. Identify which of the named controls in the answer key do not satisfy the four proposed review rules, retaining their lifecycle status.",
+      "calls": [
+        "decisions-page-1",
+        "decisions-page-2",
+        "findings-all",
+        "tasks-page-1",
+        "tasks-page-2",
+        "action-proposals",
+        "context-clean",
+        "action-proposals-clean",
+        "recall-clean"
+      ],
+      "expected": {
+        "cleanWorkspace": "ws_mem000_clean",
+        "acceptedCurrentDecision": "dec_mem000_current",
+        "supersededDecision": "dec_mem000_superseded",
+        "supportedFinding": "find_mem000_supported",
+        "withdrawnFinding": "find_mem000_withdrawn",
+        "descriptionTask": "task_mem000_blocked_description_only",
+        "assigneeTask": "task_mem000_blocked_assignee_only",
+        "completeTask": "task_mem000_blocked_complete",
+        "acceptedAction": "actp_mem000_accepted"
+      },
+      "safety": "Only the specific predicates define the proposed rules. Missing controls in this existing fixture remain unobserved rather than being marked clean."
+    }
+  ],
+  "plannedDeniedTasks": [
+    {
+      "id": "denied-nonparticipant",
+      "actor": "hum_mem000_denied",
+      "type": "human",
+      "method": "get_workspace_context",
+      "workspaceId": "ws_mem000_health",
+      "expectedError": "ParticipantRequired"
+    },
+    {
+      "id": "denied-wrong-workspace",
+      "actor": "hum_mem000_wrong",
+      "type": "human",
+      "method": "get_workspace_context",
+      "workspaceId": "ws_mem000_health",
+      "expectedError": "ParticipantRequired"
+    },
+    {
+      "id": "denied-ended-session",
+      "actor": "agt_mem000_inactive",
+      "type": "agent",
+      "session": "ses_mem000_inactive",
+      "method": "get_workspace_context",
+      "workspaceId": "ws_mem000_health",
+      "expectedError": "Unauthorized"
+    },
+    {
+      "id": "denied-revoked-credential",
+      "actor": "hum_mem000_revoked",
+      "type": "human",
+      "method": "get_workspace_context",
+      "workspaceId": "ws_mem000_health",
+      "expectedError": "Unauthorized",
+      "credential": "fixture-revoked-token-held-privately"
+    }
+  ],
+  "coverageLimits": "The positive tasks use IDs given in their prompts and cannot measure open-ended discovery. The separate candidate fixture supplies additional controls. Denied transport cases are planned above; candidate cursor behavior requires separate candidate tests.",
+  "candidateTasks": [
+    {
+      "id": "human_member:unknown-outcome",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-action",
+      "calls": [
+        "unknown",
+        "receipts"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown. Do not mutate.",
+      "requiredSourceIds": [
+        "actp_mempage_unknown",
+        "task_mempage_action",
+        "resv_mempage_unknown",
+        "arcp_mempage_unknown"
+      ],
+      "cueId": "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+      "safeNextAction": "reconcile_existing_proposal",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json."
+    },
+    {
+      "id": "human_member:decision-review",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-decision",
+      "calls": [
+        "review",
+        "old-finding"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_review",
+        "cit_mempage_review",
+        "find_mempage_old"
+      ],
+      "cueId": "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review",
+      "safeNextAction": "review_decision_basis",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json."
+    },
+    {
+      "id": "human_member:finding-a1",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-a"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_a",
+        "fev_mempage_a1",
+        "art_mempage_a"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-a",
+      "evidenceId": "fev_mempage_a1"
+    },
+    {
+      "id": "human_member:finding-a2",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-a"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_a",
+        "fev_mempage_a2",
+        "art_mempage_b"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-a",
+      "evidenceId": "fev_mempage_a2"
+    },
+    {
+      "id": "human_member:finding-b1",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-b"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_b",
+        "fev_mempage_b1",
+        "art_mempage_c"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-b",
+      "evidenceId": "fev_mempage_b1"
+    },
+    {
+      "id": "human_member:task-b",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-b"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:14:task_mempage_b. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_b"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-b"
+    },
+    {
+      "id": "human_member:task-a",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-a"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:14:task_mempage_a. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_a"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-a"
+    },
+    {
+      "id": "human_member:task-whitespace",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-whitespace"
+      ],
+      "prompt": "Using CLI as hum_mempage_member, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:23:task_mempage_whitespace. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_whitespace"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-whitespace"
+    },
+    {
+      "id": "human_member:control:decision-current",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-current",
+      "calls": [
+        "decision-current",
+        "finding-new"
+      ],
+      "callId": "decision-current",
+      "prompt": "Using CLI as hum_mempage_member, inspect dec_mempage_current. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_current"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:decision-proposed",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-proposed",
+      "calls": [
+        "decision-proposed",
+        "old-finding"
+      ],
+      "callId": "decision-proposed",
+      "prompt": "Using CLI as hum_mempage_member, inspect dec_mempage_proposed. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_proposed"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:decision-removed",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-removed",
+      "calls": [
+        "decision-removed"
+      ],
+      "callId": "decision-removed",
+      "prompt": "Using CLI as hum_mempage_member, inspect dec_mempage_removed. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_removed"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:decision-old",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-old",
+      "calls": [
+        "decision-old"
+      ],
+      "callId": "decision-old",
+      "prompt": "Using CLI as hum_mempage_member, inspect dec_mempage_old. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_old"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:decision-successor",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-successor",
+      "calls": [
+        "decision-successor"
+      ],
+      "callId": "decision-successor",
+      "prompt": "Using CLI as hum_mempage_member, inspect dec_mempage_successor. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_successor"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:finding-supported",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-finding-supported",
+      "calls": [
+        "finding-supported"
+      ],
+      "callId": "finding-supported",
+      "prompt": "Using CLI as hum_mempage_member, inspect find_mempage_supported. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_supported"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:finding-withdrawn",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-finding-withdrawn",
+      "calls": [
+        "finding-withdrawn"
+      ],
+      "callId": "finding-withdrawn",
+      "prompt": "Using CLI as hum_mempage_member, inspect find_mempage_withdrawn. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_withdrawn"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:task-action",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-action"
+      ],
+      "callId": "task-action",
+      "prompt": "Using CLI as hum_mempage_member, inspect task_mempage_action. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_action"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:task-description",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-description"
+      ],
+      "callId": "task-description",
+      "prompt": "Using CLI as hum_mempage_member, inspect task_mempage_description. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_description"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:task-assignee",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-assignee"
+      ],
+      "callId": "task-assignee",
+      "prompt": "Using CLI as hum_mempage_member, inspect task_mempage_assignee. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_assignee"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:task-open",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-open",
+      "calls": [
+        "task-open"
+      ],
+      "callId": "task-open",
+      "prompt": "Using CLI as hum_mempage_member, inspect task_mempage_open. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_open"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:accepted-action",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage",
+      "kind": "control-action-accepted",
+      "calls": [
+        "accepted-action"
+      ],
+      "callId": "accepted-action",
+      "prompt": "Using CLI as hum_mempage_member, inspect actp_mempage_accepted. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "actp_mempage_accepted"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "human_member:control:empty-workspace",
+      "actor": "human_member",
+      "interface": "CLI",
+      "fixtureIdentity": "hum_mempage_member",
+      "workspaceId": "ws_mempage_empty",
+      "kind": "control-empty",
+      "calls": [
+        "empty-context"
+      ],
+      "callId": "empty-context",
+      "prompt": "Using CLI as hum_mempage_member, inspect ws_mempage_empty. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "ws_mempage_empty"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:unknown-outcome",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-action",
+      "calls": [
+        "unknown",
+        "receipts"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown. Do not mutate.",
+      "requiredSourceIds": [
+        "actp_mempage_unknown",
+        "task_mempage_action",
+        "resv_mempage_unknown",
+        "arcp_mempage_unknown"
+      ],
+      "cueId": "mh1:action_outcome_unknown:action_proposal:20:actp_mempage_unknown:20:arcp_mempage_unknown",
+      "safeNextAction": "reconcile_existing_proposal",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json."
+    },
+    {
+      "id": "registered_agent:decision-review",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-decision",
+      "calls": [
+        "review",
+        "old-finding"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_review",
+        "cit_mempage_review",
+        "find_mempage_old"
+      ],
+      "cueId": "mh1:accepted_decision_needs_review:decision:18:dec_mempage_review:18:cit_mempage_review",
+      "safeNextAction": "review_decision_basis",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json."
+    },
+    {
+      "id": "registered_agent:finding-a1",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-a"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_a",
+        "fev_mempage_a1",
+        "art_mempage_a"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a1",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-a",
+      "evidenceId": "fev_mempage_a1"
+    },
+    {
+      "id": "registered_agent:finding-a2",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-a"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_a",
+        "fev_mempage_a2",
+        "art_mempage_b"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_a:14:fev_mempage_a2",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-a",
+      "evidenceId": "fev_mempage_a2"
+    },
+    {
+      "id": "registered_agent:finding-b1",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-finding",
+      "calls": [
+        "finding-b"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_b",
+        "fev_mempage_b1",
+        "art_mempage_c"
+      ],
+      "cueId": "mh1:current_finding_has_contradicting_evidence:finding:14:find_mempage_b:14:fev_mempage_b1",
+      "safeNextAction": "review_finding_evidence",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "finding-b",
+      "evidenceId": "fev_mempage_b1"
+    },
+    {
+      "id": "registered_agent:task-b",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-b"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:14:task_mempage_b. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_b"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:14:task_mempage_b",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-b"
+    },
+    {
+      "id": "registered_agent:task-a",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-a"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:14:task_mempage_a. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_a"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:14:task_mempage_a",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-a"
+    },
+    {
+      "id": "registered_agent:task-whitespace",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "positive-task",
+      "calls": [
+        "task-whitespace"
+      ],
+      "prompt": "Using MCP stdio as agt_mempage_agent, read the named records in ws_mempage and select a safe next action only if the observed fields match mh1:blocked_task_missing_context:task:23:task_mempage_whitespace. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_whitespace"
+      ],
+      "cueId": "mh1:blocked_task_missing_context:task:23:task_mempage_whitespace",
+      "safeNextAction": "update_task_after_review",
+      "expectation": "positive",
+      "incompleteContext": "These calls do not page a memory-health result. Multi-page expectations stay in candidate-projection-key.json and are not an observed endpoint.",
+      "denialExpectation": "A non-participant is denied before record contents. That denial is not re-run on this candidate task; see authorization.json.",
+      "callId": "task-whitespace"
+    },
+    {
+      "id": "registered_agent:control:decision-current",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-current",
+      "calls": [
+        "decision-current",
+        "finding-new"
+      ],
+      "callId": "decision-current",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect dec_mempage_current. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_current"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:decision-proposed",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-proposed",
+      "calls": [
+        "decision-proposed",
+        "old-finding"
+      ],
+      "callId": "decision-proposed",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect dec_mempage_proposed. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_proposed"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:decision-removed",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-removed",
+      "calls": [
+        "decision-removed"
+      ],
+      "callId": "decision-removed",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect dec_mempage_removed. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_removed"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:decision-old",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-old",
+      "calls": [
+        "decision-old"
+      ],
+      "callId": "decision-old",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect dec_mempage_old. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_old"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:decision-successor",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-decision-successor",
+      "calls": [
+        "decision-successor"
+      ],
+      "callId": "decision-successor",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect dec_mempage_successor. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "dec_mempage_successor"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:finding-supported",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-finding-supported",
+      "calls": [
+        "finding-supported"
+      ],
+      "callId": "finding-supported",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect find_mempage_supported. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_supported"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:finding-withdrawn",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-finding-withdrawn",
+      "calls": [
+        "finding-withdrawn"
+      ],
+      "callId": "finding-withdrawn",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect find_mempage_withdrawn. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "find_mempage_withdrawn"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:task-action",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-action"
+      ],
+      "callId": "task-action",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect task_mempage_action. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_action"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:task-description",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-description"
+      ],
+      "callId": "task-description",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect task_mempage_description. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_description"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:task-assignee",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-context",
+      "calls": [
+        "task-assignee"
+      ],
+      "callId": "task-assignee",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect task_mempage_assignee. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_assignee"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:task-open",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-task-open",
+      "calls": [
+        "task-open"
+      ],
+      "callId": "task-open",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect task_mempage_open. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "task_mempage_open"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:accepted-action",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage",
+      "kind": "control-action-accepted",
+      "calls": [
+        "accepted-action"
+      ],
+      "callId": "accepted-action",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect actp_mempage_accepted. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "actp_mempage_accepted"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    },
+    {
+      "id": "registered_agent:control:empty-workspace",
+      "actor": "registered_agent",
+      "interface": "MCP stdio",
+      "fixtureIdentity": "agt_mempage_agent",
+      "workspaceId": "ws_mempage_empty",
+      "kind": "control-empty",
+      "calls": [
+        "empty-context"
+      ],
+      "callId": "empty-context",
+      "prompt": "Using MCP stdio as agt_mempage_agent, inspect ws_mempage_empty. Report no review condition unless the observed fields match a \u00a72 rule. Do not mutate.",
+      "requiredSourceIds": [
+        "ws_mempage_empty"
+      ],
+      "safeNextAction": "no_review_condition",
+      "expectation": "control",
+      "incompleteContext": "A single control read is not full-workspace memory-health coverage.",
+      "denialExpectation": "Denial remains ParticipantRequired or Unauthorized for unauthorized actors and is not re-executed for this control."
+    }
+  ],
+  "candidateTaskNote": "Each human_member and registered_agent row is a separate task id. Scores come from candidate CLI/MCP captures, class scripted engineering. remove_decision_basis and remove_finding_evidence are safe-path expectations in answer-key.json and are not executed."
+}

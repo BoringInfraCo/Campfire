@@ -128,6 +128,7 @@ import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
+import type { MemoryHealthResult } from "../domain/memory-health.js";
 import { handoffReceipt, type CampfireHandoffPacket, type WorkspaceRecall } from "../domain/recall.js";
 import { assertHandoffDestination, writeHandoffFile } from "./handoff-file.js";
 import {
@@ -1711,6 +1712,61 @@ async function cmdRecall(parsed: ParsedArgs, argv: string[]): Promise<void> {
     if (cursor !== undefined) params.cursor = cursor;
     const recall = (await backend.call("recall_workspace", params)) as WorkspaceRecall;
     emitResult(recall, mode, formatRecall);
+  });
+}
+
+function formatMemoryHealth(result: MemoryHealthResult): string {
+  const lines: string[] = [
+    labeled("Workspace", result.workspaceId),
+    labeled("Observed", result.observedAt),
+    labeled("Orientation", result.orientationCursor),
+  ];
+  if (result.filters.reason !== undefined) lines.push(labeled("Reason", result.filters.reason));
+  const coverage = result.coverage;
+  lines.push(
+    labeled(
+      "Coverage",
+      `returned ${coverage.returned}`,
+      `total ${coverage.total}`,
+      `truncated ${coverage.truncated}`,
+    ),
+  );
+  lines.push(labeled("Rules", coverage.rulesEvaluated.join(", ")));
+  if (result.cues.length === 0) lines.push("No memory-health cues.");
+  for (const cue of result.cues) {
+    lines.push(joinFields(cue.id, cue.reason, cue.subjectType, cue.subjectId));
+    lines.push(`  ${cue.summary}`);
+    if (cue.relatedRecordIds.length > 0) lines.push(`  related ${cue.relatedRecordIds.join(" ")}`);
+    lines.push(
+      `  ${Object.entries(cue.sourceFacts)
+        .map(([key, value]) => `${key}=${String(value)}`)
+        .join(" ")}`,
+    );
+    lines.push(
+      `  ${joinFields(`created ${cue.createdAt}`, cue.updatedAt === undefined ? undefined : `updated ${cue.updatedAt}`, `source ${cue.sourceUpdateTime}`)}`,
+    );
+  }
+  if (result.nextCursor !== undefined) lines.push(`nextCursor ${result.nextCursor}`);
+  return lines.join("\n");
+}
+
+async function cmdMemoryHealth(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  const reason = optionalFlag(parsed.flags, "reason");
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId };
+    if (reason !== undefined) params.reason = reason;
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    const result = (await backend.call("get_memory_health", params)) as MemoryHealthResult;
+    emitResult(result, mode, formatMemoryHealth);
   });
 }
 
@@ -3680,6 +3736,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   context: (parsed, argv) => cmdContext(parsed, argv),
   "catch-up": (parsed, argv) => cmdCatchUp(parsed, argv),
   recall: (parsed, argv) => cmdRecall(parsed, argv),
+  "memory-health": (parsed, argv) => cmdMemoryHealth(parsed, argv),
   "handoff-packet": (parsed, argv) => cmdHandoffPacket(parsed, argv),
   findings: (parsed, argv) => cmdFindings(parsed, argv),
   tasks: (parsed, argv) => cmdTasks(parsed, argv),

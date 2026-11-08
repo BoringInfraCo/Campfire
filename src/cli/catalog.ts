@@ -23,6 +23,7 @@ export const CLI_COMMAND_NAMES = [
   "context",
   "catch-up",
   "recall",
+  "memory-health",
   "handoff-packet",
   "findings",
   "tasks",
@@ -362,6 +363,18 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "Sections report total, returned, truncated, and nextCursor.",
       "Historical text stays historical. There are no embeddings.",
       "Does not write a contribution.",
+    ] },
+  ),
+  "memory-health": spec(
+    "memory-health",
+    "workspace",
+    "List deterministic memory-health cues for one workspace.",
+    "campfire memory-health [workspaceId] [--workspace <workspaceId>] [--reason <reasonCode>] [--limit <1..100>] [--cursor <opaque>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "recall", "catch-up"], notes: [
+      "Reasons: action_outcome_unknown, accepted_decision_needs_review, current_finding_has_contradicting_evidence, blocked_task_missing_context.",
+      "The default limit is 25 and the maximum is 100. Coverage reports total, returned, and truncated; pass nextCursor to continue.",
+      "A stale cursor returns Conflict; restart without --cursor.",
+      "Read-only. It does not repair, write a contribution, or search another workspace.",
     ] },
   ),
   "handoff-packet": spec(
