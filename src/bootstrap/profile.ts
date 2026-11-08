@@ -5,9 +5,9 @@
  * put in the Viewer, or copied into a handoff. MCP must not read this file:
  * an agent process gets CAMPFIRE_TOKEN from its own harness env.
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { ValidationError } from "../domain/errors.js";
 import { formatLocalStatusReceipt } from "../presentation/receipts.js";
 import { canonicalEndpoint } from "./endpoint.js";
@@ -276,7 +276,46 @@ function writePrivateJson(path: string, value: unknown): void {
   chmodSync(path, 0o600);
 }
 
+function pathInside(root: string, target: string): boolean {
+  const bases = new Set<string>([resolve(root)]);
+  try {
+    bases.add(realpathSync(root));
+  } catch {
+    // The root may not exist yet. The resolved path is enough.
+  }
+  const resolvedTarget = resolve(target);
+  let realTarget = resolvedTarget;
+  try {
+    realTarget = realpathSync(target);
+  } catch {
+    // A database file may not exist until the first run.
+  }
+  for (const base of bases) {
+    const prefix = base.endsWith(sep) ? base : `${base}${sep}`;
+    if (resolvedTarget === base || resolvedTarget.startsWith(prefix)) return true;
+    if (realTarget === base || realTarget.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+/**
+ * A temp database must not become the operator profile. Tests isolate
+ * CAMPFIRE_CONFIG_DIR under the OS temp directory. A process that forgets
+ * that isolation used to replace ~/.config/campfire with a fixture whose
+ * token matches no real database, and the next `campfire` then failed closed.
+ */
+function assertProfileDatabaseIsDurable(profile: CampfireProfile, env: NodeJS.ProcessEnv): void {
+  const configDir = resolveProfilePaths(env).configDir;
+  if (pathInside(tmpdir(), configDir)) return;
+  if (!pathInside(tmpdir(), profile.databasePath)) return;
+  throw new ValidationError(
+    "Refusing to point the operator profile at a temporary database. The current profile was not changed.",
+    { field: "databasePath", nextAction: "keep_the_operator_database" },
+  );
+}
+
 export function saveProfile(profile: CampfireProfile, env: NodeJS.ProcessEnv = process.env): ProfilePaths {
+  assertProfileDatabaseIsDurable(profile, env);
   const paths = resolveProfilePaths(env);
   mkdirSync(paths.configDir, { recursive: true });
   writeFileSync(paths.configPath, `${JSON.stringify(profile, null, 2)}\n`, { mode: 0o644 });

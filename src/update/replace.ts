@@ -42,7 +42,8 @@ function safeEntry(entry: string): boolean {
   const parts = entry.split("/").filter((part) => part.length > 0);
   if (parts.some((part) => part === "..")) return false;
   if (parts[0] === "bin") return parts.length <= 2;
-  if (parts[0] === "lib" && parts[1] === "campfire") return true;
+  // `tar` records the parent `lib/` directory. It is not a second install tree.
+  if (parts[0] === "lib" && (parts.length === 1 || parts[1] === "campfire")) return true;
   return false;
 }
 

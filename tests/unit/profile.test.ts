@@ -1,5 +1,5 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir, userInfo } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveDatabasePath } from "../../src/config.js";
@@ -11,6 +11,7 @@ import {
   readOperatorAgentToken,
   readOperatorHumanToken,
   resolveProfilePaths,
+  saveProfile,
 } from "../../src/bootstrap/profile.js";
 
 const originalCwd = process.cwd();
@@ -94,6 +95,28 @@ describe("operator profile", () => {
     persistOnboardProfile(SAMPLE);
     expect(readOperatorHumanToken()).toBe(SAMPLE.humanToken);
     expect(readOperatorAgentToken()).toBe(SAMPLE.agentToken);
+  });
+
+  it("refuses to point the operator profile at a temporary database", () => {
+    const configDir = mkdtempSync(join(userInfo().homedir, ".campfire-profile-guard-"));
+    const databasePath = join(tmpdir(), "ses001-unused.db");
+    try {
+      expect(() =>
+        saveProfile(
+          {
+            version: 1,
+            databasePath,
+            url: "http://127.0.0.1:9414",
+            humanId: "hum_owner",
+            humanName: "Owner",
+          },
+          { ...process.env, CAMPFIRE_CONFIG_DIR: configDir },
+        ),
+      ).toThrow(/temporary database/);
+      expect(existsSync(join(configDir, "config.json"))).toBe(false);
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
   });
 });
 

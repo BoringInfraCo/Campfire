@@ -361,7 +361,7 @@ async function withBackend<T>(
   try {
     let bound = identity;
     if (token !== undefined) {
-      const actor = runtime.service.resolveToken(token);
+      const actor = resolveLocalCredential(runtime.service, token);
       bound = { ctx: { actor, agentSessionId: identity.ctx.agentSessionId }, harness: identity.harness };
     }
     const backend: CliBackend = {
@@ -376,6 +376,23 @@ async function withBackend<T>(
     return await fn(backend);
   } finally {
     runtime.close();
+  }
+}
+
+function resolveLocalCredential(
+  service: { resolveToken(token: string): { actorId: string; actorType: "human" | "agent" } },
+  token: string,
+): { actorId: string; actorType: "human" | "agent" } {
+  try {
+    return service.resolveToken(token);
+  } catch (error) {
+    if (error instanceof CampfireError && error.code === "Unauthorized") {
+      throw new ValidationError(
+        "The saved credential does not match this installation's database. The database was not changed.",
+        { field: "operatorCredential" },
+      );
+    }
+    throw error;
   }
 }
 
@@ -2320,7 +2337,7 @@ async function cmdPublish(parsed: ParsedArgs, argv: string[]): Promise<void> {
     ensureParentDir(config.databasePath);
     const runtime = createRuntime({ ...config, databasePath: profile.databasePath });
     try {
-      const actor = runtime.service.resolveToken(credentials.humanToken);
+      const actor = resolveLocalCredential(runtime.service, credentials.humanToken);
       if (actor.actorType !== "human" || actor.actorId !== profile.humanId) {
         throw new ValidationError("Only the current local human owner can publish this workspace", {
           field: "credentials",
@@ -2982,7 +2999,7 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
   const runtime = createRuntime(config);
   let running: Awaited<ReturnType<typeof openLocalListener>> | undefined;
   try {
-    const actor = runtime.service.resolveToken(humanToken);
+    const actor = resolveLocalCredential(runtime.service, humanToken);
     const human = runtime.store.getHuman(actor.actorId);
     if (human === undefined) {
       throw new ValidationError("The stored operator credential is not a human.", { field: "credentials" });
@@ -3215,7 +3232,7 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
     return stopping;
   };
   try {
-    const actor = runtime.service.resolveToken(humanToken);
+    const actor = resolveLocalCredential(runtime.service, humanToken);
     const human = runtime.store.getHuman(actor.actorId);
     if (human === undefined) {
       throw new ValidationError("The stored operator credential is not a human.", { field: "credentials" });

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.29.7 — 2026-11-07
+
+- The operator profile refuses a database path inside the OS temp directory. A test fixture can no longer replace the real profile with a token that matches no installation database. The current profile is left unchanged.
+- A saved local credential that does not match this installation's database fails before the work shell opens. The message names the mismatch. The database is not changed.
+- The empty-workspace screen keeps its short footer after movement and filter keys. It does not fall through to the workspace shell.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. The v1.29.6 tag is unchanged. Homebrew and Nix stay on the published v1.29.6 archives until the v1.29.7 checksums exist.
+
 ## 1.29.6 — 2026-11-06
 
 - With no workspace, the work shell keeps the sessions layout: CAMPFIRE and the section labels in the sidebar, and the titles Team sessions and Selected session. The panes say no workspace yet and no session selected. It does not invent a workspace, people, harnesses, counts, or terminal output.

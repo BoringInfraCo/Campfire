@@ -775,6 +775,7 @@ function clampRow(state: DashboardState): DashboardState {
 function withoutTransient(state: DashboardState): DashboardState {
   return {
     workspaceId: state.workspaceId,
+    ...(state.awaitingWorkspace === undefined ? {} : { awaitingWorkspace: state.awaitingWorkspace }),
     actorId: state.actorId,
     actorType: state.actorType,
     perspective: state.perspective,
@@ -2768,7 +2769,7 @@ function renderEmptyShell(columns: number, rows: number, help: boolean): string 
       })),
     );
   }
-  const footer = footerLines(size.columns, false);
+  const footer = chrome("? help  q quit", size.columns, 0);
   const footerKept = footer.length >= size.rows ? footer.slice(footer.length - size.rows) : footer;
   const room = Math.max(0, size.rows - footerKept.length);
   // Help lines are lower rank than the sidebar. Keep each rail row, or a long

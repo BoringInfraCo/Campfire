@@ -53,9 +53,22 @@ describe("awaiting workspace dashboard", () => {
     const frame = renderDashboard(state, 80, 24);
     expectHonest(frame, 80);
     expect(frame.split("\n")).toHaveLength(24);
-    expect(frame.split("\n").at(-1)).toBe("j/k move  h history  ? help  tab  enter  q quit");
+    expect(frame.split("\n").at(-1)).toBe("? help  q quit");
     expect(frame).not.toContain("no recorded goal");
     expect(reduceDashboardKey(state, "q").quit).toBe(true);
+  });
+
+  it.each(["j", "k", "tab", "enter", "p"])("keeps the empty screen after %s", (key) => {
+    const state = reduceDashboardKey(awaitingState(), key);
+    expect(state.awaitingWorkspace).toBe(true);
+    expectHonest(renderDashboard(state, 80, 24), 80);
+    expect(renderDashboard(state, 80, 24)).not.toContain("no recorded goal");
+  });
+
+  it("keeps the empty screen after opening and submitting a filter", () => {
+    const state = reduceDashboardKey(reduceDashboardKey(awaitingState(), "/"), "enter");
+    expect(state.awaitingWorkspace).toBe(true);
+    expectHonest(renderDashboard(state, 80, 24), 80);
   });
 
   it("paints the sidebar behind the logo and sections", () => {
@@ -114,11 +127,14 @@ describe("awaiting workspace dashboard", () => {
     stdout.columns = 80;
     stdout.rows = 24;
     const writes: string[] = [];
-    let sent = false;
+    let sent = 0;
     stdout.write = (chunk: unknown) => {
       writes.push(String(chunk));
-      if (!sent) {
-        sent = true;
+      if (sent === 0) {
+        sent = 1;
+        stdin.emit("data", "j");
+      } else if (sent === 1) {
+        sent = 2;
         stdin.emit("data", "q");
       }
       return true;
@@ -140,5 +156,6 @@ describe("awaiting workspace dashboard", () => {
     expect(loads).toBe(0);
     expect(writes.join("")).toContain("No workspace yet");
     expect(writes.join("")).toContain("q quit");
+    expect(writes.join("")).not.toContain("no recorded goal");
   }, 5_000);
 });

@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as localWorkspace from "../../src/bootstrap/local-workspace.js";
 import { beginHuman } from "../../src/bootstrap/listen.js";
-import { loadProfile, persistHumanProfile, saveProfile } from "../../src/bootstrap/profile.js";
+import { loadProfile, persistHumanProfile, saveCredentials, saveProfile } from "../../src/bootstrap/profile.js";
 import { persistRemoteProfile } from "../../src/bootstrap/remote-profile.js";
 import * as dashboard from "../../src/cli/dashboard.js";
 import { runCliEntry } from "../../src/cli/index.js";
@@ -120,6 +120,21 @@ describe("bare campfire human shell", () => {
       awaitingWorkspace: true,
       workspaceId: "",
     });
+  });
+
+  it("reports a mismatched local credential without opening the console or changing the database", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    saveCredentials({ humanToken: "cft_not_in_this_database_0000000000000000" });
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+
+    expect(await runCliEntry([])).toBe(1);
+
+    expect(errors.join("\n")).toContain("does not match this installation's database");
+    expect(errors.join("\n")).not.toContain("Invalid or revoked token");
+    expect(localWorkspace.startLocalWorkspace).not.toHaveBeenCalled();
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
   });
 
   it("opens the dashboard for a TTY local profile with a workspace and does not print the status card", async () => {

@@ -302,6 +302,21 @@ describe("UPD-001 install and restart", () => {
     expect(readFileSync(join(prefix, "bin", "campfire"), "utf8")).toBe("old-bin");
   });
 
+  it("accepts the parent lib directory entry that tar records", async () => {
+    const prefix = join(tempDir(), "prefix");
+    seed(prefix);
+    const files = installFiles("1.26.3");
+    const replaced = await replaceDirect({
+      prefix,
+      release: { version: "1.26.3", tarballUrl: "https://example.test/pinned.tar.gz", checksumUrl: "https://example.test/pinned.tar.gz.sha256" },
+      fetch: files.fetch,
+      listEntries: () => ["bin/", "bin/campfire", "lib/", "lib/campfire/", "lib/campfire/package.json"],
+      unpack: files.unpack,
+      spawnSmoke: () => ({ ok: true, stdout: "Campfire 1.26.3" }),
+    });
+    expect(replaced).toEqual({ ok: true, version: "1.26.3" });
+  });
+
   it("names an owned restart, a required external restart, and a package-manager instruction", async () => {
     expect(restartPlan({
       channel: "direct",

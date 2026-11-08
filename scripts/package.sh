@@ -112,7 +112,9 @@ stage_help="$("$STAGE/bin/campfire" --help 2>&1)" || {
   exit 1
 }
 
-tar -czf "release/$ARTIFACT" -C "$STAGE" bin lib || {
+# Name lib/campfire, not lib. A bare lib/ entry is only a parent directory,
+# and older updaters reject any archive path outside bin/ and lib/campfire/.
+tar -czf "release/$ARTIFACT" -C "$STAGE" bin lib/campfire || {
   echo "package.sh: error: tar failed" >&2
   exit 1
 }
