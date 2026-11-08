@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.29.8 — 2026-11-08
+
+- `campfire publish` and `campfire join --invitation-link` / `--invitation-file` accept `--allow-loopback` again. The v1.29.4 strict-argument check had rejected it with exit 2 because the command usage never named it. The flag is for same-machine testing only.
+- No schema, migration, MCP tool, or Worker change. This source snapshot does not deploy the Worker. The v1.29.7 tag is unchanged. Homebrew and Nix stay on the published v1.29.7 archives until the v1.29.8 checksums exist.
+
 ## 1.29.7 — 2026-11-07
 
 - The operator profile refuses a database path inside the OS temp directory. A test fixture can no longer replace the real profile with a token that matches no installation database. The current profile is left unchanged.

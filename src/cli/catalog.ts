@@ -171,7 +171,7 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
     "publish",
     "start",
     "Publish the selected local workspace to a hosted Campfire endpoint.",
-    "campfire publish --url <https-endpoint> [--workspace <id>] [--rehearsal-code <code>] [--dry-run] [--no-connect] [--output auto|human|json]",
+    "campfire publish --url <https-endpoint> [--workspace <id>] [--rehearsal-code <code>] [--dry-run] [--no-connect] [--allow-loopback] [--output auto|human|json]",
     { ...WRITE, workspaceScoped: true, credentials: false, related: ["invite-teammate", "publish-status", "publish-recover", "connect"], notes: [
       "Owner-only: the local human owner initiates publication; an agent session cannot grant hosted ownership.",
       "A hosted rehearsal requires the operator-held rehearsal admission code. The alpha flag alone is closed.",
@@ -1098,17 +1098,17 @@ function invitationJoinRequested(flags: Record<string, string | boolean>, positi
 /** Variants preserve the legacy JSON-only join contract. */
 export function commandSpecForArgs(name: CliCommand, flags: Record<string, string | boolean>, positionals: readonly string[] = []): CliCommandSpec {
   const base = commandSpec(name);
-  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", description: "Compatibility: join from a private invitation file and prepare configs for selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
+  if (name === "join" && flags["invitation-file"] !== undefined) return { ...base, group: "start", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode] [--allow-loopback]", description: "Compatibility: join from a private invitation file and prepare configs for selected agents.", outputModes: DUAL, alwaysJson: false, credentials: false };
   if (name === "join" && invitationJoinRequested(flags, positionals)) {
     const consent = flags.accept === true || flags.decline === true;
-    return { ...base, group: "start", mutates: consent, usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline]", description: consent ? "Accept or decline a private invitation link." : "Preview a private invitation link before accepting or declining.", outputModes: DUAL, alwaysJson: false, credentials: false };
+    return { ...base, group: "start", mutates: consent, usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline] [--allow-loopback]", description: consent ? "Accept or decline a private invitation link." : "Preview a private invitation link before accepting or declining.", outputModes: DUAL, alwaysJson: false, credentials: false };
   }
   if (name === "connect" && flags.enroll === true) return { ...base, mutates: true, usage: "campfire connect --harness codex|opencode --enroll", description: "Enroll an additional recipient-owned harness and connect it." };
   return base;
 }
 
 CLI_CATALOG.join = { ...CLI_CATALOG.join, variants: [
-  { selector: "--invitation-link", usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline]", mutates: true, outputModes: DUAL },
-  { selector: "--invitation-file", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode]", mutates: true, outputModes: DUAL },
+  { selector: "--invitation-link", usage: "campfire join --invitation-link <link> [--accept --human-name <name> --harness codex|opencode | --decline] [--allow-loopback]", mutates: true, outputModes: DUAL },
+  { selector: "--invitation-file", usage: "campfire join --invitation-file <private-file> --human-name <name> --harness codex|opencode [--harness codex|opencode] [--allow-loopback]", mutates: true, outputModes: DUAL },
 ] };
 CLI_CATALOG.connect = { ...CLI_CATALOG.connect, variants: [{ selector: "--enroll", usage: "campfire connect --harness codex|opencode --enroll", mutates: true, outputModes: DUAL }] };

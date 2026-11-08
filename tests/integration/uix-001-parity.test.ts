@@ -318,11 +318,24 @@ describe("UIX-001 ATT-001 lab parity", () => {
       expectNoSecrets(text, label);
     }
 
+    // The Overview landing is a summary of cards (GOAL, NEEDS YOU, ...) with no
+    // "OVERVIEW" banner and no goal id or coverage line; it keeps the goal title
+    // and workspace id. The goal id, task/decision coverage, and the registered
+    // (not "online") agent wording live in the work shell header that every
+    // later section draws, so they are asserted on the Needs You frames.
     for (const frame of [anaMine, anaTeam, benMine]) {
-      expect(frame).toContain("OVERVIEW");
+      expect(frame).toContain("GOAL");
+      expect(frame).toContain("NEEDS YOU");
+      // The goal card wraps beside the left rail, so match its first wrapped line.
+      expect(frame).toContain(GOAL_TITLE.split(" ").slice(0, 6).join(" "));
+      expect(frame).toContain(SCENARIO.workspaces.lab);
+      expect(frame).not.toContain("online");
+      expect(frame).not.toContain("operative");
+    }
+
+    for (const frame of [anaMineAttention, anaTeamAttention, benMineAttention]) {
       expect(frame).toContain(SCENARIO.goal.lab);
       expect(frame).toContain(GOAL_TITLE);
-      expect(frame).toContain(SCENARIO.workspaces.lab);
       expect(frame.includes("20/21") || frame.includes("20 of 21")).toBe(true);
       expect(frame).toContain("truncated");
       expect(frame).toContain("registered");

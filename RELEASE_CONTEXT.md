@@ -1,4 +1,4 @@
-# Campfire 1.29.7 release context
+# Campfire 1.29.8 release context
 
 > Controlled Cloud alpha. An admitted owner publishes and shares, and the
 > installed CLI previews, accepts, or declines one invitation link. There is no
@@ -7,7 +7,7 @@
 > install the published v1.29.1 archives. This source snapshot does not deploy the
 > Worker. `bun` can run the installer; the CLI still runs on Node.js 22.
 
-This public source snapshot was exported on 2026-11-08 from private canonical source commit `3e8abd0cdb5cb04ff93ca42b9f07b4eb1082eb7e` (dated 2026-11-07T21:04:08-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-11-08 from private canonical source commit `78b74f2f53495dd6056c76284bc9b971db22bfe3` (dated 2026-11-08T09:57:17-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
@@ -55,6 +55,7 @@ Ship a harness-independent shared workspace where people and authorized agents c
 - In 1.29.2, the Claude Code pin is 2.1.319 because the installed binary updated itself. Launch arguments are unchanged. OpenCode 2.2.5 read the attached workspace through Campfire on an isolated server. That observation used an `OPENCODE_CLI` wrapper adding `--standalone` and is not the shipped argv. A live Campfire tool read inside Claude Code is NOT OBSERVED: the session registered, then the model request returned authentication_failed (401). The Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.1 archives until the v1.29.2 checksums exist.
 - In 1.29.3, a terminal no longer prints the authorization trace before the Campfire receipt. Redirected stderr still records the decision. Authorization, schema, the Mac app, the two-Mac proof, and the Worker are unchanged. Homebrew and Nix stay on the published v1.29.2 archives until the v1.29.3 checksums exist.
 - In 1.29.7, saving the operator profile refuses a database path inside the OS temp directory and leaves the current profile unchanged. A saved local credential that does not match this installation's database fails before the work shell opens, and the database is not changed. The empty-workspace screen keeps its short footer after movement and filter keys. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. The v1.29.6 tag is unchanged. Homebrew and Nix stay on the published v1.29.6 archives until the v1.29.7 checksums exist.
+- In 1.29.8, `campfire publish` and `campfire join --invitation-link` / `--invitation-file` accept `--allow-loopback` again; the v1.29.4 strict-argument check had rejected the flag with exit 2. The flag is for same-machine testing only. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. The v1.29.7 tag is unchanged. Homebrew and Nix stay on the published v1.29.7 archives until the v1.29.8 checksums exist.
 - In 1.29.6, a profile with no workspace still shows the sessions shell: CAMPFIRE and the section labels in the sidebar, and the titles Team sessions and Selected session. The panes say no workspace yet and no session selected. No workspace, person, harness, count, or terminal line is invented. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. The v1.29.5 tag is unchanged. Homebrew and Nix stay on the published v1.29.4 archives.
 - In 1.29.5, the work shell no longer prints API request JSON over the screen. Redirected stderr still records each request. The no-workspace screen stays plain text and does not draw an empty sidebar. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.29.4 archives until the v1.29.5 checksums exist.
 - In 1.29.4, an interactive `campfire` opens the terminal even when a Campfire listener is already bound, and even when the profile has no workspace. The empty screen says no workspace yet and does not invent sessions or show terminal output. Unknown options and extra arguments fail before the command runs, and a usage mistake exits 2. Root help lists the common jobs; `campfire help --all` lists every command. Command names are unchanged. Piped `auto` output still selects JSON. Schema, the Mac app, the two-Mac proof, and the Worker are unchanged. This release does not deploy the Worker. Homebrew and Nix stay on the published v1.29.3 archives until the v1.29.4 checksums exist.
@@ -70,12 +71,12 @@ Ship a harness-independent shared workspace where people and authorized agents c
 ## Artifacts
 
 - This source snapshot and its manifest.
-- The versioned installer source for v1.29.7.
+- The versioned installer source for v1.29.8.
 - Darwin and Linux release archives for ARM64 and x64, with SHA-256 files, are produced by the public release workflow after publication.
 
 ## Verification
 
-At source preparation, the private 1.29.7 candidate passed type checking,
+At source preparation, the private 1.29.8 candidate passed type checking,
 build, local Darwin ARM64 packaging, and a deployment dry run against a
 distinctly named isolated Worker configuration. The pin-scoped v1.26.2
 full-suite run records 132 files / 1,581 tests with 1,580 passing and one opt-in

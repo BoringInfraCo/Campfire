@@ -216,7 +216,7 @@ describe("ARH-001 artifact-reference surfaces", () => {
    */
   function beforeSource(frame: string): string {
     const lines = frame.split("\n");
-    const at = lines.findIndex((line) => line === "SOURCE");
+    const at = lines.findIndex((line) => /(^|\s)SOURCE$/.test(line.trimEnd()));
     return at < 0 ? frame : lines.slice(0, at).join("\n");
   }
 
