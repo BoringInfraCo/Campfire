@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "version": "1.29.8",
   "sourceCommit": "78b74f2f53495dd6056c76284bc9b971db22bfe3",
+  "installChannelsCommit": "a24c5a1c11b57995ecfbbcd4faa745bb753cbb9b",
   "sourceDate": "2026-11-08T09:57:17-05:00",
   "exportedAt": "2026-11-08T00:00:00.000Z",
   "files": [
