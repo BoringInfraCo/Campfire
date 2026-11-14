@@ -12,7 +12,10 @@ import { beginHuman } from "../../src/bootstrap/listen.js";
 import { loadProfile, persistHumanProfile, saveCredentials, saveProfile } from "../../src/bootstrap/profile.js";
 import { persistRemoteProfile } from "../../src/bootstrap/remote-profile.js";
 import * as dashboard from "../../src/cli/dashboard.js";
-import { runCliEntry } from "../../src/cli/index.js";
+import { cmdDashboard, runCliEntry } from "../../src/cli/index.js";
+import { parseArgs } from "../../src/cli/args.js";
+import * as updateCommand from "../../src/cli/update-command.js";
+import * as opentui from "../../src/cli/opentui-launch.js";
 import { createRuntimeFromPath } from "../../src/runtime.js";
 
 function setTty(stream: NodeJS.ReadStream | NodeJS.WriteStream, value: boolean | undefined): void {
@@ -39,6 +42,7 @@ describe("bare campfire human shell", () => {
     setTty(process.stderr, previousStderr);
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -57,6 +61,7 @@ describe("bare campfire human shell", () => {
       errors.push(args.map(String).join(" "));
     });
     listenerClosed = false;
+    vi.stubEnv("CAMPFIRE_TUI", "opentui");
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new Error("connect ECONNREFUSED");
     }));
@@ -69,6 +74,8 @@ describe("bare campfire human shell", () => {
     });
     vi.spyOn(localWorkspace, "openLoopbackUrl").mockImplementation(() => {});
     vi.spyOn(dashboard, "runDashboardSession").mockResolvedValue(undefined);
+    vi.spyOn(opentui, "spawnOpentui").mockReturnValue({ once() {} });
+    vi.spyOn(opentui, "waitForOpentui").mockResolvedValue("quit");
   }
 
   function localProfileWithWorkspace(): { token: string; workspaceId: string; humanId: string } {
@@ -115,10 +122,12 @@ describe("bare campfire human shell", () => {
 
     expect(traces.join("")).not.toContain('"event":"authz"');
     expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
-    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(opentui.spawnOpentui).mock.calls[0]?.[0]).toMatchObject({
       awaitingWorkspace: true,
       workspaceId: "",
+      baseUrl: "http://127.0.0.1:9414",
     });
   });
 
@@ -145,37 +154,124 @@ describe("bare campfire human shell", () => {
 
     expect(await runCliEntry(["--db", dbPath])).toBe(0);
 
-    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(opentui.spawnOpentui).mock.calls[0]?.[0]).toMatchObject({
+      baseUrl: "http://127.0.0.1:9414",
+      token,
       workspaceId,
+      awaitingWorkspace: false,
       actorId: humanId,
       actorType: "human",
     });
     expect(localWorkspace.startLocalWorkspace).toHaveBeenCalledTimes(1);
     expect(localWorkspace.openLoopbackUrl).not.toHaveBeenCalled();
     expect(listenerClosed).toBe(true);
-    const calls: Array<{ url: string; authorization: string | null; body: unknown }> = [];
-    vi.stubGlobal("fetch", vi.fn(async (input, init) => {
-      calls.push({
-        url: String(input),
-        authorization: new Headers(init?.headers).get("authorization"),
-        body: JSON.parse(String(init?.body ?? "")),
-      });
-      return new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 });
-    }));
-    await vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]?.load();
-    expect(calls).toEqual([
-      {
-        url: "http://127.0.0.1:9414/v1/call",
-        authorization: `Bearer ${token}`,
-        body: { method: "get_workspace_context", params: { workspaceId, participants: "omit" } },
-      },
-    ]);
     const text = `${output.join("\n")}\n${errors.join("\n")}`;
     expect(text).not.toContain("Saved local profile");
     expect(text).not.toContain("open the Viewer and prepare your harness's tools");
     expect(text).not.toContain("Campfire is running");
     expect(text).not.toContain(token);
+  });
+
+  it("uses the classic dashboard when the sidecar is unavailable before launch", async () => {
+    prepare();
+    const { workspaceId } = localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.mocked(opentui.spawnOpentui).mockImplementation(() => { throw new opentui.OpentuiUnavailableError(); });
+
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({ workspaceId });
+    expect(opentui.waitForOpentui).not.toHaveBeenCalled();
+    expect(errors.join("\n")).toContain("Using the classic dashboard");
+  });
+
+  it("selects the classic dashboard when CAMPFIRE_TUI=classic", async () => {
+    prepare();
+    const { workspaceId } = localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubEnv("CAMPFIRE_TUI", "classic");
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({ workspaceId });
+    expect(opentui.spawnOpentui).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("defaults to classic and opts in with --opentui", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubEnv("CAMPFIRE_TUI", "");
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(opentui.spawnOpentui).not.toHaveBeenCalled();
+    expect(await runCliEntry(["--db", dbPath, "--opentui"])).toBe(0);
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs the update handoff once, after the sidecar and listener are gone, only on 'update'", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    let closedAtUpdate: boolean | undefined;
+    const update = vi.spyOn(updateCommand, "runUpdateCommand").mockImplementation(async () => {
+      closedAtUpdate = listenerClosed;
+    });
+    vi.mocked(opentui.waitForOpentui).mockResolvedValue("quit");
+    expect(await runCliEntry(["--db", dbPath, "--opentui"])).toBe(0);
+    expect(update).not.toHaveBeenCalled();
+
+    vi.mocked(opentui.waitForOpentui).mockResolvedValue("update");
+    expect(await runCliEntry(["--db", dbPath, "--opentui"])).toBe(0);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(2);
+    expect(closedAtUpdate).toBe(true);
+  });
+
+  it("keeps a sidecar runtime failure visible instead of falling back", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.mocked(opentui.waitForOpentui).mockRejectedValue(new Error("sidecar failed"));
+
+    expect(await runCliEntry(["--db", dbPath])).toBe(1);
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(errors.join("\n")).toContain("sidecar failed");
+  });
+
+  it("keeps the direct local SQLite dashboard available without an HTTP URL", async () => {
+    prepare();
+    const { workspaceId } = localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubEnv("CAMPFIRE_URL", "");
+    vi.stubEnv("CAMPFIRE_DB", dbPath);
+    vi.stubEnv("CAMPFIRE_TUI", "classic");
+    await cmdDashboard(parseArgs(["dashboard", workspaceId]), ["dashboard", workspaceId]);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(opentui.spawnOpentui).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("explains when explicit OpenTUI cannot use a direct local SQLite backend", async () => {
+    prepare();
+    const { workspaceId } = localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubEnv("CAMPFIRE_URL", "");
+    vi.stubEnv("CAMPFIRE_DB", dbPath);
+    vi.stubEnv("CAMPFIRE_TUI", "");
+    await expect(cmdDashboard(parseArgs(["dashboard", workspaceId, "--opentui"]), ["dashboard", workspaceId, "--opentui"]))
+      .rejects.toThrow("OpenTUI needs a Campfire HTTP listener");
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(opentui.spawnOpentui).not.toHaveBeenCalled();
   });
 
   it("does not start the dashboard for non-TTY or JSON bare campfire", async () => {
@@ -235,9 +331,13 @@ describe("bare campfire human shell", () => {
 
     expect(await runCliEntry([])).toBe(0);
 
-    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(opentui.spawnOpentui).mock.calls[0]?.[0]).toMatchObject({
+      baseUrl: "https://shared.example.test/team-a",
+      token: "human-secret-sentinel",
       workspaceId: "ws_existing",
+      awaitingWorkspace: false,
       actorId: "hum_alice",
       actorType: "human",
     });
@@ -266,11 +366,13 @@ describe("bare campfire human shell", () => {
 
     expect(localWorkspace.startLocalWorkspace).not.toHaveBeenCalled();
     expect(listenerClosed).toBe(false);
-    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(dashboard.runDashboardSession).mock.calls[0]?.[0]).toMatchObject({
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(opentui.spawnOpentui).mock.calls[0]?.[0]).toMatchObject({
       workspaceId,
       actorId: humanId,
       actorType: "human",
+      awaitingWorkspace: false,
     });
     expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
   });
@@ -302,7 +404,8 @@ describe("bare campfire human shell", () => {
       httpPort: 0,
       viewerPort: 0,
     });
-    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(dashboard.runDashboardSession).not.toHaveBeenCalled();
     expect(`${output.join("\n")}\n${errors.join("\n")}`).not.toContain("EADDRINUSE");
     expect(listenerClosed).toBe(true);
   });

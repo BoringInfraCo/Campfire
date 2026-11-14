@@ -7,6 +7,14 @@
  * it explains (AGENTS.md invariant 5). Storage details stay behind
  * `CampfireStore` (AGENTS.md invariant 7).
  */
+import type { AttentionAuthority, AttentionCatchUp, AttentionResult, GetWorkspaceAttentionInput } from "../domain/attention.js";
+import {
+  assembleAttentionCatchUp,
+  notRequestedCatchUp,
+  planAttentionCatchUp,
+  type SinceCursor,
+} from "../domain/attention-catchup.js";
+import { assertAttentionSnapshotFresh, attentionFromSnapshot, prepareAttentionRequest, snapshotTip } from "./attention-read.js";
 import { MEMORY_HEALTH_REASONS, validateMemoryHealthInput } from "../domain/memory-health.js";
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
@@ -713,6 +721,54 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       ...(afterPosition > 0 ? { afterPosition } : {}),
       ...(tip > 0 ? { throughPosition: tip } : {}),
     };
+  }
+
+  // FAC-001 catch-up reads: the same pageContributions calls as get_workspace_changes, limit E.
+  function readAttentionCatchUp(
+    workspaceId: string,
+    since: SinceCursor,
+    sinceToken: string,
+    currentTip: number,
+  ): AttentionCatchUp {
+    const plan = planAttentionCatchUp(since, currentTip);
+    let high: Contribution[] = [];
+    let highHasMore = false;
+    let normal: Contribution[] = [];
+    let normalHasMore = false;
+    if (since.phase === "high") {
+      const highPage = store.pageContributions(workspaceId, pageContributionQuery(plan.limit, "high", since.position, plan.tip));
+      high = highPage.items;
+      highHasMore = highPage.hasMore;
+      if (!highHasMore) {
+        const room = plan.limit - high.length;
+        if (room > 0) {
+          const normalPage = store.pageContributions(workspaceId, pageContributionQuery(room, "normal", since.originPosition, plan.tip));
+          normal = normalPage.items;
+          normalHasMore = normalPage.hasMore;
+        } else {
+          const probe = store.pageContributions(workspaceId, pageContributionQuery(1, "normal", since.originPosition, plan.tip));
+          normalHasMore = probe.items.length > 0 || probe.hasMore;
+        }
+      }
+    } else {
+      const normalPage = store.pageContributions(workspaceId, pageContributionQuery(plan.limit, "normal", since.position, plan.tip));
+      normal = normalPage.items;
+      normalHasMore = normalPage.hasMore;
+    }
+    const highCount = store.pageContributions(workspaceId, pageContributionQuery(1, "high", since.originPosition, plan.tip));
+    const normalCount = store.pageContributions(workspaceId, pageContributionQuery(1, "normal", since.originPosition, plan.tip));
+    return assembleAttentionCatchUp({
+      workspaceId,
+      fromCursor: sinceToken,
+      since,
+      currentTip,
+      high,
+      highHasMore,
+      normal,
+      normalHasMore,
+      highTotal: highCount.total,
+      normalTotal: normalCount.total,
+    });
   }
 
   function objectAfter(
@@ -1496,6 +1552,39 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         observedAt,
         snapshot,
       );
+    },
+
+    getWorkspaceAttention(ctx: ActorContext, input: GetWorkspaceAttentionInput): AttentionResult {
+      // 5.2 (1): authentication and workspace:read. (2): role and capabilities. No cue-source read yet.
+      const workspace = requireReadableWorkspace(ctx, input.workspaceId);
+      const role = store.getParticipant(input.workspaceId, ctx.actor)?.role ?? "none";
+      const active = workspace.status === "active";
+      const canTaskUpdate = authorizer.canAct(ctx, "task:update", input.workspaceId);
+      const authority: AttentionAuthority = {
+        role,
+        canDecisionUpdate: authorizer.canAct(ctx, "decision:update", input.workspaceId),
+        canTaskUpdate,
+        reviewEligible:
+          authorizer.canAct(ctx, "action:review", input.workspaceId) &&
+          ctx.actor.actorType === "human" &&
+          role === "owner" &&
+          active,
+        workspaceStatus: workspace.status,
+      };
+      const who = { actorType: ctx.actor.actorType, actorId: ctx.actor.actorId };
+      // (3) limit, cursor, since shape; (4) authority fingerprint.
+      const prepared = prepareAttentionRequest(input, who, authority);
+      const observedAt = prepared.cursor?.observedAt ?? clock();
+      // (4.5) one transaction; (5) staleness; (6) since ahead of tip.
+      return store.transaction(() => {
+        const snapshot = store.readAttentionSnapshot(input.workspaceId, { who, canTaskUpdate, includeReview: active });
+        assertAttentionSnapshotFresh(prepared, snapshot);
+        const catchUp =
+          prepared.since === undefined
+            ? notRequestedCatchUp()
+            : readAttentionCatchUp(input.workspaceId, prepared.since, prepared.sinceToken as string, snapshotTip(snapshot));
+        return attentionFromSnapshot(prepared, who, authority, observedAt, snapshot, catchUp);
+      });
     },
 
     recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput) {

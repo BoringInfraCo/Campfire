@@ -24,6 +24,7 @@ export const CAMPFIRE_HTTP_METHODS = [
   "get_workspace_changes",
   "recall_workspace",
   "get_memory_health",
+  "get_workspace_attention",
   "project_handoff_packet",
   "list_decisions",
   "list_findings",
@@ -517,6 +518,19 @@ export function dispatchCampfireMethod(
       const cursor = optionalStr(params, "cursor");
       if (cursor !== undefined) input.cursor = cursor;
       return service.getMemoryHealth(ctx, input);
+    }
+    case "get_workspace_attention": {
+      // Shape only: limit/cursor/since validation (A1.30, 5.2) runs in the service after authorization.
+      const input: { workspaceId: string; limit?: number; cursor?: string; since?: string } = {
+        workspaceId: str(params, "workspaceId"),
+      };
+      const limit = optionalInt(params, "limit");
+      if (limit !== undefined) input.limit = limit;
+      const cursor = optionalStr(params, "cursor");
+      if (cursor !== undefined) input.cursor = cursor;
+      const since = optionalStr(params, "since");
+      if (since !== undefined) input.since = since;
+      return service.getWorkspaceAttention(ctx, input);
     }
     case "recall_workspace":
       return service.recallWorkspace(ctx, recallReadInput(params));

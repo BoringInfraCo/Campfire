@@ -621,6 +621,8 @@ describe("ARH-001 artifact-reference surfaces", () => {
         "get_artifact",
         "get_record_history",
         "list_agent_sessions",
+        "get_workspace_attention",
+        "get_action_proposal",
       ]);
       expect(PUBLIC_APP_JS).toBe(APP_JS);
       expect(PUBLIC_APP_CSS).toBe(APP_CSS);

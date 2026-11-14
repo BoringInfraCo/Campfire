@@ -99,7 +99,8 @@ function explain(database: Database.Database, sql: string, params: readonly unkn
 describe("NAV-002 bounded reads", () => {
   it("keeps HTTP and CLI catalogs unchanged while the Viewer allowlist adds the seven NAV-003 reads", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(58);
+    // FAC-001 (A2.11) adds exactly one HTTP method, `get_workspace_attention`.
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(59);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(
       expect.arrayContaining(["list_workspace_participants", "get_record_history"]),
     );
@@ -117,10 +118,13 @@ describe("NAV-002 bounded reads", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_workspace_attention",
+      "get_action_proposal",
     ]);
     // The desktop intent channel adds exactly one CLI name (Phase C):
     // `intent`, the loopback bridge whose allowlist is numbered below.
-    expect(CLI_COMMAND_NAMES).toHaveLength(66);
+    // FAC-001 (A2.11) adds exactly one more: `attention`.
+    expect(CLI_COMMAND_NAMES).toHaveLength(67);
     expect(CLI_COMMAND_NAMES).toContain("intent");
     const listed = (source: string): string[] => {
       const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);

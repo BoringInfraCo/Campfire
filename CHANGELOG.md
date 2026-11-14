@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.31.0 — 2026-11-13
+
+- `get_workspace_attention` lists bounded, source-linked, authorized attention cues with declared coverage and catch-up. It is deterministic and read-only, and is available through the CLI (`campfire attention`), HTTP, and one added MCP tool. The Terminal dashboard and the loopback Viewer show the same cues with their coverage and catch-up caveats and never claim an unqualified all-clear. The Viewer read allowlist gains `get_workspace_attention` and `get_action_proposal`; there is no write path.
+- An opt-in OpenTUI terminal interface (`--opentui` or `CAMPFIRE_TUI=opentui`) adds sidebar sections, details and history, attention with `p` mine/team, keyboard and mouse navigation, empty-workspace guidance, and the `/update` handoff. The classic dashboard stays the default and OpenTUI does not replace it. It is packaged under `tui/` with Bun and the OpenTUI renderer; musl Linux falls back to the classic dashboard. Observed working only on macOS darwin-arm64 from a locally built archive.
+- `tools/list` grows because one MCP tool was added.
+- Scripted engineering results only. NOT OBSERVED: a person reading, understanding, or acting on an attention cue (the three-participant Terminal reading test has no scored result, no Viewer human protocol exists, and no two-human shared-work continuation was observed); hosted catch-up and deployed D1 for attention; OpenTUI on macOS x64, Linux glibc, and Linux musl, the CI release runners for those targets, a real update download, install, health restart, and rollback, and a human navigation test.
+- No schema or migration change, and no stored-data change. This source snapshot does not deploy the production Worker or its assets; the current production hosted Worker does not serve this release. Homebrew and Nix stay on the published v1.30.0 archives until the v1.31.0 checksums exist.
+
 ## 1.30.0 — 2026-11-08
 
 - `campfire memory-health [workspace]`, the HTTP method `get_memory_health`, and the MCP tool `get_memory_health` list a bounded, paged set of workspace records that need review, with the reason and the source facts for each. Four fixed rules: an action outcome that is unknown, an accepted decision whose basis is under review, a current finding with contradicting evidence, and a blocked task with missing context. It reads canonical state with the caller's authorization, calls no model and no network, writes nothing, and stores nothing. It does not find everything that is stale or contradictory.

@@ -27,7 +27,9 @@ const els = {
   alignment: document.getElementById("alignment"),
   nextAction: document.getElementById("next-action"),
   needsYou: document.getElementById("needs-you"),
+  needsYouTitle: document.getElementById("needs-you-title"),
   needsAttention: document.getElementById("needs-attention"),
+  needsAttentionTitle: document.getElementById("needs-attention-title"),
   currentWork: document.getElementById("current-work"),
   sources: document.getElementById("sources"),
   since: document.getElementById("since"),
@@ -75,6 +77,12 @@ const state = {
   workspaces: [],
   workspaceId: null,
   context: null,
+  // FAC-001 session baseline B. Memory only. Never written to localStorage or sessionStorage.
+  attention: null,
+  attentionFailed: false,
+  attentionFailureText: "",
+  attentionBaseline: null,
+  attentionWorkspaceId: null,
   view: null,
   activity: null,
   perspective: readStoredPerspective(),
@@ -808,6 +816,7 @@ function setWorkspace(id) {
   state.context = null;
   state.view = null;
   state.activity = null;
+  clearAttentionSession();
   render();
   refresh();
 }
@@ -1028,6 +1037,146 @@ function attentionItemBodyHtml(item) {
   const assigneeHtml = assigneeId ? `<span>${esc(`assignee: ${assigneeId}`)}</span>` : "";
   const symbol = item.kind === "decision" ? "◇" : item.kind === "task" ? "▣" : "○";
   return `<span class="row-main"><span class="row-symbol" aria-hidden="true">${symbol}</span><span class="row-title">${esc(visibleText(sentence))}</span></span><span class="row-meta">${[sourceHtml, reasonHtml, citedHtml, assigneeHtml].filter(Boolean).join(" · ")}</span>`;
+}
+
+// FAC-001 human strings. Kept equal to ATTENTION_VIEW_STRINGS and FAC_ATTENTION_REASON_LABELS
+// in src/presentation/attention-view.ts. A test pins the equality.
+const FAC_REASON_LABELS = {
+  action_proposal_awaiting_review: "Proposal awaiting review by an owner",
+  action_outcome_unknown: "Action outcome unknown",
+  assigned_blocked_task: "Assigned task is blocked",
+  proposed_decision_actionable: "Proposed decision you can act on",
+  team_proposed_decision: "Proposed decision awaiting the team",
+  accepted_decision_needs_review: "Accepted decision needs review",
+  current_finding_has_contradicting_evidence: "Current finding has contradicting evidence",
+  unassigned_blocked_task: "Unassigned task is blocked",
+  team_blocked_task: "Team task is blocked",
+  blocked_task_missing_context: "Blocked task is missing context",
+  assigned_open_task: "Assigned task is open",
+};
+const FAC_STRINGS = {
+  emptyComplete: "No recorded cue matches these rules.",
+  emptyIncomplete:
+    "No recorded cue matches these rules, but coverage is incomplete (see sources below). This does not mean nothing needs attention.",
+  morePages: "More cues exist beyond this page.",
+  expiredMarker: "(expired)",
+  coverageComplete: "Coverage: complete under the rules.",
+  coverageIncomplete: "Coverage: incomplete under the rules.",
+};
+
+function facAttentionActive(homeState) {
+  return isRecord(homeState) && isRecord(homeState.attention) && Array.isArray(homeState.attention.cues);
+}
+
+function facReasonText(reason) {
+  return Object.prototype.hasOwnProperty.call(FAC_REASON_LABELS, reason) ? FAC_REASON_LABELS[reason] : strField(reason);
+}
+
+function facCuesInOrder(result, audience) {
+  return result.cues.filter((cue) => isRecord(cue) && cue.audience === audience);
+}
+
+function facCountExact(result) {
+  return Boolean(result && result.coverage && result.coverage.completeUnderRules === true && result.nextCursor === undefined);
+}
+
+function facNeedsYouText(result) {
+  const count = facCuesInOrder(result, "you").length;
+  return facCountExact(result) ? String(count) : `${count}+ (more pages or incomplete coverage)`;
+}
+
+function facSourceLines(result) {
+  const lines = [result.coverage && result.coverage.completeUnderRules === true ? FAC_STRINGS.coverageComplete : FAC_STRINGS.coverageIncomplete];
+  const perSource = result.coverage && Array.isArray(result.coverage.perSource) ? result.coverage.perSource : [];
+  for (const entry of perSource) {
+    if (!isRecord(entry)) continue;
+    const label = facReasonText(entry.reason);
+    if (entry.skipped !== undefined && entry.skipped !== null) lines.push(`${label}: skipped (${strField(entry.skipped)}).`);
+    else if (entry.truncated === true) lines.push(`${label}: scanned ${Number(entry.scanned || 0)} of ${Number(entry.total || 0)}; scan limit reached.`);
+  }
+  return lines;
+}
+
+function facCatchUpLines(result) {
+  const c = isRecord(result.catchUp) ? result.catchUp : null;
+  if (!c || c.status === "not_requested") return [];
+  const lines = [];
+  if (c.status === "partial") {
+    lines.push(`Catch-up: partial; more changes exist. ${Number(c.changedCount)} changed in this interval; ${Number(c.examined)} examined on this page.`);
+  } else if (c.status === "complete") {
+    const to = typeof c.toCursor === "string" && c.toCursor ? ` to ${c.toCursor}` : "";
+    lines.push(`Caught up${to}. ${Number(c.changedCount)} changed in this interval; ${Number(c.examined)} examined on this page.`);
+  }
+  if (c.tipAdvanced === true) lines.push("The workspace advanced while reading.");
+  if (Array.isArray(c.affectedIds) && c.affectedIds.length) lines.push(`Affected: ${c.affectedIds.map((id) => strField(id)).join(", ")}`);
+  if (c.affectedTruncated === true) lines.push(`Affected list is truncated (showing ${Array.isArray(c.affectedIds) ? c.affectedIds.length : 0}).`);
+  return lines;
+}
+
+function facCueItem(cue) {
+  const kind = strField(cue.subjectType);
+  const related = Array.isArray(cue.relatedIds) ? cue.relatedIds.map((id) => strField(id)).filter(Boolean) : [];
+  return {
+    kind,
+    id: strField(cue.subjectId),
+    cueId: strField(cue.id),
+    summary: strField(cue.summary),
+    reason: strField(cue.reason),
+    related,
+    expired: cue.reason === "action_proposal_awaiting_review" && cue.expired === true,
+  };
+}
+
+function facItemHtml(item) {
+  const kind = esc(item.kind);
+  const id = esc(item.id);
+  const current = state.sectionSelection && state.sectionSelection.attention === item.id ? ` aria-current="true"` : "";
+  const expired = item.expired ? ` ${FAC_STRINGS.expiredMarker}` : "";
+  const title = `${facReasonText(item.reason)}${expired}`;
+  const related = item.related && item.related.length ? `<span class="row-meta">related: ${item.related.map((value) => esc(value)).join(", ")}</span>` : "";
+  return `<li class="oitem"><button type="button" class="row-btn" data-record-id="${id}" data-record-kind="${kind}"${current}><span class="row-main"><span class="row-title">${esc(title)}</span></span><span class="row-meta">${esc(item.summary)} · <span class="record-id">${esc(item.cueId)}</span></span>${related}</button></li>`;
+}
+
+function facNotesHtml(result) {
+  const lines = facSourceLines(result);
+  if (result.nextCursor !== undefined && result.nextCursor !== null) lines.push(FAC_STRINGS.morePages);
+  lines.push(...facCatchUpLines(result));
+  return lines.length ? `<div class="coverage">${lines.map((line) => esc(line)).join("<br>")}</div>` : "";
+}
+
+function renderFacPanel(el, titleEl, heading, items, emptyText, notesHtml) {
+  if (titleEl) titleEl.textContent = heading;
+  if (!el) return;
+  const list = items.length ? `<ul class="olist">${items.map((item) => facItemHtml(item)).join("")}</ul>` : `<div class="empty">${esc(emptyText)}</div>`;
+  el.innerHTML = list + (notesHtml || "");
+}
+
+function clearAttentionSession() {
+  state.attention = null;
+  state.attentionFailed = false;
+  state.attentionFailureText = "";
+  state.attentionBaseline = null;
+  state.attentionWorkspaceId = null;
+}
+
+function rememberAttentionBaseline(result, workspaceId) {
+  // A4.1, same rule as the Terminal: the first success takes orientationCursor.
+  // A later not_requested read keeps that baseline. partial or complete advances to toCursor.
+  const catchUp = isRecord(result) && isRecord(result.catchUp) ? result.catchUp : null;
+  const sameWorkspace = state.attentionWorkspaceId === workspaceId;
+  const prior = sameWorkspace && typeof state.attentionBaseline === "string" ? state.attentionBaseline : null;
+  if (!prior && isRecord(result) && typeof result.orientationCursor === "string") {
+    state.attentionBaseline = result.orientationCursor;
+  } else if (prior && catchUp && catchUp.status !== "not_requested" && typeof catchUp.toCursor === "string") {
+    state.attentionBaseline = catchUp.toCursor;
+  }
+  state.attentionWorkspaceId = workspaceId;
+}
+
+function facFailureText(err) {
+  const message = err && typeof err.message === "string" ? err.message.replace(/\s+/g, " ").trim() : "";
+  if (!message || /token|secret|bearer|\/users\/|file:/i.test(message)) return "Attention read failed. Showing the older list.";
+  return `Attention read failed: ${message}. Showing the older list.`;
 }
 
 function renderAttentionList(el, items, emptyText, coverageText) {
@@ -1832,17 +1981,39 @@ function renderOrientation(homeEls = els, homeState = state) {
   renderAlignment(homeEls.alignment, deriveAlignment(homeState.context), homeState.context);
   renderOwnedNote(homeState);
   const filterQuery = String(homeState.rowFilter || "").trim().toLowerCase();
-  const needsYou = deriveNeedsYou(homeState.context);
-  const needsAttention = deriveNeedsAttention(homeState.context);
-  const attentionText = (item) => `${strField(item.id)} ${strField(item.summary)} ${strField(item.status)} ${strField(item.reason)}`;
-  const shownYou = filterQuery ? needsYou.filter((item) => attentionText(item).toLowerCase().includes(filterQuery)) : needsYou;
-  const shownAttention = filterQuery
-    ? needsAttention.filter((item) => attentionText(item).toLowerCase().includes(filterQuery))
-    : needsAttention;
-  if (filterQuery && needsYou.length && !shownYou.length) renderFilterMiss(homeEls.needsYou, coverageText);
-  else renderAttentionList(homeEls.needsYou, shownYou, emptyText, coverageText);
-  if (filterQuery && needsAttention.length && !shownAttention.length) renderFilterMiss(homeEls.needsAttention, coverageText);
-  else renderAttentionList(homeEls.needsAttention, shownAttention, emptyText, coverageText);
+  if (facAttentionActive(homeState)) {
+    const result = homeState.attention;
+    const notes = facNotesHtml(result);
+    const youItems = facCuesInOrder(result, "you").map(facCueItem);
+    const teamItems = facCuesInOrder(result, "team").map(facCueItem);
+    const matches = (item) => `${item.id} ${item.cueId} ${item.summary} ${item.reason}`.toLowerCase().includes(filterQuery);
+    const shownYou = filterQuery ? youItems.filter(matches) : youItems;
+    const shownTeam = filterQuery ? teamItems.filter(matches) : teamItems;
+    const youEmpty = result.cues.length === 0
+      ? (result.coverage && result.coverage.completeUnderRules === true ? FAC_STRINGS.emptyComplete : FAC_STRINGS.emptyIncomplete)
+      : "No you cue in this page.";
+    const teamEmpty = result.cues.length === 0 ? youEmpty : "No team cue in this page.";
+    if (filterQuery && youItems.length && !shownYou.length) renderFilterMiss(homeEls.needsYou, "");
+    else renderFacPanel(homeEls.needsYou, homeEls.needsYouTitle, `Needs You  ${facNeedsYouText(result)}`, shownYou, youEmpty, notes);
+    if (filterQuery && teamItems.length && !shownTeam.length) renderFilterMiss(homeEls.needsAttention, "");
+    else renderFacPanel(homeEls.needsAttention, homeEls.needsAttentionTitle, `Needs Attention  ${teamItems.length}`, shownTeam, teamEmpty, "");
+  } else {
+    if (homeEls.needsYouTitle) homeEls.needsYouTitle.textContent = "Needs You";
+    if (homeEls.needsAttentionTitle) homeEls.needsAttentionTitle.textContent = "Needs Attention";
+    const failure = homeState.attentionFailed === true ? `<div class="coverage">${esc(homeState.attentionFailureText || "Attention read failed. Showing the older list.")}</div>` : "";
+    const needsYou = deriveNeedsYou(homeState.context);
+    const needsAttention = deriveNeedsAttention(homeState.context);
+    const attentionText = (item) => `${strField(item.id)} ${strField(item.summary)} ${strField(item.status)} ${strField(item.reason)}`;
+    const shownYou = filterQuery ? needsYou.filter((item) => attentionText(item).toLowerCase().includes(filterQuery)) : needsYou;
+    const shownAttention = filterQuery
+      ? needsAttention.filter((item) => attentionText(item).toLowerCase().includes(filterQuery))
+      : needsAttention;
+    if (filterQuery && needsYou.length && !shownYou.length) renderFilterMiss(homeEls.needsYou, coverageText);
+    else renderAttentionList(homeEls.needsYou, shownYou, emptyText, coverageText);
+    if (filterQuery && needsAttention.length && !shownAttention.length) renderFilterMiss(homeEls.needsAttention, coverageText);
+    else renderAttentionList(homeEls.needsAttention, shownAttention, emptyText, coverageText);
+    if (failure && homeEls.needsYou) homeEls.needsYou.innerHTML = failure + homeEls.needsYou.innerHTML;
+  }
   // Both perspectives render from this same context; only the leading panel
   // differs (CSS order/visibility). No section makes its own read.
   const who = callerRef(homeState.whoami);
@@ -2185,9 +2356,16 @@ function renderOverview() {
   const title = goal ? visibleText(strField(goal.title)) : "";
   if (title) parts.push(`<div class="ogroup"><div class="ogroup-label">Goal</div><div>${esc(title)}</div></div>`);
   const team = state.perspective === "team";
-  const attention = team ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
-  const label = team ? "Needs Attention" : "Needs You";
-  parts.push(`<div>${esc(label)} · ${attention.length} shown</div>`);
+  if (facAttentionActive(state)) {
+    const label = team ? "Needs Attention" : "Needs You";
+    const text = team ? String(facCuesInOrder(state.attention, "team").length) : facNeedsYouText(state.attention);
+    parts.push(`<div>${esc(label)} · ${esc(text)}</div>`);
+  } else {
+    const attention = team ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+    const label = team ? "Needs Attention" : "Needs You";
+    const failed = state.attentionFailed === true ? " · older list" : "";
+    parts.push(`<div>${esc(label)} · ${attention.length} shown${esc(failed)}</div>`);
+  }
   const taskCount = recordedTaskCount(state.context);
   if (taskCount !== null) parts.push(`<div>Tasks · ${taskCount} recorded</div>`);
   parts.push(caveat);
@@ -2240,6 +2418,10 @@ function idsInSection(section) {
     );
   }
   if (section === "attention") {
+    if (facAttentionActive(state)) {
+      const audience = state.perspective === "team" ? "team" : "you";
+      return facCuesInOrder(state.attention, audience).map((cue) => strField(cue.subjectId));
+    }
     const list = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
     return list.map((row) => strField(row.id));
   }
@@ -2363,6 +2545,11 @@ function actorFactHtml(label, actor) {
 }
 
 function sourceHeadingHtml(kind, record, fallbackId) {
+  if (kind === "action_proposal") {
+    const id = isRecord(record) ? strField(record.id, fallbackId) : strField(fallbackId);
+    const status = isRecord(record) ? strField(record.status) : "";
+    return `<div class="detail-identity"><span class="record-id">ACTION_PROPOSAL ${esc(id)}</span><span class="detail-state">${esc(status || "recorded")}</span></div><h2>Proposal awaiting review by an owner</h2>`;
+  }
   if (!isRecord(record)) return `<div class="detail-identity"><span class="record-id">${esc(fallbackId || "")}</span></div><h2>Selected record</h2>`;
   const actor = isRecord(record.actor) ? record.actor : {};
   const id = strField(record.id, actor.actorId, fallbackId);
@@ -2376,6 +2563,10 @@ function sourceHeadingHtml(kind, record, fallbackId) {
 
 function sourceRecordHtml(kind, record, findings = []) {
   if (!isRecord(record)) return `<p>This read did not include the record.</p>`;
+  if (kind === "action_proposal") {
+    const status = strField(record.status);
+    return `<section class="detail-panel" data-detail-panel="overview"><h3>Record at a glance</h3>${sourceFactHtml("Record state", status)}<p class="source-note">This is a recorded proposal. The Viewer does not show its body, target, or receipt.</p></section><section class="detail-panel" data-detail-panel="sources"><h3>Recorded sources</h3><p class="empty">No proposal payload is shown in this read.</p></section>`;
+  }
   const overview = [];
   const sources = [];
   if (kind === "human" || kind === "agent" || kind === "participant") {
@@ -2674,8 +2865,30 @@ async function selectRecord(kind, id) {
   render();
   focusDetailOnNarrow();
   if (!state.workspaceId) return;
+  const workspaceId = state.workspaceId;
   if (full) {
-    if (kind === "decision" && local) void loadMissingFindings(gen, state.workspaceId, local);
+    if (kind === "decision" && local) void loadMissingFindings(gen, workspaceId, local);
+    return;
+  }
+  if (kind === "action_proposal") {
+    try {
+      const proposal = await api("get_action_proposal", { workspaceId, proposalId: id });
+      if (gen !== state.detailGen || state.workspaceId !== workspaceId || !state.detail || state.detail.id !== id) return;
+      const record = isRecord(proposal) && isRecord(proposal.proposal) ? proposal.proposal : proposal;
+      state.detail = {
+        id,
+        kind,
+        record: { id: strField(isRecord(record) ? record.id : id), status: strField(isRecord(record) ? record.status : ""), title: "Proposal awaiting review by an owner" },
+        loading: false,
+        error: null,
+        method: "get_action_proposal",
+      };
+    } catch (err) {
+      if (gen !== state.detailGen || !state.detail || state.detail.id !== id) return;
+      state.detail.loading = false;
+      state.detail.error = err.message || String(err);
+    }
+    if (gen === state.detailGen) render();
     return;
   }
   if (RECORD_KINDS.indexOf(kind) === -1) {
@@ -2683,7 +2896,6 @@ async function selectRecord(kind, id) {
     render();
     return;
   }
-  const workspaceId = state.workspaceId;
   try {
     const record = await api(`get_${kind}`, { workspaceId, [`${kind}Id`]: id });
     if (gen !== state.detailGen || state.workspaceId !== workspaceId || !state.detail || state.detail.id !== id) return;
@@ -2825,7 +3037,11 @@ function seedSectionPreview() {
   let id = "";
   let record = null;
   if (state.section === "attention") {
-    const rows = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+    const rows = facAttentionActive(state)
+      ? facCuesInOrder(state.attention, state.perspective === "team" ? "team" : "you").map(facCueItem)
+      : state.perspective === "team"
+        ? deriveNeedsAttention(state.context)
+        : deriveNeedsYou(state.context);
     const first = pick(rows, (row) => matchesRowFilter(`${strField(row.id)} ${strField(row.summary)} ${strField(row.reason)}`));
     if (first) {
       kind = strField(first.kind);
@@ -2924,7 +3140,11 @@ function renderNavigation() {
     }
     else button.setAttribute("data-count", `${count}${qualified ? "+" : ""}`);
   };
-  const attentionItems = state.perspective === "team" ? deriveNeedsAttention(state.context) : deriveNeedsYou(state.context);
+  const attentionItems = facAttentionActive(state)
+    ? facCuesInOrder(state.attention, state.perspective === "team" ? "team" : "you").map(facCueItem)
+    : state.perspective === "team"
+      ? deriveNeedsAttention(state.context)
+      : deriveNeedsYou(state.context);
   const attentionCoverage = attentionCoverageFrom(state.context);
   const participantCoverage = omittedParticipantCoverage(state.context);
   if (els.sectionCount) {
@@ -2937,7 +3157,12 @@ function renderNavigation() {
           : "";
     els.sectionCount.textContent = count;
   }
-  navCount("attention", state.context ? attentionItems.length : null, !attentionCoverage || attentionCoverage.completeUnderRules !== true);
+  const facExact = facAttentionActive(state) && facCountExact(state.attention);
+  navCount(
+    "attention",
+    facAttentionActive(state) || state.context ? attentionItems.length : null,
+    facAttentionActive(state) ? !facExact : !attentionCoverage || attentionCoverage.completeUnderRules !== true,
+  );
   navCount("work", state.workPage && typeof state.workPage.total === "number" ? state.workPage.total : null, false);
   navCount("people", participantCoverage ? participantCoverage.total : null, false);
   navCount("decisions", null, false);
@@ -3272,6 +3497,7 @@ async function refresh() {
       state.view = null;
       state.activity = null;
       state.error = null;
+      clearAttentionSession();
       render();
       return;
     }
@@ -3283,11 +3509,37 @@ async function refresh() {
     const contextParams = { workspaceId: id, participants: "omit" };
     if (useSince) contextParams.since = cursor;
 
-    const [context, activity] = await Promise.all([
+    const attentionParams = { workspaceId: id, limit: 100 };
+    if (state.attentionBaseline && state.attentionWorkspaceId === id) attentionParams.since = state.attentionBaseline;
+    const [context, activity, attentionOutcome] = await Promise.all([
       api("get_workspace_context", contextParams),
       api("get_activity", { workspaceId: id, limit: LIMIT }),
+      api("get_workspace_attention", attentionParams).then(
+        (value) => ({ ok: true, value }),
+        (err) => ({ ok: false, err }),
+      ),
     ]);
     if (g !== gen || state.workspaceId !== id) return;
+    const attentionValue = attentionOutcome.ok ? attentionOutcome.value : null;
+    const attentionMismatch = isRecord(attentionValue) && typeof attentionValue.workspaceId === "string" && attentionValue.workspaceId !== id;
+    if (attentionOutcome.ok && !attentionMismatch) {
+      state.attention = attentionValue;
+      state.attentionFailed = false;
+      state.attentionFailureText = "";
+      rememberAttentionBaseline(attentionValue, id);
+    } else if (attentionMismatch) {
+      state.attention = null;
+      state.attentionFailed = true;
+      state.attentionFailureText = "Attention read failed. Showing the older list.";
+      state.attentionBaseline = null;
+      state.attentionWorkspaceId = null;
+    } else {
+      state.attention = null;
+      state.attentionFailed = true;
+      state.attentionFailureText = facFailureText(attentionOutcome.err);
+      state.attentionBaseline = null;
+      state.attentionWorkspaceId = null;
+    }
     state.context = context;
     // The full inspector is not part of this refresh. Drop a leftover view
     // only after the orientation read succeeds, so a failure keeps the last

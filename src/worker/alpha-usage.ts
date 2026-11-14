@@ -29,7 +29,7 @@ const SAFETY_WRITES = new Set([
 ]);
 const CONTENT_READS = new Set([
   "get_workspace", "get_workspace_context", "get_workspace_changes",
-  "recall_workspace", "get_memory_health", "project_handoff_packet", "list_decisions",
+  "recall_workspace", "get_memory_health", "get_workspace_attention", "project_handoff_packet", "list_decisions",
   "list_findings", "list_tasks", "list_artifacts", "get_decision",
   "get_finding", "get_task", "get_artifact", "get_activity",
   "list_workspace_participants", "get_record_history", "get_action_proposal",

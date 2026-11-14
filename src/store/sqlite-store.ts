@@ -1,3 +1,10 @@
+import {
+  ATTENTION_TIP_SQL,
+  assembleAttentionSnapshot,
+  attentionScanStatements,
+  type AttentionCountSqlRow,
+  type AttentionTipSqlRow,
+} from "./attention-queries.js";
 import Database from "better-sqlite3";
 import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import { Conflict } from "../domain/errors.js";
@@ -1547,6 +1554,23 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         proposals: run<ProposalJoinRow>(MEMORY_HEALTH_PROPOSALS_SQL),
       });
       return { tip: mapMemoryHealthTip(tip), rows };
+    },
+
+    readAttentionSnapshot(workspaceId, request) {
+      const run = <T>(sql: string): T[] => db.prepare(sql).all(workspaceId) as T[];
+      const tip = db.prepare(ATTENTION_TIP_SQL).get(workspaceId) as AttentionTipSqlRow | undefined;
+      const memoryHealth = assembleMemoryHealthRows({
+        decisions: run<DecisionJoinRow>(MEMORY_HEALTH_DECISIONS_SQL),
+        findings: run<FindingJoinRow>(MEMORY_HEALTH_FINDINGS_SQL),
+        tasks: run<TaskJoinRow>(MEMORY_HEALTH_TASKS_SQL),
+        proposals: run<ProposalJoinRow>(MEMORY_HEALTH_PROPOSALS_SQL),
+      });
+      const scans = attentionScanStatements(workspaceId, request).map((statement) => ({
+        key: statement.key,
+        rows: db.prepare(statement.list.sql).all(...statement.list.params) as unknown[],
+        count: db.prepare(statement.count.sql).get(...statement.count.params) as AttentionCountSqlRow | undefined,
+      }));
+      return assembleAttentionSnapshot({ tip, memoryHealth, scans });
     },
 
     recallSection(workspaceId, section, query) {

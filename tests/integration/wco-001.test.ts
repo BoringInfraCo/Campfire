@@ -363,7 +363,7 @@ describe("WCO-001 D4 — boundary parity", () => {
 });
 
 describe("WCO-001 D5 — interface safety", () => {
-  it("keeps the Viewer read allowlist closed at the twelve NAV-003 methods", () => {
+  it("keeps the Viewer read allowlist at the NAV-003 methods plus the FAC-001 reads", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([
       "whoami",
       "list_workspaces",
@@ -378,6 +378,8 @@ describe("WCO-001 D5 — interface safety", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_workspace_attention",
+      "get_action_proposal",
     ]);
   });
 
@@ -409,6 +411,7 @@ describe("WCO-001 D5 — interface safety", () => {
         "get_finding",
         "get_task",
         "get_workspace",
+        "get_workspace_attention",
         "get_workspace_changes",
         "get_workspace_context",
         "invite_workspace",
@@ -491,7 +494,7 @@ describe("WCO-001 D6 — compatibility", () => {
 
   it("keeps the CLI command catalog unchanged for continuation commands", () => {
     const commands = [...CLI_COMMAND_NAMES];
-    expect(commands).toHaveLength(66);
+    expect(commands).toHaveLength(67); // FAC-001 (A2.11): +1 `attention`
     for (const command of ["status", "context", "catch-up", "tasks", "update-task", "cite-evidence", "inspect"]) {
       expect(commands).toContain(command);
     }

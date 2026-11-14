@@ -93,6 +93,7 @@ const STRUCTURED_READ_TITLES: Readonly<Record<string, string>> = {
   list_tasks: "List tasks",
   get_task: "Get task",
   get_memory_health: "Get memory health",
+  get_workspace_attention: "Get workspace attention",
   get_decision: "Get decision",
   get_finding: "Get finding",
   get_artifact: "Get artifact",
@@ -423,6 +424,22 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
       },
     },
     (args) => run("get_memory_health", () => invoke("get_memory_health", args)),
+  );
+
+  server.registerTool(
+    "get_workspace_attention",
+    {
+      title: STRUCTURED_READ_TITLES.get_workspace_attention,
+      annotations: READ_TOOL_ANNOTATIONS,
+      description: "Read-only attention cues for one authorized workspace, with coverage and nextCursor.",
+      inputSchema: {
+        workspaceId: z.string(),
+        limit: z.number().int().positive().optional(),
+        cursor: z.string().optional(),
+        since: z.string().optional(),
+      },
+    },
+    (args) => run("get_workspace_attention", () => invoke("get_workspace_attention", args)),
   );
 
   server.registerTool(

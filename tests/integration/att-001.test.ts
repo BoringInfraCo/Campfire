@@ -845,6 +845,8 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_workspace_attention",
+      "get_action_proposal",
     ]);
 
     const server = createCampfireMcpServer({ service, identity: { ctx: ctxA } as ServerIdentity });
@@ -857,8 +859,9 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
       // remove any. NAV-003 extends the Viewer allowlist only. CAP-001 adds
       // discover_capabilities and get_read_recipe. Those two project the local
       // catalog; they are not workspace reads and they are not on the Viewer
-      // allowlist.
-      expect(names).toHaveLength(47);
+      // allowlist. FAC-001 (A2.11) adds exactly one tool,
+      // `get_workspace_attention`.
+      expect(names).toHaveLength(48);
       for (const name of [
         "get_workspace_context",
         "update_task",

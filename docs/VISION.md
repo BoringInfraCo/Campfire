@@ -1,8 +1,9 @@
 # Campfire — Vision
 
-**Status:** Revised after `v1.10.0`
+**Status:** Revised through published `v1.30.0` (v1.31.0 approved and in preparation, not yet published); collaborative-workspace
+positioning and FAC-001 direction recorded November 11, 2026
 **Version:** 0.2
-**Date:** October 3, 2026
+**Date:** October 3, 2026; latest revision November 11, 2026
 **Company:** Boring Infra Co.
 
 ## Vision
@@ -121,6 +122,46 @@ Humans and agents contribute to the same workspace while remaining distinct acto
 An agent can leave. A different agent can arrive. A teammate can continue the work.
 
 The useful state remains.
+
+The clearest expression of this model is not “share an AI chat.” It is:
+
+> **Invite a teammate. Their agent can join the work already in progress.**
+
+The teammate and agent enter the same authorized workspace, orient from the
+recorded goals, tasks, findings, decisions, artifacts, evidence, and
+provenance, and contribute the next useful state. Private sessions remain
+private. The workspace is what compounds.
+
+## Three Stages of the Product
+
+Campfire's product should become more valuable in three stages:
+
+```text
+01 — THE FOUNDATION
+Your agents and their work, in one place.
+
+02 — THE COLLABORATIVE WORKSPACE
+Your whole team and their agents, working together.
+
+03 — THE INTELLIGENT WORKSPACE
+Campfire helps the team understand what matters and what happens next.
+```
+
+The first stage makes work durable and portable across sessions and harnesses.
+The second makes that work understandable and actionable across people,
+devices, and agents. Its signature experience is a teammate and their agent
+continuing existing work without a transcript transfer or manual handoff. The
+third helps maintain and use the team's shared memory:
+it can surface overlooked evidence, explain what changed, identify recorded
+blockers, prepare handoffs, and propose next steps.
+
+Each stage depends on the one before it. Intelligence without trustworthy
+state becomes confident summarization. Collaboration without identity and
+authorization becomes leakage. A workspace without useful continuity becomes
+another place humans must keep updated manually.
+
+The workspace is the product. A terminal, agent session, native application,
+or generated brief is one way to participate in it.
 
 ---
 
@@ -243,6 +284,30 @@ A team may use Codex today, Claude Code tomorrow, an open-source harness for ano
 Campfire belongs **between those experiences**, not inside one of them.
 
 The collaboration state should outlive any individual harness.
+
+Harness independence does not mean Campfire ignores harness capabilities. A
+harness may provide code-based tool composition, a local sandbox, model
+routing, resumable execution, or specialized agents. Campfire can expose typed,
+structured, capability-described operations so those runtimes use fewer model
+round trips and return less irrelevant context.
+
+The ownership boundary should remain clear:
+
+```text
+Campfire
+  owns authorized work, task fit, provenance, memory, and outcomes
+
+Harness
+  owns model calls, tool composition, private context, and execution loop
+
+Sandbox / operating system
+  owns containment of commands, files, network, and process effects
+```
+
+Campfire may recommend a user-owned agent for a task. The recommendation must
+respect authorization, installed tools, repository access, privacy, model
+constraints, budget, and measured outcomes. Automatic assignment is a later,
+opt-in step; it should not be inferred from a model name or vendor claim.
 
 ---
 
@@ -422,6 +487,29 @@ Organizational Learning
 ```
 
 Campfire should earn each layer rather than prematurely claiming all of them.
+
+Memory is not one database feature. Campfire's memory system includes:
+
+- durable events and Contributions;
+- structured memory records such as Findings, Decisions, Tasks, Goals, and
+  Artifact references;
+- bounded context supplied to a current session;
+- search and retrieval;
+- derived representations such as workspace maps and briefs;
+- and maintenance that finds stale, contradictory, duplicated, or disconnected
+  state.
+
+The first five are already present in partial forms. The missing product loop
+is trustworthy maintenance. Campfire should first compute deterministic memory
+health, then allow an optional Memory Steward to propose corrections,
+relationships, questions, handoffs, or summaries. The Steward must not silently
+rewrite canonical work. A human or authorized agent accepts any durable change
+through the same application services and provenance rules as other work.
+
+The strongest intelligent experience is therefore not “ask a chatbot about
+everything.” It is a workspace that can say what changed, what may conflict,
+what evidence supports the conclusion, what is incomplete, and what deserves
+attention next.
 
 ---
 

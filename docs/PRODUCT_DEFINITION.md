@@ -1,9 +1,10 @@
 # Campfire — Product Definition v0.2
 
-**Status:** Revised after `v1.10.0`; SES-001 local-session boundary recorded November 5, 2026
+**Status:** Revised through published `v1.30.0`; collaborative-workspace
+positioning and FAC-001 direction recorded November 11, 2026
 **Company:** Boring Infra Co.  
 **Version:** 0.2  
-**Date:** October 3, 2026; SES-001 exception recorded November 5, 2026
+**Date:** October 3, 2026; latest revision November 11, 2026
 
 ---
 
@@ -65,15 +66,71 @@ It provides a shared collaboration boundary for:
 - decisions;
 - artifacts;
 - provenance;
+- workspace memory *(current — structured state, currentness, history, recall,
+  and provenance inside an authorized workspace)*;
 - capabilities *(future — Era II coordination, not in v1.0)*;
 - checkpoints *(future — Era II, not in v1.0)*;
 - interventions *(future — Era II, not in v1.0)*;
-- and team memory *(future — Era II, not in v1.0; v1.0 keeps workspace-scoped
-  history only, no cross-workspace memory)*.
+- team and organizational memory *(future — authorization-aware reuse across
+  workspaces; no implicit organization-wide memory pool)*;
+- and optional derived intelligence *(future — cited assistance over authorized
+  records, never a replacement for canonical state)*.
 
 Humans and agents can enter a Campfire workspace from different tools and harnesses while operating against the same authorized work state.
 
 Campfire does **not** attempt to make every agent share one conversation or one global memory. Instead, it gives agents access to structured, scoped, provenance-backed organizational work state.
+
+### 3.1 Product evolution
+
+Campfire should evolve through three product stages without treating the later
+stages as claims about current behavior:
+
+```text
+01 — Foundation
+Your agents and their work, in one place.
+
+02 — Collaborative Workspace
+Your whole team and their agents, working together.
+
+03 — Intelligent Workspace
+Campfire helps the team understand what matters and what happens next.
+```
+
+The Foundation earns developer trust through local operation, open-source
+inspectability, harness independence, structured work state, authorization,
+provenance, and continuity. The Collaborative Workspace adds shared projects,
+people, permissions, cross-device updates, conversations attached to work, and
+a legible home for what changed and what needs attention. The Intelligent
+Workspace may then provide opt-in, permission-aware assistance: catch-up,
+overlooked findings, blockers, handoff preparation, relationship discovery,
+and proposed next steps.
+
+The signature Collaborative Workspace experience should be easy to explain:
+invite a teammate, let them enter the existing work, and let their agent orient
+from the authorized goals, tasks, findings, decisions, artifacts, and evidence
+already recorded there. The teammate should not need a manually prepared
+handoff, and their agent should not receive the originating private transcript.
+This is **joining the work**, not joining one shared conversation.
+
+That experience composes the existing Workspace, Participant, AgentSession,
+Contribution, currentness, authorization, and provenance contracts. It does
+not introduce a SharedSession, Handoff, Room, or transcript collection as a
+second collaboration model beside the workspace.
+
+The third stage is not merely transcript summarization. Its value comes from
+understanding relationships among authorized Goals, Tasks, Findings, Decisions,
+Artifacts, Contributions, participants, and outcomes. Every derived factual
+conclusion and proposed next step must show its supporting source record IDs,
+freshness, and completeness. Unsupported factual conclusions must be omitted;
+unanswered questions may be listed separately and explicitly labeled as
+questions. Missing information must remain missing rather than being filled
+with plausible prose.
+
+Local and hosted products should share this capability model. Local Campfire
+may use a user-selected local model or API key. Hosted Campfire may offer
+managed inference and team-wide convenience. The durable paid distinction is
+managed collaboration, administration, shared history, reliability, and
+managed intelligence—not an intentionally weakened open-source memory model.
 
 ---
 
@@ -295,15 +352,18 @@ Which human or agent is participating in the workspace?
 What is a participant permitted to access or execute?
 *(Future — Era II coordination. v1.0 has roles + invite membership only.)*
 
-### Planned ActionProposal — bounded v1.26 pilot
+### ActionProposal — shipped bounded v1.26.1 behavior
 What exact external verification retry is proposed, which human approved it,
-and what was submitted or observed? The [ACT-001 proposed sprint](Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md)
-adds this workspace-owned record and attributed receipts for one action class.
-An external client performs the action with its own provider credential; a
-configured signed completion may contribute cited evidence. Approval is specific
-to the intent, evidence, and executor. It is not a general capability grant,
-an accepted team Decision, or proof of external success. This planned pilot
-does not establish controlled-action demand or expand Campfire into a runtime.
+and what was submitted or observed? The [ACT-001 sprint](Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md)
+shipped this workspace-owned record and attributed receipts for one action class
+in v1.26.1. An external client performs the action with its own provider
+credential; a configured signed completion may contribute cited evidence.
+Approval is specific to the intent, evidence, and executor. It is not a general
+capability grant, an accepted team Decision, or proof of external success.
+ACT-001 remains **CONDITIONAL GO — engineering candidate**: live Codex/OpenCode
+paths and real-provider interoperability are not observed. The shipped bounded
+behavior does not establish controlled-action demand or expand Campfire into a
+runtime.
 
 ### Checkpoint
 What is the current recoverable state of the work?
@@ -440,6 +500,16 @@ Memory is one component of collaboration state, not the product itself.
 ### An agent framework
 Campfire does not dictate how agents reason, plan, or execute. The November 5, 2026 exception below is a user-initiated local process supervisor. It is not a framework for how agents think or a scheduler for when they run.
 
+Campfire may recommend which user-owned agent or harness is a good fit for a
+task when it can explain the recommendation from authorized, measured facts.
+The selected harness still owns model interaction, tool composition, and
+private execution context. A recommendation is not delegation, authorization,
+or proof of availability, and the person explicitly starts any session.
+Recommendations and selection/rejection receipts stay local-only by default.
+Any later shared projection uses redacted stable reason codes and never places
+raw repository/local paths, credential IDs, argv/env, prompts, terminal bytes,
+or transcripts in shared records.
+
 ### A model provider
 Teams bring their existing agents and models.
 
@@ -460,6 +530,14 @@ Workspace is the collaboration boundary. A Channel, or any other collection of a
 
 ### A skills platform or workflow engine
 Guidance for how to record useful state may be tested later as one workspace playbook. That playbook does not execute workflow and does not add domain machinery. The only candidate named for that experiment is incident investigation.
+
+### A universal Code Mode runtime
+Harnesses may offer a sandboxed code-composition mode that can call several
+typed tools, filter results, and return only the useful output to the model.
+Campfire should make its interfaces easy for those runtimes to compose, but it
+does not need to duplicate their interpreter, model loop, or tool runner. Code
+composition is not operating-system containment: the underlying tools retain
+their own permissions and side effects.
 
 ### Founder-directed v1.29 exception — local session host
 
@@ -624,6 +702,12 @@ Sprint 001 succeeds if the second human-agent pair can meaningfully continue the
 ### Structured state over transcript sharing
 Store what matters about the work, not every token exchanged while producing it.
 
+### Join the work, not the chat
+Inviting a teammate should give that person and their authorized agent a clear
+way to understand what the team discovered, decided, changed, and still needs
+to do. Collaboration becomes immediate through the existing workspace, not by
+pooling private sessions or inventing a second shared-conversation primitive.
+
 ### Provenance by default
 Every meaningful contribution should be attributable.
 
@@ -716,15 +800,27 @@ They will need infrastructure for:
 
 Campfire's role in that world is to make collaborative work between humans and agents **shared, durable, inspectable, portable, and governable**.
 
+It should eventually do more than provide a place where collaboration happens.
+It should help a team collaborate better: maintain trustworthy memory, surface
+what deserves attention, explain dependencies among parallel work, prepare
+handoffs, and recommend safe next steps. Deterministic state remains the
+authority; model-assisted output remains derived, cited, permission-aware,
+correctable, and optional.
+
 The long-term experience should feel less like connecting several AI assistants to company tools and more like adding capable new participants to an existing team.
 
 ---
 
 ## 20. Product Promise
 
-**Campfire gives people and their agents a shared place to work.**
+**Invite the team. Keep the work moving.**
 
-Bring the agents your team already uses. Campfire gives them a common collaboration boundary for goals, tasks, context, findings, decisions, artifacts, and provenance — so work can move across people and agents without losing what the team has already learned. (Capabilities, checkpoints, and team memory are Era II futures, not v1.0.)
+Bring the agents your team already uses. Campfire gives people and authorized
+agents the same durable work state for goals, tasks, findings, decisions,
+artifacts, evidence, and provenance. A teammate can enter later, understand
+what the team already learned, and continue without receiving anyone else's
+private agent transcript. (Capabilities, checkpoints, and team memory are Era
+II futures, not v1.0.)
 
 ---
 

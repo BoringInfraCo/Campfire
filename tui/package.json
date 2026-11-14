@@ -1,0 +1,14 @@
+{
+  "name": "campfire-opentui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Campfire OpenTUI sidecar. Installed with npm and executed only by the vendored Bun. The Campfire CLI itself stays on Node >=22.",
+  "scripts": {
+    "typecheck": "../node_modules/.bin/tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opentui/core": "0.8.4",
+    "bun": "1.3.14"
+  }
+}

@@ -302,6 +302,22 @@ describe("SHR-001 hosted publication boundary", () => {
     expect(await store.getContribution("con_finding_create")).toBeUndefined();
   });
 
+  it("rejects a fraction-less snapshot timestamp as a validation error, not a digest mismatch", async () => {
+    const { call } = await setup();
+    const snapshot = localSnapshot();
+    const bad = structuredClone(snapshot);
+    bad.workspace.updatedAt = "2026-10-23T12:20:00Z";
+    // Recompute the digest over the received bytes so only the timestamp gate can fail.
+    bad.digest = publicationDigest(bad);
+    expect((await call("/v1/publication/enroll", undefined, enrollmentBody())).status).toBe(200);
+    const result = await call("/v1/publication/import", ownerToken, {
+      requestId: "pub-request-1", digest: bad.digest, snapshot: bad,
+    });
+    expect(result.status).toBe(400);
+    expect(result.body.details.field).toBe("workspace.updatedAt");
+    expect(result.body.message).toContain("workspace.updatedAt");
+  });
+
   it("rejects a tampered digest and a reopened enrollment without leaking state", async () => {
     const { call } = await setup();
     const snapshot = localSnapshot();

@@ -122,11 +122,24 @@ describe("CMP-001 slice A", () => {
         openWorldHint: false,
       });
     }
-    for (const tool of tools.filter((t) => !(TOOLS as readonly string[]).includes(t.name))) {
+    // FAC-001 (F11, A2.11): get_workspace_attention carries a title and the read-only
+    // annotations but deliberately NO outputSchema (size ceiling). Carve-out is explicit.
+    const attention = tools.find((t) => t.name === "get_workspace_attention")!;
+    expect(attention.title).toBeTruthy();
+    expect(attention.outputSchema).toBeUndefined();
+    expect(attention.annotations).toEqual({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    });
+    for (const tool of tools.filter(
+      (t) => !(TOOLS as readonly string[]).includes(t.name) && t.name !== "get_workspace_attention",
+    )) {
       expect(tool.annotations, tool.name).toBeUndefined();
       expect(tool.outputSchema, tool.name).toBeUndefined();
     }
-    expect(tools).toHaveLength(47);
+    expect(tools).toHaveLength(48);
   });
 
   it("performs no write: the eight read tools leave contributions unchanged", async () => {

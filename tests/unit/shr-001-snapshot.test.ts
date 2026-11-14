@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { ValidationError } from "../../src/domain/errors.js";
 import { canonicalJson, parsePublicationSnapshot } from "../../src/domain/publication.js";
 import { inspectPublicationSource, readWorkspaceSnapshot } from "../../src/publication/snapshot.js";
 import { openSqliteStore } from "../../src/store/sqlite-store.js";
@@ -200,6 +201,36 @@ describe("SHR-001 local snapshot", () => {
     });
     bad.counts.tasks += 1;
     expect(() => parsePublicationSnapshot(bad)).toThrow(/Actor id and type/);
+  });
+
+  it("rejects a fraction-less publication timestamp and accepts the canonical form", () => {
+    const databasePath = setup();
+    const read = () => readWorkspaceSnapshot({
+      databasePath,
+      workspaceId: SHR.workspaceId,
+      ownerHumanId: SHR.humanId,
+      packageVersion: "1.26.2-test",
+      exportedAt: "2026-10-23T12:30:00.000Z",
+    });
+    const capture = (value: unknown): unknown => {
+      try {
+        parsePublicationSnapshot(value);
+        return undefined;
+      } catch (error) {
+        return error;
+      }
+    };
+
+    const bad = structuredClone(read());
+    bad.workspace.updatedAt = "2026-10-23T12:20:00Z";
+    const error = capture(bad);
+    expect(error).toBeInstanceOf(ValidationError);
+    expect((error as ValidationError).details?.field).toBe("workspace.updatedAt");
+    expect((error as Error).message).toContain("workspace.updatedAt");
+
+    const canonical = structuredClone(read());
+    canonical.workspace.updatedAt = "2026-10-23T12:20:00.000Z";
+    expect(capture(canonical)).toBeUndefined();
   });
 
   it("canonicalizes __proto__ as data rather than dropping it", () => {

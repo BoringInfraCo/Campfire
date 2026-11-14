@@ -50,17 +50,17 @@ jobs:
             host_arch: x86_64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Build the selected release source, but keep release tooling from the
       # protected default branch. That lets us repair an existing tag without
       # recreating a bug that existed in its historical packaging script.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag }}
           path: release-source
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -73,6 +73,16 @@ jobs:
 
       # `npm ci` runs the `prepare` script, which builds dist/.
       - run: npm ci
+        working-directory: release-source
+
+      # Historical tags may not contain the TUI. When present, install its
+      # own lockfile on each target host so Bun and OpenTUI match the archive.
+      - name: Install OpenTUI dependencies
+        run: |
+          if [ -f tui/package.json ]; then
+            npm ci --prefix tui --omit=dev --no-audit --no-fund
+            npm run --prefix tui --if-present typecheck
+          fi
         working-directory: release-source
 
       - name: Check native platform

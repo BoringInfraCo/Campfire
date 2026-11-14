@@ -50,6 +50,8 @@ const READS = [
   "get_artifact",
   "get_record_history",
   "list_agent_sessions",
+  "get_workspace_attention",
+  "get_action_proposal",
 ] as const;
 
 const WORKSPACE_READS: Array<[string, Record<string, unknown>]> = [
@@ -173,9 +175,9 @@ afterAll(async () => {
 });
 
 describe("NAV-003 viewer read boundary", () => {
-  it("allowlists exactly twelve reads and mirrors them on the worker", () => {
+  it("allowlists the NAV-003 reads plus the FAC-001 attention reads", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([...READS]);
-    expect(VIEWER_READ_METHODS).toHaveLength(13);
+    expect(VIEWER_READ_METHODS).toHaveLength(15);
     const handler = readFileSync(new URL("../../src/worker/handler.ts", import.meta.url), "utf8");
     const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(handler);
     expect(match).not.toBeNull();
@@ -543,7 +545,8 @@ describe("NAV-003 viewer read boundary", () => {
     await vm.runInContext("boot()", sandbox);
 
     const methodsOf = (rows: Array<{ method: string }>) => rows.map((row) => row.method);
-    expect(methodsOf(calls)).toEqual(["whoami", "list_workspaces", "get_workspace_context", "get_activity"]);
+    expect(methodsOf(calls)).toEqual(["whoami", "list_workspaces", "get_workspace_context", "get_activity", "get_workspace_attention"]);
+    expect(calls[4]?.params).toEqual({ workspaceId: "ws_nav001_lab", limit: 100 });
     expect(calls[2]?.params).toEqual({ workspaceId: "ws_nav001_lab", participants: "omit", since: "con_saved" });
     expect(elements["recorded-counts"]?.textContent).toBe("57 workspace participants");
     expect(elements["people"]?.textContent).toBe("Participant roster is not in this read.");
@@ -565,14 +568,19 @@ describe("NAV-003 viewer read boundary", () => {
       "list_workspaces",
       "get_workspace_context",
       "get_activity",
+      "get_workspace_attention",
     ]);
-    expect(calls.at(-2)?.params).toEqual({ workspaceId: "ws_nav001_lab", participants: "omit" });
-    expect(calls.at(-2)?.params).not.toHaveProperty("since");
+    const contextCall = calls.slice(afterInitial).find((row) => row.method === "get_workspace_context");
+    expect(contextCall?.params).toEqual({ workspaceId: "ws_nav001_lab", participants: "omit" });
+    expect(contextCall?.params).not.toHaveProperty("since");
+    const attentionCall = calls.slice(afterInitial).find((row) => row.method === "get_workspace_attention");
+    expect(attentionCall?.params).toEqual({ workspaceId: "ws_nav001_lab", limit: 100 });
+    expect(attentionCall?.params).not.toHaveProperty("cursor");
 
     vm.runInContext("state.view = { goal: { title: 'leftover inspector' }, participants: [] }", sandbox);
     fail = true;
     await poll!();
-    expect(methodsOf(calls.slice(afterInitial + 3))).toEqual(["list_workspaces"]);
+    expect(methodsOf(calls.slice(afterInitial + 4))).toEqual(["list_workspaces"]);
     expect(vm.runInContext("state.context.goal.title", sandbox)).toBe("Keep the count");
     expect(vm.runInContext("state.view.goal.title", sandbox)).toBe("leftover inspector");
     // The thrown Error is from outside the page realm, so api() keeps its
@@ -581,7 +589,7 @@ describe("NAV-003 viewer read boundary", () => {
     expect(elements["recorded-counts"]?.textContent).toBe("57 workspace participants");
     expect(elements["people"]?.textContent).not.toContain("0 people");
     for (const row of calls) {
-      expect(["whoami", "list_workspaces", "get_workspace_context", "get_activity"]).toContain(row.method);
+      expect(["whoami", "list_workspaces", "get_workspace_context", "get_activity", "get_workspace_attention"]).toContain(row.method);
     }
   });
 });

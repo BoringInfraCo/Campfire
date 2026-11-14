@@ -48,7 +48,7 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.30.0/install.sh | sh -s -- --version 1.30.0
+curl -fsSL https://boringinfra.company/campfire/v1.31.0/install.sh | sh -s -- --version 1.31.0
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
 

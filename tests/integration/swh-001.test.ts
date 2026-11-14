@@ -632,6 +632,8 @@ describe("SWH-001 D4 — read boundary", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_workspace_attention",
+      "get_action_proposal",
     ]);
 
     const before = runtime.store.countObjects("contributions", FIXTURE.workspaces.billing);

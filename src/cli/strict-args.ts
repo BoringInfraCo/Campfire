@@ -38,6 +38,7 @@ const BARE_OPTIONS = [
   "config",
   "theme",
   "all",
+  "opentui",
 ] as const;
 
 export function flagsNamedIn(text: string): string[] {

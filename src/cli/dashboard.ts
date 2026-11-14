@@ -15,6 +15,16 @@
  */
 import { execFileSync } from "node:child_process";
 import { CampfireError } from "../domain/errors.js";
+import type { AttentionCue, AttentionResult } from "../domain/attention.js";
+import {
+  ATTENTION_VIEW_STRINGS,
+  attentionCatchUpLines,
+  attentionCoverageViewLines,
+  attentionCueParts,
+  attentionCueText,
+  attentionNeedsYouCount,
+  attentionRailCount,
+} from "../presentation/attention-view.js";
 import type { Artifact, Contribution, Decision, Finding, Task } from "../domain/types.js";
 import {
   ARTIFACT_EXTERNAL_UNVERIFIED_LABEL,
@@ -171,6 +181,15 @@ export interface HistoryStamp {
   objectId: string;
 }
 
+export interface DashboardAttentionState {
+  workspaceId: string;
+  result?: AttentionResult;
+  /** Why the FAC-001 read failed; the older list is shown with a label (D8). */
+  error?: string;
+  /** Session catch-up baseline `B` (A4.1). Never persisted. */
+  baseline?: string;
+}
+
 export interface DashboardState {
   workspaceId: string;
   actorId: string;
@@ -198,6 +217,12 @@ export interface DashboardState {
   inspectRequest?: DashboardInspectRequest;
   inspected?: DashboardInspected;
   staleError?: string;
+  /**
+   * FAC-001 attention read (A4.1-A4.3). Keyed by workspace id; a mismatch with
+   * `workspaceId` means it is ignored, so a switch never reuses another
+   * workspace's result, fallback or baseline. In memory only.
+   */
+  attention?: DashboardAttentionState;
   refreshedAt?: string;
   taskPage?: LoadedPage<Task>;
   taskPageRequest?: PageRequest;
@@ -231,6 +256,8 @@ export interface DashboardSessionOptions {
   load: () => Promise<WorkspaceContext>;
   inspect?: (kind: DashboardInspectKind, id: string) => Promise<unknown>;
   loadTasks?: (cursor: string | undefined) => Promise<DashboardPageInput<Task>>;
+  /** FAC-001 read: one page at limit 100, never a continuation cursor; `since` is the session baseline. */
+  loadAttention?: (input: { since?: string }) => Promise<AttentionResult>;
   loadPeople?: (input: { cursor?: string; humanOwnerId?: string }) => Promise<DashboardPageInput<ParticipantListItem>>;
   loadHistory?: (input: {
     objectType: HistoryObjectType;
@@ -298,8 +325,10 @@ interface TaggedLine {
 }
 
 interface DashRow {
-  kind: "task" | "decision" | "finding" | "artifact" | "contribution" | "participant";
+  kind: "task" | "decision" | "finding" | "artifact" | "contribution" | "participant" | "proposal";
   id: string;
+  /** FAC-001 cue id when this row is a cue; `id` stays the subject id used by inspect. */
+  cueId?: string;
   text: string;
   full: boolean;
   reviewCue: boolean;
@@ -369,6 +398,88 @@ function sameWorkspace(state: DashboardState): WorkspaceContext | undefined {
   if (context === undefined) return undefined;
   if (context.workspace.id !== state.workspaceId) return undefined;
   return context;
+}
+
+/** FAC-001 attention state for the current workspace only (A4.3: never another workspace's). */
+function attentionState(state: DashboardState): DashboardAttentionState | undefined {
+  const held = state.attention;
+  if (held === undefined || held.workspaceId !== state.workspaceId) return undefined;
+  return held;
+}
+
+/** The FAC-001 result when one is loaded for this workspace; otherwise the older ATT-001 list applies. */
+function facResult(state: DashboardState): AttentionResult | undefined {
+  const result = attentionState(state)?.result;
+  return result !== undefined && result.workspaceId === state.workspaceId ? result : undefined;
+}
+
+/** Set when the FAC-001 read failed and the older list is shown with a label (D8). */
+function facFallbackError(state: DashboardState): string | undefined {
+  const held = attentionState(state);
+  return held !== undefined && held.result === undefined && held.error !== undefined ? held.error : undefined;
+}
+
+function facRow(context: WorkspaceContext, cue: AttentionCue): DashRow {
+  const text = attentionCueText(cue);
+  const base = { id: cue.subjectId, cueId: cue.id, text, reviewCue: cue.reason === "accepted_decision_needs_review" };
+  switch (cue.subjectType) {
+    case "task":
+      return { ...base, kind: "task", full: taskById(context, cue.subjectId) !== undefined, fetchKind: "task" };
+    case "decision":
+      return { ...base, kind: "decision", full: decisionById(context, cue.subjectId) !== undefined, fetchKind: "decision" };
+    case "finding":
+      return { ...base, kind: "finding", full: findingRecord(context, cue.subjectId) !== undefined, fetchKind: "finding" };
+    default:
+      // action_proposal: no inspect reader in the dashboard; shown as a cue only.
+      return { ...base, kind: "proposal", full: true };
+  }
+}
+
+/** Cues in server order for the active perspective (audience filter only; never re-sorted). */
+function facRows(state: DashboardState, context: WorkspaceContext, result: AttentionResult, audience: "you" | "team"): DashRow[] {
+  void state;
+  return result.cues.filter((cue) => cue.audience === audience).map((cue) => facRow(context, cue));
+}
+
+function needsYouText(state: DashboardState, context: WorkspaceContext): string {
+  const result = facResult(state);
+  return result === undefined ? String(context.needsYou.length) : attentionNeedsYouCount(result).text;
+}
+
+/**
+ * Apply a successful FAC-001 read (A4.1). The first read sets the baseline to
+ * orientationCursor; a read sent with `since` advances it to toCursor, whether
+ * the run is partial or complete. Another workspace's result is refused.
+ */
+export function applyAttentionResult(state: DashboardState, workspaceId: string, result: AttentionResult): DashboardState {
+  if (workspaceId !== state.workspaceId) return state;
+  if (result.workspaceId !== workspaceId) {
+    return failAttentionRead(state, workspaceId, "attention read did not match the authorized workspace");
+  }
+  const prior = state.attention?.workspaceId === workspaceId ? state.attention : undefined;
+  const baseline =
+    prior?.baseline === undefined
+      ? result.orientationCursor
+      : result.catchUp.status === "not_requested"
+        ? prior.baseline
+        : (result.catchUp.toCursor ?? prior.baseline);
+  return reconcileSelection(state, { ...state, attention: { workspaceId, result, baseline } });
+}
+
+/**
+ * A failed FAC-001 read drops the result and clears the baseline (A4.1/A4.3), so
+ * `cursor_ahead_of_tip` and authorization failures are visible and never read
+ * as "nothing changed". The older list is labelled as a fallback.
+ */
+export function failAttentionRead(
+  state: DashboardState,
+  workspaceId: string,
+  message: string,
+  authorization = false,
+): DashboardState {
+  if (workspaceId !== state.workspaceId) return state;
+  if (authorization) return discardForAuthorization(state, message);
+  return reconcileSelection(state, { ...state, attention: { workspaceId, error: noteOf(message) } });
 }
 
 function viewport(columns: number, rows: number): { columns: number; rows: number } {
@@ -626,7 +737,12 @@ function workSource(state: DashboardState, context: WorkspaceContext): Task[] {
  * in_progress tasks, and skip ids already listed under Needs You.
  */
 function overviewWorkRows(state: DashboardState, context: WorkspaceContext): DashRow[] {
-  const skip = new Set(context.needsYou.map((item) => item.id));
+  const fac = facResult(state);
+  const skip = new Set(
+    fac === undefined
+      ? context.needsYou.map((item) => item.id)
+      : fac.cues.filter((cue) => cue.audience === "you").map((cue) => cue.subjectId),
+  );
   return workSource(state, context)
     .filter((task) => (task.status === "open" || task.status === "in_progress") && !skip.has(task.id))
     .map(taskRow);
@@ -637,6 +753,14 @@ function overviewParts(state: DashboardState, context: WorkspaceContext): {
   needsAttention: DashRow[];
   work: DashRow[];
 } {
+  const fac = facResult(state);
+  if (fac !== undefined) {
+    return {
+      needsYou: facRows(state, context, fac, "you"),
+      needsAttention: facRows(state, context, fac, "team"),
+      work: overviewWorkRows(state, context),
+    };
+  }
   return {
     needsYou: context.needsYou.map((item) => attentionRow(context, item)),
     needsAttention: context.needsAttention.map((item) => attentionRow(context, item)),
@@ -684,8 +808,11 @@ export function sectionRows(state: DashboardState): DashRow[] {
       const parts = overviewParts(state, context);
       return [...parts.needsYou, ...parts.needsAttention, ...parts.work];
     }
-    case "attention":
+    case "attention": {
+      const fac = facResult(state);
+      if (fac !== undefined) return facRows(state, context, fac, state.perspective === "mine" ? "you" : "team");
       return attentionItems(state, context).map((item) => attentionRow(context, item));
+    }
     case "work":
       // A loaded list_tasks page is the work list. Orientation tasks stay the
       // fallback only for fixtures that never asked for a bounded page.
@@ -792,6 +919,7 @@ function withoutTransient(state: DashboardState): DashboardState {
     boundedReads: state.boundedReads,
     ...(state.context === undefined ? {} : { context: state.context }),
     ...(state.staleError === undefined ? {} : { staleError: state.staleError }),
+    ...(state.attention === undefined ? {} : { attention: state.attention }),
     ...(state.refreshedAt === undefined ? {} : { refreshedAt: state.refreshedAt }),
     ...(state.taskPage === undefined ? {} : { taskPage: state.taskPage }),
     ...(state.peoplePage === undefined ? {} : { peoplePage: state.peoplePage }),
@@ -822,8 +950,11 @@ function canonicalKey(key: string): string {
  * current selection.
  */
 function reconcileSelection(previous: DashboardState, next: DashboardState): DashboardState {
-  const selectedId = shownRows(previous)[previous.row]?.id;
-  const index = selectedId === undefined ? -1 : shownRows(next).findIndex((row) => row.id === selectedId);
+  const selectedRow = shownRows(previous)[previous.row];
+  const selectedId = selectedRow?.id;
+  // Two cues can share one subject id; a cue row is identified by its cue id.
+  const selectedKey = selectedRow === undefined ? undefined : (selectedRow.cueId ?? selectedRow.id);
+  const index = selectedKey === undefined ? -1 : shownRows(next).findIndex((row) => (row.cueId ?? row.id) === selectedKey);
   if (selectedId === undefined || index < 0) {
     const lost = selectedId !== undefined;
     return {
@@ -1212,6 +1343,8 @@ export function fulfillWorkspaceSwitch(state: DashboardState, workspaceId: strin
     workspaceListRequest: undefined,
     refreshedAt: undefined,
     staleError: undefined,
+    // A4.1(4)/A4.3: the previous workspace's attention result, fallback and baseline are discarded.
+    attention: undefined,
     statusNote: undefined,
     selectionNote: undefined,
   };
@@ -1629,7 +1762,67 @@ export function applyContextLoad(
   return reconcileAfterLoad(state, loaded, refreshedAt);
 }
 
-export function failContextLoad(state: DashboardState, generation: number, message: string): DashboardState {
+/** Typed error codes that mean the actor is no longer allowed to read the workspace. */
+export const AUTHORIZATION_ERROR_CODES: ReadonlySet<string> = new Set(["Unauthorized", "ParticipantRequired"]);
+
+/**
+ * True for an authorization refusal, keyed on the typed `code` (CampfireError sets
+ * `name` to the same value, so a structurally identical error also matches). Never
+ * on message text: a plain Error that merely says "not authorized" is transient.
+ */
+export function isAuthorizationFailure(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const { code, name } = error as { code?: unknown; name?: unknown };
+  if (typeof code === "string") return AUTHORIZATION_ERROR_CODES.has(code);
+  return typeof name === "string" && AUTHORIZATION_ERROR_CODES.has(name);
+}
+
+/** Fixed refusal line. The server message is never shown (it can carry workspace, actor or session ids). */
+export const AUTHORIZATION_REFUSED_LINE = "Authorization refused; workspace data cleared.";
+
+/**
+ * A4.1(4)/A4.3: after an authorization refusal nothing from the workspace may
+ * render. Drops the context, the FAC-001 result/fallback/baseline, and every
+ * page, inspect and history view; keeps a refusal line.
+ */
+export function discardForAuthorization(state: DashboardState, _message?: string): DashboardState {
+  const next: DashboardState = {
+    ...state,
+    context: undefined,
+    attention: undefined,
+    row: 0,
+    detailOpen: false,
+    inspected: undefined,
+    inspectRequest: undefined,
+    history: undefined,
+    historyRequest: undefined,
+    taskPage: undefined,
+    taskPageRequest: undefined,
+    peoplePage: undefined,
+    peoplePageRequest: undefined,
+    peopleSplit: undefined,
+    refreshedAt: undefined,
+    refreshRequested: false,
+    // Fixed string: the server message can carry workspace, actor or session ids, so it is never displayed.
+    staleError: AUTHORIZATION_REFUSED_LINE,
+    selectionNote: undefined,
+    statusNote: undefined,
+    workspaceListOpen: false,
+    workspaceListRequest: undefined,
+    // workspaceChoices is the actor's own list (not workspace data) and is kept.
+  };
+  return next;
+}
+
+export function failContextLoad(
+  state: DashboardState,
+  generation: number,
+  message: string,
+  authorization = false,
+): DashboardState {
+  // An authorization refusal is never swallowed by a generation mismatch (a key
+  // pressed while the load was in flight must not keep old workspace data).
+  if (authorization) return discardForAuthorization(state, message);
   if (generation !== state.generation && state.context !== undefined) return state;
   return { ...state, staleError: noteOf(message), refreshRequested: false };
 }
@@ -1664,8 +1857,10 @@ function workspaceTotal(state: DashboardState, context: WorkspaceContext): strin
       return String(context.slices.artifacts.total);
     case "changes":
       return String(context.provenanceTotal);
-    case "attention":
-      return String(context.attentionCoverage.tasks.total);
+    case "attention": {
+      const fac = facResult(state);
+      return fac === undefined ? String(context.attentionCoverage.tasks.total) : attentionRailCount(fac);
+    }
     case "overview":
       return String(context.slices.tasks.total);
   }
@@ -1713,11 +1908,15 @@ function sliceCoverage(
 }
 
 function buildAttention(state: DashboardState, context: WorkspaceContext, columns: number): TaggedLine[] {
+  const fac = facResult(state);
+  if (fac !== undefined) return buildFacAttention(state, context, fac, columns);
   const counts = attentionCoverageCounts(context.attentionCoverage);
   const coverage = attentionCoverageText(context.attentionCoverage);
   const heading = state.perspective === "mine" ? "NEEDS YOU" : "NEEDS ATTENTION";
+  const fallback = facFallbackError(state);
   const lines: TaggedLine[] = [
     ...chrome(`${heading}  ${counts}`, columns, 0),
+    ...(fallback !== undefined ? record(`Attention read failed: ${clean(fallback)}. Showing the older list.`, columns, 0) : []),
     ...(coverage.length > 0 ? record(coverage, columns, 0) : []),
     ...record(ASSIGNMENT_RECORD_NOTE, columns, 1),
     ...filterIndicator(state, context, columns),
@@ -1728,6 +1927,39 @@ function buildAttention(state: DashboardState, context: WorkspaceContext, column
     return lines;
   }
   lines.push(...renderRowList(rows, state.row, columns));
+  return lines;
+}
+
+/**
+ * FAC-001 attention section: cues in server order (A4.2). Coverage, more-pages
+ * and catch-up lines sit ABOVE the rows so many cues cannot push them out of
+ * the viewport.
+ */
+function buildFacAttention(state: DashboardState, context: WorkspaceContext, fac: AttentionResult, columns: number): TaggedLine[] {
+  const heading = state.perspective === "mine" ? "NEEDS YOU" : "NEEDS ATTENTION";
+  const audience = state.perspective === "mine" ? "you" : "team";
+  const shownCount = fac.cues.filter((cue) => cue.audience === audience).length;
+  const count = state.perspective === "mine" ? attentionNeedsYouCount(fac).text : String(shownCount);
+  const lines: TaggedLine[] = [
+    ...chrome(`${heading}  ${count}`, columns, 0),
+    ...record(ASSIGNMENT_RECORD_NOTE, columns, 1),
+  ];
+  for (const line of attentionCoverageViewLines(fac)) lines.push(...record(line, columns, 1));
+  if (fac.nextCursor !== undefined) lines.push(...record(ATTENTION_VIEW_STRINGS.morePages, columns, 1));
+  for (const line of attentionCatchUpLines(fac)) lines.push(...record(line, columns, 1));
+  lines.push(...filterIndicator(state, context, columns));
+  const rows = shownRows(state);
+  if (rows.length === 0) {
+    const empty =
+      fac.cues.length === 0
+        ? fac.coverage.completeUnderRules
+          ? ATTENTION_VIEW_STRINGS.emptyComplete
+          : ATTENTION_VIEW_STRINGS.emptyIncomplete
+        : `No ${audience === "you" ? "you" : "team"} cue in this page.`;
+    lines.push(...emptyOrFilterLines(state, empty, columns, 0));
+  } else {
+    lines.push(...renderRowList(rows, state.row, columns));
+  }
   return lines;
 }
 
@@ -1799,13 +2031,20 @@ function tagSpan(lines: readonly TaggedLine[], mainWidth: number): PaneLine[] {
   }));
 }
 
-function overviewTitleLine(name: string, id: string, needs: number, width: number): string {
-  const right = `Needs You  ${needs}`;
+function overviewTitleLine(name: string, id: string, needs: number | string, width: number): string {
   const left = `${name}  ${id}`.trim();
-  const gap = width - left.length - right.length;
-  if (gap >= 2) return left + " ".repeat(gap) + right;
-  const compact = `${left}  ${right}`;
-  return compact.length <= width ? compact : compact.slice(0, width);
+  // A count that is not exact keeps its "+" even when the caveat text is dropped.
+  const short = String(needs).split(" ")[0] ?? String(needs);
+  for (const count of [String(needs), short]) {
+    const right = `Needs You  ${count}`;
+    const gap = width - left.length - right.length;
+    if (gap >= 2) return left + " ".repeat(gap) + right;
+  }
+  for (const count of [String(needs), short]) {
+    const compact = `${left}  Needs You  ${count}`;
+    if (compact.length <= width) return compact;
+  }
+  return `${left}  Needs You  ${short}`.slice(0, width);
 }
 
 function rowMatchesFilter(state: DashboardState, row: DashRow): boolean {
@@ -1889,6 +2128,13 @@ function overviewVisual(
     }
     return { primary, secondary: name };
   }
+  if (row.cueId !== undefined) {
+    const cue = facResult(state)?.cues.find((entry) => entry.id === row.cueId);
+    if (cue !== undefined) {
+      const parts = attentionCueParts(cue);
+      return { primary: parts.primary, secondary: withRecordId(parts.secondary, id) };
+    }
+  }
   const item = [...context.needsYou, ...context.needsAttention].find((entry) => entry.id === row.id);
   if (item?.kind === "decision") {
     const status = clean(item.status);
@@ -1913,7 +2159,7 @@ function buildOverview(state: DashboardState, context: WorkspaceContext, columns
   const lines: PaneLine[] = [];
   const width = Math.max(1, mainWidth);
   const name = clean(context.workspace.name);
-  const needs = context.needsYou.length;
+  const needs = needsYouText(state, context);
   const titleWidth = mainWidth > 0 && mainWidth < columns ? mainWidth : columns;
   const titleLine = overviewTitleLine(name.length > 0 ? name : "workspace", clean(state.workspaceId), needs, titleWidth);
   // Padding before "Needs You" is intentional; do not trim it.
@@ -1921,6 +2167,8 @@ function buildOverview(state: DashboardState, context: WorkspaceContext, columns
   if (state.staleError !== undefined && clean(state.staleError).length > 0) {
     pushPane(lines, `STALE  ${clean(state.staleError)}`, width, 0);
   }
+  const fallback = facFallbackError(state);
+  if (fallback !== undefined) pushPane(lines, `Attention read failed: ${clean(fallback)}. Showing the older list.`, width, 0);
   pushBlank(lines);
   lines.push({ text: "GOAL", rank: 0, span: "pane" });
   pushBlank(lines);
@@ -2594,14 +2842,19 @@ function railPlain(text: string, width: number, rank: number): TaggedLine {
 function workspaceRailRow(name: string, selected: boolean, badge: string, width: number): string {
   const marker = selected ? "> " : "  ";
   // The count sits on the name. The empty rest of the rail stays empty.
-  const body = badge.length > 0 ? `${marker}${name} ${badge}` : `${marker}${name}`;
+  // A long name is cut before the badge, so an inexact "N+" never reads as an exact "N".
+  const room = width - marker.length - badge.length - 1;
+  const shownName = badge.length > 0 && room >= 1 && name.length > room ? name.slice(0, room) : name;
+  const body = badge.length > 0 ? `${marker}${shownName} ${badge}` : `${marker}${name}`;
   return body.length > width ? body.slice(0, width) : body;
 }
 
 function buildRail(state: DashboardState, context: WorkspaceContext, width: number): TaggedLine[] {
   const lines: TaggedLine[] = [...chrome("workspaces", width, 1)];
+  const fac = facResult(state);
   const needs = context.needsYou.length;
-  const badge = needs > 0 ? String(needs) : "";
+  const facBadge = fac === undefined ? "" : (attentionNeedsYouCount(fac).text.split(" ")[0] ?? "");
+  const badge = fac !== undefined ? (facBadge === "0" ? "" : facBadge) : needs > 0 ? String(needs) : "";
   const choices = state.workspaceChoices;
   if (choices.length === 0) {
     const name = clean(context.workspace.name);
@@ -2683,7 +2936,8 @@ function buildClassicHeader(state: DashboardState, context: WorkspaceContext | u
     header.push(...record("STALE  workspace context did not match the authorized workspace", columns, 0));
   }
   if (context !== undefined) {
-    header.push(...record(attentionCoverageCounts(context.attentionCoverage), columns, 0));
+    const fac = facResult(state);
+    header.push(...record(fac === undefined ? attentionCoverageCounts(context.attentionCoverage) : attentionCoverageViewLines(fac)[0] ?? "", columns, 0));
     header.push(...buildParticipants(state, context, columns));
   }
   return header;
@@ -2842,7 +3096,15 @@ export function renderDashboard(state: DashboardState, columns: number, rows: nu
   const fitted = fit(composeShell(rail, main, layout.rail, size.columns, layout.gutter), room);
   const blanks = Array.from({ length: Math.max(0, room - fitted.length) }, () => "");
   const selected = context === undefined ? undefined : shownRows(state)[state.row];
-  const coverageToken = context === undefined ? "" : attentionCoverageCounts(context.attentionCoverage).split(" ")[0] ?? "";
+  const facForToken = facResult(state);
+  const coverageToken =
+    context === undefined
+      ? ""
+      : facForToken !== undefined
+        ? facForToken.coverage.completeUnderRules
+          ? "complete"
+          : "incomplete"
+        : (attentionCoverageCounts(context.attentionCoverage).split(" ")[0] ?? "");
   // The overview keeps the workspace id and the selected record id, which the
   // shell already shows. Goal id and coverage stay off that screen.
   const facts = overviewShell
@@ -3422,6 +3684,30 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
   const isRejectedCursor = (error: unknown): boolean =>
     error instanceof CampfireError && error.code === "ValidationError";
 
+  /**
+   * FAC-001 read (A4.3): one page, no continuation cursor; `since` is the
+   * session baseline (A4.1). Runs after every context load attempt, so an
+   * authorization failure that fails the context also clears the attention
+   * result and baseline instead of leaving stale content.
+   */
+  const readAttention = async (requestedId: string): Promise<void> => {
+    if (options.loadAttention === undefined) return;
+    const since = attentionState(state)?.baseline;
+    try {
+      const result = await options.loadAttention(since === undefined ? {} : { since });
+      // The baseline must be what this read was sent with; otherwise a switch away
+      // and back, or an overlapping read, changed it and this result is stale.
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined || attentionState(state)?.baseline !== since) return;
+      state = applyAttentionResult(state, requestedId, result);
+    } catch (error) {
+      const refused = isAuthorizationFailure(error);
+      // An authorization refusal discards regardless of baseline movement.
+      if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
+      if (!refused && attentionState(state)?.baseline !== since) return;
+      state = failAttentionRead(state, requestedId, errorText(error), refused);
+    }
+  };
+
   async function fulfillOne(): Promise<boolean> {
     if (closed) return false;
     if (state.workspaceSwitchId !== undefined) {
@@ -3477,9 +3763,10 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
         }
       } catch (error) {
         if (!closed && state.workspaceId === requestedId && currentWorkspace()) {
-          state = failContextLoad(state, generation, errorText(error));
+          state = failContextLoad(state, generation, errorText(error), isAuthorizationFailure(error));
         }
       }
+      if (!closed && state.workspaceId === requestedId && currentWorkspace()) await readAttention(requestedId);
       return true;
     }
     const taskReq = state.taskPageRequest;
@@ -3636,8 +3923,9 @@ export async function runDashboardSession(options: DashboardSessionOptions): Pro
       loadedOk = state.context?.workspace.id === requestedId && state.staleError === undefined;
     } catch (error) {
       if (closed || state.workspaceId !== requestedId || state.workspaceSwitchId !== undefined) return;
-      state = failContextLoad(state, generation, errorText(error));
+      state = failContextLoad(state, generation, errorText(error), isAuthorizationFailure(error));
     }
+    if (!closed && state.workspaceId === requestedId && state.workspaceSwitchId === undefined) await readAttention(requestedId);
     if (loadedOk && !closed && state.workspaceSwitchId === undefined) {
       queueRailReads();
       schedule();

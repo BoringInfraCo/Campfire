@@ -376,6 +376,8 @@ describe("viewer 003 read-only boundary", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_workspace_attention",
+      "get_action_proposal",
     ]);
     for (const method of VIEWER_READ_METHODS) {
       expect(isViewerReadMethod(method)).toBe(true);

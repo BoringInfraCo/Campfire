@@ -8,15 +8,33 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Install OpenTUI sidecar
+        if: ${{ hashFiles('tui/package.json') != '' }}
+        run: npm ci --prefix tui --no-audit --no-fund
       - run: npm run typecheck
+      - name: Typecheck OpenTUI sidecar
+        if: ${{ hashFiles('tui/package.json') != '' }}
+        run: npm run --prefix tui typecheck
       - run: npm run build
       - run: npm test
+        env:
+          CAMPFIRE_REQUIRE_OPENTUI_PTY: "1"
+      # PI-000 is private-only and its scripts are intentionally absent from
+      # the exported public source. Run these checks when the scripts exist.
+      - name: PI-000 local preparation checks
+        if: ${{ hashFiles('scripts/pi-000/pi-launcher.test.ts') != '' }}
+        env:
+          PI000_REQUIRE_KEY: "1"
+          PI000_REQUIRE_PLAN: "1"
+        run: |
+          npm run test:pi-000
+          node --import tsx scripts/pi-000/egress-gate-check.ts
       - name: blank-DB bootstrap smoke
         run: |
           export CAMPFIRE_DB="$RUNNER_TEMP/campfire-ci-smoke.db"

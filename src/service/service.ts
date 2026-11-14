@@ -17,6 +17,7 @@ import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentI
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
 import type { MemoryHealthResult } from "../domain/memory-health.js";
 import type { GetMemoryHealthInput } from "./memory-health-read.js";
+import type { AttentionResult, GetWorkspaceAttentionInput } from "../domain/attention.js";
 import type { CampfireHandoffPacket, WorkspaceRecall } from "../domain/recall.js";
 import type {
   ActorRef,
@@ -707,6 +708,8 @@ export interface CampfireService {
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): WorkspaceRecall;
   /** MEM-001: authorized, read-only, non-persisted memory-health cues. */
   getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput): MemoryHealthResult;
+  /** FAC-001: authorized, read-only, deterministic attention cues with coverage and catch-up. */
+  getWorkspaceAttention(ctx: ActorContext, input: GetWorkspaceAttentionInput): AttentionResult;
   /**
    * Authorized projection of one recall plus orientation anchors.
    * The caller writes the private file. This method does not.

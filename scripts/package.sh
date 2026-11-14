@@ -9,7 +9,7 @@
 #
 # Tarball layout (mirrors the install prefix):
 #   bin/campfire                        POSIX sh wrapper (node + bundled lib)
-#   lib/campfire/{dist,package.json,package-lock.json,LICENSE,node_modules}
+#   lib/campfire/{dist,package.json,package-lock.json,LICENSE,node_modules,tui}
 #
 # node_modules includes installed production deps only, copied from the build
 # host so the native better-sqlite3 binding matches it. CI builds one per
@@ -77,6 +77,55 @@ while IFS= read -r dependency; do
       ;;
   esac
 done < "$STAGE/production-dependencies"
+
+# Old release tags predate the optional OpenTUI sidecar. The protected release
+# workflow deliberately runs this script against those tags as well, so stage
+# the sidecar only when that release source includes it. A present but broken
+# install is an error: the packaged CLI must not silently ship without its UI.
+if [ -f tui/package.json ]; then
+  if [ "$OS" = linux ]; then
+    node -e 'const h = process.report?.getReport()?.header; if (typeof h?.glibcVersionRuntime !== "string") process.exit(1);' || {
+      echo "package.sh: error: OpenTUI archives currently require glibc on Linux (musl is not supported)" >&2; exit 1;
+    }
+  fi
+  [ -f tui/package-lock.json ] && [ -f tui/src/main.ts ] && [ -d tui/assets ] || {
+    echo "package.sh: error: incomplete OpenTUI source" >&2; exit 1;
+  }
+  TUI_ROOT="$(cd tui && node -e 'import { realpathSync } from "node:fs"; console.log(realpathSync("."))')"
+  TUI_DEST="$STAGE/lib/campfire/tui"
+  mkdir -p "$TUI_DEST/node_modules"
+  cp tui/package.json tui/package-lock.json "$TUI_DEST/"
+  cp -R tui/src tui/assets "$TUI_DEST/"
+  (cd tui && npm ls --omit=dev --parseable --all) > "$STAGE/tui-dependencies" || {
+    echo "package.sh: error: install OpenTUI dependencies with npm ci --prefix tui" >&2; exit 1;
+  }
+  while IFS= read -r dependency; do
+    case "$dependency" in
+      "$TUI_ROOT") continue ;;
+      "$TUI_ROOT/node_modules/"*)
+        relative="${dependency#"$TUI_ROOT/node_modules/"}"
+        destination="$TUI_DEST/node_modules/$relative"
+        mkdir -p "$(dirname "$destination")"
+        cp -R "$dependency" "$(dirname "$destination")/" || {
+          echo "package.sh: error: could not stage OpenTUI dependency $relative" >&2; exit 1;
+        }
+        ;;
+      *) echo "package.sh: error: unexpected OpenTUI dependency path $dependency" >&2; exit 1 ;;
+    esac
+  done < "$STAGE/tui-dependencies"
+
+  # npm's Bun postinstall puts the host binary here; validate the actual staged
+  # executable and native renderer, not just the existence of platform names.
+  TUI_BUN="$TUI_DEST/node_modules/bun/bin/bun.exe"
+  [ -x "$TUI_BUN" ] || { echo "package.sh: error: staged Bun is missing" >&2; exit 1; }
+  TUI_BUN_VERSION="$("$TUI_BUN" --version)" || { echo "package.sh: error: staged Bun failed to run" >&2; exit 1; }
+  node -e 'const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(process.argv[1]); if (!m || Number(m[1]) < 1 || (Number(m[1]) === 1 && (Number(m[2]) < 3 || (Number(m[2]) === 3 && Number(m[3]) < 14)))) process.exit(1);' "$TUI_BUN_VERSION" || {
+    echo "package.sh: error: staged Bun must be at least 1.3.14" >&2; exit 1;
+  }
+  (unset OPENTUI_LIB_PATH OTUI_ASSET_ROOT OPENTUI_LIBC; cd "$TUI_DEST" && "$TUI_BUN" -e 'import { createTestRenderer } from "@opentui/core/testing"; const t = await createTestRenderer({width: 8, height: 4}); await t.renderOnce(); t.renderer.destroy();') || {
+    echo "package.sh: error: staged OpenTUI native renderer failed" >&2; exit 1;
+  }
+fi
 
 # POSIX sh wrapper: resolves symlinks portably, execs bundled dist with node.
 # LIB_DIR must be normalized (no ".." segments): the CLI runs only when

@@ -73,6 +73,8 @@ const SES_HTTP_ADDITIONS = [
 ] as const;
 
 const MEM_HTTP_ADDITIONS = ["get_memory_health"] as const;
+// FAC-001 slice 1 (A2.11): the one additive read method.
+const FAC_HTTP_ADDITIONS = ["get_workspace_attention"] as const;
 
 const EXPECTED_MCP_ADDITIONS = [
   "propose_action",
@@ -83,6 +85,8 @@ const EXPECTED_MCP_ADDITIONS = [
   "list_action_receipts",
   // MEM-001 step 3: deliberate read-only addition.
   "get_memory_health",
+  // FAC-001 slice 1 (A2.11): deliberate read-only addition.
+  "get_workspace_attention",
 ] as const;
 
 describe("ACT-001 D1 baseline preservation", () => {
@@ -93,11 +97,17 @@ describe("ACT-001 D1 baseline preservation", () => {
     expect(ANSWER_KEY.baseline.httpMethods).toBe(47);
     expect(ANSWER_KEY.interfaces.serviceMethods).toBe(8);
     expect(CAMPFIRE_HTTP_METHODS).toHaveLength(
-      frozen.count + EXPECTED_HTTP_ADDITIONS.length + SES_HTTP_ADDITIONS.length + MEM_HTTP_ADDITIONS.length,
+      frozen.count +
+        EXPECTED_HTTP_ADDITIONS.length +
+        SES_HTTP_ADDITIONS.length +
+        MEM_HTTP_ADDITIONS.length +
+        FAC_HTTP_ADDITIONS.length,
     );
     expect(new Set(CAMPFIRE_HTTP_METHODS).size).toBe(CAMPFIRE_HTTP_METHODS.length);
     const added = CAMPFIRE_HTTP_METHODS.filter((method) => !frozen.methods.includes(method));
-    expect([...added].sort()).toEqual([...EXPECTED_HTTP_ADDITIONS, ...SES_HTTP_ADDITIONS, ...MEM_HTTP_ADDITIONS].sort());
+    expect([...added].sort()).toEqual(
+      [...EXPECTED_HTTP_ADDITIONS, ...SES_HTTP_ADDITIONS, ...MEM_HTTP_ADDITIONS, ...FAC_HTTP_ADDITIONS].sort(),
+    );
   });
 
   it("pins v1.25 MCP tools (40) plus exactly the 6 ACT-001 agent tools and MEM-001 get_memory_health", () => {
@@ -124,11 +134,12 @@ describe("ACT-001 D1 baseline preservation", () => {
     // write channel — as the one catalog name past the SHR-001 family.
     const retired = ["dashboard"];
     const visible = CLI_COMMAND_NAMES.filter((name) => name !== "playbook");
-    expect(visible).toHaveLength(frozen.length + 7 - retired.length);
+    expect(visible).toHaveLength(frozen.length + 8 - retired.length);
     const added = visible.filter((name) => !frozen.includes(name));
     expect(added).toEqual([
       "update",
       "memory-health",
+      "attention",
       "actions",
       "publish",
       "publish-status",
@@ -150,8 +161,11 @@ describe("ACT-001 D1 baseline preservation", () => {
     const frozen = baselineJson<{ count: number; methods: string[] }>("viewer-allowlist.json");
     expect(frozen.count).toBe(12);
     expect(ANSWER_KEY.baseline.viewerReads).toBe(12);
-    expect([...VIEWER_READ_METHODS].sort()).toEqual([...frozen.methods, "list_agent_sessions"].sort());
+    expect([...VIEWER_READ_METHODS].sort()).toEqual(
+      [...frozen.methods, "list_agent_sessions", "get_workspace_attention", "get_action_proposal"].sort(),
+    );
     for (const method of EXPECTED_HTTP_ADDITIONS) {
+      if (method === "get_action_proposal") continue;
       expect(VIEWER_READ_METHODS as readonly string[]).not.toContain(method);
     }
   });
@@ -217,7 +231,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.30.0");
+    expect(pkg.version).toBe("1.31.0");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

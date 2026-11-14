@@ -30,6 +30,7 @@ const BOOLEAN_FLAGS = new Set([
   "decline",
   "check",
   "version",
+  "opentui",
 ]);
 
 export function parseArgs(argv: string[]): ParsedArgs {

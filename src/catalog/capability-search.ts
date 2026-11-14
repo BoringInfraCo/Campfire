@@ -56,6 +56,7 @@ export const MCP_TOOL_NAMES = [
   "get_record_history",
   "get_task",
   "get_workspace",
+  "get_workspace_attention",
   "get_workspace_changes",
   "get_workspace_context",
   "invite_workspace",

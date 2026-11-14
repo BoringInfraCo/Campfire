@@ -188,6 +188,9 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
   if (recoveryCode === "invalid_enrollment_invitation") return [{command:"campfire join --invitation-link <full-link>",when:"Ask the workspace owner for a fresh invitation link; an invitation id alone cannot join, and pending credentials stay local for recovery"}];
   if (recoveryCode === "agent_already_enrolled") return [{command:"campfire connect --harness codex|opencode",when:"Reconnect the existing enrolled harness"}];
   if (recoveryCode === "invitation_already_claimed") return [{command:"campfire join --help",when:"Retry the original prepared request; another recipient needs a new invitation"}];
+  if (recoveryCode === "attention_cursor_stale" || recoveryCode === "attention_cursor_authority_changed") {
+    return [{ command: "campfire attention <workspaceId>", when: "The workspace changed; restart without --cursor" }];
+  }
   if (recoveryCode === "memory_health_stale_cursor" || nextAction === "restart_without_cursor") {
     return [{ command: "campfire memory-health <workspaceId>", when: "The workspace changed; restart without --cursor" }];
   }

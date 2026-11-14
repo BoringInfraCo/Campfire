@@ -100,11 +100,13 @@ import {
   type DashboardPageInput,
   type DashboardSessionOptions,
 } from "./dashboard.js";
+import { OpentuiUnavailableError, opentuiRequested, spawnOpentui, waitForOpentui, type OpentuiChild, type OpentuiOutcome, type SpawnOpentuiInput } from "./opentui-launch.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { announceStableUpdate, runUpdateCommand } from "./update-command.js";
 import { setOwnedCampfireService } from "./service-owner.js";
 import { shouldAnnounce } from "../update/notice.js";
-import { DASHBOARD_NON_TTY_MESSAGE } from "../presentation/work-console.js";
+import { renderAttentionLines } from "../presentation/attention-view.js";
+import { DASHBOARD_NON_TTY_MESSAGE, stripTerminalControls } from "../presentation/work-console.js";
 import {
   formatJoinReceipt,
   formatLocalUpReceipt,
@@ -128,6 +130,7 @@ import { seedFixture } from "../bootstrap/seed.js";
 import { loadConfig } from "../config.js";
 import { MAX_PAGE_SIZE } from "../domain/context-policy.js";
 import { CampfireError, ValidationError } from "../domain/errors.js";
+import type { AttentionResult } from "../domain/attention.js";
 import type { MemoryHealthResult } from "../domain/memory-health.js";
 import { handoffReceipt, type CampfireHandoffPacket, type WorkspaceRecall } from "../domain/recall.js";
 import { assertHandoffDestination, writeHandoffFile } from "./handoff-file.js";
@@ -1487,6 +1490,22 @@ async function cmdStatus(parsed: ParsedArgs, argv: string[]): Promise<void> {
 }
 
 /**
+ * FAC-001 A4.3: the Terminal's attention reader. One page at the maximum limit,
+ * never a continuation cursor; `since` is the session baseline (A4.1). Exported
+ * so tests exercise the production closure instead of a copy.
+ */
+export function makeAttentionLoader(
+  call: (method: string, params: Record<string, unknown>) => Promise<unknown>,
+  currentWorkspaceId: () => string,
+): (query: { since?: string }) => Promise<AttentionResult> {
+  return async (query) => {
+    const params: Record<string, unknown> = { workspaceId: currentWorkspaceId(), limit: 100 };
+    if (query.since !== undefined) params.since = query.since;
+    return (await call("get_workspace_attention", params)) as AttentionResult;
+  };
+}
+
+/**
  * Loader wiring shared by `campfire dashboard` and the interactive bare command.
  * Callers pass the call they already authorized. The local human shell passes
  * loopback HTTP on the listener this process owns so `withBackend` does not
@@ -1506,14 +1525,7 @@ function dashboardSessionOptions(options: {
     actorId: options.actorId,
     actorType: options.actorType,
     ...(options.awaitingWorkspace === true ? { awaitingWorkspace: true } : {}),
-    onUpdate: async () => {
-      try {
-        await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
-      } catch (error) {
-        console.error(formatCliFailure(error, { command: "update" }));
-        throw error;
-      }
-    },
+    onUpdate: runDashboardUpdate,
     load: async () =>
       (await call("get_workspace_context", {
         workspaceId,
@@ -1524,6 +1536,7 @@ function dashboardSessionOptions(options: {
       if (cursor !== undefined) params.cursor = cursor;
       return (await call("list_tasks", params)) as WorkspaceObjectPage<Task>;
     },
+    loadAttention: makeAttentionLoader(call, () => workspaceId),
     loadPeople: async (query) => {
       const params: Record<string, unknown> = { workspaceId, limit: DASHBOARD_PEOPLE_PAGE_LIMIT };
       if (query.cursor !== undefined) params.cursor = query.cursor;
@@ -1563,25 +1576,85 @@ function dashboardSessionOptions(options: {
   };
 }
 
-async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
+async function runDashboardUpdate(): Promise<void> {
+  try {
+    await runUpdateCommand(parseArgs(["update"]), { stdinIsTTY: true, stdoutIsTTY: true });
+  } catch (error) {
+    console.error(formatCliFailure(error, { command: "update" }));
+    throw error;
+  }
+}
+
+/** Only a preflight missing/unsupported sidecar may fall back; child errors remain errors. */
+async function runPreferredDashboard(input: SpawnOpentuiInput, classic: () => Promise<void>, flags: ParsedArgs["flags"]): Promise<OpentuiOutcome> {
+  if (!opentuiRequested(input.parentEnv ?? process.env, flags)) {
+    await classic();
+    return "quit";
+  }
+  let child: OpentuiChild;
+  try {
+    child = spawnOpentui(input);
+  } catch (error) {
+    if (!(error instanceof OpentuiUnavailableError)) throw error;
+    console.error(`${error.message} Using the classic dashboard.`);
+    await classic();
+    return "quit";
+  }
+  return await waitForOpentui(child);
+}
+
+export async function cmdDashboard(parsed: ParsedArgs, argv: string[]): Promise<void> {
   if (!isInteractiveTty()) {
     throw new ValidationError(DASHBOARD_NON_TTY_MESSAGE);
   }
+  const remoteProfile = loadRemoteProfile();
+  const access =
+    remoteProfile === undefined
+      ? undefined
+      : resolveRemoteAccess({
+          url: optionalFlag(parsed.flags, "url"),
+          token: readCampfireToken(process.env, argv),
+        });
+  const url = access?.url ?? readCampfireUrl();
+  const token = url === undefined ? undefined : access?.token ?? readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
+  if (url !== undefined && token === undefined) {
+    throw new ValidationError("Missing token: pass --token or set CAMPFIRE_TOKEN when CAMPFIRE_URL is set", {
+      field: "token",
+    });
+  }
   const explicit = explicitWorkspaceArgument(parsed);
+  let outcome = "quit" as OpentuiOutcome;
   await withBackend(argv, async (backend) => {
     const selection = await resolveReadWorkspace(backend, explicit, { allowAwaiting: true });
     const actor = backend.identity.ctx.actor;
     const awaiting = "awaiting" in selection;
-    await runDashboardSession(
-      dashboardSessionOptions({
-        workspaceId: awaiting ? "" : selection.workspaceId,
+    const workspaceId = awaiting ? "" : selection.workspaceId;
+    const classic = () => runDashboardSession(dashboardSessionOptions({
+      workspaceId,
+      actorId: actor.actorId,
+      actorType: actor.actorType,
+      ...(awaiting ? { awaitingWorkspace: true } : {}),
+      call: (method, params) => backend.call(method, params),
+    }));
+    // The sidecar needs HTTP. Direct SQLite dashboard reads remain supported.
+    if (url === undefined || token === undefined) {
+      if (opentuiRequested(process.env, parsed.flags)) {
+        throw new ValidationError("OpenTUI needs a Campfire HTTP listener. Run the bare campfire command to start a local listener, or connect to a hosted profile.", { field: "opentui" });
+      }
+      await classic();
+    } else {
+      outcome = await runPreferredDashboard({
+        baseUrl: url,
+        token,
+        workspaceId,
+        awaitingWorkspace: awaiting,
         actorId: actor.actorId,
         actorType: actor.actorType,
-        ...(awaiting ? { awaitingWorkspace: true } : {}),
-        call: (method, params) => backend.call(method, params),
-      }),
-    );
+      }, classic, parsed.flags);
+    }
   });
+  // The sidecar has exited and the backend is closed before update runs.
+  if (outcome === "update") await runDashboardUpdate();
 }
 
 async function cmdAgents(parsed: ParsedArgs, argv: string[]): Promise<void> {
@@ -1767,6 +1840,35 @@ async function cmdMemoryHealth(parsed: ParsedArgs, argv: string[]): Promise<void
     if (cursor !== undefined) params.cursor = cursor;
     const result = (await backend.call("get_memory_health", params)) as MemoryHealthResult;
     emitResult(result, mode, formatMemoryHealth);
+  });
+}
+
+function formatAttention(result: AttentionResult): string {
+  const lines: string[] = [labeled("Workspace", stripTerminalControls(result.workspaceId)), labeled("Observed", stripTerminalControls(result.observedAt))];
+  lines.push(...renderAttentionLines(result));
+  // The CLI has no paging key, so a caller needs the cursors to continue.
+  if (result.nextCursor !== undefined) lines.push(`nextCursor ${stripTerminalControls(result.nextCursor)}`);
+  if (result.catchUp.status === "partial" && result.catchUp.toCursor !== undefined) lines.push(`toCursor ${stripTerminalControls(result.catchUp.toCursor)}`);
+  return lines.join("\n");
+}
+
+async function cmdAttention(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const mode = commandOutput(parsed);
+  const explicit = explicitWorkspaceArgument(parsed);
+  const limit = optionalPositiveInt(parsed.flags, "limit");
+  const cursor = optionalFlag(parsed.flags, "cursor");
+  const since = optionalFlag(parsed.flags, "since");
+  await withBackend(argv, async (backend) => {
+    const selection = await resolveReadWorkspace(backend, explicit);
+    if ("awaiting" in selection) {
+      throw workspaceSelectionError([]);
+    }
+    const params: Record<string, unknown> = { workspaceId: selection.workspaceId };
+    if (limit !== undefined) params.limit = limit;
+    if (cursor !== undefined) params.cursor = cursor;
+    if (since !== undefined) params.since = since;
+    const result = (await backend.call("get_workspace_attention", params)) as AttentionResult;
+    emitResult(result, mode, formatAttention);
   });
 }
 
@@ -3278,6 +3380,7 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
   const runtime = createRuntime(config);
   let running: Awaited<ReturnType<typeof openLocalListener>> | undefined;
   let stopping: Promise<void> | undefined;
+  let outcome = "quit" as OpentuiOutcome;
   const stopOwned = (): Promise<void> => {
     if (stopping !== undefined) return stopping;
     stopping = (async () => {
@@ -3375,15 +3478,23 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
     process.once("SIGINT", onSignal);
     process.once("SIGTERM", onSignal);
     try {
-      await runDashboardSession(
-        dashboardSessionOptions({
+      outcome = await runPreferredDashboard(
+        {
+          baseUrl: session.apiUrl,
+          token: humanToken,
+          workspaceId,
+          awaitingWorkspace,
+          actorId: actor.actorId,
+          actorType: actor.actorType,
+        },
+        () => runDashboardSession(dashboardSessionOptions({
           workspaceId,
           actorId: actor.actorId,
           actorType: actor.actorType,
           ...(awaitingWorkspace ? { awaitingWorkspace: true } : {}),
-          call: (method, params) =>
-            campfireHttpCall({ baseUrl: session.apiUrl, token: humanToken, method, params }),
-        }),
+          call: (method, params) => campfireHttpCall({ baseUrl: session.apiUrl, token: humanToken, method, params }),
+        })),
+        parsed.flags,
       );
     } finally {
       process.off("SIGINT", onSignal);
@@ -3395,6 +3506,8 @@ async function runLocalHumanShell(parsed: ParsedArgs): Promise<void> {
   } finally {
     await stopOwned();
   }
+  // The sidecar has exited and the owned listener and runtime are closed.
+  if (outcome === "update") await runDashboardUpdate();
 }
 
 async function cmdDefault(parsed: ParsedArgs, argv: string[]): Promise<void> {
@@ -3737,6 +3850,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   "catch-up": (parsed, argv) => cmdCatchUp(parsed, argv),
   recall: (parsed, argv) => cmdRecall(parsed, argv),
   "memory-health": (parsed, argv) => cmdMemoryHealth(parsed, argv),
+  attention: (parsed, argv) => cmdAttention(parsed, argv),
   "handoff-packet": (parsed, argv) => cmdHandoffPacket(parsed, argv),
   findings: (parsed, argv) => cmdFindings(parsed, argv),
   tasks: (parsed, argv) => cmdTasks(parsed, argv),

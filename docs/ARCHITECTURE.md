@@ -1,13 +1,14 @@
 # Campfire — Architecture
 
-**Status:** Revised for published CAP-001, the planned v1.26 ACT-001 pilot
-boundary, the proposed local-dictation adapter boundary, and the
-founder-directed SES-001 local session host
+**Status:** Revised through published `v1.30.0` (v1.31.0 approved and in preparation, not yet published); memory-maintenance,
+machine-composable MCP, harness Code Mode, and explainable routing boundaries
+recorded November 7, 2026; MEM-001, CMP-001, ActionProposal, PI-000 HOLD, and
+FAC-001 boundaries corrected November 11, 2026
 **Version:** 0.2
 **Date:** October 3, 2026; projection boundary revised October 9, 2026; CAP-001
 boundary October 20, 2026; ACT-001 pilot planned October 21, 2026; local
 dictation boundary proposed October 31, 2026; SES-001 local session host
-recorded November 5, 2026
+recorded November 5, 2026; latest revision November 11, 2026
 **Company:** Boring Infra Co.  
 **Depends on:** Product Definition v0.2, Vision v0.2
 
@@ -108,6 +109,14 @@ Where practical, important collaboration changes should produce immutable contri
 ### 3.10 Evidence before intelligence
 
 The first system should prove reliable state sharing and continuation before adding autonomous summarization, ranking, inference, or organizational learning.
+
+### 3.11 Deterministic authority beneath derived intelligence
+
+Authorization, identity, lifecycle, currentness, provenance, contribution
+order, and canonical records remain deterministic. A model may retrieve,
+summarize, rank, relate, or propose. It does not silently turn its output into
+workspace truth. Every derived result must retain its authorized audience,
+sources, completeness, freshness, and derivation policy.
 
 ---
 
@@ -567,10 +576,11 @@ Agent-authored HTML is untrusted. Any future preview needs sandboxing, a content
 
 ---
 
-### Planned v1.26 ActionProposal and submission receipts
+### Shipped v1.26.1 ActionProposal and submission receipts
 
 [ACT-001 — Propose and Follow Up](Campfire-v1.26-ACT-001-Propose-and-Follow-Up.md)
-plans one workspace-owned ActionProposal aggregate for a verification retry.
+shipped in v1.26.1 as a CONDITIONAL GO engineering candidate; the live
+Codex and OpenCode paths and a real provider remain unobserved. It defines one workspace-owned ActionProposal aggregate for a verification retry.
 It records immutable intent and evidence, a designated executor, human review,
 a single dispatch reservation, and append-only submission/reconciliation
 receipts. It is distinct from a Task, Decision, Finding, Capability grant,
@@ -587,9 +597,13 @@ external effects or recall a request already sent. A submitted retry is not a
 successful verification, and a signed completion is evidence rather than
 permission to merge, deploy, accept a decision, or complete a task.
 
-This is a proposed narrow Phase 8 probe. Its contract and Step 0 freeze govern
+This is a narrow Phase 8 probe. Its contract and Step 0 freeze govern
 implementation; this amendment does not claim Gate F demand or authorize a
 general policy, grant, workflow, or execution system.
+
+Read-only awaiting-review and outcome-unknown attention cues are derived from
+the proposal. They carry no approval authority, and approval and lifecycle
+controls stay in APR-001.
 
 ### External execution-provider adapters
 
@@ -690,9 +704,73 @@ send input to another person's local process. Stop is a local control-socket
 request from the owner of that launch. A stale PID is not a license to kill an
 arbitrary process.
 
+### Harness-side Code Mode and local agent recommendation
+
+[Pi Code Mode](https://pi.dev/docs/latest/codemode) demonstrates a useful
+harness pattern: a model can produce one program that composes several typed
+tools, runs independent calls in parallel, filters large results, and returns a
+small answer. Pi runs that program in a QuickJS sandbox without direct Node.js,
+filesystem, network, or timer access. The program reaches the outside world
+through host-exposed tools and explicitly enabled provider-backed model APIs,
+including `models.classify` and `models.generateImages`; mediation is not
+tool-only. Those model APIs use session credentials and can incur provider
+cost, so their enablement, data egress, credentials, and budget remain host
+policy.
+
+That sandbox does not make an unsafe tool or model call safe. Tool effects
+occur in their real backing systems, are not rolled back when a later call
+fails, and inherit the permissions of the process or service implementing the
+tool unless a separate OS/container boundary restricts them. Campfire therefore
+treats Code Mode as a **composition boundary**, not an authorization or
+containment boundary. Compatibility work must configure an explicit
+whole-script timeout and output cap. Script completion, failure, or timeout
+must cancel still-pending sibling calls; cancellation does not undo completed
+effects or provider charges.
+
+```text
+Campfire workspace and task
+        |
+        | authorized state + explainable fit recommendation
+        v
+user-selected agent / harness
+        |
+        | harness-owned Code Mode and model loop
+        v
+scoped typed tools + explicitly enabled model APIs
+        |
+        | tool/model authorization, budget + sandbox / OS containment
+        v
+external effects
+        |
+        | source-backed outcome
+        v
+Campfire contribution, receipt, finding, or artifact reference
+```
+
+The local session host may eventually expose an **agent recommendation** for a
+task. Hard constraints run before ranking: actor/workspace authorization,
+human ownership, installed harness, repository access, required tools,
+privacy/data policy, model/context limits, and budget. Ranking may then use
+measured success, latency, cost, and current workload. The result must include
+reason codes and the facts used. It is advisory until the person explicitly
+starts the session. RTR recommendation responses and receipts are local-only
+by default and use stable, redacted reason codes. Raw repository or local
+paths, credential identifiers, argv/environment, prompts, terminal bytes, and
+transcripts are prohibited from shared records, even if a later contract adds
+a shared recommendation projection.
+
+Automatic routing is a later, opt-in capability. It requires repeated evidence
+that recommendations are correct, a budget and fallback policy, auditable
+selection receipts, revocation behavior, and a separate sprint. Per-request
+model routing remains the selected harness's responsibility unless a later
+product decision explicitly moves it; retries, continuation, and compaction
+can use separate physical dispatches. Campfire does not infer quality from a
+vendor or model name, does not silently start a process, and does not create
+work merely because an agent appears idle.
+
 ## 9. Contribution and Provenance Model
 
-Every meaningful mutation should generate a contribution record.
+Every meaningful change to canonical work state should generate a contribution record. Credential issuance and revocation (issueToken, revokeToken) and clock-derived states (proposal expiry) did not advance the contribution tip in the SQLite measurement, so catch-up cursors do not imply credential changes; invites and joins do advance it, and no service caller exists for role changes (source: docs/evidence/fac-001/step-0/measurements/03-writer-coverage.txt; SQLite only, D1 twins and GitHub ingress not measured).
 
 ```text
 Contribution
@@ -774,7 +852,7 @@ Core does not import or branch on Slack, Linear, GitHub, email, or any other des
 
 The closed vocabulary is `finding.recorded`, `decision.proposed`, `decision.accepted`, `task.blocked`, `task.completed`, `goal.completed`, `artifact.attached`, and `workspace.completed`. Other mutations still write their Contribution and write no DomainEvent.
 
-### Planned v1.26 inbound completion evidence
+### Shipped v1.26.1 inbound completion evidence
 
 ACT-001 adds a separate, operator-bound native GitHub webhook ingress on the
 local server and Worker. One configured source maps to one workspace,
@@ -1028,9 +1106,85 @@ The first implementation can be simple and explicit.
 
 CTX-001 keeps that projection as an orientation, not a copy of the history. `get_workspace_context` returns bounded slices. Each slice reports `total`, `returned`, and `truncated`, and `completeness.fullHistoryIncluded` is false. Drill-down is `list_decisions`, `list_findings`, `list_tasks`, `list_artifacts`, and the matching get-by-id methods. Catch-up is `get_workspace_changes` from `orientationCursor`, ordered by a durable per-workspace append position and bounded by a frozen stream tip. `get_workspace` remains the full inspector. Orientation counts and lists current findings, and accepted plus proposed decisions. Historical counts are separate and do not spend the current-item budget. `Finding.sourceArtifactId` still ranks findings. A finding may also cite artifacts as `supports` or `contradicts`, and a decision may cite findings. Those links are explicit rows with provenance. `needsReview` is computed when a current decision cites a finding that is no longer current. Authorization still runs before any of those reads.
 
-RCL-001 adds one workspace-scoped bounded recall read. It searches only that workspace's structured goal, task, finding, decision, and artifact title/type text. It reports current versus historical lifecycle, provenance, and bounded excerpts. The handoff packet is a non-canonical offline copy written by the CLI, not a stored object and not authority to act. Decision records and proposed or accepted anchors include the decision rationale, bounded to 1024 bytes, including when the query excerpt matched only the summary. The recall response does not add that field. RCL-001, RCL-002, and RCL-003 remain NO-GO / REFRAME; v1.16.0 was subsequently published under a separate founder release-scope override. That publication did not close Gate E or alter the pilot verdicts.
+RCL-001 adds one workspace-scoped bounded recall read. It searches only that workspace's structured goal, task, finding, decision, and artifact title/type text. It reports current versus historical lifecycle, provenance, and bounded excerpts. The handoff packet is a non-canonical offline copy written by the CLI, not a stored object and not authority to act. Shipped Recall schema v2 decision hits and decision-set members carry the stored rationale bounded to 1024 bytes, with `rationaleTruncated: true` when that bound truncates it, including when the query excerpt matched only the summary. Handoff decision records and proposed or accepted anchors use the same bounded rationale projection; a superseded decision-set member in the handoff packet omits its own rationale and labels it historical explanation. RCL-001, RCL-002, and RCL-003 remain NO-GO / REFRAME; v1.16.0 was subsequently published under a separate founder release-scope override. That publication did not close Gate E or alter the pilot verdicts.
 
 No embeddings or semantic ranking are required to prove the thesis.
+
+### Deterministic attention (FAC-001)
+
+FAC-001 adds one deterministic, workspace-scoped, per-read derived attention
+read over existing state. It adds no new primitive, no stored cue objects, and
+no model. Authorization runs before retrieval. The frozen contract,
+[Campfire-FAC-001-Deterministic-Facilitation.md](Campfire-FAC-001-Deterministic-Facilitation.md),
+is authoritative. The shipped baseline attention (ATT-001) is unchanged until
+FAC-001 slice 1 ships.
+
+### Memory component model
+
+Campfire memory is a system of cooperating components, not one index:
+
+| Memory component | Campfire representation | Current boundary |
+| --- | --- | --- |
+| Event history | Contributions, record history, domain events, action receipts | Durable and provenance-backed; raw private transcripts stay outside canonical state. |
+| Memory records | Goals, Tasks, Findings, Decisions, Artifacts, relationships | Structured, lifecycle-aware, workspace-scoped, and authorized. |
+| Working context | `get_workspace_context`, catch-up cursors, paged drill-down | Bounded and explicit about truncation; not a claim to full history. |
+| Retrieval | Current one-workspace Recall plus explicit filters and links | Lexical `instr` matching today; no hidden semantic authority. |
+| Representations | Viewer, terminal, generated workspace view, future briefs/maps | Derived, audience-bound, non-canonical, and reproducible from authorized records. |
+| Maintenance | Currentness, `needsReview`, correction, supersession; memory health (MEM-001, four deterministic cues, released in v1.30.0) | Deterministic checks first; model-assisted proposals later. |
+
+The highest-priority gap is maintenance. A growing workspace needs to identify
+stale current findings, accepted decisions resting on non-current evidence,
+unresolved competing decisions, orphaned tasks and artifact references,
+duplicated records, missing handoff facts, and candidate relationships. Many of
+these checks can be deterministic and should ship before a model is involved.
+
+Retrieval should evolve in layers:
+
+1. keep structured filters, lifecycle, authorization, and explicit relations;
+2. add portable full-text search for the fields users actually try to find;
+3. add relationship expansion and source-aware ranking;
+4. evaluate optional embeddings only for misses the earlier layers cannot
+   solve;
+5. authorize every candidate source before counts, excerpts, ranking, or
+   generated output cross the boundary.
+
+An embedding or external index may accelerate candidate discovery. It can
+never decide membership, currentness, decision state, or permission. Final
+records are re-read from canonical storage and returned with IDs, lifecycle,
+provenance, timestamps, match reasons, completeness, and uncertainty.
+
+### Optional Memory Steward
+
+The Memory Steward is a later application service over authorized structured
+state. It is not a background agent with unrestricted tools. Its first useful
+outputs are proposals:
+
+- a cited catch-up or handoff brief;
+- a possible stale or contradictory record requiring review;
+- a candidate relationship between existing records;
+- a question about missing evidence, ownership, blocker reason, or next step;
+- a proposed correction, supersession, consolidation, or archival action.
+
+Every Steward result binds one workspace and audience, source record IDs,
+contribution-position watermark, page completeness, generation time,
+model/provider, policy version, freshness/invalidations, and cost budget.
+Unsupported factual conclusions are omitted. A genuinely unanswered question
+may appear separately as a labeled question, never as a factual conclusion.
+Every conclusion and proposed next step must cite the source record IDs that
+support it or be omitted. Conflicting accepted decisions remain visible; the
+Steward does not choose one silently.
+
+Durable mutation still uses the existing typed application service and the
+actor who accepts the proposal. The Steward cannot authorize itself, create an
+unattributed Contribution, accept or retire a Decision, assign a Task, approve
+an ActionProposal, or execute a tool. Local deployments may use a local model
+or user-provided API key; hosted deployments may provide managed inference.
+Both follow the same source, permission, audit, and fallback contract.
+
+Memory quality needs a frozen evaluation set before optimization. Score correct
+source IDs, currentness and decision safety, authorization denial, omissions,
+citation support, next-action usefulness, latency, cost, and behavior under
+stale/conflicting/incomplete data. A fluent summary is not a pass.
 
 Example:
 
@@ -1147,6 +1301,75 @@ domain object, not a participant, and not executed. `incident-investigation`
 1.0.0 is the only definition. Further playbooks wait on the evidence in
 `docs/SPRINT_WOW_001_RESULT.md`: a recording gain on three synthetic
 incidents, and no measured continuation gain.
+
+### Machine-composable MCP contract
+
+The current MCP success adapter serializes pretty JSON into a text content
+block. That remains compatible, but it forces a Code Mode harness to parse a
+presentation string and gives the host no typed result contract. The bounded
+CMP-001 contract, released in v1.30.0 as a CONDITIONAL GO engineering
+candidate, selects exactly these eight reads:
+`get_workspace_context`, `get_workspace_changes`, `list_tasks`, `get_task`,
+`get_memory_health`, `get_decision`, `get_finding`, and
+`get_artifact`. It does not include `list_workspaces` or expand to the full MCP
+surface.
+
+For each selected read, successful `structuredContent` is an object and the
+existing text fallback serializes the same JSON value. A stable, versioned
+`outputSchema` describes and validates that success object before it crosses
+the MCP boundary; cursor, truncation, currentness, and provenance fields remain
+intact. An array result such as `list_workspaces`, if later included, requires
+an explicit versioned object envelope rather than a bare array. That future
+possibility does not expand the initial set.
+
+Expected application errors preserve `isError: true` and the existing typed
+JSON `{ error, message, details }` text fallback. The structured-error decision
+is to return that same typed error object as `structuredContent`, not a
+success-shaped value; success `outputSchema` validation does not describe the
+error envelope. Unexpected internal errors return the generic sanitized
+`{ error: "InternalError", message: "Internal error", details: null }` object
+in both channels and never raw exception text. The pinned MCP SDK and each
+compatibility client must be tested to prove `isError` propagation and this
+structured error behavior rather than assuming protocol handling.
+
+The sanitization repair covers both the ordinary tool runner and the catalog
+result path, including tools outside the selected read set. Inject a distinctive
+exception sentinel through each path and assert that it appears in neither the
+text nor structured response, while expected typed application errors retain
+their existing details. Exercise both a normally returned `isError` result and
+a rejected Pi call; the client must handle each without treating either as a
+successful domain result.
+
+Tool annotations must be accurate: set `readOnlyHint`, `destructiveHint`,
+`idempotentHint`, and `openWorldHint` only when the actual operation supports
+the claim. Large or sensitive operations remain discoverable without exposing
+every tool to every model turn. Test Codex, Claude Code, OpenCode, and a pinned
+Pi SDK/Code Mode client against the same application-service result; the
+pinned Pi path is unobserved and is not a release gate. Pi Code
+Mode returns an MCP `CallToolResult`, including `isError` and
+`structuredContent`, not an unwrapped bare domain record. Client scripts must
+inspect that envelope, handle rejected calls, and use `Promise.allSettled()` for
+independent parallel calls when partial results are useful.
+
+These metadata improve planning and composition. They do not grant permission.
+Authorization still runs on every call, and write idempotency still belongs to
+the application/domain layer. A script that makes three authorized calls does
+not receive a new aggregate permission merely because the harness made them
+inside one program. Structured results, schemas, annotations, and sanitized
+internal-error behavior shipped in v1.30.0; the hosted MCP path, model-visible
+bytes, and the pinned-client paths remain unobserved (see
+`docs/CURRENT_STATE.md`). New reads may omit `outputSchema` when the
+`tools/list` size ceiling requires it (FAC-001 `get_workspace_attention`
+declares none, F11); the ceiling is asserted by
+`tests/unit/cmp-001-handshake-size.test.ts`.
+
+PI-000 (the Pi SDK/MCP compatibility spike) is closed at HOLD
+(`docs/SPRINT_PI_000_RESULT.md`). The model experiment was not run, and
+reopening requires a separate founder decision. If reopened, integrate Pi only
+through its SDK or MCP/tool boundary in isolation. Do not implement a
+Campfire-owned QuickJS tool runtime unless evidence across multiple harnesses
+shows that a shared missing capability is worth owning. Pi remains optional; ordinary CLI/MCP behavior and
+the other supported harnesses must remain fully usable without it.
 
 Thin handlers still allow other interfaces:
 
@@ -1723,6 +1946,10 @@ The following should remain true as Campfire evolves:
 12. **The system should be able to explain why an agent received a piece of context.**
 13. **An external runtime may execute approved work, but cannot become Campfire's authority or canonical workspace.**
 14. **A local session host may supervise only a user-initiated process on that person's machine.** Its report expires, creates no Contribution, and never carries terminal bytes or remote control. The workspace stays canonical.
+15. **Derived intelligence cannot silently become canonical state.** It remains cited, audience-bound, freshness-labeled, correctable, and optional.
+16. **Code composition is not authorization or containment.** Every underlying tool call retains its own authorization, idempotency, and sandbox boundary.
+17. **Agent recommendations are explainable and advisory before they are automatic.** Hard constraints precede measured ranking; a recommendation grants no authority.
+18. **Memory maintenance preserves history.** Consolidation, correction, supersession, and archival proposals never erase the provenance needed to understand prior work.
 
 These invariants matter more than any particular framework, database, or protocol choice.
 

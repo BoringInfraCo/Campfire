@@ -9,6 +9,9 @@
 import { MEMORY_HEALTH_REASONS, validateMemoryHealthInput } from "../domain/memory-health.js";
 import type { MemoryHealthResult } from "../domain/memory-health.js";
 import { memoryHealthFromSnapshot, type GetMemoryHealthInput } from "../service/memory-health-read.js";
+import type { AttentionCatchUp, AttentionResult, AttentionAuthority, GetWorkspaceAttentionInput } from "../domain/attention.js";
+import { assembleAttentionCatchUp, notRequestedCatchUp, planAttentionCatchUp, type SinceCursor } from "../domain/attention-catchup.js";
+import { assertAttentionSnapshotFresh, attentionFromSnapshot, prepareAttentionRequest, snapshotTip } from "../service/attention-read.js";
 import type { ActorContext } from "../service/authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "../service/session-list.js";
@@ -202,6 +205,8 @@ export interface AsyncCampfireService {
   getWorkspaceChanges(ctx: ActorContext, input: GetWorkspaceChangesInput): Promise<WorkspaceCatchUp>;
   recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): Promise<WorkspaceRecall>;
   getMemoryHealth(ctx: ActorContext, input: GetMemoryHealthInput): Promise<MemoryHealthResult>;
+  /** FAC-001: authorized, read-only, deterministic attention cues (D1 twin; same pure core as SQLite). */
+  getWorkspaceAttention(ctx: ActorContext, input: GetWorkspaceAttentionInput): Promise<AttentionResult>;
   projectHandoffPacket(ctx: ActorContext, input: ProjectHandoffPacketInput): Promise<CampfireHandoffPacket>;
   listDecisionsPage(ctx: ActorContext, input: ListWorkspaceObjectsInput): Promise<WorkspaceObjectPage<Decision>>;
   getDecisionInWorkspace(ctx: ActorContext, workspaceId: string, decisionId: string): Promise<Decision>;
@@ -798,6 +803,57 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       ...(afterPosition > 0 ? { afterPosition } : {}),
       ...(tip > 0 ? { throughPosition: tip } : {}),
     };
+  }
+
+  /**
+   * FAC-001 catch-up row I/O only: the async mirror of readAttentionCatchUp in campfire-service.ts
+   * (same pageContributions calls, limit E). Every decision is made by phase A's pure assembleAttentionCatchUp.
+   */
+  async function readAttentionCatchUp(
+    workspaceId: string,
+    since: SinceCursor,
+    sinceToken: string,
+    currentTip: number,
+  ): Promise<AttentionCatchUp> {
+    const plan = planAttentionCatchUp(since, currentTip);
+    let high: Contribution[] = [];
+    let highHasMore = false;
+    let normal: Contribution[] = [];
+    let normalHasMore = false;
+    if (since.phase === "high") {
+      const highPage = await store.pageContributions(workspaceId, pageContributionQuery(plan.limit, "high", since.position, plan.tip));
+      high = highPage.items;
+      highHasMore = highPage.hasMore;
+      if (!highHasMore) {
+        const room = plan.limit - high.length;
+        if (room > 0) {
+          const normalPage = await store.pageContributions(workspaceId, pageContributionQuery(room, "normal", since.originPosition, plan.tip));
+          normal = normalPage.items;
+          normalHasMore = normalPage.hasMore;
+        } else {
+          const probe = await store.pageContributions(workspaceId, pageContributionQuery(1, "normal", since.originPosition, plan.tip));
+          normalHasMore = probe.items.length > 0 || probe.hasMore;
+        }
+      }
+    } else {
+      const normalPage = await store.pageContributions(workspaceId, pageContributionQuery(plan.limit, "normal", since.position, plan.tip));
+      normal = normalPage.items;
+      normalHasMore = normalPage.hasMore;
+    }
+    const highCount = await store.pageContributions(workspaceId, pageContributionQuery(1, "high", since.originPosition, plan.tip));
+    const normalCount = await store.pageContributions(workspaceId, pageContributionQuery(1, "normal", since.originPosition, plan.tip));
+    return assembleAttentionCatchUp({
+      workspaceId,
+      fromCursor: sinceToken,
+      since,
+      currentTip,
+      high,
+      highHasMore,
+      normal,
+      normalHasMore,
+      highTotal: highCount.total,
+      normalTotal: normalCount.total,
+    });
   }
 
   function objectAfter(
@@ -1568,6 +1624,33 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         observedAt,
         snapshot,
       );
+    },
+
+    async getWorkspaceAttention(ctx: ActorContext, input: GetWorkspaceAttentionInput): Promise<AttentionResult> {
+      // 5.2 (1) readable workspace, (2) role and capabilities; no cue-source read yet.
+      const workspace = await requireReadableWorkspace(ctx, input.workspaceId);
+      const role = (await store.getParticipant(input.workspaceId, ctx.actor))?.role ?? "none";
+      const active = workspace.status === "active";
+      const canDecisionUpdate = await authorizer.canAct(ctx, "decision:update", input.workspaceId);
+      const canTaskUpdate = await authorizer.canAct(ctx, "task:update", input.workspaceId);
+      const reviewEligible =
+        (await authorizer.canAct(ctx, "action:review", input.workspaceId)) &&
+        ctx.actor.actorType === "human" &&
+        role === "owner" &&
+        active;
+      const authority: AttentionAuthority = { role, canDecisionUpdate, canTaskUpdate, reviewEligible, workspaceStatus: workspace.status };
+      const who = { actorType: ctx.actor.actorType, actorId: ctx.actor.actorId };
+      // (3) limit, cursor, since shape; (4) authority fingerprint: pure, before any store read.
+      const prepared = prepareAttentionRequest(input, who, authority);
+      const observedAt = prepared.cursor?.observedAt ?? clock();
+      // (4.5) D1 bracketed snapshot; (5) staleness; (6) since ahead of tip.
+      const snapshot = await store.readAttentionSnapshot(input.workspaceId, { who, canTaskUpdate, includeReview: active });
+      assertAttentionSnapshotFresh(prepared, snapshot);
+      const catchUp =
+        prepared.since === undefined
+          ? notRequestedCatchUp()
+          : await readAttentionCatchUp(input.workspaceId, prepared.since, prepared.sinceToken as string, snapshotTip(snapshot));
+      return attentionFromSnapshot(prepared, who, authority, observedAt, snapshot, catchUp);
     },
 
     async recallWorkspace(ctx: ActorContext, input: RecallWorkspaceInput): Promise<WorkspaceRecall> {

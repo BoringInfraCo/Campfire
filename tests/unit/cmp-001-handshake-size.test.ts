@@ -67,5 +67,11 @@ describe("CMP-001 whole-handshake size", () => {
     // eslint-disable-next-line no-console
     process.stdout.write(`cmp-001 tools/list frame bytes: ${bytes} (baseline ${BASELINE_BYTES}, ceiling ${CEILING_BYTES}, ratio ${(bytes / BASELINE_BYTES).toFixed(3)})\n`);
     expect(bytes).toBeLessThanOrEqual(CEILING_BYTES);
+    // FAC-001 F9/F11: the real attention tool is inside the unchanged ceiling with no outputSchema.
+    const attention = list.tools.find((t) => t.name === "get_workspace_attention");
+    expect(attention).toBeDefined();
+    expect(attention!.outputSchema).toBeUndefined();
+    expect(attention!.description!.length).toBeLessThanOrEqual(84);
+    process.stdout.write(`fac-001 headroom: ${CEILING_BYTES - bytes} bytes\n`);
   });
 });

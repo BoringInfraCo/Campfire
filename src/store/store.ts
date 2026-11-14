@@ -5,6 +5,7 @@
  * implementation lives in `sqlite-store.ts`. Keeping this explicit avoids
  * leaking storage details into collaboration semantics (AGENTS.md invariant 7).
  */
+import type { AttentionSnapshot, AttentionSnapshotRequest } from "../domain/attention.js";
 import type { AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import type {
   ActionProposal,
@@ -370,6 +371,11 @@ export interface CampfireStore {
   recallDecisionSet(workspaceId: string, query: RecallDecisionSetQuery): RecallDecisionSetPage;
   /** MEM-001: one workspace-scoped read of the source rows and contribution tip. Read-only; no schema. */
   readMemoryHealthSnapshot(workspaceId: string): MemoryHealthSnapshot;
+  /**
+   * FAC-001: one workspace-scoped read of every attention cue input (tip, memory-health rows,
+   * per-reason scans capped at S with exact counts). Read-only; call inside `transaction`.
+   */
+  readAttentionSnapshot(workspaceId: string, request: AttentionSnapshotRequest): AttentionSnapshot;
   pageContributions(workspaceId: string, query: ContributionPageQuery): ObjectPage<Contribution>;
   /**
    * ACT-001 action proposals. `updateActionProposal` is a guarded claim: it

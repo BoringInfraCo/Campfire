@@ -24,6 +24,7 @@ export const CLI_COMMAND_NAMES = [
   "catch-up",
   "recall",
   "memory-health",
+  "attention",
   "handoff-packet",
   "findings",
   "tasks",
@@ -375,6 +376,19 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "The default limit is 25 and the maximum is 100. Coverage reports total, returned, and truncated; pass nextCursor to continue.",
       "A stale cursor returns Conflict; restart without --cursor.",
       "Read-only. It does not repair, write a contribution, or search another workspace.",
+    ] },
+  ),
+  attention: spec(
+    "attention",
+    "workspace",
+    "List deterministic attention cues for one workspace.",
+    "campfire attention [workspaceId] [--workspace <workspaceId>] [--limit <1..100>] [--cursor <opaque>] [--since <cursor>] [--output auto|human|json]",
+    { ...READ, workspaceScoped: true, related: ["context", "catch-up", "memory-health"], notes: [
+      "The default limit is 25 and the maximum is 100. A limit above 100 is rejected, not clamped.",
+      "Coverage reports per-reason truncation; pass nextCursor to continue.",
+      "--since is a contribution cursor for catch-up, distinct from --cursor.",
+      "A stale cursor returns Conflict; restart without --cursor.",
+      "Read-only. It does not write a contribution or search another workspace.",
     ] },
   ),
   "handoff-packet": spec(

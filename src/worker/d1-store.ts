@@ -57,6 +57,15 @@ import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
+  ATTENTION_TIP_SQL,
+  assembleAttentionSnapshot,
+  attentionScanStatements,
+  type AttentionCountSqlRow,
+  type AttentionScanResult,
+  type AttentionTipSqlRow,
+} from "../store/attention-queries.js";
+import { ATTENTION_D1_BRACKET_ATTEMPTS, ATTENTION_RECOVERY_CODES, ATTENTION_NEXT_ACTIONS } from "../domain/attention.js";
+import {
   MEMORY_HEALTH_DECISIONS_SQL,
   MEMORY_HEALTH_FINDINGS_SQL,
   MEMORY_HEALTH_PROPOSALS_SQL,
@@ -1346,6 +1355,38 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
       throw new Conflict("Workspace changed during the memory-health read", {
         recoveryCode: "memory_health_concurrent_write",
         nextAction: "retry",
+      });
+    },
+
+    /**
+     * FAC-001 D1 twin of the SQLite snapshot read. ONE tip bracket around ALL
+     * reads (memory-health sources plus the authored-reason scans and counts),
+     * 3 attempts, then Conflict attention_concurrent_write (A2.3). SELECT only.
+     * Statement plan and row assembly are phase A's shared functions.
+     */
+    async readAttentionSnapshot(workspaceId, request) {
+      for (let attempt = 0; attempt < ATTENTION_D1_BRACKET_ATTEMPTS; attempt += 1) {
+        const before = await first<AttentionTipSqlRow>(ATTENTION_TIP_SQL, workspaceId);
+        const memoryHealth = assembleMemoryHealthRows({
+          decisions: await all<DecisionJoinRow>(MEMORY_HEALTH_DECISIONS_SQL, workspaceId),
+          findings: await all<FindingJoinRow>(MEMORY_HEALTH_FINDINGS_SQL, workspaceId),
+          tasks: await all<TaskJoinRow>(MEMORY_HEALTH_TASKS_SQL, workspaceId),
+          proposals: await all<ProposalJoinRow>(MEMORY_HEALTH_PROPOSALS_SQL, workspaceId),
+        });
+        const scans: AttentionScanResult[] = [];
+        for (const statement of attentionScanStatements(workspaceId, request)) {
+          scans.push({
+            key: statement.key,
+            rows: await all<unknown>(statement.list.sql, ...statement.list.params),
+            count: await first<AttentionCountSqlRow>(statement.count.sql, ...statement.count.params),
+          });
+        }
+        const after = await first<AttentionTipSqlRow>(ATTENTION_TIP_SQL, workspaceId);
+        if (before?.id === after?.id) return assembleAttentionSnapshot({ tip: after, memoryHealth, scans });
+      }
+      throw new Conflict("Workspace changed during the attention read", {
+        recoveryCode: ATTENTION_RECOVERY_CODES.concurrentWrite,
+        nextAction: ATTENTION_NEXT_ACTIONS.retry,
       });
     },
 

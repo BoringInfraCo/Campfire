@@ -45,22 +45,7 @@ export function memoryHealthFromSnapshot(
 ): MemoryHealthResult {
   const validated = validateMemoryHealthInput(input, MEMORY_HEALTH_REASONS);
   const tip = snapshot.tip;
-  const orientationCursor =
-    tip === undefined
-      ? encodeContextCursor(genesisContributionCursor(input.workspaceId))
-      : encodeContextCursor(
-          contributionCursor({
-            workspaceId: input.workspaceId,
-            occurredAt: tip.createdAt,
-            id: tip.id,
-            phase: "high",
-            originOccurredAt: tip.createdAt,
-            originId: tip.id,
-            position: tip.appendPosition,
-            originPosition: tip.appendPosition,
-            tip: 0,
-          }),
-        );
+  const orientationCursor = orientationCursorFromTip(input.workspaceId, tip);
   return projectMemoryHealth({
     workspaceId: input.workspaceId,
     ...(validated.reason === undefined ? {} : { reason: validated.reason }),
@@ -72,6 +57,25 @@ export function memoryHealthFromSnapshot(
     orientationCursor,
     rows: snapshot.rows,
   });
+}
+
+/** Orientation cursor built from the tip row (genesis cursor when the workspace has no contribution). */
+export function orientationCursorFromTip(workspaceId: string, tip: MemoryHealthSnapshot["tip"]): string {
+  return tip === undefined
+    ? encodeContextCursor(genesisContributionCursor(workspaceId))
+    : encodeContextCursor(
+        contributionCursor({
+          workspaceId,
+          occurredAt: tip.createdAt,
+          id: tip.id,
+          phase: "high",
+          originOccurredAt: tip.createdAt,
+          originId: tip.id,
+          position: tip.appendPosition,
+          originPosition: tip.appendPosition,
+          tip: 0,
+        }),
+      );
 }
 
 export function projectMemoryHealth(input: MemoryHealthReadInput): MemoryHealthResult {
