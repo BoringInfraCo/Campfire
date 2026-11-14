@@ -1,6 +1,6 @@
 # Campfire — Vision
 
-**Status:** Revised through published `v1.30.0` (v1.31.0 approved and in preparation, not yet published); collaborative-workspace
+**Status:** Revised through published `v1.31.0` (v1.32.0 approved and in preparation, not published; v1.31.0 published 2026-11-14; FAC-001 closed by founder direction; NOT_OBSERVED items unchanged); collaborative-workspace
 positioning and FAC-001 direction recorded November 11, 2026
 **Version:** 0.2
 **Date:** October 3, 2026; latest revision November 11, 2026

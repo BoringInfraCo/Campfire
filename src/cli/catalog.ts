@@ -1041,6 +1041,7 @@ export function formatFullUsage(): string {
     "",
     "Usage:",
     "  campfire [--human-name <name>]  Open the read-only console in an interactive terminal; scripts still get status or JSON",
+    "  campfire [--classic]            The console is OpenTUI where supported; --classic or CAMPFIRE_TUI=classic keeps the classic dashboard",
     "  campfire <command> --help       Usage for one command",
     "  campfire help --all             Every command",
     "",

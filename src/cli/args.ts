@@ -31,6 +31,7 @@ const BOOLEAN_FLAGS = new Set([
   "check",
   "version",
   "opentui",
+  "classic",
 ]);
 
 export function parseArgs(argv: string[]): ParsedArgs {

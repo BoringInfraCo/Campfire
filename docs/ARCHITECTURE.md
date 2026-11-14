@@ -1,6 +1,6 @@
 # Campfire — Architecture
 
-**Status:** Revised through published `v1.30.0` (v1.31.0 approved and in preparation, not yet published); memory-maintenance,
+**Status:** Revised through published `v1.31.0` (v1.32.0 approved and in preparation, not published; v1.31.0 published 2026-11-14; FAC-001 closed by founder direction; NOT_OBSERVED items unchanged); memory-maintenance,
 machine-composable MCP, harness Code Mode, and explainable routing boundaries
 recorded November 7, 2026; MEM-001, CMP-001, ActionProposal, PI-000 HOLD, and
 FAC-001 boundaries corrected November 11, 2026

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.32.0 — 2026-11-14
+
+- OpenTUI becomes the default Terminal interface on supported platforms (interactive terminal, bundled Bun and OpenTUI library present). Opt out with `campfire --classic` or `CAMPFIRE_TUI=classic`. `--opentui` and `CAMPFIRE_TUI=opentui` still request it explicitly; `--classic` with `--opentui` is an error, and a flag beats `CAMPFIRE_TUI`. When the sidecar cannot start before launch (musl Linux, unsupported platform, missing Bun or native library), the default path prints one short note and opens the classic dashboard; a sidecar that fails after it starts is still an error. Non-interactive, `--json`, `--no-tui` and every non-dashboard command are unchanged. Scripts that drive the classic dashboard in a terminal should pin `CAMPFIRE_TUI=classic`.
+- OpenTUI as the default Terminal interface was decided by the founder after v1.31.0 shipped it opt-in. Still NOT observed: a human navigation test, the musl fallback on a real musl host, and a real `/update` download, install, health restart and rollback from the OpenTUI path.
+- NOT OBSERVED: a person using OpenTUI as the default on a real workspace, any usability result, OpenTUI being better than or a complete replacement for classic, musl Linux, a real `/update` install, FAC-001 human use, hosted catch-up, and deployed D1 attention. The default change was checked by unit and terminal tests, the full suite, and manual launches on macOS arm64.
+- No schema or migration change, and no stored-data change. This source snapshot does not deploy the production Worker or its assets; the current production hosted Worker does not serve this release. Homebrew and Nix stay on the published v1.31.0 archives until the v1.32.0 checksums exist.
+
 ## 1.31.0 — 2026-11-13
 
 - `get_workspace_attention` lists bounded, source-linked, authorized attention cues with declared coverage and catch-up. It is deterministic and read-only, and is available through the CLI (`campfire attention`), HTTP, and one added MCP tool. The Terminal dashboard and the loopback Viewer show the same cues with their coverage and catch-up caveats and never claim an unqualified all-clear. The Viewer read allowlist gains `get_workspace_attention` and `get_action_proposal`; there is no write path.

@@ -100,7 +100,7 @@ import {
   type DashboardPageInput,
   type DashboardSessionOptions,
 } from "./dashboard.js";
-import { OpentuiUnavailableError, opentuiRequested, spawnOpentui, waitForOpentui, type OpentuiChild, type OpentuiOutcome, type SpawnOpentuiInput } from "./opentui-launch.js";
+import { OPENTUI_FALLBACK_NOTE, OpentuiUnavailableError, chooseDashboard, opentuiRequested, spawnOpentui, waitForOpentui, type OpentuiChild, type OpentuiOutcome, type SpawnOpentuiInput } from "./opentui-launch.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
 import { announceStableUpdate, runUpdateCommand } from "./update-command.js";
 import { setOwnedCampfireService } from "./service-owner.js";
@@ -1587,7 +1587,8 @@ async function runDashboardUpdate(): Promise<void> {
 
 /** Only a preflight missing/unsupported sidecar may fall back; child errors remain errors. */
 async function runPreferredDashboard(input: SpawnOpentuiInput, classic: () => Promise<void>, flags: ParsedArgs["flags"]): Promise<OpentuiOutcome> {
-  if (!opentuiRequested(input.parentEnv ?? process.env, flags)) {
+  const choice = chooseDashboard(input.parentEnv ?? process.env, flags, isInteractiveTty());
+  if (choice.mode === "classic") {
     await classic();
     return "quit";
   }
@@ -1596,7 +1597,7 @@ async function runPreferredDashboard(input: SpawnOpentuiInput, classic: () => Pr
     child = spawnOpentui(input);
   } catch (error) {
     if (!(error instanceof OpentuiUnavailableError)) throw error;
-    console.error(`${error.message} Using the classic dashboard.`);
+    console.error(choice.explicit ? `${error.message} Using the classic dashboard.` : OPENTUI_FALLBACK_NOTE);
     await classic();
     return "quit";
   }

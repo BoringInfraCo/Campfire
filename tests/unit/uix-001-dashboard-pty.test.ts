@@ -93,6 +93,7 @@ env = os.environ.copy()
 env["CAMPFIRE_TELEMETRY"] = "0"
 env["CAMPFIRE_CONFIG_DIR"] = cfg["configDir"]
 env["CAMPFIRE_DATA_DIR"] = cfg["configDir"]
+env["CAMPFIRE_TUI"] = "classic"
 env.pop("CAMPFIRE_URL", None)
 env.pop("CAMPFIRE_TOKEN", None)
 proc = subprocess.Popen(

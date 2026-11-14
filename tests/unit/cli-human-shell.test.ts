@@ -201,17 +201,34 @@ describe("bare campfire human shell", () => {
     vi.unstubAllEnvs();
   });
 
-  it("defaults to classic and opts in with --opentui", async () => {
+  it("defaults to OpenTUI; --classic and --opentui select explicitly", async () => {
     prepare();
     localProfileWithWorkspace();
     setTty(process.stdin, true);
     setTty(process.stdout, true);
     vi.stubEnv("CAMPFIRE_TUI", "");
-    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+    expect(await runCliEntry(["--db", dbPath, "--classic"])).toBe(0);
     expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
     expect(opentui.spawnOpentui).not.toHaveBeenCalled();
-    expect(await runCliEntry(["--db", dbPath, "--opentui"])).toBe(0);
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
     expect(opentui.spawnOpentui).toHaveBeenCalledTimes(1);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(await runCliEntry(["--db", dbPath, "--opentui"])).toBe(0);
+    expect(opentui.spawnOpentui).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back to classic with one note when the default sidecar is unavailable at preflight", async () => {
+    prepare();
+    localProfileWithWorkspace();
+    setTty(process.stdin, true);
+    setTty(process.stdout, true);
+    vi.stubEnv("CAMPFIRE_TUI", "");
+    vi.mocked(opentui.spawnOpentui).mockImplementation(() => { throw new opentui.OpentuiUnavailableError(); });
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await runCliEntry(["--db", dbPath])).toBe(0);
+    expect(dashboard.runDashboardSession).toHaveBeenCalledTimes(1);
+    expect(errors.mock.calls.filter((c) => String(c[0]) === opentui.OPENTUI_FALLBACK_NOTE)).toHaveLength(1);
+    errors.mockRestore();
   });
 
   it("runs the update handoff once, after the sidecar and listener are gone, only on 'update'", async () => {

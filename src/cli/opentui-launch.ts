@@ -23,10 +23,39 @@ const MIN_BUN = "1.3.14";
 
 export interface OpentuiFlagSource {
   opentui?: unknown;
+  classic?: unknown;
 }
 
+export type DashboardChoice =
+  | { mode: "classic"; reason: "flag" | "env" | "non-interactive" }
+  | { mode: "opentui"; explicit: boolean };
+
+export const OPENTUI_FALLBACK_NOTE = "OpenTUI unavailable on this platform; using the classic dashboard.";
+
+/**
+ * Choose the dashboard. Precedence: explicit flag, then CAMPFIRE_TUI, then the
+ * default (OpenTUI when the preflight finds a usable sidecar). `--classic` with
+ * `--opentui` is an error. Explicit OpenTUI keeps its own unavailable semantics;
+ * only a default choice may fall back, and only at preflight.
+ */
+export function chooseDashboard(env: NodeJS.ProcessEnv, flags: OpentuiFlagSource, interactive = true): DashboardChoice {
+  const wantsClassic = flags.classic === true;
+  const wantsOpentui = flags.opentui === true;
+  if (wantsClassic && wantsOpentui) {
+    throw new ValidationError("--classic and --opentui cannot be used together.", { field: "classic" });
+  }
+  if (wantsClassic) return { mode: "classic", reason: "flag" };
+  if (wantsOpentui) return { mode: "opentui", explicit: true };
+  if (env.CAMPFIRE_TUI === "classic") return { mode: "classic", reason: "env" };
+  if (env.CAMPFIRE_TUI === "opentui") return { mode: "opentui", explicit: true };
+  if (!interactive) return { mode: "classic", reason: "non-interactive" };
+  return { mode: "opentui", explicit: false };
+}
+
+/** True only when OpenTUI was asked for by flag or CAMPFIRE_TUI=opentui. */
 export function opentuiRequested(env: NodeJS.ProcessEnv, flags: OpentuiFlagSource): boolean {
-  return flags.opentui === true || env.CAMPFIRE_TUI === "opentui";
+  const choice = chooseDashboard(env, flags);
+  return choice.mode === "opentui" && choice.explicit;
 }
 
 export function vendoredBunPackageName(platform: string, arch: string): string | undefined {
