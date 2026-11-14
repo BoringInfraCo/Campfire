@@ -42,6 +42,6 @@ class Campfire < Formula
   end
 
   test do
-    assert_match "Usage:", shell_output("#{bin}/campfire --help")
+    assert_match version.to_s, shell_output("#{bin}/campfire --version")
   end
 end
