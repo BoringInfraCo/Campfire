@@ -13,8 +13,8 @@ const formula = readFileSync(resolve(root, "packaging/homebrew/campfire.rb"), "u
 const flake = readFileSync(resolve(root, "flake.nix"), "utf8");
 const exporterPath = resolve(root, "scripts/export-public-release.mjs");
 const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version as string;
-// The four published v1.30.0 archives stay the Homebrew and Nix pin until the v1.31.0 checksums exist.
-const pinnedVersion = "1.30.0";
+// The four published v1.31.0 archives are the Homebrew and Nix pin.
+const pinnedVersion = "1.31.0";
 
 function digestsFromFormula(text: string): Record<string, string> {
   const digests: Record<string, string> = {};
