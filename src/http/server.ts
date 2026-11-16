@@ -1,4 +1,4 @@
-import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
+import { normalizeRedeemEnrollmentInput, publicEnrollmentDecline, publicEnrollmentPreview } from "../domain/enrollment.js";
 import { INVITATION_LANDING_HTML } from "../bootstrap/invitation-link.js";
 /**
  * Campfire HTTP adapter.
@@ -407,7 +407,9 @@ export async function startCampfireHttpServer(options: HttpServerOptions): Promi
           : path === "/v1/enrollment/decline"
             ? service.declineEnrollment(secret, input)
             : service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
-        writeJson(res, 200, { ok: true, result });
+        const recipientResult = result.kind === "enrollment_invitation_preview" ? publicEnrollmentPreview(result)
+          : result.kind === "enrollment_invitation_decline" ? publicEnrollmentDecline(result) : result;
+        writeJson(res, 200, { ok: true, result: recipientResult });
       } catch (error) {
         if (error instanceof CampfireError) fail(res, statusFor(error.code, false), error.code, error.message, {}, error.details);
         else {

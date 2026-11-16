@@ -14,7 +14,10 @@ import { createServer, type IncomingMessage, type Server } from "node:http";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+// This sharing rehearsal uses an explicit synthetic config path; it does not
+// exercise the installed harness's own configuration discovery.
+vi.mock("../../src/bootstrap/connect.js", async (load) => { const real = await load<typeof import("../../src/bootstrap/connect.js")>(); return { ...real, detectOpenCodeMajor: () => 1, assertOpenCodeV1Effective: () => {}, prepareConnection: (input: Parameters<typeof real.prepareConnection>[0]) => real.prepareConnection({ ...input, opencodeMajor: undefined }) }; });
 import { saveInvitationFile } from "../../src/bootstrap/enrollment-client.js";
 import { joinFromInvitation } from "../../src/bootstrap/enrollment-client.js";
 import { loadCredentials } from "../../src/bootstrap/profile.js";

@@ -1,3 +1,4 @@
+vi.mock("../../src/bootstrap/connect.js", async (load) => { const real = await load<typeof import("../../src/bootstrap/connect.js")>(); return { ...real, detectOpenCodeMajor: () => 1, assertOpenCodeV1Effective: () => {}, prepareConnection: (input: Parameters<typeof real.prepareConnection>[0]) => real.prepareConnection({ ...input, opencodeMajor: undefined }) }; });
 import { expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,6 +38,9 @@ const view = {
 beforeEach(() => {
   previous = { ...process.env };
   dir = mkdtempSync(join(tmpdir(), "campfire-s020-remote-cli-"));
+  const bin = join(dir, "bin"); mkdirSync(bin); const executable = join(bin, "opencode");
+  writeFileSync(executable, `#!/bin/sh\nif [ "$1" = "--version" ]; then printf '%s.0.0\\n' "$TEST_OPENCODE_MAJOR"; elif [ "$TEST_OPENCODE_MAJOR" = 1 ]; then if [ -f "$TEST_OPENCODE_CONFIG" ]; then cat "$TEST_OPENCODE_CONFIG"; else printf '{}'; fi; elif [ -f "$TEST_OPENCODE_CONFIG" ]; then printf '[{"type":"document","path":"%s","info":' "$TEST_OPENCODE_CONFIG"; cat "$TEST_OPENCODE_CONFIG"; printf '}]'; else printf '[]'; fi\n`); chmodSync(executable, 0o755);
+  process.env.PATH = `${bin}:${previous.PATH ?? ""}`; process.env.TEST_OPENCODE_MAJOR = "1"; process.env.TEST_OPENCODE_CONFIG = join(dir, "opencode.json");
   process.env.CAMPFIRE_CONFIG_DIR = join(dir, "config");
   process.env.CAMPFIRE_DATA_DIR = join(dir, "data");
   for (const key of ["CAMPFIRE_DB", "CAMPFIRE_URL", "CAMPFIRE_TOKEN", "CAMPFIRE_SESSION_ID", "CAMPFIRE_HARNESS"]) delete process.env[key];
@@ -67,11 +70,20 @@ afterEach(() => {
 });
 
 describe("Sprint 020 remote recipient CLI", () => {
+  it("detects OpenCode 2 for an existing remote profile without saved receipt metadata", async () => {
+    process.env.TEST_OPENCODE_MAJOR = "2";
+    const path = join(dir, "opencode.json");
+    expect(await runCliEntry(["connect", "--harness", "opencode", "--config", path, "--json"])).toBe(0);
+    const entry = JSON.parse(readFileSync(path, "utf8")).mcp.servers.campfire;
+    expect(entry.environment.CAMPFIRE_MCP_PROFILE_DIR).toBe(process.env.CAMPFIRE_CONFIG_DIR);
+    expect(entry.environment.CAMPFIRE_TOKEN).toBeUndefined();
+  });
   it("connects each requested harness with only its own credential and no local database", async () => {
     const path = join(dir, "opencode.json");
     expect(await runCliEntry(["connect", "--harness", "opencode", "--config", path, "--json"])).toBe(0);
     const contents = readFileSync(path, "utf8");
-    expect(contents).toContain(profile.agents[1]!.token);
+    expect(contents).not.toContain(profile.agents[1]!.token);
+    expect(JSON.parse(contents).mcp.campfire.environment.CAMPFIRE_MCP_PROFILE_DIR).toBe(process.env.CAMPFIRE_CONFIG_DIR);
     expect(contents).not.toContain(profile.humanToken);
     expect(contents).not.toContain(profile.agents[0]!.token);
     expect(output.join("\n") + errors.join("\n")).not.toContain("secret-sentinel");
@@ -137,7 +149,8 @@ describe("Sprint 020 remote recipient CLI", () => {
     process.emit("SIGTERM");
     expect(await execution).toBe(0);
     const contents = readFileSync(path, "utf8");
-    expect(contents).toContain(profile.agents[1]!.token);
+    expect(contents).not.toContain(profile.agents[1]!.token);
+    expect(JSON.parse(contents).mcp.campfire.environment.CAMPFIRE_MCP_PROFILE_DIR).toBe(process.env.CAMPFIRE_CONFIG_DIR);
     expect(contents).not.toContain(profile.humanToken);
     expect(contents).not.toContain(profile.agents[0]!.token);
     expect(JSON.parse(output[0]!)).toMatchObject({ mode: "remote", agents: ["opencode"], reloadRequired: true, sessionRegistered: false });

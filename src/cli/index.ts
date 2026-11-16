@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from "node:crypto";
-import { acceptInvitationLink, declineInvitationLink, invitationStatusAdvice, joinFromInvitation, previewInvitationLink, saveInvitationFile } from "../bootstrap/enrollment-client.js";
+import { acceptInvitationLink, assertNoProfileOverrides, declineInvitationLink, invitationStatusAdvice, joinFromInvitation, previewInvitationLink, saveInvitationFile, savedEnrollmentConnection, type JoinOutcome } from "../bootstrap/enrollment-client.js";
 import { formatInvitationLink, invitationCapabilityShape } from "../bootstrap/invitation-link.js";
 import type { EnrollmentHarness, IssuedEnrollmentInvitation } from "../domain/enrollment.js";
 /**
@@ -11,7 +11,7 @@ import type { EnrollmentHarness, IssuedEnrollmentInvitation } from "../domain/en
  * without a harness (AGENTS.md "Observability").
  */
 import { mkdirSync, readFileSync, realpathSync, rmSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootstrapOrganizationTeam } from "../bootstrap/bootstrap.js";
 import {
@@ -19,6 +19,7 @@ import {
   defaultHarnessConfigPath,
   assertConnectionCompatible,
   detectInstalledHarnesses,
+  detectOpenCodeMajor,
   prepareConnection,
   type SupportedHarness,
 } from "../bootstrap/connect.js";
@@ -30,6 +31,10 @@ import {
   loadCredentials,
   loadProfile,
   loadAnyProfile,
+  resolveProfilePaths,
+  pinnedMcpProfileEnvironment,
+  listLocalProfiles,
+  activateLocalProfile,
   persistHumanProfile,
   persistOnboardProfile,
   readOperatorAgentToken,
@@ -1056,8 +1061,12 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
   const flags = parsed.flags;
   const harness = requireFlag(flags, "harness");
   const profile = loadAnyProfile();
+  const saved = profile?.mode === "remote" && flags.enroll !== true && (harness === "codex" || harness === "opencode")
+    ? savedEnrollmentConnection(harness) : undefined;
+  const openCodeMajor = profile?.mode === "remote" && harness === "opencode" ? saved?.opencodeMajor ?? detectOpenCodeMajor() : undefined;
   const configPath =
     optionalFlag(flags, "config") ??
+    saved?.configPath ??
     (harness === "claude-code"
       ? defaultClaudeConfigPath()
       : harness === "codex" || harness === "opencode"
@@ -1066,7 +1075,7 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
   if (configPath === undefined) {
     throw new ValidationError("Missing required --config argument", { field: "config" });
   }
-  const mcpCommand = optionalFlag(flags, "mcp-command") ?? process.argv[1] ?? "campfire";
+  const mcpCommand = optionalFlag(flags, "mcp-command") ?? saved?.mcpCommand ?? process.argv[1] ?? "campfire";
   if (flags.enroll === true) {
     if (profile?.mode !== "remote") {
       throw new ValidationError("--enroll requires a joined remote profile", { field: "enroll", nextAction: "join_with_invitation_file" });
@@ -1103,6 +1112,9 @@ async function cmdConnect(parsed: ParsedArgs): Promise<void> {
     mcpCommand,
     url,
     agentToken,
+    ...(access !== undefined && harness === "opencode" ? { credentialProfileDir: resolveProfilePaths().configDir } : {}),
+    ...(saved?.serverName === undefined ? {} : { serverName: saved.serverName }),
+    ...(openCodeMajor === undefined ? {} : { opencodeMajor: openCodeMajor }),
     ...(access === undefined ? {} : { rejectConflicting: true }),
     ...(workspaceId === undefined ? {} : { workspaceId }),
   });
@@ -2688,6 +2700,34 @@ async function cmdRevokeInvitation(parsed:ParsedArgs,argv:string[]):Promise<void
       : "Invitation revoked before anyone claimed it. No enrollment happened, and existing members are unaffected."));
 }
 
+async function cmdProfiles(parsed: ParsedArgs): Promise<void> {
+  const action = parsed.positionals[0] ?? "list";
+  if (action === "list" && parsed.positionals.length === 1 || action === "list" && parsed.positionals.length === 0) {
+    emitResult({ profiles: listLocalProfiles() }, commandOutput(parsed), (value) => value.profiles.map((profile) =>
+      `${profile.active ? "*" : " "} ${profile.id}${profile.id === "default" ? "  (original profile)" : ""}${profile.workspaceName ? `  ${profile.workspaceName}` : ""}${profile.workspaceId ? ` (${profile.workspaceId})` : ""}`).join("\n"));
+    return;
+  }
+  if (action !== "use" || parsed.positionals.length !== 2) {
+    throw new ValidationError("Use campfire profiles to list profiles, or campfire profiles use <profileId> to switch.", { field: "profile" });
+  }
+  assertNoProfileOverrides(process.env);
+  const id = parsed.positionals[1]!;
+  activateLocalProfile(process.env, id);
+  emitResult({ activeProfile: id }, commandOutput(parsed), () => `Active Campfire profile: ${id}\nThis changes the CLI profile. Existing agent connections remain separate; select the connection for the workspace in your agent.`);
+}
+
+function formatJoinedWorkspace(value: JoinOutcome): string {
+  const result = formatJoinReceipt({ workspaceName: value.workspace.name, humanName: value.human.name,
+    agents: value.agents.map((agent) => agent.harness),
+    prepared: value.stages.includes("connection_prepared") ? value.agents.map((agent) => agent.harness) : [] });
+  const extras: string[] = [];
+  if (value.profileId) extras.push(`Active Campfire profile: ${value.profileId}. Run campfire profiles to switch profiles.`);
+  for (const [harness, server] of Object.entries(value.connectionNames ?? {})) {
+    if (server !== "campfire") extras.push(`${harness} connection for this workspace: ${server}. Reload ${harness} and select this connection; existing connections remain available.`);
+  }
+  return extras.length ? `${result}\n\n${extras.join("\n")}` : result;
+}
+
 async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const invitationFile = optionalFlag(parsed.flags,"invitation-file");
   const explicitLink = optionalFlag(parsed.flags, "invitation-link");
@@ -2748,12 +2788,7 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
     }
     const receipt = await acceptInvitationLink({ link, humanName: requireFlag(parsed.flags, "human-name"), harnesses: selected as EnrollmentHarness[], configPaths, mcpCommand: optionalFlag(parsed.flags, "mcp-command"), allowLoopback });
     telemetryInBackground(reportActivated("cli", { env: process.env }));
-    emitResult(receipt, commandOutput(parsed), (value) => formatJoinReceipt({
-      workspaceName: value.workspace.name,
-      humanName: value.human.name,
-      agents: value.agents.map((agent) => agent.harness),
-      prepared: value.stages.includes("connection_prepared") ? value.agents.map((agent) => agent.harness) : [],
-    }));
+    emitResult(receipt, commandOutput(parsed), formatJoinedWorkspace);
     return;
   }
   if (invitationFile !== undefined) {
@@ -2772,16 +2807,7 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
     // the invitation variant reaches it; background so a committed join is
     // never failed by measurement.
     telemetryInBackground(reportActivated("cli", { env: process.env }));
-    emitResult(receipt,commandOutput(parsed),value=>formatJoinReceipt({
-      workspaceName: value.workspace.name,
-      humanName: value.human.name,
-      agents: value.agents.map((agent) => agent.harness),
-      // A joined membership is not a written config: only name harnesses the
-      // local run actually prepared.
-      prepared: value.stages.includes("connection_prepared")
-        ? value.agents.map((agent) => agent.harness)
-        : [],
-    }));
+    emitResult(receipt,commandOutput(parsed),formatJoinedWorkspace);
     return;
   }
   const workspaceId = requirePositional(parsed, "workspaceId");
@@ -3080,6 +3106,17 @@ async function cmdInvite(parsed: ParsedArgs, argv: string[]): Promise<void> {
 }
 
 async function cmdMcp(argv: string[]): Promise<void> {
+  const profileDir = process.env.CAMPFIRE_MCP_PROFILE_DIR;
+  if (profileDir !== undefined) {
+    if (!isAbsolute(profileDir) || readHarness(process.env, argv) !== "opencode" || readCampfireUrl() !== undefined || readCampfireToken(process.env, argv) !== undefined ||
+        ["CAMPFIRE_ACTOR_ID", "CAMPFIRE_ACTOR_TYPE", "CAMPFIRE_SESSION_ID"].some(key => Boolean(process.env[key]?.trim())) || argv.some(arg => /^--(?:url|token|actor|type|session)(?:=|$)/.test(arg))) {
+      throw new ValidationError("Profile-bound MCP requires an absolute profile and no credential or identity overrides", { field: "profile" });
+    }
+    const profileEnv = pinnedMcpProfileEnvironment(profileDir, process.env);
+    const access = resolveRemoteAccess({ harness: "opencode" }, profileEnv);
+    await startStdioServer(undefined, { ...profileEnv, CAMPFIRE_URL: access.url, CAMPFIRE_TOKEN: access.token }, argv);
+    return;
+  }
   const url = readCampfireUrl();
   if (url !== undefined) {
     await startStdioServer(undefined, process.env, argv);
@@ -3131,9 +3168,14 @@ async function cmdUp(parsed: ParsedArgs): Promise<void> {
       }
       const plans = harnesses.map((harness) => {
         const agentAccess = resolveRemoteAccess({ harness }, { ...process.env, CAMPFIRE_TOKEN: undefined });
-        const configPath = override ?? defaultHarnessConfigPath(harness);
+        const saved = savedEnrollmentConnection(harness);
+        const openCodeMajor = harness === "opencode" ? saved?.opencodeMajor ?? detectOpenCodeMajor() : undefined;
+        const configPath = override ?? saved?.configPath ?? defaultHarnessConfigPath(harness);
         const input = { harness, configPath, url: agentAccess.url, agentToken: agentAccess.token,
-          workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? process.argv[1] ?? "campfire", rejectConflicting: true };
+          ...(harness === "opencode" ? { credentialProfileDir: resolveProfilePaths().configDir } : {}),
+          workspaceId: profile.workspaceId, mcpCommand: optionalFlag(parsed.flags, "mcp-command") ?? saved?.mcpCommand ?? process.argv[1] ?? "campfire", rejectConflicting: true,
+          ...(saved?.serverName === undefined ? {} : { serverName: saved.serverName }),
+          ...(openCodeMajor === undefined ? {} : { opencodeMajor: openCodeMajor }) };
         try {
           assertConnectionCompatible(input);
         } catch (error) {
@@ -3953,6 +3995,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   "publish-recover": (parsed) => cmdPublishRecover(parsed),
   invitations: (parsed, argv) => cmdInvitations(parsed, argv),
   "revoke-invitation": (parsed, argv) => cmdRevokeInvitation(parsed, argv),
+  profiles: (parsed) => cmdProfiles(parsed),
   serve: (parsed) => cmdServe(parsed),
   view: (parsed, argv) => cmdView(parsed, argv),
   mcp: (_parsed, argv) => cmdMcp(argv),

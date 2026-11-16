@@ -23,6 +23,13 @@ describe("--allow-loopback is accepted by the strict-argument check", () => {
     expect(commandSpecForArgs("join", { "invitation-link": "link" }).usage).toContain("--allow-loopback");
   });
 
+  it("accepts the documented harness configuration options on invitation joins", () => {
+    for (const option of ["config", "codex-config", "opencode-config"]) {
+      expect(() => accepts("join", { "invitation-link": "link", accept: true, [option]: "/tmp/config" })).not.toThrow();
+      expect(() => accepts("join", { "invitation-file": "file", [option]: "/tmp/config" })).not.toThrow();
+    }
+  });
+
   it("join --invitation-file", () => {
     expect(() => accepts("join", { "invitation-file": "f", "human-name": "A", harness: "codex", "allow-loopback": true })).not.toThrow();
     expect(commandSpecForArgs("join", { "invitation-file": "f" }).usage).toContain("--allow-loopback");

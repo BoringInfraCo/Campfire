@@ -1,4 +1,4 @@
-import { normalizeRedeemEnrollmentInput } from "../domain/enrollment.js";
+import { normalizeRedeemEnrollmentInput, publicEnrollmentDecline, publicEnrollmentPreview } from "../domain/enrollment.js";
 import { INVITATION_LANDING_HTML } from "../bootstrap/invitation-link.js";
 /**
  * Cloudflare Workers fetch handler for Campfire.
@@ -1211,7 +1211,9 @@ async function handleEnrollmentRedeem(
         : await service.redeemEnrollment(secret, normalizeRedeemEnrollmentInput(input));
     // Enrollment records participants and contributions, not domain events.
     // Preview and decline do not enqueue a webhook delivery either.
-    return json(200, { ok: true, result });
+    const recipientResult = result.kind === "enrollment_invitation_preview" ? publicEnrollmentPreview(result)
+      : result.kind === "enrollment_invitation_decline" ? publicEnrollmentDecline(result) : result;
+    return json(200, { ok: true, result: recipientResult });
   } catch (error) {
     if (error instanceof CampfireError) return fail(statusFor(error.code, false), error.code, error.message, error.details);
     logInternalError({ route: path, stage: path === "/v1/enrollment/redeem" ? "redeem" : "invitation" }, error);

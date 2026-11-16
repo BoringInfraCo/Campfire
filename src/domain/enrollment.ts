@@ -82,6 +82,11 @@ export interface EnrollmentInvitationPreview {
   permittedHarnesses: EnrollmentHarness[];
   status: EnrollmentPreviewStatus;
 }
+
+/** Wire view: an inactive capability does not disclose workspace metadata. */
+export type PublicEnrollmentInvitationPreview =
+  | (EnrollmentInvitationPreview & { status: "pending" })
+  | { version: 1; kind: "enrollment_invitation_preview"; invitationId: string; status: Exclude<EnrollmentPreviewStatus, "pending"> };
 export interface EnrollmentDeclineReceipt {
   version: 1;
   kind: "enrollment_invitation_decline";
@@ -90,6 +95,26 @@ export interface EnrollmentDeclineReceipt {
   outcome: "declined" | "already_revoked" | "expired" | "already_used" | "unavailable";
   membershipCreated: false;
   declinedAt?: string;
+}
+
+/** An inactive capability cannot disclose the workspace through decline either. */
+export type PublicEnrollmentDeclineReceipt =
+  | (EnrollmentDeclineReceipt & { outcome: "declined" })
+  | { version: 1; kind: "enrollment_invitation_decline"; invitationId: string; outcome: Exclude<EnrollmentDeclineReceipt["outcome"], "declined">; membershipCreated: false };
+
+export function publicEnrollmentPreview(preview: EnrollmentInvitationPreview): PublicEnrollmentInvitationPreview {
+  if (preview.status === "pending") return { version: 1, kind: "enrollment_invitation_preview", invitationId: preview.invitationId,
+    workspace: { id: preview.workspace.id, name: preview.workspace.name, teamId: preview.workspace.teamId },
+    inviter: { id: preview.inviter.id, name: preview.inviter.name }, expiresAt: preview.expiresAt,
+    permittedHarnesses: [...preview.permittedHarnesses], status: "pending" };
+  return { version: 1, kind: "enrollment_invitation_preview", invitationId: preview.invitationId, status: preview.status };
+}
+
+export function publicEnrollmentDecline(receipt: EnrollmentDeclineReceipt): PublicEnrollmentDeclineReceipt {
+  if (receipt.outcome === "declined") return { version: 1, kind: "enrollment_invitation_decline", invitationId: receipt.invitationId,
+    workspaceId: receipt.workspaceId, outcome: "declined", membershipCreated: false,
+    ...(receipt.declinedAt === undefined ? {} : { declinedAt: receipt.declinedAt }) };
+  return { version: 1, kind: "enrollment_invitation_decline", invitationId: receipt.invitationId, outcome: receipt.outcome, membershipCreated: false };
 }
 /** Recipient decline. The secret hash authorizes the write; no membership rows are inserted. */
 export interface DeclineEnrollmentInvitationPlan {

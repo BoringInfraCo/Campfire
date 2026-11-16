@@ -30,7 +30,7 @@ function digestsFromFormula(text: string): Record<string, string> {
 
 describe("install channels", () => {
   it("pins the Homebrew formula and Nix flake to the same release archives", () => {
-    expect(packageVersion).toBe("1.33.0");
+    expect(packageVersion).toBe("1.33.1");
     expect(formula).toContain(`/v${pinnedVersion}/`);
     expect(formula).not.toMatch(/^\s*version "/m);
     expect(flake).toMatch(`version = "${pinnedVersion}";`);

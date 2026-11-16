@@ -5,9 +5,10 @@
  * put in the Viewer, or copied into a handoff. MCP must not read this file:
  * an agent process gets CAMPFIRE_TOKEN from its own harness env.
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
-import { dirname, isAbsolute, join, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { ValidationError } from "../domain/errors.js";
 import { formatLocalStatusReceipt } from "../presentation/receipts.js";
 import { canonicalEndpoint } from "./endpoint.js";
@@ -82,11 +83,100 @@ function homeDir(env: NodeJS.ProcessEnv): string {
   return envDir(env, "HOME") ?? homedir();
 }
 
+function baseConfigDir(env: NodeJS.ProcessEnv): string {
+  const home = homeDir(env);
+  return resolve(
+    envDir(env, "CAMPFIRE_CONFIG_DIR") ??
+    join(envDir(env, "XDG_CONFIG_HOME") ?? join(home, ".config"), "campfire"),
+  );
+}
+
+const DEFAULT_PROFILE_ID = "default";
+const JOIN_PROFILE_ID = /^join-ein_[A-Za-z0-9_.-]{1,124}$/;
+const ACTIVE_PROFILE_FILE = "active-profile.json";
+const pinnedEnvironments = new WeakSet<object>();
+
+function profileSelectionError(): never {
+  throw new ValidationError("Campfire profile selection is invalid; the existing profile was not changed", {
+    field: "profile", nextAction: "inspect_profile_selection",
+  });
+}
+
+function joinedProfileDir(base: string, id: string): string {
+  if (!JOIN_PROFILE_ID.test(id)) return profileSelectionError();
+  return join(base, "profiles", id);
+}
+
+/** Joined profile directories are private; never chmod a pre-existing path. */
+function assertPrivateDirectory(path: string, required = true): void {
+  let stat;
+  try { stat = lstatSync(path); } catch (error) {
+    if (!required && (error as NodeJS.ErrnoException).code === "ENOENT") return;
+    return profileSelectionError();
+  }
+  if (stat.isSymbolicLink() || !stat.isDirectory() || (stat.mode & 0o077) !== 0) profileSelectionError();
+}
+
+/** Config is nonsecret inside a private directory; credentials are secret. */
+function assertJoinedProfileFile(path: string, secret: boolean): void {
+  let stat;
+  try { stat = lstatSync(path); } catch { return profileSelectionError(); }
+  if (stat.isSymbolicLink() || !stat.isFile() || (stat.mode & (secret ? 0o077 : 0o022)) !== 0) profileSelectionError();
+}
+
+function pathExists(path: string): boolean {
+  try { lstatSync(path); return true; } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    return profileSelectionError();
+  }
+}
+
+function isJoinedProfilePath(base: string): boolean {
+  return basename(dirname(base)) === "profiles" && JOIN_PROFILE_ID.test(basename(base));
+}
+
+function activeProfileId(base: string): string {
+  const marker = join(base, ACTIVE_PROFILE_FILE);
+  if (!pathExists(marker)) return DEFAULT_PROFILE_ID;
+  // An explicitly selected child is already resolved. A nested marker is
+  // never followed, even if it was introduced by a damaged or foreign file.
+  if (isJoinedProfilePath(base)) return profileSelectionError();
+  let value: unknown;
+  try {
+    const stat = lstatSync(marker);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 4096 || (stat.mode & 0o077) !== 0) return profileSelectionError();
+    value = JSON.parse(readFileSync(marker, "utf8"));
+  } catch { return profileSelectionError(); }
+  if (!isRecord(value) || Object.keys(value).sort().join(",") !== "active,version" || value.version !== 1 ||
+      typeof value.active !== "string" || (value.active !== DEFAULT_PROFILE_ID && !JOIN_PROFILE_ID.test(value.active))) return profileSelectionError();
+  return value.active;
+}
+
 export function resolveProfilePaths(env: NodeJS.ProcessEnv = process.env): ProfilePaths {
   const home = homeDir(env);
-  const configDir =
-    envDir(env, "CAMPFIRE_CONFIG_DIR") ??
-    join(envDir(env, "XDG_CONFIG_HOME") ?? join(home, ".config"), "campfire");
+  const base = baseConfigDir(env);
+  if (isJoinedProfilePath(base)) {
+    // An explicit child environment can refer to an in-progress enrollment;
+    // its directory may not exist yet, but existing parents must be private.
+    assertPrivateDirectory(dirname(base), false);
+    assertPrivateDirectory(base, false);
+  }
+  const active = pinnedEnvironments.has(env) ? DEFAULT_PROFILE_ID : activeProfileId(base);
+  let configDir = base;
+  if (active !== DEFAULT_PROFILE_ID) {
+    assertPrivateDirectory(join(base, "profiles"));
+    configDir = joinedProfileDir(base, active);
+    assertPrivateDirectory(configDir);
+    // Reject nested pointers rather than silently selecting another identity.
+    if (pathExists(join(configDir, ACTIVE_PROFILE_FILE))) return profileSelectionError();
+    // The marker may survive file loss or tampering. Never treat a damaged
+    // selected child as an empty local profile, and never follow file links.
+    assertJoinedProfileFile(join(configDir, "config.json"), false);
+    assertJoinedProfileFile(join(configDir, "credentials.json"), true);
+    // Recheck endpoint, human, workspace and agent binding every time the
+    // active selection is resolved. Explicit-child reads do not recurse here.
+    assertCompletedJoinedProfile(env, active);
+  }
   const dataDir =
     envDir(env, "CAMPFIRE_DATA_DIR") ??
     join(envDir(env, "XDG_DATA_HOME") ?? join(home, ".local", "share"), "campfire");
@@ -97,6 +187,137 @@ export function resolveProfilePaths(env: NodeJS.ProcessEnv = process.env): Profi
     dataDir,
     defaultDatabasePath: join(dataDir, "campfire.db"),
   };
+}
+
+/** Select one completed profile directly, without consulting its active pointer. */
+export function pinnedMcpProfileEnvironment(path: string, env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  if (!isAbsolute(path) || resolve(path) !== path) return profileSelectionError();
+  let directory;
+  try { directory = lstatSync(path); } catch { return profileSelectionError(); }
+  if (directory.isSymbolicLink() || !directory.isDirectory() || (directory.mode & 0o022) !== 0) return profileSelectionError();
+  if (isJoinedProfilePath(path)) { assertPrivateDirectory(dirname(path)); assertPrivateDirectory(path); }
+  assertJoinedProfileFile(join(path, "config.json"), false);
+  assertJoinedProfileFile(join(path, "credentials.json"), true);
+  const pinned = { ...env, CAMPFIRE_CONFIG_DIR: path };
+  pinnedEnvironments.add(pinned);
+  return pinned;
+}
+
+/** A stable, isolated location for retrying one invitation; does not select it. */
+export function joinProfileEnvironment(env: NodeJS.ProcessEnv, invitationId: string): NodeJS.ProcessEnv {
+  const base = baseConfigDir(env);
+  if (isJoinedProfilePath(base)) return profileSelectionError();
+  // Do not create a new enrollment under a damaged active selection. The user
+  // can explicitly switch to the original profile to recover first.
+  resolveProfilePaths(env);
+  const id = `join-${invitationId}`;
+  const dir = joinedProfileDir(base, id);
+  assertPrivateDirectory(join(base, "profiles"), false);
+  assertPrivateDirectory(dir, false);
+  return { ...env, CAMPFIRE_CONFIG_DIR: dir };
+}
+
+/** Profile summaries contain no credentials or invitation capabilities. */
+export interface LocalProfileSummary {
+  id: string;
+  active: boolean;
+  mode?: "local" | "remote";
+  workspaceId?: string;
+  workspaceName?: string;
+}
+
+function joinedEnvironment(env: NodeJS.ProcessEnv, id: string): NodeJS.ProcessEnv {
+  return { ...env, CAMPFIRE_CONFIG_DIR: joinedProfileDir(baseConfigDir(env), id) };
+}
+
+function assertCompletedJoinedProfile(env: NodeJS.ProcessEnv, id: string): RemoteCampfireProfile {
+  const base = baseConfigDir(env);
+  assertPrivateDirectory(join(base, "profiles"));
+  const dir = joinedProfileDir(base, id);
+  assertPrivateDirectory(dir);
+  if (pathExists(join(dir, ACTIVE_PROFILE_FILE))) return profileSelectionError();
+  assertJoinedProfileFile(join(dir, "config.json"), false);
+  assertJoinedProfileFile(join(dir, "credentials.json"), true);
+  const selected = joinedEnvironment(env, id);
+  const profile = loadAnyProfile(selected);
+  const credentials = loadCredentials(selected);
+  if (profile?.mode !== "remote" || credentials === undefined || credentials.endpoint !== profile.url ||
+      credentials.humanId !== profile.humanId || credentials.workspaceId !== profile.workspaceId ||
+      profile.agents.some((agent) => credentials.agentIds?.[agent.harness] !== agent.id || !credentials.agents?.[agent.harness])) return profileSelectionError();
+  return profile;
+}
+
+/**
+ * Atomically switch only to a completely verified profile; default is never
+ * moved. Concurrent successful switches are last-rename-wins, so callers must
+ * not assume a switch remains selected after another process acts. A failed
+ * directory fsync can occur after rename: callers should re-read the marker
+ * before retrying and must reuse the same saved enrollment, not re-enroll.
+ */
+export function activateLocalProfile(env: NodeJS.ProcessEnv, id: string): void {
+  const base = baseConfigDir(env);
+  if (isJoinedProfilePath(base)) return profileSelectionError();
+  if (id !== DEFAULT_PROFILE_ID) assertCompletedJoinedProfile(env, id);
+  // An explicit return to the original profile can recover from a damaged
+  // marker without following or discarding it. Other switches fail closed.
+  try { activeProfileId(base); }
+  catch (error) {
+    if (id !== DEFAULT_PROFILE_ID || !(error instanceof ValidationError)) throw error;
+    const marker = join(base, ACTIVE_PROFILE_FILE);
+    if (!pathExists(marker)) throw error;
+    const backup = join(base, `.active-profile-invalid-${randomUUID()}.backup`);
+    if (pathExists(backup)) return profileSelectionError();
+    // rename moves a symlink itself; it never follows its target.
+    renameSync(marker, backup);
+    const parent = openSync(base, "r");
+    try { fsyncSync(parent); } finally { closeSync(parent); }
+  }
+  mkdirSync(base, { recursive: true, mode: 0o700 });
+  const target = join(base, ACTIVE_PROFILE_FILE);
+  const temp = join(base, `.active-profile-${randomUUID()}.tmp`);
+  try {
+    const fd = openSync(temp, "wx", 0o600);
+    try { writeFileSync(fd, `${JSON.stringify({ version: 1, active: id })}\n`); fsyncSync(fd); }
+    finally { closeSync(fd); }
+    renameSync(temp, target);
+    const directory = openSync(base, "r");
+    try { fsyncSync(directory); } finally { closeSync(directory); }
+  } finally { rmSync(temp, { force: true }); }
+}
+
+export function activateJoinProfile(env: NodeJS.ProcessEnv, invitationId: string): void {
+  activateLocalProfile(env, `join-${invitationId}`);
+}
+
+export function listLocalProfiles(env: NodeJS.ProcessEnv = process.env): LocalProfileSummary[] {
+  const base = baseConfigDir(env);
+  if (isJoinedProfilePath(base)) return profileSelectionError();
+  const active = activeProfileId(base);
+  const originalEnv = { ...env, CAMPFIRE_CONFIG_DIR: base };
+  // Ignore the marker when reading the original: an empty, separate root env
+  // cannot be used here because the files must remain at their original path.
+  const entries: LocalProfileSummary[] = [{ id: DEFAULT_PROFILE_ID, active: active === DEFAULT_PROFILE_ID }];
+  const directory = join(base, "profiles");
+  if (!pathExists(directory)) {
+    if (active !== DEFAULT_PROFILE_ID) return profileSelectionError();
+    return entries;
+  }
+  assertPrivateDirectory(directory);
+  for (const id of readdirSync(directory).sort()) {
+    if (!JOIN_PROFILE_ID.test(id)) continue;
+    const dir = joinedProfileDir(base, id);
+    assertPrivateDirectory(dir);
+    // A failed/interrupted join may legitimately leave a private pending file.
+    // It is not selectable until both profile and credentials were persisted.
+    if (!pathExists(join(dir, "config.json")) || !pathExists(join(dir, "credentials.json"))) {
+      if (active === id) return profileSelectionError();
+      continue;
+    }
+    const profile = assertCompletedJoinedProfile(originalEnv, id);
+    entries.push({ id, active: active === id, mode: "remote", workspaceId: profile.workspaceId, ...(profile.workspaceName ? { workspaceName: profile.workspaceName } : {}) });
+  }
+  if (active !== DEFAULT_PROFILE_ID && !entries.some((entry) => entry.id === active)) return profileSelectionError();
+  return entries;
 }
 
 export function cwdDatabasePath(cwd: string = process.cwd()): string {

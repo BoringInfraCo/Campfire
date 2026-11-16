@@ -1,4 +1,5 @@
-import { afterEach, expect, it } from "vitest";
+vi.mock("../../src/bootstrap/connect.js", async (load) => { const real = await load<typeof import("../../src/bootstrap/connect.js")>(); return { ...real, detectOpenCodeMajor: () => 1, assertOpenCodeV1Effective: () => {}, prepareConnection: (input: Parameters<typeof real.prepareConnection>[0]) => real.prepareConnection({ ...input, opencodeMajor: undefined }) }; });
+import { afterEach, expect, it, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -36,6 +37,7 @@ it("previews from the capability header and does not echo a link secret on the l
   const humans = runtime.store.countHumans();
   const preview = await campfireHttpPreviewEnrollment({ baseUrl: server.url, secret: invitation.secret, invitationId: invitation.invitationId });
   expect(preview.status).toBe("pending");
+  if (preview.status !== "pending") throw new Error("Expected a pending invitation");
   expect(preview.inviter.name).toBe("Sergio");
   expect(runtime.store.countHumans()).toBe(humans);
   const page = await fetch(`${server.url}/campfire/join?secret=${invitation.secret}`);

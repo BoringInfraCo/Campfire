@@ -5,7 +5,7 @@
  * bearer token is the actor; callers never send an acting actor id.
  */
 import { CampfireError, ValidationError, type CampfireErrorCode } from "../domain/errors.js";
-import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentReceipt, RedeemEnrollmentInput } from "../domain/enrollment.js";
+import type { PublicEnrollmentDeclineReceipt, PublicEnrollmentInvitationPreview, EnrollmentReceipt, RedeemEnrollmentInput } from "../domain/enrollment.js";
 import type { BridgeReport } from "../bridge/report.js";
 
 const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
@@ -197,11 +197,11 @@ export async function campfireHttpRedeemEnrollment(options: {
 }
 export async function campfireHttpPreviewEnrollment(options: {
   baseUrl: string; secret: string; invitationId: string;
-}): Promise<EnrollmentInvitationPreview> {
+}): Promise<PublicEnrollmentInvitationPreview> {
   return campfireHttpEnrollment({ ...options, path: "/v1/enrollment/preview", body: { invitationId: options.invitationId } });
 }
 export async function campfireHttpDeclineEnrollment(options: {
   baseUrl: string; secret: string; invitationId: string;
-}): Promise<EnrollmentDeclineReceipt> {
+}): Promise<PublicEnrollmentDeclineReceipt> {
   return campfireHttpEnrollment({ ...options, path: "/v1/enrollment/decline", body: { invitationId: options.invitationId } });
 }

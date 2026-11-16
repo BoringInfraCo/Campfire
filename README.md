@@ -48,9 +48,23 @@ After the release and Worker deployment, install from the versioned URL or the
 latest published release:
 
 ```bash
-curl -fsSL https://boringinfra.company/campfire/v1.33.0/install.sh | sh -s -- --version 1.33.0
+curl -fsSL https://boringinfra.company/campfire/v1.33.1/install.sh | sh -s -- --version 1.33.1
 curl -fsSL https://boringinfra.company/campfire/install.sh | sh
 ```
+
+### Join a teammate's workspace
+
+Preview a private invitation link, then accept it with your name and agent:
+
+```bash
+campfire join --invitation-link '<link>'
+campfire join --invitation-link '<link>' --accept --human-name "Alice" --harness opencode
+```
+
+If you already have a Campfire profile, joining preserves it and selects a
+separate profile for the new workspace. Run `campfire profiles` to list and
+switch profiles. Existing agent connections remain separate; if Campfire prints
+a named connection, reload the agent and select it for the new workspace.
 
 ### Generated workspace view
 

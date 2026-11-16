@@ -124,7 +124,7 @@ describe("NAV-002 bounded reads", () => {
     // The desktop intent channel adds exactly one CLI name (Phase C):
     // `intent`, the loopback bridge whose allowlist is numbered below.
     // FAC-001 (A2.11) adds exactly one more: `attention`.
-    expect(CLI_COMMAND_NAMES).toHaveLength(68);
+    expect(CLI_COMMAND_NAMES).toHaveLength(69);
     expect(CLI_COMMAND_NAMES).toContain("intent");
     const listed = (source: string): string[] => {
       const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(source);

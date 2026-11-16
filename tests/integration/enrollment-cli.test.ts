@@ -1,5 +1,6 @@
+vi.mock("../../src/bootstrap/connect.js", async (load) => { const real = await load<typeof import("../../src/bootstrap/connect.js")>(); return { ...real, detectOpenCodeMajor: () => 1, assertOpenCodeV1Effective: () => {}, prepareConnection: (input: Parameters<typeof real.prepareConnection>[0]) => real.prepareConnection({ ...input, opencodeMajor: undefined }) }; });
 import { afterEach, expect, it, vi } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { runCliEntry } from "../../src/cli/index.js";
@@ -103,7 +104,14 @@ it("requires an explicit accept and never joins locally from an invitation id", 
   vi.stubEnv("CAMPFIRE_CONFIG_DIR", join(dir, "accepted"));
   vi.stubEnv("CAMPFIRE_TOKEN", "");
   vi.stubEnv("CAMPFIRE_URL", "");
-  expect(await runCliEntry(["join", "--invitation-link", second.link, "--accept", "--human-name", "Ruth Link", "--harness", "opencode", "--allow-loopback", "--output", "json"])).toBe(0);
+  const existingConfig = join(dir, "xdg", "opencode", "opencode.json");
+  mkdirSync(join(dir, "xdg", "opencode"), { recursive: true });
+  const existing = JSON.stringify({ mcp: { campfire: { type: "local", enabled: true, command: ["old-campfire", "mcp"] } } });
+  writeFileSync(existingConfig, existing);
+  const isolatedConfig = join(dir, "accepted", "opencode.json");
+  expect(await runCliEntry(["join", "--invitation-link", second.link, "--accept", "--human-name", "Ruth Link", "--harness", "opencode", "--config", isolatedConfig, "--allow-loopback", "--output", "json"])).toBe(0);
+  expect(readFileSync(existingConfig, "utf8")).toBe(existing);
+  expect(JSON.parse(readFileSync(isolatedConfig, "utf8")).mcp.campfire.enabled).toBe(true);
   expect(loadRemoteProfile()?.humanName).toBe("Ruth Link");
   expect(loadRemoteProfile()?.workspaceId).toBe(FIXTURE.workspaces.billing);
   expect(loadRemoteProfile()?.agents).toHaveLength(1);
@@ -112,4 +120,79 @@ it("requires an explicit accept and never joins locally from an invitation id", 
   const status = output.length;
   expect(await runCliEntry(["status", "--output", "json"])).toBe(0);
   expect(output.slice(status).join("\n")).not.toContain("cfe_");
+});
+
+it("recovers the same link after the enrollment response is lost", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "campfire-link-recovery-"));
+  const runtime = createRuntimeFromPath(join(dir, "owner.db")); seedFixture(runtime.store);
+  const server = await startCampfireHttpServer({ runtime, port: 0 });
+  cleanup.push(() => rmSync(dir, { recursive: true, force: true }), () => runtime.close(), () => server.close());
+  vi.stubEnv("CAMPFIRE_CONFIG_DIR", join(dir, "owner")); vi.stubEnv("CAMPFIRE_DATA_DIR", join(dir, "data"));
+  vi.stubEnv("HOME", join(dir, "home")); vi.stubEnv("XDG_CONFIG_HOME", join(dir, "xdg"));
+  vi.stubEnv("CAMPFIRE_URL", server.url); vi.stubEnv("CAMPFIRE_TOKEN", FIXTURE.tokens.sergio);
+  const output: string[] = []; const errors: string[] = [];
+  vi.spyOn(console, "log").mockImplementation((value) => output.push(String(value)));
+  vi.spyOn(console, "error").mockImplementation((value) => errors.push(String(value)));
+  expect(await runCliEntry(["invite-teammate", FIXTURE.workspaces.billing, "--allow-loopback", "--output", "json"])).toBe(0);
+  const { link } = JSON.parse(output.at(-1) ?? "{}") as { link: string };
+  vi.stubEnv("CAMPFIRE_CONFIG_DIR", join(dir, "recipient")); vi.stubEnv("CAMPFIRE_URL", ""); vi.stubEnv("CAMPFIRE_TOKEN", "");
+  const original = fetch; let dropped = false;
+  vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+    const response = await original(...args);
+    if (String(args[0]).endsWith("/v1/enrollment/redeem") && !dropped) { dropped = true; throw new Error("lost response"); }
+    return response;
+  });
+  const args = ["join", "--invitation-link", link, "--accept", "--human-name", "Sammi", "--harness", "opencode", "--allow-loopback"];
+  expect(await runCliEntry(args)).toBe(1);
+  const humanCount = runtime.store.countHumans();
+  const wrongHuman = [...args]; wrongHuman[wrongHuman.indexOf("Sammi")] = "Someone Else";
+  expect(await runCliEntry(wrongHuman)).toBe(1);
+  const forged = new URL(link);
+  const encoded = forged.hash.slice("#v1.".length);
+  const capability = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as { secret: string };
+  capability.secret = `cfe_${"0".repeat(32)}`;
+  forged.hash = `v1.${Buffer.from(JSON.stringify(capability)).toString("base64url")}`;
+  const wrongSecret = [...args]; wrongSecret[wrongSecret.indexOf(link)] = forged.toString();
+  expect(await runCliEntry(wrongSecret)).toBe(1);
+  expect(runtime.store.countHumans()).toBe(humanCount);
+  expect(await runCliEntry(args)).toBe(0);
+  expect(runtime.store.countHumans()).toBe(humanCount);
+  expect(loadRemoteProfile()?.humanName).toBe("Sammi");
+  expect(existsSync(join(resolveProfilePaths().configDir, "pending-enrollment.json"))).toBe(false);
+  expect(errors.join("\n")).not.toContain(link);
+});
+
+it("reports committed enrollment and preserves pending credentials when a harness config changes mid-join", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "campfire-join-config-race-"));
+  const runtime = createRuntimeFromPath(join(dir, "owner.db")); seedFixture(runtime.store);
+  const server = await startCampfireHttpServer({ runtime, port: 0 });
+  cleanup.push(() => rmSync(dir, { recursive: true, force: true }), () => runtime.close(), () => server.close());
+  vi.stubEnv("HOME", join(dir, "home")); vi.stubEnv("XDG_CONFIG_HOME", join(dir, "xdg"));
+  vi.stubEnv("CAMPFIRE_CONFIG_DIR", join(dir, "owner")); vi.stubEnv("CAMPFIRE_URL", server.url); vi.stubEnv("CAMPFIRE_TOKEN", FIXTURE.tokens.sergio);
+  const output: string[] = [], errors: string[] = [];
+  vi.spyOn(console, "log").mockImplementation((value) => output.push(String(value)));
+  vi.spyOn(console, "error").mockImplementation((value) => errors.push(String(value)));
+  expect(await runCliEntry(["invite-teammate", FIXTURE.workspaces.billing, "--allow-loopback", "--output", "json"])).toBe(0);
+  const { link } = JSON.parse(output.at(-1) ?? "{}") as { link: string };
+  const recipient = join(dir, "recipient"), config = join(dir, "opencode.json");
+  vi.stubEnv("CAMPFIRE_CONFIG_DIR", recipient); vi.stubEnv("CAMPFIRE_URL", ""); vi.stubEnv("CAMPFIRE_TOKEN", "");
+  const originalFetch = fetch; let injected = false;
+  const foreign = JSON.stringify({ mcp: { campfire: { type: "local", enabled: true, command: ["other", "mcp"], environment: { CAMPFIRE_URL: "https://elsewhere.example", CAMPFIRE_TOKEN: "other-token", CAMPFIRE_HARNESS: "opencode" } } } });
+  vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+    const response = await originalFetch(...args);
+    if (!injected && String(args[0]).endsWith("/v1/call") && JSON.parse(String(args[1]?.body)).method === "whoami") {
+      injected = true; writeFileSync(config, foreign);
+    }
+    return response;
+  });
+  const args = ["join", "--invitation-link", link, "--accept", "--human-name", "Sammi", "--harness", "opencode", "--config", config, "--allow-loopback"];
+  expect(await runCliEntry(args)).toBe(1);
+  expect(errors.join("\n")).toContain("Enrollment committed (stage: credentials_saved)");
+  expect(readFileSync(config, "utf8")).toBe(foreign);
+  expect(existsSync(join(recipient, "pending-enrollment.json"))).toBe(true);
+  const count = runtime.store.countHumans();
+  rmSync(config);
+  expect(await runCliEntry(args)).toBe(0);
+  expect(runtime.store.countHumans()).toBe(count);
+  expect(existsSync(join(recipient, "pending-enrollment.json"))).toBe(false);
 });

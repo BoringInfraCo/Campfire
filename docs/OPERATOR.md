@@ -236,7 +236,7 @@ An owner can revoke one with `campfire revoke-invitation <invitationId> --worksp
 <workspaceId>`. The invitation capability must not be placed in logs or shared
 with anyone else. A display name is not verified account identity.
 
-On the teammate's machine, using a fresh or isolated Campfire profile:
+On the teammate's machine:
 
 ```bash
 campfire join --invitation-link '<link>'
@@ -247,6 +247,13 @@ campfire up
 Preview does not enroll the recipient. Accept creates their own identity and
 agent credentials. The optional `--out` file is a private compatibility path;
 it is written with mode 0600 and must be transferred securely.
+
+An existing Campfire profile and its credentials are preserved. Join selects a
+separate profile for the invited workspace; run `campfire profiles` to list
+profiles and `campfire profiles use <profileId>` to switch. Existing agent MCP
+connections remain separate. If join prints a named connection, reload the
+harness and select that connection for the new workspace. Switching the CLI
+profile does not switch an agent's active connection.
 
 To select both validated harnesses, repeat `--harness codex --harness opencode`.
 The endpoint and workspace come from the invitation. Do not pass a workspace,
