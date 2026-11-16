@@ -13,7 +13,7 @@ import type {
   ActionSubmissionOutcome,
   SignedObservationRef,
 } from "../domain/action-proposal.js";
-import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
+import type { EnrollmentInvitationList, ListEnrollmentInvitationsInput, EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentReceipt, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, OwnedAgentReceipt, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import type { ChangeSummary, ContextBudget, ContextSlice } from "../domain/context-policy.js";
 import type { MemoryHealthResult } from "../domain/memory-health.js";
 import type { GetMemoryHealthInput } from "./memory-health-read.js";
@@ -689,6 +689,7 @@ export interface ActionReceiptPage extends ContextSlice<ActionReceipt> {
 
 export interface CampfireService {
   issueEnrollmentInvitation(ctx: ActorContext, input: IssueEnrollmentInvitationInput): IssuedEnrollmentInvitation;
+  listEnrollmentInvitations(ctx: ActorContext, input: ListEnrollmentInvitationsInput): EnrollmentInvitationList;
   getEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentInvitationView;
   revokeEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): EnrollmentRevocationReceipt;
   previewEnrollment(secret: string, input: unknown): EnrollmentInvitationPreview;

@@ -23,6 +23,7 @@ export { V9_SQL } from "../store/telemetry-integrity-schema.js";
 export { V10_SQL } from "../store/action-proposal-schema.js";
 export { V11_SQL } from "../store/publication-schema.js";
 export { V12_SQL } from "../store/alpha-usage-schema.js";
+export { V13_SQL, ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL } from "../store/enrollment-issue-request-schema.js";
 
 /** v2 delta: actor tokens + workspace invites (mirrors migrations.ts v2). */
 export const V2_SQL = `

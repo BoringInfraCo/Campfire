@@ -3,6 +3,7 @@
  * distinguishes the winning write from even an identical concurrent retry.
  * Every dependent INSERT selects only if that execution won the claim.
  */
+import { MAX_ACTIVE_ENROLLMENT_INVITATIONS } from "../domain/enrollment.js";
 import type { DeclineEnrollmentInvitationPlan, EnrollmentInvitation, EnrollmentProvisionPlan, OwnedAgentEnrollmentRecord, OwnedAgentProvisionPlan, RevokeEnrollmentInvitationPlan } from "../domain/enrollment.js";
 import type { Agent, ActorToken, NewContribution, WorkspaceParticipant } from "../domain/types.js";
 
@@ -55,12 +56,20 @@ function slotInsert(record: OwnedAgentEnrollmentRecord, nonce: string, guard: Gu
 }
 
 export function issueEnrollmentStatements(invitation: EnrollmentInvitation, contribution: NewContribution, nonce: string): EnrollmentStatement[] {
-  const guard = ownerGuard(invitation.workspaceId, invitation.issuedByHumanId, invitation.teamId);
+  const owner = ownerGuard(invitation.workspaceId, invitation.issuedByHumanId, invitation.teamId);
+  // Cap guard lives in the same INSERT...SELECT as the row, so it is atomic with issuance
+  // (SQLite immediate transaction / one D1 statement). Active means unexpired, unused,
+  // unrevoked; recipient decline stamps revoked_at, so it frees the slot too.
+  const guard: Guard = {
+    sql: `${owner.sql} AND (SELECT COUNT(*) FROM enrollment_invitations
+        WHERE workspace_id = ? AND revoked_at IS NULL AND consumed_at IS NULL AND julianday(expires_at) > julianday(?)) < ?`,
+    values: [...owner.values, invitation.workspaceId, invitation.createdAt, MAX_ACTIVE_ENROLLMENT_INVITATIONS],
+  };
   const ownWrite = { sql: "EXISTS (SELECT 1 FROM enrollment_invitations WHERE id = ? AND claim_nonce = ?)", values: [invitation.id, nonce] };
   return [
-    insert("enrollment_invitations", "id, workspace_id, team_id, issued_by_human_id, secret_hash, permitted_harnesses, created_at, expires_at, claim_nonce",
+    insert("enrollment_invitations", "id, workspace_id, team_id, issued_by_human_id, secret_hash, permitted_harnesses, created_at, expires_at, claim_nonce, issue_request_id",
       [invitation.id, invitation.workspaceId, invitation.teamId, invitation.issuedByHumanId, invitation.secretHash,
-        JSON.stringify(invitation.permittedHarnesses), invitation.createdAt, invitation.expiresAt, nonce], guard),
+        JSON.stringify(invitation.permittedHarnesses), invitation.createdAt, invitation.expiresAt, nonce, invitation.issueRequestId ?? null], guard),
     contributionInsert(contribution, ownWrite),
   ];
 }
@@ -144,16 +153,31 @@ export function provisionOwnedAgentStatements(plan: OwnedAgentProvisionPlan, non
 export interface EnrollmentInvitationRow {
   id: string; workspace_id: string; team_id: string; issued_by_human_id: string; secret_hash: string; permitted_harnesses: string;
   created_at: string; expires_at: string; revoked_at: string | null; consumed_at: string | null; request_id: string | null;
-  request_digest: string | null; receipt_json: string | null;
+  request_digest: string | null; receipt_json: string | null; issue_request_id?: string | null;
 }
 export function mapEnrollmentInvitation(row: EnrollmentInvitationRow): EnrollmentInvitation {
   return { id: row.id, workspaceId: row.workspace_id, teamId: row.team_id, issuedByHumanId: row.issued_by_human_id,
     secretHash: row.secret_hash, permittedHarnesses: JSON.parse(row.permitted_harnesses), createdAt: row.created_at, expiresAt: row.expires_at,
     revokedAt: row.revoked_at ?? undefined, consumedAt: row.consumed_at ?? undefined, requestId: row.request_id ?? undefined,
-    requestDigest: row.request_digest ?? undefined, receipt: row.receipt_json === null ? undefined : JSON.parse(row.receipt_json) };
+    requestDigest: row.request_digest ?? undefined, issueRequestId: row.issue_request_id ?? undefined, receipt: row.receipt_json === null ? undefined : JSON.parse(row.receipt_json) };
 }
 export interface OwnedAgentEnrollmentRow { workspace_id: string; human_id: string; harness: OwnedAgentEnrollmentRecord["harness"]; request_id: string; request_digest: string; token_hash: string; receipt_json: string }
 export function mapOwnedAgentEnrollment(row: OwnedAgentEnrollmentRow): OwnedAgentEnrollmentRecord {
   return { workspaceId: row.workspace_id, humanId: row.human_id, harness: row.harness, requestId: row.request_id,
     requestDigest: row.request_digest, tokenHash: row.token_hash, receipt: JSON.parse(row.receipt_json) };
 }
+
+/** Active = unexpired, unused, unrevoked (decline revokes). Oldest first. */
+export const LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL = `SELECT * FROM enrollment_invitations
+  WHERE workspace_id = ? AND revoked_at IS NULL AND consumed_at IS NULL AND julianday(expires_at) > julianday(?)
+  ORDER BY created_at, id`;
+
+/** A lost race on the issuance request-id unique index (not the secret hash or append position). */
+export function isIssueRequestConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const code = "code" in error && typeof error.code === "string" ? error.code : "";
+  const message = "message" in error && typeof error.message === "string" ? error.message : "";
+  return (code.startsWith("SQLITE_CONSTRAINT") || /unique constraint failed/i.test(message))
+    && (message.includes("issue_request_id") || message.includes("idx_enrollment_issue_request"));
+}
+export const ENROLLMENT_BY_ISSUE_REQUEST_SQL = "SELECT * FROM enrollment_invitations WHERE workspace_id = ? AND issued_by_human_id = ? AND issue_request_id = ?";

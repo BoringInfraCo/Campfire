@@ -367,3 +367,32 @@ describe("schema migrations", () => {
     }
   });
 });
+
+describe("enrollment issue-request column (unversioned additive)", () => {
+  const columnNames = (db: Database.Database) =>
+    (db.prepare("PRAGMA table_info(enrollment_invitations)").all() as Array<{ name: string }>).map((c) => c.name);
+  const indexNames = (db: Database.Database) =>
+    (db.prepare("PRAGMA index_list(enrollment_invitations)").all() as Array<{ name: string }>).map((c) => c.name);
+
+  it("is present on a fresh database without changing the schema version", () => {
+    const db = memory();
+    applyMigrations(db, () => NOW);
+    expect(columnNames(db)).toContain("issue_request_id");
+    expect(indexNames(db)).toContain("idx_enrollment_issue_request");
+    expect(schemaVersion(db)).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it("upgrades an existing current-version database that lacks it, keeping rows, and is idempotent", () => {
+    const db = memory();
+    applyMigrations(db, () => NOW);
+    db.exec("DROP INDEX idx_enrollment_issue_request; ALTER TABLE enrollment_invitations DROP COLUMN issue_request_id;");
+    expect(columnNames(db)).not.toContain("issue_request_id");
+    const versionBefore = schemaVersion(db);
+    applyMigrations(db, () => LATER);
+    applyMigrations(db, () => LATER);
+    expect(columnNames(db).filter((n) => n === "issue_request_id")).toHaveLength(1);
+    expect(indexNames(db)).toContain("idx_enrollment_issue_request");
+    expect(schemaVersion(db)).toBe(versionBefore);
+    expect(db.prepare("SELECT MAX(version) AS v FROM schema_migrations").get()).toEqual({ v: CURRENT_SCHEMA_VERSION });
+  });
+});

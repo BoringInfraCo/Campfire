@@ -24,6 +24,8 @@ export type CampfireErrorCode =
   | "ActionProposalNotFound"
   | "ActionReceiptNotFound"
   | "RateLimited"
+  | "InvitationLimitReached"
+  | "InvitationAlreadyIssued"
   | "RecallRestart";
 
 export class CampfireError extends Error {
@@ -149,6 +151,31 @@ export class ActionReceiptNotFound extends CampfireError {
 export class RateLimited extends CampfireError {
   constructor(message: string, details?: Record<string, unknown>) {
     super("RateLimited", message, details);
+  }
+}
+
+/** A workspace already holds the maximum number of active enrollment invitations. Carries no secrets. */
+export class InvitationLimitReached extends CampfireError {
+  constructor(limit: number, activeInvitations: ReadonlyArray<{ invitationId: string; expiresAt: string; createdAt: string }>) {
+    super(
+      "InvitationLimitReached",
+      `This workspace already has ${limit} active invitations, which is the limit. Revoke one of the active invitations (or wait for it to expire) and try again.`,
+      { limit, activeInvitations: activeInvitations.map(({ invitationId, expiresAt, createdAt }) => ({ invitationId, expiresAt, createdAt })) },
+    );
+  }
+}
+
+/**
+ * A retried issue request reused a request id that already produced an invitation. The secret is
+ * never stored, so it cannot be shown again. Carries no secret and no secret hash.
+ */
+export class InvitationAlreadyIssued extends CampfireError {
+  constructor(invitation: { invitationId: string; createdAt: string; expiresAt: string; status: "active" | "expired" | "consumed" | "revoked" }) {
+    super(
+      "InvitationAlreadyIssued",
+      `An invitation (${invitation.invitationId}) was already issued for this request, but its link cannot be shown again. ${invitation.status === "active" ? "Revoke it and issue a new invitation with a new request id." : `It is ${invitation.status}; issue a new invitation with a new request id.`}`,
+      { invitationId: invitation.invitationId, createdAt: invitation.createdAt, expiresAt: invitation.expiresAt, status: invitation.status },
+    );
   }
 }
 

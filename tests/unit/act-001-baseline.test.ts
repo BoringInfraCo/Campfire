@@ -70,6 +70,7 @@ const EXPECTED_HTTP_ADDITIONS = [
 const SES_HTTP_ADDITIONS = [
   "report_agent_session_runtime",
   "list_agent_sessions",
+  "list_enrollment_invitations",
 ] as const;
 
 const MEM_HTTP_ADDITIONS = ["get_memory_health"] as const;
@@ -134,7 +135,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // write channel — as the one catalog name past the SHR-001 family.
     const retired = ["dashboard"];
     const visible = CLI_COMMAND_NAMES.filter((name) => name !== "playbook");
-    expect(visible).toHaveLength(frozen.length + 8 - retired.length);
+    expect(visible).toHaveLength(frozen.length + 9 - retired.length);
     const added = visible.filter((name) => !frozen.includes(name));
     expect(added).toEqual([
       "update",
@@ -144,6 +145,7 @@ describe("ACT-001 D1 baseline preservation", () => {
       "publish",
       "publish-status",
       "publish-recover",
+      "invitations",
       "intent",
     ]);
     const visibleNames = new Set<string>(visible);
@@ -231,7 +233,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.32.0");
+    expect(pkg.version).toBe("1.33.0");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

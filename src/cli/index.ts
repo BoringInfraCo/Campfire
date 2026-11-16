@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { acceptInvitationLink, declineInvitationLink, joinFromInvitation, previewInvitationLink, saveInvitationFile } from "../bootstrap/enrollment-client.js";
+import { randomUUID } from "node:crypto";
+import { acceptInvitationLink, declineInvitationLink, invitationStatusAdvice, joinFromInvitation, previewInvitationLink, saveInvitationFile } from "../bootstrap/enrollment-client.js";
 import { formatInvitationLink, invitationCapabilityShape } from "../bootstrap/invitation-link.js";
 import type { EnrollmentHarness, IssuedEnrollmentInvitation } from "../domain/enrollment.js";
 /**
@@ -2409,12 +2410,15 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
   const outFlag = parsed.flags.out;
   if (outFlag === true) throw new ValidationError("Choose a private file path for --out, or omit it to receive only the invitation link.", { field: "out", nextAction: "choose_invitation_output" });
   const path = typeof outFlag === "string" ? outFlag : undefined;
+  if (parsed.flags.hours !== undefined || parsed.flags["expires-in-hours"] !== undefined) {
+    throw new ValidationError("Invitations always expire 30 minutes after the server issues them; --hours and --expires-in-hours are no longer supported. Run the command again without it.", { field: "hours", nextAction: "omit_expiry_flag" });
+  }
   const remote=loadRemoteProfile();
   const access=remote===undefined?undefined:resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
   const requestedUrl=access?.url ?? optionalFlag(parsed.flags,"url") ?? readCampfireUrl();
   const token=access?.token ?? readCampfireToken(process.env,argv);
   if (remote === undefined && token === undefined && requestedUrl === undefined) {
-    throw new ValidationError("A local-only workspace cannot issue a teammate invitation. Publish it first with campfire publish.", {
+    throw new ValidationError("A local-only workspace cannot issue a teammate invitation because there is no hosted workspace to join. Publish it first with campfire publish (an explicit step Campfire never runs for you); the hosted-first guided move is not available yet.", {
       field: "workspace",
       nextAction: "publish_workspace",
     });
@@ -2423,8 +2427,14 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
   const endpoint=canonicalEndpoint(requestedUrl ?? "",{allowLoopbackHttp:allowLoopback});
   if(token===undefined) throw new ValidationError("Invitation issuance requires a credential for this shared endpoint; pass --token or CAMPFIRE_TOKEN",{field:"token",nextAction:"publish_workspace"});
   const call=(method:string,params:Record<string,unknown>)=>campfireHttpCall({baseUrl:endpoint,token,method,params});
-  const hours=optionalFlag(parsed.flags,"expires-in-hours");
-  const invitation=await call("issue_enrollment_invitation",{workspaceId,...(hours===undefined?{}:{expiresInHours:Number(hours)})}) as IssuedEnrollmentInvitation;
+  // One stable id per invocation. Any internal retry of this call must reuse it, so a lost response
+  // can never mint a second invitation. --request-id lets the owner deliberately retry one request.
+  const requestFlag=parsed.flags["request-id"];
+  if (requestFlag===true || (typeof requestFlag==="string" && !/^[a-zA-Z0-9_.-]{1,200}$/.test(requestFlag))) throw new ValidationError("--request-id must be 1-200 characters of letters, digits, '.', '_' or '-'.",{field:"request-id"});
+  const requestId=typeof requestFlag==="string"?requestFlag:`inv_${randomUUID()}`;
+  let invitation:IssuedEnrollmentInvitation;
+  try { invitation=await call("issue_enrollment_invitation",{workspaceId,requestId}) as IssuedEnrollmentInvitation; }
+  catch (error) { throw explainInvitationAlreadyIssued(explainInvitationLimit(error,workspaceId),workspaceId); }
   let filePath: string | undefined;
   if (path !== undefined) {
     try { filePath = saveInvitationFile(path, invitation, endpoint, allowLoopback).path; }
@@ -2433,18 +2443,65 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
   const link = formatInvitationLink(endpoint, invitation, allowLoopback);
   const receipt = { invitationId: invitation.invitationId, workspaceId: invitation.workspace.id, expiresAt: invitation.expiresAt, link, url: endpoint, ...(filePath === undefined ? {} : { path: filePath }) };
   emitResult(receipt, commandOutput(parsed), (value) => [
-    "Private invitation link:",
+    "Private invitation link (a secret; share it only with the person you are inviting):",
     value.link,
     "",
-    `Expires ${value.expiresAt}.`,
-    "Share this link yourself. Campfire does not send it.",
-    "The other computer previews the workspace and inviter, then accepts or declines:",
-    "  campfire join --invitation-link '<link>'",
-    "  campfire join --invitation-link '<link>' --accept --human-name <name> --harness codex|opencode",
-    "  campfire join --invitation-link '<link>' --decline",
-    "Decline creates no membership. An invitation id alone cannot join.",
+    "Copyable join command for the recipient:",
+    `  campfire join --invitation-link '${value.link}'`,
+    "",
+    `Expires ${value.expiresAt} (in 30 minutes; the server sets the time).`,
+    "Campfire does not send this link. Share it yourself.",
+    "Joining adds a member, not an owner. Anyone with this link can preview it until it expires, is used, or is revoked.",
+    "The recipient previews the workspace and inviter, then accepts or declines; decline creates no membership.",
+    `Revoke before use: campfire revoke-invitation ${value.invitationId} --workspace ${value.workspaceId}`,
     ...(value.path === undefined ? [] : ["", `Compatibility file: ${value.path}`]),
   ].join("\n"));
+}
+
+/** Turn InvitationAlreadyIssued into a recovery path. The original link cannot be shown again; no link is printed. */
+function explainInvitationAlreadyIssued(error:unknown,workspaceId:string):unknown {
+  if (!(error instanceof CampfireError) || (error.code as string)!=="InvitationAlreadyIssued") return error;
+  const d=error.details ?? {};
+  const id=typeof d.invitationId==="string"?d.invitationId:"(unknown)";
+  const status=typeof d.status==="string"?d.status:"unknown";
+  const expiresAt=typeof d.expiresAt==="string"?d.expiresAt:undefined;
+  const lines=["This request already created an invitation, so the response to the earlier attempt may have been lost.",
+    "Campfire never stores the link, so it cannot be shown again, and no new invitation was created.",
+    `  invitation ${id}  status ${status}${expiresAt===undefined?"":`  expires ${expiresAt}`}`,
+    ...(status==="active"?["Revoke it, then issue a new invitation:",`  campfire revoke-invitation ${id} --workspace ${workspaceId}`]
+      :status==="consumed"?["It was already accepted, so the person may have joined. Check the workspace members before inviting again.","Issue a new invitation only if you need another person:"]
+      :status==="expired"?["It expired unused. Issue a new invitation:"]
+      :status==="revoked"?["It was revoked or declined and can no longer be used. Issue a new invitation:"]
+      :["It can no longer be used. Issue a new invitation:"]),
+    `  campfire invite-teammate ${workspaceId}`];
+  return new CampfireError(error.code,lines.join("\n"),{invitationId:id,status,...(expiresAt===undefined?{}:{expiresAt}),...(typeof d.createdAt==="string"?{createdAt:d.createdAt}:{}),nextAction:"revoke_and_reissue_invitation",workspaceId});
+}
+
+/** Turn the server's InvitationLimitReached refusal into an actionable error. */
+function explainInvitationLimit(error:unknown,workspaceId:string):unknown {
+  if (!(error instanceof CampfireError)) return error;
+  const active=error.details?.activeInvitations;
+  if ((error.code as string)!=="InvitationLimitReached" && !Array.isArray(active)) return error;
+  const list=(Array.isArray(active)?active:[]) as Array<{invitationId?:unknown;createdAt?:unknown;expiresAt?:unknown}>;
+  const safe=list.filter(item=>typeof item.invitationId==="string").map(item=>({invitationId:String(item.invitationId),createdAt:typeof item.createdAt==="string"?item.createdAt:undefined,expiresAt:typeof item.expiresAt==="string"?item.expiresAt:undefined}));
+  const lines=["This workspace already has 5 active unused invitations, the limit. No new invitation or link was issued.",
+    "Revoke one to free a slot, or wait for one to expire (they last 30 minutes):",
+    ...safe.map(item=>`  ${item.invitationId}${item.expiresAt===undefined?"":`  expires ${item.expiresAt}`}\n    campfire revoke-invitation ${item.invitationId} --workspace ${workspaceId}`)];
+  if (safe.length===0) lines.push(`  campfire invitations --workspace ${workspaceId}`);
+  return new CampfireError(error.code,lines.join("\n"),{activeInvitations:safe,limit:5,nextAction:"revoke_invitation",workspaceId});
+}
+
+async function cmdInvitations(parsed:ParsedArgs,argv:string[]):Promise<void> {
+  const workspaceId=requireFlag(parsed.flags,"workspace");
+  await withBackend(argv,async backend=>{
+    const result=await backend.call("list_enrollment_invitations",{workspaceId}) as {invitations?:Array<{invitationId:string;createdAt?:string;expiresAt?:string;issuedBy?:unknown}>};
+    const invitations=(result.invitations??[]).map(item=>({invitationId:item.invitationId,createdAt:item.createdAt,expiresAt:item.expiresAt,...(item.issuedBy===undefined?{}:{issuedBy:item.issuedBy})}));
+    emitResult({workspaceId,limit:5,invitations},commandOutput(parsed),value=>value.invitations.length===0
+      ? `No active invitations for ${workspaceId}. Create one with: campfire invite-teammate ${workspaceId}`
+      : [`Active invitations for ${workspaceId} (${value.invitations.length} of 5):`,
+        ...value.invitations.map(item=>`  ${item.invitationId}  expires ${item.expiresAt ?? "unknown"}\n    revoke: campfire revoke-invitation ${item.invitationId} --workspace ${workspaceId}`),
+        "","Links are secret and cannot be shown again. Revoke one and issue a new link if it was lost."].join("\n"));
+  });
 }
 async function cmdPublish(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const profile = loadAnyProfile();
@@ -2668,16 +2725,16 @@ async function cmdJoin(parsed: ParsedArgs, argv: string[]): Promise<void> {
       return;
     }
     if (parsed.flags.accept !== true) {
-      const preview = await previewInvitationLink(link, allowLoopback);
-      emitResult(preview, commandOutput(parsed), (value) => [
+      const fullPreview = await previewInvitationLink(link, allowLoopback);
+      // A non-pending link reveals nothing about the workspace or inviter.
+      const preview = fullPreview.status === "pending" ? fullPreview : { kind: fullPreview.kind, invitationId: fullPreview.invitationId, status: fullPreview.status } as unknown as typeof fullPreview;
+      emitResult(preview, commandOutput(parsed), (value) => value.status !== "pending" ? invitationStatusAdvice(value.status) : [
         `Workspace  ${value.workspace.name} (${value.workspace.id})`,
         `Inviter    ${value.inviter.name}`,
         `Expires    ${value.expiresAt}`,
         `Status     ${value.status}`,
         "",
-        value.status === "pending"
-          ? "Nothing joined. Run the same command with --accept --human-name <name> --harness codex|opencode, or with --decline."
-          : "Nothing joined. This link cannot enroll a teammate.",
+        "Nothing joined. Joining adds you as a member, not an owner. Run the same command with --accept --human-name <name> --harness codex|opencode, or with --decline.",
       ].join("\n"));
       return;
     }
@@ -3894,6 +3951,7 @@ export const CLI_COMMAND_HANDLERS: Record<CliCommand, CliHandler> = {
   publish: (parsed, argv) => cmdPublish(parsed, argv),
   "publish-status": (parsed) => cmdPublishStatus(parsed),
   "publish-recover": (parsed) => cmdPublishRecover(parsed),
+  invitations: (parsed, argv) => cmdInvitations(parsed, argv),
   "revoke-invitation": (parsed, argv) => cmdRevokeInvitation(parsed, argv),
   serve: (parsed) => cmdServe(parsed),
   view: (parsed, argv) => cmdView(parsed, argv),

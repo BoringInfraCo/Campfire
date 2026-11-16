@@ -1,6 +1,6 @@
 # Campfire — Vision
 
-**Status:** Revised through published `v1.31.0` (v1.32.0 approved and in preparation, not published; v1.31.0 published 2026-11-14; FAC-001 closed by founder direction; NOT_OBSERVED items unchanged); collaborative-workspace
+**Status:** Revised through published `v1.32.0` (v1.32.0 published 2026-11-14 (tag v1.32.0, GitHub Release Latest, four archives, Homebrew/Nix pins and tap updated); OpenTUI is the default Terminal dashboard (classic via --classic or CAMPFIRE_TUI=classic); NOT_OBSERVED items unchanged; the Homebrew formula test uses `campfire --version`; v1.31.0 published 2026-11-14; FAC-001 closed by founder direction); collaborative-workspace
 positioning and FAC-001 direction recorded November 11, 2026
 **Version:** 0.2
 **Date:** October 3, 2026; latest revision November 11, 2026

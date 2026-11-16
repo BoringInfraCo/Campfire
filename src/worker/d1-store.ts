@@ -54,8 +54,9 @@ import type {
 import { Conflict } from "../domain/errors.js";
 import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
+import { ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL, V13_SQL } from "../store/enrollment-issue-request-schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
-  mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
+  LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL, ENROLLMENT_BY_ISSUE_REQUEST_SQL, isIssueRequestConflict, mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
   ATTENTION_TIP_SQL,
   assembleAttentionSnapshot,
@@ -786,7 +787,12 @@ function isAppendPositionConflict(error: unknown): boolean {
 
 /** Apply the Campfire schema to a D1 database (idempotent). */
 export async function migrateD1(db: D1Database): Promise<void> {
-  await db.exec(CAMPFIRE_D1_SCHEMA_SQL);
+  // migrations/0013 (additive column + partial unique index) rides in the same single exec. The
+  // column check runs first: on a fresh database the table does not exist yet, so the ALTER is
+  // appended after the CREATE TABLE; on an existing one it is added only when the column is missing.
+  const present = await db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('enrollment_invitations') WHERE name = 'issue_request_id'").first<{ n: number }>();
+  const alter = (present?.n ?? 0) === 0 ? `${ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL};\n` : "";
+  await db.exec(`${CAMPFIRE_D1_SCHEMA_SQL}${alter}${V13_SQL};\n`);
 }
 
 export function createD1Store(db: D1Database): AsyncCampfireStore {
@@ -1510,11 +1516,23 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
     },
 
     async createEnrollmentInvitation(invitation, contribution) {
-      return executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+      try {
+        return await executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+      } catch (error) {
+        if (isIssueRequestConflict(error)) return false;
+        throw error;
+      }
+    },
+    async getEnrollmentInvitationByIssueRequest(workspaceId, issuedByHumanId, issueRequestId) {
+      const row = await first<EnrollmentInvitationRow>(ENROLLMENT_BY_ISSUE_REQUEST_SQL, workspaceId, issuedByHumanId, issueRequestId);
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
     },
     async getEnrollmentInvitation(id) {
       const row = await first<EnrollmentInvitationRow>("SELECT * FROM enrollment_invitations WHERE id = ?", id);
       return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    async listActiveEnrollmentInvitations(workspaceId, now) {
+      return (await all<EnrollmentInvitationRow>(LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL, workspaceId, now)).map(mapEnrollmentInvitation);
     },
     async getEnrollmentInvitationByHash(secretHash) {
       const row = await first<EnrollmentInvitationRow>("SELECT * FROM enrollment_invitations WHERE secret_hash = ?", secretHash);

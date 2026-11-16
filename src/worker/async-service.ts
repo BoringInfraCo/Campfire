@@ -15,8 +15,8 @@ import { assertAttentionSnapshotFresh, attentionFromSnapshot, prepareAttentionRe
 import type { ActorContext } from "../service/authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "../service/session-list.js";
-import { ENROLLMENT_HARNESSES, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
-import type { EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
+import { ENROLLMENT_HARNESSES, ENROLLMENT_INVITATION_TTL_MS, MAX_ACTIVE_ENROLLMENT_INVITATIONS, normalizeListEnrollmentInvitationsInput, type EnrollmentInvitationList, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationLifecycleStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
+import type { ListEnrollmentInvitationsInput, EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
 import { assembleWorkspaceContext } from "../service/context-assembly.js";
 import { createAsyncCorrectionActions } from "../service/async-correction-actions.js";
@@ -141,7 +141,7 @@ import { generateRawTokenWeb as generateRawToken, hashTokenWeb as hashTokenAsync
 import type { ActionReceipt } from "../domain/action-proposal.js";
 import { createId, nowIso } from "../domain/ids.js";
 import type { IdSource } from "../domain/ids.js";
-import {
+import { InvitationAlreadyIssued, InvitationLimitReached,
   ActorNotFound,
   ArtifactNotFound,
   Conflict,
@@ -188,6 +188,7 @@ export interface AsyncCampfireServiceOptions {
  */
 export interface AsyncCampfireService {
   issueEnrollmentInvitation(ctx: ActorContext, input: IssueEnrollmentInvitationInput): Promise<IssuedEnrollmentInvitation>;
+  listEnrollmentInvitations(ctx: ActorContext, input: ListEnrollmentInvitationsInput): Promise<EnrollmentInvitationList>;
   getEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): Promise<EnrollmentInvitationView>;
   revokeEnrollmentInvitation(ctx: ActorContext, input: RevokeEnrollmentInvitationInput): Promise<EnrollmentRevocationReceipt>;
   previewEnrollment(secret: string, input: unknown): Promise<EnrollmentInvitationPreview>;
@@ -1006,10 +1007,32 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       if (workspace.status !== "active") throw new Conflict("Enroll teammates only into active workspaces", { recoveryCode: "workspace_not_active" });
       const now = clock();
       const secret = generateRawToken().replace(/^cft_/, "cfe_");
-      const invitation: EnrollmentInvitation = { id: `ein_${idSource("invite")}`, workspaceId: workspace.id, teamId: workspace.teamId, issuedByHumanId: ctx.actor.actorId, secretHash: (await hashTokenAsync(secret)), createdAt: now, expiresAt: new Date(Date.parse(now) + input.expiresInHours * 3_600_000).toISOString(), permittedHarnesses: [...ENROLLMENT_HARNESSES] };
+      const invitation: EnrollmentInvitation = { id: `ein_${idSource("invite")}`, workspaceId: workspace.id, teamId: workspace.teamId, issuedByHumanId: ctx.actor.actorId, secretHash: (await hashTokenAsync(secret)), createdAt: now, expiresAt: new Date(Date.parse(now) + ENROLLMENT_INVITATION_TTL_MS).toISOString(), permittedHarnesses: [...ENROLLMENT_HARNESSES], ...(input.requestId === undefined ? {} : { issueRequestId: input.requestId }) };
       const contribution: Omit<Contribution, "appendPosition"> = { id: idSource("contribution"), workspaceId: workspace.id, actor: ctx.actor, action: "create", objectType: "enrollment_invitation", objectId: invitation.id, payload: { expiresAt: invitation.expiresAt, role: "member" }, createdAt: now };
-      if (!(await store.createEnrollmentInvitation(invitation, contribution))) throw new Unauthorized("Workspace owner authority changed before invitation issuance", { recoveryCode: "owner_required" });
+      if (!(await store.createEnrollmentInvitation(invitation, contribution))) {
+        // The guarded insert refused: a retried request id, the active-invitation cap, or changed owner authority.
+        // A repeated request id is checked first: it must report the existing row (never its secret) even when the cap is full.
+        if (input.requestId !== undefined) {
+          const prior = await store.getEnrollmentInvitationByIssueRequest(workspace.id, ctx.actor.actorId, input.requestId);
+          if (prior !== undefined) throw new InvitationAlreadyIssued({ invitationId: prior.id, createdAt: prior.createdAt, expiresAt: prior.expiresAt, status: invitationLifecycleStatus(prior, now) });
+        }
+        const active = await store.listActiveEnrollmentInvitations(workspace.id, now);
+        if (active.length >= MAX_ACTIVE_ENROLLMENT_INVITATIONS) throw new InvitationLimitReached(MAX_ACTIVE_ENROLLMENT_INVITATIONS, active.map((item) => ({ invitationId: item.id, expiresAt: item.expiresAt, createdAt: item.createdAt })));
+        throw new Unauthorized("Workspace owner authority changed before invitation issuance", { recoveryCode: "owner_required" });
+      }
       return { version: 1, kind: "enrollment_invitation", invitationId: invitation.id, secret, workspace: { id: workspace.id, name: workspace.name, teamId: workspace.teamId }, expiresAt: invitation.expiresAt, permittedHarnesses: [...invitation.permittedHarnesses] };
+    },
+
+    async listEnrollmentInvitations(ctx, rawInput): Promise<EnrollmentInvitationList> {
+      const input = normalizeListEnrollmentInvitationsInput(rawInput);
+      await assertEnrollmentOwner(ctx, input.workspaceId);
+      const rows = await store.listActiveEnrollmentInvitations(input.workspaceId, clock());
+      const invitations = [];
+      for (const row of rows) {
+        const issuer = await store.getHuman(row.issuedByHumanId);
+        invitations.push({ invitationId: row.id, createdAt: row.createdAt, expiresAt: row.expiresAt, issuer: { id: row.issuedByHumanId, name: issuer?.displayName ?? "" } });
+      }
+      return { version: 1, kind: "enrollment_invitation_list", workspaceId: input.workspaceId, limit: MAX_ACTIVE_ENROLLMENT_INVITATIONS, invitations };
     },
 
     async getEnrollmentInvitation(ctx, rawInput) {

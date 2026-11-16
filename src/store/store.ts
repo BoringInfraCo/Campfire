@@ -281,6 +281,8 @@ export interface CampfireStore {
   // did not claim authority; callers may inspect a winning receipt for replay.
   createEnrollmentInvitation(invitation: EnrollmentInvitation, contribution: NewContribution): boolean;
   getEnrollmentInvitation(id: string): EnrollmentInvitation | undefined;
+  getEnrollmentInvitationByIssueRequest(workspaceId: string, issuedByHumanId: string, issueRequestId: string): EnrollmentInvitation | undefined;
+  listActiveEnrollmentInvitations(workspaceId: string, now: string): EnrollmentInvitation[];
   getEnrollmentInvitationByHash(secretHash: string): EnrollmentInvitation | undefined;
   revokeEnrollmentInvitation(input: RevokeEnrollmentInvitationPlan): boolean;
   /** False means this call did not claim the decline. Callers re-read the row. */

@@ -11,7 +11,7 @@ import { Conflict } from "../domain/errors.js";
 import type { AgentSessionRuntimeReport, SessionFailureKind, SessionRuntimeState } from "../domain/session-runtime.js";
 import { applyMigrations } from "./migrations.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
-  mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
+  LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL, ENROLLMENT_BY_ISSUE_REQUEST_SQL, isIssueRequestConflict, mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "./enrollment-sql.js";
 import type {
   ActorType,
   ActorToken,
@@ -1714,11 +1714,23 @@ function createSqliteStore(db: Database.Database): CampfireStore {
     },
 
     createEnrollmentInvitation(invitation, contribution) {
-      return executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+      try {
+        return executeEnrollment(issueEnrollmentStatements(invitation, contribution, globalThis.crypto.randomUUID()));
+      } catch (error) {
+        if (isIssueRequestConflict(error)) return false;
+        throw error;
+      }
+    },
+    getEnrollmentInvitationByIssueRequest(workspaceId, issuedByHumanId, issueRequestId) {
+      const row = db.prepare(ENROLLMENT_BY_ISSUE_REQUEST_SQL).get(workspaceId, issuedByHumanId, issueRequestId) as EnrollmentInvitationRow | undefined;
+      return row === undefined ? undefined : mapEnrollmentInvitation(row);
     },
     getEnrollmentInvitation(id) {
       const row = db.prepare("SELECT * FROM enrollment_invitations WHERE id = ?").get(id) as EnrollmentInvitationRow | undefined;
       return row === undefined ? undefined : mapEnrollmentInvitation(row);
+    },
+    listActiveEnrollmentInvitations(workspaceId, now) {
+      return (db.prepare(LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL).all(workspaceId, now) as EnrollmentInvitationRow[]).map(mapEnrollmentInvitation);
     },
     getEnrollmentInvitationByHash(secretHash) {
       const row = db.prepare("SELECT * FROM enrollment_invitations WHERE secret_hash = ?").get(secretHash) as EnrollmentInvitationRow | undefined;

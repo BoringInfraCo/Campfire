@@ -13,7 +13,15 @@ export interface RedeemEnrollmentInput {
   humanTokenHash: string;
   agents: PreparedEnrollmentAgent[];
 }
-export interface IssueEnrollmentInvitationInput { workspaceId: string; expiresInHours?: number }
+/** Server-fixed invitation lifetime. Clients cannot choose it (hosted-first sharing contract). */
+export const ENROLLMENT_INVITATION_TTL_MS = 30 * 60 * 1000;
+/** Maximum active (unexpired, unused, unrevoked, undeclined) invitations per workspace. */
+export const MAX_ACTIVE_ENROLLMENT_INVITATIONS = 5;
+export interface IssueEnrollmentInvitationInput { workspaceId: string; /** Client-stable issuance id for lost-response retries; distinct from the consumption requestId. */ requestId?: string }
+export interface ListEnrollmentInvitationsInput { workspaceId: string }
+/** Secret-free summary of one active invitation. */
+export interface ActiveEnrollmentInvitationSummary { invitationId: string; createdAt: string; expiresAt: string; issuer: { id: string; name: string } }
+export interface EnrollmentInvitationList { version: 1; kind: "enrollment_invitation_list"; workspaceId: string; limit: number; invitations: ActiveEnrollmentInvitationSummary[] }
 export interface RevokeEnrollmentInvitationInput { workspaceId: string; invitationId: string }
 export interface EnrollmentAgentRef { id: string; name: string; harness: EnrollmentHarness }
 export interface EnrollmentReceipt {
@@ -35,6 +43,8 @@ export interface EnrollmentInvitation {
   createdAt: string;
   expiresAt: string;
   permittedHarnesses: EnrollmentHarness[];
+  /** Stable id the owner supplied at issuance. Not the consumption request id. */
+  issueRequestId?: string;
   revokedAt?: string;
   consumedAt?: string;
   requestId?: string;
@@ -191,13 +201,17 @@ function harness(value: unknown): EnrollmentHarness {
   if (value !== "codex" && value !== "opencode") throw new ValidationError("Unsupported enrollment harness", { field: "harness" });
   return value;
 }
-export function normalizeIssueEnrollmentInput(value: unknown): Required<IssueEnrollmentInvitationInput> {
-  const input = object(value, ["workspaceId", "expiresInHours"], "invitation request");
-  const expiresInHours = input.expiresInHours ?? 24;
-  if (typeof expiresInHours !== "number" || !Number.isInteger(expiresInHours) || expiresInHours < 1 || expiresInHours > 168) {
-    throw new ValidationError("Invitation expiry must be between 1 and 168 hours", { field: "expiresInHours" });
-  }
-  return { workspaceId: identifier(input.workspaceId, "workspaceId"), expiresInHours };
+/**
+ * `expiresInHours` is accepted for backward compatibility with older clients
+ * and ignored: the server fixes expiry at issuance time + 30 minutes.
+ */
+export function normalizeIssueEnrollmentInput(value: unknown): IssueEnrollmentInvitationInput {
+  const input = object(value, ["workspaceId", "requestId", "expiresInHours"], "invitation request");
+  return { workspaceId: identifier(input.workspaceId, "workspaceId"), ...(input.requestId === undefined ? {} : { requestId: identifier(input.requestId, "requestId") }) };
+}
+export function normalizeListEnrollmentInvitationsInput(value: unknown): ListEnrollmentInvitationsInput {
+  const input = object(value, ["workspaceId"], "invitation list request");
+  return { workspaceId: identifier(input.workspaceId, "workspaceId") };
 }
 export function normalizeInvitationLookup(value: unknown): RevokeEnrollmentInvitationInput {
   const input = object(value, ["workspaceId", "invitationId"], "invitation lookup");
@@ -297,4 +311,13 @@ export function buildOwnedAgentPlan(human: Human, input: EnrollOwnedAgentInput, 
   const receipt: OwnedAgentReceipt = { version: 1, kind: "owned_agent_enrollment", requestId: input.requestId, workspaceId: input.workspaceId, humanId: human.id, agent: { id: agent.id, name: agent.name, harness: input.harness }, enrolledAt: now };
   const contributions: NewContribution[] = [{ id: idSource("contribution"), workspaceId: input.workspaceId, actor, action: "join", objectType: "participant", objectId: agent.id, payload: { role: "agent", actorType: "agent", humanOwnerId: human.id }, createdAt: now }];
   return { record: { workspaceId: input.workspaceId, humanId: human.id, harness: input.harness, requestId: input.requestId, requestDigest, tokenHash: input.tokenHash, receipt }, claimedAt: now, agent, token, participant, contributions };
+}
+
+export type EnrollmentInvitationLifecycleStatus = "active" | "expired" | "consumed" | "revoked";
+/** Secret-free lifecycle status of an issued invitation. */
+export function invitationLifecycleStatus(invitation: EnrollmentInvitation, now: string): EnrollmentInvitationLifecycleStatus {
+  if (invitation.consumedAt !== undefined) return "consumed";
+  if (invitation.revokedAt !== undefined) return "revoked";
+  if (Date.parse(invitation.expiresAt) <= Date.parse(now)) return "expired";
+  return "active";
 }

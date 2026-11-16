@@ -66,6 +66,7 @@ export const CLI_COMMAND_NAMES = [
   "publish",
   "publish-status",
   "publish-recover",
+  "invitations",
   "revoke-invitation",
   "join",
   "serve",
@@ -159,7 +160,11 @@ const READ = { mutates: false } as const;
 const WRITE = { mutates: true } as const;
 
 export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
-  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation link for a new teammate.", "campfire invite-teammate <workspaceId> [--out <private-file>] [--expires-in-hours 24] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "revoke-invitation"], notes: [
+  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation link for a new teammate.", "campfire invite-teammate <workspaceId> [--out <private-file>] [--request-id <id>] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "invitations", "revoke-invitation"], notes: [
+    "The server sets expiry to exactly 30 minutes after issuance. --hours and --expires-in-hours are no longer supported.",
+    "At 5 active unused invitations the server refuses another. Run campfire invitations --workspace <workspaceId>, then campfire revoke-invitation <invitationId> --workspace <workspaceId>.",
+    "Each run sends a fresh request id. If a response was lost, rerunning with a new id is safe; rerunning with the same --request-id is refused with InvitationAlreadyIssued (the link is never stored and cannot be shown again): revoke that invitation, then issue a new one.",
+    "Joining adds a member, not an owner. Any stronger authority needs a separate explicit action.",
     "Owner-only: authorizes one new human to join an already reachable workspace with bounded agent identities.",
     "Supplying a public URL does not publish a local workspace. Run campfire publish from the local owner profile first.",
     "The owner receives one private link. Its capability is in the URL fragment and is not printed by campfire status.",
@@ -206,6 +211,10 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
       "Does not reimport the workspace or create a second hosted workspace.",
     ] },
   ),
+  invitations: spec("invitations", "recover", "List active unused teammate invitations (ids and expiry only; never secrets).", "campfire invitations --workspace <workspaceId> [--allow-loopback] [--output auto|human|json]", { ...READ, workspaceScoped: true, related: ["invite-teammate", "revoke-invitation"], notes: [
+    "Owner-only. Shows invitation ids and expiry for unexpired, unused, unrevoked invitations. The private link cannot be recovered here.",
+    "Revoke one with campfire revoke-invitation <invitationId> --workspace <workspaceId> to free a slot (limit 5 active).",
+  ] }),
   "revoke-invitation": spec("revoke-invitation", "recover", "Revoke an enrollment invitation without removing existing members.", "campfire revoke-invitation <invitationId> --workspace <workspaceId>", { ...WRITE, workspaceScoped: true, notes: [
     "Cancels an unclaimed invitation, or stops receipt replay for a consumed one.",
     "It does not remove already enrolled humans, agents, credentials, or membership. It is not offboarding.",

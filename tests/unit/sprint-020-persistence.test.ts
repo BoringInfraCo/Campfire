@@ -119,6 +119,45 @@ describe.each(["sqlite", "d1"] as const)("Sprint 020 guarded enrollment on %s", 
     expect((await store.getEnrollmentInvitationByHash(invitation.secretHash))?.revokedAt).toBeUndefined();
     expect(await store.listContributions("ws_shared")).toHaveLength(1);
   });
+  it("enforces the five-active-invitation cap atomically with issuance under concurrent requests", async () => {
+    const { store } = await setup(mode); // setup already issued one active invitation
+    const attempt = (n: number) => store.createEnrollmentInvitation(
+      { ...invitation, id: `eni_race_${n}`, secretHash: `${n}`.padStart(64, "e"), createdAt: NOW, expiresAt: "2026-10-01T10:30:00.000Z" }, contribution(`con_race_${n}`));
+    const results = await Promise.all(Array.from({ length: 10 }, (_, n) => attempt(n)));
+    expect(results.filter(Boolean)).toHaveLength(4);
+    expect(await store.listActiveEnrollmentInvitations("ws_shared", NOW)).toHaveLength(5);
+    expect(await store.listContributions("ws_shared")).toHaveLength(5); // refused issues append no history
+    // Expiry, decline and revoke each free a slot; an expired row never counts.
+    expect(await store.listActiveEnrollmentInvitations("ws_shared", "2026-10-01T10:30:00.000Z")).toHaveLength(1);
+    expect(await store.createEnrollmentInvitation({ ...invitation, id: "eni_full", secretHash: "a".repeat(64) }, contribution("con_full"))).toBe(false);
+    const active = await store.listActiveEnrollmentInvitations("ws_shared", NOW);
+    expect(await store.revokeEnrollmentInvitation({ invitationId: active[1]!.id, workspaceId: "ws_shared", actor: owner, revokedAt: NOW, contribution: contribution("con_rv") })).toBe(true);
+    expect(await store.createEnrollmentInvitation({ ...invitation, id: "eni_after_revoke", secretHash: "b".repeat(64) }, contribution("con_after_rv"))).toBe(true);
+    expect(await store.createEnrollmentInvitation({ ...invitation, id: "eni_full2", secretHash: "c".repeat(64) }, contribution("con_full2"))).toBe(false);
+    expect(await store.declineEnrollmentInvitation({ invitationId: active[2]!.id, workspaceId: "ws_shared", secretHash: active[2]!.secretHash, declinedAt: NOW,
+      issuedByHumanId: owner.actorId, teamId: "team", contribution: contribution("con_dc") })).toBe(true);
+    expect(await store.createEnrollmentInvitation({ ...invitation, id: "eni_after_decline", secretHash: "d".repeat(64) }, contribution("con_after_dc"))).toBe(true);
+  });
+  it("issue_request_id is unique per owner and workspace; a duplicate or concurrent duplicate inserts exactly one row", async () => {
+    const { store } = await setup(mode); // one active invitation already
+    const attempt = (n: number, requestId: string | undefined) => store.createEnrollmentInvitation(
+      { ...invitation, id: `eni_req_${n}`, secretHash: `${n}`.padStart(64, "f"), createdAt: NOW, expiresAt: "2026-10-01T10:30:00.000Z", ...(requestId === undefined ? {} : { issueRequestId: requestId }) }, contribution(`con_req_${n}`));
+    const results = await Promise.all([attempt(1, "same"), attempt(2, "same"), attempt(3, "same")]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(await store.listContributions("ws_shared")).toHaveLength(2);
+    const winner = await store.getEnrollmentInvitationByIssueRequest("ws_shared", owner.actorId, "same");
+    expect(winner?.issueRequestId).toBe("same");
+    expect(await store.getEnrollmentInvitationByIssueRequest("ws_shared", "hum_other", "same")).toBeUndefined();
+    expect(await store.getEnrollmentInvitationByIssueRequest("ws_other", owner.actorId, "same")).toBeUndefined();
+    // A cap refusal leaves the id unburned; null request ids never collide.
+    expect(await attempt(4, undefined)).toBe(true);
+    expect(await attempt(5, undefined)).toBe(true);
+    expect(await attempt(6, "later")).toBe(true); // 5 active now
+    expect(await attempt(7, "burn-test")).toBe(false);
+    expect(await store.getEnrollmentInvitationByIssueRequest("ws_shared", owner.actorId, "burn-test")).toBeUndefined();
+    await store.revokeEnrollmentInvitation({ invitationId: winner!.id, workspaceId: "ws_shared", actor: owner, revokedAt: NOW, contribution: contribution("con_rv_req") });
+    expect(await attempt(8, "burn-test")).toBe(true);
+  });
   it("provisions both explicitly selected harnesses with separate managed slots", async () => {
     const { store } = await setup(mode);
     const claim = plan("one");

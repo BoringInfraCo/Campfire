@@ -170,6 +170,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     case "DecisionNotFound":
       return 404;
     case "RecallRestart":
+    case "InvitationLimitReached":
+    case "InvitationAlreadyIssued":
       return 409;
     default:
       return 400;
@@ -827,7 +829,7 @@ async function handleSyncCall(service: CampfireService, request: Request): Promi
         statusFor(error.code, false),
         error.code,
         error.message,
-        method === "preflight" ? error.details : undefined,
+        method === "preflight" || error.code === "InvitationLimitReached" || error.code === "InvitationAlreadyIssued" ? error.details : undefined,
       );
     }
     throw error;
@@ -875,7 +877,7 @@ async function handleAsyncCall(
         statusFor(error.code, false),
         error.code,
         error.message,
-        method === "preflight" ? error.details : undefined,
+        method === "preflight" || error.code === "InvitationLimitReached" || error.code === "InvitationAlreadyIssued" ? error.details : undefined,
       );
     }
     throw error;

@@ -97,7 +97,7 @@ export const INTENT_METHOD_PARAMS: Record<IntentMethod, readonly IntentParamSpec
   ],
   issue_enrollment_invitation: [
     { name: "workspaceId", required: true },
-    { name: "expiresInHours", required: false },
+    { name: "requestId", required: false },
   ],
 };
 

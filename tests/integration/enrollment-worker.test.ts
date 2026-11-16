@@ -146,6 +146,65 @@ describe.each(["sync", "d1"] as const)("Sprint 020 Worker enrollment transport o
     expect((await call("/campfire/v1/enrollment/redeem", invitation.secret, request)).status).toBe(403);
     expect((await actorCall("/campfire", "teammate-human", "get_workspace_context", { workspaceId: "ws_shared" })).status).toBe(200);
   });
+  it("caps active invitations at five over concurrent HTTP issues and exposes a secret-free owner list", async () => {
+    const { actorCall } = await setup(mode);
+    const issued = await Promise.all(Array.from({ length: 10 }, () => actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared" })));
+    const ok = issued.filter((r) => r.status === 200);
+    const refused = issued.filter((r) => r.status !== 200);
+    expect(ok).toHaveLength(5);
+    expect(refused).toHaveLength(5);
+    expect(refused[0]!.status).toBe(409);
+    expect(refused[0]!.body).toMatchObject({ ok: false, error: "InvitationLimitReached" });
+    expect(refused[0]!.body.message).toContain("5");
+    const details = refused[0]!.body.details as { limit: number; activeInvitations: Array<Record<string, string>> };
+    expect(details.limit).toBe(5);
+    expect(details.activeInvitations).toHaveLength(5);
+    expect(Object.keys(details.activeInvitations[0]!).sort()).toEqual(["createdAt", "expiresAt", "invitationId"]);
+    for (const r of ok) expect(r.body.result.expiresAt).toBe("2026-10-01T12:30:00.000Z");
+
+    for (const token of ["hum_member", "agt_owner"]) {
+      expect((await actorCall("/campfire", token, "list_enrollment_invitations", { workspaceId: "ws_shared" })).status).toBe(403);
+    }
+    expect((await actorCall("/campfire", owner.actorId, "list_enrollment_invitations", { workspaceId: "ws_private_other" })).status).not.toBe(200);
+    const listed = await actorCall("/campfire", owner.actorId, "list_enrollment_invitations", { workspaceId: "ws_shared" });
+    expect(listed.status).toBe(200);
+    expect(listed.body.result.invitations).toHaveLength(5);
+    const text = JSON.stringify(listed.body);
+    for (const r of ok) expect(text).not.toContain(r.body.result.secret);
+    // Offered revocation frees a slot.
+    const victim = details.activeInvitations[0]!.invitationId;
+    expect((await actorCall("/campfire", owner.actorId, "revoke_enrollment_invitation", { workspaceId: "ws_shared", invitationId: victim })).status).toBe(200);
+    expect((await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared" })).status).toBe(200);
+  });
+
+  it("makes issuance idempotent by requestId over HTTP: lost-response retry, concurrency, and no disclosure", async () => {
+    const { actorCall } = await setup(mode);
+    const first = await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-1" });
+    expect(first.status).toBe(200);
+    // The response is "lost": the owner retries with the same id.
+    const retry = await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-1" });
+    expect(retry.status).toBe(409);
+    expect(retry.body).toMatchObject({ ok: false, error: "InvitationAlreadyIssued", details: { invitationId: first.body.result.invitationId, status: "active", expiresAt: first.body.result.expiresAt } });
+    expect(Object.keys(retry.body.details as object).sort()).toEqual(["createdAt", "expiresAt", "invitationId", "status"]);
+    expect(JSON.stringify(retry.body)).not.toContain(first.body.result.secret);
+    const listed = await actorCall("/campfire", owner.actorId, "list_enrollment_invitations", { workspaceId: "ws_shared" });
+    expect(listed.body.result.invitations).toHaveLength(1);
+    // Revoke, then the old id still reports the revoked row; a new id issues.
+    await actorCall("/campfire", owner.actorId, "revoke_enrollment_invitation", { workspaceId: "ws_shared", invitationId: first.body.result.invitationId });
+    expect((await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-1" })).body.details).toMatchObject({ status: "revoked" });
+    expect((await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-2" })).status).toBe(200);
+    // Concurrent duplicates yield exactly one invitation.
+    const race = await Promise.all(Array.from({ length: 6 }, () => actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-race" })));
+    expect(race.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(race.filter((r) => r.status === 409 && r.body.error === "InvitationAlreadyIssued")).toHaveLength(5);
+    // Other actors learn nothing about the id.
+    for (const token of ["hum_member", "agt_owner"]) {
+      const denied = await actorCall("/campfire", token, "issue_enrollment_invitation", { workspaceId: "ws_shared", requestId: "req-http-2" });
+      expect(denied.status).toBe(403);
+      expect(JSON.stringify(denied.body)).not.toContain("InvitationAlreadyIssued");
+    }
+    expect((await actorCall("/campfire", owner.actorId, "issue_enrollment_invitation", { workspaceId: "ws_private_other", requestId: "req-http-2" })).body.error).not.toBe("InvitationAlreadyIssued");
+  });
 });
 
 describe("invitation capability rate limit", () => {

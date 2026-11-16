@@ -222,28 +222,31 @@ expose a local service. The owner uses their existing human credentials for
 that exact endpoint; another-machine invitations cannot use the owner's
 localhost URL. A path prefix such as `/campfire` is supported.
 
-An authenticated human owner of the active workspace runs:
+An authenticated human owner creates a private invitation:
 
 ```bash
-campfire invite-teammate <workspaceId> --out ./alice.invitation.json
-# Optional expiry override, from 1 through 168 hours:
-campfire invite-teammate <workspaceId> --out ./bob.invitation.json --expires-in-hours 48
+campfire invite-teammate <workspaceId>
+campfire invitations --workspace <workspaceId>
 ```
 
-The file is written with mode 0600, never silently replaces an existing file,
-and contains an expiring enrollment secret. Transfer it through a private
-channel of your choice. Campfire sends no message or email. Possession grants
-one new-person enrollment; a display name is not verified email/account identity.
-The receipt reports safe metadata, not the secret, in both human and JSON output.
+Share the resulting link privately. Campfire does not send it. The link expires
+30 minutes after issuance, can be accepted once, and grants member rather than
+owner access. Each workspace can have at most five active unused invitations.
+An owner can revoke one with `campfire revoke-invitation <invitationId> --workspace
+<workspaceId>`. The invitation capability must not be placed in logs or shared
+with anyone else. A display name is not verified account identity.
 
-On the teammate's machine, using a fresh or isolated Campfire profile that
-has not run a local first run:
+On the teammate's machine, using a fresh or isolated Campfire profile:
 
 ```bash
-campfire join --invitation-file ./alice.invitation.json \
-  --human-name "Alice" --harness opencode
+campfire join --invitation-link '<link>'
+campfire join --invitation-link '<link>' --accept --human-name "Alice" --harness opencode
 campfire up
 ```
+
+Preview does not enroll the recipient. Accept creates their own identity and
+agent credentials. The optional `--out` file is a private compatibility path;
+it is written with mode 0600 and must be transferred securely.
 
 To select both validated harnesses, repeat `--harness codex --harness opencode`.
 The endpoint and workspace come from the invitation. Do not pass a workspace,

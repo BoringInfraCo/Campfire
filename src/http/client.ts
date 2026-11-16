@@ -29,6 +29,8 @@ const KNOWN_CODES: ReadonlySet<string> = new Set<CampfireErrorCode>([
   "ActionReceiptNotFound",
   "RateLimited",
   "RecallRestart",
+  "InvitationLimitReached",
+  "InvitationAlreadyIssued",
 ]);
 
 export interface CampfireHttpCallOptions {

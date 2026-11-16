@@ -22,6 +22,7 @@ export { V9_SQL } from "./telemetry-integrity-schema.js";
 import { V10_SQL } from "./action-proposal-schema.js";
 export { V10_SQL } from "./action-proposal-schema.js";
 
+import { ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL, V13_SQL } from "./enrollment-issue-request-schema.js";
 import { SESSION_RUNTIME_TABLE_SQL, SESSION_TASK_COLUMN_SQL } from "./session-runtime-schema.js";
 
 export const CURRENT_SCHEMA_VERSION = 11;
@@ -239,6 +240,26 @@ export function applyMigrations(
     });
     apply();
   }
+  ensureEnrollmentIssueRequest(db);
+}
+
+/**
+ * Additive local counterpart of migrations/0013_enrollment_issue_request.sql. It is idempotent and
+ * deliberately not a numbered schema version: the published schema version (and every publication
+ * digest bound to it) must not change for a local-only, non-published column.
+ */
+function ensureEnrollmentIssueRequest(db: Database.Database): void {
+  if (!hasTable(db, "enrollment_invitations")) return;
+  const columns = db.prepare("PRAGMA table_info(enrollment_invitations)").all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "issue_request_id")) {
+    try {
+      db.exec(ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL);
+    } catch (error) {
+      // Another process opening the same database may have added the column between the check and the ALTER.
+      if (!(error instanceof Error) || !/duplicate column name/i.test(error.message)) throw error;
+    }
+  }
+  db.exec(V13_SQL);
 }
 
 export function schemaVersion(db: Database.Database): number {

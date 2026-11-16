@@ -133,9 +133,28 @@ async function recoverEnrollment(pending:PendingEnrollment):Promise<EnrollmentRe
   }
   return {version:1,kind:"workspace_enrollment",invitationId:pending.input.invitationId,requestId:pending.input.requestId,workspace:pending.invitation.workspace,human:{id:identity.actor.actorId,name:pending.input.humanName},agents,enrolledAt:human.joinedAt};
 }
+/** Actionable recipient text per non-pending status. Never names the workspace. */
+export function invitationStatusAdvice(status: string): string {
+  switch (status) {
+    case "expired": return "This invitation has expired (invitations last 30 minutes). Ask the owner for a new link. Nothing joined and no local workspace was created.";
+    case "consumed": return "This invitation was already used. If that was you, you are already a member. Otherwise ask the owner for a new link. Nothing joined.";
+    case "revoked": return "This invitation was revoked by the owner. Ask them for a new link. Nothing joined.";
+    case "unavailable": return "This invitation is not available right now. Ask the owner for a new link. Nothing joined.";
+    default: return "This invitation link is not valid. Check that you pasted the whole link, or ask the owner for a new one. Nothing joined and no local workspace was created.";
+  }
+}
+/** Map a server rejection of an invitation capability to a recipient-safe error. */
+export function invitationRejection(error: unknown): unknown {
+  if (error instanceof CampfireError && (error.code === "Unauthorized" || error.code === "Conflict" || error.code === "WorkspaceNotFound")) {
+    return new CampfireError(error.code, invitationStatusAdvice("invalid"), { nextAction: "request_new_invitation" });
+  }
+  return error;
+}
 export async function previewInvitationLink(link: string, allowLoopback = false) {
   const parsed = parseInvitationLink(link, allowLoopback);
-  const preview = await campfireHttpPreviewEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId });
+  let preview;
+  try { preview = await campfireHttpPreviewEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId }); }
+  catch (error) { throw invitationRejection(error); }
   if (preview.kind !== "enrollment_invitation_preview" || preview.invitationId !== parsed.invitationId || preview.workspace?.id === undefined || preview.inviter?.name === undefined) {
     failure("Invitation preview did not match the link", "paste_invitation_link");
   }
@@ -143,7 +162,9 @@ export async function previewInvitationLink(link: string, allowLoopback = false)
 }
 export async function declineInvitationLink(link: string, allowLoopback = false) {
   const parsed = parseInvitationLink(link, allowLoopback);
-  const receipt = await campfireHttpDeclineEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId });
+  let receipt;
+  try { receipt = await campfireHttpDeclineEnrollment({ baseUrl: parsed.url, secret: parsed.secret, invitationId: parsed.invitationId }); }
+  catch (error) { throw invitationRejection(error); }
   if (receipt.kind !== "enrollment_invitation_decline" || receipt.membershipCreated !== false || receipt.invitationId !== parsed.invitationId) {
     failure("Invitation decline did not match the link", "paste_invitation_link");
   }
@@ -152,7 +173,7 @@ export async function declineInvitationLink(link: string, allowLoopback = false)
 export async function acceptInvitationLink(input: Omit<JoinFromInvitationInput, "invitationFile"> & { link: string }, env: NodeJS.ProcessEnv = process.env): Promise<JoinOutcome> {
   const parsed = parseInvitationLink(input.link, input.allowLoopback === true);
   const preview = await previewInvitationLink(input.link, input.allowLoopback === true);
-  if (preview.status !== "pending") failure(`Invitation is ${preview.status}. No membership was created.`, preview.status === "expired" ? "request_new_invitation" : "paste_invitation_link");
+  if (preview.status !== "pending") failure(invitationStatusAdvice(preview.status), preview.status === "expired" ? "request_new_invitation" : "paste_invitation_link");
   const invitation = validateInvitation({
     version: 1, kind: "enrollment_invitation", invitationId: preview.invitationId, secret: parsed.secret, url: parsed.url,
     workspace: preview.workspace, expiresAt: preview.expiresAt, permittedHarnesses: preview.permittedHarnesses,
@@ -222,7 +243,7 @@ async function completeEnrollment(invitation: InvitationFile, input: JoinFromInv
     // in that case the same prepared credentials still prove the real state.
     if (error instanceof CampfireError && (error.code==="Unauthorized" || error.code==="Conflict")) {
       try { receipt = await recoverEnrollment(pending); }
-      catch { throw error; }
+      catch { throw invitationRejection(error); }
     } else if (error instanceof CampfireError) throw error;
     else return failure("Enrollment commit is uncertain: the response was lost. Retry the same invitation with the saved request");
   }

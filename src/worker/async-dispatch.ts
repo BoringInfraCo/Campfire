@@ -12,7 +12,7 @@ import type { ActorContext } from "../service/authorization.js";
 import type { ListWorkspaceObjectsInput } from "../service/service.js";
 import type { AsyncCampfireService } from "./async-service.js";
 
-import { normalizeIssueEnrollmentInput, normalizeInvitationLookup, normalizeEnrollOwnedAgentInput } from "../domain/enrollment.js";
+import { normalizeIssueEnrollmentInput, normalizeListEnrollmentInvitationsInput, normalizeInvitationLookup, normalizeEnrollOwnedAgentInput } from "../domain/enrollment.js";
 
 export const CAMPFIRE_HTTP_METHODS = [
   "preflight",
@@ -41,6 +41,7 @@ export const CAMPFIRE_HTTP_METHODS = [
   "join_workspace",
   "invite_workspace",
   "issue_enrollment_invitation",
+  "list_enrollment_invitations",
   "revoke_enrollment_invitation",
   "enroll_owned_agent",
   "register_agent_session",
@@ -583,6 +584,8 @@ export async function dispatchCampfireMethodAsync(
       return await service.joinWorkspace(ctx, { workspaceId: str(params, "workspaceId") });
     case "issue_enrollment_invitation":
       return service.issueEnrollmentInvitation(ctx, normalizeIssueEnrollmentInput(params));
+    case "list_enrollment_invitations":
+      return await service.listEnrollmentInvitations(ctx, normalizeListEnrollmentInvitationsInput(params));
     case "revoke_enrollment_invitation":
       return service.revokeEnrollmentInvitation(ctx, normalizeInvitationLookup(params));
     case "enroll_owned_agent":

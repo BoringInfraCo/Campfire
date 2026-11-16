@@ -136,6 +136,8 @@ function statusFor(code: CampfireErrorCode, unauthenticated: boolean): number {
     case "DecisionNotFound":
       return 404;
     case "RecallRestart":
+    case "InvitationLimitReached":
+    case "InvitationAlreadyIssued":
       return 409;
     default:
       return 400;
