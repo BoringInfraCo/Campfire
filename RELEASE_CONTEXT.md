@@ -7,7 +7,7 @@
 > install the latest published release archives. This source snapshot does not deploy the
 > Worker. `bun` can run the installer; the CLI still runs on Node.js 22.
 
-This public source snapshot was exported on 2026-11-16 from private canonical source commit `e290448189dafa729d7dbc794f09316272b76c0f` (dated 2026-11-16T10:31:22-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
+This public source snapshot was exported on 2026-11-17 from private canonical source commit `e290448189dafa729d7dbc794f09316272b76c0f` (dated 2026-11-16T10:31:22-05:00). The identifier is retained for provenance; the private development history and private workspace data are intentionally not mirrored.
 
 ## Goal
 
