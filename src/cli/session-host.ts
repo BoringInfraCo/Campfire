@@ -15,6 +15,7 @@ import { assertSessionHostEnabled } from "../session-host/flag.js";
 import {
   listSessions,
   prepareSession,
+  setSessionShare,
   reconcileSessions,
   runSession,
   sessionAgentCredential,
@@ -73,10 +74,23 @@ export function formatSessionList(workspaceId: string, page: AgentSessionListPag
   }
   for (const session of page.sessions) {
     lines.push(
-      [session.id, session.state ?? "unknown", session.agentId, session.taskId ?? "-", session.harness].join("  "),
+      [
+        session.id,
+        session.state ?? "unknown",
+        session.agentId,
+        session.taskId ?? "-",
+        session.harness,
+        ...(session.shared === true ? ["shared"] : []),
+      ].join("  "),
     );
   }
   return lines.join("\n");
+}
+
+export function formatSessionShareReceipt(shared: boolean, sessionId: string): string {
+  return shared
+    ? `Shared ${sessionId}. Teammates in the workspace can now watch its status and recorded work. No terminal text is shared.`
+    : `Stopped sharing ${sessionId}. Teammates can no longer watch it.`;
 }
 
 function resolveCampfireExecutable(explicit: string | undefined): string {
@@ -263,6 +277,27 @@ export async function runSessionHostFromParsed(parsed: ParsedArgs, deps: Session
     printJson(result.receipt);
     return;
   }
+  if (subcommand === "share" || subcommand === "unshare") {
+    const sessionId = parsed.positionals[1];
+    if (sessionId === undefined || sessionId.trim().length === 0) {
+      throw new ValidationError("Missing required <sessionId> argument.", { field: "sessionId" });
+    }
+    const mode = outputMode(parsed, ["human", "json"]);
+    const workspaceId = flagString(parsed, "workspace") ?? loadAnyProfile(env)?.workspaceId;
+    if (workspaceId === undefined) {
+      throw new ValidationError("Missing required --workspace <id>.", { field: "workspace" });
+    }
+    const enabled = subcommand === "share";
+    const receipt = await withProfileCore(
+      env,
+      shared,
+      (core) => setSessionShare(enabled, workspaceId, sessionId, { ...shared, core: core.client, readerContext: core.reader }),
+      profileSelectionForHost(env),
+    );
+    if (mode === "json") printJson(receipt);
+    else console.log(formatSessionShareReceipt(enabled, receipt.sessionId));
+    return;
+  }
   if (subcommand === "run") {
     const launchId = parsed.positionals[1];
     if (launchId === undefined || launchId.trim().length === 0) {
@@ -311,5 +346,5 @@ export async function runSessionHostFromParsed(parsed: ParsedArgs, deps: Session
     printJson(result);
     return;
   }
-  throw new ValidationError("Unknown session command. Use prepare, run, stop, or reconcile.", { field: "session" });
+  throw new ValidationError("Unknown session command. Use prepare, run, stop, reconcile, share, or unshare.", { field: "session" });
 }

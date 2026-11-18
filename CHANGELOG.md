@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.35.0
+
+- **Required operator action:** D1 migration `0016_agent_session_shares.sql` must be applied before the Worker is deployed. It is additive. A Worker rollback does not undo D1 state.
+- An owner can explicitly share one of their sessions, and workspace participants can read its derived live, disconnected, or ended state and the work recorded for it. This is available over HTTP and through `campfire session share` and `campfire session unshare`; the CLI commands are behind `CAMPFIRE_SESSION_HOST=1`.
+- A shared session exposes no terminal text, prompts, transcript, input, or control. There is no MCP tool for it.
+- The Mac app watch pane ships separately with Campfire Desktop and is not part of this release.
+- NOT OBSERVED: a two-computer watch; the Cycle 1 two-person continuation and offline-owner run; production concurrency. Member removal is not available. A session does not survive its host going offline. Push delivery is not included.
+
 ## 1.34.0
 
 - **Required operator action:** D1 migrations `0014_workspace_create_request.sql` and `0015_workspace_create_session_claim.sql` must be applied, in that order, before the Worker is deployed. A Worker rollback does not undo D1 state.

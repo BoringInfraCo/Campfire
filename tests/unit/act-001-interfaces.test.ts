@@ -99,7 +99,7 @@ describe("HTTP /v1/call dispatch", () => {
   it("adds the eight ACT-001 methods on both dispatch files and keeps them off the outbound bridge", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
     // 58 ACT-001 methods + FAC-001 `get_workspace_attention` (contract A2.11: the only HTTP addition) = 59.
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(60);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(63);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(expect.arrayContaining([...ACTION_HTTP_METHODS]));
     for (const method of ACTION_HTTP_METHODS) {
       expect(isDeliveryEligibleMethod(method)).toBe(false);

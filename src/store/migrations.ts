@@ -26,6 +26,7 @@ import { ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL, V13_SQL } from "./enrollment-issue
 import { SESSION_RUNTIME_TABLE_SQL, SESSION_TASK_COLUMN_SQL } from "./session-runtime-schema.js";
 import { V14_SQL } from "./workspace-create-request-schema.js";
 import { V15_SQL } from "./workspace-create-session-claim-schema.js";
+import { V16_SQL } from "./agent-session-share-schema.js";
 
 export const CURRENT_SCHEMA_VERSION = 11;
 
@@ -245,6 +246,7 @@ export function applyMigrations(
   ensureEnrollmentIssueRequest(db);
   ensureWorkspaceCreateRequest(db);
   ensureWorkspaceCreateSessionClaim(db);
+  ensureAgentSessionShares(db);
 }
 
 /**
@@ -280,6 +282,15 @@ function ensureWorkspaceCreateRequest(db: Database.Database): void {
  */
 function ensureWorkspaceCreateSessionClaim(db: Database.Database): void {
   db.exec(V15_SQL);
+}
+
+/**
+ * Additive local counterpart of migrations/0016_agent_session_shares.sql. Idempotent and
+ * unversioned like 0013-0015: the share record is operational, not published, so the published
+ * schema version (and every publication digest bound to it) stays put.
+ */
+function ensureAgentSessionShares(db: Database.Database): void {
+  db.exec(V16_SQL);
 }
 
 export function schemaVersion(db: Database.Database): number {

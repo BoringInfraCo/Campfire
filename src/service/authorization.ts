@@ -27,6 +27,7 @@ export type Operation =
   | "session:register"
   | "session:report"
   | "session:end"
+  | "session:share"
   | "invite:create"
   | "action:propose"
   | "action:review"

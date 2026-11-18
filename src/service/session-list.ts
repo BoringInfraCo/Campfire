@@ -23,6 +23,8 @@ export interface SessionListFacts {
   humans: ReadonlyMap<string, { displayName: string }>;
   reports: ReadonlyMap<string, AgentSessionRuntimeReport>;
   contributions: ReadonlyMap<string, { count: number; newestPosition: number | null }>;
+  /** Sessions whose owner currently offers a watch view. */
+  shared?: ReadonlySet<string>;
   cursor?: string;
   limit?: number;
 }
@@ -72,6 +74,7 @@ export function projectAgentSessionPage(facts: SessionListFacts): AgentSessionLi
       ...(report?.expiresAt === undefined ? {} : { expiresAt: report.expiresAt }),
       ...(report?.exitCode === undefined ? {} : { exitCode: report.exitCode }),
       ...(report?.failureKind === undefined ? {} : { failureKind: report.failureKind }),
+      shared: facts.shared?.has(session.id) ?? false,
       sharedContributionCount: contributions?.count ?? 0,
       ...(contributions?.newestPosition == null ? {} : { newestContributionPosition: contributions.newestPosition }),
     };

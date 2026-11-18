@@ -7,6 +7,7 @@
  */
 import type { AttentionSnapshot, AttentionSnapshotRequest } from "../domain/attention.js";
 import type { AgentSessionRuntimeReport } from "../domain/session-runtime.js";
+import type { AgentSessionShare } from "../domain/session-watch.js";
 import type {
   ActionProposal,
   ActionReceipt,
@@ -219,6 +220,14 @@ export interface CampfireStore {
   upsertAgentSessionRuntime(report: AgentSessionRuntimeReport): void;
   getAgentSessionRuntime(sessionId: string): AgentSessionRuntimeReport | undefined;
   countSessionContributions(workspaceId: string, sessionId: string): { count: number; newestPosition: number | null };
+  /** Contributions attributed to a session, oldest first, strictly after `afterPosition`. */
+  listSessionContributions(workspaceId: string, sessionId: string, afterPosition: number, limit: number): Contribution[];
+  getAgentSessionShare(sessionId: string): AgentSessionShare | undefined;
+  /** Idempotent: an active share is left as is; a revoked one is re-shared with a fresh sharedAt. */
+  shareAgentSession(share: { sessionId: string; workspaceId: string; sharedBy: string; sharedAt: string }): void;
+  /** Idempotent: only an active share is revoked. */
+  revokeAgentSessionShare(sessionId: string, revokedAt: string): void;
+  listActiveAgentSessionShareIds(workspaceId: string): string[];
 
   // --- workspaces ---
   createWorkspace(workspace: Workspace): void;

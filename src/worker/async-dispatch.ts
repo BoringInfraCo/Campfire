@@ -48,6 +48,9 @@ export const CAMPFIRE_HTTP_METHODS = [
   "register_agent_session",
   "report_agent_session_runtime",
   "list_agent_sessions",
+  "share_agent_session",
+  "unshare_agent_session",
+  "get_agent_session_watch",
   "create_goal",
   "update_goal",
   "add_finding",
@@ -656,6 +659,27 @@ export async function dispatchCampfireMethodAsync(
       const cursor = passthroughCursor(params);
       if (cursor !== undefined) input.cursor = cursor;
       return await service.listAgentSessions(ctx, input);
+    }
+    case "share_agent_session":
+      return await service.shareAgentSession(ctx, {
+        workspaceId: str(params, "workspaceId"),
+        sessionId: str(params, "sessionId"),
+      });
+    case "unshare_agent_session":
+      return await service.unshareAgentSession(ctx, {
+        workspaceId: str(params, "workspaceId"),
+        sessionId: str(params, "sessionId"),
+      });
+    case "get_agent_session_watch": {
+      const input: { workspaceId: string; sessionId: string; after?: number; limit?: number } = {
+        workspaceId: str(params, "workspaceId"),
+        sessionId: str(params, "sessionId"),
+      };
+      const after = optionalNum(params, "after");
+      if (after !== undefined) input.after = after;
+      const limit = passthroughLimit(params);
+      if (limit !== undefined) input.limit = limit;
+      return await service.getAgentSessionWatch(ctx, input);
     }
     case "create_goal":
       return await service.createGoal(ctx, {

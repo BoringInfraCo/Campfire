@@ -71,6 +71,10 @@ const SES_HTTP_ADDITIONS = [
   "report_agent_session_runtime",
   "list_agent_sessions",
   "list_enrollment_invitations",
+  // SES-001 A2 (Cycle 2): owner-shared session watch.
+  "share_agent_session",
+  "unshare_agent_session",
+  "get_agent_session_watch",
 ] as const;
 
 const MEM_HTTP_ADDITIONS = ["get_memory_health"] as const;
@@ -165,7 +169,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     expect(frozen.count).toBe(12);
     expect(ANSWER_KEY.baseline.viewerReads).toBe(12);
     expect([...VIEWER_READ_METHODS].sort()).toEqual(
-      [...frozen.methods, "list_agent_sessions", "get_workspace_attention", "get_action_proposal"].sort(),
+      [...frozen.methods, "list_agent_sessions", "get_agent_session_watch", "get_workspace_attention", "get_action_proposal"].sort(),
     );
     for (const method of EXPECTED_HTTP_ADDITIONS) {
       if (method === "get_action_proposal") continue;
@@ -234,7 +238,7 @@ describe("ACT-001 D1 baseline preservation", () => {
     // The Step 0 answer key stays pinned to the released v1.25.0 baseline;
     // release preparation moves the package to the separately decided target.
     expect(ANSWER_KEY.baseline.package).toBe("1.25.0");
-    expect(pkg.version).toBe("1.34.0");
+    expect(pkg.version).toBe("1.35.0");
     const orientation = baselineJson<{ topKeys: string[] }>("orientation-projection.json");
     expect(orientation.topKeys).toHaveLength(26);
     expect(ANSWER_KEY.baseline.orientationTopKeys).toBe(26);

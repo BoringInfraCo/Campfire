@@ -111,13 +111,15 @@ simple = { limit = 30, period = 60 }
 # guard is present, off otherwise) by leaving this unset.
 [vars]
 TELEMETRY_GATE_MODE = "enforce"
-# SHR-001 private alpha. The publication enrollment/import routes are closed
-# unless this is exactly "1". Leave it "0" until the deployment has migration
-# 0010, the abuse/cost review, and a deliberate operator decision.
-CAMPFIRE_PUBLICATION_ALPHA = "0"
-# Published alpha teams start with expensive writes paused until the operator
-# explicitly enables them. Existing teams are unaffected.
-CAMPFIRE_ALPHA_EXPENSIVE_WRITES = "0"
+# SHR-001 private alpha switches are intentionally NOT set here. Production
+# holds CAMPFIRE_PUBLICATION_ALPHA="1" and CAMPFIRE_ALPHA_EXPENSIVE_WRITES="1"
+# as dashboard-managed vars, and `wrangler deploy --keep-vars` only preserves
+# vars that are absent from this file. Setting either here (even to "0")
+# overrides production on the next deploy and silently pauses publication,
+# invitations and writes. Without them the code defaults apply: publication
+# routes closed unless exactly "1", expensive writes paused unless "1".
+# CAMPFIRE_PUBLICATION_ALPHA = "1"       # enables publication enrollment/import
+# CAMPFIRE_ALPHA_EXPENSIVE_WRITES = "1"  # enables writes for published alpha teams
 # Optional per-source enrollment budget per rolling 24 hours. Default 5.
 # CAMPFIRE_PUBLICATION_ENROLLMENTS_PER_DAY = "5"
 #

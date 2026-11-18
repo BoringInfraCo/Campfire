@@ -845,6 +845,7 @@ describe("ATT-001 D6 — boundedness and compatibility", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_agent_session_watch",
       "get_workspace_attention",
       "get_action_proposal",
     ]);

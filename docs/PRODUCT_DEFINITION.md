@@ -547,6 +547,8 @@ On November 5, 2026 the founder directed one narrow exception. It does not rewri
 
 The workspace remains canonical. A status report is an expiring operational observation, not a Task, Finding, Decision, Contribution, approval, authorization grant, or proof of successful work. Heartbeats do not create Contributions. Terminal bytes, argv, environment, PID, local path, prompt, and transcript never enter shared reads.
 
+**Amendment A2 (2026-11-18, draft).** An owner may explicitly share one session so workspace participants can watch its live status and recorded work in Desktop. Terminal bytes, prompts, transcripts and any input or control still never enter shared reads, and this adds no SharedSession object beside the workspace. See `docs/Campfire-v1.29-SES-001-Team-Agent-Sessions.md` section 20.
+
 This is a bounded, user-initiated local session host. The person starts a process they already own, on their own machine, against one task. Campfire may attach that process's `AgentSession` and publish whether the report is still fresh. Campfire does not decide how the agent reasons, plan work on its behalf, run it while the person is absent, or become a generic agent framework, orchestration engine, swarm, proprietary harness, or model provider. Managed or hosted execution stays outside this exception. The contract is `docs/Campfire-v1.29-SES-001-Team-Agent-Sessions.md`. CLI candidate v1.29.0 ships the flag-gated Codex external path. The Mac app, Claude Code, OpenCode, a real harness trace, and the two-Mac proof are not part of that tag.
 
 ---

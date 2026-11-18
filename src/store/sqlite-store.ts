@@ -8,6 +8,7 @@ import {
 import Database from "better-sqlite3";
 import { normalizeDeliveryLimit } from "../bridge/retry.js";
 import { Conflict } from "../domain/errors.js";
+import { mapShare, type AgentSessionShareRow } from "./agent-session-share-schema.js";
 import type { AgentSessionRuntimeReport, SessionFailureKind, SessionRuntimeState } from "../domain/session-runtime.js";
 import { applyMigrations } from "./migrations.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
@@ -925,6 +926,46 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         )
         .get(workspaceId, sessionId) as { count: number; newest: number | null };
       return { count: row.count, newestPosition: row.newest };
+    },
+
+    listSessionContributions(workspaceId, sessionId, afterPosition, limit) {
+      const rows = db
+        .prepare(
+          "SELECT * FROM contributions WHERE workspace_id = ? AND agent_session_id = ? AND append_position > ? ORDER BY append_position LIMIT ?",
+        )
+        .all(workspaceId, sessionId, afterPosition, limit) as ContributionRow[];
+      return rows.map(mapContribution);
+    },
+
+    getAgentSessionShare(sessionId) {
+      const row = db.prepare("SELECT * FROM agent_session_shares WHERE session_id = ?").get(sessionId) as
+        | AgentSessionShareRow
+        | undefined;
+      return row ? mapShare(row) : undefined;
+    },
+
+    shareAgentSession(share) {
+      db.prepare(
+        `INSERT INTO agent_session_shares (session_id, workspace_id, shared_by, shared_at, revoked_at)
+         VALUES (?, ?, ?, ?, NULL)
+         ON CONFLICT(session_id) DO UPDATE SET
+           shared_by = excluded.shared_by, shared_at = excluded.shared_at, revoked_at = NULL
+         WHERE agent_session_shares.revoked_at IS NOT NULL`,
+      ).run(share.sessionId, share.workspaceId, share.sharedBy, share.sharedAt);
+    },
+
+    revokeAgentSessionShare(sessionId, revokedAt) {
+      db.prepare("UPDATE agent_session_shares SET revoked_at = ? WHERE session_id = ? AND revoked_at IS NULL").run(
+        revokedAt,
+        sessionId,
+      );
+    },
+
+    listActiveAgentSessionShareIds(workspaceId) {
+      const rows = db
+        .prepare("SELECT session_id FROM agent_session_shares WHERE workspace_id = ? AND revoked_at IS NULL")
+        .all(workspaceId) as Array<{ session_id: string }>;
+      return rows.map((row) => row.session_id);
     },
 
     // --- workspaces ---

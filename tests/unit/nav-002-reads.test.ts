@@ -100,7 +100,7 @@ describe("NAV-002 bounded reads", () => {
   it("keeps HTTP and CLI catalogs unchanged while the Viewer allowlist adds the seven NAV-003 reads", () => {
     expect(ASYNC_HTTP_METHODS).toEqual([...CAMPFIRE_HTTP_METHODS]);
     // FAC-001 (A2.11) adds exactly one HTTP method, `get_workspace_attention`.
-    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(60);
+    expect(CAMPFIRE_HTTP_METHODS).toHaveLength(63);
     expect(CAMPFIRE_HTTP_METHODS).toEqual(
       expect.arrayContaining(["list_workspace_participants", "get_record_history"]),
     );
@@ -118,6 +118,7 @@ describe("NAV-002 bounded reads", () => {
       "get_artifact",
       "get_record_history",
       "list_agent_sessions",
+      "get_agent_session_watch",
       "get_workspace_attention",
       "get_action_proposal",
     ]);

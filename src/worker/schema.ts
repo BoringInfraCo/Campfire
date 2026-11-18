@@ -26,6 +26,7 @@ export { V12_SQL } from "../store/alpha-usage-schema.js";
 export { V13_SQL, ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL } from "../store/enrollment-issue-request-schema.js";
 export { V14_SQL } from "../store/workspace-create-request-schema.js";
 export { V15_SQL } from "../store/workspace-create-session-claim-schema.js";
+export { V16_SQL } from "../store/agent-session-share-schema.js";
 
 /** v2 delta: actor tokens + workspace invites (mirrors migrations.ts v2). */
 export const V2_SQL = `

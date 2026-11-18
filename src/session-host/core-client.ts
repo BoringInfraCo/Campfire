@@ -12,6 +12,7 @@ import {
   RUNTIME_REPORT_MISSING_MESSAGE,
   type AgentSessionListInput,
   type AgentSessionListPage,
+  type AgentSessionShareReceipt,
   type CoreClient,
   type ListedAgentSession,
   type RegisterAgentSessionInput,
@@ -26,6 +27,8 @@ export const HTTP_METHODS = {
   report: "report_agent_session_runtime",
   end: "end_agent_session",
   list: "list_agent_sessions",
+  share: "share_agent_session",
+  unshare: "unshare_agent_session",
 } as const;
 
 type ServiceMethod = (...args: unknown[]) => unknown;
@@ -88,8 +91,10 @@ export function createServiceCoreClient(service: object, binding: ServiceCoreBin
   const register = requireMethod(service, "registerAgentSession");
   const end = requireMethod(service, "endAgentSession");
   const list = requireMethod(service, "listAgentSessions");
+  const share = method(service, "shareAgentSession");
+  const unshare = method(service, "unshareAgentSession");
   const secrets = binding.secrets ?? [];
-  return {
+  const client: CoreClient = {
     async registerAgentSession(agentCtx, input) {
       const ctx = agentCtx.actor.actorId.length > 0 ? agentCtx : binding.agent;
       return (await callMethod(register, [ctx, input], secrets)) as RegisteredAgentSession;
@@ -106,6 +111,19 @@ export function createServiceCoreClient(service: object, binding: ServiceCoreBin
       return (await callMethod(list, [ctx, input], secrets)) as AgentSessionListPage;
     },
   };
+  if (share !== undefined) {
+    client.shareAgentSession = async (readerCtx, input) => {
+      const ctx = readerCtx.actor.actorId.length > 0 ? readerCtx : binding.reader;
+      return (await callMethod(share, [ctx, input], secrets)) as AgentSessionShareReceipt;
+    };
+  }
+  if (unshare !== undefined) {
+    client.unshareAgentSession = async (readerCtx, input) => {
+      const ctx = readerCtx.actor.actorId.length > 0 ? readerCtx : binding.reader;
+      return (await callMethod(unshare, [ctx, input], secrets)) as AgentSessionShareReceipt;
+    };
+  }
+  return client;
 }
 
 export interface HttpCoreOptions {
@@ -142,6 +160,12 @@ export function createHttpCoreClient(options: HttpCoreOptions): CoreClient {
         workspaceId: input.workspaceId,
         ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
       });
+    },
+    shareAgentSession(_readerCtx, input) {
+      return invoke(options.humanToken, HTTP_METHODS.share, { workspaceId: input.workspaceId, sessionId: input.sessionId });
+    },
+    unshareAgentSession(_readerCtx, input) {
+      return invoke(options.humanToken, HTTP_METHODS.unshare, { workspaceId: input.workspaceId, sessionId: input.sessionId });
     },
   };
 }

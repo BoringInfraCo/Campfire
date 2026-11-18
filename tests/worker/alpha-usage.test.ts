@@ -92,4 +92,11 @@ describe("alpha usage limit message", () => {
     expect(alphaUsageCategory("report_agent_session_runtime")).toBe("read");
     expect(alphaUsageCategory("list_agent_sessions")).toBe("read");
   });
+
+  it("classifies the SES-001 A2 watch as a content read, share as a write, and unshare as an uncounted safety write", () => {
+    expect(alphaUsageCategory("get_agent_session_watch")).toBe("read");
+    expect(alphaUsageCategory("share_agent_session")).toBe("write");
+    expect(alphaUsageCategory("unshare_agent_session")).toBeUndefined();
+    expect(alphaUsageCategory("end_agent_session")).toBeUndefined();
+  });
 });

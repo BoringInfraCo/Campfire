@@ -19,6 +19,8 @@ import { MEMORY_HEALTH_REASONS, validateMemoryHealthInput } from "../domain/memo
 import type { ActorContext, Authorizer } from "./authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "./session-list.js";
+import { projectAgentSessionWatch } from "./session-watch.js";
+import { clampWatchLimit, isShareActive, parseWatchAfter } from "../domain/session-watch.js";
 import { ENROLLMENT_HARNESSES, ENROLLMENT_INVITATION_TTL_MS, MAX_ACTIVE_ENROLLMENT_INVITATIONS, normalizeListEnrollmentInvitationsInput, type EnrollmentInvitationList, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationLifecycleStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentDeclineReceipt, type EnrollmentInvitation, type EnrollmentInvitationPreview, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import { createSimpleAuthorizer } from "./simple-authorizer.js";
 import { assembleWorkspaceContext } from "./context-assembly.js";
@@ -524,6 +526,19 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
     if (ctx.actor.actorType === "agent" && ctx.agentSessionId === undefined) {
       throw new Unauthorized(`Agent ${ctx.actor.actorId} must act through a registered agent session`);
     }
+  }
+
+  // session:share is for the owning human only. A session outside the named workspace is "not found".
+  function ownedSessionForShare(ctx: ActorContext, workspaceId: string, sessionId: string): AgentSession {
+    authorizer.assertAllowed(ctx, "session:share", workspaceId);
+    const session = store.getAgentSession(sessionId);
+    if (session === undefined || session.workspaceId !== workspaceId) {
+      throw new SessionNotFound(sessionId);
+    }
+    if (ctx.actor.actorType !== "human" || session.humanId !== ctx.actor.actorId) {
+      throw new Unauthorized(`Actor ${ctx.actor.actorId} may not share session ${sessionId}`);
+    }
+    return session;
   }
 
   function requireAssigneeInWorkspace(workspaceId: string, assignee: ActorRef): void {
@@ -2365,6 +2380,7 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
         humans,
         reports,
         contributions,
+        shared: new Set(store.listActiveAgentSessionShareIds(input.workspaceId)),
         cursor: input.cursor,
         limit: input.limit,
       });
@@ -2383,6 +2399,52 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
       store.transaction(() => {
         store.endAgentSession(sessionId, now);
         record(ctx, session.workspaceId, "update", "agent_session", sessionId, { endedAt: now }, now);
+      });
+    },
+
+    shareAgentSession(ctx, input) {
+      const session = ownedSessionForShare(ctx, input.workspaceId, input.sessionId);
+      const now = clock();
+      store.shareAgentSession({
+        sessionId: session.id,
+        workspaceId: session.workspaceId,
+        sharedBy: ctx.actor.actorId,
+        sharedAt: now,
+      });
+      const share = store.getAgentSessionShare(session.id);
+      return { sessionId: session.id, shared: true, sharedAt: share?.sharedAt ?? now };
+    },
+
+    unshareAgentSession(ctx, input) {
+      const session = ownedSessionForShare(ctx, input.workspaceId, input.sessionId);
+      store.revokeAgentSessionShare(session.id, clock());
+      return { sessionId: session.id, shared: false };
+    },
+
+    getAgentSessionWatch(ctx, input) {
+      authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const after = parseWatchAfter(input.after);
+      const limit = clampWatchLimit(input.limit);
+      const session = store.getAgentSession(input.sessionId);
+      const share = session === undefined ? undefined : store.getAgentSessionShare(session.id);
+      const shared = isShareActive(share);
+      const isOwner = session !== undefined && ctx.actor.actorType === "human" && session.humanId === ctx.actor.actorId;
+      // Same shape for "no such session", "other workspace" and "not shared with you".
+      if (session === undefined || session.workspaceId !== input.workspaceId || (!shared && !isOwner)) {
+        throw new SessionNotFound(input.sessionId);
+      }
+      const now = clock();
+      const task = session.taskId === undefined ? undefined : store.getTask(session.taskId);
+      return projectAgentSessionWatch({
+        now,
+        session,
+        shared,
+        report: store.getAgentSessionRuntime(session.id),
+        taskTitle: task !== undefined && task.workspaceId === session.workspaceId ? task.title : undefined,
+        agentName: store.getAgent(session.agentId)?.name ?? session.agentId,
+        humanName: store.getHuman(session.humanId)?.displayName ?? session.humanId,
+        contributions: store.listSessionContributions(session.workspaceId, session.id, after, limit + 1),
+        limit,
       });
     },
 

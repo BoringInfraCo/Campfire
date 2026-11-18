@@ -6,6 +6,7 @@
  */
 import type { ActorContext } from "./authorization.js";
 import type { AgentSessionRuntimeReport, DerivedSessionRuntimeState } from "../domain/session-runtime.js";
+import type { SessionWatchActivityItem, SessionWatchState } from "../domain/session-watch.js";
 import type {
   ActionProposal,
   ActionProviderRef,
@@ -114,6 +115,53 @@ export interface ListedAgentSession {
   failureKind?: string;
   sharedContributionCount: number;
   newestContributionPosition?: number;
+  /** SES-001 A2: the owner offers a watch view of this session. */
+  shared: boolean;
+}
+
+export interface ShareAgentSessionInput {
+  workspaceId: string;
+  sessionId: string;
+}
+
+export interface AgentSessionShareResult {
+  sessionId: string;
+  shared: true;
+  sharedAt: string;
+}
+
+export interface AgentSessionUnshareResult {
+  sessionId: string;
+  shared: false;
+}
+
+export interface GetAgentSessionWatchInput {
+  workspaceId: string;
+  sessionId: string;
+  /** Exclusive append position; return activity strictly after it. */
+  after?: number;
+  limit?: number;
+}
+
+export interface AgentSessionWatch {
+  serverTime: string;
+  session: {
+    id: string;
+    shared: boolean;
+    human: { id: string; name: string };
+    agent: { id: string; name: string };
+    /** null for a legacy session registered without a task. */
+    task: { id: string; title: string } | null;
+    startedAt: string;
+    endedAt?: string;
+    watchState: SessionWatchState;
+    runtime: { state: DerivedSessionRuntimeState; reportedAt?: string; expiresAt?: string };
+  };
+  activity: {
+    items: SessionWatchActivityItem[];
+    /** Last returned position when more items exist; null when the page is the end. */
+    nextCursor: number | null;
+  };
 }
 
 export interface AgentSessionListPage {
@@ -748,6 +796,9 @@ export interface CampfireService {
   reportAgentSessionRuntime(ctx: ActorContext, input: ReportAgentSessionRuntimeInput): AgentSessionRuntimeReport;
   listAgentSessions(ctx: ActorContext, input: ListAgentSessionsInput): AgentSessionListPage;
   endAgentSession(ctx: ActorContext, sessionId: string): void;
+  shareAgentSession(ctx: ActorContext, input: ShareAgentSessionInput): AgentSessionShareResult;
+  unshareAgentSession(ctx: ActorContext, input: ShareAgentSessionInput): AgentSessionUnshareResult;
+  getAgentSessionWatch(ctx: ActorContext, input: GetAgentSessionWatchInput): AgentSessionWatch;
 
   createGoal(ctx: ActorContext, input: CreateGoalInput): Goal;
   updateGoal(ctx: ActorContext, input: UpdateGoalInput): Goal;

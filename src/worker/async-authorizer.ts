@@ -128,6 +128,11 @@ async function evaluate(
     return;
   }
 
+  if (operation === "session:share" && actor.actorType !== "human") {
+    // A2 section 20.3: sharing is the owning human's decision; an agent cannot make it.
+    throw new Unauthorized("Only the owning human may share or unshare an agent session");
+  }
+
   if (operation === "session:register" || operation === "session:report") {
     if (actor.actorType !== "agent") {
       throw new Unauthorized("Only agent identities may register or report an agent session");

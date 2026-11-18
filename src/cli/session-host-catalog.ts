@@ -11,6 +11,8 @@ export const SESSION_HOST_USAGE = [
   "campfire session run <launch-id>",
   "campfire session stop <launch-id> --output json",
   "campfire session reconcile --output json",
+  "campfire session share <sessionId> [--workspace <id>] --output human|json",
+  "campfire session unshare <sessionId> [--workspace <id>] --output human|json",
   "campfire sessions <workspace> --output human|json",
 ] as const;
 

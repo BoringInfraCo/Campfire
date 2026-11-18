@@ -50,6 +50,7 @@ const READS = [
   "get_artifact",
   "get_record_history",
   "list_agent_sessions",
+  "get_agent_session_watch",
   "get_workspace_attention",
   "get_action_proposal",
 ] as const;
@@ -177,7 +178,7 @@ afterAll(async () => {
 describe("NAV-003 viewer read boundary", () => {
   it("allowlists the NAV-003 reads plus the FAC-001 attention reads", () => {
     expect([...VIEWER_READ_METHODS]).toEqual([...READS]);
-    expect(VIEWER_READ_METHODS).toHaveLength(15);
+    expect(VIEWER_READ_METHODS).toHaveLength(16);
     const handler = readFileSync(new URL("../../src/worker/handler.ts", import.meta.url), "utf8");
     const match = /const VIEWER_READ_METHODS = \[([\s\S]*?)\] as const/.exec(handler);
     expect(match).not.toBeNull();

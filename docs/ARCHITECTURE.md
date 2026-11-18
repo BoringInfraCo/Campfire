@@ -665,6 +665,8 @@ Shepherdr or RUN-001 managed-runtime gate above.
 > share terminal bytes, or treat sessions as a second collaboration collection
 > beside the workspace.
 
+*Amendment A2 (2026-11-18, draft): an owner may explicitly share one session so workspace participants can watch its derived live, disconnected or ended state and its recorded work. This is a read of workspace records plus the lease, not shared terminal bytes or a transcript, and it grants no control. See SES-001 section 20.*
+
 **Local execution ownership.** The workspace remains canonical. The local
 supervisor is an interface/runtime adapter in the installed Campfire CLI, not a
 domain service and not a second process manager inside Desktop. Desktop is a

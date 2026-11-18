@@ -820,6 +820,32 @@ async function finishDeadWrapper(record: LaunchRecord, deps: SessionHostDeps, re
   result.deadWrappers.push(record.launchId);
 }
 
+/** Owner-human share or unshare of one session (SES-001 A2). Core decides authority. */
+export async function setSessionShare(
+  shared: boolean,
+  workspaceId: string,
+  sessionId: string,
+  deps: SessionHostDeps & { core: CoreClient; readerContext?: SessionActorContext },
+) {
+  assertSessionHostEnabled(depsEnv(deps));
+  const input = {
+    workspaceId: assertObjectId(workspaceId, "workspaceId"),
+    sessionId: assertObjectId(sessionId, "sessionId"),
+  };
+  const reader = deps.readerContext ?? { actor: { actorId: "human", actorType: "human" as const } };
+  if (reader.actor.actorType === "agent") {
+    throw new ValidationError("Only the owning human may share or unshare a session.", { field: "sessionId" });
+  }
+  const call = shared ? deps.core.shareAgentSession : deps.core.unshareAgentSession;
+  if (call === undefined) {
+    throw new ValidationError("This Campfire Core does not support session sharing. Upgrade Campfire Core.", {
+      field: "sessionId",
+      nextAction: "upgrade_campfire_core",
+    });
+  }
+  return call.call(deps.core, reader, input);
+}
+
 export async function listSessions(
   workspaceId: string,
   deps: SessionHostDeps & { core: CoreClient; readerContext?: SessionActorContext },

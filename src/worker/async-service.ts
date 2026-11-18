@@ -15,6 +15,8 @@ import { assertAttentionSnapshotFresh, attentionFromSnapshot, prepareAttentionRe
 import type { ActorContext } from "../service/authorization.js";
 import { harnessesMatch, prepareRuntimeReport, type AgentSessionRuntimeReport } from "../domain/session-runtime.js";
 import { projectAgentSessionPage } from "../service/session-list.js";
+import { projectAgentSessionWatch } from "../service/session-watch.js";
+import { clampWatchLimit, isShareActive, parseWatchAfter } from "../domain/session-watch.js";
 import { ENROLLMENT_HARNESSES, ENROLLMENT_INVITATION_TTL_MS, MAX_ACTIVE_ENROLLMENT_INVITATIONS, normalizeListEnrollmentInvitationsInput, type EnrollmentInvitationList, buildEnrollmentPlan, buildEnrollmentPreview, buildOwnedAgentPlan, declineReceipt, invitationPreviewStatus, invitationLifecycleStatus, invitationView, normalizeEnrollOwnedAgentInput, normalizeEnrollmentCapabilityLookup, normalizeInvitationLookup, normalizeIssueEnrollmentInput, normalizeRedeemEnrollmentInput, revocationReceipt, type EnrollmentInvitation, type EnrollmentReceipt, type OwnedAgentEnrollmentRecord, type OwnedAgentReceipt } from "../domain/enrollment.js";
 import type { ListEnrollmentInvitationsInput, EnrollmentDeclineReceipt, EnrollmentInvitationPreview, EnrollmentInvitationView, EnrollmentRevocationReceipt, EnrollOwnedAgentInput, IssueEnrollmentInvitationInput, IssuedEnrollmentInvitation, RedeemEnrollmentInput, RevokeEnrollmentInvitationInput } from "../domain/enrollment.js";
 import { createAsyncAuthorizer, type AsyncAuthorizer } from "./async-authorizer.js";
@@ -99,6 +101,11 @@ import {
   type ReportAgentSessionRuntimeInput,
   type ListAgentSessionsInput,
   type AgentSessionListPage,
+  type ShareAgentSessionInput,
+  type AgentSessionShareResult,
+  type AgentSessionUnshareResult,
+  type GetAgentSessionWatchInput,
+  type AgentSessionWatch,
   type RemoveDecisionBasisInput,
   type RemoveFindingEvidenceInput,
   type ReserveActionInput,
@@ -239,6 +246,9 @@ export interface AsyncCampfireService {
   reportAgentSessionRuntime(ctx: ActorContext, input: ReportAgentSessionRuntimeInput): Promise<AgentSessionRuntimeReport>;
   listAgentSessions(ctx: ActorContext, input: ListAgentSessionsInput): Promise<AgentSessionListPage>;
   endAgentSession(ctx: ActorContext, sessionId: string): Promise<void>;
+  shareAgentSession(ctx: ActorContext, input: ShareAgentSessionInput): Promise<AgentSessionShareResult>;
+  unshareAgentSession(ctx: ActorContext, input: ShareAgentSessionInput): Promise<AgentSessionUnshareResult>;
+  getAgentSessionWatch(ctx: ActorContext, input: GetAgentSessionWatchInput): Promise<AgentSessionWatch>;
   createGoal(ctx: ActorContext, input: CreateGoalInput): Promise<Goal>;
   updateGoal(ctx: ActorContext, input: UpdateGoalInput): Promise<Goal>;
   addFinding(ctx: ActorContext, input: AddFindingInput): Promise<Finding>;
@@ -613,6 +623,19 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
     if (ctx.actor.actorType === "agent" && ctx.agentSessionId === undefined) {
       throw new Unauthorized(`Agent ${ctx.actor.actorId} must act through a registered agent session`);
     }
+  }
+
+  // session:share is for the owning human only. A session outside the named workspace is "not found".
+  async function ownedSessionForShare(ctx: ActorContext, workspaceId: string, sessionId: string): Promise<AgentSession> {
+    await authorizer.assertAllowed(ctx, "session:share", workspaceId);
+    const session = await store.getAgentSession(sessionId);
+    if (session === undefined || session.workspaceId !== workspaceId) {
+      throw new SessionNotFound(sessionId);
+    }
+    if (ctx.actor.actorType !== "human" || session.humanId !== ctx.actor.actorId) {
+      throw new Unauthorized(`Actor ${ctx.actor.actorId} may not share session ${sessionId}`);
+    }
+    return session;
   }
 
   async function requireAssigneeInWorkspace(workspaceId: string, assignee: ActorRef): Promise<void> {
@@ -2456,6 +2479,7 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
         humans,
         reports,
         contributions,
+        shared: new Set(await store.listActiveAgentSessionShareIds(input.workspaceId)),
         cursor: input.cursor,
         limit: input.limit,
       });
@@ -2474,6 +2498,52 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
       await store.transaction(async () => {
         await store.endAgentSession(sessionId, now);
         await record(ctx, session.workspaceId, "update", "agent_session", sessionId, { endedAt: now }, now);
+      });
+    },
+
+    async shareAgentSession(ctx, input) {
+      const session = await ownedSessionForShare(ctx, input.workspaceId, input.sessionId);
+      const now = clock();
+      await store.shareAgentSession({
+        sessionId: session.id,
+        workspaceId: session.workspaceId,
+        sharedBy: ctx.actor.actorId,
+        sharedAt: now,
+      });
+      const share = await store.getAgentSessionShare(session.id);
+      return { sessionId: session.id, shared: true, sharedAt: share?.sharedAt ?? now };
+    },
+
+    async unshareAgentSession(ctx, input) {
+      const session = await ownedSessionForShare(ctx, input.workspaceId, input.sessionId);
+      await store.revokeAgentSessionShare(session.id, clock());
+      return { sessionId: session.id, shared: false };
+    },
+
+    async getAgentSessionWatch(ctx, input) {
+      await authorizer.assertAllowed(ctx, "workspace:read", input.workspaceId);
+      const after = parseWatchAfter(input.after);
+      const limit = clampWatchLimit(input.limit);
+      const session = await store.getAgentSession(input.sessionId);
+      const share = session === undefined ? undefined : await store.getAgentSessionShare(session.id);
+      const shared = isShareActive(share);
+      const isOwner = session !== undefined && ctx.actor.actorType === "human" && session.humanId === ctx.actor.actorId;
+      // Same shape for "no such session", "other workspace" and "not shared with you".
+      if (session === undefined || session.workspaceId !== input.workspaceId || (!shared && !isOwner)) {
+        throw new SessionNotFound(input.sessionId);
+      }
+      const now = clock();
+      const task = session.taskId === undefined ? undefined : await store.getTask(session.taskId);
+      return projectAgentSessionWatch({
+        now,
+        session,
+        shared,
+        report: await store.getAgentSessionRuntime(session.id),
+        taskTitle: task !== undefined && task.workspaceId === session.workspaceId ? task.title : undefined,
+        agentName: (await store.getAgent(session.agentId))?.name ?? session.agentId,
+        humanName: (await store.getHuman(session.humanId))?.displayName ?? session.humanId,
+        contributions: await store.listSessionContributions(session.workspaceId, session.id, after, limit + 1),
+        limit,
       });
     },
 

@@ -25,6 +25,7 @@ const SAFETY_WRITES = new Set([
   "revoke_enrollment_invitation",
   "revoke_token",
   "end_agent_session",
+  "unshare_agent_session",
   "cancel_action",
 ]);
 const CONTENT_READS = new Set([
@@ -36,6 +37,8 @@ const CONTENT_READS = new Set([
   "list_action_proposals", "list_action_receipts",
   // SES-001 observations. A heartbeat is not a canonical workspace write.
   "list_agent_sessions", "report_agent_session_runtime",
+  // SES-001 A2: the owner-shared watch is a content read. share_agent_session stays a default write.
+  "get_agent_session_watch",
 ]);
 
 export function alphaUsageCategory(method: string): AlphaUsageCategory | undefined {

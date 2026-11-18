@@ -107,6 +107,19 @@ export interface ListedAgentSession {
   reportedAt?: string;
   expiresAt?: string;
   exitCode?: number;
+  /** SES-001 A2: the owner offers a watch view of this session. */
+  shared?: boolean;
+}
+
+export interface AgentSessionShareInput {
+  workspaceId: string;
+  sessionId: string;
+}
+
+export interface AgentSessionShareReceipt {
+  sessionId: string;
+  shared: boolean;
+  sharedAt?: string;
 }
 
 export interface AgentSessionListPage {
@@ -215,4 +228,7 @@ export interface CoreClient {
   reportAgentSessionRuntime(agentCtx: SessionActorContext, input: RuntimeReportInput): Promise<RuntimeReport>;
   endAgentSession(agentCtx: SessionActorContext, sessionId: string): Promise<void>;
   listAgentSessions(readerCtx: SessionActorContext, input: AgentSessionListInput): Promise<AgentSessionListPage>;
+  /** Owner-human only (SES-001 A2). Optional so older Core clients keep working. */
+  shareAgentSession?(readerCtx: SessionActorContext, input: AgentSessionShareInput): Promise<AgentSessionShareReceipt>;
+  unshareAgentSession?(readerCtx: SessionActorContext, input: AgentSessionShareInput): Promise<AgentSessionShareReceipt>;
 }
