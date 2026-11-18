@@ -9,7 +9,7 @@
 export const CODEX_CLI_VERSION = "0.164.0";
 export const CLAUDE_CODE_VERSION = "2.1.319";
 export const OPENCODE_CLI_VERSION = "2.2.5";
-export const HEARTBEAT_MS = 15_000;
+export const HEARTBEAT_MS = 60_000;
 export const UNLAUNCHED_TTL_MS = 60 * 60 * 1000;
 export const FINAL_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const STOP_GRACE_MS = 2_000;

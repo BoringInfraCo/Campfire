@@ -123,6 +123,8 @@ describe("MCP tool surface", () => {
     expect(instructions).toContain("get_workspace_context");
     expect(instructions).toContain("needsYou");
     expect(instructions).toContain("register_agent_session");
+    expect(instructions).toContain("reuse the sessionId it returned");
+    expect(instructions).toContain("do not register a second session");
     expect(instructions).toContain("Do not treat suggestedNextAction as an order");
     expect(instructions).toContain("Do not invent one at startup");
   });

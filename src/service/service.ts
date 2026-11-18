@@ -47,6 +47,16 @@ export interface CreateWorkspaceInput {
   teamId: string;
   name: string;
   description?: string;
+  /** Client-stable id. The same actor, request, and body returns the original workspace. */
+  requestId?: string;
+  /** Resume this workspace. It does not grant membership. */
+  workspaceId?: string;
+}
+
+/** Workspace plus the agent retry fields. Those fields are absent for every other caller. */
+export interface CreatedWorkspace extends Workspace {
+  sessionId?: string;
+  resumed?: boolean;
 }
 
 export interface UpdateWorkspaceInput {
@@ -697,7 +707,7 @@ export interface CampfireService {
   redeemEnrollment(secret: string, input: RedeemEnrollmentInput): EnrollmentReceipt;
   enrollOwnedAgent(ctx: ActorContext, input: EnrollOwnedAgentInput): OwnedAgentReceipt;
   checkReadiness(ctx: ActorContext, input: CheckReadinessInput): ReadinessStatus;
-  createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace;
+  createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): CreatedWorkspace;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace;
   listWorkspaces(ctx: ActorContext): WorkspaceSummary[];
   getWorkspace(ctx: ActorContext, workspaceId: string): WorkspaceView;

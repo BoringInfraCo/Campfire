@@ -563,7 +563,15 @@ describe("NAV-003 viewer read boundary", () => {
 
     const afterInitial = calls.length;
     expect(poll).toBeTypeOf("function");
-    await poll!();
+    // The timer tick skips a refresh that would land inside the poll interval
+    // after boot; this test exercises a tick after that interval has elapsed.
+    // pollTick starts refresh() without returning it; let the reads settle.
+    const pollOnce = async () => {
+      vm.runInContext("lastRefreshAt = 0", sandbox);
+      await poll!();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    };
+    await pollOnce();
     expect(methodsOf(calls.slice(afterInitial))).toEqual([
       "list_workspaces",
       "get_workspace_context",
@@ -579,7 +587,7 @@ describe("NAV-003 viewer read boundary", () => {
 
     vm.runInContext("state.view = { goal: { title: 'leftover inspector' }, participants: [] }", sandbox);
     fail = true;
-    await poll!();
+    await pollOnce();
     expect(methodsOf(calls.slice(afterInitial + 4))).toEqual(["list_workspaces"]);
     expect(vm.runInContext("state.context.goal.title", sandbox)).toBe("Keep the count");
     expect(vm.runInContext("state.view.goal.title", sandbox)).toBe("leftover inspector");

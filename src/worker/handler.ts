@@ -55,7 +55,7 @@ import { dispatchCampfireMethod, isCampfireHttpMethod, isDeliveryEligibleMethod 
 import { dispatchCampfireMethodAsync } from "./async-dispatch.js";
 import { createAsyncCampfireService, type AsyncCampfireService } from "./async-service.js";
 import type { AsyncCampfireStore } from "./d1-store.js";
-import { checkAlphaUsage, type AlphaUsageOptions } from "./alpha-usage.js";
+import { alphaUsageLimitMessage, checkAlphaUsage, type AlphaUsageOptions } from "./alpha-usage.js";
 import {
   handlePublicationEnroll,
   handlePublicationImport,
@@ -793,7 +793,9 @@ async function alphaBudgetResponse(
     method,
   );
   if (verdict === "allowed") return undefined;
-  if (verdict === "limited") return fail(429, "RateLimited", "Cloud alpha daily usage limit reached");
+  if (verdict === "limited") {
+    return fail(429, "RateLimited", alphaUsageLimitMessage(method, (options.alphaUsage?.now ?? nowIso)()));
+  }
   if (verdict === "stopped") return fail(503, "ServiceUnavailable", "Cloud alpha writes are temporarily paused");
   return fail(503, "ServiceUnavailable", "Cloud alpha usage control is temporarily unavailable");
 }
@@ -1166,7 +1168,7 @@ async function handleWorkerGithubIngress(
       const status = verdict === "limited" ? 429 : 503;
       const error = verdict === "limited" ? "RateLimited" : "ServiceUnavailable";
       const message = verdict === "limited"
-        ? "Cloud alpha daily usage limit reached"
+        ? alphaUsageLimitMessage("github_ingress", (options.alphaUsage?.now ?? nowIso)())
         : verdict === "stopped"
           ? "Cloud alpha writes are temporarily paused"
           : "Cloud alpha usage control is temporarily unavailable";

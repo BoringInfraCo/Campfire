@@ -12,6 +12,7 @@ import type { ActorContext } from "../service/authorization.js";
 import type { CampfireService, ListWorkspaceObjectsInput } from "../service/service.js";
 
 import { normalizeIssueEnrollmentInput, normalizeListEnrollmentInvitationsInput, normalizeInvitationLookup, normalizeEnrollOwnedAgentInput } from "../domain/enrollment.js";
+import { readOptionalIdentifier } from "../service/workspace-create.js";
 
 export const CAMPFIRE_HTTP_METHODS = [
   "preflight",
@@ -476,12 +477,17 @@ export function dispatchCampfireMethod(
       return { actor: ctx.actor, sessionId: ctx.agentSessionId };
     case "list_workspaces":
       return service.listWorkspaces(ctx);
-    case "create_workspace":
+    case "create_workspace": {
+      const requestId = readOptionalIdentifier(params.requestId, "requestId");
+      const workspaceId = readOptionalIdentifier(params.workspaceId, "workspaceId");
       return service.createWorkspace(ctx, {
         teamId: str(params, "teamId"),
         name: str(params, "name"),
         description: optionalStr(params, "description"),
+        ...(requestId === undefined ? {} : { requestId }),
+        ...(workspaceId === undefined ? {} : { workspaceId }),
       });
+    }
     case "update_workspace":
       return service.updateWorkspace(ctx, {
         workspaceId: str(params, "workspaceId"),

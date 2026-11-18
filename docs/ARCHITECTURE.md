@@ -690,8 +690,9 @@ per session, not a Task, Finding, Decision, Artifact, or Contribution. Its
 `origin` is `local_supervisor`. `sequence` increases monotonically per
 session; a lower or equal sequence is idempotent or rejected and never rolls
 status backward. `reported_at` and `expires_at` are server time. Client clocks
-are not trusted. The heartbeat target is 15 seconds. The active lease is 45
-seconds. Core accepts at most one active report per session per 5 seconds.
+are not trusted. The heartbeat target is 60 seconds. The active lease is 180
+seconds (amended 2026-11-17 from 15 s / 45 s to stay within the hosted alpha
+daily read budget; a stopped host can take up to 180 s to show as disconnected). Core accepts at most one active report per session per 5 seconds.
 `running` is shown only while the lease is current and the session has not
 ended. An expired non-final state (`starting`, `running`, or `stopping`) maps
 to `unknown`, never to `running`, `idle`, `blocked`, or `needs input`.

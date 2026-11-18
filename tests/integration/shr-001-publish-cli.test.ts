@@ -180,8 +180,12 @@ describe("SHR-001 CLI", () => {
     const code = await runCliEntry(["invite-teammate", SHR.workspaceId, "--out", join(root, "invite.json"), "--json"]);
     expect(code).toBe(1);
     const text = error.mock.calls.map((call) => call.join(" ")).join("\n");
-    expect(text).toContain("publish_workspace");
-    expect(text).toContain("Publish it first");
+    expect(text).toContain("confirm_host_workspace");
+    expect(text).toContain("structured records");
+    expect(text).toContain("not move private chat transcripts");
+    expect(text).toContain("recoverable backup");
+    expect(text).toContain("freeze local writes");
+    expect(text).not.toContain(SHR.humanToken);
     error.mockRestore();
   });
 });

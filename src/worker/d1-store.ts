@@ -43,6 +43,8 @@ import type {
   DecisionPatch,
   GoalPatch,
   TaskPatch,
+  WorkspaceCreateRequest,
+  WorkspaceCreateSessionClaim,
   WorkspacePatch,
 } from "../store/store.js";
 import type {
@@ -55,6 +57,8 @@ import { Conflict } from "../domain/errors.js";
 import type { D1Database, D1PreparedStatement } from "./d1-types.js";
 import { CAMPFIRE_D1_SCHEMA_SQL } from "./schema.js";
 import { ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL, V13_SQL } from "../store/enrollment-issue-request-schema.js";
+import { V14_SQL } from "../store/workspace-create-request-schema.js";
+import { V15_SQL } from "../store/workspace-create-session-claim-schema.js";
 import { issueEnrollmentStatements, revokeEnrollmentStatements, declineEnrollmentStatements, provisionEnrollmentStatements, provisionOwnedAgentStatements,
   LIST_ACTIVE_ENROLLMENT_INVITATIONS_SQL, ENROLLMENT_BY_ISSUE_REQUEST_SQL, isIssueRequestConflict, mapEnrollmentInvitation, mapOwnedAgentEnrollment, type EnrollmentStatement, type EnrollmentInvitationRow, type OwnedAgentEnrollmentRow } from "../store/enrollment-sql.js";
 import {
@@ -274,6 +278,22 @@ interface AgentSessionRuntimeRow {
   expires_at: string | null;
   exit_code: number | null;
   failure_kind: string | null;
+}
+
+interface WorkspaceCreateRequestRow {
+  actor_id: string;
+  actor_type: string;
+  request_id: string;
+  body_digest: string;
+  workspace_id: string;
+  created_at: string;
+}
+
+interface WorkspaceCreateSessionClaimRow {
+  agent_id: string;
+  workspace_id: string;
+  session_id: string;
+  created_at: string;
 }
 
 interface WorkspaceRow {
@@ -528,6 +548,25 @@ function mapRuntime(row: AgentSessionRuntimeRow): AgentSessionRuntimeReport {
     expiresAt: row.expires_at ?? undefined,
     exitCode: row.exit_code ?? undefined,
     failureKind: (row.failure_kind ?? undefined) as SessionFailureKind | undefined,
+  };
+}
+
+function mapWorkspaceCreateRequest(row: WorkspaceCreateRequestRow): WorkspaceCreateRequest {
+  return {
+    actor: { actorId: row.actor_id, actorType: row.actor_type as ActorType },
+    requestId: row.request_id,
+    bodyDigest: row.body_digest,
+    workspaceId: row.workspace_id,
+    createdAt: row.created_at,
+  };
+}
+
+function mapWorkspaceCreateSessionClaim(row: WorkspaceCreateSessionClaimRow): WorkspaceCreateSessionClaim {
+  return {
+    agentId: row.agent_id,
+    workspaceId: row.workspace_id,
+    sessionId: row.session_id,
+    createdAt: row.created_at,
   };
 }
 
@@ -792,7 +831,7 @@ export async function migrateD1(db: D1Database): Promise<void> {
   // appended after the CREATE TABLE; on an existing one it is added only when the column is missing.
   const present = await db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('enrollment_invitations') WHERE name = 'issue_request_id'").first<{ n: number }>();
   const alter = (present?.n ?? 0) === 0 ? `${ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL};\n` : "";
-  await db.exec(`${CAMPFIRE_D1_SCHEMA_SQL}${alter}${V13_SQL};\n`);
+  await db.exec(`${CAMPFIRE_D1_SCHEMA_SQL}${alter}${V13_SQL};\n${V14_SQL};\n${V15_SQL};\n`);
 }
 
 export function createD1Store(db: D1Database): AsyncCampfireStore {
@@ -1043,6 +1082,39 @@ export function createD1Store(db: D1Database): AsyncCampfireStore {
         workspace.id, workspace.teamId, workspace.name, workspace.description ?? null,
         workspace.status, workspace.createdBy.actorId, workspace.createdBy.actorType,
         workspace.createdAt, workspace.updatedAt);
+    },
+
+    async getWorkspaceCreateRequest(actor, requestId) {
+      const row = await first<WorkspaceCreateRequestRow>(
+        "SELECT * FROM workspace_create_requests WHERE actor_id = ? AND actor_type = ? AND request_id = ?",
+        actor.actorId, actor.actorType, requestId);
+      return row === undefined ? undefined : mapWorkspaceCreateRequest(row);
+    },
+
+    async insertWorkspaceCreateRequest(request) {
+      await run(
+        "INSERT INTO workspace_create_requests (actor_id, actor_type, request_id, body_digest, workspace_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        request.actor.actorId, request.actor.actorType, request.requestId, request.bodyDigest,
+        request.workspaceId, request.createdAt);
+    },
+
+    async getWorkspaceCreateSessionClaim(agentId, workspaceId) {
+      const row = await first<WorkspaceCreateSessionClaimRow>(
+        "SELECT * FROM workspace_create_session_claims WHERE agent_id = ? AND workspace_id = ?",
+        agentId, workspaceId);
+      return row === undefined ? undefined : mapWorkspaceCreateSessionClaim(row);
+    },
+
+    async insertWorkspaceCreateSessionClaim(claim) {
+      await run(
+        "INSERT INTO workspace_create_session_claims (agent_id, workspace_id, session_id, created_at) VALUES (?, ?, ?, ?)",
+        claim.agentId, claim.workspaceId, claim.sessionId, claim.createdAt);
+    },
+
+    async deleteWorkspaceCreateSessionClaim(agentId, workspaceId, sessionId) {
+      await run(
+        "DELETE FROM workspace_create_session_claims WHERE agent_id = ? AND workspace_id = ? AND session_id = ?",
+        agentId, workspaceId, sessionId);
     },
 
     async getWorkspace(id) {

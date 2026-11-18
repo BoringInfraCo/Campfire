@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sqliteD1 } from "../helpers/sqlite-d1.js";
 import { V12_SQL } from "../../src/store/alpha-usage-schema.js";
-import { alphaUsageCategory, checkAlphaUsage, type AlphaUsageOptions } from "../../src/worker/alpha-usage.js";
+import { alphaUsageCategory, alphaUsageLimitMessage, checkAlphaUsage, type AlphaUsageOptions } from "../../src/worker/alpha-usage.js";
 import type { AsyncCampfireStore } from "../../src/worker/d1-store.js";
 
 const ACTOR = { actorId: "hum_alpha", actorType: "human" as const };
@@ -72,5 +72,24 @@ describe("published alpha usage limits", () => {
     expect(await checkAlphaUsage(options, ACTOR, "create_task")).toBe("limited");
     options.now = () => "2026-10-26T00:00:00.000Z";
     expect(await checkAlphaUsage(options, ACTOR, "create_task")).toBe("allowed");
+  });
+});
+
+describe("alpha usage limit message", () => {
+  it("names the category and the next 00:00 UTC reset", () => {
+    expect(alphaUsageLimitMessage("get_activity", NOW)).toBe(
+      "Cloud alpha daily read usage limit reached; resets at 2026-10-26T00:00:00.000Z (00:00 UTC)",
+    );
+    expect(alphaUsageLimitMessage("create_task", "2026-10-25T23:59:59.999Z")).toContain("daily write usage limit");
+    expect(alphaUsageLimitMessage("create_task", "2026-10-25T23:59:59.999Z")).toContain("2026-10-26T00:00:00.000Z");
+    expect(alphaUsageLimitMessage("issue_enrollment_invitation", "2026-12-31T00:00:00.000Z")).toContain(
+      "daily invitation usage limit reached; resets at 2027-01-01T00:00:00.000Z",
+    );
+    expect(alphaUsageLimitMessage("github_ingress", NOW)).toContain("daily write");
+  });
+
+  it("keeps heartbeat and session listing metered as reads", () => {
+    expect(alphaUsageCategory("report_agent_session_runtime")).toBe("read");
+    expect(alphaUsageCategory("list_agent_sessions")).toBe("read");
   });
 });

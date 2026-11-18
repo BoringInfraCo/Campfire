@@ -84,6 +84,13 @@ export function commandForNextAction(
     case "paste_invitation_link":
       return "campfire join --invitation-link <full-link>";
     case "publish_workspace":
+    case "confirm_host_workspace":
+      return "campfire invite-teammate <workspaceId> --confirm-host";
+    case "hosted_admission_required":
+    case "use_admitted_team":
+      return "campfire create-workspace --hosted --name <name>";
+    case "retry_hosted_create":
+      return `campfire create-workspace --hosted --resume ${workspace}`;
     case "pass_publish_url":
     case "begin_publication":
     case "retry_publish":
@@ -238,7 +245,8 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
   }
 
   if (nextAction !== undefined) {
-    const command = commandForNextAction(nextAction);
+    const workspaceId = typeof details.workspaceId === "string" ? details.workspaceId : undefined;
+    const command = commandForNextAction(nextAction, workspaceId === undefined ? undefined : { workspaceId });
     if (command !== undefined) return [{command, when:"Resume using the original identity and scope"}];
   }
 
@@ -272,7 +280,8 @@ export function nextStepsForError(error: unknown, command?: string): CliNextStep
   }
 
   if (nextAction !== undefined) {
-    const mapped = commandForNextAction(nextAction);
+    const workspaceId = typeof details.workspaceId === "string" ? details.workspaceId : undefined;
+    const mapped = commandForNextAction(nextAction, workspaceId === undefined ? undefined : { workspaceId });
     if (mapped !== undefined) {
       return [{ command: mapped, when: nextAction }];
     }

@@ -27,7 +27,8 @@ export interface PersistPublishedProfileInput {
   workspaceId: string;
   workspaceName: string;
   goalTitle?: string;
-  sourceDatabasePath: string;
+  /** Local publication source. Hosted create omits it so a workspace id is not a database path. */
+  sourceDatabasePath?: string;
   humanToken: string;
   agents: Array<ProfileAgent & { token: string }>;
   allowLoopbackHttp?: boolean;
@@ -89,7 +90,8 @@ export function persistPublishedProfile(input: PersistPublishedProfileInput, env
        (profile.workspaceId !== undefined && profile.workspaceId !== input.workspaceId))) {
     conflict("The local profile changed after publication started; refusing to overwrite a different workspace");
   }
-  if (profile !== undefined && profile.mode === "local" && profile.databasePath !== input.sourceDatabasePath) {
+  if (profile !== undefined && profile.mode === "local" &&
+      (input.sourceDatabasePath === undefined || profile.databasePath !== input.sourceDatabasePath)) {
     conflict("The local database path changed after publication started");
   }
   if (profile !== undefined && profile.mode === "remote" &&

@@ -74,6 +74,7 @@ import {
   type CreateGoalInput,
   type CreateHumanInput,
   type CreateTaskInput,
+  type CreatedWorkspace,
   type CreateWorkspaceInput,
   type CurrentWork,
   type GetActionProposalInput,
@@ -138,6 +139,15 @@ import type {
   WorkspaceParticipant,
 } from "../domain/types.js";
 import { generateRawTokenWeb as generateRawToken, hashTokenWeb as hashTokenAsync } from "./crypto.js";
+import {
+  readOptionalIdentifier,
+  workspaceCreateBody,
+  workspaceCreateDisagreement,
+  workspaceCreateRequestConflict,
+} from "../service/workspace-create.js";
+import { isWorkspaceCreateRequestConflict } from "../store/workspace-create-request-schema.js";
+import { isWorkspaceCreateSessionClaimConflict } from "../store/workspace-create-session-claim-schema.js";
+import type { WorkspaceCreateRequest } from "../store/store.js";
 import type { ActionReceipt } from "../domain/action-proposal.js";
 import { createId, nowIso } from "../domain/ids.js";
 import type { IdSource } from "../domain/ids.js";
@@ -196,7 +206,7 @@ export interface AsyncCampfireService {
   redeemEnrollment(secret: string, input: RedeemEnrollmentInput): Promise<EnrollmentReceipt>;
   enrollOwnedAgent(ctx: ActorContext, input: EnrollOwnedAgentInput): Promise<OwnedAgentReceipt>;
   checkReadiness(ctx: ActorContext, input: CheckReadinessInput): Promise<ReadinessStatus>;
-  createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<Workspace>;
+  createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<CreatedWorkspace>;
   updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Promise<Workspace>;
   listWorkspaces(ctx: ActorContext): Promise<WorkspaceSummary[]>;
   getWorkspace(ctx: ActorContext, workspaceId: string): Promise<WorkspaceView>;
@@ -258,6 +268,103 @@ export interface AsyncCampfireService {
 function assertNonEmpty(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new ValidationError(`${field} must not be empty`, { field });
+  }
+}
+
+function buildWorkspace(ctx: ActorContext, input: CreateWorkspaceInput, now: string, ids: IdSource): Workspace {
+  return {
+    id: ids("workspace"),
+    teamId: input.teamId,
+    name: input.name,
+    description: input.description,
+    status: "active",
+    createdBy: ctx.actor,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+async function commitWorkspace(
+  store: AsyncCampfireStore,
+  ctx: ActorContext,
+  workspace: Workspace,
+  now: string,
+  humanId: string | undefined,
+  write: (
+    ctx: ActorContext,
+    workspaceId: string,
+    action: ContributionAction,
+    objectType: ContributionObjectType,
+    objectId: string,
+    payload: Record<string, unknown> | undefined,
+    createdAt: string,
+  ) => Promise<unknown>,
+  request?: WorkspaceCreateRequest,
+): Promise<void> {
+  await store.transaction(async () => {
+    await store.createWorkspace(workspace);
+    await store.addParticipant({ workspaceId: workspace.id, actor: ctx.actor, role: "owner", joinedAt: now });
+    await write(ctx, workspace.id, "create", "workspace", workspace.id, { name: workspace.name }, now);
+    await write(ctx, workspace.id, "join", "participant", ctx.actor.actorId, { role: "owner" }, now);
+    // The Viewer is opened as the owning human. An agent-created workspace
+    // is visible to that human without a second invite. This does not give
+    // the agent the human's other workspaces.
+    if (humanId !== undefined) {
+      await store.addParticipant({
+        workspaceId: workspace.id,
+        actor: { actorId: humanId, actorType: "human" },
+        role: "owner",
+        joinedAt: now,
+      });
+      await write(ctx, workspace.id, "join", "participant", humanId, { role: "owner" }, now);
+    }
+    if (request !== undefined) await store.insertWorkspaceCreateRequest(request);
+  });
+}
+
+async function requireReplayWorkspace(
+  store: AsyncCampfireStore,
+  workspaceId: string,
+  actor: ActorRef,
+  humanId: string | undefined,
+): Promise<Workspace> {
+  const workspace = await store.getWorkspace(workspaceId);
+  if (workspace === undefined) throw new WorkspaceNotFound(workspaceId);
+  if (await store.getParticipant(workspaceId, actor) === undefined) {
+    throw new ParticipantRequired(`Actor ${actor.actorId} is not a participant of workspace ${workspaceId}`);
+  }
+  if (workspace.status !== "active") {
+    throw new ValidationError("Workspace is not active", { workspaceId, status: workspace.status });
+  }
+  if (humanId !== undefined && await store.getParticipant(workspaceId, { actorId: humanId, actorType: "human" }) === undefined) {
+    throw new ParticipantRequired(`Owning human ${humanId} is not a participant of workspace ${workspaceId}`);
+  }
+  return workspace;
+}
+
+async function rememberWorkspaceCreateRequest(
+  store: AsyncCampfireStore,
+  actor: ActorRef,
+  requestId: string,
+  digest: string,
+  workspaceId: string,
+  now: string,
+  workspaceDigest: string,
+): Promise<void> {
+  if (digest !== workspaceDigest) throw workspaceCreateDisagreement();
+  const existing = await store.getWorkspaceCreateRequest(actor, requestId);
+  if (existing !== undefined) {
+    if (existing.workspaceId !== workspaceId || existing.bodyDigest !== digest) throw workspaceCreateDisagreement();
+    return;
+  }
+  try {
+    await store.insertWorkspaceCreateRequest({ actor, requestId, bodyDigest: digest, workspaceId, createdAt: now });
+  } catch (error) {
+    if (!isWorkspaceCreateRequestConflict(error)) throw error;
+    const winner = await store.getWorkspaceCreateRequest(actor, requestId);
+    if (winner === undefined || winner.workspaceId !== workspaceId || winner.bodyDigest !== digest) {
+      throw workspaceCreateDisagreement();
+    }
   }
 }
 
@@ -1169,7 +1276,9 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           };
     },
 
-    async createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<Workspace> {
+    async createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Promise<CreatedWorkspace> {
+      const requestId = readOptionalIdentifier(input.requestId, "requestId");
+      const resumeWorkspaceId = readOptionalIdentifier(input.workspaceId, "workspaceId");
       if (await store.getTeam(input.teamId) === undefined) {
         throw new TeamNotFound(input.teamId);
       }
@@ -1184,32 +1293,146 @@ export function createAsyncCampfireService(options: AsyncCampfireServiceOptions)
           `Actor ${ctx.actor.actorId} belongs to team ${acting.teamId}, not ${input.teamId}`,
         );
       }
+      const retryable = requestId !== undefined || resumeWorkspaceId !== undefined;
+      const loadedAgent = ctx.actor.actorType === "agent" ? await store.getAgent(ctx.actor.actorId) : undefined;
+      if (ctx.actor.actorType === "agent" && loadedAgent === undefined) {
+        throw new ActorNotFound(ctx.actor.actorId);
+      }
+      // A retryable agent create is shared work. Refuse before any insert when
+      // the agent has no owning human. A legacy create without these fields
+      // keeps its previous behavior.
+      if (retryable && loadedAgent !== undefined && (loadedAgent.humanId === undefined || loadedAgent.humanId.length === 0)) {
+        throw new ValidationError("Agent has no owning human", { field: "humanId", agentId: loadedAgent.id });
+      }
+      if (retryable && loadedAgent?.humanId !== undefined) {
+        const human = await store.getHuman(loadedAgent.humanId);
+        if (human === undefined) throw new ActorNotFound(loadedAgent.humanId);
+        if (human.teamId !== acting.teamId) {
+          throw new Unauthorized(`Owning human ${human.id} belongs to team ${human.teamId}, not ${acting.teamId}`);
+        }
+      }
+      const owningHumanId = loadedAgent?.humanId !== undefined && loadedAgent.humanId.length > 0
+        ? loadedAgent.humanId
+        : undefined;
+
+      const finish = async (workspace: Workspace, resumed: boolean): Promise<CreatedWorkspace> => {
+        if (ctx.actor.actorType !== "agent" || !retryable || loadedAgent === undefined) return workspace;
+        if (await store.getParticipant(workspace.id, ctx.actor) === undefined) {
+          throw new ParticipantRequired(
+            `Actor ${ctx.actor.actorId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        if (owningHumanId !== undefined && await store.getParticipant(workspace.id, { actorId: owningHumanId, actorType: "human" }) === undefined) {
+          throw new ParticipantRequired(
+            `Owning human ${owningHumanId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        const prior = await store.getWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id);
+        if (prior !== undefined) {
+          const existing = await store.getAgentSession(prior.sessionId);
+          if (existing !== undefined && existing.endedAt === undefined) {
+            return { ...workspace, sessionId: prior.sessionId, resumed };
+          }
+        }
+        try {
+          let sessionId = "";
+          await store.transaction(async () => {
+            sessionId = (await this.registerAgentSession({ actor: ctx.actor }, {
+              agentId: loadedAgent.id,
+              workspaceId: workspace.id,
+              harness: loadedAgent.harness,
+            })).id;
+            if (prior !== undefined) {
+              await store.deleteWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id, prior.sessionId);
+            }
+            await store.insertWorkspaceCreateSessionClaim({
+              agentId: loadedAgent.id,
+              workspaceId: workspace.id,
+              sessionId,
+              createdAt: clock(),
+            });
+          });
+          return { ...workspace, sessionId, resumed };
+        } catch (error) {
+          if (!isWorkspaceCreateSessionClaimConflict(error)) throw error;
+          const winner = await store.getWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id);
+          if (winner === undefined) throw error;
+          const winnerSession = await store.getAgentSession(winner.sessionId);
+          if (winnerSession === undefined) throw new SessionNotFound(winner.sessionId);
+          if (winnerSession.endedAt !== undefined) {
+            throw new Conflict(
+              `Winning claimed session ${winner.sessionId} is already ended`,
+              { sessionId: winner.sessionId, agentId: loadedAgent.id, workspaceId: workspace.id },
+            );
+          }
+          return { ...workspace, sessionId: winner.sessionId, resumed };
+        }
+      };
+
+      if (resumeWorkspaceId !== undefined) {
+        const workspace = await store.getWorkspace(resumeWorkspaceId);
+        if (workspace === undefined) throw new WorkspaceNotFound(resumeWorkspaceId);
+        if (await store.getParticipant(resumeWorkspaceId, ctx.actor) === undefined) {
+          throw new ParticipantRequired(
+            `Actor ${ctx.actor.actorId} is not a participant of workspace ${resumeWorkspaceId}`,
+          );
+        }
+        if (workspace.teamId !== input.teamId) {
+          throw new Unauthorized(
+            `Workspace ${workspace.id} belongs to team ${workspace.teamId}, not ${input.teamId}`,
+          );
+        }
+        if (workspace.status !== "active") {
+          throw new ValidationError("Workspace is not active", { workspaceId: workspace.id, status: workspace.status });
+        }
+        if (owningHumanId !== undefined && await store.getParticipant(workspace.id, { actorId: owningHumanId, actorType: "human" }) === undefined) {
+          throw new ParticipantRequired(
+            `Owning human ${owningHumanId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        if (requestId !== undefined) {
+          const digest = await hashTokenAsync(workspaceCreateBody(input));
+          const recorded = await hashTokenAsync(workspaceCreateBody({
+            teamId: workspace.teamId,
+            name: workspace.name,
+            description: workspace.description,
+          }));
+          await rememberWorkspaceCreateRequest(store, ctx.actor, requestId, digest, workspace.id, clock(), recorded);
+        }
+        return finish(workspace, true);
+      }
+
+      if (requestId !== undefined) {
+        const digest = await hashTokenAsync(workspaceCreateBody(input));
+        const existing = await store.getWorkspaceCreateRequest(ctx.actor, requestId);
+        if (existing !== undefined) {
+          if (existing.bodyDigest !== digest) throw workspaceCreateRequestConflict();
+          const workspace = await requireReplayWorkspace(store, existing.workspaceId, ctx.actor, owningHumanId);
+          return finish(workspace, true);
+        }
+        const now = clock();
+        const created = buildWorkspace(ctx, input, now, idSource);
+        try {
+          await commitWorkspace(store, ctx, created, now, owningHumanId, record, {
+            actor: ctx.actor,
+            requestId,
+            bodyDigest: digest,
+            workspaceId: created.id,
+            createdAt: now,
+          });
+        } catch (error) {
+          if (!isWorkspaceCreateRequestConflict(error)) throw error;
+          const winner = await store.getWorkspaceCreateRequest(ctx.actor, requestId);
+          if (winner === undefined || winner.bodyDigest !== digest) throw workspaceCreateRequestConflict();
+          return finish(await requireReplayWorkspace(store, winner.workspaceId, ctx.actor, owningHumanId), true);
+        }
+        return finish(created, false);
+      }
 
       const now = clock();
-      const workspace: Workspace = {
-        id: idSource("workspace"),
-        teamId: input.teamId,
-        name: input.name,
-        description: input.description,
-        status: "active",
-        createdBy: ctx.actor,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const participant: WorkspaceParticipant = {
-        workspaceId: workspace.id,
-        actor: ctx.actor,
-        role: "owner",
-        joinedAt: now,
-      };
-
-      await store.transaction(async () => {
-        await store.createWorkspace(workspace);
-        await store.addParticipant(participant);
-        await record(ctx, workspace.id, "create", "workspace", workspace.id, { name: workspace.name }, now);
-        await record(ctx, workspace.id, "join", "participant", ctx.actor.actorId, { role: "owner" }, now);
-      });
-      return workspace;
+      const created = buildWorkspace(ctx, input, now, idSource);
+      await commitWorkspace(store, ctx, created, now, owningHumanId, record);
+      return created;
     },
 
     async updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Promise<Workspace> {

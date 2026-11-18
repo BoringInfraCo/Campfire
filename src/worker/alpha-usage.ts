@@ -52,6 +52,25 @@ function dayBucket(at: string): string {
   return `${date.toISOString().slice(0, 10)}T00:00:00.000Z`;
 }
 
+/** Next 00:00 UTC after `at`, when the daily buckets roll over. */
+export function alphaUsageResetAt(at: string): string {
+  const day = new Date(dayBucket(at));
+  day.setUTCDate(day.getUTCDate() + 1);
+  return day.toISOString();
+}
+
+/** Actionable 429 text: names the exhausted category and the UTC reset time. */
+export function alphaUsageLimitMessage(method: string, at: string): string {
+  const category = alphaUsageCategory(method) ?? "write";
+  let reset: string;
+  try {
+    reset = alphaUsageResetAt(at);
+  } catch {
+    return `Cloud alpha daily ${category} usage limit reached`;
+  }
+  return `Cloud alpha daily ${category} usage limit reached; resets at ${reset} (00:00 UTC)`;
+}
+
 async function actorTeam(store: AsyncCampfireStore, actor: ActorRef): Promise<string | undefined> {
   return actor.actorType === "human"
     ? (await store.getHuman(actor.actorId))?.teamId

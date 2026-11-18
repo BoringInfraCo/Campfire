@@ -178,6 +178,23 @@ export interface ActionMutationReceipt {
 
 import type { MemoryHealthSnapshot } from "./memory-health-queries.js";
 
+/** Idempotent create_workspace claim. Digest is not a token. */
+export interface WorkspaceCreateRequest {
+  actor: ActorRef;
+  requestId: string;
+  bodyDigest: string;
+  workspaceId: string;
+  createdAt: string;
+}
+
+/** Session chosen by a retryable create_workspace. Not a token. */
+export interface WorkspaceCreateSessionClaim {
+  agentId: string;
+  workspaceId: string;
+  sessionId: string;
+  createdAt: string;
+}
+
 export interface CampfireStore {
   // --- identity ---
   createOrganization(organization: Organization): void;
@@ -205,6 +222,12 @@ export interface CampfireStore {
 
   // --- workspaces ---
   createWorkspace(workspace: Workspace): void;
+  getWorkspaceCreateRequest(actor: ActorRef, requestId: string): WorkspaceCreateRequest | undefined;
+  insertWorkspaceCreateRequest(request: WorkspaceCreateRequest): void;
+  getWorkspaceCreateSessionClaim(agentId: string, workspaceId: string): WorkspaceCreateSessionClaim | undefined;
+  insertWorkspaceCreateSessionClaim(claim: WorkspaceCreateSessionClaim): void;
+  /** Removes the claim only when it still points at sessionId. */
+  deleteWorkspaceCreateSessionClaim(agentId: string, workspaceId: string, sessionId: string): void;
   getWorkspace(id: string): Workspace | undefined;
   updateWorkspace(id: string, patch: WorkspacePatch): void;
   listWorkspaces(): Workspace[];

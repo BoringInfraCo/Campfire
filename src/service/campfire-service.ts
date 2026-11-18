@@ -73,6 +73,7 @@ import {
   type CreateGoalInput,
   type CreateHumanInput,
   type CreateTaskInput,
+  type CreatedWorkspace,
   type CreateWorkspaceInput,
   type CurrentWork,
   type GetActionProposalInput,
@@ -128,6 +129,15 @@ import type {
   WorkspaceParticipant,
 } from "../domain/types.js";
 import { generateRawToken, hashToken } from "./tokens.js";
+import {
+  readOptionalIdentifier,
+  workspaceCreateBody,
+  workspaceCreateDisagreement,
+  workspaceCreateRequestConflict,
+} from "./workspace-create.js";
+import { isWorkspaceCreateRequestConflict } from "../store/workspace-create-request-schema.js";
+import { isWorkspaceCreateSessionClaimConflict } from "../store/workspace-create-session-claim-schema.js";
+import type { WorkspaceCreateRequest } from "../store/store.js";
 import { createId, nowIso } from "../domain/ids.js";
 import type { IdSource } from "../domain/ids.js";
 import { InvitationAlreadyIssued, InvitationLimitReached,
@@ -173,6 +183,103 @@ export interface CampfireServiceOptions {
 function assertNonEmpty(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new ValidationError(`${field} must not be empty`, { field });
+  }
+}
+
+function buildWorkspace(ctx: ActorContext, input: CreateWorkspaceInput, now: string, ids: IdSource): Workspace {
+  return {
+    id: ids("workspace"),
+    teamId: input.teamId,
+    name: input.name,
+    description: input.description,
+    status: "active",
+    createdBy: ctx.actor,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function commitWorkspace(
+  store: CampfireStore,
+  ctx: ActorContext,
+  workspace: Workspace,
+  now: string,
+  humanId: string | undefined,
+  write: (
+    ctx: ActorContext,
+    workspaceId: string,
+    action: ContributionAction,
+    objectType: ContributionObjectType,
+    objectId: string,
+    payload: Record<string, unknown> | undefined,
+    createdAt: string,
+  ) => void,
+  request?: WorkspaceCreateRequest,
+): void {
+  store.transaction(() => {
+    store.createWorkspace(workspace);
+    store.addParticipant({ workspaceId: workspace.id, actor: ctx.actor, role: "owner", joinedAt: now });
+    write(ctx, workspace.id, "create", "workspace", workspace.id, { name: workspace.name }, now);
+    write(ctx, workspace.id, "join", "participant", ctx.actor.actorId, { role: "owner" }, now);
+    // The Viewer is opened as the owning human. An agent-created workspace
+    // is visible to that human without a second invite. This does not give
+    // the agent the human's other workspaces.
+    if (humanId !== undefined) {
+      store.addParticipant({
+        workspaceId: workspace.id,
+        actor: { actorId: humanId, actorType: "human" },
+        role: "owner",
+        joinedAt: now,
+      });
+      write(ctx, workspace.id, "join", "participant", humanId, { role: "owner" }, now);
+    }
+    if (request !== undefined) store.insertWorkspaceCreateRequest(request);
+  });
+}
+
+function requireReplayWorkspace(
+  store: CampfireStore,
+  workspaceId: string,
+  actor: ActorRef,
+  humanId: string | undefined,
+): Workspace {
+  const workspace = store.getWorkspace(workspaceId);
+  if (workspace === undefined) throw new WorkspaceNotFound(workspaceId);
+  if (store.getParticipant(workspaceId, actor) === undefined) {
+    throw new ParticipantRequired(`Actor ${actor.actorId} is not a participant of workspace ${workspaceId}`);
+  }
+  if (workspace.status !== "active") {
+    throw new ValidationError("Workspace is not active", { workspaceId, status: workspace.status });
+  }
+  if (humanId !== undefined && store.getParticipant(workspaceId, { actorId: humanId, actorType: "human" }) === undefined) {
+    throw new ParticipantRequired(`Owning human ${humanId} is not a participant of workspace ${workspaceId}`);
+  }
+  return workspace;
+}
+
+function rememberWorkspaceCreateRequest(
+  store: CampfireStore,
+  actor: ActorRef,
+  requestId: string,
+  digest: string,
+  workspaceId: string,
+  now: string,
+  workspaceDigest: string,
+): void {
+  if (digest !== workspaceDigest) throw workspaceCreateDisagreement();
+  const existing = store.getWorkspaceCreateRequest(actor, requestId);
+  if (existing !== undefined) {
+    if (existing.workspaceId !== workspaceId || existing.bodyDigest !== digest) throw workspaceCreateDisagreement();
+    return;
+  }
+  try {
+    store.insertWorkspaceCreateRequest({ actor, requestId, bodyDigest: digest, workspaceId, createdAt: now });
+  } catch (error) {
+    if (!isWorkspaceCreateRequestConflict(error)) throw error;
+    const winner = store.getWorkspaceCreateRequest(actor, requestId);
+    if (winner === undefined || winner.workspaceId !== workspaceId || winner.bodyDigest !== digest) {
+      throw workspaceCreateDisagreement();
+    }
   }
 }
 
@@ -1085,7 +1192,9 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           };
     },
 
-    createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): Workspace {
+    createWorkspace(ctx: ActorContext, input: CreateWorkspaceInput): CreatedWorkspace {
+      const requestId = readOptionalIdentifier(input.requestId, "requestId");
+      const resumeWorkspaceId = readOptionalIdentifier(input.workspaceId, "workspaceId");
       if (store.getTeam(input.teamId) === undefined) {
         throw new TeamNotFound(input.teamId);
       }
@@ -1100,47 +1209,146 @@ export function createCampfireService(options: CampfireServiceOptions): Campfire
           `Actor ${ctx.actor.actorId} belongs to team ${acting.teamId}, not ${input.teamId}`,
         );
       }
+      const retryable = requestId !== undefined || resumeWorkspaceId !== undefined;
+      const loadedAgent = ctx.actor.actorType === "agent" ? store.getAgent(ctx.actor.actorId) : undefined;
+      if (ctx.actor.actorType === "agent" && loadedAgent === undefined) {
+        throw new ActorNotFound(ctx.actor.actorId);
+      }
+      // A retryable agent create is shared work. Refuse before any insert when
+      // the agent has no owning human. A legacy create without these fields
+      // keeps its previous behavior.
+      if (retryable && loadedAgent !== undefined && (loadedAgent.humanId === undefined || loadedAgent.humanId.length === 0)) {
+        throw new ValidationError("Agent has no owning human", { field: "humanId", agentId: loadedAgent.id });
+      }
+      if (retryable && loadedAgent?.humanId !== undefined) {
+        const human = store.getHuman(loadedAgent.humanId);
+        if (human === undefined) throw new ActorNotFound(loadedAgent.humanId);
+        if (human.teamId !== acting.teamId) {
+          throw new Unauthorized(`Owning human ${human.id} belongs to team ${human.teamId}, not ${acting.teamId}`);
+        }
+      }
+      const owningHumanId = loadedAgent?.humanId !== undefined && loadedAgent.humanId.length > 0
+        ? loadedAgent.humanId
+        : undefined;
 
-      const now = clock();
-      const workspace: Workspace = {
-        id: idSource("workspace"),
-        teamId: input.teamId,
-        name: input.name,
-        description: input.description,
-        status: "active",
-        createdBy: ctx.actor,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const participant: WorkspaceParticipant = {
-        workspaceId: workspace.id,
-        actor: ctx.actor,
-        role: "owner",
-        joinedAt: now,
-      };
-
-      store.transaction(() => {
-        store.createWorkspace(workspace);
-        store.addParticipant(participant);
-        record(ctx, workspace.id, "create", "workspace", workspace.id, { name: workspace.name }, now);
-        record(ctx, workspace.id, "join", "participant", ctx.actor.actorId, { role: "owner" }, now);
-        // The Viewer is opened as the owning human. An agent-created workspace
-        // is visible to that human without a second invite. This does not give
-        // the agent the human's other workspaces.
-        if (ctx.actor.actorType === "agent") {
-          const agent = store.getAgent(ctx.actor.actorId);
-          if (agent?.humanId !== undefined && agent.humanId.length > 0) {
-            store.addParticipant({
-              workspaceId: workspace.id,
-              actor: { actorId: agent.humanId, actorType: "human" },
-              role: "owner",
-              joinedAt: now,
-            });
-            record(ctx, workspace.id, "join", "participant", agent.humanId, { role: "owner" }, now);
+      const finish = (workspace: Workspace, resumed: boolean): CreatedWorkspace => {
+        if (ctx.actor.actorType !== "agent" || !retryable || loadedAgent === undefined) return workspace;
+        if (store.getParticipant(workspace.id, ctx.actor) === undefined) {
+          throw new ParticipantRequired(
+            `Actor ${ctx.actor.actorId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        if (owningHumanId !== undefined && store.getParticipant(workspace.id, { actorId: owningHumanId, actorType: "human" }) === undefined) {
+          throw new ParticipantRequired(
+            `Owning human ${owningHumanId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        const prior = store.getWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id);
+        if (prior !== undefined) {
+          const existing = store.getAgentSession(prior.sessionId);
+          if (existing !== undefined && existing.endedAt === undefined) {
+            return { ...workspace, sessionId: prior.sessionId, resumed };
           }
         }
-      });
-      return workspace;
+        try {
+          let sessionId = "";
+          store.transaction(() => {
+            sessionId = this.registerAgentSession({ actor: ctx.actor }, {
+              agentId: loadedAgent.id,
+              workspaceId: workspace.id,
+              harness: loadedAgent.harness,
+            }).id;
+            if (prior !== undefined) {
+              store.deleteWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id, prior.sessionId);
+            }
+            store.insertWorkspaceCreateSessionClaim({
+              agentId: loadedAgent.id,
+              workspaceId: workspace.id,
+              sessionId,
+              createdAt: clock(),
+            });
+          });
+          return { ...workspace, sessionId, resumed };
+        } catch (error) {
+          if (!isWorkspaceCreateSessionClaimConflict(error)) throw error;
+          const winner = store.getWorkspaceCreateSessionClaim(loadedAgent.id, workspace.id);
+          if (winner === undefined) throw error;
+          const winnerSession = store.getAgentSession(winner.sessionId);
+          if (winnerSession === undefined) throw new SessionNotFound(winner.sessionId);
+          if (winnerSession.endedAt !== undefined) {
+            throw new Conflict(
+              `Winning claimed session ${winner.sessionId} is already ended`,
+              { sessionId: winner.sessionId, agentId: loadedAgent.id, workspaceId: workspace.id },
+            );
+          }
+          return { ...workspace, sessionId: winner.sessionId, resumed };
+        }
+      };
+
+      if (resumeWorkspaceId !== undefined) {
+        const workspace = store.getWorkspace(resumeWorkspaceId);
+        if (workspace === undefined) throw new WorkspaceNotFound(resumeWorkspaceId);
+        if (store.getParticipant(resumeWorkspaceId, ctx.actor) === undefined) {
+          throw new ParticipantRequired(
+            `Actor ${ctx.actor.actorId} is not a participant of workspace ${resumeWorkspaceId}`,
+          );
+        }
+        if (workspace.teamId !== input.teamId) {
+          throw new Unauthorized(
+            `Workspace ${workspace.id} belongs to team ${workspace.teamId}, not ${input.teamId}`,
+          );
+        }
+        if (workspace.status !== "active") {
+          throw new ValidationError("Workspace is not active", { workspaceId: workspace.id, status: workspace.status });
+        }
+        if (owningHumanId !== undefined && store.getParticipant(workspace.id, { actorId: owningHumanId, actorType: "human" }) === undefined) {
+          throw new ParticipantRequired(
+            `Owning human ${owningHumanId} is not a participant of workspace ${workspace.id}`,
+          );
+        }
+        if (requestId !== undefined) {
+          const digest = hashToken(workspaceCreateBody(input));
+          const recorded = hashToken(workspaceCreateBody({
+            teamId: workspace.teamId,
+            name: workspace.name,
+            description: workspace.description,
+          }));
+          rememberWorkspaceCreateRequest(store, ctx.actor, requestId, digest, workspace.id, clock(), recorded);
+        }
+        return finish(workspace, true);
+      }
+
+      if (requestId !== undefined) {
+        const digest = hashToken(workspaceCreateBody(input));
+        const existing = store.getWorkspaceCreateRequest(ctx.actor, requestId);
+        if (existing !== undefined) {
+          if (existing.bodyDigest !== digest) throw workspaceCreateRequestConflict();
+          const workspace = requireReplayWorkspace(store, existing.workspaceId, ctx.actor, owningHumanId);
+          return finish(workspace, true);
+        }
+        const now = clock();
+        const created = buildWorkspace(ctx, input, now, idSource);
+        try {
+          commitWorkspace(store, ctx, created, now, owningHumanId, record, {
+            actor: ctx.actor,
+            requestId,
+            bodyDigest: digest,
+            workspaceId: created.id,
+            createdAt: now,
+          });
+        } catch (error) {
+          if (!isWorkspaceCreateRequestConflict(error)) throw error;
+          const winner = store.getWorkspaceCreateRequest(ctx.actor, requestId);
+          if (winner === undefined || winner.bodyDigest !== digest) throw workspaceCreateRequestConflict();
+          return finish(requireReplayWorkspace(store, winner.workspaceId, ctx.actor, owningHumanId), true);
+        }
+        return finish(created, false);
+      }
+
+      const now = clock();
+      const created = buildWorkspace(ctx, input, now, idSource);
+      commitWorkspace(store, ctx, created, now, owningHumanId, record);
+      return created;
     },
 
     updateWorkspace(ctx: ActorContext, input: UpdateWorkspaceInput): Workspace {

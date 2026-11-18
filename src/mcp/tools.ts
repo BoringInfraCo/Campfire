@@ -296,14 +296,24 @@ export function createCampfireMcpServer(options: CampfireMcpOptions): McpServer 
   server.registerTool(
     "create_workspace",
     {
-      description: "Create a workspace. The acting actor becomes the owner.",
+      description:
+        "Create a workspace. The acting actor becomes the owner. A shared retryable create passes a stable requestId and retries that same id. A call with neither requestId nor workspaceId is a legacy create, is not replay-safe, and does not apply the owning-human refusal. The call uses this agent's own credential. A workspace id alone is not access.",
       inputSchema: {
         teamId: z.string(),
         name: z.string(),
         description: z.string().optional(),
+        requestId: z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/).optional(),
+        workspaceId: z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/).optional(),
       },
     },
-    (args) => run("create_workspace", () => invoke("create_workspace", args)),
+    (args) =>
+      run("create_workspace", async () => {
+        const result = (await invoke("create_workspace", args)) as { sessionId?: string };
+        if (typeof result.sessionId === "string" && result.sessionId.length > 0) {
+          requireCtx().agentSessionId = result.sessionId;
+        }
+        return result;
+      }),
   );
 
   server.registerTool(

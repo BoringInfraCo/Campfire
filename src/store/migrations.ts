@@ -24,6 +24,8 @@ export { V10_SQL } from "./action-proposal-schema.js";
 
 import { ENROLLMENT_ISSUE_REQUEST_COLUMN_SQL, V13_SQL } from "./enrollment-issue-request-schema.js";
 import { SESSION_RUNTIME_TABLE_SQL, SESSION_TASK_COLUMN_SQL } from "./session-runtime-schema.js";
+import { V14_SQL } from "./workspace-create-request-schema.js";
+import { V15_SQL } from "./workspace-create-session-claim-schema.js";
 
 export const CURRENT_SCHEMA_VERSION = 11;
 
@@ -241,6 +243,8 @@ export function applyMigrations(
     apply();
   }
   ensureEnrollmentIssueRequest(db);
+  ensureWorkspaceCreateRequest(db);
+  ensureWorkspaceCreateSessionClaim(db);
 }
 
 /**
@@ -260,6 +264,22 @@ function ensureEnrollmentIssueRequest(db: Database.Database): void {
     }
   }
   db.exec(V13_SQL);
+}
+
+/**
+ * Additive local counterpart of migrations/0014_workspace_create_request.sql. Idempotent and
+ * unversioned, same as the enrollment issue-request column: the published schema version stays put.
+ */
+function ensureWorkspaceCreateRequest(db: Database.Database): void {
+  db.exec(V14_SQL);
+}
+
+/**
+ * Additive local counterpart of migrations/0015_workspace_create_session_claim.sql.
+ * Idempotent and unversioned, same as the workspace create request table.
+ */
+function ensureWorkspaceCreateSessionClaim(db: Database.Database): void {
+  db.exec(V15_SQL);
 }
 
 export function schemaVersion(db: Database.Database): number {

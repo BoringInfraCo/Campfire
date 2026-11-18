@@ -19,7 +19,7 @@ export const SESSION_FAILURE_KINDS = [
 ] as const;
 export type SessionFailureKind = (typeof SESSION_FAILURE_KINDS)[number];
 
-export const SESSION_LEASE_MS = 45_000;
+export const SESSION_LEASE_MS = 180_000;
 export const SESSION_REPORT_MIN_INTERVAL_MS = 5_000;
 export const SESSION_LIST_DEFAULT_LIMIT = 25;
 export const SESSION_LIST_MAX_LIMIT = 50;

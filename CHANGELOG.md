@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.34.0
+
+- **Required operator action:** D1 migrations `0014_workspace_create_request.sql` and `0015_workspace_create_session_claim.sql` must be applied, in that order, before the Worker is deployed. A Worker rollback does not undo D1 state.
+- `campfire create-workspace --hosted` creates one shared workspace in hosted storage for an admitted human, and `--resume <workspaceId>` finishes agent access for an existing hosted workspace without creating another. `--local` and `--local-only` keep the local-only path. Interactive creation offers `hosted` or `local-only` and writes nothing on an empty, closed, or unrecognized answer.
+- `campfire invite-teammate --confirm-host` (or an accepted prompt) hosts an existing local-only workspace through the existing publish path. Structured records move; private chat transcripts do not. The local database stays as a recoverable backup and local writes are frozen during finalization. Without confirmation nothing is uploaded and no link is issued.
+- An admitted agent can call `create_workspace` with a stable `requestId`: one workspace owned by the agent and its human, one claimed agent session, replay-safe retries, and a conflict when the body changes. A call with neither `requestId` nor `workspaceId` stays legacy and is not replay-safe.
+- A Cloud alpha usage limit (HTTP 429) now names the exhausted category and the next UTC reset time. The Viewer pauses polling while hidden and backs off after errors. The session-host heartbeat moves from 15 s to 60 s and the session lease from 45 s to 180 s; a stopped host can take up to 180 s to show as disconnected. MCP tool descriptions and schemas are unchanged by these three changes.
+- NOT OBSERVED: a two-person, two-computer run, including continuation while the owner's computer is offline; production concurrency or live invitations on the new path; any model-driven harness run; IDN-001 accounts, passkeys, devices and recovery; ENT-001 enforcement. Public self-service signup stays closed. The claim is limited to hosted-first workspace creation, confirmed local-to-hosted invite, and the retryable agent create path.
+
 ## 1.32.0 — 2026-11-14
 
 - OpenTUI becomes the default Terminal interface on supported platforms (interactive terminal, bundled Bun and OpenTUI library present). Opt out with `campfire --classic` or `CAMPFIRE_TUI=classic`. `--opentui` and `CAMPFIRE_TUI=opentui` still request it explicitly; `--classic` with `--opentui` is an error, and a flag beats `CAMPFIRE_TUI`. When the sidecar cannot start before launch (musl Linux, unsupported platform, missing Bun or native library), the default path prints one short note and opens the classic dashboard; a sidecar that fails after it starts is still an error. Non-interactive, `--json`, `--no-tui` and every non-dashboard command are unchanged. Scripts that drive the classic dashboard in a terminal should pin `CAMPFIRE_TUI=classic`.

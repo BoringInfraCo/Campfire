@@ -164,13 +164,15 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
   profiles: spec("profiles", "start", "List or switch saved local Campfire profiles.", "campfire profiles [list|use <profileId>]", { ...WRITE, workspaceScoped: false, notes: [
     "Joining another workspace preserves the original profile. Use 'campfire profiles' to see available profiles and 'campfire profiles use <profileId>' to switch.",
   ] }),
-  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation link for a new teammate.", "campfire invite-teammate <workspaceId> [--out <private-file>] [--request-id <id>] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "invitations", "revoke-invitation"], notes: [
+  "invite-teammate": spec("invite-teammate", "start", "Create a private invitation link for a new teammate.", "campfire invite-teammate <workspaceId> [--out <private-file>] [--request-id <id>] [--confirm-host] [--rehearsal-code <code>] [--no-connect] [--allow-loopback]", { ...WRITE, workspaceScoped: true, related: ["publish", "join", "invitations", "revoke-invitation"], notes: [
     "The server sets expiry to exactly 30 minutes after issuance. --hours and --expires-in-hours are no longer supported.",
     "At 5 active unused invitations the server refuses another. Run campfire invitations --workspace <workspaceId>, then campfire revoke-invitation <invitationId> --workspace <workspaceId>.",
     "Each run sends a fresh request id. If a response was lost, rerunning with a new id is safe; rerunning with the same --request-id is refused with InvitationAlreadyIssued (the link is never stored and cannot be shown again): revoke that invitation, then issue a new one.",
     "Joining adds a member, not an owner. Any stronger authority needs a separate explicit action.",
     "Owner-only: authorizes one new human to join an already reachable workspace with bounded agent identities.",
-    "Supplying a public URL does not publish a local workspace. Run campfire publish from the local owner profile first.",
+    "A local-only workspace is hosted only after --confirm-host or an accepted prompt. That moves structured records, not private chat transcripts, keeps the local database as a recoverable backup, and freezes local writes during finalization so only one copy stays writable.",
+    "Missing confirmation uploads nothing and issues no link. A workspace that is already hosted is invited directly and is not published again.",
+    "Supplying --url alone does not publish a local workspace. The default hosted origin is used only after confirmation.",
     "The owner receives one private link. Its capability is in the URL fragment and is not printed by campfire status.",
     "The recipient previews the workspace and inviter, then explicitly accepts or declines. Decline creates no membership.",
     "--out writes the same capability to a mode-0600 file for compatibility. The file is not required.",
@@ -585,9 +587,16 @@ export const CLI_CATALOG: Record<CliCommand, CliCommandSpec> = {
   "create-workspace": spec(
     "create-workspace",
     "admin",
-    "Create a workspace in a team.",
-    "campfire create-workspace --team <teamId> --name <name> [--description <text>]",
-    { ...WRITE, workspaceScoped: false, outputModes: JSON_ONLY, alwaysJson: true },
+    "Create a hosted shared workspace, or a local-only workspace.",
+    "campfire create-workspace [--hosted | --local | --local-only] [--team <teamId>] --name <name> [--description <text>] [--resume <workspaceId>] [--allow-loopback]",
+    { ...WRITE, workspaceScoped: false, outputModes: JSON_ONLY, alwaysJson: true, notes: [
+      "A shared workspace is created in hosted storage. --hosted uses the admitted human credential and that human's existing team.",
+      "--resume <workspaceId> finishes agent access for that existing hosted workspace. It does not create a workspace.",
+      "--local and --local-only create a local-only workspace. On a terminal, Campfire asks once. The answer must be hosted or local-only; an empty answer creates nothing.",
+      "Structured work for a hosted workspace is stored at the hosted endpoint named before the result.",
+      "--team must be the hosted human's team when it is passed. A shared workspace is not created locally when admission is missing.",
+      "--url is accepted only with --allow-loopback for a loopback test. The product origin is https://boringinfra.company/campfire.",
+    ] },
   ),
   "update-workspace": spec(
     "update-workspace",

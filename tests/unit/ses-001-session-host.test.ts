@@ -506,7 +506,8 @@ describe("SES-001 session host", () => {
     await until(() => core.calls.filter((call) => call.method === "report" && (call.input as { state?: string }).state === "running").length >= 1);
     clock.release();
     await until(() => core.calls.filter((call) => call.method === "report" && (call.input as { state?: string }).state === "running").length >= 2);
-    expect(clock.waits.every((wait) => wait === 15_000)).toBe(true);
+    // SES-001 heartbeat amendment (v1.34.0): 60 s heartbeat, 180 s lease.
+    expect(clock.waits.every((wait) => wait === 60_000)).toBe(true);
     expect(clock.waits.length).toBeGreaterThanOrEqual(2);
     child.finish(0, null);
     const result = await first;

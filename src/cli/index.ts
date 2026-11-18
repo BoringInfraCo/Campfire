@@ -108,6 +108,14 @@ import {
 } from "./dashboard.js";
 import { OPENTUI_FALLBACK_NOTE, OpentuiUnavailableError, chooseDashboard, opentuiRequested, spawnOpentui, waitForOpentui, type OpentuiChild, type OpentuiOutcome, type SpawnOpentuiInput } from "./opentui-launch.js";
 import { isInteractiveTty, wordmark } from "./ui.js";
+import {
+  createHostedWorkspace,
+  hostLocalWorkspaceForInvite,
+  hostMoveExplanation,
+  hostedStorageLine,
+  resolveWorkspacePlacement,
+  resumeHostedWorkspace,
+} from "./hosted-workspace.js";
 import { announceStableUpdate, runUpdateCommand } from "./update-command.js";
 import { setOwnedCampfireService } from "./service-owner.js";
 import { shouldAnnounce } from "../update/notice.js";
@@ -335,13 +343,16 @@ async function withBackend<T>(
      * command reuses them for its own arguments (target actor, artifact type).
      */
     stripIdentityFlags?: string[];
+    /** `--local` must not follow CAMPFIRE_URL or a remote profile. */
+    forceLocal?: boolean;
   },
 ): Promise<T> {
   const parsed = parseArgs(argv);
-  const remoteProfile = loadRemoteProfile();
+  const forceLocal = options?.forceLocal === true;
+  const remoteProfile = forceLocal ? undefined : loadRemoteProfile();
   const access = remoteProfile === undefined ? undefined : resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
-  const url = access?.url ?? readCampfireUrl();
-  const token = access?.token ?? readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
+  const url = forceLocal ? undefined : access?.url ?? readCampfireUrl();
+  const token = forceLocal ? readOperatorHumanToken() : access?.token ?? readCampfireToken(process.env, argv) ?? readOperatorHumanToken();
 
   if (url !== undefined) {
     if (token === undefined) {
@@ -2248,12 +2259,49 @@ async function cmdCapabilities(parsed: ParsedArgs): Promise<void> {
 }
 
 async function cmdCreateWorkspace(parsed: ParsedArgs, argv: string[]): Promise<void> {
+  const resumeFlag = parsed.flags.resume;
+  if (resumeFlag !== undefined) {
+    if (parsed.flags.local === true || parsed.flags["local-only"] === true) {
+      throw new ValidationError("Choose either --resume or a local workspace. No workspace was created.", { field: "mode" });
+    }
+    if (typeof resumeFlag !== "string" || resumeFlag.trim().length === 0) {
+      throw new ValidationError("Pass the existing workspace id with --resume. No workspace was created.", { field: "resume" });
+    }
+    const workspace = await resumeHostedWorkspace({
+      workspaceId: resumeFlag.trim(),
+      teamId: optionalFlag(parsed.flags, "team"),
+      url: optionalFlag(parsed.flags, "url"),
+      token: readCampfireToken(process.env, argv),
+      allowLoopback: parsed.flags["allow-loopback"] === true,
+      onBeforeAgent: (endpoint) => console.log(hostedStorageLine(endpoint)),
+    });
+    printJson(workspace);
+    return;
+  }
+  const description = optionalFlag(parsed.flags, "description");
+  const placement = await resolveWorkspacePlacement({
+    hosted: parsed.flags.hosted === true,
+    local: parsed.flags.local === true || parsed.flags["local-only"] === true,
+    stdinIsTty: process.stdin.isTTY === true,
+  });
+  if (placement === "hosted") {
+    const workspace = await createHostedWorkspace({
+      name: requireFlag(parsed.flags, "name"),
+      teamId: optionalFlag(parsed.flags, "team"),
+      description,
+      url: optionalFlag(parsed.flags, "url"),
+      token: readCampfireToken(process.env, argv),
+      allowLoopback: parsed.flags["allow-loopback"] === true,
+      onBeforeWrite: (endpoint) => console.log(hostedStorageLine(endpoint)),
+    });
+    printJson(workspace);
+    return;
+  }
   const teamId = requireFlag(parsed.flags, "team");
   const name = requireFlag(parsed.flags, "name");
-  const description = optionalFlag(parsed.flags, "description");
   await withBackend(argv, async (backend) => {
     printJson(await backend.call("create_workspace", { teamId, name, description }));
-  });
+  }, placement === "local" ? { forceLocal: true } : undefined);
 }
 
 async function cmdUpdateWorkspace(parsed: ParsedArgs, argv: string[]): Promise<void> {
@@ -2426,24 +2474,47 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
     throw new ValidationError("Invitations always expire 30 minutes after the server issues them; --hours and --expires-in-hours are no longer supported. Run the command again without it.", { field: "hours", nextAction: "omit_expiry_flag" });
   }
   const remote=loadRemoteProfile();
-  const access=remote===undefined?undefined:resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:readCampfireToken(process.env,argv)});
-  const requestedUrl=access?.url ?? optionalFlag(parsed.flags,"url") ?? readCampfireUrl();
-  const token=access?.token ?? readCampfireToken(process.env,argv);
-  if (remote === undefined && token === undefined && requestedUrl === undefined) {
-    throw new ValidationError("A local-only workspace cannot issue a teammate invitation because there is no hosted workspace to join. Publish it first with campfire publish (an explicit step Campfire never runs for you); the hosted-first guided move is not available yet.", {
-      field: "workspace",
-      nextAction: "publish_workspace",
-    });
-  }
+  const tokenFromEnv=readCampfireToken(process.env,argv);
+  const campfireUrl=readCampfireUrl();
   const allowLoopback = parsed.flags["allow-loopback"] === true;
+  const requestFlag=parsed.flags["request-id"];
+  if (requestFlag===true || (typeof requestFlag==="string" && !/^[a-zA-Z0-9_.-]{1,200}$/.test(requestFlag))) throw new ValidationError("--request-id must be 1-200 characters of letters, digits, '.', '_' or '-'.",{field:"request-id"});
+  const requestId=typeof requestFlag==="string"?requestFlag:`inv_${randomUUID()}`;
+  if (remote === undefined && tokenFromEnv === undefined && campfireUrl === undefined) {
+    let hosted: Awaited<ReturnType<typeof hostLocalWorkspaceForInvite>>;
+    try {
+      hosted = await hostLocalWorkspaceForInvite({
+        workspaceId,
+        url: optionalFlag(parsed.flags, "url"),
+        allowLoopback,
+        confirmed: parsed.flags["confirm-host"] === true,
+        stdinIsTty: process.stdin.isTTY === true,
+        rehearsalCode: optionalFlag(parsed.flags, "rehearsal-code") ?? process.env[PUBLICATION_REHEARSAL_CODE_ENV],
+        connect: parsed.flags["no-connect"] !== true,
+        requestId,
+        outPath: path,
+        mcpCommand: process.argv[1] ?? "campfire",
+        onBeforeWrite: (endpoint) => {
+          console.log(hostedStorageLine(endpoint));
+          console.log(hostMoveExplanation(endpoint));
+        },
+      });
+    } catch (error) {
+      throw explainInvitationAlreadyIssued(explainInvitationLimit(error, workspaceId), workspaceId);
+    }
+    const link = formatInvitationLink(hosted.endpoint, hosted.invitation, allowLoopback);
+    const receipt = { invitationId: hosted.invitation.invitationId, workspaceId: hosted.invitation.workspace.id, expiresAt: hosted.invitation.expiresAt, link, url: hosted.endpoint, ...(hosted.path === undefined ? {} : { path: hosted.path }) };
+    emitInvitationReceipt(parsed, receipt);
+    return;
+  }
+  const access=remote===undefined?undefined:resolveRemoteAccess({url:optionalFlag(parsed.flags,"url"),token:tokenFromEnv});
+  const requestedUrl=access?.url ?? optionalFlag(parsed.flags,"url") ?? campfireUrl;
+  const token=access?.token ?? tokenFromEnv;
   const endpoint=canonicalEndpoint(requestedUrl ?? "",{allowLoopbackHttp:allowLoopback});
   if(token===undefined) throw new ValidationError("Invitation issuance requires a credential for this shared endpoint; pass --token or CAMPFIRE_TOKEN",{field:"token",nextAction:"publish_workspace"});
   const call=(method:string,params:Record<string,unknown>)=>campfireHttpCall({baseUrl:endpoint,token,method,params});
   // One stable id per invocation. Any internal retry of this call must reuse it, so a lost response
   // can never mint a second invitation. --request-id lets the owner deliberately retry one request.
-  const requestFlag=parsed.flags["request-id"];
-  if (requestFlag===true || (typeof requestFlag==="string" && !/^[a-zA-Z0-9_.-]{1,200}$/.test(requestFlag))) throw new ValidationError("--request-id must be 1-200 characters of letters, digits, '.', '_' or '-'.",{field:"request-id"});
-  const requestId=typeof requestFlag==="string"?requestFlag:`inv_${randomUUID()}`;
   let invitation:IssuedEnrollmentInvitation;
   try { invitation=await call("issue_enrollment_invitation",{workspaceId,requestId}) as IssuedEnrollmentInvitation; }
   catch (error) { throw explainInvitationAlreadyIssued(explainInvitationLimit(error,workspaceId),workspaceId); }
@@ -2453,7 +2524,10 @@ async function cmdInviteTeammate(parsed:ParsedArgs,argv:string[]):Promise<void> 
     catch (error) { try { await call("revoke_enrollment_invitation", { workspaceId, invitationId: invitation.invitationId }); } catch { /* The caller still reports the file failure. */ } throw error; }
   }
   const link = formatInvitationLink(endpoint, invitation, allowLoopback);
-  const receipt = { invitationId: invitation.invitationId, workspaceId: invitation.workspace.id, expiresAt: invitation.expiresAt, link, url: endpoint, ...(filePath === undefined ? {} : { path: filePath }) };
+  emitInvitationReceipt(parsed, { invitationId: invitation.invitationId, workspaceId: invitation.workspace.id, expiresAt: invitation.expiresAt, link, url: endpoint, ...(filePath === undefined ? {} : { path: filePath }) });
+}
+
+function emitInvitationReceipt(parsed: ParsedArgs, receipt: { invitationId: string; workspaceId: string; expiresAt: string; link: string; url: string; path?: string }): void {
   emitResult(receipt, commandOutput(parsed), (value) => [
     "Private invitation link (a secret; share it only with the person you are inviting):",
     value.link,

@@ -45,7 +45,7 @@ import type {
   WebhookDeliveryRecord,
   WebhookDeliveryStatus,
 } from "../domain/events.js";
-import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspacePatch } from "./store.js";
+import type { CampfireStore, DecisionPatch, GoalPatch, TaskPatch, WorkspaceCreateRequest, WorkspaceCreateSessionClaim, WorkspacePatch } from "./store.js";
 import {
   MEMORY_HEALTH_DECISIONS_SQL,
   MEMORY_HEALTH_FINDINGS_SQL,
@@ -200,6 +200,22 @@ interface AgentSessionRuntimeRow {
   expires_at: string | null;
   exit_code: number | null;
   failure_kind: string | null;
+}
+
+interface WorkspaceCreateRequestRow {
+  actor_id: string;
+  actor_type: string;
+  request_id: string;
+  body_digest: string;
+  workspace_id: string;
+  created_at: string;
+}
+
+interface WorkspaceCreateSessionClaimRow {
+  agent_id: string;
+  workspace_id: string;
+  session_id: string;
+  created_at: string;
 }
 
 interface WorkspaceRow {
@@ -454,6 +470,25 @@ function mapRuntime(row: AgentSessionRuntimeRow): AgentSessionRuntimeReport {
     expiresAt: row.expires_at ?? undefined,
     exitCode: row.exit_code ?? undefined,
     failureKind: (row.failure_kind ?? undefined) as SessionFailureKind | undefined,
+  };
+}
+
+function mapWorkspaceCreateRequest(row: WorkspaceCreateRequestRow): WorkspaceCreateRequest {
+  return {
+    actor: { actorId: row.actor_id, actorType: row.actor_type as ActorType },
+    requestId: row.request_id,
+    bodyDigest: row.body_digest,
+    workspaceId: row.workspace_id,
+    createdAt: row.created_at,
+  };
+}
+
+function mapWorkspaceCreateSessionClaim(row: WorkspaceCreateSessionClaimRow): WorkspaceCreateSessionClaim {
+  return {
+    agentId: row.agent_id,
+    workspaceId: row.workspace_id,
+    sessionId: row.session_id,
+    createdAt: row.created_at,
   };
 }
 
@@ -907,6 +942,47 @@ function createSqliteStore(db: Database.Database): CampfireStore {
         workspace.createdAt,
         workspace.updatedAt,
       );
+    },
+
+    getWorkspaceCreateRequest(actor, requestId) {
+      const row = db
+        .prepare(
+          "SELECT * FROM workspace_create_requests WHERE actor_id = ? AND actor_type = ? AND request_id = ?",
+        )
+        .get(actor.actorId, actor.actorType, requestId) as WorkspaceCreateRequestRow | undefined;
+      return row === undefined ? undefined : mapWorkspaceCreateRequest(row);
+    },
+
+    insertWorkspaceCreateRequest(request) {
+      db.prepare(
+        "INSERT INTO workspace_create_requests (actor_id, actor_type, request_id, body_digest, workspace_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      ).run(
+        request.actor.actorId,
+        request.actor.actorType,
+        request.requestId,
+        request.bodyDigest,
+        request.workspaceId,
+        request.createdAt,
+      );
+    },
+
+    getWorkspaceCreateSessionClaim(agentId, workspaceId) {
+      const row = db
+        .prepare("SELECT * FROM workspace_create_session_claims WHERE agent_id = ? AND workspace_id = ?")
+        .get(agentId, workspaceId) as WorkspaceCreateSessionClaimRow | undefined;
+      return row === undefined ? undefined : mapWorkspaceCreateSessionClaim(row);
+    },
+
+    insertWorkspaceCreateSessionClaim(claim) {
+      db.prepare(
+        "INSERT INTO workspace_create_session_claims (agent_id, workspace_id, session_id, created_at) VALUES (?, ?, ?, ?)",
+      ).run(claim.agentId, claim.workspaceId, claim.sessionId, claim.createdAt);
+    },
+
+    deleteWorkspaceCreateSessionClaim(agentId, workspaceId, sessionId) {
+      db.prepare(
+        "DELETE FROM workspace_create_session_claims WHERE agent_id = ? AND workspace_id = ? AND session_id = ?",
+      ).run(agentId, workspaceId, sessionId);
     },
 
     getWorkspace(id) {

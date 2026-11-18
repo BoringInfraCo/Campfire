@@ -5,6 +5,9 @@ const CURSOR_PREFIX = "campfire.viewer.lastSeen.";
 // SWH-001: local UI preference only. Never workspace content.
 const PERSPECTIVE_KEY = "campfire.viewer.perspective";
 const POLL_MS = 2000;
+// Joined (remote/hosted) Viewers spend the team's daily read budget, so they
+// poll more slowly. Local Viewers keep POLL_MS.
+const REMOTE_POLL_MS = 10000;
 const LIMIT = 50;
 
 const FIRST_VISIT_MESSAGE = "First visit — new activity will appear here.";
@@ -3852,6 +3855,27 @@ document.addEventListener("keydown", (event) => {
 applyDensity(readStoredDensity());
 renderPerspective();
 
+function isRemoteViewer() {
+  const root = typeof document !== "undefined" ? document.documentElement : null;
+  return Boolean(root) && typeof root.getAttribute === "function" && root.getAttribute("data-workspace-hint") === "joined";
+}
+
+function isTabHidden() {
+  return typeof document !== "undefined" && document.visibilityState === "hidden";
+}
+
+let lastRefreshAt = 0;
+
+/** One timer tick: skip while the tab is hidden; remote Viewers poll every REMOTE_POLL_MS. */
+function pollTick() {
+  if (isTabHidden()) return;
+  const interval = isRemoteViewer() ? REMOTE_POLL_MS : POLL_MS;
+  // Ticks arrive every POLL_MS; half a tick of slack avoids timer jitter skips.
+  if (Date.now() - lastRefreshAt < interval - POLL_MS / 2) return;
+  lastRefreshAt = Date.now();
+  refresh();
+}
+
 async function boot() {
   applyDensity(readStoredDensity());
   try {
@@ -3860,8 +3884,17 @@ async function boot() {
     state.error = err.message || String(err);
     render();
   }
+  lastRefreshAt = Date.now();
   await refresh();
-  setInterval(refresh, POLL_MS);
+  lastRefreshAt = Date.now();
+  setInterval(pollTick, POLL_MS);
+  // Catch up once when a hidden tab returns, instead of waiting for the next tick.
+  document.addEventListener("visibilitychange", () => {
+    if (!isTabHidden()) {
+      lastRefreshAt = Date.now();
+      refresh();
+    }
+  });
 }
 
 boot();
